@@ -1,0 +1,18 @@
+
+# cifs automounts
+# ============================================
+Projetos    -fstype=cifs,defaults,username=3d,password=,uid=500,uid=500,file_mode=0777,dir_mode=0777   ://192.168.0.2/Projetos			
+Render	    -fstype=cifs,defaults,username=render,password=,uid=500,file_mode=0777,dir_mode=0777,sec=ntlm   ://192.168.0.4/Render
+install		-fstype=cifs,defaults,username=3d,password=,uid=500,uid=500,file_mode=0777,dir_mode=0777   ://192.168.0.2/Install	
+Bruto		-fstype=cifs,defaults,username=bruto,password=,uid=500,file_mode=0777,dir_mode=0777,sec=ntlm    ://192.168.0.3/Bruto	
+
+
+# nfs automounts
+# ============================================
+#Render	    -fstype=nfs,vers=3,rw,nolock					        192.168.0.3:/volumes/VFXSTORAGE/Render
+#Projetos2   -fstype=nfs,vers=3,rw									192.168.0.10:/RAID/Projetos
+.apps		-fstype=nfs,vers=3,rw									192.168.0.10:/RAID/atomo/apps/linux/x86_64/
+.pipe		-fstype=nfs,vers=3,rw									192.168.0.10:/RAID/atomo/pipeline/tools/
+
+#Bruto 	-fstype=nfs,vers=3,ro,nolock							192.168.0.3:/volumes/VFXSTORAGE/Bruto
+
