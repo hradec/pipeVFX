@@ -1,0 +1,44 @@
+#!/bin/sh
+#---------------------------------------------------------------------------------------------------------
+# XORG SETUP
+#---------------------------------------------------------------------------------------------------------
+# setup xorg
+
+setupXorg(){
+    # delete xorg if there's no nvidia video board!
+    #[ "$(lspci | grep VGA | grep n.idia)" = "" ] && mv /etc/X11/xorg.conf /etc/X11/xorg.conf.nvidia
+    rm -rf /etc/X11/xorg.conf
+    if [ "$(lspci | grep VGA | awk '{print toupper($0)}' | grep NVIDIA)" != "" ] ; then 
+        /usr/bin/nvidia-xconfig 1>&2
+
+    else
+        rm -rf /usr/lib/libGL.so*
+        rm -rf /usr/lib/xorg/modules/extensions/libglx.so
+        cp -rf /usr/lib/xorg/modules/extensions/libglx.so.original /usr/lib/xorg/modules/extensions/libglx.so
+
+        if [ "$(lspci | grep VGA | awk '{print toupper($0)}' | grep ATI)" != "" ] ; then 
+            mv /etc/X11/radeon.conf /etc/X11/xorg.conf.d/radeon.conf
+        fi
+    
+    fi
+    
+
+    # 
+    local_root=$(echo $(ls /dev/vg_*/lv_root 2>/dev/null) | cut -d' ' -f1)
+    if [ "$local_root" != "" ] ; then 
+        mkdir -p /boot/rootLOCAL
+        mount $local_root /boot/rootLOCAL
+        if [ -f /boot/rootLOCAL/etc/X11/xorg.conf ] ; then 
+            cp -rf /boot/rootLOCAL/etc/X11/xorg.conf /etc/X11/xorg.conf
+        fi 
+    fi
+    [ "$(echo $(hostname) | grep farm)" != "" ] && mv /etc/X11/xorg.conf /etc/X11/xorg.conf.nvidia
+#    [ "$(echo $(hostname) | grep farm)" != "" ] && service messagebus stop ; killall -9 Xorg
+#    [ "$(echo $(hostname) | grep farm)" != "" ] && init 3
+#    [ "$(echo $(hostname) | grep farm)" != "" ] && rmmod nvidia
+#    [ "$(echo $(hostname) | grep farm)" != "" ] && find /lib/modules/$(uname -r)/kernel/drivers/ -name nvidia.ko -exec rm -rf {} \;
+#    [ "$(echo $(hostname) | grep farm)" != "" ] && service messagebus start
+    sleep 0.1
+}
+setupXorg
+

@@ -1,0 +1,74 @@
+#!/bin/bash 
+
+rib="$@"
+for x in $@; do
+    [ "$x" != "${x/.rib*}" ] && ribfile="$x"
+done
+for x in $@; do
+    [ "$x" != "${x/.local*}" ] && machine=$x
+done
+
+flag=0
+for x in $@; do
+    [ "$flag" == "1" ] && jobid=$x && break
+    [ "$x" != "${x/-jobid*}" ] && flag=1
+done
+
+for x in $@; do
+    [ "$x" != "${x/,*}" ] && hosts=$x
+done
+
+c=0
+for x in $(echo $hosts | sed 's/,/ /g'); do
+    [ "$c" == "$jobid" ] && machine=$x
+    c=$(expr $c + 1)
+done
+
+
+
+
+echo $ribfile
+if [ "$PIPE_SHOT" == "" ] ; then
+    export PIPE_JOB=$(echo $ribfile | cut -d'/' -f4)
+    export PIPE_SHOT=$(echo $(echo $ribfile | cut -d'/' -f5)@$(echo $ribfile | cut -d'/' -f6))
+    export SSH=1
+    echo $PIPE_SHOT
+fi
+
+date
+t=$(date +%s)
+echo "===============================================================================" 
+echo "$@" 
+echo "===============================================================================" 
+
+
+pathBase=$(dirname $BASH_SOURCE)
+#pathBase=$ROOT/pipeline/tools/scripts
+source $pathBase/../init/bash
+echo $pathBase/go $PIPE_JOB $(echo $PIPE_SHOT | cut -d'@' -f1)  $(echo $PIPE_SHOT | cut -d'@' -f2)
+source $pathBase/go $PIPE_JOB $(echo $PIPE_SHOT | cut -d'@' -f1)  $(echo $PIPE_SHOT | cut -d'@' -f2)
+echo "==============================================================================="
+
+
+args=""
+
+for x in $@; do
+    [ "$x" == "-master" ] && x="$x $(hostname --ip-address)"
+    [ "$x" == "${x/.local*}" ] && [ "$x" != "$ribfile" ] && [ "$x" != "$machine" ] && echo $x >&2
+    [ "$x" == "${x/.local*}" ] && [ "$x" != "$ribfile" ] && [ "$x" != "$machine" ] && args="$args $x"
+done
+
+
+echo "===============================================================================" >&2
+echo "$jobid" >&2
+echo "$ribfile" >&2
+echo "$@" >&2
+#cmd=". $pathBase/go $PIPE_JOB $(echo $PIPE_SHOT | cut -d'@' -f1)  $(echo $PIPE_SHOT | cut -d'@' -f2) && run $args $ribfile"
+cmd="$(readlink -f $(dirname $BASH_SOURCE))/$(echo $args) $ribfile"
+echo "$cmd" >&2
+echo ssh -o StrictHostKeyChecking=no $machine $cmd >&2
+echo . >&2
+echo "===============================================================================" >&2
+ssh -o StrictHostKeyChecking=no -o ForwardX11=no $machine killall renderdl
+ssh -o StrictHostKeyChecking=no -o ForwardX11=no $machine "$cmd"
+#renderdl_net.py $cmd

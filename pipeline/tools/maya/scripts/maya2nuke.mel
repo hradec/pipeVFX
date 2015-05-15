@@ -1,0 +1,1242 @@
+/*********************************************************************/
+/********      VERSION 3.8.0 for Maya 2012.X       ***********/
+/*********************************************************************/
+//This file contains MEL procedures for exporting object and camera motion data in the Nuke
+//chan format.  If you are having trouble with this script, contact me at bberman@3dmation.com.
+//copyright 2010 Barry Berman, 3Dmation Visual Effects.
+
+//Use at your own risk.
+
+/*****************************************************************************************************/
+/***********************                    maya2nuke                      ***************************/
+/*****************************************************************************************************/
+//This procedure is designed to export Maya object, lights and camera data into a format (ie. .nk, or .txt)
+//that is compatible with Nuke from The Foundry.  Eventually, I'll convert all of MoCon to Nuke also.
+
+//Usage:  Place the "pass2nuke.mel" file in your Maya scripts folder.  Then start Maya.
+//Select all objects and/or cameras (all maya camera types) you want to export then
+//type "pass2nuke" in the command line and hit enter.  A browser dialog will appear and offer you to
+//name the file and choose a directory.  Use the .nk extension but .txt is also excepted. I prefer to use 
+//.txt format, just so i can double click on it, and it'll wind up in wordpad/textedit.
+
+//Make sure that your film back settings are correct before exporting.  Maya does not animate
+//the Field of View directly (only the focal length) so changing your film back will change the
+//field of view that needs to be written to the file.  Make sure that your Film Fit is set to "Fill"
+//or the final images may not line up.
+
+//All Camera Types are exported as regular cameras.  There is no Camera + Aim or Camera + Aim + Up in Nuke.
+//Note cameras are exported as world position/rotation.  If you are unsure if these are matching, select
+//your camera and run camLinker and a world positon/rotation camera will be created.  Note the camLinker script
+//does hard code rotation order of ZYX, as this is used for many packages.  If comparing rotation angles,
+//make sure you do have the same rotation order.
+
+
+//Rotation Order is carried across to Nuke.  As is light types, and pernumbra, and falloff.
+
+//After export, import the script in Nuke, or copy/paste it, it'll add the nodes with animation.
+
+
+
+/*****************************************************************************************************/
+/************************                    openFile                      ***************************/
+/*****************************************************************************************************/
+global proc int openMotion (string $eiFileName, string $fileType)
+{
+
+	//get the selected object's name and check for selection
+	$curSelection = `ls -sl`;
+	$numSelect = size($curSelection);
+	$count = 0;
+	if ($numSelect == 0) {
+		print ("You do not have anything selected!\n");
+		return 0;
+		}
+
+	string $thingName[];
+	for ($count = 0; $count < $numSelect; $count++){
+		$thingName[$count] = $curSelection[$count];		
+	}
+
+	/***************  Open The File  *********************/
+	int $eiFileID = `fopen $eiFileName "w"`;
+	if ($eiFileID == 0)
+		{print("I could not create the file!\n");
+		return 0;}
+	
+	for ($count = 0; $count < $numSelect; $count++){
+
+	string $myObjName = $thingName[$count];
+
+    // --------------- MUDANCAS ATOMO -----------------------
+	select -cl;
+	select -r $myObjName;
+
+ 
+    // desliga a animacao e 
+    // move o obj atual para o 0
+    float $tx, $ty, $tz, $sx, $sy, $sz, $rx, $ry, $rz;
+
+    autoKeyframe -state false;
+    currentTime 0;
+
+
+    $tx = getAttr ($myObjName+".translateX");
+    $ty = getAttr ($myObjName+".translateY");
+    $tz = getAttr ($myObjName+".translateZ");
+    $sx = getAttr ($myObjName+".scaleX");
+    $sy = getAttr ($myObjName+".scaleY");
+    $sz = getAttr ($myObjName+".scaleZ");
+    $rx = getAttr ($myObjName+".rotateX");
+    $ry = getAttr ($myObjName+".rotateY");
+    $rz = getAttr ($myObjName+".rotateZ");
+
+    setAttr ($myObjName+".tx") 0;
+    setAttr ($myObjName+".ty") 0;
+    setAttr ($myObjName+".tz") 0;
+    setAttr ($myObjName+".sx") 1;
+    setAttr ($myObjName+".sy") 1;
+    setAttr ($myObjName+".sz") 1;
+    setAttr ($myObjName+".rx") 0;
+    setAttr ($myObjName+".ry") 0;
+    setAttr ($myObjName+".rz") 0;
+
+    currentTime 1;
+    
+    string $temp = `match "[^/\\]*$" $eiFileName`;
+    string $folderName = `match "^[^\.]*" $temp`;
+    string $dir = `match "^.*/" $eiFileName`;
+    $dir = ($dir +"OBJ_"+$folderName);
+    
+
+	system ("mkdir "+ $dir);
+	
+	string $objFileName = $dir+"/"+$myObjName+"_Con.obj";
+	
+	file -force -options "groups=1;ptgroups=1;materials=1;smoothing=1;normals=1" -typ "OBJexport" -pr -es $objFileName;
+    
+    // Volta objeto para a posicao anterior
+
+    setAttr ($myObjName+".tx") $tx;
+    setAttr ($myObjName+".ty") $ty;
+    setAttr ($myObjName+".tz") $tz;
+    setAttr ($myObjName+".sx") $sx;
+    setAttr ($myObjName+".sy") $sy;
+    setAttr ($myObjName+".sz") $sz;
+    setAttr ($myObjName+".rx") $rx;
+    setAttr ($myObjName+".ry") $ry;
+    setAttr ($myObjName+".rz") $rz;
+
+    // muda o tempo com auto-keyframe desligado para forcar volta a pos inicial
+    currentTime 1;
+
+	
+	/***************  Get Object Name  *********************/
+	//pickWalk down to get the object shape's name, return up
+	$curSelection = `select -cl  `;
+	$curSelection = `select -r $thingName[$count]  `;
+	$curSelection = `pickWalk -d down`;
+	string $camShape = $curSelection[0];
+	$curSelection = `pickWalk -d up`;
+
+	/***************  	Object Type	   *********************/
+	//This is where we determine if this is an object or a camera
+	//pickwalk down to get the cameraShape's name
+	print ("\nExporting:  " + $thingName[$count] + "\n");
+	string $mysteryObject;
+	string $assignMe;
+	string $yRotRigName;
+	string $xRotRigName;
+	string $zRotRigName;
+	string $camRigName;
+	string $cam[] = `ls -sl`;
+	string $camGrp[] = `listRelatives -p $cam[0]`;
+	float $nullType = 3;
+	$curSelection = `pickWalk -d down`;
+	string $mysteryObject = $curSelection[0];
+	$assignMe = `objectType $mysteryObject`;
+	$curSelection = `pickWalk -d up`;
+
+	if ($assignMe == "camera")
+		{if (size($camGrp) == 0)
+			$nullType = 1;
+		else
+		{
+//			string $upNode = `connectionInfo -sfd ($camGrp[0] + ".worldUpMatrix")`;
+//			if ($upNode == "")
+//				$nullType = 0;
+//			else
+			$nullType = 1;
+		}
+	}
+
+	if ($myObjName == "TRANS_XYZ")
+		{$nullType = 2;
+		$curSelection[$count] = `pickWalk -d down`;
+		$yRotRigName = $curSelection[0];
+		$curSelection = `pickWalk -d down`;
+		$xRotRigName = $curSelection[0];
+		$curSelection = `pickWalk -d down`;
+		$zRotRigName = $curSelection[0];
+		$curSelection = `pickWalk -d down`;
+		$camRigName = $curSelection[0];
+		$curSelection = `pickWalk -d up`;
+		$curSelection = `pickWalk -d up`;
+		$curSelection = `pickWalk -d up`;
+		$curSelection = `pickWalk -d up`;
+		$myObjName = $curSelection[0];
+		
+		$nullType = 1;
+
+		}
+
+	/***************  Get Timing Info ********************/
+	int $minFrame = `playbackOptions -query -min`;
+	int $maxFrame = `playbackOptions -query -max`;
+	int $iFrames = $maxFrame - $minFrame +1;
+	float $frameRate = 0;
+	if (`currentUnit -query -time` == "game")
+		{$frameRate = 0.0666666667;
+		}
+	if (`currentUnit -query -time` == "film")
+		{$frameRate = 0.0416666667;
+		}
+	if (`currentUnit -query -time` == "pal")
+		{$frameRate = 0.0400000000;
+		}
+	if (`currentUnit -query -time` == "ntsc")
+		{$frameRate = 0.0333333333;
+		}
+	if (`currentUnit -query -time` == "show")
+		{$frameRate = 0.0208333333;
+		}
+	if (`currentUnit -query -time` == "palf")
+		{$frameRate = 0.0200000000;
+		}
+	if (`currentUnit -query -time` == "ntscf")
+		{$frameRate = 0.0166666667;
+		}
+
+	string $curWord;
+	float $curData;
+
+/*****************************************************************************************************/
+/************************                Writing Header                    ***************************/
+/*****************************************************************************************************/
+
+
+	int $frIndex;
+	//turn off cycle checking (spews out warning for cameras attached to paths)
+	cycleCheck -e off;
+
+/*****************************************************************************************************/
+/************************                  Writing Body                    ***************************/
+/*****************************************************************************************************/
+	//step through the frames and write out data for each frame.
+	//There is a period being written in the scrip window for each
+	//frame.  If need be, ammend to have frame numbers.
+	//Note: as cameras and objects have slightly different parameters,
+	//there is code for each here.  This also makes it easier to add
+	//additional object types, like camera and aim.
+	print ("Writing Data");
+	
+	int $curTime;
+
+	print(".");
+
+	$curTime = $frIndex;
+
+
+	//This is for Camera + Aim.
+	if ($nullType == 0)	{
+		string $cmd; 
+		string $newname;
+		$newname = $myObjName + "_Con"; 
+
+		$cmd = "CreateCameraOnly";
+		$newCamName = eval($cmd); 
+		rename $newCamName $newname; 
+
+		select -cl;
+		select -r $myObjName;
+		select -add $newname; 
+
+		string $sel[] = `ls -sl`;
+		string $cam1 = $sel[0];
+		string $camShape1[] = `listRelatives -s $cam1`;
+		string $cam2 = $sel[1];
+		string $camShape2[] = `listRelatives -s $cam2`;
+
+			pointConstraint -offset 0 0 0 -weight 1;
+			orientConstraint -offset 0 0 0 -weight 1;
+
+			connectAttr -f ($camShape1[0] + ".horizontalFilmAperture")  ($camShape2[0] + ".horizontalFilmAperture");
+			connectAttr -f ($camShape1[0] + ".verticalFilmAperture")  ($camShape2[0] + ".verticalFilmAperture");
+			connectAttr -f ($camShape1[0] + ".focalLength")  ($camShape2[0] + ".focalLength");
+			connectAttr -f ($camShape1[0] + ".lensSqueezeRatio")  ($camShape2[0] + ".lensSqueezeRatio");
+			connectAttr -f ($camShape1[0] + ".fStop")  ($camShape2[0] + ".fStop");
+			connectAttr -f ($camShape1[0] + ".focusDistance")  ($camShape2[0] + ".focusDistance");
+			connectAttr -f ($camShape1[0] + ".shutterAngle")  ($camShape2[0] + ".shutterAngle");
+			connectAttr -f ($camShape1[0] + ".centerOfInterest")  ($camShape2[0] + ".centerOfInterest");
+			connectAttr -f ($camShape1[0] + ".nearClipPlane")  ($camShape2[0] + ".nearClipPlane");
+			connectAttr -f ($camShape1[0] + ".farClipPlane")  ($camShape2[0] + ".farClipPlane");
+			connectAttr -f ($camShape1[0] + ".horizontalFilmOffset")  ($camShape2[0] + ".horizontalFilmOffset");
+			connectAttr -f ($camShape1[0] + ".verticalFilmOffset")  ($camShape2[0] + ".verticalFilmOffset");
+			connectAttr -f ($camShape1[0] + ".overscan")  ($camShape2[0] + ".overscan");
+			connectAttr -f ($camShape1[0] + ".filmFit")  ($camShape2[0] + ".filmFit");
+
+		$curWord = $myObjName + ".rotateOrder";
+		$mayaRotOrder = `getAttr -t $curTime $curWord`;
+		setAttr ($newname + ".rotateOrder") $mayaRotOrder;
+
+
+		$myObjName = $newname;
+
+		select -cl;
+		select -r $myObjName;
+
+		$curWord = $myObjName + ".rotateOrder";
+		$mayaRotOrder = `getAttr -t $curTime $curWord`;
+		string $rotOrder;
+		string $xTran;
+		string $yTran;
+		string $zTran;
+		string $xRot;
+		string $yRot;
+		string $zRot;
+		
+		if ($mayaRotOrder == 0) {
+			$rotOrder = "XYZ";
+			}
+		if ($mayaRotOrder == 1) {
+			$rotOrder = "YZX";
+			}
+		if ($mayaRotOrder == 2) {
+			$rotOrder = "ZXY";
+			}
+		if ($mayaRotOrder == 3) {
+			$rotOrder = "XZY";
+			}
+		if ($mayaRotOrder == 4) {
+			$rotOrder = "YXZ";
+			}
+		if ($mayaRotOrder == 5) {
+			$rotOrder = "ZYX";
+			}
+
+		//Write Header
+		fprint ($eiFileID, "push 0\n");
+		fprint ($eiFileID, "Camera {\n");
+		fprint ($eiFileID, " selectable false\n");
+		fprint ($eiFileID, " rot_order " + $rotOrder + "\n");
+
+
+
+		//Write TransX Data
+		fprint ($eiFileID, " translate {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateX";
+		$xTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $xTran);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+		//Write TransY Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateY";
+		$yTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $yTran);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+		//Write TransZ Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateZ";
+		$zTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $zTran);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+		//Write rotX Data
+		fprint ($eiFileID, " rotate {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateX";
+		$xRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $xRot);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+		//Write rotY Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateY";
+		$yRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $yRot);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+		//Write rotZ Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateZ";
+		$zRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $zRot);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+		
+
+		//Write Focal Length Info
+		fprint ($eiFileID, " focal {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord =  $myObjName + ".focalLength";
+		float $focal = `getAttr -t $curTime $curWord`;
+
+
+		fprint ($eiFileID, " " + $focal);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+		//Write out Apertures and win_scales
+		$curWord = $myObjName + ".horizontalFilmAperture";
+		$hMayaApert = `getAttr -t $curTime $curWord`;
+		$hApert = $hMayaApert * 25.4;
+
+		$curWord = $myObjName + ".verticalFilmAperture";
+		$vMayaApert = `getAttr -t $curTime $curWord`;
+		$vApert = $vMayaApert * 25.4;
+
+		fprint ($eiFileID, " haperture " + $hApert + "\n");
+		fprint ($eiFileID, " vaperture " + $vApert + "\n");
+		fprint ($eiFileID, " win_scale {1 1}\n");
+		
+				
+		//Write near info
+    
+		fprint ($eiFileID, " near {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord =  $myObjName + ".nearClipPlane";
+		float $nearValue = `getAttr -t $curTime $curWord`;
+
+
+		fprint ($eiFileID, " " + $nearValue);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+
+		//Write far info
+		fprint ($eiFileID, " far {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord =  $myObjName + ".farClipPlane";
+		float $farValue = `getAttr -t $curTime $curWord`;
+
+
+		fprint ($eiFileID, " " + $farValue);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+		
+		
+
+		//Write Footer and Name
+		fprint ($eiFileID, " name Camera\n");
+		fprint ($eiFileID, " label " + $myObjName + "\n");
+		fprint ($eiFileID, "}\n");
+
+		select -cl;
+		select -r $myObjName; 
+		doDelete;
+
+
+	}
+
+	//This is for camera's, not camera and aim, or camera, aim and up.
+		if ($nullType == 1)
+		{
+		string $cmd; 
+		string $newname;
+		$newname = $myObjName + "_Con"; 
+
+		$cmd = "CreateCameraOnly";
+		$newCamName = eval($cmd); 
+		rename $newCamName $newname; 
+
+		select -cl;
+		select -r $myObjName;
+		select -add $newname; 
+
+		string $sel[] = `ls -sl`;
+		string $cam1 = $sel[0];
+		string $camShape1[] = `listRelatives -s $cam1`;
+		string $cam2 = $sel[1];
+		string $camShape2[] = `listRelatives -s $cam2`;
+
+			pointConstraint -offset 0 0 0 -weight 1;
+			orientConstraint -offset 0 0 0 -weight 1;
+
+			connectAttr -f ($camShape1[0] + ".horizontalFilmAperture")  ($camShape2[0] + ".horizontalFilmAperture");
+			connectAttr -f ($camShape1[0] + ".verticalFilmAperture")  ($camShape2[0] + ".verticalFilmAperture");
+			connectAttr -f ($camShape1[0] + ".focalLength")  ($camShape2[0] + ".focalLength");
+			connectAttr -f ($camShape1[0] + ".lensSqueezeRatio")  ($camShape2[0] + ".lensSqueezeRatio");
+			connectAttr -f ($camShape1[0] + ".fStop")  ($camShape2[0] + ".fStop");
+			connectAttr -f ($camShape1[0] + ".focusDistance")  ($camShape2[0] + ".focusDistance");
+			connectAttr -f ($camShape1[0] + ".shutterAngle")  ($camShape2[0] + ".shutterAngle");
+			connectAttr -f ($camShape1[0] + ".centerOfInterest")  ($camShape2[0] + ".centerOfInterest");
+			connectAttr -f ($camShape1[0] + ".nearClipPlane")  ($camShape2[0] + ".nearClipPlane");
+			connectAttr -f ($camShape1[0] + ".farClipPlane")  ($camShape2[0] + ".farClipPlane");
+			connectAttr -f ($camShape1[0] + ".horizontalFilmOffset")  ($camShape2[0] + ".horizontalFilmOffset");
+			connectAttr -f ($camShape1[0] + ".verticalFilmOffset")  ($camShape2[0] + ".verticalFilmOffset");
+			connectAttr -f ($camShape1[0] + ".overscan")  ($camShape2[0] + ".overscan");
+			connectAttr -f ($camShape1[0] + ".filmFit")  ($camShape2[0] + ".filmFit");
+
+		$curWord = $myObjName + ".rotateOrder";
+		$mayaRotOrder = `getAttr -t $curTime $curWord`;
+		setAttr ($newname + ".rotateOrder") $mayaRotOrder;
+
+
+		$myObjName = $newname;
+
+		select -cl;
+		select -r $myObjName;
+
+
+		$curWord = $myObjName + ".rotateOrder";
+		$mayaRotOrder = `getAttr -t $curTime $curWord`;
+		string $rotOrder;
+		string $xTran;
+		string $yTran;
+		string $zTran;
+		string $xRot;
+		string $yRot;
+		string $zRot;
+		
+		if ($mayaRotOrder == 0) {
+			$rotOrder = "XYZ";
+			}
+		if ($mayaRotOrder == 1) {
+			$rotOrder = "YZX";
+			}
+		if ($mayaRotOrder == 2) {
+			$rotOrder = "ZXY";
+			}
+		if ($mayaRotOrder == 3) {
+			$rotOrder = "XZY";
+			}
+		if ($mayaRotOrder == 4) {
+			$rotOrder = "YXZ";
+			}
+		if ($mayaRotOrder == 5) {
+			$rotOrder = "ZYX";
+			}
+
+		//Write Header
+		fprint ($eiFileID, "push 0\n");
+		fprint ($eiFileID, "Camera {\n");
+		fprint ($eiFileID, " selectable false\n");
+		fprint ($eiFileID, " rot_order " + $rotOrder + "\n");
+
+
+
+		//Write TransX Data
+		fprint ($eiFileID, " translate {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateX";
+		$xTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $xTran);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+		//Write TransY Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateY";
+		$yTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $yTran);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+		//Write TransZ Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateZ";
+		$zTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $zTran);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+		//Write rotX Data
+		fprint ($eiFileID, " rotate {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateX";
+		$xRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $xRot);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+		//Write rotY Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateY";
+		$yRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $yRot);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+		//Write rotZ Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateZ";
+		$zRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $zRot);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+		
+
+		//Write Focal Length Info
+		fprint ($eiFileID, " focal {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord =  $myObjName + ".focalLength";
+		float $focal = `getAttr -t $curTime $curWord`;
+
+
+		fprint ($eiFileID, " " + $focal);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+		//Write out Apertures and win_scales
+		$curWord = $myObjName + ".horizontalFilmAperture";
+		$hMayaApert = `getAttr -t $curTime $curWord`;
+		$hApert = $hMayaApert * 25.4;
+
+		$curWord = $myObjName + ".verticalFilmAperture";
+		$vMayaApert = `getAttr -t $curTime $curWord`;
+		$vApert = $vMayaApert * 25.4;
+
+		fprint ($eiFileID, " haperture " + $hApert + "\n");
+		fprint ($eiFileID, " vaperture " + $vApert + "\n");
+		fprint ($eiFileID, " win_scale {1 1}\n");
+		
+		
+		//Write near info
+    
+		fprint ($eiFileID, " near {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord =  $myObjName + ".nearClipPlane";
+		float $nearValue = `getAttr -t $curTime $curWord`;
+
+
+		fprint ($eiFileID, " " + $nearValue);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+
+		//Write far info
+		fprint ($eiFileID, " far {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord =  $myObjName + ".farClipPlane";
+		float $farValue = `getAttr -t $curTime $curWord`;
+
+
+		fprint ($eiFileID, " " + $farValue);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+		
+
+		//Write Footer and Name
+		fprint ($eiFileID, " name Camera\n");
+		fprint ($eiFileID, " label " + $myObjName + "\n");
+		fprint ($eiFileID, "}\n");
+
+		select -cl;
+		select -r $myObjName; 
+		doDelete;
+
+
+	}
+
+	//this export is for a camera on a null rig.
+		if ($nullType == 2)
+		{
+		//***********  TRANS_XYZ Motion Data  *************
+		//Get Current Time by frames
+		$curData = $curTime;
+		fprint ($eiFileID, $curData + "\t");
+
+		//Get XTranslation
+		$curWord = $myObjName + ".translateX";
+		$curData = `getAttr -t $curTime $curWord`;
+		fprint ( $eiFileID, $curData + "\t");
+
+		//Get YTranslation
+		$curWord = $myObjName + ".translateY";
+		$curData = `getAttr -t $curTime $curWord`;
+		fprint ( $eiFileID, $curData + "\t");
+
+		//Get ZTranslation
+		$curWord = $myObjName + ".translateZ";
+		$curData = `getAttr -t $curTime $curWord`;
+		//must flip for EI
+		fprint ( $eiFileID, $curData + "\t");
+
+		//Get ZRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get XRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get YRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+		fprint ( $eiFileID, "\n");
+
+
+	}
+
+    //
+    //
+    //    
+	//this export is for any generic transform.  for instance
+	//if your camera is on a null (not a null rig), but the null is animated,
+	//then you export the null's motion data.
+
+	if ($nullType == 3) {
+		
+		string $cmd; 
+		string $cubeName; 
+		string $newname;
+		$newname = $myObjName + "_Con"; 
+
+		$cmd = "CreateLocator";
+		$locatorName = eval($cmd); 
+		rename $locatorName $newname; 
+
+		select -cl;
+		select -r $myObjName;
+		select -add $newname;
+
+		pointConstraint -offset 0 0 0 -weight 1;
+		orientConstraint -offset 0 0 0 -weight 1;
+        scaleConstraint -offset 1 1 1 -weight 1;
+
+		$curWord = $myObjName + ".rotateOrder";
+		$mayaRotOrder = `getAttr -t $curTime $curWord`;
+		setAttr ($newname + ".rotateOrder") $mayaRotOrder;
+
+		$myObjName = $newname;
+		select -cl;
+		select -r $myObjName;
+
+		string $rotOrder;
+		string $xTran;
+		string $yTran;
+		string $zTran;
+		string $xRot;
+		string $yRot;
+		string $zRot;
+		string $xSca;
+		string $ySca;
+		string $zSca;
+		
+		if ($mayaRotOrder == 0) {
+			$rotOrder = "XYZ";
+			}
+		if ($mayaRotOrder == 1) {
+			$rotOrder = "YZX";
+			}
+		if ($mayaRotOrder == 2) {
+			$rotOrder = "ZXY";
+			}
+		if ($mayaRotOrder == 3) {
+			$rotOrder = "XZY";
+			}
+		if ($mayaRotOrder == 4) {
+			$rotOrder = "YXZ";
+			}
+		if ($mayaRotOrder == 5) {
+			$rotOrder = "ZYX";
+			}
+
+		//Write Header
+		fprint ($eiFileID, "push 0\n");
+		fprint ($eiFileID, "push 0\n");
+		fprint ($eiFileID, "push 0\n");
+		fprint ($eiFileID, "TransformGeo {\n");
+		fprint ($eiFileID, " inputs 3\n");
+		fprint ($eiFileID, " selectable false\n");
+		fprint ($eiFileID, " rot_order " + $rotOrder + "\n");
+
+		//Write TransX Data
+		fprint ($eiFileID, " translate {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateX";
+		$xTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $xTran);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+
+
+		//Write TransY Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateY";
+		$yTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $yTran);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+
+
+		//Write TransZ Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".translateZ";
+		$zTran = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $zTran);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+		//Write rotX Data
+		fprint ($eiFileID, " rotate {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateX";
+		$xRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $xRot);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+
+
+		//Write rotY Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateY";
+		$yRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $yRot);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+
+
+		//Write rotZ Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".rotateZ";
+		$zRot = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $zRot);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+		//Write scaX Data
+		fprint ($eiFileID, " scaling {{curve x" + $minFrame);
+
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+    		$curTime = $frIndex;
+
+	   		$curWord = $myObjName + ".scaleX";
+	    	$xSca = `getAttr -t $curTime $curWord`;
+
+
+    		fprint ($eiFileID, " " + $xSca);
+
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+
+
+		//Write scaY Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".scaleY";
+		$ySca = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $ySca);
+		}
+		fprint ($eiFileID, "} {curve x" + $minFrame);
+
+
+
+		//Write rotZ Data
+		int $curTime;
+
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		$curTime = $frIndex;
+
+		$curWord = $myObjName + ".scaleZ";
+		$zSca = `getAttr -t $curTime $curWord`;
+
+		fprint ($eiFileID, " " + $zSca);
+		}
+
+		fprint ($eiFileID, "}}\n");
+
+
+
+		//Write Footer and Name
+		fprint ($eiFileID, " name TransformGeo\n");
+		fprint ($eiFileID, " label " + $myObjName + "\n");
+		fprint ($eiFileID, "}\n");
+
+		select -cl;
+		select -r $myObjName; 
+		doDelete;
+
+	}
+		if ($nullType == 2)
+			{
+
+		print ("\n" + "Writing Data");
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		print(".");
+
+		$curTime = $frIndex;
+
+	//***********  Y_Rot Motion Data  ************
+		//Get Current Time by frames
+		$curData = $curTime;
+		fprint ($eiFileID, $curData + "\t");
+
+		//Get XTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get YTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get ZTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get ZRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get XRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get YRotation
+		$curWord = $yRotRigName + ".rotateY";
+		$curData = `getAttr -t $curTime $curWord`;
+		//must flip for EI
+		fprint ( $eiFileID, $curData + "\t");
+		fprint ( $eiFileID, "\n");
+
+		}
+		}
+
+		if ($nullType == 2)
+			{
+
+		print ("\n" + "Writing Data");
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		print(".");
+
+		$curTime = $frIndex;
+
+	//***********  X_Rot Motion Data  ************
+		//Get Current Time by frames
+		$curData = $curTime;
+		fprint ($eiFileID, $curData + "\t");
+
+		//Get XTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get YTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get ZTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get ZRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get XRotation
+		$curWord = $xRotRigName + ".rotateX";
+		$curData = `getAttr -t $curTime $curWord`;
+		//must flip for EI
+		fprint ( $eiFileID, $curData + "\t");
+
+		//Get YRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+		fprint ( $eiFileID, "\n");
+
+		}
+		}
+
+		if ($nullType == 2)
+			{
+
+		print ("\n" + "Writing Data");
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		print(".");
+
+		$curTime = $frIndex;
+
+	//***********  Z_Rot Motion Data  ************
+		//Get Current Time by frames
+		$curData = $curTime;
+		fprint ($eiFileID, $curData + "\t");
+
+		//Get XTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get YTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get ZTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get ZRotation
+		$curWord = $zRotRigName + ".rotateZ";
+		$curData = `getAttr -t $curTime $curWord`;
+		fprint ( $eiFileID, $curData + "\t");
+
+		//Get XRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get YRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+		fprint ( $eiFileID, "\n");
+
+		}
+		}
+
+		if ($nullType == 2)
+			{
+		print ("\n" + "Writing Data");
+		for ($frIndex=$minFrame; $frIndex <= $maxFrame; $frIndex++){
+		print(".");
+
+		$curTime = $frIndex;
+
+	//***********  Camera Motion Data  ************
+		//Get Current Time by frames
+		$curData = $curTime;
+		fprint ($eiFileID, $curData + "\t");
+
+		//Get XTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get YTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get ZTranslation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get ZRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get XRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Get YRotation
+		//hard coded to be 0's
+		fprint ( $eiFileID, "0.0" + "\t");
+
+		//Calculate field of view
+		float $theFOV;
+		string $curWord =  $camRigName + ".horizontalFilmAperture";
+		float $plateH = `getAttr -t $curTime $curWord`;
+		$plateH = $plateH/2.0;
+
+		$curWord =  $camRigName + ".verticalFilmAperture";
+		float $plateV = `getAttr -t $curTime $curWord`;
+		$plateV = $plateV/2.0;
+
+		$curWord =  $camRigName + ".focalLength";
+		float $focal = `getAttr -t $curTime $curWord`;
+		// change mm to inches
+		$focal = $focal * .0393700788;
+		$theFOV = atand( ($plateH/$focal) ) *2.0;
+		$theVFOV = (($theFOV/$plateH) * $plateV);
+
+		//finally, print the field of view
+		fprint ( $eiFileID, $theVFOV + "\t");
+
+		fprint ( $eiFileID, "\n");
+
+		}
+		}
+		
+    }
+	fprint ($eiFileID, "Scene {\n");
+	fprint ($eiFileID, " inputs " + $numSelect + "\n");
+	fprint ($eiFileID, " name Maya_Scene\n");
+	fprint ($eiFileID, "}\n");
+	fclose $eiFileID;
+	return 1;
+}
+
+/*****************************************************************************************************/
+/*************************                    pass2chan                     **************************/
+/*****************************************************************************************************/
+//this procedure writes out the motion data to a Nuke chan motion file
+
+global proc maya2nuke ()
+{
+	fileBrowserDialog -m 1 -fc "openMotion" -ft ".txt" -an "Save_Motion" -om "ExportActive";
+	print ("\nExport Completed!\n");
+	return ;
+
+}

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+
+#---------------------------------------------------------------------------------------------------------
+# GDM SETUP 
+#---------------------------------------------------------------------------------------------------------
+#
+# setup gdm to use central tools/init/gdm/ scripts for login/logout
+#
+
+qube_gdm_setup(){
+    # setup GDM so it locks qube worker if someone logs in...
+    cat > /etc/gdm/PreSession/Default << EOF
+#!/bin/sh
+PATH="/usr/bin:$PATH"
+$tools/init/gdm/login
+EOF
+    # and unlocks if someone logs out!
+    cat > /etc/gdm/PostSession/Default << EOF
+#!/bin/sh
+$tools/init/gdm/logout
+exit 0
+EOF
+}
+
+
+qube_gdm_setup 1>&2

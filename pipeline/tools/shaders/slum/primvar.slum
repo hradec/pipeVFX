@@ -1,0 +1,81 @@
+#
+# primvar.slum - reads a primitive variable directly from geometry
+#
+#    Author: Hradec - set/2013
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+
+class PrimVar(slumSurface):
+    def ID(self):
+        '''
+            a unique ID that identifys the shader inside slum. If you upload
+            this template to a online repository, this method will be replaced
+            automatically by the repository server, with the next global available ID.
+        '''
+        return 118
+
+    def parameters(self):
+        '''
+            This method defines all the parameter for our shader template. Keep in mind that here you define
+            the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+            defines.
+        '''
+        #Intensity 	= parameter( 1.0, 'Intensity', help = 'Intensity of our diffuse factor. 0 disables.', max = 2, min = 0 )
+        primvar     = parameter( 'colorSet1', 'PrimVarName', help = 'Enter the name of the primitive variable stored in the geometry.' )
+        type    	= parameter( 2, 'PrimVarType', help = 'the data type of the primitive variable to look for.', ui=ui.popup({
+            'float':1,
+            'color':2,
+            'normal':3,
+            'vector':4,
+        }) )
+        
+        OutColor 	= parameter( color(1), 'outColor', output=True ) # required for 3delight surface shaders
+        OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+        return  group( [
+            primvar,
+            type,
+            OutColor,
+            OutTransparency,
+        ], name = 'Get a Primitive Variable from geometry.' )
+
+
+    def delight(self, node):
+        '''
+            delight method is were you define the code for this shader, when rendering in 3delight.
+            this is a renderer method. a renderer method should allways return a tupple as:
+            ( <list of strings that define extra shader parameters>, <list of strings that define the shader code>)
+        '''
+        # shader extra parameters
+        shaderPars = []
+        if node['PrimVarType'] == 1:
+            shaderPars.append( "shader_input varying float %s=0;" % node['PrimVarName'] )
+        elif node['PrimVarType'] == 2:
+            shaderPars.append( "shader_input varying color %s=0;" % node['PrimVarName'] )
+        elif node['PrimVarType'] == 3:
+            shaderPars.append( "shader_input varying normal %s=0;" % node['PrimVarName'] )
+        elif node['PrimVarType'] == 4:
+            shaderPars.append( "shader_input varying vector %s=0;" % node['PrimVarName'] )
+                              
+
+        # shader code
+        code=[' outColor = color(%s);' % node['PrimVarName']]
+
+        # return a tupple
+        return (shaderPars, code)

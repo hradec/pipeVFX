@@ -1,0 +1,368 @@
+#!/bin/csh -f
+
+setenv c_option null	# COP name or COP netname
+setenv d_option null	# ROP name
+setenv e_option null	# Render sequence
+setenv w_option null	# Width
+setenv h_option null	# Height
+setenv i_option null	# Frame increment
+setenv f_option null	# Frame or frame range
+setenv o_option null	# Output name
+setenv b_option null	# Image fraction
+setenv x_option	null	# Debug only, don't render
+setenv I_option
+setenv v_option null
+setenv r_option null	# render only flag
+setenv hip	null	# .hip file
+
+setenv strframe null	# Start frame
+setenv endframe null	# End frame
+
+setenv mycop	null
+
+setenv mystatus	1
+setenv myaspect	no
+setenv E	null
+setenv mylast	$#argv
+setenv myverbose 
+setenv mythreads
+set    mycount = 0
+set    renderonly=""
+
+if ( ! $?TEMP ) setenv TEMP /tmp
+set    myscript = $TEMP/hrender_script$$
+set    myoutput = $TEMP/hrender_output$$
+
+onintr cleanup
+
+if ( "$1" == '' || "$1" == '-' )  goto usage
+
+
+while ( "$1" != '' )
+    @ mycount = $mycount + 1
+
+    switch( "$1" )
+    case *.hip:
+    case *.hipnc:
+		if( "$hip" != null ) then
+		    setenv E "Too many .hip motion file names: $hip, $1."
+		    goto usage
+		endif
+		setenv hip "$1"
+		breaksw
+    case -c:
+		shift; if ( "$c_option" != null || "$1" == '' ) goto usage
+		setenv c_option "$1"
+		breaksw
+    case -d:
+		shift; if ( "$d_option" != null || "$1" == '' ) goto usage
+		setenv d_option "$1"
+		breaksw
+    case -w:
+		shift; if ( "$w_option" != null || "$1" == '' ) goto usage
+		setenv w_option "$1"
+		breaksw
+    case -h:	
+		shift; if ( "$h_option" != null || "$1" == '' ) goto usage
+		setenv h_option "$1"
+		breaksw
+    case -f:	
+		shift; if ( "$strframe" != null || "$1" == '' ) goto usage
+		setenv strframe "$1"
+
+		if ( $#argv > 1 && "$2" =~ [1-9,00-99,'-']* ) then
+		    if ( $e_option == null ) then
+			setenv E "Cannot specify frame range without -e."
+			goto usage
+		    endif
+		    shift;
+		    setenv endframe "$1"
+		else
+		    setenv endframe $strframe
+		endif
+
+#		if( $strframe > $endframe ) then
+#		    setenv E "Start frame cannot be greater than end frame."
+#		    goto usage
+#		endif
+		breaksw
+    case -i:	
+		if ( $e_option == null ) then
+		    setenv E "Cannot use -i option without -e."
+		    goto usage
+		endif
+		shift; if ( "$i_option" != null || "$1" == '' ) goto usage
+		setenv i_option "$1"
+		breaksw
+    case -o:	
+		shift; if ( "$o_option" != null || "$1" == '' ) goto usage
+		setenv o_option "$1"
+		breaksw
+    case -b:	
+		shift; if ( "$b_option" != null || "$1" == '' ) goto usage
+		setenv b_option "$1"
+		breaksw
+    case -e:
+		if ( $mycount != 1 ) then
+		    setenv E "-e must be first parameter to hrender."
+		    goto usage
+		endif
+		setenv e_option 1
+		breaksw
+    case -R:
+		set renderonly="-R"
+		breaksw
+    case -v:
+		setenv v_option 1
+		setenv myverbose -v
+		breaksw
+    case -j:
+		shift; if ( "$1" == '' ) goto usage
+		setenv mythreads "-j $1"
+		breaksw
+    case -x:
+		setenv x_option 1
+		breaksw
+    case -I:
+		setenv I_option "-I"
+		breaksw
+    default:
+		if("$2" == '' && "$o_option" == null && "$e_option" == null)then
+		    setenv o_option "$1"
+		else
+		    setenv E "Unknown option: $1"
+		    goto usage
+		endif
+		breaksw
+    endsw
+
+    shift
+end
+
+#------------------------------------------------------------------------------
+# Do further checking
+
+if ( "$hip" == null ) then
+    setenv E "Missing .hip motion file name."
+    goto usage
+endif
+
+if ( ! -f "$hip" ) then
+    echo Cannot find file \'$hip\'.
+    goto cleanup
+endif
+
+if ( "$c_option" == null && "$d_option" == null ) then
+    setenv E "Must specify one of -c or -d."
+    goto usage
+endif
+
+if ( "$c_option" != null && "$d_option" != null ) then
+    setenv E "Cannot specify both -c and -d."
+    goto usage
+endif
+
+if ( "$w_option" == null && "$h_option" != null ) setenv myaspect yes
+if ( "$h_option" == null && "$w_option" != null ) setenv myaspect yes
+
+if ( "$w_option" != null && "$w_option" < 1 ) then
+    setenv E "Width must be greater than 0."
+    goto usage
+endif
+if ( "$h_option" != null && "$h_option" < 1 ) then
+    setenv E "Height must be greater than 0."
+    goto usage
+endif
+if ( "$i_option" != null && "$i_option" < 1 ) then
+    setenv E "Frane increment must be greater than 0."
+    goto usage
+endif
+
+cat /dev/null > $myscript
+if ( $status != 0 ) goto cleanup;
+cat /dev/null > $myoutput
+if ( $status != 0 ) goto cleanup;
+
+if ( "$c_option" != null ) then
+    # If it is a single word, then it is a netname
+    # If it is comp/x then it is a netname
+    # If it is x/y then it is a copname
+    # If it comp/x/y then it is a copname
+
+    switch( "$c_option" )
+    case */
+	setenv E "Invalid parameter '$c_option' for -c option. (Trailing '/')."
+	goto usage
+	breaksw
+    default:
+	setenv mycop $c_option
+	breaksw
+    endsw
+endif
+
+if ( 1 == 0 ) then
+    if ( "$mycop"    != null )	echo "Composite OP:    $mycop"
+    if ( "$d_option" != null )	echo "Output driver:   $d_option"
+    if ( "$o_option" != null )	echo "Output:          $o_option"
+    if ( "$strframe" != null )	echo "Start frame:     $strframe"
+    if ( "$endframe" != null )	echo "End frame:       $endframe"
+    if ( "$i_option" != null )	echo "Frame increment: $i_option"
+    if ( "$w_option" != null )	echo "Width (pixels):  $w_option"
+    if ( "$h_option" != null )	echo "Height (pixels): $h_option"
+    if ( "$b_option" != null )	echo "Image fraction:  $b_option"
+endif
+
+#------------------------------------------------------------------------------
+# Generate script
+
+cat >> $myscript << "EOF"
+
+# Establish ROP to be used
+
+if ( $c_option != null ) then
+    opcd /out
+    set myrop = `execute( "opadd -v comp")`
+    opparm $myrop coppath ( $mycop )
+    setenv rop = /out/$myrop
+else
+    set myrop = $d_option
+    # Check if full path is specified
+    if ( `substr("$myrop", 0, 1)` == "/" ) then
+	setenv rop = $myrop
+    else
+	setenv rop = /out/$myrop
+    endif
+endif
+
+if ( $myaspect == yes ) then
+    # Maintain aspect ratio - Use aspect ratio from ROP
+    setenv xres = `ch("$rop/res1")`
+    setenv yres = `ch("$rop/res2")`
+    if ( $w_option != null ) then
+	setenv h_option = `($w_option / $xres) * $yres`
+    else
+	setenv w_option = `($h_option / $yres) * $xres `
+    endif
+endif
+
+# Add in overides
+
+if ( $w_option != null ) then
+    # Add in resolution overide. For composite ROPs, we need to set tres
+    # to be "specify", since "on" and "off" values are meaningless.
+    setenv tres = `ch("$rop/tres")`
+    if ( $tres == "on" || $tres == "off" )
+	opparm $rop tres (on) res ( $w_option $h_option )
+    else
+	opparm $rop tres (specify) res ( $w_option $h_option )
+    endif
+endif
+
+if( $strframe != null ) then
+    # Add in frame range overide
+    if ( $i_option == null ) then
+	setenv i_option = 1
+    endif
+    opparm $rop trange (on) f ( $strframe $endframe $i_option )
+else if ( $i_option != null ) then
+    # Set increment into existing frame range
+    setenv strframe = `ch("$rop/f1")`
+    setenv endframe = `ch("$rop/f2")`
+    opparm $rop trange (on) f ( $strframe $endframe $i_option )
+else if ( $e_option != null ) then
+    # Force frame range from output driver
+    opparm $rop trange (on)
+else
+    # Force off frame range from output driver and get default single frame
+    opparm $rop trange (off)
+endif
+
+if( $o_option != null ) then
+    # Add in output file name overide
+    if ( $c_option != null ) then
+	opparm $rop copoutput ( $o_option )
+    else
+	# TODO:  This doesn't work for RIB renders.  The correct solution is to
+	# use the -o option on the render command instead.
+	opparm $rop vm_picture ( $o_option )
+    endif
+endif
+
+if ( $b_option != null ) then
+    # Add in image processing fraction
+    opparm $rop fraction ( $b_option )
+endif
+
+if ( $v_option != null ) then
+    # opscript $rop
+    echo "$hip ($rop)..."
+endif
+
+if ( $x_option == null ) then
+    render $I_option $myrop
+endif
+
+"EOF"
+
+#cat $myscript
+
+hbatch $renderonly -i -q $myverbose $mythreads "$hip" < \
+	$myscript |& tee $myoutput | \
+	grep -v -e 'Warning' -e 'Data may'
+
+if ($status != 0) then
+    setenv mystatus 1
+else
+    grep -q Error $myoutput
+    if ( $status == 0 ) then
+	setenv mystatus 1
+    else
+	setenv mystatus 0
+    endif
+endif
+
+goto cleanup
+
+#------------------------------------------------------------------------------
+usage:
+
+cat <<"EOF"
+
+Usage:
+
+Single frame:	hrender    [options] driver|cop file.hip [imagefile]
+Frame range:	hrender -e [options] driver|cop file.hip
+
+driver|cop:	-c /img/imgnet
+		-c /img/imgnet/cop_name
+		-d output_driver
+
+options:	-w pixels	Output width
+		-h pixels	Output height
+		-f frame	Single frame
+		-b fraction	Image processing fraction (0.01 to 1.0)
+		-o output	Output name specification
+		-v              Run in verbose mode
+		-R		Use non-graphics license token
+		-I		Interleaved, hscript render -I
+
+with "-e":	-f start end	Frame range start and end
+		-i increment	Frame increment
+
+Notes:	1)  For output name use $F to specify frame number (e.g. -o $F.pic).
+	2)  If only one of width (-w) or height (-h) is specified, aspect ratio
+	    will be maintained based upon aspect ratio of output driver.
+
+"EOF"
+
+if ( "$E" != null ) then
+    echo  Error: $E
+    echo "*****"
+endif
+
+#------------------------------------------------------------------------------
+cleanup:
+    if ( $?myscript ) then
+	rm -f $myscript $myoutput
+    endif
+    exit $mystatus

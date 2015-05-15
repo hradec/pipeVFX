@@ -1,0 +1,5 @@
+#!/bin/bash
+
+
+eval "$(/usr/bin/python -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.go()" $BASH_SOURCE $@)" 
+

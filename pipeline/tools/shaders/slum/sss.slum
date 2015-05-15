@@ -1,0 +1,240 @@
+#
+#   SSS.slum - an SubSurface Scatering shader
+#
+#	Author: hradec - aug/2013
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+class SSS(slumSurface):
+    def ID(self):
+            return 1001
+
+    def parameters(self):
+            surface  = parameter( color(1), 'materialIn', help = 'connect the shading network to be used to scatter light into.')
+            transparency  = parameter( color(1), 'transparencyIn', help = 'connect the shading network to be used to scatter light into.')
+            SSSenable = parameter( 0.0, 'SSSEnable', help = 'Enable/disable point based sub-surface scattering', ui=ui.popup({'Yes':1,'No':0}) )
+            SSSIntensity = parameter( 1.0, 'SSSIntensity', help = 'Scatering output intensity', max = 100, min = 0 )
+            SSSGamma = parameter( 1.0, 'SSSGamma', help = 'apply a gamma curve to the SSS effect.', max = 100, min = 0 )
+            albedo= parameter( color(0.830,0.791, 0.753), 'albedo', help = 'SSS Albedo. ')
+            dmfp= parameter( color(8.51, 5.57, 3.95), 'dmfp', help = 'SSS dmfp. ')
+            scattering = parameter( color(2.19, 2.62, 3.00), 'scattering', help = 'SSS scattering. ')
+            absorption = parameter( color(0.0021, 0.0041, 0.0071), 'absorption', help = 'SSS absorption. ')
+            ior= parameter( 1.5, 'ior', help = 'SSS Index of Refraction. ')
+            scale= parameter( 1.0, 'scale', help = 'SSS Object Scale. ')
+            smooth= parameter( 3.0, 'smooth', help = 'Smooth out the result of PTC SSS. Very usefull for low-res PTCs!')
+
+            occEnable=parameter( 0.0, 'occEnable', help = 'Enable/disable point based occlusion',ui=ui.popup({'Yes':1,'No':0}))
+            occIntensity=parameter( 1.0, 'occIntensity', help = 'Multiply the occlusion effect up and dow.')
+            occGamma=parameter( 1.0, 'occGamma', help = 'Apply a gamma curve to the occlusion effect.')
+            coneangle= parameter( 89.0, 'occConeAngle', help = 'Angle of a imaginary cone where the surface should look for occlusion objects.', min=0,max=90)
+            maxdist= parameter( 100.0, 'occMaxDistance', help = 'Only consider intersections closer than this distance.', min=0,max=10000)
+            maxSolidAngle= parameter( 0.1, 'occMaxSolidAngle', help = 'This is a quality vs speed control. Default is 0.1.', min=0,max=90)
+            clamp= parameter( 0.0, 'occClamp', 
+                                    help = 'If set, attempts to reduce the excessive occlusion caused by the point-based algorithm, at the cost of speed. Default is OFF. This also makes the occlusion more "ray-traced looking alike"!',
+                                    ui=ui.popup({'Yes':1,'No':0}))
+
+            bounceEnable=parameter( 0.0, 'bounceEnable', help = 'Enable/disable point based final gather/bounce light',ui=ui.popup({'Yes':1,'No':0}))
+            fIntensity=parameter( 1.0, 'bounceIntensity', help = 'Multiply the final gather/bounce light effect up and dow.')
+            fGamma=parameter( 1.0, 'bounceGamma', help = 'Apply a gamma curve to the final gather/bounce light effect.')
+            fconeangle= parameter( 89.0, 'bounceConeAngle', help = 'Angle of a imaginary cone where the surface should look for occlusion objects.', min=0,max=90)
+            fmaxdist= parameter( 100.0, 'bounceMaxDistance', help = 'Only consider intersections closer than this distance.', min=0,max=10000)
+            fmaxSolidAngle= parameter( 0.1, 'bounceMaxSolidAngle', help = 'This is a quality vs speed control. Default is 0.1.', min=0,max=90)
+            fclamp= parameter( 0.0, 'bounceClamp', 
+                                    help = 'If set, attempts to reduce the excessive occlusion caused by the point-based algorithm, at the cost of speed. Default is OFF. This also makes the occlusion more "ray-traced look alike"!',
+                                    ui=ui.popup({'Yes':1,'No':0}))
+            fsortbleeding= parameter( 0.0, 'bounceSortBleeding', 
+                                            help = 'If set and "BounceClamp" is also set, this forces the color bleeding computations to take the ordering of surfaces into account. It is recommanded to set this parameter to render a more "ray-traced look alike" bounce light! Default is OFF.',
+                                            ui=ui.popup({'Yes':1,'No':0}))
+
+
+            OutColor = parameter( color(1), 'outColor', output=True ) 		# required for 3delight surface shadersOutColor
+            OutTransparency = parameter( color(0), 'outTransparency', output=True ) # required for 3delight surface shaders
+
+
+            return  group( [
+#                    particleType, 
+                    OutColor,
+                    OutTransparency,
+                    surface,transparency,
+                    group( [SSSenable, 
+                            SSSIntensity,SSSGamma,
+                            albedo,
+                            dmfp,scattering,absorption,
+                            ior,
+                            scale,
+                            smooth,
+                    ], name = 'SSS'),
+                    group( [occEnable, occIntensity, occGamma,
+                            coneangle,
+                            maxdist,
+                            maxSolidAngle,
+                            clamp,
+                    ], name = 'AmbientOcclusion'),
+                    group( [bounceEnable, fIntensity, fGamma,
+                            fconeangle,
+                            fmaxdist,
+                            fmaxSolidAngle,
+                            fclamp,
+                            fsortbleeding,
+                    ], name = 'Final Gather / Bounce Light'),
+                    
+            ], name = 'PTC Lighting' )
+
+
+    def delight(self, node):
+            # 3deligth shader extra parameters
+            shaderPars = []
+
+            # shader code
+            code=['''
+                            float luminance(color c){
+                                    return float(0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2]);
+                            }
+                            extern normal N;
+                            extern point  P;
+                            extern vector I;
+                            normal Nn = normalize(N);
+                            normal Nf = faceforward(Nn, I);
+                            vector V  = normalize(-I);
+
+                            uniform string raytype = "unknown";
+                            rayinfo( "type", raytype );
+                            
+                            uniform float raydepth = 0;
+                            rayinfo( "depth", raydepth );
+
+                            outColor = materialIn;
+                            string bake_file="";
+                            
+                            uniform float ShadowMapRendering = 0;
+                            option( "user:ShadowMapRendering", ShadowMapRendering );
+                            if( ShadowMapRendering > 0.0 ){
+                                outColor = 1.0;
+                                return;
+                            }
+                            if( raytype == "transmission" ){
+                                    outTransparency = transparencyIn;
+                                    return;
+                            }
+                            
+                            uniform float maya_bakepass = 0;
+                            option( "user:maya_bakepass", maya_bakepass );
+                            
+                            if ( raytype == "camera" ){
+                                if( maya_bakepass == 1 ) {
+                                        illuminance( P ){
+                                            lightsource( "bake_file", bake_file );
+                                        }
+                                        if( bake_file!="" ){
+                                            float A = area(P);
+                                            bake3d( concat(bake_file,".sss.ptc"), "", P, N, 
+                                                   "_radiosity", outColor, "_area", A, "interpolate", 1 );
+                                        }
+                                }else{
+                                    option( "user:bake_file", bake_file );
+                                    if( bake_file != "" ){
+                                        if( SSSEnable > 0.0 ){
+                                            color sss = SSSIntensity * subsurface(P, N,
+                                                      "filename", concat(bake_file,".sss.ptc"),
+                                                      //"filename", bake_file,
+                                                      "diffusemeanfreepath", dmfp, "albedo", albedo,
+                                                      "scale", scale, "ior", ior,
+                                                      "smooth", smooth, "followtopology", 1,
+                                                      "absorption", absorption,
+                                                      "scattering",scattering
+                                                      );
+                                            sss = color(
+                                                    pow(sss[0], SSSGamma),
+                                                    pow(sss[1], SSSGamma),
+                                                    pow(sss[2], SSSGamma)
+                                            );//*(1-luminance(transparencyIn));
+                                            if( isoutput( "aov_subsurface" ) ){
+                                                outputchannel( "aov_subsurface", sss );
+                                            }
+                                            outColor += sss;
+                                            
+                                            //color reflex = indirectdiffuse( P, N, 0,
+                                            //    "coneangle", radians(10),
+                                            //    "maxdist", 300,
+                                            //    "filename", bake_file, 
+                                            //    "pointbased", 1 
+                                            //);
+                                            //if( isoutput( "vinho" ) ){
+                                            //    outputchannel( "vinho", reflex );
+                                            //}
+                                            //outColor += reflex;
+                                            
+                                        }
+                                        if( occEnable > 0.0 ){
+                                            float occ = occIntensity * (1-occlusion( P, N, 0 
+                                                        ,"pointbased", 1.0
+                                                        ,"filename", bake_file
+                                                        //,"coneangle", radians(occConeAngle)
+                                                        ,"maxdist", occMaxDistance
+                                                        //,"hitsides", "both"
+                                                        ,"maxsolidangle", occMaxSolidAngle
+                                                        ,"clamp", occClamp 
+                                            ));
+                                            occ = pow(occ, occGamma);
+                                            if( isoutput( "aov_occlusion" ) ){
+                                                outputchannel( "aov_occlusion", color(occ) );
+                                            }
+                                            outColor *= occ;
+                                        }
+                                        if( bounceEnable > 0.0 ){
+                                            color bounce = bounceIntensity * indirectdiffuse( P, N, 0 
+                                                        ,"pointbased", 1.0
+                                                        ,"filename", concat(bake_file,".sss.ptc")
+                                                        ,"coneangle", radians(bounceConeAngle)
+                                                        ,"maxdist", bounceMaxDistance
+                                                        //,"hitsides", "both"
+                                                        ,"maxsolidangle", bounceMaxSolidAngle
+                                                        ,"clamp", bounceClamp
+                                                        ,"sortbleeding", bounceSortBleeding
+                                            );
+                                            bounce = color(
+                                                pow(bounce[0], bounceGamma),
+                                                pow(bounce[1], bounceGamma),
+                                                pow(bounce[2], bounceGamma)
+                                            );
+                                            if( isoutput( "aov_indirect" ) ){
+                                                outputchannel( "aov_indirect", bounce );
+                                            }
+                                            outColor += bounce;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            outColor[0] = clamp(outColor[0],0,10);
+                            outColor[1] = clamp(outColor[1],0,10);
+                            outColor[2] = clamp(outColor[2],0,10);
+                            outTransparency = 0.0;
+                            //transparencyIn;
+
+                            //if( raytype == "subsurface" )
+                            //{
+                            //        outColor = materialIn * Ka*ambient() + Kd*diffuse(Nn) + Ks * specular(Nf, V, Roughness);
+                            //}else{
+                            //        outColor = subsurface(P) * SSSIntensity;
+                            //}
+                    ''']
+
+            # return a tupple
+            return (shaderPars, code)
+

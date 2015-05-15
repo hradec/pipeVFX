@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# set global ulimit
+ulimit -n 524288

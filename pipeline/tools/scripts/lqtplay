@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "running rv to play playblast $1* ..."
+export LD_LIBRARY_PATH=""
+run rv $1* &

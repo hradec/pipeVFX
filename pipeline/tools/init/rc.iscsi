@@ -1,0 +1,26 @@
+# Disabling swap if being used, this is only for old-pipe renderfarm config
+/sbin/swapoff -a
+# logging out of iscsi target if connected and delete old configuration first
+iscsiadm -m node -T iqn.2013-01.com.atomovfx:$(hostname -s)-swap --logout
+/sbin/service iscsid stop
+/bin/rm -rf /var/lib/iscsi/node
+/bin/rm -rf /var/lib/iscsi/send_targets
+
+
+# Startign iscsi service and running discovery of targets 
+/sbin/service iscsid start
+/sbin/iscsiadm -m discovery -t st -p 192.168.0.10
+/sbin/iscsiadm -m node -T iqn.2013-01.com.atomovfx:$(hostname -s)-swap --login
+
+# We define variable for iscsi disk since its going to differ on different machines
+export ISCSI_DISK=$(/bin/sh /atomo/pipeline/tools/init/get_iscsi_disk)
+# For some reason, the variable $ISCSI_DISK is not held if not being called from outside file??
+#export ISCSI_DISK=$(cat /proc/partitions | grep 16777216 | grep -oe sd[abcdef])
+#echo $ISCSI_DISK
+# After iscsi connection we create swap and mount it on iscsi device
+
+#/sbin/mkswap -v1 /dev/$ISCSI_DISK
+/sbin/swapon -v /dev/$ISCSI_DISK
+echo 'iSCSI Swap Started'
+
+

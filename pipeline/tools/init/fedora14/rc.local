@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# Atomo VFX Fedora 14 config script
+# 
+#   author: rhradec april/2013 
+# 
+
+
+
+#=========================================================================================================
+# TIMEZONE SETUP
+#=========================================================================================================
+set_timezone(){
+    /bin/cp -rf /usr/share/zoneinfo/Brazil/East  /etc/localtime
+}
+action "Setting timezone to Sao Paulo, Brazil:"  set_timezone
+
+
+
+#=========================================================================================================
+# HOSTNAME SETUP
+#=========================================================================================================
+extra_hostname(){
+    echo -e "NETWORKING=yes\nHOSTNAME=$(hostname)\nNTPSERVERARGS=iburst\n" > /etc/sysconfig/network 
+
+    # last, make sure avahi is not being started automatically, since we want
+    # this script to start it after setting the hostname
+    chkconfig avahi-daemon off
+}
+action "Some extra hostname setup needed in $release:"  extra_hostname
+
+
+#=========================================================================================================
+# FORCE SSSD START
+#=========================================================================================================
+
+sssd(){
+    /etc/init.d/sssd restart
+}
+action "force sssd service to restart:"  sssd
+

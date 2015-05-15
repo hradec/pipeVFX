@@ -1,0 +1,16 @@
+#! C:/Program Files/Nuke7.0v2/Nuke7.0.exe -nx
+version 7.0 v2
+Gizmo {
+ inputs 0
+ addUserKnob {20 User l Import}
+ addUserKnob {2 File1 l "Maya Scene"}
+ addUserKnob {22 Import -STARTLINE T "from __future__ import with_statement \nmyRoot = nuke.toNode( 'root' )\nb = nuke.tcl(\"value File1\")\nc = b.replace(\".ma\", \"\")\nd = c\[0:c.rfind(\"/\")]+\"/OBJ_\"+c\[c.rfind(\"/\")+1:len(c)]+\"/\"\nwith myRoot:\n\tnuke.nodePaste(str(b))\nfor s in nuke.selectedNodes():\n\tif s.Class() in ('TransformGeo'):\n\t\tla = s\['label'].value()\n\t\tr = nuke.nodes.ReadGeo(file=d+la+\".obj\")\n\t\ts.setInput(0, r)\n\ts.autoplace()\nprint(\"©Atomo VFX 2013\")"}
+}
+ Output {
+  inputs 0
+  name Output1
+  label "\[value File1]"
+  xpos 31
+  ypos 144
+ }
+end_group

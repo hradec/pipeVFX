@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+#---------------------------------------------------------------------------------------------------------
+# AUTOFS SETUP
+#---------------------------------------------------------------------------------------------------------
+# setup autofs to point to our global /atomo/pipeline/tools/init/autofs.auto
+# to proper configure autofs
+
+set_autofs(){
+    /bin/cp /atomo/pipeline/tools/init/autofs.master /etc/auto.master
+    cat > /etc/sysconfig/autofs <<EOF
+    TIMEOUT=300
+    BROWSE_MODE="yes"
+    MOUNT_NFS_DEFAULT_PROTOCOL=3
+    USE_MISC_DEVICE="yes"
+EOF
+}
+set_autofs
+
+start_autofs(){
+    if [ "$uname" = "linux" ] ; then 
+        service autofs restart  1>&2 
+    fi
+}
+start_autofs

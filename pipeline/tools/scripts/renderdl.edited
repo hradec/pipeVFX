@@ -1,0 +1,80 @@
+#!/bin/bash 
+
+getDisplays(){
+    run renderdl -catrib $1 2>/dev/null | \
+        grep Display | \
+        cut -d'"' -f2 | \
+        sed 's/+//' | \
+        grep '^/' | \
+        grep -v idisplay
+}
+
+checkImage(){
+    if [ "$(runlib exrheader2.0.0 $1 2>&1 | grep 'Cannot read')" == "" ] ; then
+        echo "OK"
+    else
+        echo "ERROR"
+    fi
+}
+
+date
+t=$(date +%s)
+echo "==============================================================================="
+#pathBase=$(dirname $BASH_SOURCE)
+pathBase=$ROOT/pipeline/tools/scripts
+. $pathBase/../init/bash
+. $pathBase/go $PIPE_JOB $(echo $PIPE_SHOT | cut -d'@' -f1)  $(echo $PIPE_SHOT | cut -d'@' -f2)
+if [ "$DISPLAY" != ""  ] ; then
+    if [ "$__RENDERDL" == "" ]  ; then 
+        if [ "$PIPE_FARM_USER" == "" ] ; then 
+            log=""
+            for arg in $@ ; do
+                rib=$(echo $arg | cut -d'.' -f2)
+                if [ "$rib" != ".rib" ] ; then
+                    log=$(echo $arg | sed 's/\.rib/.log/')
+                fi
+            done
+        fi
+    fi
+fi
+<<<<<<< .mine
+export __RENDERDL=1
+=======
+export __RENDERDL=nono
+>>>>>>> .r233
+xterm_pid=""
+if [ "$log" != "" ] ; then 
+    touch $log
+    xterm -geometry 200x40 -bg black -fg white -e  "/usr/bin/tail -f $log" &
+    xterm_pid=$!
+fi
+time run renderdl "$@" --logd 
+returnCode=$?
+[ "$xterm_pid" != "" ] && kill $xterm_pid 2>/dev/null
+echo "==============================================================================="
+date
+e=$(expr $(date +%s) - $t)
+m=$(expr $e / 60)
+echo "elapsed $m mins"
+echo "==============================================================================="
+#echo -e "Checking frames\n"
+
+#tmp=""
+##for each in $(getDisplays "$@"); do
+##    [ "$(echo $each | grep \.exr)" != "" ] && res=$(checkImage $each)
+##    echo "$each -> $res"
+##    tmp="$tmp $res"
+##done
+
+#tmp=$(runlib exrheader2.0.0 $(getDisplays "$@") 2>&1 | grep \.exr)
+#echo $tmp
+#echo "==============================================================================="
+
+#if [ "$(echo $tmp | grep 'ERROR')" != "" ] ; then
+#    exit -1
+#fi
+#if [ "$(echo $tmp | grep 'Cannot read')" != "" ] ; then
+#    exit -1
+#fi
+
+exit $returnCode

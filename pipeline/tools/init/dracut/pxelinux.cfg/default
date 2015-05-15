@@ -1,0 +1,61 @@
+default vesamenu.c32
+
+menu title AtomoVFX Network Boot Menu
+
+menu color title  1;44;30 #FFFFFFFF #00000000
+menu color unsel  44;30 #FF000000 #00000000 
+menu color sel    44;30 #FFFFFFFF #FF333333
+menu color tabmsg  44;30 #FF000000
+menu color cmdmark 44;30 #FF000000
+menu color cmdline 44;30 #FF000000
+menu background networkBootWorkstation/menu.png
+timeout 150
+
+
+label 1.AtomoVFX Fedora Workstation - Versao 2.0.4 
+   kernel networkBootWorkstation/atomoLinux2.0.0_vmlinuz
+   append initrd=networkBootWorkstation/atomoLinux2.0.4_initrd.img quiet distro=netboot/distros/networkBoot_fedora14_28_06_2013/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
+
+label 2.AtomoVFX Fedora Workstation - Versao 2.1.0 - nvidia 340 
+   kernel networkBootWorkstation/atomoLinux2.0.0_vmlinuz
+   append initrd=networkBootWorkstation/atomoLinux2.0.4_initrd.img quiet distro=netboot/distros/networkBoot_fedora14_27_10_2014/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
+
+
+#label 2.AtomoVFX Linux Workstation - Versao Dev 
+#   kernel networkBootWorkstation/vmlinuz_dev
+#   append quiet initrd=networkBootWorkstation/initrd_dev.img  distro=netboot/distros/networkBoot_fedora14_28_06_2013/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau  rdblacklist=radeon radeon.modeset=0 iommu=pt
+#   append initrd=networkBootWorkstation/initrd_dev.img quiet distro=netboot/distros/networkBoot_fedora14_28_06_2013/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
+
+
+
+label 99.AtomoVFX Debian Workstation - Versao Dev
+   kernel networkBootWorkstation/vmlinuz_dev
+   append quiet initrd=networkBootWorkstation/initrd_dev.img  distro=netboot/distros/current_dev/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau  iommu=pt
+
+
+
+#label 3.AtomoVFX Fedora Workstation - Versao Dev
+#   kernel networkBootWorkstation/atomoLinux2.0.0_vmlinuz
+#   append initrd=networkBootWorkstation/initrd_dev.img  quiet distro=netboot/distros/networkBoot_fedora14_28_06_2013/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
+
+
+#label Centos 6.4 Netboot Install
+# kernel centos64netboot/isolinux/vmlinuz
+# append initrd=/centos64netboot/isolinux/initrd.img 
+
+#label clonezilla
+#  MENU LABEL Clonezilla: unicast restore atomolinux-50G to disk sda
+#  # MENU PASSWD
+#  kernel vmlinuz-pxe
+#  append initrd=initrd-pxe.img devfs=nomount drblthincli=off selinux=0 text 1   clientdir=node_root  ocs_opt="-l en_US.UTF-8  --batch -g auto -e1 auto -e2 -r --ignore-chk-dsk-size-pt --clone-hidden-data -p reboot restoredisk atomolinux-50G sda"
+#  TEXT HELP
+#  * Clonezilla version: 3.3.18-drbl1.noarch. (C) 2003-2013, NCHC, Taiwan
+#  * Disclaimer: Clonezilla comes with ABSOLUTELY NO WARRANTY
+#  ENDTEXT
+
+
+#label Fedora 14 Netboot Install
+# kernel fedora14/isolinux/vmlinuz
+# append initrd=/fedora14/isolinux/initrd.img
+
+

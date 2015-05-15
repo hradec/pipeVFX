@@ -1,0 +1,166 @@
+#! C:/Program Files/Nuke7.0v8/Nuke7.0.exe -nx
+#version 7.0 v8
+Gizmo {
+ tile_color 0xcc804eff
+ addUserKnob {20 f422 l "ProRes 422 filter"}
+ addUserKnob {4 filter l Filter M {Linear Notch "accurated scale" "" ""}}
+ addUserKnob {26 warning l "   " -STARTLINE T "accurated scale is slower than the others."}
+ addUserKnob {6 GBclamp l "Clamp Chrominance" +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {41 size l "Chroma Blur" T Chroma_Blur.size}
+ addUserKnob {41 filter_1 l filter T Chroma_Blur.filter}
+ addUserKnob {41 mix T Chroma_Blur.mix}
+ addUserKnob {26 ""}
+ addUserKnob {41 LB_size l "Luma Blur" T LumaBlur.size}
+ addUserKnob {41 filter_2 l filter T LumaBlur.filter}
+ addUserKnob {41 mix_1 l mix T LumaBlur.mix}
+ addUserKnob {26 ""}
+ addUserKnob {41 size_1 l "Chroma Sharpen" T Chroma_Sharpen.size}
+ addUserKnob {41 filter_3 l filter T Chroma_Sharpen.filter}
+ addUserKnob {41 mix_2 l mix T Chroma_Sharpen.mix}
+ addUserKnob {26 ""}
+ addUserKnob {41 size_2 l "Luma Sharpen" T Luma_Sharpen.size}
+ addUserKnob {41 filter_4 l filter T Luma_Sharpen.filter}
+ addUserKnob {41 mix_3 l mix T Luma_Sharpen.mix}
+}
+ Input {
+  inputs 0
+  name Input
+  xpos -266
+  ypos -198
+ }
+ Colorspace {
+  colorspace_out YCbCr
+  name Colorspace1
+  xpos -266
+  ypos -124
+ }
+ Dot {
+  name Dot1
+  xpos -232
+  ypos -45
+ }
+set N1e8503f0 [stack 0]
+push $N1e8503f0
+ Dot {
+  name Dot2
+  xpos -146
+  ypos -45
+ }
+set N1e850760 [stack 0]
+ Reformat {
+  type scale
+  format "1920 1080 0 0 1920 1080 1 HD"
+  scale 0.5
+  filter Impulse
+  name Reformat1
+  xpos -64
+  ypos -49
+ }
+set N1e850ad0 [stack 0]
+ Dot {
+  name Dot3
+  xpos 69
+  ypos -46
+ }
+ TVIscale {
+  channels rgb
+  name TVIscale1
+  xpos 35
+  ypos 26
+ }
+push $N1e850ad0
+ Reformat {
+  type scale
+  format "1920 1080 0 0 1920 1080 1 HD"
+  scale 2
+  filter Notch
+  name Reformat2
+  label "Notch filter\n"
+  xpos -64
+  ypos 16
+ }
+set N1e851520 [stack 0]
+push $N1e850760
+ Matrix {
+  channels {-rgba.red rgba.green rgba.blue}
+  matrix {
+      {1 2 1}
+      {2 4 2}
+      {1 2 1}
+    }
+  normalize true
+  name Matrix1
+  xpos -180
+  ypos 25
+ }
+ Switch {
+  inputs 3
+  which {{parent.filter}}
+  name Switch1
+  xpos -64
+  ypos 101
+ }
+ ShuffleCopy {
+  inputs 2
+  red red
+  alpha alpha2
+  name ShuffleCopy1
+  xpos -266
+  ypos 101
+ }
+ Blur {
+  channels {-rgba.red rgba.green rgba.blue}
+  name Chroma_Blur
+  xpos -266
+  ypos 133
+ }
+ Blur {
+  channels {rgba.red -rgba.green -rgba.blue}
+  name LumaBlur
+  xpos -266
+  ypos 177
+ }
+ Sharpen {
+  channels {-rgba.red rgba.green rgba.blue}
+  size 0
+  name Chroma_Sharpen
+  xpos -266
+  ypos 225
+ }
+ Sharpen {
+  channels {rgba.red -rgba.green -rgba.blue}
+  size 0
+  name Luma_Sharpen
+  xpos -266
+  ypos 266
+ }
+ Clamp {
+  channels {-rgba.red rgba.green rgba.blue -rgba.alpha}
+  name Clamp1
+  xpos -266
+  ypos 309
+  disable {{!GBclamp x1 0}}
+ }
+ Colorspace {
+  colorspace_in YCbCr
+  name Colorspace2
+  xpos -266
+  ypos 355
+ }
+ Output {
+  name Output1
+  xpos -266
+  ypos 398
+ }
+push $N1e851520
+push $N1e850760
+ Viewer {
+  inputs 2
+  input_number 1
+  input_process false
+  name Viewer1
+  xpos 124
+  ypos 132
+ }
+end_group

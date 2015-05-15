@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# This script will be executed *after* all the other init scripts.
+# You can put your own initialization stuff in here if you don't
+# want to do the full Sys V style init stuff.
+
+touch /var/lock/subsys/local
+
+# we wait for the network to come up, so we can mount /atomo
+. /etc/init.d/functions
+waitForDHCP() {
+    while [ "$(ping  -c 3 192.168.0.1 | grep ' 0% packet loss')" == "" ]
+    do 
+        sleep 1 
+    done
+}
+waitForGateway() {
+    while [ "$(route -n | grep UG)" == "" ]
+    do 
+        sleep 1 
+    done
+}
+action $"Waiting for network to come up..." waitForDHCP
+#action $"Waiting for gateway to come up..." waitForGateway
+
+# now that we have network, mount /atomo
+mount -a
+
+# so now we can run our central rc.local!
+source /atomo/pipeline/tools/init/rc.local

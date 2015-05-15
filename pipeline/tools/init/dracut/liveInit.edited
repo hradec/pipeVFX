@@ -1,0 +1,314 @@
+#!/bin/bash
+#
+# Sets up a readonly root filesystem to be used as a normal
+# writable root filesystem! 
+#
+# We need to add this to the top of /etc/rc.sysinit
+# so it runs before the whole fedora initialization!!!
+#
+#
+
+version=0.8.6
+
+clear 
+getarg(){
+    for each in $(echo $(cat /proc/cmdline)) ; do 
+        [ "$(echo $each | cut -d'=' -f1)" == "$1" ] && echo $(echo $each | cut -d'=' -f2)
+    done
+}
+
+cache(){
+  for line in $(cat /proc/partitions | grep sd.. | cut -d's' -f2 | sed 's/d/sd/g'); do
+	echo "$(/sbin/blkid /dev/$line | grep CACHE | cut -d':' -f1)"
+	/sbin/blkid /dev/$line >&2
+	echo $line >&2
+  done
+}
+mountCache(){
+    cacheVol=$(cache)
+    cat /proc/partitions >&2
+    echo $cacheVol >&2
+    if [ "$cacheVol" != "" ] ; then 
+        mkdir -p /boot/cache
+        mount $cacheVol /boot/cache
+        chmod a+rwx /boot/cache
+    fi
+}
+
+
+pipe=$(getarg pipe)
+distro=$(getarg distro)
+studio=$(getarg studio)
+liveInit=$(getarg liveInit)
+nfsRoot="$pipe/$distro"
+nfsOpts="vers=3,rsize=8192,wsize=8192,nolock,timeo=1200,retry=5,intr,tcp"
+
+
+echo "=============================================================="
+echo Pipe Boot script version $version
+echo ""
+echo "Pipe....: $pipe"
+echo "Distro..: $distro"
+echo "liveInit: $liveInit"
+
+ulimit -n 131072
+
+#/sbin/modprobe squashfs
+#/sbin/modprobe fuse
+
+# create folders to hold read-only and read-write filesystems. 
+mkdir -p /boot
+mount -t tmpfs -o size=16G tmpfs  /boot
+mkdir -p /boot/rootRO
+mkdir -p /boot/rootRW
+mkdir -p /boot/rootRW/$studio
+mkdir -p /boot/rootRW/3DSERVER/
+mkdir -p /boot/rootRW/3dserver/
+ln -s /mnt/Projetos /boot/rootRW/3DSERVER/
+ln -s /mnt/Projetos /boot/rootRW/3dserver/
+
+#busybox mount -o nolock,rw,hard,intr,vers=3 -t nfs $pipe /pipe
+#busybox mount -o loop -t squashfs /pipe/home/rhradec/networkBoot_fedora14_20_06_2013.sqsh /boot/rootRO
+mount -r -o $nfsOpts $nfsRoot /boot/rootRO
+mount -t tmpfs -o size=16G  tmpfs  /boot/rootRW
+
+
+# mount a local cache of the filesystem, if we do have a cache partition
+#mountCache
+#mkdir -p /boot/newroot/$studio
+#mount -r -o $nfsOpts $pipe /boot/newroot/$studio
+#echo  /boot/newroot/$studio/${distro%/}.sqsh 
+#if [ -f /boot/newroot/$studio/${distro%/}.sqsh ] ; then 
+#    echo "=============================================================="
+#    echo "we found a cache partition... \nupdating root file system to local cache partition...\nplease wait..."
+#    cp  /boot/newroot/$studio/${distro%/}.sqsh  /boot/cache/$(basename ${distro%/}).sqsh ] 
+#    umount /boot/rootRO
+#    mount -r -o loop /boot/cache/$(basename ${distro%/}).sqsh /boot/rootRO
+#    echo "using locally cached $(basename $distro).sqsh as root..."
+#    echo "=============================================================="
+#fi
+#umount /boot/newroot/$studio
+#sh
+##sh
+
+
+# mount writable folders for booting
+busybox mount -o dirs=/boot/rootRW=rw:/boot/rootRO=ro -t aufs none /newroot
+
+
+# setup sssd log folder, or else sssd won't start!!
+mkdir -p /newroot/var/log/sssd
+
+#mount -o rw,$nfsOpts $pipe /newroot/$studio
+#setupLog(){
+#    macAddres=$(echo $(ifconfig | grep -B2 192.168 | grep HWadd) | cut -d' ' -f5)
+#    hostname=$(echo $(cat /newroot/$studio/pipeline/tools/init/hosts | grep $macAddres) | cut -d' ' -f2)
+#    if [ "$hostname" == "" ] ; then 
+#        hostname=$macAddres
+#    fi
+#    logPath="/$studio/netboot/log/$hostname"
+#    mkdir -p /newroot$logPath/gdm
+#    mkdir -p /newroot$logPath/sssd
+##    rm -rf /var/log/*
+##    cp -rf /boot/rootRO/var/log/* "/$studio/home/.networkBoot/$macAddres/log/"
+#    chown 42:42 /newroot$logPath/gdm
+#    touch /newroot/$logPath/lastlog
+#    rm -rf /newroot/var/log
+#    ln -s $logPath /newroot/var/log
+#    chmod a+rw /newroot/tmp
+#    mkdir -p /newroot/var/tmp
+#    chmod a+rw /newroot/var/tmp
+#}
+#setupLog
+
+# setup disk environment
+setupDiskEnvironment(){
+    cat > /newroot/etc/fstab <<EOF
+proc                    /proc                   proc    defaults        0 0
+tmpfs                   /dev/shm                tmpfs   defaults        0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
+sysfs                   /sys                    sysfs   defaults        0 0
+$pipe                   /$studio                nfs     vers=3,rsize=8192,wsize=8192,timeo=14,intr,tcp 
+EOF
+    rm -rf    /newroot/etc/mtab
+    echo "" > /newroot/etc/mtab
+
+}
+setupDiskEnvironment
+
+# setup network environment
+setupNetwork(){
+    cat > /newroot/etc/resolv.conf <<EOF
+domain $studio.local
+search $studio.local local
+nameserver 208.67.222.222
+nameserver 208.67.220.220
+EOF
+
+    rm -rf /newroot/etc/sysconfig/network-scripts/ifcfg-eth*
+    rm -rf /newroot/etc/rc?.d/*NetworkManager*
+    rm -rf /newroot/etc/rc?.d/*ware*
+    rm -rf /newroot/etc/rc?.d/*kdump*
+    rm -rf /newroot/etc/rc?.d/*sendmail*
+
+    cat >  /newroot/etc/networks <<EOF
+default 0.0.0.0
+loopback 127.0.0.0
+link-local 169.254.0.0
+
+iface eth0 inet manual
+iface eth1 inet manual
+iface eth2 inet manual
+EOF
+
+    mac=$(echo $(ifconfig | grep -B2 192.168 | grep HWadd) | cut -d' ' -f5)
+    cat >  /newroot/etc/NetworkManager/NetworkManager.conf  <<EOF
+[main]
+plugins=ifcfg-rh,keyfile
+
+[ifupdown]
+managed=false
+
+
+[keyfile]
+unmanaged-devices=mac:$mac
+EOF
+}
+setupNetwork
+
+# setup dbus environment
+setupDbus(){
+    # fix dbus service paths!
+    sed -i -e 's/<fork\/>/<fork\/>\n\n  <servicedir>\/usr\/share\/dbus-1\/system-services<\/servicedir>\n/g' /newroot/etc/dbus-1/system.conf  
+
+    #fix dbus for the current boot - remove previous machine-id, if any!
+    rm -rf /newroot/var/lib/dbus/machine-id
+}
+setupDbus
+
+
+#fix reboot
+fixReboot(){
+<<<<<<< .mine
+    cat > /newroot/etc/rc.d/init.d/halt << EOF
+#!/bin/bash
+mount -t proc proc /proc
+echo 1 > /proc/sys/kernel/sysrq
+echo b > /proc/sysrq-trigger
+=======
+    halt=/newroot/etc/init.d/halt
+    reboot=/newroot/etc/init.d/halt
+    # if fedora, fix path for halt script
+    if [ -f /newroot/etc/rc.d/rc.local ] ; then
+        halt=/newroot/etc/rc.d/init.d/halt
+        reboot=/newroot/etc/rc.d/init.d/reboot
+        cat > $halt << EOF
+#! /bin/sh
+mount -t proc proc /proc
+echo 1 > /proc/sys/kernel/sysrq
+echo b > /proc/sysrq-trigger
+>>>>>>> .r374
+EOF
+<<<<<<< .mine
+    cp  /newroot/etc/rc.d/init.d/halt \
+        /newroot/etc/rc.d/init.d/reboot
+=======
+        cp  $halt $reboot
+    fi
+>>>>>>> .r374
+}
+fixReboot
+
+
+# add pipeline rc.local to /etc/rc.local
+pipeSetup(){
+    chmod a+rw  /newroot/tmp
+    mkdir -p    /newroot/var/tmp
+    chmod a+rw  /newroot/var/tmp    
+
+    # use the proper rc.local on debian and fedora!
+    export rclocal=/etc/rc.local
+<<<<<<< .mine
+=======
+    # if fedora:
+>>>>>>> .r374
+    if [ -f /newroot/etc/rc.d/rc.local ] ; then
+        rclocal=/etc/rc.d/rc.local
+<<<<<<< .mine
+=======
+        fedora=1
+>>>>>>> .r374
+    fi
+
+<<<<<<< .mine
+=======
+    # if not fedora, fix gdm
+    if [ "$fedora" == "" ] ; then
+        ln -s /etc/gdm3 /newroot/etc/gdm 
+        # disable GDM, so we can start it AFTER pipe rc.local!
+        for each in $(ls /newroot/etc/rc?.d/S*gdm*)
+        do
+            rm -rf $each
+        done
+    fi
+    
+    # blacklist nouveau, as we want to use nvidia drivers, if we have nvidia hardware
+    cat > /newroot/etc/blacklist-nouveau.conf <<EOF
+# pipeVFX blacklist for nouveau driver - you need to run as root:
+# dracut -f /boot/initramfs-$(uname -r).img $(uname -r)
+# if nouveau is loaded despite this file.
+blacklist nouveau
+EOF
+
+>>>>>>> .r374
+
+    # hook pipe init script into bash init for all users
+    if [ -f /newroot/etc/bash.bashrc ] ; then
+        echo " " >> /newroot/etc/bash.bashrc
+        echo "# pipeline init script" >> /newroot/etc/bash.bashrc
+        echo "[ -f /atomo/pipeline/tools/init/bash ] && source /atomo/pipeline/tools/init/bash" >> /newroot/etc/bash.bashrc
+    fi
+
+    # copy the up2date rc.local from the pipeline template 
+    #cp -rf /newroot/$studio/pipeline/tools/init/fedora14/etc_rc.local.example /newroot/etc/rc.local 
+    rm -rf /newroot/mountRootAsUnionFS.sh
+    liveInit=$(getarg liveInit)
+    toolsInitPath=$(dirname $(dirname $liveInit))
+    cat > /newroot/$rclocal <<EOF
+<<<<<<< .mine
+#!/bin/sh
+touch /var/lock/subsys/local
+mount /atomo
+=======
+#!/bin/bash
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin:$PATH
+mkdir -p /var/lock/subsys/
+touch /var/lock/subsys/local
+mount -a
+>>>>>>> .r374
+source /$studio/$toolsInitPath/rc.local
+<<<<<<< .mine
+=======
+ulimit -n 131072
+
+# if we are in debian 7 (we have /etc/gdm3)
+[ -d  /etc/gdm3 ] && service gdm3 start
+exit 0
+>>>>>>> .r374
+EOF
+
+    chmod +x    /newroot/$rclocal
+
+}
+pipeSetup
+
+
+echo "=============================================================="
+
+umount /sys /proc #/newroot/$studio
+cp -rf /dev/console /newroot/dev/
+cp -rf /dev/tty /newroot/dev/
+cp -rf /dev/null /newroot/dev/
+exec switch_root -c /dev/console /newroot /sbin/init
+
+

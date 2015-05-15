@@ -1,0 +1,2 @@
+/atomo/jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/src/r8168-8.038.00/src/r8168.ko
+/atomo/jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/src/r8168-8.038.00/src/r8168_n.o /atomo/jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/src/r8168-8.038.00/src/r8168_asf.o /atomo/jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/src/r8168-8.038.00/src/rtl_eeprom.o /atomo/jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/src/r8168-8.038.00/src/rtltool.o

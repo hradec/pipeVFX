@@ -1,0 +1,17 @@
+#!/bin/bash 
+#
+# run - runs an alias inside a script. 
+
+
+aliasCache=/tmp/alias_cache_$USER
+cacheIt=0
+[ ! -f $aliasCache ] && cacheIt=1 && touch $aliasCache 
+[ $(expr $(date +%s) - $(stat -c %Z $aliasCache) ) -gt 300 ] && cacheIt=2
+if [ $cacheIt -gt 0 ] ; then
+    # source the pipeline init script, if it hasn't being sourced yet!
+    PIPE_RUN_WITH_LIBS=1
+    source $(dirname $BASH_SOURCE)/../init/bash > $aliasCache
+    alias > $aliasCache
+else
+    source $aliasCache
+fi

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+
+#---------------------------------------------------------------------------------------------------------
+# GOOGLE CHROME SETUP
+#---------------------------------------------------------------------------------------------------------
+# because of googles stupidy, we have to copy chrome-sandbox
+# to /opt/google/chrome/ since the path is hardcoded into 
+# the binary of chrome
+chrome_setup() {
+    if [ "$uname" = "linux" ] ; then 
+        /bin/mkdir -p /opt/google/chrome/ 
+        /bin/cp /atomo/apps/$uname/x86_64/chrome/current/chrome-sandbox /opt/google/chrome/chrome-sandbox 
+        chmod 4755 /opt/google/chrome/chrome-sandbox 
+    fi
+#    if [ "$uname" == "darwin" ] ; then 
+#    fi
+}
+#chrome_setup

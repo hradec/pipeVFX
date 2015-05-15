@@ -1,0 +1,75 @@
+#!/bin/sh
+#---------------------------------------------------------------------------------------------------------
+# HOSTNAME SETUP
+#---------------------------------------------------------------------------------------------------------
+# Sets the hostname based on the one found in $tools/init/hosts file.
+# If mac not yet registered, sets a default vfxws-NNN.local, were NNN is the DHCP given ip address 
+# and appends it to $tools/init/hosts so we can edit it later.
+# As it turns out, this seems to be distro independent, so we can keep it here for now until 
+# we find a distro that breaks it! 
+pipeHostname(){
+    # first set a dummy hostname so python can find the ip
+    hostname  dummy.local
+    
+    # make it compatible with OSX
+    ip_tokenize=':'
+    ether_tokenize="HWaddr"
+    if [ "$uname" == "darwin" ] ; then 
+        ip_tokenize=' '
+        ether_tokenize="ether"
+    fi
+    
+    # get all ethernet devices
+    allETH=$(ifconfig | grep -v '^\t' | grep ^e | cut -d':' -f1)
+    echo $allETH 1>&2
+    if [ "$allETH" != "" ] ; then 
+        for getETH  in $allETH ; do 
+            #grep ifconfig to get ip address for the given ethN
+            ip=`ifconfig $getETH | grep 'inet ' | cut -d"$ip_tokenize" -f2 | cut -d' ' -f1`
+            # grep ifconfig and grab mac addr 
+            macAddres=$(echo $(ifconfig $getETH | grep $ether_tokenize) | rev | cut -d' ' -f1 | rev | awk '{print toupper($0)}')
+            echo $getETH 1>&2
+            echo $ip 1>&2
+            echo $macAddres 1>&2
+            
+            if [ "$macAddres" != "" ] ; then 
+                # if we can find an macaddres, look into /atomo/pipeline/tools/init/hosts file
+                # and use the hostname in there
+                hostRecord=$(cat $tools/init/hosts | grep "$macAddres" | grep -v '^#')
+                if [ "$hostRecord" != "" ] ; then 
+                    echo $hostRecord 1>&2
+                    hostname  $(echo $hostRecord | cut -d' ' -f2)
+                    break
+                else
+                    # if our mac is not in the list, check if this eth has an ip.
+                    # if so, create a default name based on IP address and add to the host file
+                    if [ "$ip" != "" ] ; then 
+                        # construct a default hostname based on the ip address
+                        hostname  $(/usr/bin/python -c "print 'vfxws-%03d.local' % int('$ip'.split('.')[-1])")
+                        # if the mac is not in the hosts file, add it with the default name
+                        # so we can edit it later if we want!
+                        echo "$macAddres             $hostName" >> $tools/init/hosts
+                        break
+                    fi
+                fi
+            fi
+        done
+    fi
+    hostname 1>&2
+}
+avahi_start(){
+    if [ "$(/bin/uname)" = "Linux" ] ; then 
+        # after updating hostname, start avahi-daemon (kill and restart if needed)
+        if [ -f /etc/debian_version ] ; then 
+            service avahi-daemon restart 1>&2
+        else
+            pkill -9 avahi-daemon 1>&2
+            sleep 1
+            avahi-daemon -D 1>&2
+        fi
+    fi
+}
+
+
+pipeHostname
+avahi_start

@@ -1,0 +1,128 @@
+#!/bin/sh
+
+#---------------------------------------------------------------------------------------------------------
+# LOCK QUBE WORKER
+#---------------------------------------------------------------------------------------------------------
+#/atomo/pipeline/tools/scripts/run qblock --purge $(hostname)
+
+
+#---------------------------------------------------------------------------------------------------------
+# ALSA AUDIO SETUP
+#---------------------------------------------------------------------------------------------------------
+#[ -f /usr/local/bin/volbar.py ] && /usr/local/bin/volbar.py
+#[ -f /usr/local/bin/alsavol.py ] && /usr/local/bin/alsavol.py
+
+
+#---------------------------------------------------------------------------------------------------------
+# run x11vnc
+#---------------------------------------------------------------------------------------------------------
+x11vnc -many 2>&1 >/var/log/x11vnc_$USER.log &
+
+
+#---------------------------------------------------------------------------------------------------------
+# start a vglclient 
+#---------------------------------------------------------------------------------------------------------
+su $USER -c 'vglclient -gl -l /tmp/vglclient_$USER.log -force &'
+
+#---------------------------------------------------------------------------------------------------------
+# EMPATHY SETUP AND AUTO-STARTUP
+#---------------------------------------------------------------------------------------------------------
+#[ ! -f $HOME/.mission-control/accounts/accounts.cfg ] && \
+
+LDAP_USERNAME=$(env PYTHONPATH=/atomo/pipeline/tools/python /usr/bin/python -c "import openldap;print openldap.server().username(\"$USER\").lower()")
+HOSTNAME=$(hostname)
+
+#if [ ! -f $HOME/.mission-control/accounts/accounts.cfg ] ; then
+
+mkdir -p $HOME/.mission-control/accounts/
+cat > $HOME/.mission-control/accounts/accounts.cfg <<EOF
+# Telepathy accounts
+
+#[salut/local_xmpp/account0]
+#manager=salut
+#protocol=local-xmpp
+#DisplayName=AtomoVFX
+#param-email=
+#param-last-name=
+#param-nickname=$LDAP_USERNAME
+#param-first-name=$USER
+#param-jid=$USER
+#Icon=im-local-xmpp
+#Enabled=true
+#HasBeenOnline=false
+#Nickname=$USER
+#NormalizedName=$USER@atomoweb.local
+#AvatarMime=image/jpeg
+#avatar_token=891f013f6979340a81338410358dbbca2d926bd4
+#param-published-name=$USER
+
+
+[gabble/jabber/intranet0]
+manager=gabble
+protocol=jabber
+DisplayName=$USER@intranet.local
+param-account=$USER@intranet.local
+Icon=im-jabber
+param-server=intranet.local
+param-priority=0
+param-port=5222
+HasBeenOnline=false
+NormalizedName=$USER@intranet.local
+AvatarMime=
+avatar_token=
+Enabled=true
+Nickname=$USER@$HOSTNAME
+
+
+EOF
+
+
+rm -rf $HOME/.gnome2/keyrings/*
+cat > $HOME/.gnome2/keyrings/default <<EOF
+default
+EOF
+
+cat > $HOME/.gnome2/keyrings/default.keyring <<EOF
+[keyring]
+display-name=Default
+ctime=0
+mtime=0
+lock-on-idle=false
+lock-after=false
+
+[1]
+item-type=0
+display-name=account: gabble/jabber/intranet0; param: param-password
+secret=$(echo $LDAP_USERNAME | cut -d' ' -f1)
+mtime=1415309361
+ctime=0
+
+[1:attribute0]
+name=account
+type=string
+value=gabble/jabber/intranet0
+
+[1:attribute1]
+name=param
+type=string
+value=password
+
+EOF
+
+#fi
+chown -R $USER:artists $HOME/.gnome2/keyrings/*
+chown $USER $HOME/.mission-control/accounts/accounts.cfg
+chmod +w $HOME/.mission-control/accounts/accounts.cfg
+
+mkdir -p $HOME/.config/autostart/
+cat > $HOME/.config/autostart/empathy.desktop <<EOF
+[Desktop Entry]
+Name=empathy
+GenericName=empathy
+Comment=empathy
+Exec=/usr/bin/empathy
+Terminal=false
+Type=Application
+X-GNOME-Autostart-enabled=true
+EOF
+

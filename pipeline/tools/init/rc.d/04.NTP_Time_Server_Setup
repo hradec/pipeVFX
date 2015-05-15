@@ -1,0 +1,26 @@
+#!/bin/sh 
+
+#---------------------------------------------------------------------------------------------------------
+# NTP Time Server setup
+#---------------------------------------------------------------------------------------------------------
+# set the machine to use our local time servers!
+ntpd_setup(){
+    cat > /etc/ntp.conf << EOF
+server 192.168.0.10  iburst
+server 192.168.0.249   iburst
+#server	127.0.0.1	# local clock
+#fudge	127.0.0.1       stratum 10	
+tinker panic 0
+EOF
+    if [ "$(pidof ntpd)" != "" ] ; then 
+        pkill ntpd
+    fi
+
+    # if in linux, we need to restart ntpd manually
+    # osx restarts it automagically!
+    if [ "$uname" = "linux" ] ; then 
+        /usr/sbin/ntpd -c /etc/ntp.conf
+    fi
+}
+ntpd_setup
+

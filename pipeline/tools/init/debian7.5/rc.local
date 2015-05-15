@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+#  Atomo VFX Debian 7.5 config script
+# 
+#   author: rhradec Jun/2014 
+# 
+
+
+
+#=========================================================================================================
+# TIMEZONE SETUP
+#=========================================================================================================
+set_timezone(){
+    cat >/etc/timezone <<EOF
+America/Sao_Paulo
+EOF
+}
+action "Setting timezone to Sao Paulo, Brazil:"  set_timezone
+
+
+avahi_restart(){
+    service avahi-daemon restart
+    service ntp restart
+    service autofs restart
+}
+action "force restart avahi-daemon:" avahi_restart

@@ -1,0 +1,141 @@
+#!/bin/sh
+
+/atomo/pipeline/tools/python/tcptools/__init__.py "$@"
+
+
+#if [[ $@ != **--nocolors** ]] ; then
+#    RESTORE='\033[0m'
+#    RED='\033[00;31m'
+#    GREEN='\033[00;32m'
+#    YELLOW='\033[00;33m'
+#    BLUE='\033[00;34m'
+#    PURPLE='\033[00;35m'
+#    CYAN='\033[00;36m'
+#    LIGHTGRAY='\033[00;37m'
+#fi
+
+
+#if [[ $@ == **--help** ]] ; then
+#    echo "
+    
+#    --noavahi    don't get host name using avahi
+#    --help       this help
+#    --sortIP     sort by ip (default)
+#    --sortPort   sort by port
+#    "
+#else
+#    echo "Scanning network for live hosts(nmap)..."
+#    nmap="$(nmap -n -sP -sn 192.168.0.* | grep 192 | cut -d' ' -f5 | tr -s '\n' '@' | sed 's/@/ \|/g' | sed 's/|$//')"
+#    nmap="$(nmap -n -sP -sn 192.168.0.* | grep 192 | cut -d' ' -f5 | tr -s '\n' '@' | sed 's/@/ \|/g' | sed 's/|$//')"
+#    nmap="$(nmap -n -sP -sn 192.168.0.* | grep 192 | cut -d' ' -f5 | tr -s '\n' '@' | sed 's/@/ \|/g' | sed 's/|$//')"
+#    echo "Scanning Arp table for mac addresses of found hosts..."
+
+
+#    switchDownLeftMACs=$(snmpwalk -v2c -c public -O x  switchDownLeft.local .1.3.6.1.2.1.17.4.3.1.1  | tr -t '\n' @)
+#    switchDownLeftPORTMaps=$(snmpwalk -v2c -c public -O x  switchDownLeft.local .1.3.6.1.2.1.17.4.3.1.2 | tr -t '\n' @)
+#    switchDownLeftPORT=$(snmpwalk -v2c -c public -O x  switchDownLeft.local .1.3.6.1.2.1.17.1.4.1.2 | tr -t '\n' @)
+    
+#    switchDowLeftMACPORT=$(snmpwalk -v1 -c public -O x  switchDownLeft.local mib-2.17.7.1.2.2.1.2 | tr -t '\n' @)
+#    switchDownRightMACPORT=$(snmpwalk -v1 -c public -O x  switchDownRight.local mib-2.17.7.1.2.2.1.2 | tr -t '\n' @)
+#    switchUpLeftMACPORT=$(snmpwalk -v1 -c public -O x  switchUpLeft.local mib-2.17.7.1.2.2.1.2 | tr -t '\n' @)
+    
+#    switchDownLeftIP=$(avahi-resolve -n switchDownLeft.local 2>&1 | sed 's/\t/@/g' | cut -d'@' -f2)
+#    switchDownRightIP=$(avahi-resolve -n switchDownRight.local 2>&1 | sed 's/\t/@/g' | cut -d'@' -f2)
+#    switchUpLeftIP=$(avahi-resolve -n switchUpLeft.local 2>&1 | sed 's/\t/@/g' | cut -d'@' -f2)
+
+#    arp -n | egrep "$nmap" > /tmp/marp 
+#    localIP=$(ifconfig | grep 192 | cut -d':' -f2 | cut -d' ' -f1)
+#    localMAC=$(ifconfig | grep 192 -B1 | grep HWaddr | cut -d' ' -f11)
+##    printf "%s\t\tether\t%s\t\n" $localIP $localMAC >> /tmp/marp 
+    
+    
+#    cat /tmp/marp   | while read line;do
+#        ip=$(echo $line | cut -d' ' -f1)
+#        mac=$(echo $line | cut -d' ' -f3 | tr '[:lower:]' '[:upper:]')
+#        dev=$(echo $line | cut -d' ' -f5)
+#        port='     '
+##        if [ "$dns" != "switchDownLeft.local" ] ; then 
+##            mac2portmap=$(echo $switchDownLeftMACs | sed 's/@/\n/g' | grep "$(echo $mac | sed 's/\:/ /g')" | head -1 | cut -d'=' -f1  | cut -d'.' -f7,8,9,10,11,12)
+##            portmap2port=$(echo $switchDownLeftPORTMaps | sed 's/@/\n/g' | grep "$mac2portmap" | head -1 | cut -d'=' -f2 | cut -d' ' -f3)
+##            port=DL-$(echo $switchDownLeftPORT | sed 's/@/\n/g' | grep "1\.2\.$portmap2port" | head -1 | cut -d'=' -f2 | cut -d' ' -f3)
+##        fi
+#        decMac=$(printf "%d.%d.%d.%d.%d.%d"  $(echo 0x$mac | sed 's/:/ 0x/g'))
+#        portDL=$(echo $switchDowLeftMACPORT | sed 's/@/\n/g' | grep $decMac | cut -d' ' -f4)
+#        portDR=$(echo $switchDownRightMACPORT | sed 's/@/\n/g' | grep $decMac | cut -d' ' -f4)
+#        portUL=$(echo $switchUpLeftMACPORT | sed 's/@/\n/g' | grep $decMac | cut -d' ' -f4)
+        
+#        port=$(printf "DL-%02.f|DR-%02.f|UL-%02.f" "0$portDL" "0$portDR" "0$portUL")
+        
+#        ipp=$(printf "%03u.%03u.%03u.%03u\t" $(echo $ip | sed 's/\./ /g'))
+#        if [[ $@ == **--sortPort** ]] ; then
+#            ipp=$(printf "%02.f" $(echo $port | cut -d'|' -f1 | cut -d'-' -f2 ))$ipp
+#        fi
+#        if [ "$ip" == "$switchDownLeftIP" ] ; then
+#            echo -n $(printf "DR-%02.f" $portDR) > /tmp/dlport
+#        fi
+#        if [ "$ip" == "$switchDownRightIP" ] ; then
+#            echo -n $(printf "DL-%02.f" $portDL) > /tmp/drport
+#        fi
+#        if [ "$ip" == "$switchUpLeftIP" ] ; then
+#            echo -n $(printf "DL-%02.f" $portDL) > /tmp/ulport
+#        fi
+        
+#        # need to find a solution for DR-00/DR-01 inconsistency reported by swithDownRight
+#        echo -n "DR-01" > /tmp/dlport 
+#        echo -e "$ipp@$ip@$mac@$dev@$port@$dns"
+#    done | sort -g | while read line;do
+#        lineColor=$GREEN
+#        ip=$(echo $line | cut -d'@' -f2)
+#        mac=$(echo $line | cut -d'@' -f3)
+#        port=$(echo $line | cut -d'@' -f5)
+#        dev=$(echo $line | cut -d'@' -f4)
+#        dns=''
+#        if [[ $@ != **--noavahi** ]] ; then
+#            dns=$( avahi-resolve -4 -a $ip & sleep 0.5 && kill -9 $(ps aux | grep 'avahi-resolve' | grep -v grep | awk '{print $2}') 2> /dev/null)
+#            if [ "$dns" == "" ] ; then
+##                lineColor=$RED
+#                dns='  '
+#            else
+#                dns=$(echo $dns | cut -d' ' -f2)
+#            fi
+#        fi
+#        if [ "$ip" != "$switchDownLeftIP" ] ; then
+#            port=$(echo $port |  sed "s/$(cat /tmp/dlport)/@@@@@/")
+#            port=$(echo $port |  sed "s/DL-00/@@@@@/")
+#        fi
+#        if [ "$ip" != "$switchDownRightIP" ] ; then
+#            port=$(echo $port |  sed "s/$(cat /tmp/drport)/@@@@@/")
+#            port=$(echo $port |  sed "s/DR-00/@@@@@/")
+#        fi
+#        if [ "$ip" != "$switchUpLeftIP" ] ; then
+#            port=$(echo $port |  sed "s/$(cat /tmp/ulport)/@@@@@/")
+#            port=$(echo $port |  sed "s/UL-00/@@@@@/")
+#            port=$(echo $port |  sed "s/UL-28/@@@@@/")
+#        fi
+
+#        c=0
+#        if [ "$(echo $port | grep DL)" != "" ] ; then
+#            lineColor=$CYAN
+#            c=$(expr $c + 1)
+#        fi
+#        if [ "$(echo $port | grep DR)" != "" ] ; then
+#            lineColor=$PURPLE
+#            c=$(expr $c + 1)
+#        fi
+#        if [ "$(echo $port | grep UL)" != "" ] ; then
+#            lineColor=$BLUE
+#            c=$(expr $c + 1)
+#        fi
+        
+#        if [ "$c" != "1" ] ; then
+#            lineColor=$RED
+#        fi
+
+#        echo -e "$lineColor$ip\t| $mac |$port| $dns$RESTORE" | sed 's/@/ /g'
+#    done 
+
+#    echo "found $( cat /tmp/marp | wc -l) live hosts!"
+##    rm /tmp/marp /tmp/??port
+#    echo "Done."
+#fi
+

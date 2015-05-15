@@ -1,0 +1,37 @@
+#!/bin/sh
+#---------------------------------------------------------------------------------------------------------
+# MOUNT CENTRAL TMP
+#---------------------------------------------------------------------------------------------------------
+
+mountCentralTmp(){
+    tmpCentral="/atomo/netboot/tmp/$(hostname)/"
+    
+    usrTmpCentral="/atomo/netboot/usr/tmp/$(hostname)/"
+    if [ ! -d $tmpCentral ] ; then 
+        mkdir -p $tmpCentral 2>&1 > /dev/null 
+        chown -R root:root $tmpCentral
+        chmod -R a+rwx $tmpCentral 
+        chmod 1777 $tmpCentral 
+    fi
+    if [ ! -d $usrTmpCentral ] ; then 
+        mkdir -p $usrTmpCentral 2>&1 > /dev/null 
+        chown -R root:root $usrTmpCentral 
+        chmod -R a+rwx $usrTmpCentral 
+        chmod 1777 $usrTmpCentral 
+    fi
+    rm -rf $tmpCentral/*
+    rm -rf $usrTmpCentral/*
+    
+    mkdir -p /tmp
+    mkdir -p /usr/tmp
+    
+    mount --bind $tmpCentral /tmp
+    mount --bind $usrTmpCentral /usr/tmp
+    chmod 1777 /tmp
+    chmod 1777 /usr/tmp
+
+
+}
+
+mountCentralTmp
+

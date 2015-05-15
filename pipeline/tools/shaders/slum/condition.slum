@@ -1,0 +1,85 @@
+#
+# primvar.slum - reads a primitive variable directly from geometry
+#
+#    Author: Hradec - set/2013
+#
+# ---------------------------------------------------------------------------
+#	 This file is part of SLUM.
+#
+#    SLUM is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    SLUM is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SLUM.  If not, see <http://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------------
+
+
+class Condition(slumSurface):
+    def ID(self):
+        '''
+            a unique ID that identifys the shader inside slum. If you upload
+            this template to a online repository, this method will be replaced
+            automatically by the repository server, with the next global available ID.
+        '''
+        return 119
+
+    def parameters(self):
+        '''
+            This method defines all the parameter for our shader template. Keep in mind that here you define
+            the parameters that the user will see, not necessarily the same parameters of the shaders that this template
+            defines.
+        '''
+        #Intensity 	= parameter( 1.0, 'Intensity', help = 'Intensity of our diffuse factor. 0 disables.', max = 2, min = 0 )
+        pars = [
+            parameter( 0.0, 'inputValue', help = 'Connect here a node to use as the value to be tested!' ),
+            parameter( color(1), 'outColor', output=True ), # required for 3delight surface shaders
+            parameter( color(0), 'outTransparency', output=True ), # required for 3delight surface shaders
+        ]
+        
+        
+        for n in range(0,30):
+            pars.append( 
+                group( [
+                      parameter( float(n), 'if_%02d' % n, help = 'The value to test inputValue against.' ),
+                      parameter( color(0), 'do_This_%02d' % n, help = 'Returns this color if inputValue is in between if_%02d and if_%02d' % (n,n+1) ),
+                      parameter( 'aov_surface_color_%02d' % n, 'do_This_%02d_aov_name' % n, help='output "do_This_%02d" to the named aov.' % n)
+                ], name = 'Condition %02d' % n)
+            )
+        
+
+        return  group( pars, name = 'Shader Conditional Selection' )
+
+
+    def delight(self, node):
+        '''
+            delight method is were you define the code for this shader, when rendering in 3delight.
+            this is a renderer method. a renderer method should allways return a tupple as:
+            ( <list of strings that define extra shader parameters>, <list of strings that define the shader code>)
+        '''
+        # shader extra parameters
+        shaderPars = []
+              
+        # shader code
+        code = [
+            "float v=smoothstep(if_00,if_01,inputValue);", 
+            "outColor = do_This_00;",
+            "outputchannel( do_This_00_aov_name, do_This_00*(1-v));",
+        ]
+        elsee=''
+        for n in range(1,30):
+            code.append( "%sif( inputValue >= if_%02d && inputValue <= if_%02d ){" % (elsee, n-1,n) )
+            code.append( "  v = smoothstep(if_%02d,if_%02d,inputValue);" % (n-1,n) )
+            code.append( "  outColor = mix(outColor, do_This_%02d, v);" % n )
+            code.append( "  outputchannel( do_This_%02d_aov_name, do_This_%02d*(v) );" % (n,n) )
+            code.append( "}" )
+            elsee='else '
+
+        # return a tupple
+        return (shaderPars, code)

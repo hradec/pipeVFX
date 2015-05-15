@@ -1,0 +1,1 @@
+`/usr/bin/which python` -c "import pipe;pipe.apps.arnold().run(\"kick\")" "$@"

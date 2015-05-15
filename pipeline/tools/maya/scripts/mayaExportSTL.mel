@@ -1,0 +1,293 @@
+/////////////////////////////////////////////////////////////////////////////////
+// Name:					mayaExportSTL.mel
+// Version:				0.1
+// Description:		STL (STereoLithography) File Export for Maya
+// 								This is open-source software licensed under the GPL.
+// Created By:		Rob O'Neill (roneill@dal.pratt.edu)
+//								Richard (Meng Han) Ho
+// Edited:				05/11/2006
+// Usage: 				Create a shelf button set to run this command: "mayaExportSTL" 
+//								on the selected	polygonal objects
+//
+// Distributed under the Gnu Public License, see LICENSE or
+// http://www.gnu.org/licenses/gpl.txt
+//////////////////////////////////////////////////////////////////////////////////
+
+// main entry point
+global proc mayaExportSTL() 
+{
+	mayaExportSTLErrorCheck;
+}
+
+// error check
+global proc mayaExportSTLErrorCheck()
+{
+	global string $stlFilePath;
+	global string $stlFileName;
+	global string $errorMessage;
+
+	$errorMessage = "";
+	
+	// Make sure an object is selected
+	string $polyOBJ[] = `ls -sl -transforms -type mesh`;
+	if(`size($polyOBJ)` == 0)
+	{
+		$errorMessage = "Please select a polygonal object to export.";
+		warning $errorMessage;
+	}else{	
+		mayaExportSTLSaveAs();
+		
+		// Check to see that there is a file path
+		if($stlFilePath == "") 
+		{
+			// User chose to cancel 'save as' dialog
+			return;
+		}
+	}
+	// Still no errors, export
+	if($errorMessage == "") 
+	{		
+		mayaExportSTLRun;
+	} else {
+		// Display error window
+		if(`window -exists errorBox` == 1)
+		{
+			deleteUI errorBox;
+
+			if(`window -exists errorBox` != 1)
+			{	
+				int $windowWidth = 250;
+				int $windowHeight = 100;
+				window
+					-maximizeButton false
+					-resizeToFitChildren false
+					-title "mayaExportSTL Message"
+					-iconName "mayaExportSTL Message"
+					-menuBar false
+					-wh $windowWidth $windowHeight
+				errorBox;
+	
+				columnLayout -adjustableColumn true -rowSpacing 5 errorBoxColumn;
+				
+				rowLayout -nc 2 -cat 1 "left" 4 -cw 1 100;
+					text $errorMessage;
+					button -l "Okay!" -al "center" -command "deleteUI errorBox";
+				setParent..;
+					
+				window -e -wh $windowWidth $windowHeight errorBox;
+				showWindow errorBox;
+			}
+		}
+	}
+}
+
+// save as... fileBrowser
+global proc mayaExportSTLSaveAs()
+{
+	fileBrowser( "mayaExportSTLOnSave", "Save", "", 1);
+}
+
+// fileBrowser's callback function
+global proc int mayaExportSTLOnSave(string $name,string $type) 
+{
+	global string $stlFilePath;
+	global string $stlFileName;
+	global string $errorMessage="";
+	
+	// Make sure the file has the right extension
+	string $checkExtension[];
+	int $numTokens = `tokenize $name "." $checkExtension`;
+	
+	if($numTokens == 2) {
+		// check that the extension is right
+		if($checkExtension[1] == "stl")
+		{
+		}else{
+			$errorMessage = "Please use .stl extension";
+		}
+	} else {
+		// there's no extension, add .stl
+		$name = ($name + ".stl");
+	}
+
+	string $buffer[];
+	int $index;
+				
+	$numTokens = `tokenize $name "/" $buffer`;
+	if ($numTokens > 0) 
+	{
+		$index = $numTokens - 1;
+	}
+	$stlFilePath = $name;
+	$stlFileName = $buffer[$index];
+
+	return true;
+}
+
+// get ready to run
+global proc mayaExportSTLRun()
+{
+	global string $stlFileName;
+	global string $stlFilePath;
+	mayaExportSTLProcess;
+}
+
+// the main work procedure
+global proc mayaExportSTLProcess()
+{
+
+	global string $stlFileName;
+	global string $stlFilePath;
+
+	int $debug = 0;
+
+	$stlFullFileName = ($stlFilePath);
+
+	int $fileCheck = `filetest -w $stlFullFileName`;
+	if($fileCheck)
+	{
+		sysFile -del $stlFullFileName;
+	}
+	$fileId=`fopen $stlFullFileName "a"`; 
+
+	string $stl_StartString = "solid";
+	$stl_StartString += "\n";
+		
+	string $stl_EndString="endsolid";
+	$stl_EndString += "\n";
+						
+	fprint $fileId $stl_StartString;
+
+	string $polyOBJ[] = `ls -sl -transforms -type mesh`;
+	string $input_OBJ;
+
+	if($debug)
+	{
+		print "\n___________________________________";
+		print "\n__________ Start STL Export  ___________";
+		print "\n___________________________________\n";
+	}
+
+
+	// per poly object
+	for($input_OBJ in $polyOBJ)
+	{
+		int $polyFaceNum[] = `polyEvaluate -f $input_OBJ`;
+		int $polyTriNum[] = `polyEvaluate -t $input_OBJ`;
+			
+		if($polyFaceNum[0] != $polyTriNum[0])
+		{
+			polyTriangulate $input_OBJ;	
+		}
+
+		if($debug)
+		{
+			print "\n___________________________________";
+			print ("\n_____" + $input_OBJ +  "_____");
+			print "\n___________________________________\n";
+		}
+	
+		int $sizePoly[] =`polyEvaluate -f $input_OBJ`;
+					
+		// per poly face of poly object
+		for($i = 0; $i < $sizePoly[0]; $i++)
+		{		
+			string $current_Face = ($input_OBJ+".f["+$i+"]");
+							
+			string $faceNoramlInAString[] = `polyInfo -fn $current_Face`;
+			string $faceNoraml[];
+			tokenizeList($faceNoramlInAString[0], $faceNoraml);
+			
+			string $vtxOnTheFaceInAString[] = `polyInfo -fv $current_Face`;
+			string $vtxOnTheFace[];
+			tokenizeList($vtxOnTheFaceInAString[0], $vtxOnTheFace);
+			
+			vector $vtx_A = `mayaExportSTLVertexPos $vtxOnTheFace[2] $input_OBJ`;
+			vector $vtx_B = `mayaExportSTLVertexPos $vtxOnTheFace[3] $input_OBJ`;
+			vector $vtx_C = `mayaExportSTLVertexPos $vtxOnTheFace[4] $input_OBJ`;
+			
+			$stl_perFace=" ";
+			
+			$stl_perFace+="facet normal ";
+			$stl_perFace+=$faceNoraml[2];
+			$stl_perFace+=" ";
+			$stl_perFace+=$faceNoraml[3];
+			$stl_perFace+=" ";
+			$stl_perFace+=$faceNoraml[4];
+			$stl_perFace+="\n";
+			
+			$stl_perFace+="  ";		
+		
+			$stl_perFace+="outer loop";
+			$stl_perFace+="\n";
+			
+			$stl_perFace+="   ";
+			
+			$stl_perFace+="vertex ";
+			$stl_perFace+=($vtx_A.x);
+			$stl_perFace+=" ";
+			$stl_perFace+=($vtx_A.y);
+			$stl_perFace+=" ";
+			$stl_perFace+=($vtx_A.z);
+			$stl_perFace+=" \n";
+					
+			$stl_perFace+="   ";
+			
+			$stl_perFace+="vertex ";
+			$stl_perFace+=($vtx_B.x);
+			$stl_perFace+=" ";
+			$stl_perFace+=($vtx_B.y);
+			$stl_perFace+=" ";
+			$stl_perFace+=($vtx_B.z);
+			$stl_perFace+=" \n";
+					
+			$stl_perFace+="   ";
+				
+			$stl_perFace+="vertex ";
+			$stl_perFace+=($vtx_C.x);
+			$stl_perFace+=" ";
+			$stl_perFace+=($vtx_C.y);
+			$stl_perFace+=" ";
+			$stl_perFace+=($vtx_C.z);
+			$stl_perFace+=" \n";
+					
+			$stl_perFace+="  ";
+			
+			$stl_perFace+="endloop";
+			$stl_perFace+="\n";
+					
+			$stl_perFace+=" ";
+			
+			$stl_perFace+="endfacet";
+			$stl_perFace+="\n";
+			
+			fprint $fileId $stl_perFace;
+		
+			if($debug)
+			{
+				print "\n___";
+				print ($input_OBJ + " face: " + $i + " is successfully exported. ");
+				print "___\n";
+			}		
+		}
+	}
+	print ("The STL file is located in " +  $stlFullFileName);
+
+	if($debug)
+	{		
+		print " ___\n";
+		print "\n___________________________________";
+		print "\n___________ End STL Export ___________";
+		print "\n___________________________________\n";
+	}
+	fprint $fileId $stl_EndString;
+	fclose $fileId;
+}
+
+
+global proc vector mayaExportSTLVertexPos(string $input_ID, string $input_OBJ)
+{
+	vector $output_Pos; 
+	$output_Pos = `pointPosition -w ($input_OBJ+".vtx["+int($input_ID)+"]")`;
+	return $output_Pos;
+}

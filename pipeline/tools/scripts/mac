@@ -1,0 +1,1 @@
+vncviewer  passwd=/atomo/pipeline/tools/scripts/mac.passwd.vnc CompressLevel=0  QualityLevel=1 AutoSelect=0 ZlibLevel=0 tests-mac.local &

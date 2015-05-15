@@ -1,0 +1,13 @@
+
+
+# freenas
+# =================================================
+0000.DAILIES        -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/jobs/0000.DAILIES
+0260.vinheta_atomo  -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/jobs/0260.vinheta_atomo
+9998.presets        -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/jobs/9998.presets
+9999.rnd            -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/jobs/9999.rnd
+
+
+# centos
+===================================================
+0244.ovomaltine_carelli    -fstype=nfs,rw,vers=3   192.168.0.10:/RAID/atomo/jobs/0244.ovomaltine_carelli

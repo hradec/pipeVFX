@@ -1,0 +1,26 @@
+#!/bin/bash
+#---------------------------------------------------------------------------------------------------------
+# LOG SETUP
+#---------------------------------------------------------------------------------------------------------
+# sets the log folder at the pipe netboot/log folder
+setupLog(){
+    if [ "$uname" = "linux" ] ; then 
+        env > /__envs
+        macAddres=$(echo $(ifconfig | grep -B2 192.168 | grep HWadd) | cut -d' ' -f5)
+        hostname=$(echo $(cat /$root/pipeline/tools/init/hosts | grep $macAddres) | cut -d' ' -f2)
+        if [ "$hostname" = "" ] ; then 
+            hostname=$macAddres
+        fi
+        logPath="/$root/netboot/log/$hostname"
+        rsync -a /var/log/* $logPath/
+        mv /var/log /var/log.old
+        ln -s $logPath /var/log
+        chown 42:42 $logPath/gdm
+        mkdir -p /var/log/sssd
+    fi
+}
+setupLog
+
+
+
+

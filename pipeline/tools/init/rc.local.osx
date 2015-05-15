@@ -1,0 +1,125 @@
+#!/bin/bash
+#
+# This script runs on the initialization of every machine in 
+# the pipeline. 
+# 
+# We use it for global configutation, like instalations and 
+# system setup of all sorts. 
+# 
+# be carefull when editing this file to avoid breaking every
+# single machine in the network!!
+# 
+#   author: rhradec april/2013 
+# 
+
+# grab boot command line parameters
+#getarg(){
+#    for each in $(echo $(cat /proc/cmdline)) ; do 
+#        [ "$(echo $each | cut -d'=' -f1)" = "$1" ] && echo $(echo $each | cut -d'=' -f2)
+#    done
+#}
+#export studio=$(getarg studio)
+#export liveInit=$(getarg liveInit)
+export studio="atomo"
+export liveInit="pipeline/tools/init/dracut/liveInit"
+
+
+# system arch
+export arch=$(uname -m)
+
+# system name
+export uname=$(echo $(uname -s) |  awk '{print tolower($0)}')
+
+# get tools root path
+export root=/$studio
+
+# get tools root path
+#export tools=$root/pipeline/tools
+export tools=$root/$(dirname $(dirname $(dirname $liveInit)))
+
+# get tools root path
+export apps=$root/apps/$uname/$arch
+
+# force BASH_SOURCE for debian
+export BASH_SOURCE=$tools/init/rc.local
+
+
+echo "==================================================================="
+echo "Running Pipe inits..."
+echo "==================================================================="
+
+# generic action function to display [OK] or [FAILED] at startup!
+action_tab="%-59s"
+action(){
+    RESTORE='\033[0m'
+    RED='\033[00;31m'
+    GREEN='\033[00;32m'
+    printf $action_tab "$1"
+    mkdir -p /var/log/pipeBoot/
+    $2 2> /var/log/pipeBoot/$(basename $2)
+    if [ $? -gt 0 ]; then
+        echo -e "[${RED}FAILED${RESTORE}]"
+    else
+        echo -e "[${GREEN}  OK  ${RESTORE}]"
+    fi
+}
+
+
+
+##=========================================================================================================
+## GENERIC rc.d INITIALIZATION
+##=========================================================================================================
+#echo -e "\nRunning $tools/init/rc.d/*"
+#ls $tools/init/rc.d | while read line ; do
+#    path=$tools/init/rc.d/$line
+#    action_tab='\t%-51s'
+#    action $line $path
+#done
+
+
+
+##=========================================================================================================
+## PLATAFORM DEPENDENT INITIALIZATION
+##=========================================================================================================
+
+##---------------------------------------------------------------------------------------------------------
+## if fedora, figure out the release name
+##---------------------------------------------------------------------------------------------------------
+#if [ -f /etc/fedora-release ] ; then 
+#    release=$(/usr/bin/python -c "x=open('/etc/fedora-release').readline().split(' ');print x[0].lower()+x[2]")
+#fi
+
+#if [ -f /etc/debian_version ] ; then 
+#    release=debian$(cat /etc/debian_version)
+#fi
+
+##---------------------------------------------------------------------------------------------------------
+## if we have a rc.local specific for the current running os distro release, run it!
+##---------------------------------------------------------------------------------------------------------
+## distro/release specific rc.local should initialize the following:
+##   1. timezone 
+##   2. fstab
+##   3. autofs
+##
+## ex: fedora14/rc.local
+##
+#if [ "$release" != "" ] ; then 
+#    action_tab='\t%-51s'
+#    echo -e "\nRunning $release specific setup..."
+#    rclocal=$tools/init/$release/rc.local
+#    # if the current release has an rc.local file, run it!
+#    if [ -f $rclocal ] ; then 
+#        . $rclocal
+#    fi
+#fi
+
+## done
+echo "==================================================================="
+
+
+
+
+
+
+
+

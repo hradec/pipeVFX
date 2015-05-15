@@ -1,0 +1,138 @@
+#! C:/Program Files/Nuke7.0v2/Nuke7.0.exe -nx
+version 7.0 v2
+Gizmo {
+ addUserKnob {20 Santinho}
+ addUserKnob {41 gamma l Gamma T ColorCorrect1.gamma}
+ addUserKnob {41 saturation l Saturation T ColorCorrect1.saturation}
+ addUserKnob {41 size_1 l Blur T Blur1.size}
+ addUserKnob {26 Mask}
+ addUserKnob {15 test}
+ test {0 0 1920 1080}
+ addUserKnob {14 Expand R 0 100}
+ Expand {400 400}
+ addUserKnob {41 softness l Softness T Radial1.softness}
+ addUserKnob {41 size l "Mask Blur" T Blur3.size}
+ addUserKnob {6 ShowMask l "Show Mask" +STARTLINE}
+ addUserKnob {6 Output l "Output Mask" -STARTLINE}
+ Output true
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 462
+  ypos 21
+ }
+ Dot {
+  name Dot2
+  xpos 496
+  ypos 45
+ }
+set N2f42e810 [stack 0]
+ Radial {
+  output alpha
+  premult all
+  invert true
+  area {{parent.test.x-(parent.Expand.w/2)} {parent.test.y-(parent.Expand.h/2)} {parent.test.r+(parent.Expand.w/2)} {parent.test.t+(parent.Expand.h/2)}}
+  softness 0.37
+  name Radial1
+  xpos 462
+  ypos 132
+ }
+ Blur {
+  channels alpha
+  size 0.55
+  mix 0
+  name Blur3
+  xpos 462
+  ypos 175
+ }
+ Dot {
+  name Dot1
+  xpos 496
+  ypos 223
+ }
+set N2f42f260 [stack 0]
+ Dot {
+  name Dot3
+  xpos 496
+  ypos 353
+ }
+set N1d546040 [stack 0]
+push $N2f42f260
+push $N2f42f260
+push $N2f42e810
+ ColorCorrect {
+  inputs 1+1
+  gain {4 -12 -12 0}
+  name ColorCorrect2
+  xpos 606
+  ypos 220
+ }
+ Blur {
+  inputs 1+1
+  name Blur2
+  xpos 606
+  ypos 305
+ }
+ ShuffleCopy {
+  inputs 2
+  name ShuffleCopy1
+  xpos 606
+  ypos 350
+ }
+push $N1d546040
+push $N2f42f260
+push $N2f42f260
+push $N2f42e810
+ ColorCorrect {
+  inputs 1+1
+  gamma 0.645
+  name ColorCorrect1
+  xpos 312
+  ypos 220
+ }
+ Blur {
+  inputs 1+1
+  size 19.5
+  name Blur1
+  xpos 312
+  ypos 304
+ }
+set N2f430020 [stack 0]
+ ShuffleCopy {
+  inputs 2
+  name ShuffleCopy2
+  xpos 312
+  ypos 349
+ }
+push $N2f430020
+ Switch {
+  inputs 2
+  which {{parent.Output}}
+  name Switch2
+  selected true
+  xpos 312
+  ypos 373
+ }
+set N30275650 [stack 0]
+ Switch {
+  inputs 2
+  which {{parent.ShowMask}}
+  name Switch1
+  xpos 463
+  ypos 448
+ }
+ Output {
+  name Output1
+  xpos 463
+  ypos 495
+ }
+push $N30275650
+ Viewer {
+  roi {0.06599998474 -0.6159999967 1.065999985 -0.01599999666}
+  input_process false
+  name Viewer1
+  xpos 463
+  ypos 550
+ }
+end_group

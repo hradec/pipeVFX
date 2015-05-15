@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# only unlock if there's no gdm logged users!
+[ "$(w | grep gdm)" == "" ] && /atomo/pipeline/tools/scripts/run qblock --unlock $(hostname)
+
+#clean up 
+killall x11vnc
+killall vglclient

@@ -1,0 +1,8 @@
+#!/usr/bin/env ppython 
+
+import pipe
+
+p=pipe.apps.qube()
+
+p.run( filter(lambda x: 'qube'==x[0], p.bins())[0][1] )
+

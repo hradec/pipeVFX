@@ -1,0 +1,2 @@
+#!/bin/bash 
+/atomo/pipeline/tools/scripts/run hython -c $@

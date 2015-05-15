@@ -1,0 +1,10 @@
+#
+# Automounter master map
+#
++auto_master		# Use directory service
+/net			-hosts		-nobrowse,hidefromfinder,nosuid
+/home			auto_home	-nobrowse,hidefromfinder
+#/Network/Servers	-fstab
+/-			-static
+/mnt			/atomo/pipeline/tools/init/auto.osx.atomo	-browse,nosuid,nodev
+/-			auto.pipe	-browse,nosuid,nodev

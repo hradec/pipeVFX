@@ -1,0 +1,15 @@
+#!/bin/sh 
+
+
+#---------------------------------------------------------------------------------------------------------
+# PFTRACK SETUP
+#---------------------------------------------------------------------------------------------------------
+# pftrack needs this folder inside /var to store license files
+# unfortunatelly there's no license env var to redirect this!
+pftrack_setup(){
+    mkdir -p /var/thepixelfarm/ 
+    chmod a+rwx /var/thepixelfarm/
+}
+pftrack_setup
+
+

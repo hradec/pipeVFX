@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Delete temp files that make pulseaudio fail to start
+rm -rf /tmp/.esd-*

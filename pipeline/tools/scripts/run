@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# run - runs an alias inside a script. 
+
+if [ "$PIPE_JOB" != "" ]  && [ "$PIPE_SHOT" == "" ] ; then 
+    echo "
+=====================================================================
+
+ERROR:  You're in a JOB called $PIPE_JOB, but 
+
+        not in a shot or asset! 
+        
+        Please make sure to set a shot or asset by using:
+        
+            go <job> shot <shot name>
+            go <job> asset <asset name>
+            
+=====================================================================
+
+"
+exit
+fi
+
+
+# source the pipeline init script, if it hasn't being sourced yet!
+source $(dirname $BASH_SOURCE)/../init/bash
+
+#echo $(dirname $BASH_SOURCE)/../init/bash
+#echo $(which python)
+#echo "$(basename $SHELL)"
+#echo ..$NOPIPE..
+#echo "$(/usr/bin/python -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.init()" $BASH_SOURCE)"
+#echo "================="
+
+#echo $@
+
+
+# run the alias as a command line!
+cmd=`alias $1 | cut -d"'" -f2` 
+#echo $cmd "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" "${23}" "${24}" "${25}" "${26}" "${27}" "${28}" "${29}" "${30}" # > /tmp/${USER}_run
+eval $cmd  "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" "${23}" "${24}" "${25}" "${26}" "${27}" "${28}" "${29}" "${30}" # 2>&1 >> /tmp/${USER}_run

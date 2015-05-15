@@ -1,0 +1,55 @@
+#!/bin/sh
+#----------------------------------------------------------------------------------------------------
+# HOME PARTITION FOR 3D USER
+#----------------------------------------------------------------------------------------------------
+
+# mount local home user
+home=$(echo $(ls /dev/vg_*/lv_home 2>/dev/null) | cut -d' ' -f1)
+mountLocalHome(){
+    home=$(echo $(ls /dev/vg_*/lv_home 2>/dev/null) | cut -d' ' -f1)
+    mkdir /home/.local_home
+    mount $home /home/.local_home
+    uid=$(echo $(ls -ln /home/.local_home | grep 3d) | cut -d' ' -f3)
+    gid=$(echo $(ls -ln /home/.local_home | grep 3d) | cut -d' ' -f4)
+    if [ "$uid" != "" ] ; then 
+        cp /etc/passwd /etc/passwd.bak
+        cp /etc/group /etc/group.bak
+        cat /etc/passwd.bak | grep -v $uid > /etc/passwd
+        cat /etc/group.bak | grep -v $gid  > /etc/group
+        #addgroup -g $gid 3d
+        #adduser -u $uid -p $(perl -e 'print crypt("password", "3d"),"\n"') 3d
+        usermod -u $uid 3d
+        groupmod -g $gid 3d
+
+        cp -rf /home/3d/.local/ /home/
+        cp -rf /home/3d/tools/ /home/
+        cp -rf /home/3d/.bashrc /home/
+
+        mount --bind /home/.local_home/3d /home/3d
+
+        mkdir -p /home/3d/tools
+        mount --bind /home/tools /home/3d/tools
+        mount --bind /home/.local /home/3d/.local
+        mount --bind /home/.bashrc /home/3d/.bashrc
+        
+        chmod -R a+r /home/3d
+    fi
+}
+# mount a centralized version of 3d home user
+mountCentralHome(){
+    homeCentral="/atomo/netboot/home/3d/$(hostname)/"
+    if [ ! -d $homeCentral ] ; then 
+        mkdir -p $homeCentral 2>&1 > /dev/null 
+        cp -rf /home/3d/*     $homeCentral 2>&1 > /dev/null
+        cp -rf /home/3d/.??*  $homeCentral 2>&1 > /dev/null
+        chown -R 3d:artists $homeCentral
+        chmod -R a+r $homeCentral
+    fi
+    mount --bind $homeCentral /home/3d
+}
+
+if [ "$home" != "" ] ; then 
+    mountLocalHome
+else
+    mountCentralHome
+fi

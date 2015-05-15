@@ -1,0 +1,4 @@
+#!/bin/bash
+/atomo/pipeline/tools/scripts/run Render $@
+
+

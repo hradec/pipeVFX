@@ -1,0 +1,6 @@
+# be carefull to not leave a '/' at the end of the mountpoint!!
+
+/mnt                /atomo/pipeline/tools/init/autofs.auto      --timeout=600
+#/atomo/jobs         /atomo/pipeline/tools/init/autofs.jobs      --timeout=600
+#/atomo/netboot      /atomo/pipeline/tools/init/autofs.netboot   --timeout=600
+

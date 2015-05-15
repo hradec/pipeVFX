@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+#---------------------------------------------------------------------------------------------------------
+# FIX PERMISSIONS
+#---------------------------------------------------------------------------------------------------------
+fixPermissions(){
+    chown root:root /tmp
+    chmod 1777 /tmp
+    chmod 1777 /dev/shm
+    chmod a+r /var/log
+    chmod a+r /var/log/*
+    
+    # maya specific permissions and folders
+    mkdir -p /var/opt/Autodesk/
+    chmod  a+rwx /var/opt/Autodesk/
+    mkdir -p /var/flexlm/
+    chmod a+rw /var/flexlm/
+    
+    
+    # kernel 3.9 fixes!
+    # /dev/shm is not mouting properly so we do it here again...
+    mkdir -p /dev/shm
+    mount -t tmpfs tmpfs /dev/shm
+    # for some weird reason, this fix sound issues in kernel 3.9!!!
+    chmod -R a+rwx /dev/snd 
+}
+
+fixPermissions

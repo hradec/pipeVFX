@@ -1,0 +1,95 @@
+#!/bin/sh
+
+
+
+#---------------------------------------------------------------------------------------------------------
+# SWAP SETUP
+#---------------------------------------------------------------------------------------------------------
+# We look for swap partitions and mount then if we found. 
+# we also set tuxonice to use the same swap to hibernate!
+swap_setup(){
+    swapCentral="/atomo/netboot/swap/$(hostname).swap"
+    createBlockDevs=$(sed -e "s/.*major.*//; s/.*\ \([:0-9:]\+\)\ \+\ \([:0-9:]\+\)\ \+\ [:0-9:]\+\ \+\([:a-z0-9\/:]\+\).*/mknod \/dev\/\3 b \1 \2 ; /  " < /proc/partitions)
+    eval "$createBlockDevs" 1>&2
+    vgchange -ay 1>&2
+    swap=''
+    for line in $(ls /dev/sd?); do
+        swaps="$(echo $(echo $(/sbin/fdisk -l $line | grep swap) | sed 's/ /@/g') $swaps)"
+        lvms="$(echo $(ls /dev/vg*/*swap) $lvms)"
+#        lvms="$(echo $lvms $(echo $(/sbin/fdisk -l $line | grep LVM) | cut -d' ' -f1))"
+    done
+    lvms="$(echo $(echo $(blkid | grep swap | cut -d ':' -f1)) $lvms)"
+    echo $swaps 1>&2
+    echo $lvms 1>&2
+    if [ "$swaps" != "" ] ; then
+        swapsize=0
+        for each in $swaps ; do
+            size=$(echo $each | cut -d'@' -f4)
+            if [ $size -gt $swapsize ] ; then 
+                swapsize=$size
+                swap=$(echo $each | cut -d'@' -f1)
+            fi
+        done
+    elif [ "$lvms" != "" ] ; then
+        swapsize=0
+        for each in $lvms ; do
+            dm=$(readlink -e $each)
+            swap=$dm
+            size=$(echo $(cat /proc/partitions | grep $(basename $dm)) | cut -d' ' -f3)
+            if [ $size -gt $swapsize ] ; then 
+                swapsize=$size
+                swap=$dm
+            fi            
+        done
+    ##############################################
+#    else
+    #nfs swap
+#        if [ ! -f $swapCentral ] ; then 
+#            mkdir -p $(dirname $swapCentral)
+#            ram=$(echo $(free -m | grep Mem) | cut -d' ' -f2)
+#            echo -e "\n\n\tIt appears there's no local swap partition setup on this machine."
+#            echo -e "\tI'm going to create a swap file in the network for it, but this can"
+#            echo -e "\ttake a while...\n\n\n\t\tgrab a coffee!! ;)\n\n"
+#            dd if=/dev/zero of=$swapCentral bs=1M count=$ram 1>&2
+#            echo -e "\tDone... Next boot I will remember this new network swap so it"
+#            echo -e "\twon't happen again!!"
+#            echo -e "\n\n\tI hope you've enjoyed your coffee..."
+#            sleep 5
+#            echo -e "\n\n\tit will be your last freee time..."
+#            sleep 1
+#            echo -e "\n\n\tMUAA..."
+#            sleep 1
+#            echo -e "\n\n\tHAAA..."
+#            sleep 1
+#            echo -e "\n\n\tHAAAaaa...\n"
+#            printf "\n$action_tab" "     Created network swap file and used it"
+#        fi
+#        /sbin/losetup /dev/loop0 $swapCentral 
+#        /sbin/mkswap /dev/loop0  1>&2
+#        swap=/dev/loop0
+    ##############################################
+    fi
+    [ "$swap" = "" ] && return 1
+    export swap
+    /sbin/swapon $swap
+}
+tuxonice_setup(){
+    [ -f /etc/hibernate/tuxonice.conf.bak ] && cp /etc/hibernate/tuxonice.conf /etc/hibernate/tuxonice.conf.bak 
+    cat /etc/hibernate/tuxonice.conf.bak | while read line ; do
+        if [ "$(echo $line | grep SuspendDevice)" != "" ] ; then 
+            echo "SuspendDevice swap:$swap" >> /etc/hibernate/tuxonice.conf
+        else
+            echo $line >> /etc/hibernate/tuxonice.conf
+        fi
+    done
+}
+
+
+
+if [ "$(cat /proc/swaps | grep -v Filename)" = "" ] ; then 
+    swap_setup
+    if [ "$swap" != "" ]; then
+        tuxonice_setup
+    fi
+fi
+

@@ -1,0 +1,12 @@
+#!/usr/bin/env ppython
+
+
+import tcptools
+hosts = tcptools.hostnames( tcptools.pingSubnet('192.168.0',64), 64 )
+#hosts = tcptools.hostnames( map( lambda x: '192.168.0.%d' % (x+1), range(255) ) )
+c=1
+for each in hosts: 
+    if each[1]:
+        print c,each[1]
+        c += 1
+

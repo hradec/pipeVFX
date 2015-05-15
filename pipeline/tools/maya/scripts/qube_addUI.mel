@@ -1,0 +1,496 @@
+
+//
+// Add Maya menu items for Qube rendering and launching QubeGUI
+// PipelineFX
+//
+
+//
+// To auto-install, put the following in userSetup.mel:
+//	 qube_addUI();
+//
+// Location of userSetup.mel:
+//	  * Windows: (Users Documents Directory)\maya\<Version>\scripts
+//	  * Mac OS X: ~/Library/Preferences/Autodesk/maya/<version>/scripts.
+//	  * Linux: ~/maya/<version>/scripts.
+// Note: Can remove the <version>/ to apply to the version-independent
+//   scripts directory
+//
+
+global proc string qube_getCurrentRendererShortname()
+{
+    string $curRenderer = `getAttr defaultRenderGlobals.currentRenderer`;
+    switch ($curRenderer)
+    {
+    case "mayaSoftware":
+        $curRenderer = "sw";
+        break;
+    case "mayaHardware":
+        $curRenderer = "hw";
+        break;
+    case "mentalRay":
+        $curRenderer = "mr";
+        break;
+    case "renderMan":
+        $curRenderer = "rman";
+    case "arnold":
+        $curRenderer = "arnold";
+        break;    
+    }
+    //print ("Current Renderer = "+$curRenderer);
+    return $curRenderer;
+}
+
+global proc qube_removeUI()
+{
+	// Remove MenuItems
+	if (`menuItem -q -exists qube_div1`)
+		deleteUI -mi qube_div1; 
+	if (`menuItem -q -exists qube_submitSimpleCmdRender`)
+		deleteUI -mi qube_submitSimpleCmdRender; 
+	if (`menuItem -q -exists qube_submitAllRenderersMenu`)
+		deleteUI -mi qube_submitAllRenderersMenu; 
+    if (`menuItem -q -exists qube_submitJobFromFile`)
+		deleteUI -mi qube_submitJobFromFile; 
+	if (`menuItem -q -exists qube_launchQubeGUI`)
+		deleteUI -mi qube_launchQubeGUI;
+	if (`menuItem -q -exists qube_launchQubeGUI_OB`)
+		deleteUI -mi qube_launchQubeGUI_OB;
+}
+
+global proc qube_remove_legacy_UI()
+{
+	global string $gMainRenderMenu;
+
+	// Make sure Render menu has been created
+	eval(`menu -q -pmc $gMainRenderMenu`);
+
+	// Remove MenuItems
+	setParent -menu $gMainRenderMenu;
+	if (`menuItem -q -exists qube_div1`)
+		deleteUI -mi qube_div1;
+	if (`menuItem -q -exists qube_submitSimpleCmdRender`)
+		deleteUI -mi qube_submitSimpleCmdRender;
+	if (`menuItem -q -exists qube_submitAllRenderersMenu`)
+		deleteUI -mi qube_submitAllRenderersMenu;
+	if (`menuItem -q -exists qube_launchQubeGUI`)
+		deleteUI -mi qube_launchQubeGUI;
+	if (`menuItem -q -exists qube_launchQubeGUI_OB`)
+		deleteUI -mi qube_launchQubeGUI_OB;
+}
+
+//
+// qube_optionVarDlg()
+//
+global proc qube_optionVarDlg()
+{
+	// Get optionVar
+	string $qube_qubeguiPath = "";
+	if (`optionVar -exists "qube_qubeguiPath"`) {
+		$qube_qubeguiPath = `optionVar -q "qube_qubeguiPath"`;
+	}
+
+	string $commandName = "QubeGUI";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+
+	// Create OptionBox Dialog
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	tabLayout -tabsVisible 0 -scrollable 1;
+	string $parent = `columnLayout -adjustableColumn 1`;
+	string $macBrowseOptions = "";
+	if (`about -macOS`) {
+		// mac-specific flag to stop at the .app if specified
+		$macBrowseOptions = " -app";
+	}
+	textFieldButtonGrp -label "QubeGUI Path" -fileName $qube_qubeguiPath
+		-buttonLabel "Browse"
+		-bc ("{string $result = `fileDialog -mode 0 " + $macBrowseOptions +
+			 "`;  if ($result != \"\") textFieldButtonGrp -e -fi $result" +
+			 " qube_addUI_optionVarDialog_textField; }")
+		qube_addUI_optionVarDialog_textField;
+	setUITemplate -popTemplate;
+	// Buttons
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -e
+		-command ("optionVar -sv \"qube_qubeguiPath\"" +
+				  "`textFieldButtonGrp -q -fi" +
+				  " qube_addUI_optionVarDialog_textField`")
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit
+		-command ("optionVar -sv \"qube_qubeguiPath\"" +
+				  "`textFieldButtonGrp -q -fi" +
+				  " qube_addUI_optionVarDialog_textField`; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit
+		-command ("optionVar -sv \"qube_qubeguiPath\" \"\";" +
+				  " textFieldButtonGrp -e -fi \"\"" +
+				  " qube_addUI_optionVarDialog_textField;")
+		$resetBtn;
+	// Titling	  
+	setOptionBoxTitle ("Qube Preferences");
+	//setOptionBoxHelpTag( "Qube" );
+	// Show
+	showOptionBox();
+}
+
+//
+// Add a top-level "Qube!" menu to the "Rendering" submenu
+//
+global proc string qube_add_qube_menu()
+{
+	// REVISIT: For some reason, the code below adds the "Qube!" menu
+	// to all submenus, and not just the "Rendering" submenu. It used
+	// to work properly in earlier versions of Maya...
+	//
+	// The following code to add Qube! menu only to the "Rendering"
+	// submenu was contributed by anonymous@Animal Logic-- Mahalo!
+	// <contrib>
+	global string $gQubeMenu;
+	if(`menu -q -exists $gQubeMenu` == 0) {
+		print ("Creating top-level \"Qube!\" menu\n");
+		global string $gMainWindow;
+		global string $gRenderingMenus[];
+		$gQubeMenu = `menu -label "Qube!" -aob true
+			-to true -pmo true -parent $gMainWindow "newQubeMenu"`;
+		$gRenderingMenus[size($gRenderingMenus)] = $gQubeMenu;
+	}
+	// </contrib>
+	return $gQubeMenu;
+}
+
+
+//
+// Get the QubeGUI path from the optionVar qube_qubeguiPath
+//
+global proc string qube_get_qubeguiPath()
+{	
+	// get the first 3 characters of the platform
+	string $platform3 = python( "import sys; sys.platform[:3]" );
+
+	// Get qubegui path from preferences
+	string $qube_qubeguiPath = "";
+	if (`optionVar -exists "qube_qubeguiPath"`) {
+		$qube_qubeguiPath = `optionVar -q "qube_qubeguiPath"`;
+	}
+
+	switch ($platform3) {
+	case "win": // Windows
+		if($qube_qubeguiPath == "") {
+			if(exists("C:/Program Files/pfx/qube/bin/qube.exe")) {
+				$qube_qubeguiPath = "C:/Program Files/pfx/qube/bin/qube.exe";
+			} else if(exists("C:/Program Files (x86)/pfx/qube/bin/qube.exe")) {
+				$qube_qubeguiPath =
+					"C:/Program Files (x86)/pfx/qube/bin/qube.exe";
+			} else {
+				$qube_qubeguiPath = "qube.exe";
+			}
+		}
+		break;
+
+	case "dar": // OSX
+		if ($qube_qubeguiPath == "") {
+			$qube_qubeguiPath = "/Applications/pfx/qube/qube.app";
+		}
+		break;
+
+	case "lin": // Linux
+		if ($qube_qubeguiPath == "") {
+			$qube_qubeguiPath = "/atomo/pipeline/tools/scripts/qube";
+		}
+		break;
+	}
+	// Verify path exists
+	if (`filetest -x $qube_qubeguiPath` == 0) {
+		error ("QubeGUI path not valid.  Set under Qube->Launch QubeGUI option box: "+$qube_qubeguiPath);
+	}
+	return $qube_qubeguiPath;
+}
+
+global proc qube_loadJobArchive(string $cmdPrefix1, string $cmdPrefix2, string $cmdSuffix)
+{
+    string $qube_cmdTemplate = ("system(\"" + $cmdPrefix1 +
+                                            "\"+`qube_get_qubeguiPath`+\"" +
+                                              $cmdPrefix2 +
+                                            " QUBEGUI_ARGS " +
+                                            $cmdSuffix+"\")");
+
+    string $jobArchive = `fileDialog -mode 0 -directoryMask "*.xja;*.qja" -title "Browse for Qube Job Archive"`;
+    
+    if ($jobArchive != "")
+    {
+        string $submitCmd = `substitute "QUBEGUI_ARGS" $qube_cmdTemplate ("--submitFile " + $jobArchive)`;
+        eval $submitCmd;
+    }
+    else
+    {
+        print "No Qube job archive selected, submission cancelled.\n";
+    }
+}
+
+//
+// qube_addUI()
+//
+global proc qube_addUI()
+{
+	// Skip adding UI if in non-interactive mode
+	if (`about -batch` == 1) {
+		return;
+	}
+	
+	// Set Parameters
+	// NOTE: Running python directly does not seem to work (likely
+	// because of PYTHONPATH is being set by maya)
+	// If Linux, add this to the command so that it launches
+	string $qube_launchgui; 
+	string $qube_launchgui_prefix1 = "";
+	string $qube_launchgui_prefix2 = "";
+	string $qube_launchgui_suffix;	 // instead of using "open"
+	// get the first 3 characters of the platform
+	string $platform3 = python( "import sys; sys.platform[:3]" );
+
+	switch ($platform3) {
+	case "win": // Windows
+		$qube_launchgui_prefix1 = "start \\\"";
+		$qube_launchgui_prefix2 = "\\\"";
+		$qube_launchgui_suffix = "";
+		break;
+
+	case "dar": // OSX
+		$qube_launchgui_prefix1 = "";
+		$qube_launchgui_prefix2 = "/Contents/MacOS/qube";
+		$qube_launchgui_suffix = " >/dev/null 2>&1 &";
+		// ...instead of using "open"
+		break;
+
+	case "lin": // Linux
+		$qube_launchgui_prefix1 = "";
+		$qube_launchgui_prefix2 = "";
+		$qube_launchgui_suffix = " >/dev/null 2>&1 &";
+		break;
+	}
+	// Construct a string, statically filling in some fields, and
+	// dynamically filling in others
+	string $qube_cmdTemplate = ("system(\"" + $qube_launchgui_prefix1 +
+                                            "\"+`qube_get_qubeguiPath`+\"" +
+                                              $qube_launchgui_prefix2 +
+								" QUBEGUI_ARGS " +
+								$qube_launchgui_suffix+"\")");
+    //print $qube_cmdTemplate;
+	
+	// Remove menuitems (if exist)
+	qube_removeUI();
+	
+	// Remove legacy menuitems under the "Render" menu
+	qube_remove_legacy_UI();
+	
+	// create top-level "Qube!" menu
+	qube_add_qube_menu();
+
+	// Add menuitems
+	print ("Adding Qube mayabatch menuitems to Qube! menu\n");
+	global string $gQubeMenu;
+	setParent -menu $gQubeMenu;
+
+	if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+		menuItem	-label "Submit Batch Current Renderer..."
+				-c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (\"+`qube_getCurrentRendererShortname`+\")', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+				-annotation "Render current scene with current renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+				-echoCommand true
+				 qube_submitSimpleCmdRender;
+	} else {
+		menuItem	-label "Submit Batch Current Renderer..."
+				-c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (\"+`qube_getCurrentRendererShortname`+\")', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+				-annotation "Render current scene with current renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+				-echoCommand true
+				 qube_submitSimpleCmdRender;
+	}
+
+	menuItem -subMenu true -label "Submit Batch Render" qube_submitAllRenderersMenu;
+
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render file..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (file)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with file renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_file;
+    } else {
+        menuItem    -label "Render file..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (file)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with file renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_file;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render sw..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (sw)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with sw renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_sw;
+    } else {
+        menuItem    -label "Render sw..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (sw)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with sw renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_sw;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render hw..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (hw)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with hw renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_hw;
+    } else {
+        menuItem    -label "Render hw..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (hw)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with hw renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_hw;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render lightmap..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (lightmap)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with lightmap renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_lightmap;
+    } else {
+        menuItem    -label "Render lightmap..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (lightmap)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with lightmap renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_lightmap;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render mi..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (mi)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with mi renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_mi;
+    } else {
+        menuItem    -label "Render mi..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (mi)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with mi renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_mi;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render mr..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (mr)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with mr renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_mr;
+    } else {
+        menuItem    -label "Render mr..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (mr)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with mr renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_mr;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render vr..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (vr)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with vr renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_vr;
+    } else {
+        menuItem    -label "Render vr..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (vr)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with vr renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_vr;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render 3delight..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (3delight)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with 3delight renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_3delight;
+    } else {
+        menuItem    -label "Render 3delight..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (3delight)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with 3delight renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_3delight;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render vray..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (vray)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with vray renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_vray;
+    } else {
+        menuItem    -label "Render vray..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (vray)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with vray renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_vray;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render rib..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (rib)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with rib renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_rib;
+    } else {
+        menuItem    -label "Render rib..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (rib)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with rib renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_rib;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render rman..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (rman)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with rman renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_rman;
+    } else {
+        menuItem    -label "Render rman..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (rman)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with rman renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_rman;
+    }
+    
+    if (getApplicationVersionAsFloat() >= 2009) { // contains renderpass added in Maya 2009
+        menuItem    -label "Render turtle..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (turtle)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"','renderPass_all':'\"+stringArrayToString(`ls -type renderPass`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with turtle renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_turtle;
+    } else {
+        menuItem    -label "Render turtle..."
+                -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate (" --submitDict \\\"{'name':'maya batchrender \"+`file -q -sn -shn`+\"', 'prototype':'cmdrange', 'package':{'simpleCmdType':'Maya BatchRender (turtle)', 'scenefile':'\"+`file -q -sn`+\"', '-proj':'\"+`workspace -q -rd`+\"', 'range':'\"+`playbackOptions -q -min`+\"-\"+`playbackOptions -q -max`+\"','camera_all':'\"+stringArrayToString(`listCameras -p -o`, \" \")+\"', 'renderLayer_all':'\"+stringArrayToString(`ls -type renderLayer`, \" \")+\"'}}\\\"")`
+                -annotation "Render current scene with turtle renderer through Qube using the appropriate Mayabatch SimpleCmd that exposes all commandline render options"
+                -echoCommand true
+                 qube_submitSimpleCmdRender_turtle;
+    }
+    
+    setParent -menu ..;
+
+    menuItem -label "Load Job From File..."
+        -command ("qube_loadJobArchive(\"" + $qube_launchgui_prefix1 + "\", \"" + $qube_launchgui_prefix2 + "\", \"" + $qube_launchgui_suffix + "\")")
+        -annotation "Submit a job from an existing Qube job archive file (*.qja, *.xja)"
+        -echoCommand true
+        qube_submitJobFromFile;
+
+    menuItem -label "Launch Qube GUI..."
+        -c `substitute "QUBEGUI_ARGS" $qube_cmdTemplate ""`
+        -annotation "Launch the QubeGUI to monitor and manage distributed jobs"
+        -echoCommand true
+        qube_launchQubeGUI;
+    menuItem -optionBox true -c "qube_optionVarDlg()" qube_launchQubeGUI_OB;
+}

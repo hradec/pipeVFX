@@ -1,0 +1,20 @@
+
+
+# freenas
+# =================================================
+#distros     -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/netboot/distros
+#home        -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/netboot/home
+#log         -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/netboot/log
+#tmp         -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/netboot/tmp
+#usr         -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/netboot/usr
+#swap        -fstype=nfs,rw,nolock,rsize=8192,wsize=8192,vers=3,udp   192.168.0.9:/mnt/STORAGE/ATOMOPIPELINE/netboot/swap
+
+
+# centos
+#===================================================
+distros    -fstype=nfs,rw,vers=4,rsize=8192,wsize=8192,nolock,udp   192.168.0.10:/RAID/atomo/netboot/distros
+home       -fstype=nfs,rw,vers=4,rsize=8192,wsize=8192,nolock,udp   192.168.0.10:/RAID/atomo/netboot/home
+log        -fstype=nfs,rw,vers=4,rsize=8192,wsize=8192,nolock,udp   192.168.0.10:/RAID/atomo/netboot/log
+tmp        -fstype=nfs,rw,vers=4,rsize=8192,wsize=8192,nolock,udp   192.168.0.10:/RAID/atomo/netboot/tmp
+usr        -fstype=nfs,rw,vers=4,rsize=8192,wsize=8192,nolock,udp   192.168.0.10:/RAID/atomo/netboot/usr
+swap       -fstype=nfs,rw,vers=4,rsize=8192,wsize=8192,nolock,udp   192.168.0.10:/RAID/atomo/netboot/swap

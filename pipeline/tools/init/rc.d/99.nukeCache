@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Looks for a CACHE named volume, and mount it to be used by nuke as cache!
+#
+
+#cacheVol=$(/sbin/blkid | grep CACHE | cut -d':' -f1)
+
+cache(){
+  for line in $(cat /proc/partitions | grep sd.. | cut -d's' -f2 | sed 's/d/sd/g'); do
+	echo "$(/sbin/blkid /dev/$line | grep CACHE | cut -d':' -f1)"
+	/sbin/blkid /dev/$line >&2
+	echo $line >&2
+  done
+}
+cacheVol=$(cache)
+echo BUMM >&2
+cat /proc/partitions >&2
+echo $cacheVol >&2
+if [ "$cacheVol" != "" ] ; then 
+    mkdir -p /nuke_sd_cache
+    mount $cacheVol /nuke_sd_cache
+    chmod a+rwx /nuke_sd_cache
+fi
+
+

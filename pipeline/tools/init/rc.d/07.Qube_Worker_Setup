@@ -1,0 +1,109 @@
+#!/bin/bash
+
+
+#---------------------------------------------------------------------------------------------------------
+# QUBE WORKER SETUP
+#---------------------------------------------------------------------------------------------------------
+# we grab the qube supervisor from the pipeline directly, so
+# we don't have to maintain 2 different places!
+QB_SUPERVISOR=$(env PYTHONPATH=$tools/python /usr/bin/python -c "import pipe;print pipe.apps.qube()['QB_SUPERVISOR']")
+
+# and the path for the worker
+QB_ROOT=$(env PYTHONPATH=$tools/python /usr/bin/python -c "import pipe;print pipe.apps.qube().path()")
+#QB_JOB_LOGS=$(env PYTHONPATH=$tools/python /usr/bin/python -c "import pipe;print pipe.apps.qube().logFolder()")
+QB_JOB_LOGS="/mnt/Projetos/TOOLS/.qube/logs"
+QBDIR=$QB_ROOT/qube-worker/local/pfx/qube/
+
+qblock(){
+    #$tools/scripts/run qblock 
+    $QB_ROOT/qube-core/local/pfx/qube/bin/qblock $@
+}
+
+qube_worker_start() {
+	# Start daemons.
+	$QBDIR/sbin/worker 1>&2
+	[ $? -eq 0 ] && touch /var/lock/subsys/worker
+    # wait worker to start so unlock takes effect!
+    while [ "$(pidof worker)" = "" ] 
+    do
+        sleep 1
+	echo -n .
+    done
+    qblock --unlock $(hostname) 1>&2
+    sleep 0.1
+}
+qube_worker_stop() {
+	# Stop daemons.
+	pkill worker 2>&1 1>/dev/null
+	rm -f /var/lock/subsys/worker
+}
+qube_setup() {
+    # fix qube central folder permissions
+    mkdir -p  $QB_JOB_LOGS
+    chown -R admin:root  $QB_JOB_LOGS
+    chmod -R a+rwx $QB_JOB_LOGS
+
+    # create worker db folder or else it will leak memory until machine hangs!!
+    mkdir -p /var/spool/qube/
+    chmod a+rwx /var/spool/qube/
+    $QB_ROOT/qube-worker/local/pfx/qube/utils/upgrade_worker --reset 
+
+    # stop worker if its running, just in case
+    if [ -n "$(pidof worker)" ]; then
+        qube_worker_stop
+    fi
+
+    # if qube not installed, install it! 
+    CORES=$(/usr/bin/python -c "import multiprocessing as m;print m.cpu_count()")
+    if [ ! -f /etc/init.d/worker ] ; then 
+        $QBDIR/utils/install_worker \
+            --prefix "$QBDIR" 2>&1 > \
+        /var/log/pipeBoot/qbinstall_worker.log
+    fi
+    mkdir -p /etc/sysconfig/
+    cat > /etc/sysconfig/qube <<EOF
+export QB_SUPERVISOR=$QB_SUPERVISOR
+export QB_DOMAIN=qubelinux
+export QB_ROOT=$QB_ROOT
+export QBDIR=$QBDIR
+EOF
+    # setup qb.conf configuration at boot time!
+    cat > /etc/qb.conf <<EOF
+supervisor_host = $QB_SUPERVISOR
+worker_cpus = 0
+worker_template_path = "$QB_ROOT/qube-core/local/pfx/qube/types/"
+worker_job_types = "cmdline,cmdrange,cmdmulti,frame"
+worker_cluster = /pipe
+worker_groups = "pipe"
+proxy_execution_mode = user
+#proxy_execution_mode = proxy
+proxy_location =  "$QB_ROOT/qube-worker/local/pfx/qube/sbin/proxy"
+proxy_nice_value = 20
+#worker_heartbeat_interval = 600
+#worker_resources = host.processors=$CORES
+worker_logpath = $QB_JOB_LOGS
+worker_logmode = mounted
+client_logpath = $QB_JOB_LOGS
+EOF
+}
+
+qube_gdm_setup(){
+    # setup GDM so it locks qube worker if someone logs in...
+    cat > /etc/gdm/PreSession/Default << EOF
+#!/bin/sh
+PATH="/usr/bin:$PATH"
+$tools/init/gdm/login
+EOF
+    # and unlocks if someone logs out!
+    cat > /etc/gdm/PostSession/Default << EOF
+#!/bin/sh
+$tools/init/gdm/logout
+exit 0
+EOF
+}
+
+if [ -f $QBDIR/sbin/worker ] ; then 
+    qube_setup 1>&2
+    qube_gdm_setup
+    qube_worker_start
+fi

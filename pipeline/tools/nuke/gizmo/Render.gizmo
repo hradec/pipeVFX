@@ -1,0 +1,72 @@
+#! C:/Program Files/Nuke7.0v2/Nuke7.0.exe -nx
+version 7.0 v2
+Gizmo {
+ addUserKnob {20 User l Render}
+ addUserKnob {2 File1 l file}
+ addUserKnob {32 But l "\"Pipe\"" -STARTLINE T "\[set seq \[knob File1 \[python \{nuke.root()\['name'].value().rsplit('/',1)\[0]+\"/render/\"\}]]; return]"}
+ addUserKnob {41 file_type l "file type" T Write1.file_type}
+ addUserKnob {41 datatype -STARTLINE T Write1.datatype}
+ addUserKnob {41 channels T Write1.channels}
+ addUserKnob {41 colorspace T Write1.colorspace}
+ addUserKnob {41 premultiplied -STARTLINE T Write1.premultiplied}
+ addUserKnob {41 raw l "raw data" -STARTLINE T Write1.raw}
+ addUserKnob {26 ""}
+ addUserKnob {41 Render T Write1.Render}
+ addUserKnob {20 Reformat}
+ addUserKnob {41 format l "output format" T Reformat1.format}
+ addUserKnob {41 type T Reformat1.type}
+ addUserKnob {41 filter -STARTLINE T Reformat1.filter}
+ addUserKnob {26 ""}
+ addUserKnob {41 resize l "resize type" T Reformat1.resize}
+ addUserKnob {41 center -STARTLINE T Reformat1.center}
+ addUserKnob {41 flip -STARTLINE T Reformat1.flip}
+ addUserKnob {41 flop -STARTLINE T Reformat1.flop}
+ addUserKnob {41 turn -STARTLINE T Reformat1.turn}
+ addUserKnob {41 black_outside l "black outside" T Reformat1.black_outside}
+ addUserKnob {41 pbb l "preserve bounding box" -STARTLINE T Reformat1.pbb}
+ addUserKnob {26 ""}
+ addUserKnob {6 Reformat_1 l Reformat +STARTLINE}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 525
+  ypos -310
+ }
+set N2f1a4550 [stack 0]
+ Dot {
+  name Dot1
+  xpos 461
+  ypos -307
+ }
+ Reformat {
+  name Reformat1
+  xpos 427
+  ypos -220
+ }
+push $N2f1a4550
+ Switch {
+  inputs 2
+  which {{parent.Reformat_1}}
+  name Switch1
+  xpos 525
+  ypos -220
+ }
+ Write {
+  file "\[value parent.File1]\[python \{nuke.root()\['name'].value().rsplit('/',1)\[1].replace('.nk', '')\}].%04d.\[value file_type]"
+  colorspace linear
+  file_type dpx
+  checkHashOnRead false
+  version 12
+  name Write1
+  label "\[value parent.File1]"
+  selected true
+  xpos 525
+  ypos -181
+ }
+ Output {
+  name Output1
+  xpos 525
+  ypos -101
+ }
+end_group

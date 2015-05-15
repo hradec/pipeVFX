@@ -1,0 +1,3 @@
+
+ISCSI_DISK=$(cat /proc/partitions | grep 1677 | grep -oe sd[abcdef])
+echo $ISCSI_DISK
