@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+
 class slum(baseApp):
     def environ(self):
         # configure maya plugin/scripts/icons

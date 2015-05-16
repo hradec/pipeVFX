@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+#=====
 # Primitive Variables
 #
 # This cookbook example demonstrates how to assign a primitive variable

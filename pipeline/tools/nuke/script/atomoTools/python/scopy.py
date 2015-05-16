@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+#scopy.py  v1.1
 #Required modules imported
 import os
 import nuke

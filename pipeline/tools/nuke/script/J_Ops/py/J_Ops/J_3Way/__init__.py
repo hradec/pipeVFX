@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+#  __init__.py
 #  J_Ops
 #
 #  Created by Jack Binks on 07/01/2010.

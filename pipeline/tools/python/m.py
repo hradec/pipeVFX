@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+import sys, os, glob
 if os.environ.has_key('HOME'):
     mayaPath = os.path.abspath( '%s/tools/maya/plugins' % os.environ['HOME'] )
     sys.path.append( mayaPath )

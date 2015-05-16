@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+# Boundary Visual Effects - bvfx_relativize
 # Version 1.1
 #
 # For greeting, bugs, and requests email me at mborgo[at]boundaryvfx.com

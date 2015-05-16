@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+class zbrush(baseApp):
     def environ(self):
 #        self['__GL_ALWAYS_HANDLE_FORK'] = '1' 
         self['__GL_SYNC_TO_VBLANK'] = '0'

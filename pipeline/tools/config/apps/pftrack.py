@@ -33,3 +33,4 @@ class pftrack(baseApp):
         self['PIXELFARM_KEEP_PYTHONPATH'] = '1'
         self['PIXELFARM_SPLASH_DURATION'] = '0'        
 #        self['PF_DATA_HOME'] = self.path()
+   

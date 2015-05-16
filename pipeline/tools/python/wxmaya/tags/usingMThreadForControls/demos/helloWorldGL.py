@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+
 import wx
 from  wx import glcanvas as glcanvas
 import wxmaya.app as app
