@@ -1,0 +1,3 @@
+#!/bin/bash
+
+run python $(dirname $BASH_SOURCE)/../script/scons "$@"

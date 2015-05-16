@@ -52,7 +52,9 @@ if osx:
         os.system('launchctl load /usr/local/Cellar/d-bus/org.freedesktop.dbus-session.plist')
 
 import log
+import build
 from baseApp import version, versionLib, appsDB, app, libsDB, lib, baseApp, baseLib, disable, roots
+
 try:
     import admin 
 except:
@@ -213,7 +215,8 @@ def init():
         export __PATH=$PATH
         export __PYTHONPATH=$PYTHONPATH
         export EDITOR=nano
-    ''' % (root, depotRoot(), alias(), path, pythonpath)
+        %s
+    ''' % (root, depotRoot(), alias(), path, pythonpath, build.env())
     
     if '___PATH' not in os.environ.keys():
         envs += '''
