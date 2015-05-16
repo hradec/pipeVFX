@@ -1,0 +1,5 @@
+#!/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/python/2.6.8/bin/python2.6
+
+import pydoc
+if __name__ == '__main__':
+    pydoc.cli()
