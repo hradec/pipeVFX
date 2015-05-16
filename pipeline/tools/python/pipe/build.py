@@ -21,11 +21,17 @@
 from base import roots, platform, bits, arch, distro, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name
 
 
+def install(plat=platform):
+    ''' install directory for the current platform'''
+    return "%s/pipeline/libs/%s/%s/%s" % (depotRoot(),plat,arch,distro)
+
+def devInstall(plat=platform):
+    ''' development install directory for the current platform'''
+    return "%s/pipeline/build/%s/%s/%s" % (depotRoot(),plat,arch,distro)
+
 def env():
-    
+    ''' return the PATH to add our custom gcc, so when we build something, it will use pipes gcc'''
     return '''
         PATH=%s/gcc/bin/:$PATH
-    ''' % (
-        "%s/pipeline/libs/%s/%s/%s" % (depotRoot(),platform,arch,distro)
-    )
+    ''' % (install())
 

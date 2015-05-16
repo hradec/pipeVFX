@@ -1,0 +1,20 @@
+#!/usr/bin/python 
+
+import build,sys
+
+#print dir(ARGUMENTS), ARGUMENTS
+
+
+epydoc = build.pythonSetup(
+        ARGUMENTS,
+        'epydoc',
+        src='src/setup.py',
+        url='https://epydoc.svn.sourceforge.net/svnroot/epydoc/trunk/epydoc',
+        svn=True,
+        installBin=True,
+        extractFolder='epydoc/src',
+        sed = ['s/.System.Library.Frameworks.Python.framework.Versions.2.5.Resources.Python.app.Contents.MacOS.Python/\/usr\/bin\/env python/g']
+)
+epydoc.finalize()
+
+

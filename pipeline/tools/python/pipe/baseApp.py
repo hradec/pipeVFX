@@ -1332,7 +1332,7 @@ class baseApp(_environ):
                 d = "-d %s" % d 
             else:
                 d = ""
-            debug = '%s +v %s %s %s' % (vglrun, d, m32, debug)
+            debug = '%s %s %s %s' % (vglrun, d, m32, debug)
                 
         # construct the command line to run the software
         binFullName = '%s/%s' % (self.bin(), binName)
