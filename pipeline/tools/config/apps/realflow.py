@@ -33,7 +33,8 @@ class realflow(baseApp):
    
     def bins(self):
         return [('realflow', 'realflow.bin')]    
-        
+
+
     def userSetup(self, jobuser):
         self['RFSCENESPATH'] = jobuser.path('realflow')
 

@@ -18,7 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-#
+
 # mthread - a class to create proper python threads in maya.
 #
 # just derive this class to your own to create a custom threaded class

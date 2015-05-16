@@ -19,6 +19,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+##########################################################################
 #
 #  Copyright (c) 2010, Roberto Hradec. All rights reserved.
 #
