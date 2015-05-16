@@ -1,0 +1,492 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>JsonGenerator</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="ch03.html" title="Generator">
+<link rel="prev" href="ch03.html" title="Generator">
+<link rel="next" href="JsonBuilder.html" title="JsonBuilder">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="ch03.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch03.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="JsonBuilder.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#JsonGenerator.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#JsonGenerator.description" class="shortcut">Description</a>
+                   | 
+                  <a href="#JsonGenerator.object-hierarchy" class="shortcut">Object Hierarchy</a>
+                   | 
+                  <a href="#JsonGenerator.properties" class="shortcut">Properties</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="JsonGenerator"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="JsonGenerator.top_of_page"></a>JsonGenerator</span></h2>
+<p>JsonGenerator — Generates JSON data streams</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="JsonGenerator.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">struct              <a class="link" href="JsonGenerator.html#JsonGenerator-struct" title="struct JsonGenerator">JsonGenerator</a>;
+struct              <a class="link" href="JsonGenerator.html#JsonGeneratorClass" title="struct JsonGeneratorClass">JsonGeneratorClass</a>;
+<a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="returnvalue">JsonGenerator</span></a> *     <a class="link" href="JsonGenerator.html#json-generator-new" title="json_generator_new ()">json_generator_new</a>                  (<em class="parameter"><code><span class="type">void</span></code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonGenerator.html#json-generator-set-root" title="json_generator_set_root ()">json_generator_set_root</a>             (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="JsonGenerator.html#json-generator-get-root" title="json_generator_get_root ()">json_generator_get_root</a>             (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonGenerator.html#json-generator-set-pretty" title="json_generator_set_pretty ()">json_generator_set_pretty</a>           (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">gboolean</span> is_pretty</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonGenerator.html#json-generator-get-pretty" title="json_generator_get_pretty ()">json_generator_get_pretty</a>           (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonGenerator.html#json-generator-set-indent" title="json_generator_set_indent ()">json_generator_set_indent</a>           (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">guint</span> indent_level</code></em>);
+<span class="returnvalue">guint</span>               <a class="link" href="JsonGenerator.html#json-generator-get-indent" title="json_generator_get_indent ()">json_generator_get_indent</a>           (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonGenerator.html#json-generator-set-indent-char" title="json_generator_set_indent_char ()">json_generator_set_indent_char</a>      (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">gunichar</span> indent_char</code></em>);
+<span class="returnvalue">gunichar</span>            <a class="link" href="JsonGenerator.html#json-generator-get-indent-char" title="json_generator_get_indent_char ()">json_generator_get_indent_char</a>      (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>);
+
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonGenerator.html#json-generator-to-file" title="json_generator_to_file ()">json_generator_to_file</a>              (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *filename</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+<span class="returnvalue">gchar</span> *             <a class="link" href="JsonGenerator.html#json-generator-to-data" title="json_generator_to_data ()">json_generator_to_data</a>              (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">gsize</span> *length</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonGenerator.html#json-generator-to-stream" title="json_generator_to_stream ()">json_generator_to_stream</a>            (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">GOutputStream</span> *stream</code></em>,
+                                                         <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonGenerator.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  GObject
+   +----JsonGenerator
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonGenerator.properties"></a><h2>Properties</h2>
+<pre class="synopsis">
+  "<a class="link" href="JsonGenerator.html#JsonGenerator--indent" title='The "indent" property'>indent</a>"                   <span class="type">guint</span>                 : Read / Write
+  "<a class="link" href="JsonGenerator.html#JsonGenerator--indent-char" title='The "indent-char" property'>indent-char</a>"              <span class="type">guint</span>                 : Read / Write
+  "<a class="link" href="JsonGenerator.html#JsonGenerator--pretty" title='The "pretty" property'>pretty</a>"                   <span class="type">gboolean</span>              : Read / Write
+  "<a class="link" href="JsonGenerator.html#JsonGenerator--root" title='The "root" property'>root</a>"                     <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>*             : Read / Write
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonGenerator.description"></a><h2>Description</h2>
+<p>
+<a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> provides an object for generating a JSON data stream and
+put it into a buffer or a file.
+</p>
+</div>
+<div class="refsect1">
+<a name="JsonGenerator.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="JsonGenerator-struct"></a><h3>struct JsonGenerator</h3>
+<pre class="programlisting">struct JsonGenerator;</pre>
+<p>
+JSON data streams generator. The contents of the <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> structure
+are private and should only be accessed via the provided API.
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonGeneratorClass"></a><h3>struct JsonGeneratorClass</h3>
+<pre class="programlisting">struct JsonGeneratorClass {
+};
+</pre>
+<p>
+<a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> class
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-new"></a><h3>json_generator_new ()</h3>
+<pre class="programlisting"><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="returnvalue">JsonGenerator</span></a> *     json_generator_new                  (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
+<p>
+Creates a new <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>. You can use this object to generate a
+JSON data stream starting from a data object model composed by
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>s.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly created <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> instance</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-set-root"></a><h3>json_generator_set_root ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_generator_set_root             (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);</pre>
+<p>
+Sets <em class="parameter"><code>node</code></em> as the root of the JSON data stream to be serialized by
+the <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>.
+</p>
+<p>
+</p>
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+<h3 class="title">Note</h3>The node is copied by the generator object, so it can be safely
+freed after calling this function.</div>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-get-root"></a><h3>json_generator_get_root ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_generator_get_root             (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>);</pre>
+<p>
+Retrieves a pointer to the root <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> set using
+<a class="link" href="JsonGenerator.html#json-generator-set-root" title="json_generator_set_root ()"><code class="function">json_generator_set_root()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. The returned node
+is owned by the <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> and it should not be freed. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-set-pretty"></a><h3>json_generator_set_pretty ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_generator_set_pretty           (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">gboolean</span> is_pretty</code></em>);</pre>
+<p>
+Sets whether the generated JSON should be pretty printed, using the
+indentation character specified in the <a class="link" href="JsonGenerator.html#JsonGenerator--indent-char" title='The "indent-char" property'><span class="type">"indent-char"</span></a>
+property and the spacing specified in <a class="link" href="JsonGenerator.html#JsonGenerator--indent" title='The "indent" property'><span class="type">"indent"</span></a> property.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>is_pretty</code></em> :</span></p></td>
+<td>whether the generated string should be pretty printed</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-get-pretty"></a><h3>json_generator_get_pretty ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_generator_get_pretty           (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>);</pre>
+<p>
+Retrieves the value set using <a class="link" href="JsonGenerator.html#json-generator-set-pretty" title="json_generator_set_pretty ()"><code class="function">json_generator_set_pretty()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the generated JSON should be pretty-printed, and
+<code class="literal">FALSE</code> otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-set-indent"></a><h3>json_generator_set_indent ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_generator_set_indent           (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">guint</span> indent_level</code></em>);</pre>
+<p>
+Sets the number of repetitions for each indentation level.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>indent_level</code></em> :</span></p></td>
+<td>the number of repetitions of the indentation character
+that should be applied when pretty printing</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-get-indent"></a><h3>json_generator_get_indent ()</h3>
+<pre class="programlisting"><span class="returnvalue">guint</span>               json_generator_get_indent           (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>);</pre>
+<p>
+Retrieves the value set using <a class="link" href="JsonGenerator.html#json-generator-set-indent" title="json_generator_set_indent ()"><code class="function">json_generator_set_indent()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the number of repetitions per indentation level</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-set-indent-char"></a><h3>json_generator_set_indent_char ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_generator_set_indent_char      (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">gunichar</span> indent_char</code></em>);</pre>
+<p>
+Sets the character to be used when indenting
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>indent_char</code></em> :</span></p></td>
+<td>a Unicode character to be used when indenting</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-get-indent-char"></a><h3>json_generator_get_indent_char ()</h3>
+<pre class="programlisting"><span class="returnvalue">gunichar</span>            json_generator_get_indent_char      (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>);</pre>
+<p>
+Retrieves the value set using <a class="link" href="JsonGenerator.html#json-generator-set-indent-char" title="json_generator_set_indent_char ()"><code class="function">json_generator_set_indent_char()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the character to be used when indenting</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-to-file"></a><h3>json_generator_to_file ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_generator_to_file              (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *filename</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Creates a JSON data stream and puts it inside <em class="parameter"><code>filename</code></em>, overwriting the
+current file contents. This operation is atomic.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>filename</code></em> :</span></p></td>
+<td>path to the target file</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>return location for a <span class="type">GError</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if saving was successful.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-to-data"></a><h3>json_generator_to_data ()</h3>
+<pre class="programlisting"><span class="returnvalue">gchar</span> *             json_generator_to_data              (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">gsize</span> *length</code></em>);</pre>
+<p>
+Generates a JSON data stream from <em class="parameter"><code>generator</code></em> and returns it as a
+buffer.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>length</code></em> :</span></p></td>
+<td>return location for the length of the returned
+buffer, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="Parameter for returning results. Default is transfer full."><span class="acronym">out</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a newly allocated buffer holding a JSON data stream.
+Use <code class="function">g_free()</code> to free the allocated resources.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-generator-to-stream"></a><h3>json_generator_to_stream ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_generator_to_stream            (<em class="parameter"><code><a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> *generator</code></em>,
+                                                         <em class="parameter"><code><span class="type">GOutputStream</span> *stream</code></em>,
+                                                         <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Outputs JSON data and streams it (synchronously) to <em class="parameter"><code>stream</code></em>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>generator</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>stream</code></em> :</span></p></td>
+<td>a <span class="type">GOutputStream</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>cancellable</code></em> :</span></p></td>
+<td>a <span class="type">GCancellable</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>return location for a <span class="type">GError</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the write operation was successful, and <code class="literal">FALSE</code>
+on failure. In case of error, the <span class="type">GError</span> will be filled accordingly</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+</div>
+<div class="refsect1">
+<a name="JsonGenerator.property-details"></a><h2>Property Details</h2>
+<div class="refsect2">
+<a name="JsonGenerator--indent"></a><h3>The <code class="literal">"indent"</code> property</h3>
+<pre class="programlisting">  "indent"                   <span class="type">guint</span>                 : Read / Write</pre>
+<p>
+Number of spaces to be used to indent when pretty printing.
+</p>
+<p>Default value: 2</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonGenerator--indent-char"></a><h3>The <code class="literal">"indent-char"</code> property</h3>
+<pre class="programlisting">  "indent-char"              <span class="type">guint</span>                 : Read / Write</pre>
+<p>
+The character that should be used when indenting in pretty print.
+</p>
+<p>Default value: ' '</p>
+<p class="since">Since 0.6</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonGenerator--pretty"></a><h3>The <code class="literal">"pretty"</code> property</h3>
+<pre class="programlisting">  "pretty"                   <span class="type">gboolean</span>              : Read / Write</pre>
+<p>
+Whether the output should be "pretty-printed", with indentation and
+newlines. The indentation level can be controlled by using the
+JsonGenerator:indent property
+</p>
+<p>Default value: FALSE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonGenerator--root"></a><h3>The <code class="literal">"root"</code> property</h3>
+<pre class="programlisting">  "root"                     <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>*             : Read / Write</pre>
+<p>
+The root <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> to be used when constructing a JSON data
+stream.
+</p>
+<p class="since">Since 0.4</p>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>

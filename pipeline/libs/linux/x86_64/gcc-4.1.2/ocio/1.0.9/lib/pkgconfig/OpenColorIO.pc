@@ -1,0 +1,10 @@
+prefix=/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/ocio/1.0.9
+exec_prefix=/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/ocio/1.0.9
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: OpenColorIO
+Description: A color management framework for visual effects and animation
+Version: 1.0.9
+Cflags: -I${includedir}
+Libs: -L${libdir} -lOpenColorIO

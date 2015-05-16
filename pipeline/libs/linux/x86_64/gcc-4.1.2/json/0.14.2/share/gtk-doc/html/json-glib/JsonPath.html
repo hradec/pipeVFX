@@ -1,0 +1,464 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>JsonPath</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="ch02.html" title="Parser">
+<link rel="prev" href="JsonReader.html" title="JsonReader">
+<link rel="next" href="ch03.html" title="Generator">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="JsonReader.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch02.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="ch03.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#JsonPath.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#JsonPath.description" class="shortcut">Description</a>
+                   | 
+                  <a href="#JsonPath.object-hierarchy" class="shortcut">Object Hierarchy</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="JsonPath"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="JsonPath.top_of_page"></a>JsonPath</span></h2>
+<p>JsonPath — JSONPath implementation</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="JsonPath.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">                    <a class="link" href="JsonPath.html#JsonPath-struct" title="JsonPath">JsonPath</a>;
+                    <a class="link" href="JsonPath.html#JsonPathClass" title="JsonPathClass">JsonPathClass</a>;
+<a class="link" href="JsonPath.html" title="JsonPath"><span class="returnvalue">JsonPath</span></a> *          <a class="link" href="JsonPath.html#json-path-new" title="json_path_new ()">json_path_new</a>                       (<em class="parameter"><code><span class="type">void</span></code></em>);
+#define             <a class="link" href="JsonPath.html#JSON-PATH-ERROR:CAPS" title="JSON_PATH_ERROR">JSON_PATH_ERROR</a>
+enum                <a class="link" href="JsonPath.html#JsonPathError" title="enum JsonPathError">JsonPathError</a>;
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonPath.html#json-path-compile" title="json_path_compile ()">json_path_compile</a>                   (<em class="parameter"><code><a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> *path</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">char</span> *expression</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="JsonPath.html#json-path-match" title="json_path_match ()">json_path_match</a>                     (<em class="parameter"><code><a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> *path</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *root</code></em>);
+
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="JsonPath.html#json-path-query" title="json_path_query ()">json_path_query</a>                     (<em class="parameter"><code>const <span class="type">char</span> *expression</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *root</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonPath.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  GObject
+   +----JsonPath
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonPath.description"></a><h2>Description</h2>
+<p>
+<a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> is a simple class implementing the JSONPath syntax for extracting
+data out of a JSON tree. While the semantics of the JSONPath expressions are
+heavily borrowed by the XPath specification for XML, the syntax follows the
+ECMAScript origins of JSON.
+</p>
+<p>
+Once a <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> instance has been created, it has to compile a JSONPath
+expression using <a class="link" href="JsonPath.html#json-path-compile" title="json_path_compile ()"><code class="function">json_path_compile()</code></a> before being able to match it to a
+JSON tree; the same <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> instance can be used to match multiple JSON
+trees. It it also possible to compile a new JSONPath expression using the
+same <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> instance; the previous expression will be discarded only if
+the compilation of the new expression is successful.
+</p>
+<p>
+The simple convenience function <a class="link" href="JsonPath.html#json-path-query" title="json_path_query ()"><code class="function">json_path_query()</code></a> can be used for one-off
+matching.
+</p>
+<p>
+</p>
+<div class="refsect2">
+<a name="json-path-syntax"></a><h3>Syntax of the JSONPath expressions</h3>
+<p>A JSONPath expression is composed by path indices and operators.
+  Each path index can either be a member name or an element index inside
+  a JSON tree. A JSONPath expression must start with the '$' operator; each
+  path index is separated using either the dot notation or the bracket
+  notation, e.g.:</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="comment">/* dot notation */</span>
+<span class="normal">$</span><span class="symbol">.</span><span class="normal">store</span><span class="symbol">.</span><span class="normal">book</span><span class="symbol">[</span><span class="number">0</span><span class="symbol">].</span><span class="normal">title</span>
+<span class="comment">/* bracket notation */</span>
+<span class="normal">$</span><span class="symbol">[</span><span class="string">'store'</span><span class="symbol">][</span><span class="string">'book'</span><span class="symbol">][</span><span class="number">0</span><span class="symbol">][</span><span class="string">'title'</span><span class="symbol">]</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>The available operators are:</p>
+<div class="table">
+<a name="json-path-operators"></a><p class="title"><b>Table 1. Operators</b></p>
+<div class="table-contents"><table summary="Operators" border="1">
+<colgroup>
+<col>
+<col>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+<th>Results</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>$</td>
+<td>The root node</td>
+<td>$</td>
+<td>The whole document</td>
+</tr>
+<tr>
+<td>. or []</td>
+<td>The child member or element</td>
+<td>$.store.book</td>
+<td>The contents of the book member of the store object</td>
+</tr>
+<tr>
+<td>..</td>
+<td>Recursive descent</td>
+<td>$..author</td>
+<td>The content of the author member in every object</td>
+</tr>
+<tr>
+<td>*</td>
+<td>Wildcard</td>
+<td>$.store.book[*].author</td>
+<td>The content of the author member of any object of the
+          array contained in the book member of the store object</td>
+</tr>
+<tr>
+<td>[]</td>
+<td>Subscript</td>
+<td>$.store.book[0]</td>
+<td>The first element of the array contained in the book
+          member of the store object</td>
+</tr>
+<tr>
+<td>[,]</td>
+<td>Set</td>
+<td>$.store.book[0,1]</td>
+<td>The first two elements of the array contained in the
+          book member of the store object</td>
+</tr>
+<tr>
+<td>[start:end:step]</td>
+<td>Slice</td>
+<td>$.store.book[:2]</td>
+<td>The first two elements of the array contained in the
+          book member of the store object; the start and step are omitted
+          and implied to be 0 and 1, respectively</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break"><p>More information about JSONPath is available on Stefan Gössner's
+  <a class="ulink" href="http://goessner.net/articles/JsonPath/" target="_top">website</a>.</p>
+</div>
+<p>
+</p>
+<p>
+</p>
+<div class="example">
+<a name="json-path-example"></a><p class="title"><b>Example 1. Example of JsonPath usage</b></p>
+<div class="example-contents">
+<p>The following example shows some of the results of using <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a>
+  on a JSON tree. We use the following JSON description of a
+  bookstore:</p>
+<pre class="programlisting">
+{ "store": {
+    "book": [
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": "8.95"
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": "12.99"
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": "8.99"
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": "22.99"
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": "19.95"
+    }
+  }
+}
+</pre>
+<p>We can parse the JSON using <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>:</p>
+<pre class="programlisting">
+JsonParser *parser = json_parser_new ();
+json_parser_load_from_data (parser, json_data, -1, NULL);
+  </pre>
+<p>If we run the following code:</p>
+<pre class="programlisting">
+JsonNode *result;
+JsonPath *path = json_path_new ();
+json_path_compile (path, "$.store..author", NULL);
+result = json_path_match (path, json_parser_get_root (parser));
+  </pre>
+<p>The <span class="emphasis"><em>result</em></span> <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> will contain an array
+  with all values of the <span class="emphasis"><em>author</em></span> member of the objects
+  in the JSON tree. If we use a <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> to convert the <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>
+  to a string and print it:</p>
+<pre class="programlisting">
+JsonGenerator *generator = json_generator_new ();
+char *str;
+json_generator_set_pretty (generator, TRUE);
+json_generator_set_root (generator, result);
+str = json_generator_to_data (generator, NULL);
+g_print ("Results: %s\n", str);
+  </pre>
+<p>The output will be:</p>
+<pre class="programlisting">
+[
+  "Nigel Rees",
+  "Evelyn Waugh",
+  "Herman Melville",
+  "J. R. R. Tolkien"
+]
+</pre>
+</div>
+</div>
+<p><br class="example-break">
+</p>
+<p>
+<a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> is available since JSON-GLib 0.14
+</p>
+</div>
+<div class="refsect1">
+<a name="JsonPath.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="JsonPath-struct"></a><h3>JsonPath</h3>
+<pre class="programlisting">typedef struct _JsonPath JsonPath;</pre>
+<p>
+The <span class="structname">JsonPath</span> structure is an opaque object
+whose members cannot be directly accessed except through the provided
+API.
+</p>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonPathClass"></a><h3>JsonPathClass</h3>
+<pre class="programlisting">typedef struct _JsonPathClass JsonPathClass;</pre>
+<p>
+The <span class="structname">JsonPathClass</span> structure is an opaque
+object class whose members cannot be directly accessed.
+</p>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-path-new"></a><h3>json_path_new ()</h3>
+<pre class="programlisting"><a class="link" href="JsonPath.html" title="JsonPath"><span class="returnvalue">JsonPath</span></a> *          json_path_new                       (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
+<p>
+Creates a new <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> instance.
+</p>
+<p>
+Once created, the <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> object should be used with <a class="link" href="JsonPath.html#json-path-compile" title="json_path_compile ()"><code class="function">json_path_compile()</code></a>
+and <a class="link" href="JsonPath.html#json-path-match" title="json_path_match ()"><code class="function">json_path_match()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly created <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> instance. Use
+<code class="function">g_object_unref()</code> to free the allocated resources when done. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr></tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JSON-PATH-ERROR:CAPS"></a><h3>JSON_PATH_ERROR</h3>
+<pre class="programlisting">#define JSON_PATH_ERROR         (json_path_error_quark ())
+</pre>
+<p>
+Error domain for <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> errors
+</p>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonPathError"></a><h3>enum JsonPathError</h3>
+<pre class="programlisting">typedef enum {
+  JSON_PATH_ERROR_INVALID_QUERY
+} JsonPathError;
+</pre>
+<p>
+Error code enumeration for the <a class="link" href="JsonPath.html#JSON-PATH-ERROR:CAPS" title="JSON_PATH_ERROR"><code class="literal">JSON_PATH_ERROR</code></a> domain.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><a name="JSON-PATH-ERROR-INVALID-QUERY:CAPS"></a><span class="term"><code class="literal">JSON_PATH_ERROR_INVALID_QUERY</code></span></p></td>
+<td>Invalid query
+</td>
+</tr></tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-path-compile"></a><h3>json_path_compile ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_path_compile                   (<em class="parameter"><code><a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> *path</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">char</span> *expression</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Validates and decomposes <em class="parameter"><code>expression</code></em>.
+</p>
+<p>
+A JSONPath expression must be compiled before calling <a class="link" href="JsonPath.html#json-path-match" title="json_path_match ()"><code class="function">json_path_match()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>path</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>expression</code></em> :</span></p></td>
+<td>a JSONPath expression</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>return location for a <span class="type">GError</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> on success; on error, <em class="parameter"><code>error</code></em> will be set with
+the <a class="link" href="JsonPath.html#JSON-PATH-ERROR:CAPS" title="JSON_PATH_ERROR"><code class="literal">JSON_PATH_ERROR</code></a> domain and a code from the <a class="link" href="JsonPath.html#JsonPathError" title="enum JsonPathError"><span class="type">JsonPathError</span></a>
+enumeration, and <code class="literal">FALSE</code> will be returned</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-path-match"></a><h3>json_path_match ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_path_match                     (<em class="parameter"><code><a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> *path</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *root</code></em>);</pre>
+<p>
+Matches the JSON tree pointed by <em class="parameter"><code>root</code></em> using the expression compiled
+into the <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a>.
+</p>
+<p>
+The matching <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>s will be copied into a <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a> and
+returned wrapped in a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>path</code></em> :</span></p></td>
+<td>a compiled <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>root</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a newly-created <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of type
+<a class="link" href="json-glib-JSON-Node.html#JSON-NODE-ARRAY:CAPS"><code class="literal">JSON_NODE_ARRAY</code></a> containing an array of matching <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>s.
+Use <a class="link" href="json-glib-JSON-Node.html#json-node-free" title="json_node_free ()"><code class="function">json_node_free()</code></a> when done. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-path-query"></a><h3>json_path_query ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_path_query                     (<em class="parameter"><code>const <span class="type">char</span> *expression</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *root</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Queries a JSON tree using a JSONPath expression.
+</p>
+<p>
+This function is a simple wrapper around <a class="link" href="JsonPath.html#json-path-new" title="json_path_new ()"><code class="function">json_path_new()</code></a>,
+<a class="link" href="JsonPath.html#json-path-compile" title="json_path_compile ()"><code class="function">json_path_compile()</code></a> and <a class="link" href="JsonPath.html#json-path-match" title="json_path_match ()"><code class="function">json_path_match()</code></a>. It implicitly
+creates a <a class="link" href="JsonPath.html" title="JsonPath"><span class="type">JsonPath</span></a> instance, compiles <em class="parameter"><code>expression</code></em> and
+matches it against the JSON tree pointed by <em class="parameter"><code>root</code></em>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>expression</code></em> :</span></p></td>
+<td>a JSONPath expression</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>root</code></em> :</span></p></td>
+<td>the root of a JSON tree</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>return location for a <span class="type">GError</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a newly-created <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of type
+<a class="link" href="json-glib-JSON-Node.html#JSON-NODE-ARRAY:CAPS"><code class="literal">JSON_NODE_ARRAY</code></a> containing an array of matching <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>s.
+Use <a class="link" href="json-glib-JSON-Node.html#json-node-free" title="json_node_free ()"><code class="function">json_node_free()</code></a> when done. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>

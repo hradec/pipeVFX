@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Versioning information</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="json-tools.html" title="Part V. JSON-GLib Additional Reference">
+<link rel="prev" href="json-tools.html" title="Part V. JSON-GLib Additional Reference">
+<link rel="next" href="ch04.html" title="Object Hierarchy">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="json-tools.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="json-tools.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="ch04.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#json-glib-Versioning-information.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#json-glib-Versioning-information.description" class="shortcut">Description</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="json-glib-Versioning-information"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="json-glib-Versioning-information.top_of_page"></a>Versioning information</span></h2>
+<p>Versioning information — JSON-GLib version checking</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="json-glib-Versioning-information.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">#define             <a class="link" href="json-glib-Versioning-information.html#JSON-MAJOR-VERSION:CAPS" title="JSON_MAJOR_VERSION">JSON_MAJOR_VERSION</a>
+#define             <a class="link" href="json-glib-Versioning-information.html#JSON-MINOR-VERSION:CAPS" title="JSON_MINOR_VERSION">JSON_MINOR_VERSION</a>
+#define             <a class="link" href="json-glib-Versioning-information.html#JSON-MICRO-VERSION:CAPS" title="JSON_MICRO_VERSION">JSON_MICRO_VERSION</a>
+
+#define             <a class="link" href="json-glib-Versioning-information.html#JSON-VERSION:CAPS" title="JSON_VERSION">JSON_VERSION</a>
+#define             <a class="link" href="json-glib-Versioning-information.html#JSON-VERSION-S:CAPS" title="JSON_VERSION_S">JSON_VERSION_S</a>
+#define             <a class="link" href="json-glib-Versioning-information.html#JSON-VERSION-HEX:CAPS" title="JSON_VERSION_HEX">JSON_VERSION_HEX</a>
+
+#define             <a class="link" href="json-glib-Versioning-information.html#JSON-CHECK-VERSION:CAPS" title="JSON_CHECK_VERSION()">JSON_CHECK_VERSION</a>                  (major,
+                                                         minor,
+                                                         micro)
+</pre>
+</div>
+<div class="refsect1">
+<a name="json-glib-Versioning-information.description"></a><h2>Description</h2>
+<p>
+JSON-GLib provides macros to check the version of the library
+at compile-time
+</p>
+</div>
+<div class="refsect1">
+<a name="json-glib-Versioning-information.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="JSON-MAJOR-VERSION:CAPS"></a><h3>JSON_MAJOR_VERSION</h3>
+<pre class="programlisting">#define JSON_MAJOR_VERSION              (0)
+</pre>
+<p>
+Json major version component (e.g. 1 if <a class="link" href="json-glib-Versioning-information.html#JSON-VERSION:CAPS" title="JSON_VERSION"><code class="literal">JSON_VERSION</code></a> is 1.2.3)
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JSON-MINOR-VERSION:CAPS"></a><h3>JSON_MINOR_VERSION</h3>
+<pre class="programlisting">#define JSON_MINOR_VERSION              (14)
+</pre>
+<p>
+Json minor version component (e.g. 2 if <a class="link" href="json-glib-Versioning-information.html#JSON-VERSION:CAPS" title="JSON_VERSION"><code class="literal">JSON_VERSION</code></a> is 1.2.3)
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JSON-MICRO-VERSION:CAPS"></a><h3>JSON_MICRO_VERSION</h3>
+<pre class="programlisting">#define JSON_MICRO_VERSION              (2)
+</pre>
+<p>
+Json micro version component (e.g. 3 if <a class="link" href="json-glib-Versioning-information.html#JSON-VERSION:CAPS" title="JSON_VERSION"><code class="literal">JSON_VERSION</code></a> is 1.2.3)
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JSON-VERSION:CAPS"></a><h3>JSON_VERSION</h3>
+<pre class="programlisting">#define JSON_VERSION                    (0.14.2)
+</pre>
+<p>
+Json version.
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JSON-VERSION-S:CAPS"></a><h3>JSON_VERSION_S</h3>
+<pre class="programlisting">#define JSON_VERSION_S                  "0.14.2"
+</pre>
+<p>
+Json version, encoded as a string, useful for printing and
+concatenation.
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JSON-VERSION-HEX:CAPS"></a><h3>JSON_VERSION_HEX</h3>
+<pre class="programlisting">#define             JSON_VERSION_HEX</pre>
+<p>
+Json version, encoded as an hexadecimal number, useful for
+integer comparisons.
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JSON-CHECK-VERSION:CAPS"></a><h3>JSON_CHECK_VERSION()</h3>
+<pre class="programlisting">#define             JSON_CHECK_VERSION(major,minor,micro)</pre>
+<p>
+Compile-time version checking. Evaluates to <code class="literal">TRUE</code> if the version
+of Json is greater than the required one.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>major</code></em> :</span></p></td>
+<td>required major version</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>minor</code></em> :</span></p></td>
+<td>required minor version</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>micro</code></em> :</span></p></td>
+<td>required micro version</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>

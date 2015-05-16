@@ -1,0 +1,68 @@
+=========================================
+D-Bus Python bindings - notes for hackers
+=========================================
+
+:Author: Simon McVittie, `Collabora`_
+:Date: 2007-01-24
+
+.. _Collabora: http://www.collabora.co.uk/
+
+Upstream development
+====================
+
+dbus-python is developed at freedesktop.org using ``git``.
+See UsingGit_ for some details.
+
+.. _UsingGit: http://www.freedesktop.org/wiki/UsingGit
+
+Anonymous access
+    ``git clone git://anongit.freedesktop.org/git/dbus/dbus-python``
+Committer access (requires freedesktop.org shell account)
+    ``git clone git+ssh://git.freedesktop.org/git/dbus/dbus-python``
+
+Modules
+=======
+
+``dbus``, ``dbus.service`` and ``dbus.mainloop`` are core public API.
+
+``dbus.lowlevel`` provides a lower-level public API for advanced use.
+
+``dbus.mainloop.glib`` is the public API for the GLib main loop integration.
+
+``dbus.types`` and ``dbus.exceptions`` are mainly for backwards
+compatibility - use ``dbus`` instead in new code. Ditto ``dbus.glib``.
+
+``dbus._dbus``, ``dbus.introspect_parser``, ``dbus.proxies`` are internal
+implementation details.
+
+``_dbus_bindings`` is the real implementation of the Python/libdbus
+integration, while ``_dbus_bindings`` is the real implementation of
+Python/libdbus-glib integration. Neither is public API, although some
+of the classes and functions are exposed as public API in other modules.
+
+Threading/locking model
+=======================
+
+All Python functions must be called with the GIL (obviously).
+
+Before calling into any D-Bus function that can block, release the GIL;
+as well as the usual "be nice to other threads", D-Bus does its own
+locking and we don't want to deadlock with it. Most Connection methods
+can block.
+
+Other notes
+===========
+
+Code needs to be Python 2.5 compatible - use Py_ssize_t where appropriate.
+See http://www.python.org/dev/peps/pep-0353/ for details.
+
+Indentation and other holy wars
+===============================
+
+Python code is meant to follow PEP8, and has 4-space indentation, no hard tabs.
+
+C code is meant to follow what PEP7 refers to as "Python 3000" style - 4-space
+indentation, no hard tabs, otherwise consistent with historical Python 2.x
+code.
+
+Docstrings etc. are reStructuredText.

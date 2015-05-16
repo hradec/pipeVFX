@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>JSON GVariant Integration</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="json-advanced.html" title="Part IV. JSON-GLib Advanced API">
+<link rel="prev" href="json-glib-Boxed-Types-Serialization.html" title="Boxed Types Serialization">
+<link rel="next" href="json-tools.html" title="Part V. JSON-GLib Additional Reference">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="json-glib-Boxed-Types-Serialization.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="json-advanced.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="json-tools.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#json-glib-JSON-GVariant-Integration.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#json-glib-JSON-GVariant-Integration.description" class="shortcut">Description</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="json-glib-JSON-GVariant-Integration"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="json-glib-JSON-GVariant-Integration.top_of_page"></a>JSON GVariant Integration</span></h2>
+<p>JSON GVariant Integration — Serialize and deserialize GVariant types</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="json-glib-JSON-GVariant-Integration.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-serialize" title="json_gvariant_serialize ()">json_gvariant_serialize</a>             (<em class="parameter"><code><span class="type">GVariant</span> *variant</code></em>);
+<span class="returnvalue">gchar</span> *             <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-serialize-data" title="json_gvariant_serialize_data ()">json_gvariant_serialize_data</a>        (<em class="parameter"><code><span class="type">GVariant</span> *variant</code></em>,
+                                                         <em class="parameter"><code><span class="type">gsize</span> *length</code></em>);
+<span class="returnvalue">GVariant</span> *          <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-deserialize" title="json_gvariant_deserialize ()">json_gvariant_deserialize</a>           (<em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *json_node</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *signature</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+<span class="returnvalue">GVariant</span> *          <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-deserialize-data" title="json_gvariant_deserialize_data ()">json_gvariant_deserialize_data</a>      (<em class="parameter"><code>const <span class="type">gchar</span> *json</code></em>,
+                                                         <em class="parameter"><code><span class="type">gssize</span> length</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *signature</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="json-glib-JSON-GVariant-Integration.description"></a><h2>Description</h2>
+<p>
+Use <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-serialize" title="json_gvariant_serialize ()"><code class="function">json_gvariant_serialize()</code></a> and <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-serialize-data" title="json_gvariant_serialize_data ()"><code class="function">json_gvariant_serialize_data()</code></a> to
+convert from any <span class="type">GVariant</span> value to a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> tree or its string
+representation.
+</p>
+<p>
+Use <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-deserialize" title="json_gvariant_deserialize ()"><code class="function">json_gvariant_deserialize()</code></a> and <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-deserialize-data" title="json_gvariant_deserialize_data ()"><code class="function">json_gvariant_deserialize_data()</code></a> to
+obtain the <span class="type">GVariant</span> value from a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> tree or directly from a JSON
+string.
+Since many <span class="type">GVariant</span> data types cannot be directly represented as
+JSON, a <span class="type">GVariant</span> type string (signature) should be provided to these
+methods in order to obtain a correct, type-contrained result.
+If no signature is provided, conversion can still be done, but the
+resulting <span class="type">GVariant</span> value will be "guessed" from the JSON data types,
+according to the following table:
+</p>
+<p>
+</p>
+<div class="table">
+<a name="id2971653"></a><p class="title"><b>Table 2. Default JSON to GVariant conversion (without signature constrains)</b></p>
+<div class="table-contents"><table summary="Default JSON to GVariant conversion (without signature constrains)" border="1">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th align="left">JSON</th>
+<th align="left">GVariant</th>
+</tr></thead>
+<tfoot>
+<tr>
+<th align="left">string</th>
+<th align="left">string (s)</th>
+</tr>
+<tr>
+<th align="left">int64</th>
+<th align="left">int64 (x)</th>
+</tr>
+<tr>
+<th align="left">boolean</th>
+<th align="left">boolean (b)</th>
+</tr>
+<tr>
+<th align="left">double</th>
+<th align="left">double (d)</th>
+</tr>
+<tr>
+<th align="left">array</th>
+<th align="left">array of variants (av)</th>
+</tr>
+<tr>
+<th align="left">object</th>
+<th align="left">dictionary of string-variant (a{sv})</th>
+</tr>
+<tr>
+<th align="left">null</th>
+<th align="left">maybe variant (mv)</th>
+</tr>
+</tfoot>
+</table></div>
+</div>
+<p><br class="table-break">
+</p>
+</div>
+<div class="refsect1">
+<a name="json-glib-JSON-GVariant-Integration.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="json-gvariant-serialize"></a><h3>json_gvariant_serialize ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_gvariant_serialize             (<em class="parameter"><code><span class="type">GVariant</span> *variant</code></em>);</pre>
+<p>
+Converts <em class="parameter"><code>variant</code></em> to a JSON tree.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>variant</code></em> :</span></p></td>
+<td>A <span class="type">GVariant</span> to convert</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>A <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> representing the root of the
+JSON data structure obtained from <em class="parameter"><code>variant</code></em>. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-gvariant-serialize-data"></a><h3>json_gvariant_serialize_data ()</h3>
+<pre class="programlisting"><span class="returnvalue">gchar</span> *             json_gvariant_serialize_data        (<em class="parameter"><code><span class="type">GVariant</span> *variant</code></em>,
+                                                         <em class="parameter"><code><span class="type">gsize</span> *length</code></em>);</pre>
+<p>
+Converts <em class="parameter"><code>variant</code></em> to its JSON encoded string representation. This method
+is actually a helper function. It uses <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-serialize" title="json_gvariant_serialize ()"><code class="function">json_gvariant_serialize()</code></a> to obtain the
+JSON tree, and then <a class="link" href="JsonGenerator.html" title="JsonGenerator"><span class="type">JsonGenerator</span></a> to stringify it.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>variant</code></em> :</span></p></td>
+<td>A <span class="type">GVariant</span> to convert</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>length</code></em> :</span></p></td>
+<td>Return location for the length of the returned
+string, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="Parameter for returning results. Default is transfer full."><span class="acronym">out</span></acronym>][<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>The JSON encoded string corresponding to
+<em class="parameter"><code>variant</code></em>. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-gvariant-deserialize"></a><h3>json_gvariant_deserialize ()</h3>
+<pre class="programlisting"><span class="returnvalue">GVariant</span> *          json_gvariant_deserialize           (<em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *json_node</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *signature</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Converts a JSON data structure to a GVariant value using <em class="parameter"><code>signature</code></em> to
+resolve ambiguous data types. If no error occurs, the resulting <span class="type">GVariant</span>
+is guaranteed to conform to <em class="parameter"><code>signature</code></em>.
+</p>
+<p>
+If <em class="parameter"><code>signature</code></em> is not <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> but does not represent a valid GVariant type
+string, <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> is returned and error is set to <code class="literal">G_IO_ERROR_INVALID_ARGUMENT</code>.
+If a <em class="parameter"><code>signature</code></em> is provided but the JSON structure cannot be mapped to it,
+<a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> is returned and error is set to <code class="literal">G_IO_ERROR_INVALID_DATA</code>.
+If <em class="parameter"><code>signature</code></em> is <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>, the conversion is done based strictly on the types
+in the JSON nodes.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>json_node</code></em> :</span></p></td>
+<td>A <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> to convert</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signature</code></em> :</span></p></td>
+<td>A valid <span class="type">GVariant</span> type string, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>A pointer to a <span class="type">GError</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>A newly created <span class="type">GVariant</span> compliant with
+<em class="parameter"><code>signature</code></em>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> on error. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-gvariant-deserialize-data"></a><h3>json_gvariant_deserialize_data ()</h3>
+<pre class="programlisting"><span class="returnvalue">GVariant</span> *          json_gvariant_deserialize_data      (<em class="parameter"><code>const <span class="type">gchar</span> *json</code></em>,
+                                                         <em class="parameter"><code><span class="type">gssize</span> length</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *signature</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Converts a JSON string to a <span class="type">GVariant</span> value. This method works exactly
+like <a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-deserialize" title="json_gvariant_deserialize ()"><code class="function">json_gvariant_deserialize()</code></a>, but takes a JSON encoded string instead.
+The string is first converted to a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> using <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>, and then
+<a class="link" href="json-glib-JSON-GVariant-Integration.html#json-gvariant-deserialize" title="json_gvariant_deserialize ()"><code class="function">json_gvariant_deserialize()</code></a> is called.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>json</code></em> :</span></p></td>
+<td>A JSON data string</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>length</code></em> :</span></p></td>
+<td>The length of <em class="parameter"><code>json</code></em>, or -1 if <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>-terminated</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signature</code></em> :</span></p></td>
+<td>A valid <span class="type">GVariant</span> type string, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>A pointer to a <span class="type">GError</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>A newly created <span class="type">GVariant</span> compliant with
+<em class="parameter"><code>signature</code></em>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> on error. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>

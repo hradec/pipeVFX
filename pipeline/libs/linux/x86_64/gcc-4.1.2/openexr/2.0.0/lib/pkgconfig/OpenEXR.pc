@@ -1,0 +1,14 @@
+prefix=/atomo/home/rhradec/dev/externals/externals/build/linux/openexr-2.0.0
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+OpenEXR_includedir=${prefix}/include/OpenEXR
+
+Name: OpenEXR
+Description: OpenEXR image library
+Version: 2.0.0
+
+Libs: -L${libdir} -lIlmImf
+Cflags: -I${OpenEXR_includedir}
+Requires: IlmBase
+Libs.private: -lz

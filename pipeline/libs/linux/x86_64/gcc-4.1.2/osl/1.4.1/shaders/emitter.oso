@@ -1,0 +1,20 @@
+OpenShadingLanguage 1.00
+# Compiled by oslc 1.4.1
+surface emitter
+param	float	power	1 		%meta{string,help,"Total power of the light"}  %read{2,2} %write{2147483647,-1}
+param	color	Cs	1 1 1 		%meta{string,help,"Base color"}  %read{3,3} %write{2147483647,-1}
+global	closure color	Ci	 %read{2147483647,-1} %write{4,4}
+temp	closure color	$tmp1	 %read{4,4} %write{0,0}
+const	string	$const1	"emission"		 %read{0,0} %write{2147483647,-1}
+temp	float	$tmp2	 %read{2,2} %write{1,1}
+temp	float	$tmp3	 %read{3,3} %write{2,2}
+temp	color	$tmp4	 %read{4,4} %write{3,3}
+code ___main___
+# /atomo/home/rhradec/dev/externals/externals/build/linux/obj/osl-1.4.1/src/shaders/emitter.osl:48
+#     Ci = (power / surfacearea()) * Cs * emission();
+	closure		$tmp1 $const1 	%filename{"/atomo/home/rhradec/dev/externals/externals/build/linux/obj/osl-1.4.1/src/shaders/emitter.osl"} %line{48} %argrw{"wr"}
+	surfacearea	$tmp2 	%argrw{"w"}
+	div		$tmp3 power $tmp2 	%argrw{"wrr"}
+	mul		$tmp4 $tmp3 Cs 	%argrw{"wrr"}
+	mul		Ci $tmp1 $tmp4 	%argrw{"wrr"}
+	end

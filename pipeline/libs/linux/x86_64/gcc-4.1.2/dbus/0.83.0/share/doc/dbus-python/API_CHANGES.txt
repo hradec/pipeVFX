@@ -1,0 +1,124 @@
+===============================
+API changes in dbus-python 0.80
+===============================
+
+:Author: Simon McVittie
+:Contact: simon.mcvittie@collabora.co.uk
+:Organization: `Collabora Ltd`_
+:Date: 2006-11-23
+
+.. _Collabora Ltd: http://www.collabora.co.uk/
+
+Type changes
+============
+
+* The Byte constructor accepts either single-byte strings, or integers in
+  the range 0 to 255.
+
+* There is no Variant type any more. Instead, the ``variant_level``
+  attribute on D-Bus types gives the number of variant wrappers in
+  which it is contained; this is to remove ambiguity. For instance, calling
+  this method::
+
+    @dbus.service.method('com.example', in_signature='v', out_signature='') 
+    def Print(self, variant):
+        print repr(variant)
+
+  yields the following results::
+
+    # on the wire: Variant containing Int32
+    Int32(0, variant_level=1)
+    # on the wire: Variant containing Variant containing Int32
+    Int32(0, variant_level=2)
+
+  Once an object of a D-Bus type has been constructed, its
+  ``variant_level`` cannot be altered.
+
+* The D-Bus integer types (dbus.Int32, etc.) are properly range-checked.
+
+* The Array constructor takes arguments (iterable[, signature])
+  rather than (iterable[, type][, signature]); ditto for Dict.
+
+Calling conventions
+===================
+
+* In method parameters, method returns from proxy methods, etc.,
+  integers arrive as instances of dbus.Int32 etc., bytes arrive as
+  Byte, and so on, rather than everything being converted to an
+  appropriate built-in Python type. This means you can tell exactly
+  what arguments went over the bus, and their types.
+
+* Proxy methods with multiple return values return a tuple rather than
+  a list.
+
+* Calling a proxy method with reply ignored, or with async
+  handlers, returns None
+
+``dbus_bindings``
+=================
+
+* ConnectionError no longer exists (it was never raised)
+
+* ``dbus_bindings`` is now called ``_dbus_bindings``, and is considerably
+  different internally:
+
+  * connections are private at the libdbus level: shared connections
+    are only shared among Python code
+
+  * The MessageIter stuff is now done in C: there's a much simpler
+    Python API, ``Message.append(...)`` where positional arguments are
+    the things to be appended, and the keyword argument ``signature``
+    controls how objects are interpreted
+
+  * The signature-guessing algorithm used if there is no proper
+    signature is exposed as a static method,
+    ``Message.guess_signature(*args)``
+
+  * Bus is a subclass of Connection rather than being a wrapper object
+    which has-a Connection
+
+  * The timeouts in _send_with_reply and in _send_with_reply_and_block
+    are in (possibly fractional) seconds, as is conventional in Python
+
+  * The specialized Message subclasses have names ending with Message
+
+* There is a small amount of compatibility glue in a new
+  ``dbus_bindings`` module (also ``dbus.dbus_bindings``)
+  which should enable most current code to work - this is deprecated,
+  and will disappear in a future version of dbus-python
+
+Main loops
+==========
+
+Main loop handling is different - instead of the
+``use_default_mainloop`` keyword argument to Bus and subclasses, there's now
+``mainloop`` which takes an instance of dbus.mainloop.NativeMainLoop.
+
+Alternatively, you can set a default main loop by calling
+``dbus.set_default_main_loop()`` and passing it a NativeMainLoop, or
+by passing ``set_as_default=True`` to the factory function
+from which you obtained the native main loop.
+
+The plan is that in a future version of dbus-python there will be an
+abstract base class dbus.mainloop.MainLoop (or something); when it's added,
+instances of its subclasses will be accepted wherever a NativeMainLoop
+instance is now. This will let you wrap main loops using a Python API.
+This will be used to implement SimpleMainLoop (a pure-Python main loop
+which can only do D-Bus) and a Twisted main-loop wrapper.
+
+The only working mainloop implementation is (still) GLib; you can get
+a NativeMainLoop instance by::
+
+  from dbus.mainloop.glib import DBusGMainLoop
+  my_native_main_loop = DBusGMainLoop(set_as_default=True)
+
+The above is how the highly magical ``dbus.glib`` module is now implemented.
+At some point ``dbus.glib`` will be deprecated, since it's non-obvious,
+and pychecker will usually complain if you use it correctly!
+
+At the moment the GLib main loop always uses the default main context;
+python-gobject will probably need to add some extra API before we can
+allow other main-contexts to be used.
+
+..
+  vim:set sw=2 sts=2 et ft=rst tw=72:

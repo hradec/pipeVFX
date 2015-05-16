@@ -1,0 +1,993 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>JSON Object</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="ch01.html" title="Data Types">
+<link rel="prev" href="json-glib-JSON-Array.html" title="JSON Array">
+<link rel="next" href="json-streams.html" title="Part III. Reading and writing">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="json-glib-JSON-Array.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch01.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="json-streams.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#json-glib-JSON-Object.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#json-glib-JSON-Object.description" class="shortcut">Description</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="json-glib-JSON-Object"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="json-glib-JSON-Object.top_of_page"></a>JSON Object</span></h2>
+<p>JSON Object — a JSON object representation</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="json-glib-JSON-Object.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">                    <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject">JsonObject</a>;
+<a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="returnvalue">JsonObject</span></a> *        <a class="link" href="json-glib-JSON-Object.html#json-object-new" title="json_object_new ()">json_object_new</a>                     (<em class="parameter"><code><span class="type">void</span></code></em>);
+<a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="returnvalue">JsonObject</span></a> *        <a class="link" href="json-glib-JSON-Object.html#json-object-ref" title="json_object_ref ()">json_object_ref</a>                     (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-unref" title="json_object_unref ()">json_object_unref</a>                   (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);
+
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-add-member" title="json_object_add_member ()">json_object_add_member</a>              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()">json_object_set_member</a>              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="json-glib-JSON-Object.html#json-object-has-member" title="json_object_has_member ()">json_object_has_member</a>              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()">json_object_get_member</a>              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="json-glib-JSON-Object.html#json-object-dup-member" title="json_object_dup_member ()">json_object_dup_member</a>              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">GList</span> *             <a class="link" href="json-glib-JSON-Object.html#json-object-get-members" title="json_object_get_members ()">json_object_get_members</a>             (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);
+<span class="returnvalue">GList</span> *             <a class="link" href="json-glib-JSON-Object.html#json-object-get-values" title="json_object_get_values ()">json_object_get_values</a>              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);
+<span class="returnvalue">guint</span>               <a class="link" href="json-glib-JSON-Object.html#json-object-get-size" title="json_object_get_size ()">json_object_get_size</a>                (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-remove-member" title="json_object_remove_member ()">json_object_remove_member</a>           (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">void</span>                (<a class="link" href="json-glib-JSON-Object.html#JsonObjectForeach" title="JsonObjectForeach ()">*JsonObjectForeach</a>)                (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *member_node</code></em>,
+                                                         <em class="parameter"><code><span class="type">gpointer</span> user_data</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-foreach-member" title="json_object_foreach_member ()">json_object_foreach_member</a>          (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObjectForeach" title="JsonObjectForeach ()"><span class="type">JsonObjectForeach</span></a> func</code></em>,
+                                                         <em class="parameter"><code><span class="type">gpointer</span> data</code></em>);
+
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-set-array-member" title="json_object_set_array_member ()">json_object_set_array_member</a>        (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a> *value</code></em>);
+<a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="returnvalue">JsonArray</span></a> *         <a class="link" href="json-glib-JSON-Object.html#json-object-get-array-member" title="json_object_get_array_member ()">json_object_get_array_member</a>        (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-set-boolean-member" title="json_object_set_boolean_member ()">json_object_set_boolean_member</a>      (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><span class="type">gboolean</span> value</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="json-glib-JSON-Object.html#json-object-get-boolean-member" title="json_object_get_boolean_member ()">json_object_get_boolean_member</a>      (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-set-double-member" title="json_object_set_double_member ()">json_object_set_double_member</a>       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><span class="type">gdouble</span> value</code></em>);
+<span class="returnvalue">gdouble</span>             <a class="link" href="json-glib-JSON-Object.html#json-object-get-double-member" title="json_object_get_double_member ()">json_object_get_double_member</a>       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-set-int-member" title="json_object_set_int_member ()">json_object_set_int_member</a>          (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><span class="type">gint64</span> value</code></em>);
+<span class="returnvalue">gint64</span>              <a class="link" href="json-glib-JSON-Object.html#json-object-get-int-member" title="json_object_get_int_member ()">json_object_get_int_member</a>          (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-set-null-member" title="json_object_set_null_member ()">json_object_set_null_member</a>         (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="json-glib-JSON-Object.html#json-object-get-null-member" title="json_object_get_null_member ()">json_object_get_null_member</a>         (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-set-object-member" title="json_object_set_object_member ()">json_object_set_object_member</a>       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *value</code></em>);
+<a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="returnvalue">JsonObject</span></a> *        <a class="link" href="json-glib-JSON-Object.html#json-object-get-object-member" title="json_object_get_object_member ()">json_object_get_object_member</a>       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-JSON-Object.html#json-object-set-string-member" title="json_object_set_string_member ()">json_object_set_string_member</a>       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *value</code></em>);
+const <span class="returnvalue">gchar</span> *       <a class="link" href="json-glib-JSON-Object.html#json-object-get-string-member" title="json_object_get_string_member ()">json_object_get_string_member</a>       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="json-glib-JSON-Object.description"></a><h2>Description</h2>
+<p>
+<a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> is the representation of the object type inside JSON. It contains
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>s, which may contain fundamental types, arrays or other
+objects. Each member of an object is accessed using its name.
+</p>
+<p>
+Since objects can be expensive, they are reference counted. You can control
+the lifetime of a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> using <a class="link" href="json-glib-JSON-Object.html#json-object-ref" title="json_object_ref ()"><code class="function">json_object_ref()</code></a> and <a class="link" href="json-glib-JSON-Object.html#json-object-unref" title="json_object_unref ()"><code class="function">json_object_unref()</code></a>.
+</p>
+<p>
+To add or overwrite a member with a given name, use <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a>.
+To extract a member with a given name, use <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>.
+To retrieve the list of members, use <a class="link" href="json-glib-JSON-Object.html#json-object-get-members" title="json_object_get_members ()"><code class="function">json_object_get_members()</code></a>.
+To retrieve the size of the object (that is, the number of members it has),
+use <a class="link" href="json-glib-JSON-Object.html#json-object-get-size" title="json_object_get_size ()"><code class="function">json_object_get_size()</code></a>.
+</p>
+</div>
+<div class="refsect1">
+<a name="json-glib-JSON-Object.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="JsonObject"></a><h3>JsonObject</h3>
+<pre class="programlisting">typedef struct _JsonObject JsonObject;</pre>
+<p>
+A JSON object type. The contents of the <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> structure are private
+and should only be accessed by the provided API
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-new"></a><h3>json_object_new ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="returnvalue">JsonObject</span></a> *        json_object_new                     (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
+<p>
+Creates a new <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>, an JSON object type representation.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly created <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-ref"></a><h3>json_object_ref ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="returnvalue">JsonObject</span></a> *        json_object_ref                     (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);</pre>
+<p>
+Increase by one the reference count of a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the passed <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>, with the reference count
+increased by one.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-unref"></a><h3>json_object_unref ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_unref                   (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);</pre>
+<p>
+Decreases by one the reference count of a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>. If the
+reference count reaches zero, the object is destroyed and all
+its allocated resources are freed.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-add-member"></a><h3>json_object_add_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_add_member              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);</pre>
+<div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;">
+<h3 class="title">Warning</h3>
+<p><code class="literal">json_object_add_member</code> has been deprecated since version 0.8 and should not be used in newly-written code. Use <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a> instead</p>
+</div>
+<p>
+Adds a member named <em class="parameter"><code>member_name</code></em> and containing <em class="parameter"><code>node</code></em> into a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>.
+The object will take ownership of the <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>.
+</p>
+<p>
+This function will return if the <em class="parameter"><code>object</code></em> already contains a member
+<em class="parameter"><code>member_name</code></em>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em> :</span></p></td>
+<td>the value of the member. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-set-member"></a><h3>json_object_set_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_set_member              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);</pre>
+<p>
+Sets <em class="parameter"><code>node</code></em> as the value of <em class="parameter"><code>member_name</code></em> inside <em class="parameter"><code>object</code></em>.
+</p>
+<p>
+If <em class="parameter"><code>object</code></em> already contains a member called <em class="parameter"><code>member_name</code></em> then
+the member's current value is overwritten. Otherwise, a new
+member is added to <em class="parameter"><code>object</code></em>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em> :</span></p></td>
+<td>the value of the member. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-has-member"></a><h3>json_object_has_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_object_has_member              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Checks whether <em class="parameter"><code>object</code></em> has a member named <em class="parameter"><code>member_name</code></em>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of a JSON object member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the JSON object has the requested member</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-member"></a><h3>json_object_get_member ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_object_get_member              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Retrieves the <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> containing the value of <em class="parameter"><code>member_name</code></em> inside
+a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the JSON object member to access</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a pointer to the node for the requested object
+member, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-dup-member"></a><h3>json_object_dup_member ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_object_dup_member              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Retrieves a copy of the <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> containing the value of <em class="parameter"><code>member_name</code></em>
+inside a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the JSON object member to access</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a copy of the node for the requested
+object member or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. Use <a class="link" href="json-glib-JSON-Node.html#json-node-free" title="json_node_free ()"><code class="function">json_node_free()</code></a> when done. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.6</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-members"></a><h3>json_object_get_members ()</h3>
+<pre class="programlisting"><span class="returnvalue">GList</span> *             json_object_get_members             (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);</pre>
+<p>
+Retrieves all the names of the members of a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>. You can
+obtain the value for each member using <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a <span class="type">GList</span>
+of member names. The content of the list is owned by the <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+and should never be modified or freed. When you have finished using
+the returned list, use <code class="function">g_list_free()</code> to free the resources it has
+allocated. <span class="annotation">[<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> utf8][<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-values"></a><h3>json_object_get_values ()</h3>
+<pre class="programlisting"><span class="returnvalue">GList</span> *             json_object_get_values              (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);</pre>
+<p>
+Retrieves all the values of the members of a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a <span class="type">GList</span> of
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>s. The content of the list is owned by the <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+and should never be modified or freed. When you have finished using the
+returned list, use <code class="function">g_list_free()</code> to free the resources it has allocated. <span class="annotation">[<acronym title="Generics and defining elements of containers and arrays."><span class="acronym">element-type</span></acronym> JsonNode][<acronym title="Free data container after the code is done."><span class="acronym">transfer container</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-size"></a><h3>json_object_get_size ()</h3>
+<pre class="programlisting"><span class="returnvalue">guint</span>               json_object_get_size                (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>);</pre>
+<p>
+Retrieves the number of members of a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the number of members</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-remove-member"></a><h3>json_object_remove_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_remove_member           (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Removes <em class="parameter"><code>member_name</code></em> from <em class="parameter"><code>object</code></em>, freeing its allocated resources.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member to remove</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonObjectForeach"></a><h3>JsonObjectForeach ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                (*JsonObjectForeach)                (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *member_node</code></em>,
+                                                         <em class="parameter"><code><span class="type">gpointer</span> user_data</code></em>);</pre>
+<p>
+The function to be passed to <a class="link" href="json-glib-JSON-Object.html#json-object-foreach-member" title="json_object_foreach_member ()"><code class="function">json_object_foreach_member()</code></a>. You
+should not add or remove members to and from <em class="parameter"><code>object</code></em> within
+this function. It is safe to change the value of <em class="parameter"><code>member_node</code></em>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>the iterated <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_node</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> containing the <em class="parameter"><code>member_name</code></em> value</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>data passed to the function</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-foreach-member"></a><h3>json_object_foreach_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_foreach_member          (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObjectForeach" title="JsonObjectForeach ()"><span class="type">JsonObjectForeach</span></a> func</code></em>,
+                                                         <em class="parameter"><code><span class="type">gpointer</span> data</code></em>);</pre>
+<p>
+Iterates over all members of <em class="parameter"><code>object</code></em> and calls <em class="parameter"><code>func</code></em> on
+each one of them.
+</p>
+<p>
+It is safe to change the value of a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of the <em class="parameter"><code>object</code></em>
+from within the iterator <em class="parameter"><code>func</code></em>, but it is not safe to add or
+remove members from the <em class="parameter"><code>object</code></em>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>func</code></em> :</span></p></td>
+<td>the function to be called on each member. <span class="annotation">[<acronym title="The callback is valid only during the call to the method."><span class="acronym">scope call</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>data</code></em> :</span></p></td>
+<td>data to be passed to the function. <span class="annotation">[<acronym title="This parameter is a 'user_data', for callbacks; many bindings can pass NULL here."><span class="acronym">closure</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-set-array-member"></a><h3>json_object_set_array_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_set_array_member        (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a> *value</code></em>);</pre>
+<p>
+Convenience function for setting an array <em class="parameter"><code>value</code></em> of
+<em class="parameter"><code>member_name</code></em> inside <em class="parameter"><code>object</code></em>.
+</p>
+<p>
+The <em class="parameter"><code>object</code></em> will take ownership of the passed <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-array-member"></a><h3>json_object_get_array_member ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="returnvalue">JsonArray</span></a> *         json_object_get_array_member        (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Convenience function that retrieves the array
+stored in <em class="parameter"><code>member_name</code></em> of <em class="parameter"><code>object</code></em>
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the array inside the object's member. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-set-boolean-member"></a><h3>json_object_set_boolean_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_set_boolean_member      (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><span class="type">gboolean</span> value</code></em>);</pre>
+<p>
+Convenience function for setting a boolean <em class="parameter"><code>value</code></em> of
+<em class="parameter"><code>member_name</code></em> inside <em class="parameter"><code>object</code></em>.
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-boolean-member"></a><h3>json_object_get_boolean_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_object_get_boolean_member      (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Convenience function that retrieves the boolean value
+stored in <em class="parameter"><code>member_name</code></em> of <em class="parameter"><code>object</code></em>
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the boolean value of the object's member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-set-double-member"></a><h3>json_object_set_double_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_set_double_member       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><span class="type">gdouble</span> value</code></em>);</pre>
+<p>
+Convenience function for setting a floating point <em class="parameter"><code>value</code></em>
+of <em class="parameter"><code>member_name</code></em> inside <em class="parameter"><code>object</code></em>.
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-double-member"></a><h3>json_object_get_double_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">gdouble</span>             json_object_get_double_member       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Convenience function that retrieves the floating point value
+stored in <em class="parameter"><code>member_name</code></em> of <em class="parameter"><code>object</code></em>
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the floating point value of the object's member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-set-int-member"></a><h3>json_object_set_int_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_set_int_member          (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><span class="type">gint64</span> value</code></em>);</pre>
+<p>
+Convenience function for setting an integer <em class="parameter"><code>value</code></em> of
+<em class="parameter"><code>member_name</code></em> inside <em class="parameter"><code>object</code></em>.
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-int-member"></a><h3>json_object_get_int_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">gint64</span>              json_object_get_int_member          (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Convenience function that retrieves the integer value
+stored in <em class="parameter"><code>member_name</code></em> of <em class="parameter"><code>object</code></em>
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the integer value of the object's member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-set-null-member"></a><h3>json_object_set_null_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_set_null_member         (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Convenience function for setting a null <em class="parameter"><code>value</code></em> of
+<em class="parameter"><code>member_name</code></em> inside <em class="parameter"><code>object</code></em>.
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-null-member"></a><h3>json_object_get_null_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_object_get_null_member         (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Convenience function that checks whether the value
+stored in <em class="parameter"><code>member_name</code></em> of <em class="parameter"><code>object</code></em> is null
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the value is null</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-set-object-member"></a><h3>json_object_set_object_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_set_object_member       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *value</code></em>);</pre>
+<p>
+Convenience function for setting an object <em class="parameter"><code>value</code></em> of
+<em class="parameter"><code>member_name</code></em> inside <em class="parameter"><code>object</code></em>.
+</p>
+<p>
+The <em class="parameter"><code>object</code></em> will take ownership of the passed <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-object-member"></a><h3>json_object_get_object_member ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="returnvalue">JsonObject</span></a> *        json_object_get_object_member       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Convenience function that retrieves the object
+stored in <em class="parameter"><code>member_name</code></em> of <em class="parameter"><code>object</code></em>
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the object inside the object's member. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-set-string-member"></a><h3>json_object_set_string_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_object_set_string_member       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *value</code></em>);</pre>
+<p>
+Convenience function for setting a string <em class="parameter"><code>value</code></em> of
+<em class="parameter"><code>member_name</code></em> inside <em class="parameter"><code>object</code></em>.
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-set-member" title="json_object_set_member ()"><code class="function">json_object_set_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-object-get-string-member"></a><h3>json_object_get_string_member ()</h3>
+<pre class="programlisting">const <span class="returnvalue">gchar</span> *       json_object_get_string_member       (<em class="parameter"><code><a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Convenience function that retrieves the string value
+stored in <em class="parameter"><code>member_name</code></em> of <em class="parameter"><code>object</code></em>
+</p>
+<p>
+See also: <a class="link" href="json-glib-JSON-Object.html#json-object-get-member" title="json_object_get_member ()"><code class="function">json_object_get_member()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the string value of the object's member</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.8</p>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>

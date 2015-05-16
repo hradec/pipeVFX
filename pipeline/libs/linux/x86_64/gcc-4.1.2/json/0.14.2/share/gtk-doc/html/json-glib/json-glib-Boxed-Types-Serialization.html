@@ -1,0 +1,382 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Boxed Types Serialization</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="json-advanced.html" title="Part IV. JSON-GLib Advanced API">
+<link rel="prev" href="json-glib-Serializable-Interface.html" title="Serializable Interface">
+<link rel="next" href="json-glib-JSON-GVariant-Integration.html" title="JSON GVariant Integration">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="json-glib-Serializable-Interface.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="json-advanced.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="json-glib-JSON-GVariant-Integration.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#json-glib-Boxed-Types-Serialization.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#json-glib-Boxed-Types-Serialization.description" class="shortcut">Description</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="json-glib-Boxed-Types-Serialization"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="json-glib-Boxed-Types-Serialization.top_of_page"></a>Boxed Types Serialization</span></h2>
+<p>Boxed Types Serialization — Serialize and deserialize GBoxed types</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="json-glib-Boxed-Types-Serialization.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          (<a class="link" href="json-glib-Boxed-Types-Serialization.html#JsonBoxedSerializeFunc" title="JsonBoxedSerializeFunc ()">*JsonBoxedSerializeFunc</a>)           (<em class="parameter"><code><span class="type">gconstpointer</span> boxed</code></em>);
+<span class="returnvalue">gpointer</span>            (<a class="link" href="json-glib-Boxed-Types-Serialization.html#JsonBoxedDeserializeFunc" title="JsonBoxedDeserializeFunc ()">*JsonBoxedDeserializeFunc</a>)         (<em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-Boxed-Types-Serialization.html#json-boxed-register-serialize-func" title="json_boxed_register_serialize_func ()">json_boxed_register_serialize_func</a>  (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> node_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-Boxed-Types-Serialization.html#JsonBoxedSerializeFunc" title="JsonBoxedSerializeFunc ()"><span class="type">JsonBoxedSerializeFunc</span></a> serialize_func</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="json-glib-Boxed-Types-Serialization.html#json-boxed-register-deserialize-func" title="json_boxed_register_deserialize_func ()">json_boxed_register_deserialize_func</a>
+                                                        (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> node_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-Boxed-Types-Serialization.html#JsonBoxedDeserializeFunc" title="JsonBoxedDeserializeFunc ()"><span class="type">JsonBoxedDeserializeFunc</span></a> deserialize_func</code></em>);
+
+<span class="returnvalue">gboolean</span>            <a class="link" href="json-glib-Boxed-Types-Serialization.html#json-boxed-can-serialize" title="json_boxed_can_serialize ()">json_boxed_can_serialize</a>            (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> *node_type</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="json-glib-Boxed-Types-Serialization.html#json-boxed-can-deserialize" title="json_boxed_can_deserialize ()">json_boxed_can_deserialize</a>          (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> node_type</code></em>);
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="json-glib-Boxed-Types-Serialization.html#json-boxed-serialize" title="json_boxed_serialize ()">json_boxed_serialize</a>                (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><span class="type">gconstpointer</span> boxed</code></em>);
+<span class="returnvalue">gpointer</span>            <a class="link" href="json-glib-Boxed-Types-Serialization.html#json-boxed-deserialize" title="json_boxed_deserialize ()">json_boxed_deserialize</a>              (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="json-glib-Boxed-Types-Serialization.description"></a><h2>Description</h2>
+<p>
+GLib's <span class="type">GBoxed</span> type is a generic wrapper for arbitrary C structures.
+</p>
+<p>
+JSON-GLib allows serialization and deserialization of a <span class="type">GBoxed</span> type
+by registering functions mapping a <a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> to a specific
+<span class="type">GType</span>.
+</p>
+<p>
+When registering a <span class="type">GBoxed</span> type you should also register the
+corresponding transformation functions, e.g.:
+</p>
+<p>
+</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="normal">GType</span>
+<span class="function">my_struct_get_type</span><span class="normal"> </span><span class="symbol">(</span><span class="type">void</span><span class="symbol">)</span>
+<span class="cbracket">{</span>
+<span class="normal">  </span><span class="keyword">static</span><span class="normal"> </span><span class="usertype">GType</span><span class="normal"> boxed_type </span><span class="symbol">=</span><span class="normal"> </span><span class="number">0</span><span class="symbol">;</span>
+
+<span class="normal">  </span><span class="keyword">if</span><span class="normal"> </span><span class="symbol">(</span><span class="normal">boxed_type </span><span class="symbol">==</span><span class="normal"> </span><span class="number">0</span><span class="symbol">)</span>
+<span class="normal">    </span><span class="cbracket">{</span>
+<span class="normal">      boxed_type </span><span class="symbol">=</span>
+<span class="normal">        </span><span class="function">g_boxed_type_register_static</span><span class="normal"> </span><span class="symbol">(</span><span class="function">g_intern_static_string</span><span class="normal"> </span><span class="symbol">(</span><span class="string">"MyStruct"</span><span class="symbol">),</span>
+<span class="normal">                                      </span><span class="symbol">(</span><span class="normal">GBoxedCopyFunc</span><span class="symbol">)</span><span class="normal"> my_struct_copy</span><span class="symbol">,</span>
+<span class="normal">                                      </span><span class="symbol">(</span><span class="normal">GBoxedFreeFunc</span><span class="symbol">)</span><span class="normal"> my_struct_free</span><span class="symbol">);</span>
+
+<span class="normal">      </span><span class="function"><a href="json-glib-Boxed-Types-Serialization.html#json-boxed-register-serialize-func">json_boxed_register_serialize_func</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">boxed_type</span><span class="symbol">,</span><span class="normal"> <a href="json-glib-JSON-Node.html#JSON-NODE-OBJECT:CAPS">JSON_NODE_OBJECT</a></span><span class="symbol">,</span>
+<span class="normal">                                          my_struct_serialize</span><span class="symbol">);</span>
+<span class="normal">      </span><span class="function"><a href="json-glib-Boxed-Types-Serialization.html#json-boxed-register-deserialize-func">json_boxed_register_deserialize_func</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">boxed_type</span><span class="symbol">,</span><span class="normal"> <a href="json-glib-JSON-Node.html#JSON-NODE-OBJECT:CAPS">JSON_NODE_OBJECT</a></span><span class="symbol">,</span>
+<span class="normal">                                            my_struct_deserialize</span><span class="symbol">);</span>
+<span class="normal">    </span><span class="cbracket">}</span>
+
+<span class="normal">  </span><span class="keyword">return</span><span class="normal"> boxed_type</span><span class="symbol">;</span>
+<span class="cbracket">}</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+</p>
+<p>
+The serialization function will be invoked by <a class="link" href="json-glib-Boxed-Types-Serialization.html#json-boxed-serialize" title="json_boxed_serialize ()"><code class="function">json_boxed_serialize()</code></a>:
+it will be passed a pointer to the C structure and it must return a
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>. The deserialization function will be invoked by
+<a class="link" href="json-glib-Boxed-Types-Serialization.html#json-boxed-deserialize" title="json_boxed_deserialize ()"><code class="function">json_boxed_deserialize()</code></a>: it will be passed a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> for the
+declared type and it must return a newly allocated C structure.
+</p>
+<p>
+It is possible to check whether a <span class="type">GBoxed</span> type can be deserialized
+from a specific <a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a>, and whether a <span class="type">GBoxed</span> can be serialized
+and to which specific <a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a>.
+</p>
+</div>
+<div class="refsect1">
+<a name="json-glib-Boxed-Types-Serialization.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="JsonBoxedSerializeFunc"></a><h3>JsonBoxedSerializeFunc ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          (*JsonBoxedSerializeFunc)           (<em class="parameter"><code><span class="type">gconstpointer</span> boxed</code></em>);</pre>
+<p>
+Serializes the passed <span class="type">GBoxed</span> and stores it inside a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>boxed</code></em> :</span></p></td>
+<td>a <span class="type">GBoxed</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly created <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.10</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonBoxedDeserializeFunc"></a><h3>JsonBoxedDeserializeFunc ()</h3>
+<pre class="programlisting"><span class="returnvalue">gpointer</span>            (*JsonBoxedDeserializeFunc)         (<em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);</pre>
+<p>
+Deserializes the contents of the passed <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> into a <span class="type">GBoxed</span>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly created boxed type</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.10</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-boxed-register-serialize-func"></a><h3>json_boxed_register_serialize_func ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_boxed_register_serialize_func  (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> node_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-Boxed-Types-Serialization.html#JsonBoxedSerializeFunc" title="JsonBoxedSerializeFunc ()"><span class="type">JsonBoxedSerializeFunc</span></a> serialize_func</code></em>);</pre>
+<p>
+Registers a serialization function for a <span class="type">GBoxed</span> of type <em class="parameter"><code>gboxed_type</code></em>
+to a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of type <em class="parameter"><code>node_type</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>gboxed_type</code></em> :</span></p></td>
+<td>a boxed type</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node_type</code></em> :</span></p></td>
+<td>a node type</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>serialize_func</code></em> :</span></p></td>
+<td>serialization function for <em class="parameter"><code>boxed_type</code></em> into
+a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of type <em class="parameter"><code>node_type</code></em>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.10</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-boxed-register-deserialize-func"></a><h3>json_boxed_register_deserialize_func ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_boxed_register_deserialize_func
+                                                        (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> node_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-Boxed-Types-Serialization.html#JsonBoxedDeserializeFunc" title="JsonBoxedDeserializeFunc ()"><span class="type">JsonBoxedDeserializeFunc</span></a> deserialize_func</code></em>);</pre>
+<p>
+Registers a deserialization function for a <span class="type">GBoxed</span> of type <em class="parameter"><code>gboxed_type</code></em>
+from a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of type <em class="parameter"><code>node_type</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>gboxed_type</code></em> :</span></p></td>
+<td>a boxed type</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node_type</code></em> :</span></p></td>
+<td>a node type</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>deserialize_func</code></em> :</span></p></td>
+<td>deserialization function for <em class="parameter"><code>boxed_type</code></em> from
+a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of type <em class="parameter"><code>node_type</code></em>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.10</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-boxed-can-serialize"></a><h3>json_boxed_can_serialize ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_boxed_can_serialize            (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> *node_type</code></em>);</pre>
+<p>
+Checks whether it is possible to serialize a <span class="type">GBoxed</span> of
+type <em class="parameter"><code>gboxed_type</code></em> into a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>. The type of the
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> is placed inside <em class="parameter"><code>node_type</code></em> if the function
+returns <code class="literal">TRUE</code> and it's undefined otherwise.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>gboxed_type</code></em> :</span></p></td>
+<td>a boxed type</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node_type</code></em> :</span></p></td>
+<td>the <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> type to which the boxed type can be
+serialized into. <span class="annotation">[<acronym title="Parameter for returning results. Default is transfer full."><span class="acronym">out</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the type can be serialized,
+and <code class="literal">FALSE</code> otherwise.</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.10</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-boxed-can-deserialize"></a><h3>json_boxed_can_deserialize ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_boxed_can_deserialize          (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNodeType" title="enum JsonNodeType"><span class="type">JsonNodeType</span></a> node_type</code></em>);</pre>
+<p>
+Checks whether it is possible to deserialize a <span class="type">GBoxed</span> of
+type <em class="parameter"><code>gboxed_type</code></em> from a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of type <em class="parameter"><code>node_type</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>gboxed_type</code></em> :</span></p></td>
+<td>a boxed type</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node_type</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> type</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the type can be deserialized, <code class="literal">FALSE</code> otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.10</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-boxed-serialize"></a><h3>json_boxed_serialize ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_boxed_serialize                (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><span class="type">gconstpointer</span> boxed</code></em>);</pre>
+<p>
+Serializes <em class="parameter"><code>boxed</code></em>, a pointer to a <span class="type">GBoxed</span> of type <em class="parameter"><code>gboxed_type</code></em>,
+into a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>gboxed_type</code></em> :</span></p></td>
+<td>a boxed type</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>boxed</code></em> :</span></p></td>
+<td>a pointer to a <span class="type">GBoxed</span> of type <em class="parameter"><code>gboxed_type</code></em>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> with the serialization of the
+boxed type, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if serialization either failed or was not possible. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.10</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-boxed-deserialize"></a><h3>json_boxed_deserialize ()</h3>
+<pre class="programlisting"><span class="returnvalue">gpointer</span>            json_boxed_deserialize              (<em class="parameter"><code><span class="type">GType</span> gboxed_type</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);</pre>
+<p>
+Deserializes <em class="parameter"><code>node</code></em> into a <span class="type">GBoxed</span> of <em class="parameter"><code>gboxed_type</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>gboxed_type</code></em> :</span></p></td>
+<td>a boxed type</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly allocated <span class="type">GBoxed</span>. Use
+<code class="function">g_boxed_free()</code> to release the resources allocated by this
+function. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.10</p>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>

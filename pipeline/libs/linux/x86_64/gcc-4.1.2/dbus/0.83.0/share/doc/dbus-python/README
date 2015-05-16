@@ -1,0 +1,34 @@
+=======================================
+dbus-python_: Python bindings for D-Bus
+=======================================
+
+.. _dbus-python: http://www.freedesktop.org/wiki/Software/DBusBindings#python
+
+Usage
+=====
+
+Online documentation can be found at
+<http://dbus.freedesktop.org/doc/dbus-python/>.
+
+There is an incomplete tutorial in `doc/tutorial.txt`__
+(if you compile dbus-python with `docutils`_' ``rst2html`` tool installed or
+you're reading this document on the D-Bus website, there's also an
+`HTML version`__).
+
+__ doc/tutorial.txt
+__ doc/tutorial.html
+
+`API documentation`_ is generated if you compile dbus-python with `epydoc`_
+version 3 and `docutils`_ installed. An `online copy of the API documentation`_
+is also available.
+
+.. _API documentation: api/index.html
+.. _epydoc: http://epydoc.sourceforge.net/
+.. _docutils: http://docutils.sourceforge.net/
+.. _online copy of the API documentation:
+   http://dbus.freedesktop.org/doc/dbus-python/api/
+
+To develop on dbus-python, see `doc/HACKING.txt`__ or the `HTML version`__.
+
+__ doc/HACKING.txt
+__ doc/HACKING.html

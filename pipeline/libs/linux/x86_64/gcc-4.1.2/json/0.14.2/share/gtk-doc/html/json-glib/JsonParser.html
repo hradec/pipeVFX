@@ -1,0 +1,871 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>JsonParser</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="ch02.html" title="Parser">
+<link rel="prev" href="ch02.html" title="Parser">
+<link rel="next" href="JsonReader.html" title="JsonReader">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="ch02.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch02.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="JsonReader.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#JsonParser.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#JsonParser.description" class="shortcut">Description</a>
+                   | 
+                  <a href="#JsonParser.object-hierarchy" class="shortcut">Object Hierarchy</a>
+                   | 
+                  <a href="#JsonParser.signals" class="shortcut">Signals</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="JsonParser"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="JsonParser.top_of_page"></a>JsonParser</span></h2>
+<p>JsonParser — Parse JSON data streams</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="JsonParser.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">enum                <a class="link" href="JsonParser.html#JsonParserError" title="enum JsonParserError">JsonParserError</a>;
+
+struct              <a class="link" href="JsonParser.html#JsonParser-struct" title="struct JsonParser">JsonParser</a>;
+struct              <a class="link" href="JsonParser.html#JsonParserClass" title="struct JsonParserClass">JsonParserClass</a>;
+<a class="link" href="JsonParser.html" title="JsonParser"><span class="returnvalue">JsonParser</span></a> *        <a class="link" href="JsonParser.html#json-parser-new" title="json_parser_new ()">json_parser_new</a>                     (<em class="parameter"><code><span class="type">void</span></code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonParser.html#json-parser-load-from-file" title="json_parser_load_from_file ()">json_parser_load_from_file</a>          (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *filename</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonParser.html#json-parser-load-from-data" title="json_parser_load_from_data ()">json_parser_load_from_data</a>          (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *data</code></em>,
+                                                         <em class="parameter"><code><span class="type">gssize</span> length</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonParser.html#json-parser-load-from-stream" title="json_parser_load_from_stream ()">json_parser_load_from_stream</a>        (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code><span class="type">GInputStream</span> *stream</code></em>,
+                                                         <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonParser.html#json-parser-load-from-stream-async" title="json_parser_load_from_stream_async ()">json_parser_load_from_stream_async</a>  (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code><span class="type">GInputStream</span> *stream</code></em>,
+                                                         <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                                         <em class="parameter"><code><span class="type">GAsyncReadyCallback</span> callback</code></em>,
+                                                         <em class="parameter"><code><span class="type">gpointer</span> user_data</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonParser.html#json-parser-load-from-stream-finish" title="json_parser_load_from_stream_finish ()">json_parser_load_from_stream_finish</a> (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code><span class="type">GAsyncResult</span> *result</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);
+
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="JsonParser.html#json-parser-get-root" title="json_parser_get_root ()">json_parser_get_root</a>                (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>);
+
+<span class="returnvalue">guint</span>               <a class="link" href="JsonParser.html#json-parser-get-current-line" title="json_parser_get_current_line ()">json_parser_get_current_line</a>        (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>);
+<span class="returnvalue">guint</span>               <a class="link" href="JsonParser.html#json-parser-get-current-pos" title="json_parser_get_current_pos ()">json_parser_get_current_pos</a>         (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonParser.html#json-parser-has-assignment" title="json_parser_has_assignment ()">json_parser_has_assignment</a>          (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code><span class="type">gchar</span> **variable_name</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonParser.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  GObject
+   +----JsonParser
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonParser.signals"></a><h2>Signals</h2>
+<pre class="synopsis">
+  "<a class="link" href="JsonParser.html#JsonParser-array-element" title='The "array-element" signal'>array-element</a>"                                  : <code class="literal">Run Last</code>
+  "<a class="link" href="JsonParser.html#JsonParser-array-end" title='The "array-end" signal'>array-end</a>"                                      : <code class="literal">Run Last</code>
+  "<a class="link" href="JsonParser.html#JsonParser-array-start" title='The "array-start" signal'>array-start</a>"                                    : <code class="literal">Run Last</code>
+  "<a class="link" href="JsonParser.html#JsonParser-error" title='The "error" signal'>error</a>"                                          : <code class="literal">Run Last</code>
+  "<a class="link" href="JsonParser.html#JsonParser-object-end" title='The "object-end" signal'>object-end</a>"                                     : <code class="literal">Run Last</code>
+  "<a class="link" href="JsonParser.html#JsonParser-object-member" title='The "object-member" signal'>object-member</a>"                                  : <code class="literal">Run Last</code>
+  "<a class="link" href="JsonParser.html#JsonParser-object-start" title='The "object-start" signal'>object-start</a>"                                   : <code class="literal">Run Last</code>
+  "<a class="link" href="JsonParser.html#JsonParser-parse-end" title='The "parse-end" signal'>parse-end</a>"                                      : <code class="literal">Run Last</code>
+  "<a class="link" href="JsonParser.html#JsonParser-parse-start" title='The "parse-start" signal'>parse-start</a>"                                    : <code class="literal">Run Last</code>
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonParser.description"></a><h2>Description</h2>
+<p>
+<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> provides an object for parsing a JSON data stream, either
+inside a file or inside a static buffer.
+</p>
+</div>
+<div class="refsect1">
+<a name="JsonParser.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="JsonParserError"></a><h3>enum JsonParserError</h3>
+<pre class="programlisting">typedef enum {
+  JSON_PARSER_ERROR_PARSE,
+  JSON_PARSER_ERROR_TRAILING_COMMA,
+  JSON_PARSER_ERROR_MISSING_COMMA,
+  JSON_PARSER_ERROR_MISSING_COLON,
+  JSON_PARSER_ERROR_INVALID_BAREWORD,
+  
+  JSON_PARSER_ERROR_UNKNOWN
+} JsonParserError;
+</pre>
+<p>
+Error enumeration for <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</p>
+<p>
+This enumeration can be extended at later date
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><a name="JSON-PARSER-ERROR-PARSE:CAPS"></a><span class="term"><code class="literal">JSON_PARSER_ERROR_PARSE</code></span></p></td>
+<td>parse error
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-PARSER-ERROR-TRAILING-COMMA:CAPS"></a><span class="term"><code class="literal">JSON_PARSER_ERROR_TRAILING_COMMA</code></span></p></td>
+<td>unexpected trailing comma
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-PARSER-ERROR-MISSING-COMMA:CAPS"></a><span class="term"><code class="literal">JSON_PARSER_ERROR_MISSING_COMMA</code></span></p></td>
+<td>expected comma
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-PARSER-ERROR-MISSING-COLON:CAPS"></a><span class="term"><code class="literal">JSON_PARSER_ERROR_MISSING_COLON</code></span></p></td>
+<td>expected colon
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-PARSER-ERROR-INVALID-BAREWORD:CAPS"></a><span class="term"><code class="literal">JSON_PARSER_ERROR_INVALID_BAREWORD</code></span></p></td>
+<td>invalid bareword
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-PARSER-ERROR-UNKNOWN:CAPS"></a><span class="term"><code class="literal">JSON_PARSER_ERROR_UNKNOWN</code></span></p></td>
+<td>unknown error
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-struct"></a><h3>struct JsonParser</h3>
+<pre class="programlisting">struct JsonParser;</pre>
+<p>
+JSON data streams parser. The contents of the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> structure are
+private and should only be accessed via the provided API.
+</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParserClass"></a><h3>struct JsonParserClass</h3>
+<pre class="programlisting">struct JsonParserClass {
+  void (* parse_start)   (JsonParser   *parser);
+
+  void (* object_start)  (JsonParser   *parser);
+  void (* object_member) (JsonParser   *parser,
+                          JsonObject   *object,
+                          const gchar  *member_name);
+  void (* object_end)    (JsonParser   *parser,
+                          JsonObject   *object);
+
+  void (* array_start)   (JsonParser   *parser);
+  void (* array_element) (JsonParser   *parser,
+                          JsonArray    *array,
+                          gint          index_);
+  void (* array_end)     (JsonParser   *parser,
+                          JsonArray    *array);
+
+  void (* parse_end)     (JsonParser   *parser);
+  
+  void (* error)         (JsonParser   *parser,
+                          const GError *error);
+};
+</pre>
+<p>
+<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> class.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.parse-start"></a>parse_start</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::parse-start signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.object-start"></a>object_start</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::object-start signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.object-member"></a>object_member</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::object-member signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.object-end"></a>object_end</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::object-end signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.array-start"></a>array_start</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::array-start signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.array-element"></a>array_element</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::array-element signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.array-end"></a>array_end</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::array-end signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.parse-end"></a>parse_end</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::parse-end signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="structfield"><code><a name="JsonParserClass.error"></a>error</code></em> ()</span></p></td>
+<td>class handler for the JsonParser::error signal</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-new"></a><h3>json_parser_new ()</h3>
+<pre class="programlisting"><a class="link" href="JsonParser.html" title="JsonParser"><span class="returnvalue">JsonParser</span></a> *        json_parser_new                     (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
+<p>
+Creates a new <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> instance. You can use the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> to
+load a JSON stream from either a file or a buffer and then walk the
+hierarchy using the data types API.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly created <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>. Use <code class="function">g_object_unref()</code>
+to release all the memory it allocates.</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-load-from-file"></a><h3>json_parser_load_from_file ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_parser_load_from_file          (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *filename</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Loads a JSON stream from the content of <em class="parameter"><code>filename</code></em> and parses it. See
+<a class="link" href="JsonParser.html#json-parser-load-from-data" title="json_parser_load_from_data ()"><code class="function">json_parser_load_from_data()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>filename</code></em> :</span></p></td>
+<td>the path for the file to parse</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>return location for a <span class="type">GError</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the file was successfully loaded and parsed.
+In case of error, <em class="parameter"><code>error</code></em> is set accordingly and <code class="literal">FALSE</code> is returned</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-load-from-data"></a><h3>json_parser_load_from_data ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_parser_load_from_data          (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *data</code></em>,
+                                                         <em class="parameter"><code><span class="type">gssize</span> length</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Loads a JSON stream from a buffer and parses it. You can call this function
+multiple times with the same <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> object, but the contents of the
+parser will be destroyed each time.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>data</code></em> :</span></p></td>
+<td>the buffer to parse</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>length</code></em> :</span></p></td>
+<td>the length of the buffer, or -1</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>return location for a <span class="type">GError</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the buffer was succesfully parser. In case
+of error, <em class="parameter"><code>error</code></em> is set accordingly and <code class="literal">FALSE</code> is returned</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-load-from-stream"></a><h3>json_parser_load_from_stream ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_parser_load_from_stream        (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code><span class="type">GInputStream</span> *stream</code></em>,
+                                                         <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Loads the contents of an input stream and parses them.
+</p>
+<p>
+If <em class="parameter"><code>cancellable</code></em> is not <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>, then the operation can be cancelled by
+triggering the <em class="parameter"><code>cancellable</code></em> object from another thread. If the
+operation was cancelled, the error <code class="literal">G_IO_ERROR_CANCELLED</code> will be set
+on the passed <em class="parameter"><code>error</code></em>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>stream</code></em> :</span></p></td>
+<td>an open <span class="type">GInputStream</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>cancellable</code></em> :</span></p></td>
+<td>a <span class="type">GCancellable</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>the return location for a <span class="type">GError</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the data stream was successfully read and
+parsed, and <code class="literal">FALSE</code> otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-load-from-stream-async"></a><h3>json_parser_load_from_stream_async ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_parser_load_from_stream_async  (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code><span class="type">GInputStream</span> *stream</code></em>,
+                                                         <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                                         <em class="parameter"><code><span class="type">GAsyncReadyCallback</span> callback</code></em>,
+                                                         <em class="parameter"><code><span class="type">gpointer</span> user_data</code></em>);</pre>
+<p>
+Asynchronously reads the contents of <em class="parameter"><code>stream</code></em>.
+</p>
+<p>
+For more details, see <a class="link" href="JsonParser.html#json-parser-load-from-stream" title="json_parser_load_from_stream ()"><code class="function">json_parser_load_from_stream()</code></a> which is the
+synchronous version of this call.
+</p>
+<p>
+When the operation is finished, <em class="parameter"><code>callback</code></em> will be called. You should
+then call <a class="link" href="JsonParser.html#json-parser-load-from-stream-finish" title="json_parser_load_from_stream_finish ()"><code class="function">json_parser_load_from_stream_finish()</code></a> to get the result
+of the operation.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>stream</code></em> :</span></p></td>
+<td>a <span class="type">GInputStream</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>cancellable</code></em> :</span></p></td>
+<td>a <span class="type">GCancellable</span>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>callback</code></em> :</span></p></td>
+<td>a <span class="type">GAsyncReadyCallback</span> to call when the request is satisfied</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>the data to pass to <em class="parameter"><code>callback</code></em>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-load-from-stream-finish"></a><h3>json_parser_load_from_stream_finish ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_parser_load_from_stream_finish (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code><span class="type">GAsyncResult</span> *result</code></em>,
+                                                         <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>
+Finishes an asynchronous stream loading started with
+<a class="link" href="JsonParser.html#json-parser-load-from-stream-async" title="json_parser_load_from_stream_async ()"><code class="function">json_parser_load_from_stream_async()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>result</code></em> :</span></p></td>
+<td>a <span class="type">GAsyncResult</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>the return location for a <span class="type">GError</span> or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the content of the stream was successfully retrieves
+and parsed, and <code class="literal">FALSE</code> otherwise. In case of error, the <span class="type">GError</span> will be
+filled accordingly.</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-get-root"></a><h3>json_parser_get_root ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_parser_get_root                (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>);</pre>
+<p>
+Retrieves the top level node from the parsed JSON stream.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the root <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> . The returned
+node is owned by the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> and should never be modified
+or freed. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-get-current-line"></a><h3>json_parser_get_current_line ()</h3>
+<pre class="programlisting"><span class="returnvalue">guint</span>               json_parser_get_current_line        (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>);</pre>
+<p>
+Retrieves the line currently parsed, starting from 1.
+</p>
+<p>
+This function has defined behaviour only while parsing; calling this
+function from outside the signal handlers emitted by <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> will
+yield 0.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the currently parsed line, or 0.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-get-current-pos"></a><h3>json_parser_get_current_pos ()</h3>
+<pre class="programlisting"><span class="returnvalue">guint</span>               json_parser_get_current_pos         (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>);</pre>
+<p>
+Retrieves the current position inside the current line, starting
+from 0.
+</p>
+<p>
+This function has defined behaviour only while parsing; calling this
+function from outside the signal handlers emitted by <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> will
+yield 0.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the position in the current line, or 0.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-parser-has-assignment"></a><h3>json_parser_has_assignment ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_parser_has_assignment          (<em class="parameter"><code><a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser</code></em>,
+                                                         <em class="parameter"><code><span class="type">gchar</span> **variable_name</code></em>);</pre>
+<p>
+A JSON data stream might sometimes contain an assignment, like:
+</p>
+<p>
+</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="normal">var _json_data </span><span class="symbol">=</span><span class="normal"> </span><span class="cbracket">{</span><span class="normal"> </span><span class="string">"member_name"</span><span class="normal"> </span><span class="symbol">:</span><span class="normal"> </span><span class="symbol">[</span><span class="normal"> </span><span class="symbol">...</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+</p>
+<p>
+even though it would technically constitute a violation of the RFC.
+</p>
+<p>
+<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> will ignore the left hand identifier and parse the right
+hand value of the assignment. <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> will record, though, the
+existence of the assignment in the data stream and the variable name
+used.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>variable_name</code></em> :</span></p></td>
+<td>Return location for the variable
+name, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="Parameter for returning results. Default is transfer full."><span class="acronym">out</span></acronym>][<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>][<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if there was an assignment, <code class="literal">FALSE</code> otherwise. If
+<em class="parameter"><code>variable_name</code></em> is not <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> it will be set to the name of the variable
+used in the assignment. The string is owned by <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> and should
+never be modified or freed.</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.4</p>
+</div>
+</div>
+<div class="refsect1">
+<a name="JsonParser.signal-details"></a><h2>Signal Details</h2>
+<div class="refsect2">
+<a name="JsonParser-array-element"></a><h3>The <code class="literal">"array-element"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>  *array,
+                                                        <span class="type">gint</span>        index_,
+                                                        <span class="type">gpointer</span>    user_data)      : <code class="literal">Run Last</code></pre>
+<p>
+The ::array-element signal is emitted each time the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+has successfully parsed a single element of a <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>. The
+array and element index are passed to the signal handlers.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>array</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>index_</code></em> :</span></p></td>
+<td>the index of the newly parsed element</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-array-end"></a><h3>The <code class="literal">"array-end"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>  *array,
+                                                        <span class="type">gpointer</span>    user_data)      : <code class="literal">Run Last</code></pre>
+<p>
+The ::array-end signal is emitted each time the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+has successfully parsed an entire <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>array</code></em> :</span></p></td>
+<td>the parsed <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-array-start"></a><h3>The <code class="literal">"array-start"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <span class="type">gpointer</span>    user_data)      : <code class="literal">Run Last</code></pre>
+<p>
+The ::array-start signal is emitted each time the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+starts parsing a <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-error"></a><h3>The <code class="literal">"error"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <span class="type">gpointer</span>    error,
+                                                        <span class="type">gpointer</span>    user_data)      : <code class="literal">Run Last</code></pre>
+<p>
+The ::error signal is emitted each time a <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> encounters
+an error in a JSON stream.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the parser instance that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td>a pointer to the <span class="type">GError</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-object-end"></a><h3>The <code class="literal">"object-end"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object,
+                                                        <span class="type">gpointer</span>    user_data)      : <code class="literal">Run Last</code></pre>
+<p>
+The ::object-end signal is emitted each time the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+has successfully parsed an entire <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>the parsed <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-object-member"></a><h3>The <code class="literal">"object-member"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> *object,
+                                                        <span class="type">gchar</span>      *member_name,
+                                                        <span class="type">gpointer</span>    user_data)        : <code class="literal">Run Last</code></pre>
+<p>
+The ::object-member signal is emitted each time the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+has successfully parsed a single member of a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>. The
+object and member are passed to the signal handlers.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the newly parsed member</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-object-start"></a><h3>The <code class="literal">"object-start"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <span class="type">gpointer</span>    user_data)      : <code class="literal">Run Last</code></pre>
+<p>
+The ::object-start signal is emitted each time the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a>
+starts parsing a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-parse-end"></a><h3>The <code class="literal">"parse-end"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <span class="type">gpointer</span>    user_data)      : <code class="literal">Run Last</code></pre>
+<p>
+The ::parse-end signal is emitted when the parser successfully
+finished parsing a JSON data stream
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonParser-parse-start"></a><h3>The <code class="literal">"parse-start"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> *parser,
+                                                        <span class="type">gpointer</span>    user_data)      : <code class="literal">Run Last</code></pre>
+<p>
+The ::parse-start signal is emitted when the parser began parsing
+a JSON data stream.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>parser</code></em> :</span></p></td>
+<td>the <a class="link" href="JsonParser.html" title="JsonParser"><span class="type">JsonParser</span></a> that received the signal</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>

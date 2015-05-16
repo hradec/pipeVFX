@@ -1,0 +1,513 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>JsonBuilder</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="ch03.html" title="Generator">
+<link rel="prev" href="JsonGenerator.html" title="JsonGenerator">
+<link rel="next" href="json-advanced.html" title="Part IV. JSON-GLib Advanced API">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="JsonGenerator.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch03.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="json-advanced.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#JsonBuilder.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#JsonBuilder.description" class="shortcut">Description</a>
+                   | 
+                  <a href="#JsonBuilder.object-hierarchy" class="shortcut">Object Hierarchy</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="JsonBuilder"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="JsonBuilder.top_of_page"></a>JsonBuilder</span></h2>
+<p>JsonBuilder — Generates JSON trees</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="JsonBuilder.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">struct              <a class="link" href="JsonBuilder.html#JsonBuilder-struct" title="struct JsonBuilder">JsonBuilder</a>;
+struct              <a class="link" href="JsonBuilder.html#JsonBuilderClass" title="struct JsonBuilderClass">JsonBuilderClass</a>;
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-new" title="json_builder_new ()">json_builder_new</a>                    (<em class="parameter"><code><span class="type">void</span></code></em>);
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="JsonBuilder.html#json-builder-get-root" title="json_builder_get_root ()">json_builder_get_root</a>               (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonBuilder.html#json-builder-reset" title="json_builder_reset ()">json_builder_reset</a>                  (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);
+
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-begin-array" title="json_builder_begin_array ()">json_builder_begin_array</a>            (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-end-array" title="json_builder_end_array ()">json_builder_end_array</a>              (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-begin-object" title="json_builder_begin_object ()">json_builder_begin_object</a>           (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()">json_builder_set_member_name</a>        (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-end-object" title="json_builder_end_object ()">json_builder_end_object</a>             (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);
+
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-add-value" title="json_builder_add_value ()">json_builder_add_value</a>              (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-add-int-value" title="json_builder_add_int_value ()">json_builder_add_int_value</a>          (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code><span class="type">gint64</span> value</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-add-double-value" title="json_builder_add_double_value ()">json_builder_add_double_value</a>       (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code><span class="type">gdouble</span> value</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-add-boolean-value" title="json_builder_add_boolean_value ()">json_builder_add_boolean_value</a>      (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code><span class="type">gboolean</span> value</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-add-string-value" title="json_builder_add_string_value ()">json_builder_add_string_value</a>       (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *value</code></em>);
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       <a class="link" href="JsonBuilder.html#json-builder-add-null-value" title="json_builder_add_null_value ()">json_builder_add_null_value</a>         (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonBuilder.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  GObject
+   +----JsonBuilder
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonBuilder.description"></a><h2>Description</h2>
+<p>
+<a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> provides an object for generating a JSON tree.
+You can generate only one tree with one <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> instance.
+</p>
+<p>
+The root of the JSON tree can be either a <a class="link" href="json-glib-JSON-Object.html#JsonObject" title="JsonObject"><span class="type">JsonObject</span></a> or a <a class="link" href="json-glib-JSON-Array.html#JsonArray" title="JsonArray"><span class="type">JsonArray</span></a>.
+Thus the first call must necessarily be either
+<a class="link" href="JsonBuilder.html#json-builder-begin-object" title="json_builder_begin_object ()"><code class="function">json_builder_begin_object()</code></a> or <a class="link" href="JsonBuilder.html#json-builder-begin-array" title="json_builder_begin_array ()"><code class="function">json_builder_begin_array()</code></a>.
+</p>
+<p>
+For convenience to language bindings, <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> returns itself from
+most of functions, making it easy to chain function calls.
+</p>
+</div>
+<div class="refsect1">
+<a name="JsonBuilder.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="JsonBuilder-struct"></a><h3>struct JsonBuilder</h3>
+<pre class="programlisting">struct JsonBuilder;</pre>
+<p>
+The <span class="structname">JsonBuilder</span> structure contains only
+private data and shouls be accessed using the provided API
+</p>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonBuilderClass"></a><h3>struct JsonBuilderClass</h3>
+<pre class="programlisting">struct JsonBuilderClass {
+};
+</pre>
+<p>
+The <span class="structname">JsonBuilder</span> structure contains only
+private data
+</p>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-new"></a><h3>json_builder_new ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_new                    (<em class="parameter"><code><span class="type">void</span></code></em>);</pre>
+<p>
+Creates a new <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>. You can use this object to generate a
+JSON tree and obtain the root <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>s.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly created <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> instance</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-get-root"></a><h3>json_builder_get_root ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_builder_get_root               (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);</pre>
+<p>
+Returns the root of the current constructed tree, if the build is complete
+(ie: all opened objects, object members and arrays are being closed).
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the build is not complete.
+Free the returned value with <a class="link" href="json-glib-JSON-Node.html#json-node-free" title="json_node_free ()"><code class="function">json_node_free()</code></a>. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-reset"></a><h3>json_builder_reset ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_builder_reset                  (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);</pre>
+<p>
+Resets the state of the <em class="parameter"><code>builder</code></em> back to its initial state.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-begin-array"></a><h3>json_builder_begin_array ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_begin_array            (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);</pre>
+<p>
+Opens a subarray inside the given <em class="parameter"><code>builder</code></em>. When done adding members to
+the subarray, <a class="link" href="JsonBuilder.html#json-builder-end-array" title="json_builder_end_array ()"><code class="function">json_builder_end_array()</code></a> must be called.
+</p>
+<p>
+Can be called for first or only if the call is associated to an object member
+or an array element.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-end-array"></a><h3>json_builder_end_array ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_end_array              (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);</pre>
+<p>
+Closes the subarray inside the given <em class="parameter"><code>builder</code></em> that was opened by the most
+recent call to <a class="link" href="JsonBuilder.html#json-builder-begin-array" title="json_builder_begin_array ()"><code class="function">json_builder_begin_array()</code></a>.
+</p>
+<p>
+Cannot be called after <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()"><code class="function">json_builder_set_member_name()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-begin-object"></a><h3>json_builder_begin_object ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_begin_object           (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);</pre>
+<p>
+Opens a subobject inside the given <em class="parameter"><code>builder</code></em>. When done adding members to
+the subobject, <a class="link" href="JsonBuilder.html#json-builder-end-object" title="json_builder_end_object ()"><code class="function">json_builder_end_object()</code></a> must be called.
+</p>
+<p>
+Can be called for first or only if the call is associated to an object member
+or an array element.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-set-member-name"></a><h3>json_builder_set_member_name ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_set_member_name        (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Set the name of the next member in an object. The next call must add a value,
+open an object or an array.
+</p>
+<p>
+Can be called only if the call is associated to an object.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-end-object"></a><h3>json_builder_end_object ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_end_object             (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);</pre>
+<p>
+Closes the subobject inside the given <em class="parameter"><code>builder</code></em> that was opened by the most
+recent call to <a class="link" href="JsonBuilder.html#json-builder-begin-object" title="json_builder_begin_object ()"><code class="function">json_builder_begin_object()</code></a>.
+</p>
+<p>
+Cannot be called after <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()"><code class="function">json_builder_set_member_name()</code></a>.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-add-value"></a><h3>json_builder_add_value ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_add_value              (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);</pre>
+<p>
+If called after <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()"><code class="function">json_builder_set_member_name()</code></a>, sets <em class="parameter"><code>node</code></em> as member of the
+most recent opened object, otherwise <em class="parameter"><code>node</code></em> is added as element of the most
+recent opened array.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em> :</span></p></td>
+<td>the value of the member or element</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-add-int-value"></a><h3>json_builder_add_int_value ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_add_int_value          (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code><span class="type">gint64</span> value</code></em>);</pre>
+<p>
+If called after <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()"><code class="function">json_builder_set_member_name()</code></a>, sets <em class="parameter"><code>value</code></em> as member of the
+most recent opened object, otherwise <em class="parameter"><code>value</code></em> is added as element of the most
+recent opened array.
+</p>
+<p>
+See also: <a class="link" href="JsonBuilder.html#json-builder-add-value" title="json_builder_add_value ()"><code class="function">json_builder_add_value()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member or element</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-add-double-value"></a><h3>json_builder_add_double_value ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_add_double_value       (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code><span class="type">gdouble</span> value</code></em>);</pre>
+<p>
+If called after <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()"><code class="function">json_builder_set_member_name()</code></a>, sets <em class="parameter"><code>value</code></em> as member of the
+most recent opened object, otherwise <em class="parameter"><code>value</code></em> is added as element of the most
+recent opened array.
+</p>
+<p>
+See also: <a class="link" href="JsonBuilder.html#json-builder-add-value" title="json_builder_add_value ()"><code class="function">json_builder_add_value()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member or element</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-add-boolean-value"></a><h3>json_builder_add_boolean_value ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_add_boolean_value      (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code><span class="type">gboolean</span> value</code></em>);</pre>
+<p>
+If called after <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()"><code class="function">json_builder_set_member_name()</code></a>, sets <em class="parameter"><code>value</code></em> as member of the
+most recent opened object, otherwise <em class="parameter"><code>value</code></em> is added as element of the most
+recent opened array.
+</p>
+<p>
+See also: <a class="link" href="JsonBuilder.html#json-builder-add-value" title="json_builder_add_value ()"><code class="function">json_builder_add_value()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member or element</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-add-string-value"></a><h3>json_builder_add_string_value ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_add_string_value       (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *value</code></em>);</pre>
+<p>
+If called after <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()"><code class="function">json_builder_set_member_name()</code></a>, sets <em class="parameter"><code>value</code></em> as member of the
+most recent opened object, otherwise <em class="parameter"><code>value</code></em> is added as element of the most
+recent opened array.
+</p>
+<p>
+See also: <a class="link" href="JsonBuilder.html#json-builder-add-value" title="json_builder_add_value ()"><code class="function">json_builder_add_value()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em> :</span></p></td>
+<td>the value of the member or element</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-builder-add-null-value"></a><h3>json_builder_add_null_value ()</h3>
+<pre class="programlisting"><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="returnvalue">JsonBuilder</span></a> *       json_builder_add_null_value         (<em class="parameter"><code><a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a> *builder</code></em>);</pre>
+<p>
+If called after <a class="link" href="JsonBuilder.html#json-builder-set-member-name" title="json_builder_set_member_name ()"><code class="function">json_builder_set_member_name()</code></a>, sets null as member of the
+most recent opened object, otherwise null is added as element of the most
+recent opened array.
+</p>
+<p>
+See also: <a class="link" href="JsonBuilder.html#json-builder-add-value" title="json_builder_add_value ()"><code class="function">json_builder_add_value()</code></a>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>builder</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the <a class="link" href="JsonBuilder.html" title="JsonBuilder"><span class="type">JsonBuilder</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a> if the call was inconsistent. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<div class="refsect1">
+<a name="JsonBuilder.see-also"></a><h2>See Also</h2>
+JsonGenerator
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>

@@ -1,0 +1,898 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>JsonReader</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<link rel="home" href="index.html" title="JSON-GLib Reference Manual">
+<link rel="up" href="ch02.html" title="Parser">
+<link rel="prev" href="JsonParser.html" title="JsonParser">
+<link rel="next" href="JsonPath.html" title="JsonPath">
+<meta name="generator" content="GTK-Doc V1.18.1 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="JsonParser.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch02.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">JSON-GLib Reference Manual</th>
+<td><a accesskey="n" href="JsonPath.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#JsonReader.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#JsonReader.description" class="shortcut">Description</a>
+                   | 
+                  <a href="#JsonReader.object-hierarchy" class="shortcut">Object Hierarchy</a>
+                   | 
+                  <a href="#JsonReader.properties" class="shortcut">Properties</a>
+</td></tr>
+</table>
+<div class="refentry">
+<a name="JsonReader"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="JsonReader.top_of_page"></a>JsonReader</span></h2>
+<p>JsonReader — A cursor-based parser</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<a name="JsonReader.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">struct              <a class="link" href="JsonReader.html#JsonReader-struct" title="struct JsonReader">JsonReader</a>;
+struct              <a class="link" href="JsonReader.html#JsonReaderClass" title="struct JsonReaderClass">JsonReaderClass</a>;
+<a class="link" href="JsonReader.html" title="JsonReader"><span class="returnvalue">JsonReader</span></a> *        <a class="link" href="JsonReader.html#json-reader-new" title="json_reader_new ()">json_reader_new</a>                     (<em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonReader.html#json-reader-set-root" title="json_reader_set_root ()">json_reader_set_root</a>                (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *root</code></em>);
+
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonReader.html#json-reader-read-element" title="json_reader_read_element ()">json_reader_read_element</a>            (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>,
+                                                         <em class="parameter"><code><span class="type">guint</span> index_</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonReader.html#json-reader-end-element" title="json_reader_end_element ()">json_reader_end_element</a>             (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonReader.html#json-reader-is-array" title="json_reader_is_array ()">json_reader_is_array</a>                (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gint</span>                <a class="link" href="JsonReader.html#json-reader-count-elements" title="json_reader_count_elements ()">json_reader_count_elements</a>          (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonReader.html#json-reader-read-member" title="json_reader_read_member ()">json_reader_read_member</a>             (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);
+<span class="returnvalue">void</span>                <a class="link" href="JsonReader.html#json-reader-end-member" title="json_reader_end_member ()">json_reader_end_member</a>              (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonReader.html#json-reader-is-object" title="json_reader_is_object ()">json_reader_is_object</a>               (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gint</span>                <a class="link" href="JsonReader.html#json-reader-count-members" title="json_reader_count_members ()">json_reader_count_members</a>           (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gchar</span> **            <a class="link" href="JsonReader.html#json-reader-list-members" title="json_reader_list_members ()">json_reader_list_members</a>            (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+const <span class="returnvalue">gchar</span> *       <a class="link" href="JsonReader.html#json-reader-get-member-name" title="json_reader_get_member_name ()">json_reader_get_member_name</a>         (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonReader.html#json-reader-is-value" title="json_reader_is_value ()">json_reader_is_value</a>                (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          <a class="link" href="JsonReader.html#json-reader-get-value" title="json_reader_get_value ()">json_reader_get_value</a>               (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gint64</span>              <a class="link" href="JsonReader.html#json-reader-get-int-value" title="json_reader_get_int_value ()">json_reader_get_int_value</a>           (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gdouble</span>             <a class="link" href="JsonReader.html#json-reader-get-double-value" title="json_reader_get_double_value ()">json_reader_get_double_value</a>        (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+const <span class="returnvalue">gchar</span> *       <a class="link" href="JsonReader.html#json-reader-get-string-value" title="json_reader_get_string_value ()">json_reader_get_string_value</a>        (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonReader.html#json-reader-get-boolean-value" title="json_reader_get_boolean_value ()">json_reader_get_boolean_value</a>       (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+<span class="returnvalue">gboolean</span>            <a class="link" href="JsonReader.html#json-reader-get-null-value" title="json_reader_get_null_value ()">json_reader_get_null_value</a>          (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+
+enum                <a class="link" href="JsonReader.html#JsonReaderError" title="enum JsonReaderError">JsonReaderError</a>;
+#define             <a class="link" href="JsonReader.html#JSON-READER-ERROR:CAPS" title="JSON_READER_ERROR">JSON_READER_ERROR</a>
+const <span class="returnvalue">GError</span> *      <a class="link" href="JsonReader.html#json-reader-get-error" title="json_reader_get_error ()">json_reader_get_error</a>               (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonReader.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  GObject
+   +----JsonReader
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonReader.properties"></a><h2>Properties</h2>
+<pre class="synopsis">
+  "<a class="link" href="JsonReader.html#JsonReader--root" title='The "root" property'>root</a>"                     <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>*             : Read / Write / Construct
+</pre>
+</div>
+<div class="refsect1">
+<a name="JsonReader.description"></a><h2>Description</h2>
+<p>
+<a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> provides a simple, cursor-based API for parsing a JSON DOM. It
+is similar, in spirit, to the XML Reader API.
+</p>
+<p>
+In case of error, <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> will be set in an error state; all subsequent
+calls will simply be ignored until a function that resets the error state is
+called, e.g.:
+</p>
+<p>
+</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="comment">/* ask for the 7th element; if the element does not exist, the</span>
+<span class="comment"> * reader will be put in an error state</span>
+<span class="comment"> */</span>
+<span class="function"><a href="JsonReader.html#json-reader-read-element">json_reader_read_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">,</span><span class="normal"> </span><span class="number">6</span><span class="symbol">);</span>
+
+<span class="comment">/* in case of error, this will return NULL, otherwise it will</span>
+<span class="comment"> * return the value of the element</span>
+<span class="comment"> */</span>
+<span class="normal">str </span><span class="symbol">=</span><span class="normal"> </span><span class="function"><a href="JsonReader.html#json-reader-get-string-value">json_reader_get_string_value</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">value</span><span class="symbol">);</span>
+
+<span class="comment">/* this function resets the error state if any was set */</span>
+<span class="function"><a href="JsonReader.html#json-reader-end-element">json_reader_end_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+</p>
+<p>
+If you want to detect the error state as soon as possible, you can use
+<a class="link" href="JsonReader.html#json-reader-get-error" title="json_reader_get_error ()"><code class="function">json_reader_get_error()</code></a>:
+</p>
+<p>
+</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6
+7
+8</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="comment">/* like the example above, but in this case we print out the</span>
+<span class="comment"> * error immediately</span>
+<span class="comment"> */</span>
+<span class="keyword">if</span><span class="normal"> </span><span class="symbol">(!</span><span class="function"><a href="JsonReader.html#json-reader-read-element">json_reader_read_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">,</span><span class="normal"> </span><span class="number">6</span><span class="symbol">))</span>
+<span class="normal">  </span><span class="cbracket">{</span>
+<span class="normal">    </span><span class="keyword">const</span><span class="normal"> </span><span class="usertype">GError</span><span class="normal"> </span><span class="symbol">*</span><span class="normal">error </span><span class="symbol">=</span><span class="normal"> </span><span class="function"><a href="JsonReader.html#json-reader-get-error">json_reader_get_error</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span>
+<span class="normal">    </span><span class="function">g_print</span><span class="normal"> </span><span class="symbol">(</span><span class="string">"Unable to read the element: %s"</span><span class="symbol">,</span><span class="normal"> error</span><span class="symbol">-&gt;</span><span class="normal">message</span><span class="symbol">);</span>
+<span class="normal">  </span><span class="cbracket">}</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+</p>
+<p>
+<a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> is available since JSON-GLib 0.12.
+</p>
+</div>
+<div class="refsect1">
+<a name="JsonReader.details"></a><h2>Details</h2>
+<div class="refsect2">
+<a name="JsonReader-struct"></a><h3>struct JsonReader</h3>
+<pre class="programlisting">struct JsonReader;</pre>
+<p>
+The <span class="structname">JsonReader</span> structure contains only
+private data and should only be accessed using the provided API
+</p>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonReaderClass"></a><h3>struct JsonReaderClass</h3>
+<pre class="programlisting">struct JsonReaderClass {
+};
+</pre>
+<p>
+The <span class="structname">JsonReaderClass</span> structure contains only
+private data
+</p>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-new"></a><h3>json_reader_new ()</h3>
+<pre class="programlisting"><a class="link" href="JsonReader.html" title="JsonReader"><span class="returnvalue">JsonReader</span></a> *        json_reader_new                     (<em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *node</code></em>);</pre>
+<p>
+Creates a new <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>. You can use this object to read the contents of
+the JSON tree starting from <em class="parameter"><code>node</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the newly created <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>. Use <code class="function">g_object_unref()</code> to
+release the allocated resources when done</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-set-root"></a><h3>json_reader_set_root ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_reader_set_root                (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>,
+                                                         <em class="parameter"><code><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> *root</code></em>);</pre>
+<p>
+Sets the root <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> to be read by <em class="parameter"><code>reader</code></em>. The <em class="parameter"><code>reader</code></em> will take
+a copy of <em class="parameter"><code>root</code></em>
+</p>
+<p>
+If another <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> is currently set as root, it will be replaced.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>root</code></em> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>. <span class="annotation">[<acronym title="NULL is ok, both for passing and for returning."><span class="acronym">allow-none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-read-element"></a><h3>json_reader_read_element ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_reader_read_element            (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>,
+                                                         <em class="parameter"><code><span class="type">guint</span> index_</code></em>);</pre>
+<p>
+Advances the cursor of <em class="parameter"><code>reader</code></em> to the element <em class="parameter"><code>index_</code></em> of the array
+or the object at the current position.
+</p>
+<p>
+You can use the json_reader_get_value* family of functions to retrieve
+the value of the element; for instance:
+</p>
+<p>
+</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="function"><a href="JsonReader.html#json-reader-read-element">json_reader_read_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">,</span><span class="normal"> </span><span class="number">0</span><span class="symbol">);</span>
+<span class="normal">int_value </span><span class="symbol">=</span><span class="normal"> </span><span class="function"><a href="JsonReader.html#json-reader-get-int-value">json_reader_get_int_value</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+</p>
+<p>
+After reading the value, <a class="link" href="JsonReader.html#json-reader-end-element" title="json_reader_end_element ()"><code class="function">json_reader_end_element()</code></a> should be called to
+reposition the cursor inside the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>, e.g.:
+</p>
+<p>
+</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6
+7</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="function"><a href="JsonReader.html#json-reader-read-element">json_reader_read_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">,</span><span class="normal"> </span><span class="number">1</span><span class="symbol">);</span>
+<span class="normal">str_value </span><span class="symbol">=</span><span class="normal"> </span><span class="function"><a href="JsonReader.html#json-reader-get-string-value">json_reader_get_string_value</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span>
+<span class="function"><a href="JsonReader.html#json-reader-end-element">json_reader_end_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span>
+
+<span class="function"><a href="JsonReader.html#json-reader-read-element">json_reader_read_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">,</span><span class="normal"> </span><span class="number">2</span><span class="symbol">);</span>
+<span class="normal">str_value </span><span class="symbol">=</span><span class="normal"> </span><span class="function"><a href="JsonReader.html#json-reader-get-string-value">json_reader_get_string_value</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span>
+<span class="function"><a href="JsonReader.html#json-reader-end-element">json_reader_end_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+</p>
+<p>
+If <em class="parameter"><code>reader</code></em> is not currently on an array or an object, or if the <em class="parameter"><code>index_</code></em> is
+bigger than the size of the array or the object, the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> will be
+put in an error state until <a class="link" href="JsonReader.html#json-reader-end-element" title="json_reader_end_element ()"><code class="function">json_reader_end_element()</code></a> is called.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>index_</code></em> :</span></p></td>
+<td>the index of the element</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> on success, and <code class="literal">FALSE</code> otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-end-element"></a><h3>json_reader_end_element ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_reader_end_element             (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Moves the cursor back to the previous node after being positioned
+inside an array
+</p>
+<p>
+This function resets the error state of <em class="parameter"><code>reader</code></em>, if any was set
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr></tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-is-array"></a><h3>json_reader_is_array ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_reader_is_array                (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Checks whether the <em class="parameter"><code>reader</code></em> is currently on an array
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> is on an array, and <code class="literal">FALSE</code>
+otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-count-elements"></a><h3>json_reader_count_elements ()</h3>
+<pre class="programlisting"><span class="returnvalue">gint</span>                json_reader_count_elements          (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Counts the elements of the current position, if <em class="parameter"><code>reader</code></em> is
+positioned on an array
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the number of elements, or -1. In case of failure
+the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> is set in an error state</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-read-member"></a><h3>json_reader_read_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_reader_read_member             (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>,
+                                                         <em class="parameter"><code>const <span class="type">gchar</span> *member_name</code></em>);</pre>
+<p>
+Advances the cursor of <em class="parameter"><code>reader</code></em> to the <em class="parameter"><code>member_name</code></em> of the object at the
+current position.
+</p>
+<p>
+You can use the json_reader_get_value* family of functions to retrieve
+the value of the member; for instance:
+</p>
+<p>
+</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="function"><a href="JsonReader.html#json-reader-read-member">json_reader_read_member</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">,</span><span class="normal"> </span><span class="string">"width"</span><span class="symbol">);</span>
+<span class="normal">width </span><span class="symbol">=</span><span class="normal"> </span><span class="function"><a href="JsonReader.html#json-reader-get-int-value">json_reader_get_int_value</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+</p>
+<p>
+After reading the value, <a class="link" href="JsonReader.html#json-reader-end-member" title="json_reader_end_member ()"><code class="function">json_reader_end_member()</code></a> should be called to
+reposition the cursor inside the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>, e.g.:
+</p>
+<p>
+</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6
+7</pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="function"><a href="JsonReader.html#json-reader-read-member">json_reader_read_member</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">,</span><span class="normal"> </span><span class="string">"author"</span><span class="symbol">);</span>
+<span class="normal">author </span><span class="symbol">=</span><span class="normal"> </span><span class="function"><a href="JsonReader.html#json-reader-get-string-value">json_reader_get_string_value</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span>
+<span class="function"><a href="JsonReader.html#json-reader-end-element">json_reader_end_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span>
+
+<span class="function"><a href="JsonReader.html#json-reader-read-element">json_reader_read_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">,</span><span class="normal"> </span><span class="string">"title"</span><span class="symbol">);</span>
+<span class="normal">title </span><span class="symbol">=</span><span class="normal"> </span><span class="function"><a href="JsonReader.html#json-reader-get-string-value">json_reader_get_string_value</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span>
+<span class="function"><a href="JsonReader.html#json-reader-end-element">json_reader_end_element</a></span><span class="normal"> </span><span class="symbol">(</span><span class="normal">reader</span><span class="symbol">);</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>
+</p>
+<p>
+If <em class="parameter"><code>reader</code></em> is not currently on an object, or if the <em class="parameter"><code>member_name</code></em> is not
+defined in the object, the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> will be put in an error state until
+<a class="link" href="JsonReader.html#json-reader-end-member" title="json_reader_end_member ()"><code class="function">json_reader_end_member()</code></a> is called.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>member_name</code></em> :</span></p></td>
+<td>the name of the member to read</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> on success, and <code class="literal">FALSE</code> otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-end-member"></a><h3>json_reader_end_member ()</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                json_reader_end_member              (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Moves the cursor back to the previous node after being positioned
+inside an object
+</p>
+<p>
+This function resets the error state of <em class="parameter"><code>reader</code></em>, if any was set
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr></tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-is-object"></a><h3>json_reader_is_object ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_reader_is_object               (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Checks whether the <em class="parameter"><code>reader</code></em> is currently on an object
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> is on an object, and <code class="literal">FALSE</code>
+otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-count-members"></a><h3>json_reader_count_members ()</h3>
+<pre class="programlisting"><span class="returnvalue">gint</span>                json_reader_count_members           (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Counts the members of the current position, if <em class="parameter"><code>reader</code></em> is
+positioned on an object
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the number of members, or -1. In case of failure
+the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> is set in an error state</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-list-members"></a><h3>json_reader_list_members ()</h3>
+<pre class="programlisting"><span class="returnvalue">gchar</span> **            json_reader_list_members            (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Retrieves a list of member names from the current position, if <em class="parameter"><code>reader</code></em>
+is positioned on an object.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a newly allocated, <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>-terminated
+array of strings holding the members name. Use <code class="function">g_strfreev()</code> when
+done. <span class="annotation">[<acronym title="Free data after the code is done."><span class="acronym">transfer full</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-get-member-name"></a><h3>json_reader_get_member_name ()</h3>
+<pre class="programlisting">const <span class="returnvalue">gchar</span> *       json_reader_get_member_name         (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Retrieves the name of the current member.
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the name of the member, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-is-value"></a><h3>json_reader_is_value ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_reader_is_value                (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Checks whether the <em class="parameter"><code>reader</code></em> is currently on a value
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> is on a value, and <code class="literal">FALSE</code>
+otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-get-value"></a><h3>json_reader_get_value ()</h3>
+<pre class="programlisting"><a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="returnvalue">JsonNode</span></a> *          json_reader_get_value               (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Retrieves the <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a> of the current position of <em class="parameter"><code>reader</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>a <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. The returned node
+is owned by the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> and it should not be modified or freed
+directly. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-get-int-value"></a><h3>json_reader_get_int_value ()</h3>
+<pre class="programlisting"><span class="returnvalue">gint64</span>              json_reader_get_int_value           (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Retrieves the integer value of the current position of <em class="parameter"><code>reader</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the integer value</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-get-double-value"></a><h3>json_reader_get_double_value ()</h3>
+<pre class="programlisting"><span class="returnvalue">gdouble</span>             json_reader_get_double_value        (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Retrieves the floating point value of the current position of <em class="parameter"><code>reader</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the floating point value</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-get-string-value"></a><h3>json_reader_get_string_value ()</h3>
+<pre class="programlisting">const <span class="returnvalue">gchar</span> *       json_reader_get_string_value        (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Retrieves the string value of the current position of <em class="parameter"><code>reader</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the string value</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-get-boolean-value"></a><h3>json_reader_get_boolean_value ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_reader_get_boolean_value       (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Retrieves the boolean value of the current position of <em class="parameter"><code>reader</code></em>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the boolean value</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-get-null-value"></a><h3>json_reader_get_null_value ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>            json_reader_get_null_value          (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Checks whether the value of the current position of <em class="parameter"><code>reader</code></em> is 'null'
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>
+<code class="literal">TRUE</code> if 'null' is set, and <code class="literal">FALSE</code> otherwise</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JsonReaderError"></a><h3>enum JsonReaderError</h3>
+<pre class="programlisting">typedef enum {
+  JSON_READER_ERROR_NO_ARRAY,
+  JSON_READER_ERROR_INVALID_INDEX,
+  JSON_READER_ERROR_NO_OBJECT,
+  JSON_READER_ERROR_INVALID_MEMBER,
+  JSON_READER_ERROR_INVALID_NODE,
+  JSON_READER_ERROR_NO_VALUE,
+  JSON_READER_ERROR_INVALID_TYPE
+} JsonReaderError;
+</pre>
+<p>
+Error codes enumeration for <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> errors
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><a name="JSON-READER-ERROR-NO-ARRAY:CAPS"></a><span class="term"><code class="literal">JSON_READER_ERROR_NO_ARRAY</code></span></p></td>
+<td>No array found at the current position
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-READER-ERROR-INVALID-INDEX:CAPS"></a><span class="term"><code class="literal">JSON_READER_ERROR_INVALID_INDEX</code></span></p></td>
+<td>Index out of bounds
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-READER-ERROR-NO-OBJECT:CAPS"></a><span class="term"><code class="literal">JSON_READER_ERROR_NO_OBJECT</code></span></p></td>
+<td>No object found at the current position
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-READER-ERROR-INVALID-MEMBER:CAPS"></a><span class="term"><code class="literal">JSON_READER_ERROR_INVALID_MEMBER</code></span></p></td>
+<td>Member not found
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-READER-ERROR-INVALID-NODE:CAPS"></a><span class="term"><code class="literal">JSON_READER_ERROR_INVALID_NODE</code></span></p></td>
+<td>No valid node found at the current position
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-READER-ERROR-NO-VALUE:CAPS"></a><span class="term"><code class="literal">JSON_READER_ERROR_NO_VALUE</code></span></p></td>
+<td>The node at the current position does not
+  hold a value
+</td>
+</tr>
+<tr>
+<td><p><a name="JSON-READER-ERROR-INVALID-TYPE:CAPS"></a><span class="term"><code class="literal">JSON_READER_ERROR_INVALID_TYPE</code></span></p></td>
+<td>The node at the current position does not
+  hold a value of the desired type
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="JSON-READER-ERROR:CAPS"></a><h3>JSON_READER_ERROR</h3>
+<pre class="programlisting">#define JSON_READER_ERROR               (json_reader_error_quark ())
+</pre>
+<p>
+Error domain for <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> errors
+</p>
+<p class="since">Since 0.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="json-reader-get-error"></a><h3>json_reader_get_error ()</h3>
+<pre class="programlisting">const <span class="returnvalue">GError</span> *      json_reader_get_error               (<em class="parameter"><code><a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> *reader</code></em>);</pre>
+<p>
+Retrieves the <span class="type">GError</span> currently set on <em class="parameter"><code>reader</code></em>, if the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+is in error state
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>reader</code></em> :</span></p></td>
+<td>a <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td>the pointer to the error, or <a href="/home/ebassi/gnome3/install/share/gtk-doc/html/liboil/liboil-liboiljunk.html#NULL--CAPS"><code class="literal">NULL</code></a>. <span class="annotation">[<acronym title="Don't free data after the code is done."><span class="acronym">transfer none</span></acronym>]</span>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p class="since">Since 0.12</p>
+</div>
+</div>
+<div class="refsect1">
+<a name="JsonReader.property-details"></a><h2>Property Details</h2>
+<div class="refsect2">
+<a name="JsonReader--root"></a><h3>The <code class="literal">"root"</code> property</h3>
+<pre class="programlisting">  "root"                     <a class="link" href="json-glib-JSON-Node.html#JsonNode" title="JsonNode"><span class="type">JsonNode</span></a>*             : Read / Write / Construct</pre>
+<p>
+The root of the JSON tree that the <a class="link" href="JsonReader.html" title="JsonReader"><span class="type">JsonReader</span></a> should read.
+</p>
+<p class="since">Since 0.12</p>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.18.1</div>
+</body>
+</html>
