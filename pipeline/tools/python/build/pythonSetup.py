@@ -26,6 +26,7 @@ class pythonSetup:
                   installModuleFile=None, # put here the relative isntallation path+one file from the module
                   installBin=False,
                   sed=[],
+                  download=None
                   
                 ):
         self.name = name
@@ -36,6 +37,7 @@ class pythonSetup:
         self.url = url
         self.svn = svn
         self.installPath = installRoot(self.args)
+        self.download=download
         self.env=env
         if env==None:
             self.env = Environment()
@@ -111,13 +113,14 @@ class pythonSetup:
 #                    os.system( 'chmod a+x "%s"' % os.path.join(utils.central('apps',args), 'bin', each) )
                     #self.env.Alias( 'install', self.env.Install( os.path.join(os.path.dirname(self.installPath), 'bin'), each ) )
 
-    @staticmethod
-    def downloader( target, source, env):
+    #@staticmethod
+    def downloader( self, target, source, env):
         target=(str(target[0]))
         source=str(source[0])
         extractedFolder = filter(lambda x:x[0]=='EXTRACTFOLDER', env.items())[0][1]
         name = filter(lambda x:x[0]=='NAME', env.items())[0][1]
         svn = filter(lambda x:x[0]=='SVN', env.items())[0][1]
+        source = filter(lambda x:x[0]=='URL', env.items())[0][1]
         buildFolder = os.path.basename(name)
         cmd='svn'
         if not svn:
@@ -150,6 +153,7 @@ class pythonSetup:
 #            source = protocol[len(protocol)-1]+':/'+tmp[1]
             print 'svn co %s  %s' % (source, buildFolder ) 
             os.system( 'svn co %s  %s' % (source, buildFolder ) )
+            print target
         return True
 
 
@@ -161,30 +165,31 @@ class pythonSetup:
         self.env.Append(ARGS=self.args)
         self.env.Append(PYTHON_VERSION=self.pythonVersion[:3])
         self.env.Append(INSTALLBIN=self.installBin)
+        self.env.Append(URL=self.url)
         bld = Builder(action = pythonSetup.builder)
         self.env.Append(BUILDERS = {'pythonSetup' : bld})
         bld = Builder(action = pythonSetup.installer)
         self.env.Append(BUILDERS = {'pythonSetupInstall' : bld})
-        bld = Builder(action = pythonSetup.downloader)
+        bld = Builder(action = self.downloader)
         self.env.Append(BUILDERS = {'pythonSetupDownload' : bld})
 
         # if the download file dont exists, touch it so the builder can download it!
-        os.system('mkdir -p  "%s"' % os.path.dirname(self.src) )
-        os.system('touch "%s"' % self.src )
-        setup_py = os.path.join( self.name, 'setup.py' )
-        if len(self.extractFolder)>0:
-            setup_py = os.path.join( self.extractFolder, 'setup.py' )
-#        d = self.env.pythonSetupDownload( setup_py, self.url)
+        #os.system('mkdir -p  "%s"' % os.path.dirname(self.src) )
+        #setup_py = os.path.join( self.name, 'setup.py.download' )
+        #setup_py = os.path.join( self.installPath,  self.name, self.version( os.path.join( self.name, buildFolder() ) ), 'download.done' )
+        #if len(self.extractFolder)>0:
+        #    setup_py = os.path.join( self.extractFolder, 'setup.py.download' )
+        #print setup_py
+        #os.system("touch %s" % setup_py)
+        d = self.env.pythonSetupDownload( self.src, "SConstruct")
 #        # add files to be cleaned later
-#        self.env.Clean(d, os.path.basename(self.name))
-        pythonSetup.downloader([setup_py], [self.url], self.env)
+        self.env.Clean(d, self.name)
+#        pythonSetup.downloader([setup_py], [self.url], self.env)
 
         # build it running setup.py
         # installation folder
-        installPath = os.path.join( self.installPath,  self.name, self.version( os.path.join( self.name, buildFolder() ) ), 'install.done' )
-
-        target = installPath # os.path.join( os.path.dirname(self.name), buildFolder(), 'setup.py.done' )
-        t = self.env.pythonSetup( target, self.src )
+        target = os.path.join( self.installPath,  self.name, self.version( os.path.join( self.name, buildFolder() ) ), 'install.done' )
+        t = self.env.pythonSetup( target, d )
         #self.env.Clean(t,  buildFolder(self.args))
 
         # custom build for install

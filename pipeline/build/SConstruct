@@ -5,20 +5,24 @@ import build,sys,os
 #print dir(ARGUMENTS), ARGUMENTS
 
 def epydocGetVersion(buildDir):
+    return '3.0.1'
     sys.path.append('epydoc/src/')
     import epydoc
     return epydoc.__version__
+
+def epydoc_download():
+    os.system('''wget 
+ -O ''')
 
 epydoc = build.pythonSetup(
         ARGUMENTS,
         'epydoc',
         src='src/setup.py',
-        url='https://svn.code.sf.net/p/epydoc/code/trunk/epydoc',
-        svn=True,
-        version=epydocGetVersion,
-        installBin=True,
-        extractFolder='epydoc/src',
-        sed = ['s/.System.Library.Frameworks.Python.framework.Versions.2.5.Resources.Python.app.Contents.MacOS.Python/\/usr\/bin\/env python/g']
+        download=(
+            'http://downloads.sourceforge.net/project/epydoc/epydoc/3.0.1/epydoc-3.0.1.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fepydoc%2Ffiles%2Fepydoc%2F3.0.1%2F&ts=1432094792&use_mirror=iweb',
+            'epydoc-3.0.1.tar.gz'
+        ),
+        version=3.0.1,
 )
 epydoc.finalize()
 
