@@ -25,9 +25,10 @@ class pythonSetup:
                   extractFolder=None, # the folder where the compressed files are exported to
                   installModuleFile=None, # put here the relative isntallation path+one file from the module
                   installBin=False,
-                  sed=[]
+                  sed=[],
+                  
                 ):
-        self.name = os.path.join(name,name)
+        self.name = name
         self.args = args
         self.version = version
         self.pythonVersion = pythonVersion
@@ -39,11 +40,12 @@ class pythonSetup:
         if env==None:
             self.env = Environment()
         self.sed = sed
+        self.version = version
         self.clean = []
         self.extractFolder=''
         if extractFolder!=None:
             self.extractFolder = extractFolder
-        self.installModuleFile = os.path.join( os.path.basename(self.name), '__init__.py' )
+        self.installModuleFile = os.path.join( self.name, '__init__.py' )
         if installModuleFile!=None:
             self.installModuleFile = installModuleFile
         self.installBin = installBin
@@ -67,7 +69,7 @@ class pythonSetup:
         print source
         dirLevels = '..%s' % os.sep * (len(source.split(os.sep))-1)
 
-        cmd = 'cd "%s"; run python %s install --prefix=%s' % (os.path.dirname(source), os.path.basename(source), os.path.join(dirLevels,installDir))
+        cmd = 'cd "%s"; ppython %s install --prefix=%s' % (os.path.dirname(source), os.path.basename(source), os.path.join(dirLevels,installDir))
         print cmd
         if os.system(cmd)==0:
             os.system( 'echo a >> "%s"' % target )
@@ -88,7 +90,7 @@ class pythonSetup:
         target=os.path.dirname(os.path.dirname(str(target[0])))
         source=str(source[0])
         builderFolder = os.path.dirname(source)
-        tmp = os.path.join(os.path.dirname(source), 'lib', 'python%s' % p, 'site-packages')
+        tmp = builderFolder #os.path.join(os.path.dirname(source), 'lib', 'python%s' % p, 'site-packages')
         moduleBuildDir = tmp
         clean=[]
         os.system('mkdir -p "%s"' % target)
@@ -146,6 +148,7 @@ class pythonSetup:
             protocol = tmp[0].split(os.path.sep)
             print source
 #            source = protocol[len(protocol)-1]+':/'+tmp[1]
+            print 'svn co %s  %s' % (source, buildFolder ) 
             os.system( 'svn co %s  %s' % (source, buildFolder ) )
         return True
 
@@ -165,9 +168,6 @@ class pythonSetup:
         bld = Builder(action = pythonSetup.downloader)
         self.env.Append(BUILDERS = {'pythonSetupDownload' : bld})
 
-        # installation folder
-        installPath = os.path.join( self.installPath, 'python', self.pythonVersion, self.installModuleFile )
-
         # if the download file dont exists, touch it so the builder can download it!
         os.system('mkdir -p  "%s"' % os.path.dirname(self.src) )
         os.system('touch "%s"' % self.src )
@@ -180,14 +180,17 @@ class pythonSetup:
         pythonSetup.downloader([setup_py], [self.url], self.env)
 
         # build it running setup.py
-        target = os.path.join( os.path.dirname(self.name), buildFolder(), 'setup.py.done' )
+        # installation folder
+        installPath = os.path.join( self.installPath,  self.name, self.version( os.path.join( self.name, buildFolder() ) ), 'install.done' )
+
+        target = installPath # os.path.join( os.path.dirname(self.name), buildFolder(), 'setup.py.done' )
         t = self.env.pythonSetup( target, self.src )
-        self.env.Clean(t,  buildFolder(self.args))
+        #self.env.Clean(t,  buildFolder(self.args))
 
         # custom build for install
-        install = self.env.pythonSetupInstall(installPath, t)
+        #install = self.env.pythonSetupInstall(installPath, t)
         # as our install is a custom builder, we need to tell scons what to remove if cleaned
-        self.env.Clean(install, os.path.dirname(installPath) )
+        #self.env.Clean(install, os.path.dirname(installPath) )
 
 
-        self.env.Alias( 'install', install )
+        self.env.Alias( 'install', t )

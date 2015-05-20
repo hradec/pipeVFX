@@ -1,16 +1,21 @@
 #!/usr/bin/python 
 
-import build,sys
+import build,sys,os
 
 #print dir(ARGUMENTS), ARGUMENTS
 
+def epydocGetVersion(buildDir):
+    sys.path.append('epydoc/src/')
+    import epydoc
+    return epydoc.__version__
 
 epydoc = build.pythonSetup(
         ARGUMENTS,
         'epydoc',
         src='src/setup.py',
-        url='https://epydoc.svn.sourceforge.net/svnroot/epydoc/trunk/epydoc',
+        url='https://svn.code.sf.net/p/epydoc/code/trunk/epydoc',
         svn=True,
+        version=epydocGetVersion,
         installBin=True,
         extractFolder='epydoc/src',
         sed = ['s/.System.Library.Frameworks.Python.framework.Versions.2.5.Resources.Python.app.Contents.MacOS.Python/\/usr\/bin\/env python/g']
