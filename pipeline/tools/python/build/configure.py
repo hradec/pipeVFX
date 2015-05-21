@@ -9,14 +9,14 @@ import pipe
 import os,sys
 
 
-class pythonSetup(generic):
+class configure(generic):
 
     def __init__ ( self,
                   args,
                   name,
                   env=None,
                   python=pipe.libs.version.get('python'),
-                  src='setup.py',
+                  src='configure',
                   sed=[],
                   download=None
                 ):
@@ -28,8 +28,8 @@ class pythonSetup(generic):
             self.pythonVersion = [python]
 
         # register builder
-        bld = Builder(action = self.builder)
-        self.env.Append(BUILDERS = {'pythonSetup' : bld})
+        bld = Builder(action = self.configure)
+        self.env.Append(BUILDERS = {'configure' : bld})
         
         # build all python versions specified
         for p in self.pythonVersion:
@@ -40,18 +40,16 @@ class pythonSetup(generic):
                 pkgs = self.download(archive, 'SConstruct')
                 #uncompress
                 setup = os.path.join(buildFolder(self.args),download[n][1].replace('.tar.gz',".python%s" % p),src)
-                py = self.uncompress(setup, pkgs)
-                # installation folder
+                s = self.uncompress(setup, pkgs)
+                # run configure and make/make install
                 target = os.path.join( self.installPath,  self.name, download[n][2], 'install.python%s.done' % p )
-                # build it running setup.py
-                t = self.env.pythonSetup( target, py )
+                t = self.env.configure( target, s )
     #            self.env.Clean(t,  os.path.dirname(target))
 
                 self.env.Alias( 'install', t )
 
 
-    def builder(self, target, source, env):
-        import re
+    def configure(self, target, source, env):
         target=str(target[0])
         source=str(source[0])
         pythonVersion = target.split('python')[-1].split('.done')[0]
@@ -63,17 +61,12 @@ class pythonSetup(generic):
 #            os.makedirs(installDir)
 
         pipe.versionLib.set(python=pythonVersion)
-
-        site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
-        os.environ['PYTHONPATH'] = ':'.join( [
-            site_packages,
-            os.environ['PYTHONPATH'] ,
-        ])
+        pipe.version.set(python=pythonVersion)
         
         print '='*120
-        print source, pythonVersion
+        print source
         def runCMD(cmd,target):
-
+#            print cmd
             # adjust env vars for the current selected python version
             for var in os.environ.keys():
                 pp = []
@@ -84,6 +77,16 @@ class pythonSetup(generic):
                     pp.append(each)
                 os.environ[var] = ':'.join(pp)
             
+            os.environ['LD_LIBRARY_PATH'] = ':'.join([
+                os.path.dirname(''.join(os.popen('which gcc').readlines()))+'/../lib64/',
+                os.environ['LD_LIBRARY_PATH'],
+            ])
+            os.environ['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu/'
+            os.environ['PATH'] = ':'.join([
+                pipe.libs.python().path('bin'),
+                os.environ['PATH'],
+            ])
+
             os.environ['PYTHON_VERSION'] = pythonVersion
             os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
 
@@ -91,9 +94,11 @@ class pythonSetup(generic):
             lines = call.readlines()
             ret = call.close()
             if not ret:
-                os.system( 'echo a >> "%s"' % target )
-#                for each in lines :
-#                    print each.strip()
+#                os.system( 'echo a >> "%s"' % target )
+                f = open(target,'a')
+                for each in lines :
+                    f.write(each)
+                f.close()
             else:
                 print '-'*120
                 for each in lines :
@@ -102,31 +107,22 @@ class pythonSetup(generic):
                 raise Exception('Error executing setup.py install - %s' % ret)
                 print '-'*120
 
-        cmd = 'cd "%s"; mkdir -p "%s" ;  ppython --logd --python_version %s %s build 2>&1' % (
+        cmd = '''cd "%s"; ppython --logd -c "import os,sys;sys.exit(os.system('./configure --prefix=%s 2>&1'))"'''  % (
             os.path.dirname(source), 
-            site_packages, 
-            pythonVersion, 
-            os.path.basename(source)
+            os.path.abspath(os.path.join(os.path.dirname(source),dirLevels,installDir))
         )
-        print 'building...'
+        print 'configure...'
         runCMD(cmd,target)
 
 #        cmd = 'cd "%s"; ppython %s install --prefix=%s' % (os.path.dirname(source), os.path.basename(source), os.path.join(dirLevels,installDir))
-        cmd = 'cd "%s"; mkdir -p "%s" ; ppython --python_version %s %s install  --prefix=%s  2>&1' % (
-            os.path.dirname(source), 
-            site_packages, 
-            pythonVersion, 
-            os.path.basename(source), 
-            os.path.join(dirLevels,installDir)
+        cmd = 'cd "%s"; make ; make install  2>&1' % (
+            os.path.dirname(source)
         )
-        print 'installing...'
+        print 'making...'
         runCMD(cmd,target)
 
-        cmd = 'cd "%s"; mkdir -p "%s" ;  ppython --python_version %s %s clean 2>&1' % (
-            os.path.dirname(source), 
-            site_packages, 
-            pythonVersion, 
-            os.path.basename(source)
+        cmd = 'cd "%s"; make clean ; make distclean 2>&1' % (
+            os.path.dirname(source)
         )
         print 'cleaning up...'
         runCMD(cmd,target)

@@ -12,7 +12,7 @@ def installRoot(args={}):
     return dev
 
 def buildFolder(args={}):
-	build = '.build'
+	build = 'build'
 
 	if args.has_key('BUILD_FOLDER'):
 		build = args['BUILD_FOLDER']

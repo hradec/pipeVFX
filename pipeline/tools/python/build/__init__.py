@@ -4,6 +4,7 @@ from genericBuilders import *
 from mayaPlugin import *
 from mayaPython import *
 from mayaPythonPlugin import *
+from configure import *
 from msl import *
 from pythonModule import *
 from pythonSetup import *
