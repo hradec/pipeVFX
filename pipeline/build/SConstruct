@@ -6,51 +6,376 @@ import pipe
 #print dir(ARGUMENTS), ARGUMENTS
 
 allPythonVersions = pipe.libsDB()['python']['versions']
-epydoc = build.pythonSetup(
-        ARGUMENTS,
-        'epydoc',
-        download=[(
-            'http://downloads.sourceforge.net/project/epydoc/epydoc/3.0.1/epydoc-3.0.1.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fepydoc%2Ffiles%2Fepydoc%2F3.0.1%2F&ts=1432094792&use_mirror=iweb',
-            'epydoc-3.0.1.tar.gz',
-            '3.0.1',
-            'cdd6f6c76dd8bab5e653a343a0544294'
-        )],
-        python=allPythonVersions,
-)
 
 
-pygl = build.pythonSetup(
+#epydoc = build.pythonSetup(
+#        ARGUMENTS,
+#        'epydoc',
+#        download=[(
+#            'http://downloads.sourceforge.net/project/epydoc/epydoc/3.0.1/epydoc-3.0.1.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fepydoc%2Ffiles%2Fepydoc%2F3.0.1%2F&ts=1432094792&use_mirror=iweb',
+#            'epydoc-3.0.1.tar.gz',
+#            '3.0.1',
+#            'cdd6f6c76dd8bab5e653a343a0544294'
+#        )],
+#        python=allPythonVersions,
+#)
+
+
+#pygl = build.pythonSetup(
+#        ARGUMENTS,
+#        'pygl',
+#        download=[
+#          (
+#            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
+#            'PyOpenGL-3.1.0.tar.gz',
+#            '3.1.0',
+#            '0de021941018d46d91e5a8c11c071693'
+#          ),
+#          (
+#            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.0.2.tar.gz#md5=77becc24ffc0a6b28030aa109ad7ff8b',
+#            'PyOpenGL-3.0.2.tar.gz',
+#            '3.0.2',
+#            '77becc24ffc0a6b28030aa109ad7ff8b'
+#          ),
+#        ],
+#        python=allPythonVersions,
+#)
+
+#dbus = build.configure(
+#        ARGUMENTS,
+#        'dbus',
+#        download=[
+#          (
+#            'https://pypi.python.org/packages/source/d/dbus-python/dbus-python-0.84.0.tar.gz#md5=fe69a2613e824463e74f10913708c88a',
+#            'dbus-python-0.84.0.tar.gz',
+#            '0.84.0',
+#            'fe69a2613e824463e74f10913708c88a'
+#          ),
+#        ],
+#        python=allPythonVersions,
+#)
+
+
+
+
+zlib = build.configure(
         ARGUMENTS,
-        'pygl',
+        'zlib',
         download=[
           (
-            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
-            'PyOpenGL-3.1.0.tar.gz',
-            '3.1.0',
-            '0de021941018d46d91e5a8c11c071693'
-          ),
-          (
-            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.0.2.tar.gz#md5=77becc24ffc0a6b28030aa109ad7ff8b',
-            'PyOpenGL-3.0.2.tar.gz',
-            '3.0.2',
-            '77becc24ffc0a6b28030aa109ad7ff8b'
+            'http://zlib.net/zlib-1.2.8.tar.gz',
+            'zlib-1.2.8.tar.gz',
+            '1.2.8',
+            '44d667c142d7cda120332623eab69f40'
           ),
         ],
-        python=allPythonVersions,
 )
 
-dbus = build.configure(
+ilmbase = build.configure(
         ARGUMENTS,
-        'dbus',
+        'ilmbase',
         download=[
           (
-            'https://pypi.python.org/packages/source/d/dbus-python/dbus-python-0.84.0.tar.gz#md5=fe69a2613e824463e74f10913708c88a',
-            'dbus-python-0.84.0.tar.gz',
-            '0.84.0',
-            'fe69a2613e824463e74f10913708c88a'
+            'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.0.0.tar.gz',
+            'ilmbase-2.0.0.tar.gz',
+            '2.0.0',
+            '70f1413840c2a228783d1332b8b168e6'
+          ),
+          (
+            'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
+            'ilmbase-2.2.0.tar.gz',
+            '2.2.0',
+            'b540db502c5fa42078249f43d18a4652'
+          ),
+          (
+            'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
+            'ilmbase-2.1.0.tar.gz',
+            '2.1.0',
+            '8ba2f608191ad020e50277d8a3ba0850'
+          ),          
+        ],
+)
+
+
+openexr = build.configure(
+        ARGUMENTS,
+        'openexer',
+        download=[
+          (
+            'http://download.savannah.nongnu.org/releases/openexr/openexr-2.0.0.tar.gz',
+            'openexr-2.0.0.tar.gz',
+            '2.0.0',
+            '0820e1a8665236cb9e728534ebf8df18'
+          ),
+#          (
+#            'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
+#            'openexr-2.2.0.tar.gz',
+#            '2.2.0',
+#            'b64e931c82aa3790329c21418373db4e',
+#          ),
+          (
+            'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
+            'openexr-2.1.0.tar.gz',
+            '2.1.0',
+            '33735d37d2ee01c6d8fbd0df94fb8b43',
           ),
         ],
+        depend=[ilmbase,zlib],
+        GCCFLAGS=[zlib]
+)
+
+
+
+jpeg = build.configure(
+        ARGUMENTS,
+        'jpeg',
+        download=[
+          (
+            'http://www.ijg.org/files/jpegsrc.v6b.tar.gz',
+            'jpeg-6b.tar.gz',
+            '6b',
+            'dbd5f3b47ed13132f04c685d608a7547'
+          ),
+          (
+            'http://www.ijg.org/files/jpegsrc.v9a.tar.gz',
+            'jpeg-9a.tar.gz',
+            '9a',
+            '3353992aecaee1805ef4109aadd433e7',
+          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib]
+)
+jpeg.setCmd("./configure --enable-shared ")
+jpeg.setMake("make install INSTALL='/usr/bin/install -D' ")
+
+
+
+tiff = build.configure(
+        ARGUMENTS,
+        'tiff',
+        download=[
+          (
+            'ftp://ftp.remotesensing.org/pub/libtiff/tiff-3.8.2.tar.gz',
+            'tiff-3.8.2.tar.gz',
+            '3.8.2',
+            'fbb6f446ea4ed18955e2714934e5b698'
+          ),
+          (
+            'ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.3.tar.gz',
+            'tiff-4.0.3.tar.gz',
+            '4.0.3',
+            '051c1068e6a0627f461948c365290410',
+          ),
+        ],
+        depend=[zlib,jpeg],
+        GCCFLAGS=[zlib,jpeg]
+)
+
+
+
+freetype = build.configure(
+        ARGUMENTS,
+        'freetype',
+        download=[
+          (
+            'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.4.0.tar.gz',
+            'freetype-2.4.0.tar.gz',
+            '2.4.0',
+            'f900148ae8e258803eb1ab9f564f2151'
+          ),
+          (
+            'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.5.5.tar.gz',
+            'freetype-2.5.5.tar.gz',
+            '2.5.5',
+            '7448edfbd40c7aa5088684b0a3edb2b8',
+          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib]
+)
+
+
+
+freeglut = build.configure(
+        ARGUMENTS,
+        'freeglut',
+        download=[
+          (
+            'http://downloads.sourceforge.net/project/freeglut/freeglut/2.6.0/freeglut-2.6.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619050&use_mirror=iweb',
+            'freeglut-2.6.0.tar.gz',
+            '2.6.0',
+            '39f0f2de89f399529d2b981188082218'
+          ),
+          (
+            'http://downloads.sourceforge.net/project/freeglut/freeglut/2.8.1/freeglut-2.8.1.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619092&use_mirror=hivelocity',
+            'freeglut-2.8.1.tar.gz',
+            '2.8.1',
+            '918ffbddcffbac83c218bc52355b6d5a',
+          ),
+          (
+            'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
+            'freeglut-3.0.0.tar.gz',
+            '3.0.0',
+            '90c3ca4dd9d51cf32276bc5344ec9754',
+          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib]
+)
+
+
+glew = build.configure(
+        ARGUMENTS,
+        'glew',
+        download=[
+          (
+            'https://github.com/nigels-com/glew/archive/glew-1.12.0.tar.gz',
+            'glew-1.12.0.tar.gz',
+            '1.12.0',
+            'a3d23a760f031fbdde91f010b5bcf5eb'
+          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib]
+)
+
+hdf5 = build.configure(
+        ARGUMENTS,
+        'hdf5',
+        download=[
+          (
+            'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.15.tar.gz',
+            'hdf5-1.8.15.tar.gz',
+            '1.8.15',
+            '03cccb5b33dbe975fdcd8ae9dc021f24'
+          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib]
+)
+
+alembic = build.configure(
+        ARGUMENTS,
+        'alembic',
+        download=[
+          (
+            'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
+            'alembic-1.5.8.tar.gz',
+            '1.5.8',
+            'a70ba5f2e80b47d346d15d797c28731a'
+          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib]
+)
+
+
+
+
+libpng = build.configure(
+        ARGUMENTS,
+        'libpng',
+        download=[
+          (
+            'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.17.tar.gz',
+            'libpng-1.6.17.tar.gz',
+            '1.6.17',
+            '134282f1752dcf4cd81a37b8ff421cef'
+          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib]
+)
+
+
+
+
+llvm = build.configure(
+        ARGUMENTS,
+        'llvm',
+        download=[
+          (
+            'http://llvm.org/releases/3.3/llvm-3.3.src.tar.gz',
+            'llvm-3.3.tar.gz',
+            '3.3.0',
+            '40564e1dc390f9844f1711c08b08e391'
+          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib]
+)
+
+
+
+
+
+boost = build.boost(
+        ARGUMENTS,
+        'boost',
+        download=[
+          (
+            'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
+            'boost_1_56_0.tar.gz',
+            '1.56.0',
+            '8c54705c424513fa2be0042696a3a162'
+          ),
+#          (
+#            'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.58.0%2F&ts=1432347909&use_mirror=hivelocity',
+#            'boost_1_58_0.tar.gz',
+#            '1.58.0',
+#            '5a5d5614d9a07672e1ab2a250b5defc5'
+#          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib],
         python=allPythonVersions,
 )
+ 
+
+
+tbb = build.make(
+        ARGUMENTS,
+        'tbb',
+        download=[
+          (
+            'http://http.debian.net/debian/pool/main/t/tbb/tbb_3.0+r035.orig.tar.gz',
+            'tbb30_035oss.tar.gz',
+            '3.0.r035',
+            '86d2f05a06b0e53e71afb5378582f104',
+          ),
+          (
+            'http://http.debian.net/debian/pool/main/t/tbb/tbb_4.2~20140122.orig.tar.gz',
+            'tbb42_20140122oss.tar.gz',
+            '4.2.r20140122oss',
+            '70345f907f5ffe9b2bc3b7ed0d6508bc',
+          ),
+        ],
+)
+def tbb_installer(target, source, env):
+    '''we use this method to do a custom tbb install 
+    by copy files over.'''
+    import pipe, build, os
+    for n in range(len(tbb.buildFolder)):
+        lines = os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (tbb.buildFolder[n], tbb.targetFolder[n] ) ).readlines()
+        for SHLIBEXT in build.SHLIBEXT:
+           os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (tbb.buildFolder[n], SHLIBEXT, tbb.targetFolder[n]) ).readlines()
+           os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (tbb.buildFolder[n], SHLIBEXT, tbb.targetFolder[n]) ).readlines()
+tbb.setInstaller( tbb_installer )
+
+
+
+
+
+#def tbb_installer(target, source, env):
+#    import pipe, build, os
+#    lines = os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (tbb.buildFolder, tbb.targetFolder ) ).readlines()
+#    for p in pipe.libsDB()['python']['versions']:
+#        lib = "%s/lib/python%s/" % (tbb.targetFolder, p[:3])
+#        os.popen( "mkdir -p %s" % lib ).readlines()
+#        for SHLIBEXT in build.SHLIBEXT:
+#           os.popen( "rsync -aW --delete %s/build/*_release/*%s %s 2>&1" % (tbb.buildFolder, SHLIBEXT, lib ) ).readlines()
+
+
 
 
