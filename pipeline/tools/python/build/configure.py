@@ -48,3 +48,4 @@ class boost(configure):
     cmd = './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/'
     make = './b2 install'
 
+

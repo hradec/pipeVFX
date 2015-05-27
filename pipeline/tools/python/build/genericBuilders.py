@@ -7,7 +7,8 @@ from pipe.bcolors import bcolors
 import os, traceback, sys, inspect
 
 class generic:
-    src = ''
+    src   = ''
+    cmd   = ''
     extra = ''
 
     def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend=None, GCCFLAGS=[], sed=None):
@@ -206,11 +207,23 @@ class generic:
                         k.sort()
                         p = k[-1]
                             
+#                    print dependOn.name.upper(), dependOn.targetFolder[p][depend_n]
+                    os.environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = dependOn.targetFolder[p][depend_n]
                     os.environ['PKG_CONFIG_PATH'] += '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n]
                     if dependOn in self.GCCFLAGS:
                         CFLAGS.append("-I%s/include/" % dependOn.targetFolder[p][depend_n])
                         LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
                         LDFLAGS.append("-L%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
+                    os.environ['LD_LIBRARY_PATH'] = ':'.join([
+                        "%s/lib/" % dependOn.targetFolder[p][depend_n],
+                        "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
+                        os.environ['LD_LIBRARY_PATH'],
+                    ])
+                    os.environ['PYTHONPATH'] = ':'.join([
+                        "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
+                        "%s/lib/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
+                        os.environ['PYTHONPATH'],
+                    ])
         
         if CFLAGS:
 #            self.setExtra( 'CFLAGS="%s" CPPFLAGS="%s"' % (
@@ -232,11 +245,11 @@ class generic:
             os.environ['PATH'],
         ])
         os.environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER']
+        os.environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
 
         # run the command from inside ppython, so all pipe env vars get properly set!
-#        cmd = 'cd "%s" && ' % os.path.dirname(source) + cmd
         try:
-            cmd = 'cd "%s" && ' %  os.path.dirname(str(source[0])) + cmd
+            cmd = 'cd "%s" && ' %  os.environ['SOURCE_FOLDER'] + cmd
             cmd = '''ppython --python_version $PYTHON_VERSION --logd -c "import os,sys;ret=os.system(\'\'\''''+cmd+'''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)"  2>&1''' 
             call = os.popen(cmd)
             lines = call.readlines()
@@ -253,10 +266,11 @@ class generic:
             for each in lines :
                 print '\t%s' % each.strip()
             print '-'*120
-            raise Exception('Error executing setup.py install - %s' % ret)
+            raise Exception('Error: %s' % ret)
             print '-'*120
             print bcolors.FAIL,
             traceback.print_exc()
+            sys.stdout.flush()
 
         print bcolors.END,
 
@@ -273,19 +287,9 @@ class generic:
         f.write(' ')
         f.close()
 
-#    def downloader( self, target, source, env):        
-#        for d in self.downloadList:
-#            md5 = ''.join(os.popen("cd %s && md5sum %s 2>/dev/null | cut -d' ' -f1" % (buildFolder(self.args), d[1])).readlines()).strip()
-#            if md5 != d[3] or not os.path.exists(os.path.join(buildFolder(self.args),d[1])):
-#                print "Downloading... please wait..."
-#                os.popen("cd %s && wget '%s' -O %s 2>&1" % (buildFolder(self.args), d[0], d[1])).readlines()
-#                md5 = ''.join(os.popen("cd %s && md5sum %s 2>/dev/null | cut -d' ' -f1" % (buildFolder(self.args), d[1])).readlines()).strip()
-#                print "md5 for file:",d[1], md5
-#                if md5 != d[3]:
-#                    raise Exception("Download failed! MD5 check didn't match the one described in the Sconstruct file")
-
     def downloader( self, env, source, _url=None):        
         ''' this method is a builder responsible to download the packages to be build '''
+        self.error = None
         source = [source]
         for n in range(len(source)):
             url=_url
@@ -298,18 +302,20 @@ class generic:
                 lines = call.readlines()
                 md5 = ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % source[n]).readlines()).strip()
                 if md5 != url[3]:
-                    for l in lines:
-                        print l.strip()
+#                    for l in lines:
+#                        print l.strip()
                     sys.stdout.write( bcolors.WARNING )
                     print "\tmd5 for file:", url[1], md5
                     sys.stdout.write( bcolors.FAIL )
                     sys.stdout.flush()
-                    raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
+                    self.error = True
         return source
             
             
     def uncompressor( self, target, source, env):        
         ''' this method is a builder responsible to uncompress the packages to be build '''
+        if self.error:
+            raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
         for n in range(len(source)):
             url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
 #            print source[n]
@@ -334,10 +340,9 @@ class generic:
                     print '-'*120
                     raise Exception("Uncompress failed!")
                 
-                if os.path.exists( "%s/config.sub" % os.path.dirname(t) ):
-                    os.popen( "cp %s/config.sub %s"   % (os.path.dirname(s), os.path.dirname(t)) )
-                if os.path.exists( "%s/config.guess" % os.path.dirname(t) ):
-                    os.popen( "cp %s/config.guess %s" % (os.path.dirname(s), os.path.dirname(t)) )
+                for updates in ['config.sub', 'config.guess']:
+                    for file2update in os.popen('find %s -name %s 2>&1' % (os.path.dirname(t), updates) ).readlines():
+                        os.popen( "cp %s/%s %s"   % (os.path.dirname(s), updates, file2update) )
                     
 #            os.system("cd %s && rm -rf %s" % (buildFolder(self.args),d[1]))
 

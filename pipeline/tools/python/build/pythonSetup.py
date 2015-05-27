@@ -11,36 +11,29 @@ import os,sys
 
 class pythonSetup(generic):
     src = 'setup.py'
+    cmd = 'setup.py'
     
     def action(self, target, source):
-        # register builder
-        bld = Builder(action = self.pythonSetup)
-        self.env.Append(BUILDERS = {'pythonSetup' : bld})
-        
+        self.registerSconsBuilder(self.pythonSetup)
         return self.env.pythonSetup( target, source )
         
 
     def pythonSetup(self, target, source, env):
-        import re
-        target=str(target[0])
-        source=str(source[0])
-        
-        dirLevels = '..%s' % os.sep * (len(source.split(os.sep))-1)
-        installDir = os.path.dirname(target)
-        pythonVersion = target.split('python')[-1].split('.done')[0]
+        dirLevels = '..%s' % os.sep * (len(str(source[0]).split(os.sep))-1)
+        installDir = os.path.dirname(str(target[0]))
+        pythonVersion = str(target[0]).split('python')[-1].split('.done')[0]
         site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
 
         
         cmd = 'python %s build' % (
-            os.path.basename(source)
+            env['CMD'],
         )
         print bcolors.GREEN+'\tbuilding...'+bcolors.END
         self.runCMD(cmd,target,source)
 
 #        cmd = 'cd "%s"; ppython %s install --prefix=%s' % (os.path.dirname(source), os.path.basename(source), os.path.join(dirLevels,installDir))
-        cmd = 'python %s install --prefix=%s' % (
-            os.path.basename(source), 
-            os.path.join(dirLevels,installDir)
+        cmd = 'mkdir -p $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ && python %s install --prefix=$TARGET_FOLDER' % (
+            env['CMD'],
         )
         print bcolors.GREEN+'\tinstalling...'+bcolors.END
         self.runCMD(cmd,target,source)

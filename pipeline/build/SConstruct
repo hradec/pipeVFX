@@ -8,6 +8,20 @@ import pipe
 allPythonVersions = pipe.libsDB()['python']['versions']
 
 
+
+
+glibc = build.configure(
+        ARGUMENTS,
+        'glibc',
+        download=[
+          (
+            'http://git.savannah.gnu.org/cgit/hurd/glibc.git/snapshot/glibc-2.19-hurd+libpthread-20150515.tar.gz',
+            'glibc-2.19-hurd+libpthread-20150515.tar.gz',
+            '2.19.20150515.hurd_libpthread',
+            'd78d2df46aa3ed51632b3ca7a6e0b39f'
+          ),
+        ],
+)
 #epydoc = build.pythonSetup(
 #        ARGUMENTS,
 #        'epydoc',
@@ -58,6 +72,41 @@ allPythonVersions = pipe.libsDB()['python']['versions']
 
 
 
+cython = build.pythonSetup(
+        ARGUMENTS,
+        'cython',
+        download=[
+          (
+            'https://github.com/cython/cython/archive/0.22.tar.gz',
+            'cython-0.22.tar.gz',
+            '0.22.0',
+            'e67b03e8b3667c8e4e7c774ef2e2b638'
+          ),
+        ],
+        python=allPythonVersions,
+)
+
+
+
+numpy = build.pythonSetup(
+        ARGUMENTS,
+        'numpy',
+        download=[
+          (
+            'https://github.com/numpy/numpy/archive/v1.9.2.tar.gz',
+            'numpy-1.9.2.tar.gz',
+            '1.9.2',
+            '90f7434759088acccfddf5ba61b1f908'
+          ),
+        ],
+        python=allPythonVersions,
+        depend=[cython],
+        GCCFLAGS=[cython],
+)
+
+
+
+
 zlib = build.configure(
         ARGUMENTS,
         'zlib',
@@ -97,9 +146,12 @@ ilmbase = build.configure(
 )
 
 
+
+
+
 openexr = build.configure(
         ARGUMENTS,
-        'openexer',
+        'openexr',
         download=[
           (
             'http://download.savannah.nongnu.org/releases/openexr/openexr-2.0.0.tar.gz',
@@ -126,6 +178,63 @@ openexr = build.configure(
 
 
 
+boost = build.boost(
+        ARGUMENTS,
+        'boost',
+        download=[
+          (
+            'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
+            'boost_1_56_0.tar.gz',
+            '1.56.0',
+            '8c54705c424513fa2be0042696a3a162'
+          ),
+#          (
+#            'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.58.0%2F&ts=1432347909&use_mirror=hivelocity',
+#            'boost_1_58_0.tar.gz',
+#            '1.58.0',
+#            '5a5d5614d9a07672e1ab2a250b5defc5'
+#          ),
+        ],
+        depend=[zlib],
+        GCCFLAGS=[zlib],
+        python=allPythonVersions,
+)
+ 
+pyilmbase = build.configure(
+        ARGUMENTS,
+        'pyilmbase',
+        download=[
+          (
+            'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.0.0.tar.gz',
+            'pyilmbase-2.0.0.tar.gz',
+            '2.0.0',
+            '4585eba94a82f0b0916445990a47d143'
+          ),
+          (
+            'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
+            'pyilmbase-2.2.0.tar.gz',
+            '2.2.0',
+            'e84a6a4462f90b5e14d83d67253d8e5a'
+          ),
+          (
+            'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
+            'pyilmbase-2.1.0.tar.gz',
+            '2.1.0',
+            'af1115f4d759c574ce84efcde9845d29'
+          ),          
+        ],
+        python=allPythonVersions,
+        depend=[ilmbase,zlib,boost,numpy],
+        GCCFLAGS=[zlib,boost]
+)
+#pyilmbase.setCmd(" ".join([
+#        "./configure",
+#        "--with-boost-include-dir=$BOOST_TARGET_FOLDER/include/",
+#        "--with-boost-lib-dir=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
+#]))
+
+
+
 jpeg = build.configure(
         ARGUMENTS,
         'jpeg',
@@ -146,7 +255,7 @@ jpeg = build.configure(
         depend=[zlib],
         GCCFLAGS=[zlib]
 )
-jpeg.setCmd("./configure --enable-shared ")
+jpeg.setCmd("./configure --enable-shared")
 jpeg.setMake("make install INSTALL='/usr/bin/install -D' ")
 
 
@@ -213,32 +322,53 @@ freeglut = build.configure(
             '2.8.1',
             '918ffbddcffbac83c218bc52355b6d5a',
           ),
-          (
-            'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
-            'freeglut-3.0.0.tar.gz',
-            '3.0.0',
-            '90c3ca4dd9d51cf32276bc5344ec9754',
-          ),
+#          (
+#            'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
+#            'freeglut-3.0.0.tar.gz',
+#            '3.0.0',
+#            '90c3ca4dd9d51cf32276bc5344ec9754',
+#          ),
         ],
         depend=[zlib],
         GCCFLAGS=[zlib]
 )
+#freeglut = build.cmake(
+#        ARGUMENTS,
+#        'freeglut',
+#        download=[
+#          (
+#            'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
+#            'freeglut-3.0.0.tar.gz',
+#            '3.0.0',
+#            '90c3ca4dd9d51cf32276bc5344ec9754',
+#          ),
+#        ],
+#        depend=[zlib],
+#        GCCFLAGS=[zlib]
+#)
 
-
-glew = build.configure(
+glew = build.glew(
         ARGUMENTS,
         'glew',
         download=[
+#          (
+#            'https://github.com/nigels-com/glew/archive/glew-1.10.0.tar.gz',
+#            'glew-glew-1.10.0.tar.gz',
+#            '1.10.0',
+#            'a79aa9866d9771546f78d27c8c6ac0df'
+#          ),
           (
             'https://github.com/nigels-com/glew/archive/glew-1.12.0.tar.gz',
-            'glew-1.12.0.tar.gz',
+            'glew-glew-1.12.0.tar.gz',
             '1.12.0',
             'a3d23a760f031fbdde91f010b5bcf5eb'
           ),
         ],
-        depend=[zlib],
-        GCCFLAGS=[zlib]
+        depend=[zlib, freeglut],
+        GCCFLAGS=[zlib, freeglut]
 )
+
+
 
 hdf5 = build.configure(
         ARGUMENTS,
@@ -255,7 +385,7 @@ hdf5 = build.configure(
         GCCFLAGS=[zlib]
 )
 
-alembic = build.configure(
+alembic = build.alembic(
         ARGUMENTS,
         'alembic',
         download=[
@@ -266,8 +396,9 @@ alembic = build.configure(
             'a70ba5f2e80b47d346d15d797c28731a'
           ),
         ],
-        depend=[zlib],
-        GCCFLAGS=[zlib]
+        python=allPythonVersions,
+        depend=[zlib, hdf5, ilmbase, pyilmbase, openexr, glew, freeglut],
+        GCCFLAGS=[zlib, hdf5, ilmbase, openexr, pyilmbase, glew, freeglut],
 )
 
 
@@ -297,7 +428,7 @@ llvm = build.configure(
         download=[
           (
             'http://llvm.org/releases/3.3/llvm-3.3.src.tar.gz',
-            'llvm-3.3.tar.gz',
+            'llvm-3.3.src.tar.gz',
             '3.3.0',
             '40564e1dc390f9844f1711c08b08e391'
           ),
@@ -310,31 +441,8 @@ llvm = build.configure(
 
 
 
-boost = build.boost(
-        ARGUMENTS,
-        'boost',
-        download=[
-          (
-            'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
-            'boost_1_56_0.tar.gz',
-            '1.56.0',
-            '8c54705c424513fa2be0042696a3a162'
-          ),
-#          (
-#            'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.58.0%2F&ts=1432347909&use_mirror=hivelocity',
-#            'boost_1_58_0.tar.gz',
-#            '1.58.0',
-#            '5a5d5614d9a07672e1ab2a250b5defc5'
-#          ),
-        ],
-        depend=[zlib],
-        GCCFLAGS=[zlib],
-        python=allPythonVersions,
-)
- 
 
-
-tbb = build.make(
+tbb = build.tbb(
         ARGUMENTS,
         'tbb',
         download=[
@@ -352,30 +460,6 @@ tbb = build.make(
           ),
         ],
 )
-def tbb_installer(target, source, env):
-    '''we use this method to do a custom tbb install 
-    by copy files over.'''
-    import pipe, build, os
-    for n in range(len(tbb.buildFolder)):
-        lines = os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (tbb.buildFolder[n], tbb.targetFolder[n] ) ).readlines()
-        for SHLIBEXT in build.SHLIBEXT:
-           os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (tbb.buildFolder[n], SHLIBEXT, tbb.targetFolder[n]) ).readlines()
-           os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (tbb.buildFolder[n], SHLIBEXT, tbb.targetFolder[n]) ).readlines()
-tbb.setInstaller( tbb_installer )
-
-
-
-
-
-#def tbb_installer(target, source, env):
-#    import pipe, build, os
-#    lines = os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (tbb.buildFolder, tbb.targetFolder ) ).readlines()
-#    for p in pipe.libsDB()['python']['versions']:
-#        lib = "%s/lib/python%s/" % (tbb.targetFolder, p[:3])
-#        os.popen( "mkdir -p %s" % lib ).readlines()
-#        for SHLIBEXT in build.SHLIBEXT:
-#           os.popen( "rsync -aW --delete %s/build/*_release/*%s %s 2>&1" % (tbb.buildFolder, SHLIBEXT, lib ) ).readlines()
-
 
 
 
