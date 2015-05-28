@@ -8,6 +8,51 @@ import pipe
 allPythonVersions = pipe.libsDB()['python']['versions']
 
 
+zlib = build.configure(
+        ARGUMENTS,
+        'zlib',
+        download=[
+          (
+            'http://zlib.net/zlib-1.2.8.tar.gz',
+            'zlib-1.2.8.tar.gz',
+            '1.2.8',
+            '44d667c142d7cda120332623eab69f40'
+          ),
+        ],
+)
+
+
+cmake = build.configure(
+        ARGUMENTS,
+        'cmake',
+        download=[
+          (
+            'http://www.cmake.org/files/v3.2/cmake-3.2.2.tar.gz',
+            'cmake-3.2.2.tar.gz',
+            '3.2.2',
+            '2da57308071ea98b10253a87d2419281'
+          ),
+        ],
+        depend=[zlib],
+        environ={
+            'CMAKE_EXE_LINKER_FLAGS'    : '-L%s' % os.popen("dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2)").readlines()[0].strip(),
+            'CMAKE_MODULE_LINKER_FLAGS' : '-L%s' % os.popen("dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2)").readlines()[0].strip(),
+            'CMAKE_SHARED_LINKER_FLAGS' : '-L%s' % os.popen("dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2)").readlines()[0].strip(),
+        },
+        cmd = [ 
+            "./configure --system-curl",
+            "./bin/cmake "
+            " -DCMAKE_EXE_LINKER_FLAGS=$CMAKE_EXE_LINKER_FLAGS "
+            " -DCMAKE_MODULE_LINKER_FLAGS=$CMAKE_MODULE_LINKER_FLAGS"
+            " -DCMAKE_SHARED_LINKER_FLAGS=$CMAKE_SHARED_LINKER_FLAGS",            
+            "make VERBOSE=1",
+            "make install",
+        ],
+)
+#cmake.setMake(' && '.join([
+#    '''make VERBOSE=1 LD="g++ -L $(dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2))" CXX="-L $(dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2))"''',
+#    'make install'
+#]))
 
 
 glibc = build.configure(
@@ -18,7 +63,7 @@ glibc = build.configure(
             'http://git.savannah.gnu.org/cgit/hurd/glibc.git/snapshot/glibc-2.19-hurd+libpthread-20150515.tar.gz',
             'glibc-2.19-hurd+libpthread-20150515.tar.gz',
             '2.19.20150515.hurd_libpthread',
-            'd78d2df46aa3ed51632b3ca7a6e0b39f'
+            'd0676be05360176d7fd69d5f6fbd2801'
           ),
         ],
 )
@@ -107,18 +152,6 @@ numpy = build.pythonSetup(
 
 
 
-zlib = build.configure(
-        ARGUMENTS,
-        'zlib',
-        download=[
-          (
-            'http://zlib.net/zlib-1.2.8.tar.gz',
-            'zlib-1.2.8.tar.gz',
-            '1.2.8',
-            '44d667c142d7cda120332623eab69f40'
-          ),
-        ],
-)
 
 ilmbase = build.configure(
         ARGUMENTS,
@@ -253,10 +286,12 @@ jpeg = build.configure(
           ),
         ],
         depend=[zlib],
-        GCCFLAGS=[zlib]
+        GCCFLAGS=[zlib],
+        cmd = [ 
+            "./configure --enable-shared --prefix=$TARGET_FOLDER",
+            "make install INSTALL='/usr/bin/install -D'",
+        ]
 )
-jpeg.setCmd("./configure --enable-shared")
-jpeg.setMake("make install INSTALL='/usr/bin/install -D' ")
 
 
 
@@ -385,20 +420,47 @@ hdf5 = build.configure(
         GCCFLAGS=[zlib]
 )
 
-alembic = build.alembic(
-        ARGUMENTS,
-        'alembic',
-        download=[
-          (
-            'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
-            'alembic-1.5.8.tar.gz',
-            '1.5.8',
-            'a70ba5f2e80b47d346d15d797c28731a'
-          ),
-        ],
-        python=allPythonVersions,
-        depend=[zlib, hdf5, ilmbase, pyilmbase, openexr, glew, freeglut],
-        GCCFLAGS=[zlib, hdf5, ilmbase, openexr, pyilmbase, glew, freeglut],
+alembic = build.cmake(
+    ARGUMENTS,
+    'alembic',
+    download=[
+      (
+        'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
+        'alembic-1.5.8.tar.gz',
+        '1.5.8',
+        'a70ba5f2e80b47d346d15d797c28731a'
+      ),
+    ],
+    python=allPythonVersions,
+    depend=[zlib, cmake, hdf5, ilmbase, pyilmbase, openexr, glew, freeglut],
+    GCCFLAGS=[zlib, hdf5, ilmbase, openexr, glew, freeglut],
+    cmd = ' '.join([
+        'HDF5_ROOT=$HDF5_TARGET_FOLDER &&',
+        'HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include &&',
+        'HDF5_LIBRARIES=$HDF5_TARGET_FOLDER/lib/libhdf5.so &&',
+        'OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include &&',
+        'OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so &&',
+        '$CMAKE_TARGET_FOLDER/bin/cmake', 
+        '-D LIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
+        '-D PYTHON_ROOT=$PYTHON_ROOT',
+        '-D PYTHON_INCLUDE_DIR=$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR/',
+        '-D ALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
+        '-D ALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+        '-D BOOST_ROOT=$BOOST_TARGET_FOLDER',
+        '-D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+        '-D ILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+        '-D MAYA_ROOT=%s' % pipe.apps.maya().path(''),
+        '-D ARNOLD_ROOT=%s' % pipe.apps.arnold().path(''),
+        '-D PRMAN_ROOT=%s' % pipe.apps.delight().path(''),
+        '-D PYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
+        "-D GLUT_Xmu_LIBRARY=$(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2)",
+        "-D GLUT_Xi_LIBRARY=$(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2)",
+#            '-D USE_PYILMBASE=1',
+#            '-D ALEMBIC_PYILMBASE_INCLUDE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/include/',
+#            '-D ALEMBIC_PYILMBASE_PYIMATH_LIB=$PYILMBASE_TARGET_FOLDER/lib/libPyImath.so',
+#            '-D ALEMBIC_PYILMBASE_PYIMATH_MODULE=$PYILMBASE_TARGET_FOLDER/lib/',
+        '. && make && make install',
+    ]),
 )
 
 

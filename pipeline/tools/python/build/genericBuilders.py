@@ -11,7 +11,7 @@ class generic:
     cmd   = ''
     extra = ''
 
-    def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend=None, GCCFLAGS=[], sed=None):
+    def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend=None, GCCFLAGS=[], sed=None, environ={}, **kargs):
         sys.stdout.write( bcolors.END )
         self.className = str(self.__class__).split('.')[-1]
         self.GCCFLAGS = GCCFLAGS
@@ -30,6 +30,10 @@ class generic:
         self.downloadList = download
         self.sed  = sed
         self.installPath = installRoot(self.args)
+        
+        
+        if kargs.has_key('cmd'):
+            self.cmd = kargs['cmd']
         
         bld = Builder(action = self.sed)
         self.env.Append(BUILDERS = {'sed' : bld})
@@ -56,7 +60,26 @@ class generic:
         for each in filter(lambda x: type(x[1])==str and not '__' in x[0], inspect.getmembers(self)):
             name = each[0]
             value = each[1]
-            self.env[name.upper()] = value
+            self.set(name.upper(), value)
+        
+        for each in filter(lambda x: type(x[1])==list and not '__' in x[0], inspect.getmembers(self)):
+            name = each[0]
+            v = each[1]
+            for n in range(len(v)):
+                if type(v[n])==str:
+                    self.set("%s_%s_%s_%02d" % (name.upper(),self.className,self.name,n), v[n])
+
+        # set extra environment variables to env
+        for name in environ.keys():
+            self.set("ENVIRON_%s" % name.upper(), environ[name])
+
+        # add all extra arguments as env vars!
+        for each in kargs:
+            v=kargs[each]
+            if type(v)==type(""):
+                v=[kargs[each]]
+            for n in range(len(v)):
+                self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
         
         # build all python versions specified
         self.buildFolder = {}
@@ -110,9 +133,11 @@ class generic:
                 self.env.Alias( 'install', t )
                 
     def registerSconsBuilder(self, *args):
-        name = str(args[0]).split(' ')[2].split('.')[-1]
+#        name = str(args[0]).split(' ')[2].split('.')[-1]
+        name = self.className
         bld = Builder(action = args[0])
         self.env.Append(BUILDERS = {name : bld})
+        return filter(lambda x: self.className==x[0], inspect.getmembers(self.env))[0][1]
         
     def setInstaller(self, method):
         self.installer = method
@@ -129,16 +154,52 @@ class generic:
     def action(self, target, source):
         ''' action must be implemented by derivated classes. action is called by the python build loop in __init__ 
         it needs to register a builder method and call it!!
-        ex: 
-            def action(self, target, source):
-                bld = Builder(action = self.configure)
-                self.env.Append(BUILDERS = {'configure' : bld})
-                return self.env.configure( target, source )
-                
-            def configure(self, target, source):
-                <the actual code to be run by scons during build>
         '''
+        return self.registerSconsBuilder(self.builder)( target, source )
+                
+
+    def fixCMD(self, cmd):
+        ''' virtual method to fix cmd lines before execution, like adding --prefix to configure '''
+        return cmd 
+
+    def installer(self, target, source, env):
+        ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.'''
         pass
+
+    
+    def builder(self, target, source, env):
+        ''' the generic builder method, used by all classes 
+        it simple executes all commands specified by self.cmd list '''
+        
+        if self.__check_target_log__(str(target[0]))==0:
+            os.popen("touch %s" % str(target[0])).readlines()
+        
+        else:
+            os.environ['CC'] = ''.join(os.popen('which gcc').readlines()).strip()
+            os.environ['CXX'] = ''.join(os.popen('which g++').readlines()).strip()
+            os.environ['LD'] = ''.join(os.popen('which gcc').readlines()).strip()
+            
+    #        import build
+    #        for each in filter(lambda x: hasattr(x[1],'src'), inspect.getmembers(build)):
+    #            print each, each[1].src
+                
+            # put all CMD vars into a dict
+            # filter only the ones that belong to this class type!
+            vars = {}
+            for name,cmd in filter(lambda x: 'CMD' in x[0], env.items()):
+                if self.className.upper() in name:
+                    vars[name] = cmd
+            
+            # so we can sort then and use in order
+            ids=vars.keys()
+            ids.sort()
+            for name in ids:
+                cmd = vars[name]
+                if cmd.strip():
+                    cmd = self.fixCMD(cmd)
+                    print '\t%s%s: %s %s ' % (bcolors.GREEN,name,cmd,bcolors.END)
+                    self.runCMD(cmd, target, source)
+
     
     def depend_n(self,dependOn,currVersion):
         ''' support function to find the same version of a depency
@@ -154,6 +215,13 @@ class generic:
                 depend_n = each
                 break
         return depend_n
+
+    def __check_target_log__(self,target):
+        ret=255
+        if os.path.exists(target):
+            lines = open(target).readlines()
+            ret = int(''.join(lines[-3:]).split("@runCMD_ERROR@")[-2].strip())
+        return ret
 
 
     def runCMD(self, cmd , target, source):
@@ -209,7 +277,10 @@ class generic:
                             
 #                    print dependOn.name.upper(), dependOn.targetFolder[p][depend_n]
                     os.environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = dependOn.targetFolder[p][depend_n]
-                    os.environ['PKG_CONFIG_PATH'] += '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n]
+                    os.environ['PKG_CONFIG_PATH'] = ':'.join([
+                        '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
+                        os.environ['PKG_CONFIG_PATH'],
+                    ])
                     if dependOn in self.GCCFLAGS:
                         CFLAGS.append("-I%s/include/" % dependOn.targetFolder[p][depend_n])
                         LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
@@ -223,6 +294,10 @@ class generic:
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         os.environ['PYTHONPATH'],
+                    ])
+                    os.environ['PATH'] = ':'.join([
+                        "%s/bin/" % (dependOn.targetFolder[p][depend_n]),
+                        os.environ['PATH'],
                     ])
         
         if CFLAGS:
@@ -246,39 +321,43 @@ class generic:
         ])
         os.environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER']
         os.environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
+        
+        # set extra env vars
+        for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
+            os.environ[name.split('ENVIRON_')[-1]] = v.strip()
 
+        lastlog = '%s/lastlog' % os.environ['TARGET_FOLDER']
+        if len(target.split('python')) > 1:
+            lastlog = '%s.%s' % (lastlog,os.environ['PYTHON_VERSION_MAJOR'])
+            
+        open(lastlog,'w').close()
         # run the command from inside ppython, so all pipe env vars get properly set!
         try:
             cmd = 'cd "%s" && ' %  os.environ['SOURCE_FOLDER'] + cmd
-            cmd = '''ppython --python_version $PYTHON_VERSION --logd -c "import os,sys;ret=os.system(\'\'\''''+cmd+'''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)"  2>&1''' 
-            call = os.popen(cmd)
-            lines = call.readlines()
-            ret = int(''.join(lines[-2:]).split("@runCMD_ERROR@")[-2].strip())
+            cmd = '''ppython --python_version $PYTHON_VERSION --logd -c "import os,sys;ret=os.system(\'\'\''''+cmd+'''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)" >%s 2>&1''' % lastlog
+            os.popen(cmd).readlines()
+            ret = self.__check_target_log__(lastlog)
             if ret == 0:
                 f = open(target,'a')
-                for each in lines :
+                for each in open(lastlog).readlines() :
                     f.write(each)
                 f.close()
             else:
                 raise
         except:
             print  '-'*120
-            for each in lines :
+            for each in open(lastlog).readlines() :
                 print '\t%s' % each.strip()
-            print '-'*120
-            raise Exception('Error: %s' % ret)
             print '-'*120
             print bcolors.FAIL,
             traceback.print_exc()
+            print '-'*120
             sys.stdout.flush()
+            raise Exception('Error!')
 
         print bcolors.END,
 
 
-
-    def installer(self, target, source, env):
-        ''' installer may be implemented by derivated classes in case installation needs to be done by copying or moving files.'''
-        pass
     
     def _installer(self, target, source, env):
         ''' a wrapper class to create target in case installer method is suscessfull! '''
@@ -298,12 +377,9 @@ class generic:
             md5 = ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % source[n]).readlines()).strip()
             if md5 != url[3]:
                 print "\tDownloading %s..." % source[n]
-                call = os.popen("wget '%s' -O %s 2>&1" % (url[0], source[n]))
-                lines = call.readlines()
+                lines = os.popen("wget '%s' -O %s >%s.log 2>&1" % (url[0], source[n], source[n])).readlines()
                 md5 = ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % source[n]).readlines()).strip()
                 if md5 != url[3]:
-#                    for l in lines:
-#                        print l.strip()
                     sys.stdout.write( bcolors.WARNING )
                     print "\tmd5 for file:", url[1], md5
                     sys.stdout.write( bcolors.FAIL )
