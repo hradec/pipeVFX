@@ -75,9 +75,9 @@ class generic:
         # download latest config.sub and config.guess so we can build old packages!
         if not os.path.exists('%s/config.sub' % buildFolder(self.args)):
             print 'Downloading latest config.sub'
-            os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" -O %s/config.sub 2>&1' % buildFolder(self.args))
+            os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" -O %s/config.sub 2>&1' % buildFolder(self.args)).readlines()
             print 'Downloading latest config.guess'
-            os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" -O %s/config.guess 2>&1' % buildFolder(self.args))
+            os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" -O %s/config.guess 2>&1' % buildFolder(self.args)).readlines()
             os.popen("chmod a+x %s/config.sub"   % buildFolder(self.args))
             os.popen("chmod a+x %s/config.guess" % buildFolder(self.args))
 
