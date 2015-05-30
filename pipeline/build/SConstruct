@@ -1,12 +1,12 @@
 #!/usr/bin/python 
 
 import build,sys,os
+sys.path.insert( 0, os.path.abspath('../tools/python/') )
 import pipe
 
 #print dir(ARGUMENTS), ARGUMENTS
 
 allPythonVersions = pipe.libsDB()['python']['versions']
-
 
 zlib = build.configure(
         ARGUMENTS,
@@ -20,40 +20,46 @@ zlib = build.configure(
           ),
         ],
 )
+build.allDepend.append(zlib)
 
-
-cmake = build.configure(
+openssl = build.configure(
         ARGUMENTS,
-        'cmake',
+        'openssl',
         download=[
           (
-            'http://www.cmake.org/files/v3.2/cmake-3.2.2.tar.gz',
-            'cmake-3.2.2.tar.gz',
-            '3.2.2',
-            '2da57308071ea98b10253a87d2419281'
+            'ftp://ftp.openssl.org/source/openssl-1.0.2a.tar.gz',
+            'openssl-1.0.2a.tar.gz',
+            '1.0.2.a',
+            'a06c547dac9044161a477211049f60ef'
           ),
         ],
-        depend=[zlib],
-        environ={
-            'CMAKE_EXE_LINKER_FLAGS'    : '-L%s' % os.popen("dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2)").readlines()[0].strip(),
-            'CMAKE_MODULE_LINKER_FLAGS' : '-L%s' % os.popen("dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2)").readlines()[0].strip(),
-            'CMAKE_SHARED_LINKER_FLAGS' : '-L%s' % os.popen("dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2)").readlines()[0].strip(),
-        },
-        cmd = [ 
-            "./configure --system-curl",
-            "./bin/cmake "
-            " -DCMAKE_EXE_LINKER_FLAGS=$CMAKE_EXE_LINKER_FLAGS "
-            " -DCMAKE_MODULE_LINKER_FLAGS=$CMAKE_MODULE_LINKER_FLAGS"
-            " -DCMAKE_SHARED_LINKER_FLAGS=$CMAKE_SHARED_LINKER_FLAGS",            
-            "make VERBOSE=1",
-            "make install",
-        ],
+        src='config',
+        cmd=[
+#            './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$TARGET_FOLDER',
+#            'make depend && make && make install',
+            './config shared --prefix=$TARGET_FOLDER',
+            'make && make install',
+        ]
 )
-#cmake.setMake(' && '.join([
-#    '''make VERBOSE=1 LD="g++ -L $(dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2))" CXX="-L $(dirname $(ldconfig -p | grep libncurses.so.5 | cut -d'>' -f2))"''',
-#    'make install'
-#]))
+build.allDepend.append(openssl)
 
+ncurses = build.configure(
+        ARGUMENTS,
+        'ncurses',
+        download=[
+          (
+            'http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz',
+            'ncurses-5.9.tar.gz',
+            '5.9.0',
+            '8cb9c412e5f2d96bc6f459aa8c6282a1'
+          ),
+        ],
+        cmd=[
+            './configure --with-shared',
+            'make -j $DCORES && make -j $DCORES install',
+        ]
+)
+build.allDepend.append(ncurses)
 
 glibc = build.configure(
         ARGUMENTS,
@@ -67,55 +73,54 @@ glibc = build.configure(
           ),
         ],
 )
-#epydoc = build.pythonSetup(
-#        ARGUMENTS,
-#        'epydoc',
-#        download=[(
-#            'http://downloads.sourceforge.net/project/epydoc/epydoc/3.0.1/epydoc-3.0.1.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fepydoc%2Ffiles%2Fepydoc%2F3.0.1%2F&ts=1432094792&use_mirror=iweb',
-#            'epydoc-3.0.1.tar.gz',
-#            '3.0.1',
-#            'cdd6f6c76dd8bab5e653a343a0544294'
-#        )],
-#        python=allPythonVersions,
-#)
+#build.allDepend.append(glibc)
 
+readline = build.configure(
+        ARGUMENTS,
+        'readline',
+        download=[
+          (
+            'ftp://ftp.cwru.edu/pub/bash/readline-6.3.tar.gz',
+            'readline-6.3.tar.gz',
+            '6.3.0',
+            '33c8fb279e981274f485fd91da77e94a'
+          ),
+        ],
+)
+build.allDepend.append(readline)
 
-#pygl = build.pythonSetup(
-#        ARGUMENTS,
-#        'pygl',
-#        download=[
-#          (
-#            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
-#            'PyOpenGL-3.1.0.tar.gz',
-#            '3.1.0',
-#            '0de021941018d46d91e5a8c11c071693'
-#          ),
-#          (
-#            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.0.2.tar.gz#md5=77becc24ffc0a6b28030aa109ad7ff8b',
-#            'PyOpenGL-3.0.2.tar.gz',
-#            '3.0.2',
-#            '77becc24ffc0a6b28030aa109ad7ff8b'
-#          ),
-#        ],
-#        python=allPythonVersions,
-#)
+python = build.configure(
+        ARGUMENTS,
+        'python',
+        download=[
+          (
+            'https://www.python.org/ftp/python/2.7.10/Python-2.7.10.tgz',
+            'Python-2.7.10.tar.gz',
+            '2.7.10',
+            'd7547558fd673bd9d38e2108c6b42521'
+          ),
+        ],
+)
 
-#dbus = build.configure(
-#        ARGUMENTS,
-#        'dbus',
-#        download=[
-#          (
-#            'https://pypi.python.org/packages/source/d/dbus-python/dbus-python-0.84.0.tar.gz#md5=fe69a2613e824463e74f10913708c88a',
-#            'dbus-python-0.84.0.tar.gz',
-#            '0.84.0',
-#            'fe69a2613e824463e74f10913708c88a'
-#          ),
-#        ],
-#        python=allPythonVersions,
-#)
-
-
-
+tbb = build.tbb(
+        ARGUMENTS,
+        'tbb',
+        download=[
+          (
+            'http://http.debian.net/debian/pool/main/t/tbb/tbb_3.0+r035.orig.tar.gz',
+            'tbb30_035oss.tar.gz',
+            '3.0.r035',
+            '86d2f05a06b0e53e71afb5378582f104',
+          ),
+          (
+            'http://http.debian.net/debian/pool/main/t/tbb/tbb_4.2~20140122.orig.tar.gz',
+            'tbb42_20140122oss.tar.gz',
+            '4.2.r20140122oss',
+            '70345f907f5ffe9b2bc3b7ed0d6508bc',
+          ),
+        ],
+)
+build.allDepend.append(tbb)
 
 cython = build.pythonSetup(
         ARGUMENTS,
@@ -130,8 +135,7 @@ cython = build.pythonSetup(
         ],
         python=allPythonVersions,
 )
-
-
+build.allDepend.append(cython)
 
 numpy = build.pythonSetup(
         ARGUMENTS,
@@ -145,12 +149,246 @@ numpy = build.pythonSetup(
           ),
         ],
         python=allPythonVersions,
-        depend=[cython],
-        GCCFLAGS=[cython],
+#        depend=[cython],
+#        GCCFLAGS=[cython],
 )
+build.allDepend.append(numpy)
+
+curl = build.configure(
+        ARGUMENTS,
+        'curl',
+        download=[
+          (
+            'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
+            'curl-7.42.1.tar.gz',
+            '7.42.1',
+            '8df5874c4a67ad55496bf3af548d99a2'
+          ),
+        ],
+)
+build.allDepend.append(curl)
+
+cmake = build.configure(
+        ARGUMENTS,
+        'cmake',
+        download=[
+          (
+            'http://www.cmake.org/files/v3.2/cmake-3.2.2.tar.gz',
+            'cmake-3.2.2.tar.gz',
+            '3.2.2',
+            '2da57308071ea98b10253a87d2419281'
+          ),
+        ],
+        cmd = [ 
+            "./configure --system-curl",
+            "./Bootstrap.cmk/cmake "
+            ' -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"'
+            ' -DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"'
+            ' -DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"',   
+            "make VERBOSE=1"
+            ' CMAKE_EXE_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"'
+            ' CMAKE_MODULE_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"'
+            ' CMAKE_SHARED_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"',   
+            "make install",
+        ],
+)
+build.allDepend.append(cmake)
+
+freeglut = build.configure(
+        ARGUMENTS,
+        'freeglut',
+        download=[
+          (
+            'http://downloads.sourceforge.net/project/freeglut/freeglut/2.6.0/freeglut-2.6.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619050&use_mirror=iweb',
+            'freeglut-2.6.0.tar.gz',
+            '2.6.0',
+            '39f0f2de89f399529d2b981188082218'
+          ),
+          (
+            'http://downloads.sourceforge.net/project/freeglut/freeglut/2.8.1/freeglut-2.8.1.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619092&use_mirror=hivelocity',
+            'freeglut-2.8.1.tar.gz',
+            '2.8.1',
+            '918ffbddcffbac83c218bc52355b6d5a',
+          ),
+#          (
+#            'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
+#            'freeglut-3.0.0.tar.gz',
+#            '3.0.0',
+#            '90c3ca4dd9d51cf32276bc5344ec9754',
+#          ),
+        ],
+)
+build.allDepend.append(freeglut)
+
+glew = build.glew(
+        ARGUMENTS,
+        'glew',
+        download=[
+#          (
+#            'https://github.com/nigels-com/glew/archive/glew-1.10.0.tar.gz',
+#            'glew-glew-1.10.0.tar.gz',
+#            '1.10.0',
+#            'a79aa9866d9771546f78d27c8c6ac0df'
+#          ),
+          (
+            'https://github.com/nigels-com/glew/archive/glew-1.12.0.tar.gz',
+            'glew-glew-1.12.0.tar.gz',
+            '1.12.0',
+            'a3d23a760f031fbdde91f010b5bcf5eb'
+          ),
+        ],
+)
+build.allDepend.append(glew)
+
+freetype = build.configure(
+        ARGUMENTS,
+        'freetype',
+        download=[
+          (
+            'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.4.0.tar.gz',
+            'freetype-2.4.0.tar.gz',
+            '2.4.0',
+            'f900148ae8e258803eb1ab9f564f2151'
+          ),
+          (
+            'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.5.5.tar.gz',
+            'freetype-2.5.5.tar.gz',
+            '2.5.5',
+            '7448edfbd40c7aa5088684b0a3edb2b8',
+          ),
+        ],
+)
+build.allDepend.append(freetype)
+
+epydoc = build.pythonSetup(
+        ARGUMENTS,
+        'epydoc',
+        download=[(
+            'http://downloads.sourceforge.net/project/epydoc/epydoc/3.0.1/epydoc-3.0.1.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fepydoc%2Ffiles%2Fepydoc%2F3.0.1%2F&ts=1432094792&use_mirror=iweb',
+            'epydoc-3.0.1.tar.gz',
+            '3.0.1',
+            'cdd6f6c76dd8bab5e653a343a0544294'
+        )],
+        python=allPythonVersions,
+)
+build.allDepend.append(epydoc)
+
+pygl = build.pythonSetup(
+        ARGUMENTS,
+        'pygl',
+        download=[
+          (
+            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
+            'PyOpenGL-3.1.0.tar.gz',
+            '3.1.0',
+            '0de021941018d46d91e5a8c11c071693'
+          ),
+          (
+            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.0.2.tar.gz#md5=77becc24ffc0a6b28030aa109ad7ff8b',
+            'PyOpenGL-3.0.2.tar.gz',
+            '3.0.2',
+            '77becc24ffc0a6b28030aa109ad7ff8b'
+          ),
+        ],
+        python=allPythonVersions,
+)
+build.allDepend.append(pygl)
+
+dbus = build.configure(
+        ARGUMENTS,
+        'dbus',
+        download=[
+          (
+            'https://pypi.python.org/packages/source/d/dbus-python/dbus-python-0.84.0.tar.gz#md5=fe69a2613e824463e74f10913708c88a',
+            'dbus-python-0.84.0.tar.gz',
+            '0.84.0',
+            'fe69a2613e824463e74f10913708c88a'
+          ),
+        ],
+        python=allPythonVersions,
+)
+build.allDepend.append(dbus)
+
+jpeg = build.configure(
+        ARGUMENTS,
+        'jpeg',
+        download=[
+          (
+            'http://www.ijg.org/files/jpegsrc.v6b.tar.gz',
+            'jpeg-6b.tar.gz',
+            '6b',
+            'dbd5f3b47ed13132f04c685d608a7547'
+          ),
+          (
+            'http://www.ijg.org/files/jpegsrc.v9a.tar.gz',
+            'jpeg-9a.tar.gz',
+            '9a',
+            '3353992aecaee1805ef4109aadd433e7',
+          ),
+        ],
+        cmd = [ 
+            "./configure --enable-shared --prefix=$TARGET_FOLDER",
+            "make install INSTALL='/usr/bin/install -D'",
+        ]
+)
+build.allDepend.append(jpeg)
+
+tiff = build.configure(
+        ARGUMENTS,
+        'tiff',
+        download=[
+          (
+            'ftp://ftp.remotesensing.org/pub/libtiff/tiff-3.8.2.tar.gz',
+            'tiff-3.8.2.tar.gz',
+            '3.8.2',
+            'fbb6f446ea4ed18955e2714934e5b698'
+          ),
+          (
+            'ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.3.tar.gz',
+            'tiff-4.0.3.tar.gz',
+            '4.0.3',
+            '051c1068e6a0627f461948c365290410',
+          ),
+        ],
+        depend=[jpeg],
+)
+build.allDepend.append(tiff)
+
+libpng = build.configure(
+        ARGUMENTS,
+        'libpng',
+        download=[
+          (
+            'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.17.tar.gz',
+            'libpng-1.6.17.tar.gz',
+            '1.6.17',
+            '134282f1752dcf4cd81a37b8ff421cef'
+          ),
+        ],
+)
+build.allDepend.append(libpng)
 
 
-
+boost = build.boost(
+        ARGUMENTS,
+        'boost',
+        download=[
+          (
+            'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
+            'boost_1_56_0.tar.gz',
+            '1.56.0',
+            '8c54705c424513fa2be0042696a3a162'
+          ),
+#          (
+#            'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.58.0%2F&ts=1432347909&use_mirror=hivelocity',
+#            'boost_1_58_0.tar.gz',
+#            '1.58.0',
+#            '5a5d5614d9a07672e1ab2a250b5defc5'
+#          ),
+        ],
+        python=allPythonVersions,
+)
+build.allDepend.append(boost)
 
 
 ilmbase = build.configure(
@@ -177,11 +415,6 @@ ilmbase = build.configure(
           ),          
         ],
 )
-
-
-
-
-
 openexr = build.configure(
         ARGUMENTS,
         'openexr',
@@ -205,34 +438,9 @@ openexr = build.configure(
             '33735d37d2ee01c6d8fbd0df94fb8b43',
           ),
         ],
-        depend=[ilmbase,zlib],
-        GCCFLAGS=[zlib]
+        depend=[ilmbase],
 )
 
-
-
-boost = build.boost(
-        ARGUMENTS,
-        'boost',
-        download=[
-          (
-            'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
-            'boost_1_56_0.tar.gz',
-            '1.56.0',
-            '8c54705c424513fa2be0042696a3a162'
-          ),
-#          (
-#            'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.58.0%2F&ts=1432347909&use_mirror=hivelocity',
-#            'boost_1_58_0.tar.gz',
-#            '1.58.0',
-#            '5a5d5614d9a07672e1ab2a250b5defc5'
-#          ),
-        ],
-        depend=[zlib],
-        GCCFLAGS=[zlib],
-        python=allPythonVersions,
-)
- 
 pyilmbase = build.configure(
         ARGUMENTS,
         'pyilmbase',
@@ -257,153 +465,13 @@ pyilmbase = build.configure(
           ),          
         ],
         python=allPythonVersions,
-        depend=[ilmbase,zlib,boost,numpy],
-        GCCFLAGS=[zlib,boost]
+        depend=[ilmbase,openexr],
 )
 #pyilmbase.setCmd(" ".join([
 #        "./configure",
 #        "--with-boost-include-dir=$BOOST_TARGET_FOLDER/include/",
 #        "--with-boost-lib-dir=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
 #]))
-
-
-
-jpeg = build.configure(
-        ARGUMENTS,
-        'jpeg',
-        download=[
-          (
-            'http://www.ijg.org/files/jpegsrc.v6b.tar.gz',
-            'jpeg-6b.tar.gz',
-            '6b',
-            'dbd5f3b47ed13132f04c685d608a7547'
-          ),
-          (
-            'http://www.ijg.org/files/jpegsrc.v9a.tar.gz',
-            'jpeg-9a.tar.gz',
-            '9a',
-            '3353992aecaee1805ef4109aadd433e7',
-          ),
-        ],
-        depend=[zlib],
-        GCCFLAGS=[zlib],
-        cmd = [ 
-            "./configure --enable-shared --prefix=$TARGET_FOLDER",
-            "make install INSTALL='/usr/bin/install -D'",
-        ]
-)
-
-
-
-tiff = build.configure(
-        ARGUMENTS,
-        'tiff',
-        download=[
-          (
-            'ftp://ftp.remotesensing.org/pub/libtiff/tiff-3.8.2.tar.gz',
-            'tiff-3.8.2.tar.gz',
-            '3.8.2',
-            'fbb6f446ea4ed18955e2714934e5b698'
-          ),
-          (
-            'ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.3.tar.gz',
-            'tiff-4.0.3.tar.gz',
-            '4.0.3',
-            '051c1068e6a0627f461948c365290410',
-          ),
-        ],
-        depend=[zlib,jpeg],
-        GCCFLAGS=[zlib,jpeg]
-)
-
-
-
-freetype = build.configure(
-        ARGUMENTS,
-        'freetype',
-        download=[
-          (
-            'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.4.0.tar.gz',
-            'freetype-2.4.0.tar.gz',
-            '2.4.0',
-            'f900148ae8e258803eb1ab9f564f2151'
-          ),
-          (
-            'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.5.5.tar.gz',
-            'freetype-2.5.5.tar.gz',
-            '2.5.5',
-            '7448edfbd40c7aa5088684b0a3edb2b8',
-          ),
-        ],
-        depend=[zlib],
-        GCCFLAGS=[zlib]
-)
-
-
-
-freeglut = build.configure(
-        ARGUMENTS,
-        'freeglut',
-        download=[
-          (
-            'http://downloads.sourceforge.net/project/freeglut/freeglut/2.6.0/freeglut-2.6.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619050&use_mirror=iweb',
-            'freeglut-2.6.0.tar.gz',
-            '2.6.0',
-            '39f0f2de89f399529d2b981188082218'
-          ),
-          (
-            'http://downloads.sourceforge.net/project/freeglut/freeglut/2.8.1/freeglut-2.8.1.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619092&use_mirror=hivelocity',
-            'freeglut-2.8.1.tar.gz',
-            '2.8.1',
-            '918ffbddcffbac83c218bc52355b6d5a',
-          ),
-#          (
-#            'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
-#            'freeglut-3.0.0.tar.gz',
-#            '3.0.0',
-#            '90c3ca4dd9d51cf32276bc5344ec9754',
-#          ),
-        ],
-        depend=[zlib],
-        GCCFLAGS=[zlib]
-)
-#freeglut = build.cmake(
-#        ARGUMENTS,
-#        'freeglut',
-#        download=[
-#          (
-#            'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
-#            'freeglut-3.0.0.tar.gz',
-#            '3.0.0',
-#            '90c3ca4dd9d51cf32276bc5344ec9754',
-#          ),
-#        ],
-#        depend=[zlib],
-#        GCCFLAGS=[zlib]
-#)
-
-glew = build.glew(
-        ARGUMENTS,
-        'glew',
-        download=[
-#          (
-#            'https://github.com/nigels-com/glew/archive/glew-1.10.0.tar.gz',
-#            'glew-glew-1.10.0.tar.gz',
-#            '1.10.0',
-#            'a79aa9866d9771546f78d27c8c6ac0df'
-#          ),
-          (
-            'https://github.com/nigels-com/glew/archive/glew-1.12.0.tar.gz',
-            'glew-glew-1.12.0.tar.gz',
-            '1.12.0',
-            'a3d23a760f031fbdde91f010b5bcf5eb'
-          ),
-        ],
-        depend=[zlib, freeglut],
-        GCCFLAGS=[zlib, freeglut]
-)
-
-
 
 hdf5 = build.configure(
         ARGUMENTS,
@@ -416,8 +484,6 @@ hdf5 = build.configure(
             '03cccb5b33dbe975fdcd8ae9dc021f24'
           ),
         ],
-        depend=[zlib],
-        GCCFLAGS=[zlib]
 )
 
 alembic = build.cmake(
@@ -432,8 +498,25 @@ alembic = build.cmake(
       ),
     ],
     python=allPythonVersions,
-    depend=[zlib, cmake, hdf5, ilmbase, pyilmbase, openexr, glew, freeglut],
+    depend=[zlib, cmake, hdf5, ilmbase, pyilmbase, openexr, glew, freeglut, boost],
     GCCFLAGS=[zlib, hdf5, ilmbase, openexr, glew, freeglut],
+    sed = {
+        '0.0.0' : {
+            'python/PyAbcOpenGL/CMakeLists.txt' : [
+                ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+                ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
+                ('/usr/include/python','${PYTHON_ROOT}/include/python'),
+            ],
+            'python/PyAlembic/CMakeLists.txt' : [
+                ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+                ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
+                ('/usr/include/python','${PYTHON_ROOT}/include/python'),
+            ],
+            'CMakeLists.txt' : [
+                ('/alembic-${VERSION}',' '),
+            ],
+        },
+    },
     cmd = ' '.join([
         'HDF5_ROOT=$HDF5_TARGET_FOLDER &&',
         'HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include &&',
@@ -441,45 +524,31 @@ alembic = build.cmake(
         'OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include &&',
         'OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so &&',
         '$CMAKE_TARGET_FOLDER/bin/cmake', 
-        '-D LIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
-        '-D PYTHON_ROOT=$PYTHON_ROOT',
-        '-D PYTHON_INCLUDE_DIR=$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR/',
-        '-D ALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
-        '-D ALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
-        '-D BOOST_ROOT=$BOOST_TARGET_FOLDER',
-        '-D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
-        '-D ILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
-        '-D MAYA_ROOT=%s' % pipe.apps.maya().path(''),
-        '-D ARNOLD_ROOT=%s' % pipe.apps.arnold().path(''),
-        '-D PRMAN_ROOT=%s' % pipe.apps.delight().path(''),
-        '-D PYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
-        "-D GLUT_Xmu_LIBRARY=$(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2)",
-        "-D GLUT_Xi_LIBRARY=$(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2)",
-#            '-D USE_PYILMBASE=1',
-#            '-D ALEMBIC_PYILMBASE_INCLUDE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/include/',
-#            '-D ALEMBIC_PYILMBASE_PYIMATH_LIB=$PYILMBASE_TARGET_FOLDER/lib/libPyImath.so',
-#            '-D ALEMBIC_PYILMBASE_PYIMATH_MODULE=$PYILMBASE_TARGET_FOLDER/lib/',
-        '. && make && make install',
+        '-Wno-dev',
+        '-DBoost_USE_STATIC_LIBS=0',
+        '-DBoost_USE_MULTITHREADED=1',
+        '-DBoost_USE_STATIC_RUNTIME=0',
+        '-DLIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
+        '-DPYTHON_ROOT=$PYTHON_ROOT',
+        '-DPYTHON_INCLUDE_DIR=$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR/',
+        '-DALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
+        '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+        '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
+        '-DBOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+        '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+        '-DMAYA_ROOT=%s' % pipe.apps.maya().path(''),
+        '-DARNOLD_ROOT=%s' % pipe.apps.arnold().path(''),
+        '-DPRMAN_ROOT=%s' % pipe.apps.delight().path(''),
+        '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
+        "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2))",
+        "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
+#        '-DUSE_PYILMBASE=1',
+        '. && make -j %d && make install' % (build.CORES*2),
     ]),
 )
 
 
 
-
-libpng = build.configure(
-        ARGUMENTS,
-        'libpng',
-        download=[
-          (
-            'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.17.tar.gz',
-            'libpng-1.6.17.tar.gz',
-            '1.6.17',
-            '134282f1752dcf4cd81a37b8ff421cef'
-          ),
-        ],
-        depend=[zlib],
-        GCCFLAGS=[zlib]
-)
 
 
 
@@ -495,8 +564,6 @@ llvm = build.configure(
             '40564e1dc390f9844f1711c08b08e391'
           ),
         ],
-        depend=[zlib],
-        GCCFLAGS=[zlib]
 )
 
 
@@ -504,24 +571,6 @@ llvm = build.configure(
 
 
 
-tbb = build.tbb(
-        ARGUMENTS,
-        'tbb',
-        download=[
-          (
-            'http://http.debian.net/debian/pool/main/t/tbb/tbb_3.0+r035.orig.tar.gz',
-            'tbb30_035oss.tar.gz',
-            '3.0.r035',
-            '86d2f05a06b0e53e71afb5378582f104',
-          ),
-          (
-            'http://http.debian.net/debian/pool/main/t/tbb/tbb_4.2~20140122.orig.tar.gz',
-            'tbb42_20140122oss.tar.gz',
-            '4.2.r20140122oss',
-            '70345f907f5ffe9b2bc3b7ed0d6508bc',
-          ),
-        ],
-)
 
 
 

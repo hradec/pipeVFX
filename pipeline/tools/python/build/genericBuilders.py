@@ -3,22 +3,40 @@ from  SCons.Builder import *
 from devRoot import *
 import pipe
 from pipe.bcolors import bcolors
+from glob import glob
 
 import os, traceback, sys, inspect
+
+
+import multiprocessing
+
+CORES=int(multiprocessing.cpu_count())
+os.environ['CORES'] = '%d' % CORES
+os.environ['DCORES'] = '%d' % (2*CORES)
+
+allDepend = []
+
 
 class generic:
     src   = ''
     cmd   = ''
     extra = ''
+    sed = {}
+    environ = {}
 
-    def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend=None, GCCFLAGS=[], sed=None, environ={}, **kargs):
+    def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend=None, GCCFLAGS=[], sed=None, environ=None, **kargs):
         sys.stdout.write( bcolors.END )
         self.className = str(self.__class__).split('.')[-1]
         self.GCCFLAGS = GCCFLAGS
         self.args = args
+        
+        # dependency
         self.dependOn = depend
         if type(self.dependOn) != type([]):
             self.dependOn = [depend]
+        # add global dependency
+        self.dependOn += allDepend 
+        
         self.env = env
         if self.env==None:
             self.env = Environment()
@@ -28,15 +46,24 @@ class generic:
             self.pythonVersion = [python]
 
         self.downloadList = download
-        self.sed  = sed
+        if sed:
+            self.sed  = sed
+        if environ:
+            self.environ  = environ
+                        
         self.installPath = installRoot(self.args)
         
         
         if kargs.has_key('cmd'):
             self.cmd = kargs['cmd']
+        if type(self.cmd)==str:
+            self.cmd = [self.cmd]
+            
+        if kargs.has_key('src'):
+            self.src = kargs['src']
         
-        bld = Builder(action = self.sed)
-        self.env.Append(BUILDERS = {'sed' : bld})
+#        bld = Builder(action = self.sed)
+#        self.env.Append(BUILDERS = {'sed' : bld})
         
         self.env.AddMethod(self.downloader, 'downloader')
 
@@ -70,8 +97,8 @@ class generic:
                     self.set("%s_%s_%s_%02d" % (name.upper(),self.className,self.name,n), v[n])
 
         # set extra environment variables to env
-        for name in environ.keys():
-            self.set("ENVIRON_%s" % name.upper(), environ[name])
+        for name in self.environ.keys():
+            self.set("ENVIRON_%s" % name.upper(), self.environ[name])
 
         # add all extra arguments as env vars!
         for each in kargs:
@@ -171,9 +198,10 @@ class generic:
         ''' the generic builder method, used by all classes 
         it simple executes all commands specified by self.cmd list '''
         
-        if self.__check_target_log__(str(target[0]))==0:
+        lastlog = self.__check_target_log__( "%s/lastlog" % os.path.dirname(str(target[0])))
+        if lastlog==0:
             os.popen("touch %s" % str(target[0])).readlines()
-        
+
         else:
             os.environ['CC'] = ''.join(os.popen('which gcc').readlines()).strip()
             os.environ['CXX'] = ''.join(os.popen('which g++').readlines()).strip()
@@ -226,6 +254,7 @@ class generic:
 
     def runCMD(self, cmd , target, source):
         ''' the main method to run system calls, like configure, make, cmake, etc '''
+        
         target=str(target[0])
         dirLevels = '..%s' % os.sep * (len(str(source[0]).split(os.sep))-1)
         installDir = os.path.dirname(target)
@@ -256,8 +285,6 @@ class generic:
             os.environ['PYTHON_VERSION'] = pythonVersion
             os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
             
-                
-                
         os.environ['PKG_CONFIG_PATH']=""
         os.environ['CFLAGS']    = ""
         os.environ['CPPFLAGS']  = ""
@@ -265,6 +292,7 @@ class generic:
         
         CFLAGS=[]
         LDFLAGS=[]
+        os.environ['LD_LIBRARY_PATH'] = ''
         for dependOn in self.dependOn:
             if dependOn:
                 depend_n = self.depend_n(dependOn, target.split('/')[-2])
@@ -281,14 +309,22 @@ class generic:
                         '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
                         os.environ['PKG_CONFIG_PATH'],
                     ])
-                    if dependOn in self.GCCFLAGS:
-                        CFLAGS.append("-I%s/include/" % dependOn.targetFolder[p][depend_n])
-                        LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
-                        LDFLAGS.append("-L%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
+                    # if dependency in explicit in GCCFLAGS or 
+                    # if dependency doesn't have a lib/pkconfig/*.pc file, 
+                    # include the dependency folders into CFLAGS(CPPFLAGS/CXXFLAGS) and LDFLAGS parameters
+#                    if dependOn in self.GCCFLAGS or not glob( "%s/lib/pkgconfig/*.pc" % dependOn.targetFolder[p][depend_n] ):
+                    CFLAGS.append("-I%s/include/" % dependOn.targetFolder[p][depend_n])
+                    LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
+                    LDFLAGS.append("-L%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
+                        
                     os.environ['LD_LIBRARY_PATH'] = ':'.join([
+                        os.environ['LD_LIBRARY_PATH'],
                         "%s/lib/" % dependOn.targetFolder[p][depend_n],
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
-                        os.environ['LD_LIBRARY_PATH'],
+                    ])
+                    os.environ['INCLUDE'] = ':'.join([
+                        "%s/include/" % dependOn.targetFolder[p][depend_n],
+                        os.environ['INCLUDE'],
                     ])
                     os.environ['PYTHONPATH'] = ':'.join([
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
@@ -300,21 +336,23 @@ class generic:
                         os.environ['PATH'],
                     ])
         
+        
         if CFLAGS:
-#            self.setExtra( 'CFLAGS="%s" CPPFLAGS="%s"' % (
-#                ' '.join(CFLAGS+LDFLAGS),
-#                ' '.join(CFLAGS+LDFLAGS),
-#            ))
-#            self.setExtra( 'LDFLAGS="%s"' % ' '.join(LDFLAGS) )
             os.environ['CFLAGS']    = "%s" % ' '.join(CFLAGS+LDFLAGS)
             os.environ['CPPFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
-#            os.environ['LDFLAGS']   = "%s" % ' '.join(LDFLAGS)
+            os.environ['CXXFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
+            os.environ['CPPCXXFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
+            os.environ['LDFLAGS']   = "%s" % ' '.join(LDFLAGS)
             
         os.environ['LD_LIBRARY_PATH'] = ':'.join([
             os.path.dirname(''.join(os.popen('which gcc').readlines()))+'/../lib64/',
             os.environ['LD_LIBRARY_PATH'],
         ])
-        os.environ['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu/'
+        os.environ['LIB'] = os.environ['LD_LIBRARY_PATH']
+        os.environ['LIBRARY_PATH'] = ':'.join([
+                   '/usr/lib/x86_64-linux-gnu/',
+                   os.environ['LD_LIBRARY_PATH'],
+        ])
         os.environ['PATH'] = ':'.join([
             pipe.libs.python().path('bin'),
             os.environ['PATH'],
@@ -330,6 +368,7 @@ class generic:
         if len(target.split('python')) > 1:
             lastlog = '%s.%s' % (lastlog,os.environ['PYTHON_VERSION_MAJOR'])
             
+        self.runSED(os.environ['SOURCE_FOLDER'])
         open(lastlog,'w').close()
         # run the command from inside ppython, so all pipe env vars get properly set!
         try:
@@ -360,10 +399,14 @@ class generic:
 
     
     def _installer(self, target, source, env):
-        ''' a wrapper class to create target in case installer method is suscessfull! '''
-        self.installer( target, source, env )
+        ''' a wrapper class to create target in case installer method is suscessfull! 
+        we do this so homever implements a installer don't have to bother!'''
+        ret = self.installer( target, source, env )
         f=open(str(target[0]),'w')
-        f.write(' ')
+        if ret:
+            f.write(''.join(ret))
+        else:
+            f.write(' ')
         f.close()
 
     def downloader( self, env, source, _url=None):        
@@ -419,30 +462,77 @@ class generic:
                 for updates in ['config.sub', 'config.guess']:
                     for file2update in os.popen('find %s -name %s 2>&1' % (os.path.dirname(t), updates) ).readlines():
                         os.popen( "cp %s/%s %s"   % (os.path.dirname(s), updates, file2update) )
+                        
+        
+    def runSED(self,t):
+        ''' this method applies sed substitution to files specified in the sed dictionary. 
+        The structure for the sed dict is as follow:
+            sed = {
+                '0.0.0' : { # the inital version of the package this sed will be applied
+                    'file' : [ # the filename to apply the sed to
+                        ( 'string to replace', 'string to replace' ), # a tupple with the replace strings
+                        ( 'string to replace 2', 'string to replace 2' ), # a tupple with the replace strings
+                    ],
+                    'file2' : [ # another filename to apply the sed to
+                        ( 'string to replace', 'string to replace' ), # a tupple with the replace strings
+                    ],
+                },
+                '2.1.0' : { # this sed will be applied to all versions equal or above 2.1.0, instead of sed 0.0.0
+                    ...
+                },
+            }
+            
+        this way we can have multiple seds for different versions of packages.
+        '''
+        ids = self.sed.keys()
+        ids.sort()
+        ids.reverse()
+        url = filter(lambda x: os.path.basename(t).split('.python')[0] in x[1], self.downloadList)[0]
+        for version in ids:
+            v  = map(lambda x: int(x), version.split('.'))
+            vv = map(lambda x: int(x), url[2].split('.'))
+            if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]: 
+                for each in self.sed[version]:
+                    file = "%s/%s" % (t,each)
+                    # we make a copy of the original file, before running sed
+                    # if we already have a copy, we restore it before running sed
+                    if os.path.exists("%s.original" % file):
+                        os.popen("cp %s.original %s" % (file,file)).readlines()
+                    else:
+                        os.popen("cp %s %s.original" % (file,file)).readlines()
+                    # apply seds
+                    for sed in self.sed[version][each]:
+                        cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
+                            file,
+                            sed[0].replace('/','\/').replace('$','\$'), 
+                            sed[1].replace('/','\/').replace('$','\$')
+                        )
+                        #print cmd
+                        os.popen(cmd).readlines()
                     
 #            os.system("cd %s && rm -rf %s" % (buildFolder(self.args),d[1]))
 
-    def sed( self, target, source, env):
-        ''' use this method to inline patch the source code before building! 
-        It's usefull to perform quick patches without a patch file!'''
-        def _sed(target,source,sed):
-            installDir = os.path.dirname(target)
-            if not os.path.exists(installDir):
-                #env.Execute( Mkdir(installDir) )
-                os.makedirs(installDir)
+#    def sed( self, target, source, env):
+#        ''' use this method to inline patch the source code before building! 
+#        It's usefull to perform quick patches without a patch file!'''
+#        def _sed(target,source,sed):
+#            installDir = os.path.dirname(target)
+#            if not os.path.exists(installDir):
+#                #env.Execute( Mkdir(installDir) )
+#                os.makedirs(installDir)
 
-            if os.path.isfile(source):
-                cmd = 'sed \'%s\' %s > %s' % ( ';'.join(sed), source, target )
-                #print '\t', cmd
-                os.system( cmd )
+#            if os.path.isfile(source):
+#                cmd = 'sed \'%s\' %s > %s' % ( ';'.join(sed), source, target )
+#                #print '\t', cmd
+#                os.system( cmd )
 
-            if os.path.isdir(source):
-                for each in os.listdir(source):
-                    if each[0] != '.':
-                        _sed( os.path.join(target, each), os.path.join(source, each), sed )
+#            if os.path.isdir(source):
+#                for each in os.listdir(source):
+#                    if each[0] != '.':
+#                        _sed( os.path.join(target, each), os.path.join(source, each), sed )
 
-        for n in range(len(target)):
-            _sed( target[n], source[n], self.sed )
+#        for n in range(len(target)):
+#            _sed( target[n], source[n], self.sed )
 
 
     def install(self, target, source):
@@ -466,9 +556,9 @@ class generic:
             self.env.Clean( ret, os.path.dirname(t) )
         return ret
 
-    def sed(self,target,source):
-        ret=source
-        if self.sed:
-            ret = self.env.sed( target, ret)
-            self.env.Clean(ret, target)
-        return ret            
+#    def sed(self,target,source):
+#        ret=source
+#        if self.sed:
+#            ret = self.env.sed( target, ret)
+#            self.env.Clean(ret, target)
+#        return ret            

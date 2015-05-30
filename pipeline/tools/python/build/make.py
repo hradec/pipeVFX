@@ -22,7 +22,7 @@ class cmake(make):
     
     def fixCMD(self, cmd):
         if 'cmake' in cmd and 'CMAKE_INSTALL_PREFIX' not in cmd:
-            cmd = 'rm -rf CMakeCache.txt && '+cmd.replace('cmake','cmake -D CMAKE_INSTALL_PREFIX=$TARGET_FOLDER')
+            cmd = 'rm -rf CMakeCache.txt && '+cmd.replace('cmake','cmake -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER')
         return cmd 
 
 
@@ -43,20 +43,21 @@ class glew(make):
         targetFolder = os.path.dirname(str(target[0]))
         if not os.path.exists("%s/lib" % targetFolder):
             if os.path.exists("%s/lib64" % targetFolder):
-                os.popen("ln -s lib64 %s/lib" % targetFolder) 
+                os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
 
 class tbb(make):
     ''' a make class to exclusively build intels TBB package
     since we need to handle the installation by ourselfs, we override
     installer() method'''
-    cmd = 'make'
+    cmd = ['make']
 
     def installer(self, target, source, env):
         '''we use this method to do a custom tbb install 
         by copying files over.'''
         import pipe, build, os
         for n in range(len(self.buildFolder)):
-            lines = os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (self.buildFolder[n], self.targetFolder[n] ) ).readlines()
+            lines = os.popen( "rsync -avWpP $SOURCE_FOLDER/include/* $TARGET_FOLDER/include/ 2>&1" ).readlines()
             for SHLIBEXT in build.SHLIBEXT:
-               os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (self.buildFolder[n], SHLIBEXT, self.targetFolder[n]) ).readlines()
-               os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (self.buildFolder[n], SHLIBEXT, self.targetFolder[n]) ).readlines()
+               lines += os.popen( "rsync -aW --delete $SOURCE_FOLDER/build/*_release/*%s* $TARGET_FOLDER/lib/ 2>&1" % (SHLIBEXT) ).readlines()
+               lines += os.popen( "rsync -aW --delete $SOURCE_FOLDER/build/*_release/*%s* $TARGET_FOLDER/bin/ 2>&1" % (SHLIBEXT) ).readlines()
+        return lines

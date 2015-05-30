@@ -13,8 +13,8 @@ from pipe.bcolors import bcolors
 class configure(generic):
     src = 'configure'
     cmd = [
-        './configure',
-        'make && make install',
+        './configure  --enable-shared',
+        'make -j $DCORES && make -j $DCORES install',
     ]
 
     def fixCMD(self, cmd):
@@ -26,9 +26,18 @@ class configure(generic):
         
 class boost(configure):
     src = './bootstrap.sh'
+    environ = {
+        'CC'        : 'gcc -fPIC',
+        'CPP'       : 'g++ -fPIC',
+        'CXX'       : 'g++ -fPIC',
+        'CXXCPP'    : 'g++ -fPIC',
+        'CPPFLAGS'  : 'g++ -fPIC',
+    }
     cmd = [
         './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-        './b2 install',
+        './b2 -j %d cxxflags=-fPIC -d+2 install' % (CORES*2),
     ]
 
+#    def installer(self, target, source, env):
+#        os.popen("rm -rf %s/lib/python*/*.a" % env['TARGET_FOLDER']).readlines()
 
