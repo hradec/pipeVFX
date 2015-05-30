@@ -22,7 +22,7 @@ zlib = build.configure(
 )
 build.allDepend.append(zlib)
 
-openssl = build.configure(
+openssl = build.openssl(
         ARGUMENTS,
         'openssl',
         download=[
@@ -33,13 +33,6 @@ openssl = build.configure(
             'a06c547dac9044161a477211049f60ef'
           ),
         ],
-        src='config',
-        cmd=[
-#            './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$TARGET_FOLDER',
-#            'make depend && make && make install',
-            './config shared --prefix=$TARGET_FOLDER',
-            'make && make install',
-        ]
 )
 build.allDepend.append(openssl)
 
@@ -182,13 +175,13 @@ cmake = build.configure(
         cmd = [ 
             "./configure --system-curl",
             "./Bootstrap.cmk/cmake "
-            ' -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"'
-            ' -DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"'
-            ' -DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"',   
+            ' -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS -lssl"'
+            ' -DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS -lssl"'
+            ' -DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS -lssl"',   
             "make VERBOSE=1"
-            ' CMAKE_EXE_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"'
-            ' CMAKE_MODULE_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"'
-            ' CMAKE_SHARED_LINKER_FLAGS="$LDFLAGS $OPENSSL_TARGET_FOLDER/lib/libssl.a"',   
+            ' CMAKE_EXE_LINKER_FLAGS="$LDFLAGS -lssl"'
+            ' CMAKE_MODULE_LINKER_FLAGS="$LDFLAGS -lssl"'
+            ' CMAKE_SHARED_LINKER_FLAGS="$LDFLAGS -lssl"',   
             "make install",
         ],
 )

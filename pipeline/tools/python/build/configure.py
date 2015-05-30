@@ -23,6 +23,22 @@ class configure(generic):
         return cmd 
     
 
+
+class openssl(configure):
+    ''' a make class to exclusively build openssl package
+    we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
+    src='config'
+    cmd=[
+#        './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$TARGET_FOLDER',
+#        'make depend && make && make install',
+        './config shared --prefix=$TARGET_FOLDER',
+        'make && make install',
+    ]
+    def installer(self, target, source, env):
+        targetFolder = os.path.dirname(str(target[0]))
+        os.popen("ln -s libssl.so %s/lib/libssl.so.10" % targetFolder).readlines()
+        os.popen("ln -s libcrypto.so %s/lib/libcrypto.so.10" % targetFolder).readlines()
+
         
 class boost(configure):
     src = './bootstrap.sh'
