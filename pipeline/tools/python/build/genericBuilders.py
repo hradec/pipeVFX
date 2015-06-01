@@ -287,10 +287,10 @@ class generic:
             os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
             
         os.environ.update( {
-            'CC'                : 'gcc -fPIC',
-            'CPP'               : 'g++ -fPIC',
-            'CXX'               : 'g++ -fPIC',
-            'CXXCPP'            : 'g++ -fPIC',
+            'CC'                : 'gcc',
+            'CPP'               : 'g++',
+            'CXX'               : 'g++',
+            'CXXCPP'            : 'g++',
             'LD'                : 'gcc',
             'LDSHARED'          : 'gcc -shared',
             'LDFLAGS'           : '',
