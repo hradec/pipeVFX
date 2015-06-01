@@ -292,6 +292,7 @@ class generic:
             'CXX'               : 'g++ -fPIC',
             'CXXCPP'            : 'g++ -fPIC',
             'LD'                : 'gcc',
+            'LDSHARED'          : 'gcc -shared',
             'LDFLAGS'           : '',
             'CFLAGS'            : '',
             'CPPFLAGS'          : '',
@@ -387,8 +388,8 @@ class generic:
         # run the command from inside ppython, so all pipe env vars get properly set!
         try:
             cmd = 'cd "%s" && ' %  os.environ['SOURCE_FOLDER'] + cmd
-            cmd = '''ppython --python_version $PYTHON_VERSION --logd -c '''
-                  '''"import os,sys;ret=os.system(\'\'\''''+cmd+
+            cmd = '''ppython --python_version $PYTHON_VERSION --logd -c '''+\
+                  '''"import os,sys;ret=os.system(\'\'\''''+cmd+\
                   '''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)" >%s 2>&1''' % lastlog
             os.popen(cmd).readlines()
             ret = self.__check_target_log__(lastlog)
