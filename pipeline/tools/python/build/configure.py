@@ -14,7 +14,7 @@ class configure(generic):
     src = 'configure'
     cmd = [
         './configure  --enable-shared',
-        'make -j $DCORES && make -j $DCORES install',
+        'make && make  install',
     ]
 
     def fixCMD(self, cmd):

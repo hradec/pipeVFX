@@ -16,6 +16,8 @@ os.environ['DCORES'] = '%d' % (2*CORES)
 
 allDepend = []
 
+environ_original = os.environ.copy()
+
 
 class generic:
     src   = ''
@@ -72,14 +74,12 @@ class generic:
 
         os.popen( "mkdir -p %s" % buildFolder(self.args) )
         
-        # download latest config.sub and config.guess so we can build old packages!
-        if not os.path.exists('%s/config.sub' % buildFolder(self.args)):
-            print 'Downloading latest config.sub'
-            os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" -O %s/config.sub 2>&1' % buildFolder(self.args)).readlines()
-            print 'Downloading latest config.guess'
-            os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" -O %s/config.guess 2>&1' % buildFolder(self.args)).readlines()
-            os.popen("chmod a+x %s/config.sub"   % buildFolder(self.args))
-            os.popen("chmod a+x %s/config.guess" % buildFolder(self.args))
+        # download latest config.sub and config.guess so we use then to build old packages in newer systems!
+        for each in ['%s/config.sub' % buildFolder(self.args), '%s/config.guess' % buildFolder(self.args)]:
+            if not os.path.exists(each) or os.path.getsize(each)==0:
+                print 'Downloading latest %s' % each
+                os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=%s;hb=HEAD" -O %s 2>&1' % (os.path.basename(each),each) ).readlines()
+                os.popen("chmod a+x %s" % each).readlines()
 
         
         # store all string variables in the class inside the current scons ENV
@@ -202,15 +202,7 @@ class generic:
         if lastlog==0:
             os.popen("touch %s" % str(target[0])).readlines()
 
-        else:
-            os.environ['CC'] = ''.join(os.popen('which gcc').readlines()).strip()
-            os.environ['CXX'] = ''.join(os.popen('which g++').readlines()).strip()
-            os.environ['LD'] = ''.join(os.popen('which gcc').readlines()).strip()
-            
-    #        import build
-    #        for each in filter(lambda x: hasattr(x[1],'src'), inspect.getmembers(build)):
-    #            print each, each[1].src
-                
+        else:                            
             # put all CMD vars into a dict
             # filter only the ones that belong to this class type!
             vars = {}
@@ -246,14 +238,23 @@ class generic:
 
     def __check_target_log__(self,target):
         ret=255
-        if os.path.exists(target):
-            lines = open(target).readlines()
-            ret = int(''.join(lines[-3:]).split("@runCMD_ERROR@")[-2].strip())
+        try:
+            if os.path.exists(target):
+                lines = open(target).readlines()
+                ret = int(''.join(lines[-3:]).split("@runCMD_ERROR@")[-2].strip())
+        except:
+            pass
         return ret
 
 
     def runCMD(self, cmd , target, source):
         ''' the main method to run system calls, like configure, make, cmake, etc '''
+        # restore original environment before ruuning anything.
+        for each in os.environ:
+            if each not in environ_original.keys():
+                os.environ[each] = ''
+            else:
+                os.environ[each] = environ_original[each]
         
         target=str(target[0])
         dirLevels = '..%s' % os.sep * (len(str(source[0]).split(os.sep))-1)
@@ -285,14 +286,23 @@ class generic:
             os.environ['PYTHON_VERSION'] = pythonVersion
             os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
             
-        os.environ['PKG_CONFIG_PATH']=""
-        os.environ['CFLAGS']    = ""
-        os.environ['CPPFLAGS']  = ""
-        os.environ['LDFLAGS']   = ""
+        os.environ.update( {
+            'CC'                : 'gcc -fPIC',
+            'CPP'               : 'g++ -fPIC',
+            'CXX'               : 'g++ -fPIC',
+            'CXXCPP'            : 'g++ -fPIC',
+            'LD'                : 'gcc',
+            'LDFLAGS'           : '',
+            'CFLAGS'            : '',
+            'CPPFLAGS'          : '',
+            'CXXFLAGS'          : '',
+            'CPPCXXFLAGS'       : '',
+            'PKG_CONFIG_PATH'   : '',
+            'LD_LIBRARY_PATH'   : '',
+        })
         
-        CFLAGS=[]
+        CFLAGS=['-fPIC']
         LDFLAGS=[]
-        os.environ['LD_LIBRARY_PATH'] = ''
         for dependOn in self.dependOn:
             if dependOn:
                 depend_n = self.depend_n(dependOn, target.split('/')[-2])
@@ -343,15 +353,15 @@ class generic:
             os.environ['CXXFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
             os.environ['CPPCXXFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
             os.environ['LDFLAGS']   = "%s" % ' '.join(LDFLAGS)
-            
+                        
         os.environ['LD_LIBRARY_PATH'] = ':'.join([
             os.path.dirname(''.join(os.popen('which gcc').readlines()))+'/../lib64/',
             os.environ['LD_LIBRARY_PATH'],
         ])
         os.environ['LIB'] = os.environ['LD_LIBRARY_PATH']
         os.environ['LIBRARY_PATH'] = ':'.join([
-                   '/usr/lib/x86_64-linux-gnu/',
                    os.environ['LD_LIBRARY_PATH'],
+                   '/usr/lib/x86_64-linux-gnu/',
         ])
         os.environ['PATH'] = ':'.join([
             pipe.libs.python().path('bin'),
@@ -360,20 +370,26 @@ class generic:
         os.environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER']
         os.environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
         
-        # set extra env vars
+        # set extra env vars that were passed to the builder class in the environ parameter!
         for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
             os.environ[name.split('ENVIRON_')[-1]] = v.strip()
 
+        # set lastlog filename
         lastlog = '%s/lastlog' % os.environ['TARGET_FOLDER']
         if len(target.split('python')) > 1:
             lastlog = '%s.%s' % (lastlog,os.environ['PYTHON_VERSION_MAJOR'])
-            
-        self.runSED(os.environ['SOURCE_FOLDER'])
+        # reset lastlog
         open(lastlog,'w').close()
+            
+        # run sed inline patch mechanism
+        self.runSED(os.environ['SOURCE_FOLDER'])
+        
         # run the command from inside ppython, so all pipe env vars get properly set!
         try:
             cmd = 'cd "%s" && ' %  os.environ['SOURCE_FOLDER'] + cmd
-            cmd = '''ppython --python_version $PYTHON_VERSION --logd -c "import os,sys;ret=os.system(\'\'\''''+cmd+'''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)" >%s 2>&1''' % lastlog
+            cmd = '''ppython --python_version $PYTHON_VERSION --logd -c '''
+                  '''"import os,sys;ret=os.system(\'\'\''''+cmd+
+                  '''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)" >%s 2>&1''' % lastlog
             os.popen(cmd).readlines()
             ret = self.__check_target_log__(lastlog)
             if ret == 0:
@@ -409,6 +425,9 @@ class generic:
             f.write(' ')
         f.close()
 
+    def md5(self, file):
+        return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()
+
     def downloader( self, env, source, _url=None):        
         ''' this method is a builder responsible to download the packages to be build '''
         self.error = None
@@ -417,11 +436,11 @@ class generic:
             url=_url
             if not url:
                 url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
-            md5 = ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % source[n]).readlines()).strip()
+            md5 = self.md5(source[n])
             if md5 != url[3]:
                 print "\tDownloading %s..." % source[n]
                 lines = os.popen("wget '%s' -O %s >%s.log 2>&1" % (url[0], source[n], source[n])).readlines()
-                md5 = ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % source[n]).readlines()).strip()
+                md5 = self.md5(source[n])
                 if md5 != url[3]:
                     sys.stdout.write( bcolors.WARNING )
                     print "\tmd5 for file:", url[1], md5
@@ -440,7 +459,7 @@ class generic:
 #            print source[n]
             s = os.path.abspath(str(source[n]))
             t = os.path.abspath(str(target[n]))
-            md5 = ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % s).readlines()).strip()
+            md5 = self.md5(source[n])
             if md5 == url[3]:
 #                print "\tMD5 OK for file ", source[n], 
 #                print "... uncompressing... "

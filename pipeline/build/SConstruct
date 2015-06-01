@@ -320,8 +320,8 @@ jpeg = build.configure(
           ),
         ],
         cmd = [ 
-            "./configure --enable-shared --prefix=$TARGET_FOLDER",
-            "make install INSTALL='/usr/bin/install -D'",
+            './configure --enable-shared --prefix=$TARGET_FOLDER',
+            'make install INSTALL="/usr/bin/install -D"',
         ]
 )
 build.allDepend.append(jpeg)
@@ -347,19 +347,23 @@ tiff = build.configure(
 )
 build.allDepend.append(tiff)
 
-libpng = build.configure(
-        ARGUMENTS,
-        'libpng',
-        download=[
-          (
-            'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.17.tar.gz',
-            'libpng-1.6.17.tar.gz',
-            '1.6.17',
-            '134282f1752dcf4cd81a37b8ff421cef'
-          ),
-        ],
-)
-build.allDepend.append(libpng)
+#libpng = build.configure(
+#        ARGUMENTS,
+#        'libpng',
+#        download=[
+#          (
+#            'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.17.tar.gz',
+#            'libpng-1.6.17.tar.gz',
+#            '1.6.17',
+#            '134282f1752dcf4cd81a37b8ff421cef'
+#          ),
+#        ],
+#        cmd = [
+#            './configure',
+#            'make && make install',
+#        ]
+#)
+#build.allDepend.append(libpng)
 
 
 boost = build.boost(
