@@ -265,6 +265,11 @@ class generic:
         sys.stdout.write( bcolors.FAIL )
         pythonVersion = pipe.versionLib.get('python')
         if len(target.split('python')) > 1:
+            if not os.environ.has_key('PYTHON_VERSION_MAJOR'):
+                os.environ['PYTHON_VERSION_MAJOR'] =   '.'.join(map(lambda x: str(x),sys.version_info[:2]))
+            if not os.environ.has_key('PYTHON_VERSION'):
+                os.environ['PYTHON_VERSION'] =   '.'.join(map(lambda x: str(x),sys.version_info[:3]))
+                
             pythonVersion = target.split('python')[-1].split('.done')[0]
             pipe.versionLib.set(python=pythonVersion)
             pipe.version.set(python=pythonVersion)
@@ -303,6 +308,9 @@ class generic:
             'LD_LIBRARY_PATH'   : '',
         })
         
+        if not os.environ.has_key('INCLUDE'):
+            os.environ['INCLUDE'] = ''
+            
         CFLAGS=['-fPIC']
         LDFLAGS=[]
         for dependOn in self.dependOn:

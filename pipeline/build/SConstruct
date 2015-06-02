@@ -8,6 +8,86 @@ import pipe
 
 allPythonVersions = pipe.libsDB()['python']['versions']
 
+
+#gmp = build.configure(
+#        ARGUMENTS,
+#        'gmp',
+#        download=[
+#          (
+#            'https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2',
+#            'gmp-6.0.0.tar.gz',
+#            '6.0.0',
+#            'b7ff2d88cae7f8085bd5006096eed470'
+#          ),
+#        ],
+#)
+#build.allDepend.append(gmp)
+#mpc = build.configure(
+#        ARGUMENTS,
+#        'mpc',
+#        download=[
+#          (
+#            'ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
+#            'mpc-1.0.3.tar.gz',
+#            '1.0.3',
+#            'd6a1d5f8ddea3abd2cc3e98f58352d26'
+#          ),
+#        ],
+#)
+#build.allDepend.append(mpc)
+#mpfr = build.configure(
+#        ARGUMENTS,
+#        'mpfr',
+#        download=[
+#          (
+#            'http://www.mpfr.org/mpfr-current/mpfr-3.1.2.tar.gz',
+#            'mpfr-3.1.2.tar.gz',
+#            '3.1.2',
+#            '181aa7bb0e452c409f2788a4a7f38476'
+#          ),
+#        ],
+#)
+#build.allDepend.append(mpfr)
+
+#gcc = build.configure(
+#        ARGUMENTS,
+#        'gcc',
+#        download=[
+##          (
+##            'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+##            'gcc-4.1.2.tar.gz',
+##            '4.1.2',
+##            'dd2a7f4dcd33808d344949fcec87aa86'
+##          ),
+#          (
+#            'http://gcc.parentingamerica.com/releases/gcc-4.4.7/gcc-4.4.7.tar.gz',
+#            'gcc-4.4.7.tar.gz',
+#            '4.4.7',
+#            'a755ac748de31dee53a39f54a0adacaf'
+#          ),
+##          (
+##            'http://gcc.parentingamerica.com/releases/gcc-4.6.0/gcc-4.6.0.tar.gz',
+##            'gcc-4.6.0.tar.gz',
+##            '4.6.0',
+##            '009f59ee0f9c8100c12939140698cf33'
+##          ),
+#        ],
+#        cmd = [
+#            "mkdir -p build && cd build && "
+#            "PATH=/usr/bin:$PATH LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/ "
+#            "../configure  --enable-tls --enable-languages=c,c++ --without-libjava "
+#            "--without-gcj --with-multilib-list=m64 --disable-multilib "
+#            "--with-sysroot=$TARGET_FOLDER/sys_root/",
+            
+#            "mkdir -p build && cd build && "
+#            "PATH=/usr/bin:$PATH LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/"
+#            "make && make -j $DCORES install",
+#        ]
+#)
+#build.allDepend.append(gcc)
+
+
+
 zlib = build.configure(
         ARGUMENTS,
         'zlib',
@@ -54,18 +134,23 @@ ncurses = build.configure(
 )
 build.allDepend.append(ncurses)
 
-glibc = build.configure(
-        ARGUMENTS,
-        'glibc',
-        download=[
-          (
-            'http://git.savannah.gnu.org/cgit/hurd/glibc.git/snapshot/glibc-2.19-hurd+libpthread-20150515.tar.gz',
-            'glibc-2.19-hurd+libpthread-20150515.tar.gz',
-            '2.19.20150515.hurd_libpthread',
-            'd0676be05360176d7fd69d5f6fbd2801'
-          ),
-        ],
-)
+#glibc = build.configure(
+#        ARGUMENTS,
+#        'glibc',
+#        download=[
+#          (
+#            'http://git.savannah.gnu.org/cgit/hurd/glibc.git/snapshot/glibc-2.19-hurd+libpthread-20150515.tar.gz',
+#            'glibc-2.19-hurd+libpthread-20150515.tar.gz',
+#            '2.19.20150515.hurd_libpthread',
+##            '9bfb3bfd3e5426e7a2a537de18712d72'
+#            '9b048b697abe51a5a9965673873754b1'
+#          ),
+#        ],
+#        cmd = [
+#            "mkdir -p build && cd build && PATH=/usr/bin:$PATH CFLAGS='' CXXFLAGS='' ../configure",
+#            "mkdir -p build && cd build && PATH=/usr/bin:$PATH CFLAGS='' CXXFLAGS='' make && PATH=/usr/bin:$PATH make install",
+#        ]
+#)
 #build.allDepend.append(glibc)
 
 readline = build.configure(
