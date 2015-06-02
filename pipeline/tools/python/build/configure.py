@@ -20,6 +20,8 @@ class configure(generic):
     def fixCMD(self, cmd):
         if 'configure' in cmd and '--prefix=' not in cmd:
             cmd = cmd.replace('configure', 'configure --prefix=$TARGET_FOLDER ')
+#        if 'make' in cmd:
+#            cmd = cmd.replace('make', "make CC=$CC CXX=$CXX CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' ")
         return cmd 
     
 

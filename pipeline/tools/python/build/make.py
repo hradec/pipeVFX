@@ -12,7 +12,7 @@ import os,sys
 class make(generic):
     ''' a class to handle make installs '''
     src = 'Makefile'
-    cmd = 'make && make install'
+    cmd = 'make CC=$CC CXX=$CXX CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" && make install'
 
 
 class cmake(make):

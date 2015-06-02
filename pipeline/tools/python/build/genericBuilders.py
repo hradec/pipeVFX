@@ -217,6 +217,7 @@ class generic:
                 cmd = vars[name]
                 if cmd.strip():
                     cmd = self.fixCMD(cmd)
+                    cmd = cmd.replace('"','\"')
                     print '\t%s%s: %s %s ' % (bcolors.GREEN,name,cmd,bcolors.END)
                     self.runCMD(cmd, target, source)
 
@@ -288,10 +289,10 @@ class generic:
             
         os.environ.update( {
             'CC'                : 'gcc',
-            'CPP'               : 'g++',
+            'CPP'               : 'cpp',
             'CXX'               : 'g++',
-            'CXXCPP'            : 'g++',
-            'LD'                : 'gcc',
+            'CXXCPP'            : 'cpp',
+            'LD'                : 'ld',
             'LDSHARED'          : 'gcc -shared',
             'LDFLAGS'           : '',
             'CFLAGS'            : '',
