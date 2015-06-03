@@ -24,6 +24,11 @@ pythonpath_original = ':'.join([
 os.environ['PYTHONPATH'] = pythonpath_original 
 environ_original = os.environ.copy()
 
+
+class gcc:
+    system=0
+    pipe=1
+
 class generic:
     src   = ''
     cmd   = ''
@@ -31,11 +36,12 @@ class generic:
     sed = {}
     environ = {}
 
-    def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend=None, GCCFLAGS=[], sed=None, environ=None, **kargs):
+    def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend=None, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
         sys.stdout.write( bcolors.END )
         self.className = str(self.__class__).split('.')[-1]
         self.GCCFLAGS = GCCFLAGS
         self.args = args
+        self.compiler = compiler
         
         # dependency
         self.dependOn = depend
@@ -86,6 +92,9 @@ class generic:
                 os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=%s;hb=HEAD" -O %s 2>&1' % (os.path.basename(each),each) ).readlines()
                 os.popen("chmod a+x %s" % each).readlines()
 
+        
+        # store the compiler type to use
+        self.set( "BUILD_COMPILER", self.compiler )
         
         # store all string variables in the class inside the current scons ENV
         # the variable name is upper() case!
@@ -187,7 +196,7 @@ class generic:
         self.installer = method
 
     def set(self, name, extra=''):
-        self.env[name.upper()] = " "+extra.replace('"','\\"')
+        self.env[name.upper()] = " "+str(extra).replace('"','\\"')
         
     def setExtra(self, extra=''):
         self.set('EXTRA', extra)
@@ -231,6 +240,8 @@ class generic:
                 if self.className.upper() in name:
                     vars[name] = cmd
             
+            buildCompiler = filter(lambda x: 'BUILD_COMPILER' in x[0], env.items())[0]
+            
             # so we can sort then and use in order
             ids=vars.keys()
             ids.sort()
@@ -238,6 +249,7 @@ class generic:
                 cmd = vars[name]
                 if cmd.strip():
                     print bcolors.GREEN+"\t%s" % name,
+                    os.environ['BUILD_COMPILER'] = buildCompiler[1]
                     self.runCMD(cmd, target, source)
      
             # if building for multiple python versions
@@ -281,16 +293,24 @@ class generic:
 
     def runCMD(self, cmd , target, source):
         ''' the main method to run system calls, like configure, make, cmake, etc '''
+        buildCompiler = os.environ['BUILD_COMPILER']
+        
         # restore original environment before ruuning anything.
         for each in filter(lambda x: x not in environ_original.keys(), os.environ.keys()):
             del os.environ[each]
         for each in environ_original:
             os.environ[each] = environ_original[each]
-                
-        os.environ['PATH'] = ':'.join([
-                pipe.build.gcc(),
-                os.environ['PATH'],
-        ])
+        
+        # first, cleanup pipe gcc/bin folder from path, if any
+        os.environ['PATH'] = os.environ['PATH'].replace(pipe.build.gcc(),'').replace('::',':')
+        
+        # now check if we want to use pipes gcc or not!
+        if buildCompiler == gcc.pipe:
+            os.environ['PATH'] = ':'.join([
+                    pipe.build.gcc(),
+                    os.environ['PATH'],
+            ])
+        
                 
         target=str(target[0])
         dirLevels = '..%s' % os.sep * (len(str(source[0]).split(os.sep))-1)

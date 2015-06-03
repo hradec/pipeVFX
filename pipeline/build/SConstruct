@@ -73,6 +73,7 @@ allPythonVersions = pipe.libsDB()['python']['versions']
 ##            '009f59ee0f9c8100c12939140698cf33'
 ##          ),
 #        ],
+#        compiler = build.gcc.system,
 #        cmd = [
 #            "mkdir -p build && cd build && "
 #            "PATH=/usr/bin:$PATH LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/ "
@@ -339,55 +340,6 @@ freetype = build.configure(
 )
 build.allDepend.append(freetype)
 
-epydoc = build.pythonSetup(
-        ARGUMENTS,
-        'epydoc',
-        download=[(
-            'http://downloads.sourceforge.net/project/epydoc/epydoc/3.0.1/epydoc-3.0.1.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fepydoc%2Ffiles%2Fepydoc%2F3.0.1%2F&ts=1432094792&use_mirror=iweb',
-            'epydoc-3.0.1.tar.gz',
-            '3.0.1',
-            'cdd6f6c76dd8bab5e653a343a0544294'
-        )],
-        python=allPythonVersions,
-)
-build.allDepend.append(epydoc)
-
-pygl = build.pythonSetup(
-        ARGUMENTS,
-        'pygl',
-        download=[
-          (
-            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
-            'PyOpenGL-3.1.0.tar.gz',
-            '3.1.0',
-            '0de021941018d46d91e5a8c11c071693'
-          ),
-          (
-            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.0.2.tar.gz#md5=77becc24ffc0a6b28030aa109ad7ff8b',
-            'PyOpenGL-3.0.2.tar.gz',
-            '3.0.2',
-            '77becc24ffc0a6b28030aa109ad7ff8b'
-          ),
-        ],
-        python=allPythonVersions,
-)
-build.allDepend.append(pygl)
-
-dbus = build.configure(
-        ARGUMENTS,
-        'dbus',
-        download=[
-          (
-            'https://pypi.python.org/packages/source/d/dbus-python/dbus-python-0.84.0.tar.gz#md5=fe69a2613e824463e74f10913708c88a',
-            'dbus-python-0.84.0.tar.gz',
-            '0.84.0',
-            'fe69a2613e824463e74f10913708c88a'
-          ),
-        ],
-        python=allPythonVersions,
-)
-build.allDepend.append(dbus)
-
 jpeg = build.configure(
         ARGUMENTS,
         'jpeg',
@@ -451,7 +403,87 @@ build.allDepend.append(tiff)
 #)
 #build.allDepend.append(libpng)
 
+dbus = build.configure(
+        ARGUMENTS,
+        'dbus',
+        download=[
+          (
+            'https://pypi.python.org/packages/source/d/dbus-python/dbus-python-0.84.0.tar.gz#md5=fe69a2613e824463e74f10913708c88a',
+            'dbus-python-0.84.0.tar.gz',
+            '0.84.0',
+            'fe69a2613e824463e74f10913708c88a'
+          ),
+        ],
+        python=allPythonVersions,
+)
+build.allDepend.append(dbus)
 
+# build all simple python modules here.
+# since its just a matter of running setup.py (hence "simple"),
+# we put all name/version/download infor in a dict for easy maintainance, 
+# and run each one through the same pythonSetup builder class, 
+# without any special setup.
+simpleModules = {
+    'epydoc' : [(
+            'http://downloads.sourceforge.net/project/epydoc/epydoc/3.0.1/epydoc-3.0.1.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fepydoc%2Ffiles%2Fepydoc%2F3.0.1%2F&ts=1432094792&use_mirror=iweb',
+            'epydoc-3.0.1.tar.gz',
+            '3.0.1',
+            'cdd6f6c76dd8bab5e653a343a0544294'
+    )],
+    'pygl' : [(
+            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
+            'PyOpenGL-3.1.0.tar.gz',
+            '3.1.0',
+            '0de021941018d46d91e5a8c11c071693'
+          ),(
+            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.0.2.tar.gz#md5=77becc24ffc0a6b28030aa109ad7ff8b',
+            'PyOpenGL-3.0.2.tar.gz',
+            '3.0.2',
+            '77becc24ffc0a6b28030aa109ad7ff8b'
+    )],
+    'pil' : [(
+            'http://effbot.org/downloads/Imaging-1.1.7.tar.gz',
+            'Imaging-1.1.7.tar.gz',
+            '1.1.7',
+            'fc14a54e1ce02a0225be8854bfba478e'
+    )],    
+#    'pygobject' : [(
+#            'https://pypi.python.org/packages/source/P/PyGObject/pygobject-2.28.3.tar.bz2#md5=aa64900b274c4661a5c32e52922977f9',
+#            'pygobject-2.28.3.tar.gz',
+#            '2.28.3',
+#            'aa64900b274c4661a5c32e52922977f9'
+#    )],    
+#    # pythonldap needs libldap2-dev package when running in ubuntu, or else it wont build!
+#    'pythonldap' : [(
+#            'https://pypi.python.org/packages/source/p/python-ldap/python-ldap-2.4.19.tar.gz#md5=b941bf31d09739492aa19ef679e94ae3',
+#            'python-ldap-2.4.19.tar.gz',
+#            '2.4.19',
+#            'b941bf31d09739492aa19ef679e94ae3'
+#    )],    
+#    'wxpython' : [(
+#            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
+#            'PyOpenGL-3.1.0.tar.gz',
+#            '3.1.0',
+#            '0de021941018d46d91e5a8c11c071693'
+#    )],    
+}
+# run the builders for each module in the dict
+simpleModulesBuilders = []
+for module in simpleModules:
+    # we store the builder in a local dict first 
+    simpleModulesBuilders.append( 
+        build.pythonSetup(
+            ARGUMENTS,
+            module,
+            download=simpleModules[module],
+            python=allPythonVersions,
+        )
+    )
+# add all builders to the global dependency at once here
+# so they can all be built in parallel by scons, since theres no 
+# dependency between then. 
+build.allDepend.extend( simpleModulesBuilders )
+    
 boost = build.boost(
         ARGUMENTS,
         'boost',
@@ -477,32 +509,27 @@ build.allDepend.append(boost)
 ilmbase = build.configure(
         ARGUMENTS,
         'ilmbase',
-        download=[
-          (
+        download=[(
             'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.0.0.tar.gz',
             'ilmbase-2.0.0.tar.gz',
             '2.0.0',
             '70f1413840c2a228783d1332b8b168e6'
-          ),
-          (
+          ),(
             'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
             'ilmbase-2.2.0.tar.gz',
             '2.2.0',
             'b540db502c5fa42078249f43d18a4652'
-          ),
-          (
+          ),(
             'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
             'ilmbase-2.1.0.tar.gz',
             '2.1.0',
             '8ba2f608191ad020e50277d8a3ba0850'
-          ),          
-        ],
+        )],
 )
 openexr = build.configure(
         ARGUMENTS,
         'openexr',
-        download=[
-          (
+        download=[(
             'http://download.savannah.nongnu.org/releases/openexr/openexr-2.0.0.tar.gz',
             'openexr-2.0.0.tar.gz',
             '2.0.0',
@@ -519,8 +546,7 @@ openexr = build.configure(
             'openexr-2.1.0.tar.gz',
             '2.1.0',
             '33735d37d2ee01c6d8fbd0df94fb8b43',
-          ),
-        ],
+        )],
         depend=[ilmbase],
 )
 
@@ -552,6 +578,7 @@ pyilmbase = build.configure(
 )
 build.allDepend.append(ilmbase)
 build.allDepend.append(openexr)
+build.allDepend.append(pyilmbase)
 
 
 
@@ -582,7 +609,6 @@ alembic = build.cmake(
       ),
     ],
     python=allPythonVersions,
-    depend=[hdf5, ilmbase, pyilmbase, openexr, glew, freeglut, boost],
     # alembic has some hard-coded path to find python, and the only
     # way to make it respect the PYTHON related environment variables,
     # is to patch some files to force it!
@@ -620,10 +646,11 @@ llvm = build.configure(
         # llvm needs a newer GCC than 4.1.2, which we use in the pipe, unfortunatelly.
         # so we're forced to rely on the system gcc here,
         # hence the /usr/bin added to the top of PATH in the cmd
-        cmd=[
-            'PATH=/usr/bin:$PATH ./configure',
-            'PATH=/usr/bin:$PATH make -j $DCORES && make install',
-        ],
+        compiler = build.gcc.system,
+#        cmd=[
+#            'PATH=/usr/bin:$PATH ./configure',
+#            'PATH=/usr/bin:$PATH make -j $DCORES && make install',
+#        ],
 )
 osl = build.cmake(
         ARGUMENTS,
@@ -652,15 +679,16 @@ ocio = build.cmake(
         ],
         # ocio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
         # so we're forced to rely on the system gcc here,
-        environ={
-            'CC'  : '/usr/bin/gcc',
-            'CXX' : '/usr/bin/g++',
-            'LD'  : '/usr/bin/ld',
-        },
-        cmd = [
-            'cmake $SOURCE_FOLDER && '
-            'make -j $DCORES && make install'
-        ],
+        compiler = build.gcc.system,
+#        environ={
+#            'CC'  : '/usr/bin/gcc',
+#            'CXX' : '/usr/bin/g++',
+#            'LD'  : '/usr/bin/ld',
+#        },
+#        cmd = [
+#            'cmake $SOURCE_FOLDER && '
+#            'make -j $DCORES && make install'
+#        ],
 )
 build.allDepend.append(ocio)
 oiio = build.cmake(
@@ -690,15 +718,16 @@ oiio = build.cmake(
         python=allPythonVersions,
         # oiio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
         # so we're forced to rely on the system gcc here,
-        environ={
-            'CC'  : '/usr/bin/gcc',
-            'CXX' : '/usr/bin/g++',
-            'LD'  : '/usr/bin/ld',
-        },
-        cmd = [
-            'cmake $SOURCE_FOLDER && '
-            'make -j $DCORES && make install'
-        ],
+        compiler = build.gcc.system,
+#        environ={
+#            'CC'  : '/usr/bin/gcc',
+#            'CXX' : '/usr/bin/g++',
+#            'LD'  : '/usr/bin/ld',
+#        },
+#        cmd = [
+#            'cmake $SOURCE_FOLDER && '
+#            'make -j $DCORES && make install'
+#        ],
 )
 build.allDepend.append(oiio)
 
@@ -715,6 +744,10 @@ qt = build.configure(
             '2edbe4d6c2eff33ef91732602f3518eb'
           ),
         ],
+        cmd = [
+            'LD=g++ ./configure  -opensource -shared --confirm-license  -no-webkit -silent',
+            'make QMAKE_CFLAGS="$CFLAGS -pipe" -j $DCORES && make install',
+        ]
 )
 build.allDepend.append(qt)
 sip = build.pythonSetup(
