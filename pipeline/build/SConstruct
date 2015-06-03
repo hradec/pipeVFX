@@ -756,6 +756,22 @@ build.allDepend.append(pyqt)
 
 
 
+appleseed = build.cmake(
+        ARGUMENTS,
+        'appleseed',
+        download=[
+          (
+            'https://github.com/appleseedhq/appleseed/archive/1.1.0-beta.tar.gz',
+            'appleseed-1.1.0-beta.tar.gz',
+            '1.0.0b',
+            'ad6eb4d6d58743a3192098bff9da15ab'
+          ),
+        ],
+)
 
+
+
+#https://github.com/ImageEngine/cortex/archive/9.0.0-b7.tar.gz
+#https://github.com/ImageEngine/cortex/archive/8.5.4.tar.gz
 
 

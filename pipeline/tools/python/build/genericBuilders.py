@@ -214,8 +214,12 @@ class generic:
     def builder(self, target, source, env):
         ''' the generic builder method, used by all classes 
         it simple executes all commands specified by self.cmd list '''
+        lastlogFile = "%s/lastlog" % os.path.dirname(str(target[0]))
+        if len(str(target[0]).split('python')) > 1:
+                pythonVersion = str(target[0]).split('python')[-1].split('.done')[0]
+                lastlogFile = "%s/lastlog.%s" % (os.path.dirname(str(target[0])), pythonVersion[:3])
         
-        lastlog = self.__check_target_log__( "%s/lastlog" % os.path.dirname(str(target[0])))
+        lastlog = self.__check_target_log__( lastlogFile )
         if lastlog==0:
             os.popen("touch %s" % str(target[0])).readlines()
 
@@ -239,12 +243,11 @@ class generic:
             # if building for multiple python versions
             # store all files in lib folder into lib/python$PYTHON_VERSION_MAJOR
             if len(str(target[0]).split('python')) > 1:
-                from glob import glob
                 pythonVersion = str(target[0]).split('python')[-1].split('.done')[0]
                 targetFolder = os.path.dirname(str(target[0]))
                 folder = "%s/lib/python%s/" % (targetFolder,pythonVersion[:3])
                 os.popen("mkdir -p %s" % folder).readlines()
-                for each in glob("%s/lib/" % targetFolder):
+                for each in glob("%s/lib/*" % targetFolder):
                     if not os.path.isdir(each):
                         cmd ="mv %s %s" % (each, folder)
                         os.popen(cmd).readlines()
