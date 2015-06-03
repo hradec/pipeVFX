@@ -425,6 +425,7 @@ class generic:
         os.environ['LD_LIBRARY_PATH'] = ':'.join([
             os.path.dirname(''.join(os.popen('which gcc').readlines()))+'/../lib64/',
             os.environ['LD_LIBRARY_PATH'],
+            '/usr/lib64', # temporary workaround for redhat systems
         ])
         os.environ['LIB'] = os.environ['LD_LIBRARY_PATH']
         os.environ['LIBRARY_PATH'] = ':'.join([
