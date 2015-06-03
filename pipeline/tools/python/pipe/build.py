@@ -29,9 +29,13 @@ def devInstall(plat=platform):
     ''' development install directory for the current platform'''
     return "%s/pipeline/build/%s/%s/%s" % (depotRoot(),plat,arch,distro)
 
+
+def gcc():
+    return "%s/gcc/bin" % install()
+
 def env():
     ''' return the PATH to add our custom gcc, so when we build something, it will use pipes gcc'''
     return '''
-        PATH=%s/gcc/bin/:$PATH
-    ''' % (install())
+        PATH=%s:$PATH
+    ''' % (gcc)
 

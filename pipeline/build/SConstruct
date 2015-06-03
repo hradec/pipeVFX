@@ -1,8 +1,9 @@
 #!/usr/bin/python 
 
-import build,sys,os
+import sys, os
+del os.environ['ROOT']
 sys.path.insert( 0, os.path.abspath('../tools/python/') )
-import pipe
+import build, pipe
 
 #print dir(ARGUMENTS), ARGUMENTS
 
@@ -549,12 +550,12 @@ pyilmbase = build.configure(
         python=allPythonVersions,
         depend=[ilmbase,openexr],
 )
-#pyilmbase.setCmd(" ".join([
-#        "./configure",
-#        "--with-boost-include-dir=$BOOST_TARGET_FOLDER/include/",
-#        "--with-boost-lib-dir=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
-#]))
+build.allDepend.append(ilmbase)
+build.allDepend.append(openexr)
 
+
+
+# Sony Imageworks packages
 hdf5 = build.configure(
         ARGUMENTS,
         'hdf5',
@@ -567,6 +568,7 @@ hdf5 = build.configure(
           ),
         ],
 )
+build.allDepend.append(hdf5)
 
 alembic = build.cmake(
     ARGUMENTS,
@@ -580,8 +582,10 @@ alembic = build.cmake(
       ),
     ],
     python=allPythonVersions,
-    depend=[zlib, cmake, hdf5, ilmbase, pyilmbase, openexr, glew, freeglut, boost],
-    GCCFLAGS=[zlib, hdf5, ilmbase, openexr, glew, freeglut],
+    depend=[hdf5, ilmbase, pyilmbase, openexr, glew, freeglut, boost],
+    # alembic has some hard-coded path to find python, and the only
+    # way to make it respect the PYTHON related environment variables,
+    # is to patch some files to force it!
     sed = {
         '0.0.0' : {
             'python/PyAbcOpenGL/CMakeLists.txt' : [
@@ -599,40 +603,7 @@ alembic = build.cmake(
             ],
         },
     },
-    cmd = ' '.join([
-        'HDF5_ROOT=$HDF5_TARGET_FOLDER &&',
-        'HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include &&',
-        'HDF5_LIBRARIES=$HDF5_TARGET_FOLDER/lib/libhdf5.so &&',
-        'OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include &&',
-        'OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so &&',
-        '$CMAKE_TARGET_FOLDER/bin/cmake', 
-        '-Wno-dev',
-        '-DBoost_USE_STATIC_LIBS=0',
-        '-DBoost_USE_MULTITHREADED=1',
-        '-DBoost_USE_STATIC_RUNTIME=0',
-        '-DLIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
-        '-DPYTHON_ROOT=$PYTHON_ROOT',
-        '-DPYTHON_INCLUDE_DIR=$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR/',
-        '-DALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
-        '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
-        '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
-        '-DBOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
-        '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
-        '-DMAYA_ROOT=%s' % pipe.apps.maya().path(''),
-        '-DARNOLD_ROOT=%s' % pipe.apps.arnold().path(''),
-        '-DPRMAN_ROOT=%s' % pipe.apps.delight().path(''),
-        '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
-        "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2))",
-        "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
-#        '-DUSE_PYILMBASE=1',
-        '. && make -j %d && make install' % (build.CORES*2),
-    ]),
 )
-
-
-
-
-
 
 
 llvm = build.configure(
@@ -640,16 +611,148 @@ llvm = build.configure(
         'llvm',
         download=[
           (
-            'http://llvm.org/releases/3.3/llvm-3.3.src.tar.gz',
-            'llvm-3.3.src.tar.gz',
-            '3.3.0',
-            '40564e1dc390f9844f1711c08b08e391'
+            'http://llvm.org/releases/3.4.2/llvm-3.4.2.src.tar.gz',
+            'llvm-3.4.2.src.tar.gz',
+            '3.4.2',
+            'a20669f75967440de949ac3b1bad439c'
+          ),
+        ],
+        # llvm needs a newer GCC than 4.1.2, which we use in the pipe, unfortunatelly.
+        # so we're forced to rely on the system gcc here,
+        # hence the /usr/bin added to the top of PATH in the cmd
+        cmd=[
+            'PATH=/usr/bin:$PATH ./configure',
+            'PATH=/usr/bin:$PATH make -j $DCORES && make install',
+        ],
+)
+osl = build.cmake(
+        ARGUMENTS,
+        'osl',
+        download=[
+          (
+            'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.5.12.tar.gz',
+            'OpenShadingLanguage-Release-1.5.12.tar.gz',
+            '1.5.12',
+            '484752a0f97df55962c3a667075deddc'
+          ),
+        ],
+        depend=[llvm]
+)
+
+ocio = build.cmake(
+        ARGUMENTS,
+        'ocio',
+        download=[
+          (
+            'https://github.com/imageworks/OpenColorIO/archive/v1.0.9.tar.gz',
+            'OpenColorIO-1.0.9.tar.gz',
+            '1.0.9',
+            '06d0efe9cc1b32d7b14134779c9d1251'
+          ),
+        ],
+        # ocio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
+        # so we're forced to rely on the system gcc here,
+        environ={
+            'CC'  : '/usr/bin/gcc',
+            'CXX' : '/usr/bin/g++',
+            'LD'  : '/usr/bin/ld',
+        },
+        cmd = [
+            'cmake $SOURCE_FOLDER && '
+            'make -j $DCORES && make install'
+        ],
+)
+build.allDepend.append(ocio)
+oiio = build.cmake(
+        ARGUMENTS,
+        'oiio',
+        # oiio has some hard-coded path to find python, and the only
+        # way to make it respect the PYTHON related environment variables,
+        # is to patch some files to force it!
+        sed = {
+            '0.0.0' : {
+                'src/python/CMakeLists.txt' : [
+                    ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+                    ('unset.*PYTHON_INCLUDE','#unset( PYTHON_INCLUDE'),
+                    ('unset.*PYTHON_LIBRARY','#unset( PYTHON_LIBRARY'),
+                    ('/usr/include/python','${PYTHON_ROOT}/include/python'),
+                ],
+            },
+        },
+        download=[
+          (
+            'https://github.com/OpenImageIO/oiio/archive/Release-1.5.15.tar.gz',
+            'oiio-Release-1.5.15.tar.gz',
+            '1.5.15',
+            '152e9422d521b4ea790b3af71ebca5ae'
+          ),
+        ],
+        python=allPythonVersions,
+        # oiio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
+        # so we're forced to rely on the system gcc here,
+        environ={
+            'CC'  : '/usr/bin/gcc',
+            'CXX' : '/usr/bin/g++',
+            'LD'  : '/usr/bin/ld',
+        },
+        cmd = [
+            'cmake $SOURCE_FOLDER && '
+            'make -j $DCORES && make install'
+        ],
+)
+build.allDepend.append(oiio)
+
+
+# qt packages
+qt = build.configure(
+        ARGUMENTS,
+        'qt',
+        download=[
+          (
+            'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
+            'qt-everywhere-opensource-src-4.8.6.tar.gz',
+            '4.8.6',
+            '2edbe4d6c2eff33ef91732602f3518eb'
           ),
         ],
 )
-
-
-
+build.allDepend.append(qt)
+sip = build.pythonSetup(
+        ARGUMENTS,
+        'sip',
+        download=[
+          (
+            'http://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
+            'sip-4.16.7.tar.gz',
+            '4.16.7',
+            '32abc003980599d33ffd789734de4c36'
+          ),
+        ],
+        python=allPythonVersions,
+        src = 'configure.py',
+        cmd = [
+            'python configure.py install --prefix=$TARGET_FOLDER',
+        ],
+)
+pyqt = build.pythonSetup(
+        ARGUMENTS,
+        'pyqt',
+        download=[
+          (
+            'http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.3/PyQt-x11-gpl-4.11.3.tar.gz',
+            'PyQt-x11-gpl-4.11.3.tar.gz',
+            '4.11.3',
+            '997c3e443165a89a559e0d96b061bf70'
+          ),
+        ],
+        depend=[sip],
+        python=allPythonVersions,
+        src = 'configure.py',
+        cmd = [
+            'python configure.py install --prefix=$TARGET_FOLDER',
+        ],
+)
+build.allDepend.append(pyqt)
 
 
 

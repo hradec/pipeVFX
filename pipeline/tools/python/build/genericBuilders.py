@@ -16,8 +16,13 @@ os.environ['DCORES'] = '%d' % (2*CORES)
 
 allDepend = []
 
+#pythonpath_original = ':'.join(filter(lambda x: '/usr/'!=x[:5], sys.path))
+pythonpath_original = ':'.join([
+        os.path.abspath('../tools/python/'),
+        os.environ['PYTHONPATH'], 
+])
+os.environ['PYTHONPATH'] = pythonpath_original 
 environ_original = os.environ.copy()
-
 
 class generic:
     src   = ''
@@ -133,8 +138,21 @@ class generic:
                 self.env['TARGET_FOLDER'] = self.targetFolder[p][-1]
                 os.environ['%s_TARGET_FOLDER' % self.name.upper()] = self.targetFolder[p][-1]
                 
-                #uncompress
                 setup = os.path.join(self.buildFolder[p][-1], self.src)
+                build = os.path.join( self.targetFolder[p][-1], 'build%s.done' % pythonDependency )
+                install = os.path.join( self.targetFolder[p][-1], 'install%s.done' % pythonDependency )
+                
+                # if install folder has no sub-folders with content, we probably got a fail install, 
+                # so force re-build!
+                if not glob("%s/*/*" % self.targetFolder[p][-1]):
+                    os.popen("rm -rf "+install).readlines()
+                    os.popen("rm -rf "+build).readlines()
+                    
+                # if not installed, force uncompress!
+                if not os.path.exists(install):
+                    os.popen("rm -rf "+setup).readlines()
+                    
+                #uncompress
                 s = self.uncompress(setup, pkgs)
                         
                 # run the action method of the class
@@ -149,12 +167,11 @@ class generic:
                         elif len(k)>0:
                             source.append( dependOn.depend[k[-1]][depend_n] )
                 
-                target = os.path.join( self.targetFolder[p][-1], 'build%s.done' % pythonDependency )
-                b = self.action( target, source )
+                # build
+                b = self.action( build, source )
                 
-                # call the install builder, in case a class need to do custom installation
-                target = os.path.join( self.targetFolder[p][-1], 'install%s.done' % pythonDependency )
-                t = self.install( target, b )
+                # call the install builder, in case a class need to do custom installation                
+                t = self.install( install, [b,source[0]] )
 
                 self.depend[p].append(t)
                 self.env.Alias( 'install', t )
@@ -216,11 +233,22 @@ class generic:
             for name in ids:
                 cmd = vars[name]
                 if cmd.strip():
-                    cmd = self.fixCMD(cmd)
-                    cmd = cmd.replace('"','\"')
-                    print '\t%s%s: %s %s ' % (bcolors.GREEN,name,cmd,bcolors.END)
+                    print bcolors.GREEN+"\t%s" % name,
                     self.runCMD(cmd, target, source)
-
+     
+            # if building for multiple python versions
+            # store all files in lib folder into lib/python$PYTHON_VERSION_MAJOR
+            if len(str(target[0]).split('python')) > 1:
+                from glob import glob
+                pythonVersion = str(target[0]).split('python')[-1].split('.done')[0]
+                targetFolder = os.path.dirname(str(target[0]))
+                folder = "%s/lib/python%s/" % (targetFolder,pythonVersion[:3])
+                os.popen("mkdir -p %s" % folder).readlines()
+                for each in glob("%s/lib/" % targetFolder):
+                    if not os.path.isdir(each):
+                        cmd ="mv %s %s" % (each, folder)
+                        os.popen(cmd).readlines()
+                        
     
     def depend_n(self,dependOn,currVersion):
         ''' support function to find the same version of a depency
@@ -251,46 +279,53 @@ class generic:
     def runCMD(self, cmd , target, source):
         ''' the main method to run system calls, like configure, make, cmake, etc '''
         # restore original environment before ruuning anything.
-        for each in os.environ:
-            if each not in environ_original.keys():
-                os.environ[each] = ''
-            else:
-                os.environ[each] = environ_original[each]
-        
+        for each in filter(lambda x: x not in environ_original.keys(), os.environ.keys()):
+            del os.environ[each]
+        for each in environ_original:
+            os.environ[each] = environ_original[each]
+                
+        os.environ['PATH'] = ':'.join([
+                pipe.build.gcc(),
+                os.environ['PATH'],
+        ])
+                
         target=str(target[0])
         dirLevels = '..%s' % os.sep * (len(str(source[0]).split(os.sep))-1)
         installDir = os.path.dirname(target)
+
+        # set a python version if none is set
+        pythonVersion = pipe.apps.baseApp("python").version()
+        if not os.environ.has_key('PYTHON_VERSION_MAJOR'):
+            os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
+        if not os.environ.has_key('PYTHON_VERSION'):
+            os.environ['PYTHON_VERSION'] = pythonVersion
                
         # adjust env vars for the current selected python version
         sys.stdout.write( bcolors.FAIL )
-        pythonVersion = pipe.versionLib.get('python')
         if len(target.split('python')) > 1:
-            if not os.environ.has_key('PYTHON_VERSION_MAJOR'):
-                os.environ['PYTHON_VERSION_MAJOR'] =   '.'.join(map(lambda x: str(x),sys.version_info[:2]))
-            if not os.environ.has_key('PYTHON_VERSION'):
-                os.environ['PYTHON_VERSION'] =   '.'.join(map(lambda x: str(x),sys.version_info[:3]))
-                
             pythonVersion = target.split('python')[-1].split('.done')[0]
-            pipe.versionLib.set(python=pythonVersion)
-            pipe.version.set(python=pythonVersion)
-    
-            for var in os.environ.keys():
-                pp = []
-                for each in os.environ[var].split(':'):
-                    each = each.replace('python%s' % os.environ['PYTHON_VERSION_MAJOR'], 'python%s' % pythonVersion[:3])
-                    if '/python/' in each:
-                        each = each.replace(os.environ['PYTHON_VERSION'], pythonVersion)
-                    pp.append(each)
-                os.environ[var] = ':'.join(pp)
-
-            site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
-            os.environ['PYTHONPATH'] = ':'.join( [
-                site_packages,
-                os.environ['PYTHONPATH'] ,
-            ])
         
-            os.environ['PYTHON_VERSION'] = pythonVersion
-            os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
+        print " "+pythonVersion 
+        pipe.versionLib.set(python=pythonVersion)
+        pipe.version.set(python=pythonVersion)
+    
+        for var in os.environ.keys():
+            pp = []
+            for each in os.environ[var].split(':'):
+                each = each.replace('python%s' % os.environ['PYTHON_VERSION_MAJOR'], 'python%s' % pythonVersion[:3])
+                if '/python/' in each:
+                    each = each.replace(os.environ['PYTHON_VERSION'], pythonVersion)
+                pp.append(each)
+            os.environ[var] = ':'.join(pp)
+
+        site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
+        os.environ['PYTHONPATH'] = ':'.join( [
+            site_packages,
+            os.environ['PYTHONPATH'] ,
+        ])
+        
+        os.environ['PYTHON_VERSION'] = pythonVersion
+        os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
             
         os.environ.update( {
             'CC'                : 'gcc',
@@ -382,6 +417,7 @@ class generic:
         
         # set extra env vars that were passed to the builder class in the environ parameter!
         for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
+            #print name.split('ENVIRON_')[-1], v.strip()
             os.environ[name.split('ENVIRON_')[-1]] = v.strip()
 
         # set lastlog filename
@@ -396,8 +432,17 @@ class generic:
         
         # run the command from inside ppython, so all pipe env vars get properly set!
         try:
+            cmd = self.fixCMD(cmd)
+            cmd = cmd.replace('"','\"').replace('$','\$')
+            for l in cmd.split('&&'):
+                print '\t\t%s %s  %s ' % (bcolors.GREEN,l.strip(),bcolors.END)
+            # we need to save the current pythonpath to set it later inside pythons system call
+            os.environ['BUILD_PYTHONPATH__'] = os.environ['PYTHONPATH']
+            # and then we need to setup a clean PYTHONPATH so ppython can find pipe, build and the correct modules
+            os.environ['PYTHONPATH'] = pythonpath_original
+            cmd = 'PYTHONPATH=\"\$BUILD_PYTHONPATH__\" && ' + cmd
             cmd = 'cd "%s" && ' %  os.environ['SOURCE_FOLDER'] + cmd
-            cmd = '''ppython --python_version $PYTHON_VERSION --logd -c '''+\
+            cmd = '''nice -n 10 ppython --python_version $PYTHON_VERSION --logd -c '''+\
                   '''"import os,sys;ret=os.system(\'\'\''''+cmd+\
                   '''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)" >%s 2>&1''' % lastlog
             os.popen(cmd).readlines()
@@ -429,11 +474,13 @@ class generic:
         we do this so homever implements a installer don't have to bother!'''
         ret = self.installer( target, source, env )
         f=open(str(target[0]),'w')
+   
         if ret:
             f.write(''.join(ret))
         else:
             f.write(' ')
         f.close()
+            
 
     def md5(self, file):
         return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()

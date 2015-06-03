@@ -18,11 +18,73 @@ class make(generic):
 class cmake(make):
     ''' a class to handle cmake installs '''
     src = 'CMakeLists.txt'
-    cmd = 'cmake $SOURCE_FOLDER'
+    cmd = [
+        'cmake $SOURCE_FOLDER && '
+        'make -j $DCORES && make install'
+    ]
     
     def fixCMD(self, cmd):
-        if 'cmake' in cmd and 'CMAKE_INSTALL_PREFIX' not in cmd:
-            cmd = 'rm -rf CMakeCache.txt && '+cmd.replace('cmake','cmake -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER')
+        ''' cmake is kindy picky with environment variables and has lots of 
+        variables override to force it to find packages in non-usual places.
+        So here we force some env vars and command line overrides to make sure 
+        cmake finds pipeVFX packages first!'''
+        try: maya = pipe.apps.maya().path('')
+        except: maya = ""
+        try: arnold = pipe.apps.arnold().path('')
+        except: arnold = ""
+        try: prman = pipe.apps.delight().path('')
+        except: prman = ""
+        environ = [
+            'HDF5_ROOT=$HDF5_TARGET_FOLDER',
+            'HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
+            'HDF5_LIBRARIES=$HDF5_TARGET_FOLDER/lib/libhdf5.so',
+            'OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include',
+            'OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
+            'CMAKE_CC_COMPILER=$CC',
+            'CMAKE_CXX_COMPILER=$CXX',
+            'CMAKE_CC_LINKER_PREFERENCE=$LD',
+            'CMAKE_CXX_LINKER_PREFERENCE=$LD',
+        ]
+        extra = [    
+            '-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER',
+            '-DCMAKE_CC_COMPILER=$CC',
+            '-DCMAKE_CXX_COMPILER=$CXX',
+            '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
+            '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
+            '-DCMAKE_LINKER=$LD',
+            '-DSTOP_ON_WARNING=0',
+            '-DBoost_USE_STATIC_LIBS=0',
+            '-DBoost_USE_MULTITHREADED=1',
+            '-DBoost_USE_STATIC_RUNTIME=0',
+            '-DLIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
+            '-DPYTHON_ROOT=$PYTHON_ROOT',
+            '-DPYTHON_INCLUDE_DIR=$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR/',
+            '-DPYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+            '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
+            '-DBOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+            '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+            '-Wno-dev',
+            '-DALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
+            '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+            '-DMAYA_ROOT=%s' % maya,
+            '-DARNOLD_ROOT=%s' % arnold,
+            '-DPRMAN_ROOT=%s' % prman,
+            '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
+            '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+            '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
+            # we need libXmi and libXi from the main system
+            "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2))",
+            "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
+        ]
+        for each in extra:
+            if 'cmake' in cmd and each.split('=')[0] not in cmd:
+                cmd = cmd.replace('cmake','cmake '+each+' ')
+        
+        if 'cmake' in cmd and os.environ.has_key('CMAKE_TARGET_FOLDER'):
+            cmd = cmd.replace('cmake','$CMAKE_TARGET_FOLDER/bin/cmake')
+         
+        cmd = ' && '.join(environ)+" && "+cmd        
+        cmd = 'find ./ -name CMakeCache.txt -exec rm -rf {} \; && '+cmd
         return cmd 
 
 
@@ -40,6 +102,9 @@ class glew(make):
     ])
     
     def installer(self, target, source, env):
+        ''' just a small installation patch to link lib64 to lib, which is the
+        expected shared library folder name, since pipeVFX organize packages in
+        arch specific hierarchy - linux/x86_64/package '''
         targetFolder = os.path.dirname(str(target[0]))
         if not os.path.exists("%s/lib" % targetFolder):
             if os.path.exists("%s/lib64" % targetFolder):
