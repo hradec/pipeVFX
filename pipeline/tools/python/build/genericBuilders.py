@@ -420,7 +420,7 @@ class generic:
             os.environ['CPPFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
             os.environ['CXXFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
             os.environ['CPPCXXFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
-            os.environ['LDFLAGS']   = "%s" % ' '.join(LDFLAGS)
+            os.environ['LDFLAGS']   = "-L/usr/lib64 %s" % ' '.join(LDFLAGS)
                         
         os.environ['LD_LIBRARY_PATH'] = ':'.join([
             os.path.dirname(''.join(os.popen('which gcc').readlines()))+'/../lib64/',
