@@ -1,4 +1,8 @@
-language: python
+language: 
+  - python
+  - c
+  - cpp
+
 python:
   - "2.7"
 # command to install dependencies
