@@ -112,8 +112,8 @@ class environ(dict):
         '''
             evaluates all keys as environment variables.
         '''
-        global initialized
-        os.environ.update( initialized )
+#        global initialized
+#        os.environ.update( initialized )
         paths = {}
         for each in self.keys():
             l = self[each]

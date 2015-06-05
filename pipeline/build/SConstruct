@@ -274,6 +274,26 @@ cmake = build.configure(
 )
 build.allDepend.append(cmake)
 
+glew = build.glew(
+        ARGUMENTS,
+        'glew',
+        download=[
+#          (
+#            'https://github.com/nigels-com/glew/archive/glew-1.10.0.tar.gz',
+#            'glew-glew-1.10.0.tar.gz',
+#            '1.10.0',
+#            'a79aa9866d9771546f78d27c8c6ac0df'
+#          ),
+          (
+            'https://github.com/nigels-com/glew/archive/glew-1.12.0.tar.gz',
+            'glew-glew-1.12.0.tar.gz',
+            '1.12.0',
+            'a3d23a760f031fbdde91f010b5bcf5eb'
+          ),
+        ],
+)
+build.allDepend.append(glew)
+
 freeglut = build.configure(
         ARGUMENTS,
         'freeglut',
@@ -297,28 +317,12 @@ freeglut = build.configure(
 #            '90c3ca4dd9d51cf32276bc5344ec9754',
 #          ),
         ],
-)
-build.allDepend.append(freeglut)
-
-glew = build.glew(
-        ARGUMENTS,
-        'glew',
-        download=[
-#          (
-#            'https://github.com/nigels-com/glew/archive/glew-1.10.0.tar.gz',
-#            'glew-glew-1.10.0.tar.gz',
-#            '1.10.0',
-#            'a79aa9866d9771546f78d27c8c6ac0df'
-#          ),
-          (
-            'https://github.com/nigels-com/glew/archive/glew-1.12.0.tar.gz',
-            'glew-glew-1.12.0.tar.gz',
-            '1.12.0',
-            'a3d23a760f031fbdde91f010b5bcf5eb'
-          ),
+        cmd = [
+            './configure --disable-dependency-tracking',
+            'make -j $DCORES && make install',
         ],
 )
-build.allDepend.append(glew)
+build.allDepend.append(freeglut)
 
 freetype = build.configure(
         ARGUMENTS,
@@ -385,23 +389,20 @@ tiff = build.configure(
 )
 build.allDepend.append(tiff)
 
-#libpng = build.configure(
-#        ARGUMENTS,
-#        'libpng',
-#        download=[
-#          (
-#            'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.17.tar.gz',
-#            'libpng-1.6.17.tar.gz',
-#            '1.6.17',
-#            '134282f1752dcf4cd81a37b8ff421cef'
-#          ),
-#        ],
-#        cmd = [
-#            './configure',
-#            'make && make install',
-#        ]
-#)
-#build.allDepend.append(libpng)
+libpng = build.configure(
+        ARGUMENTS,
+        'libpng',
+        download=[
+          (
+            'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.17.tar.gz',
+            'libpng-1.6.17.tar.gz',
+            '1.6.17',
+            '134282f1752dcf4cd81a37b8ff421cef'
+          ),
+        ],
+        
+)
+build.allDepend.append(libpng)
 
 dbus = build.configure(
         ARGUMENTS,
@@ -575,6 +576,7 @@ pyilmbase = build.configure(
         ],
         python=allPythonVersions,
         depend=[ilmbase,openexr],
+        environ={'DCORES' : 1, 'CORES' : 1}
 )
 build.allDepend.append(ilmbase)
 build.allDepend.append(openexr)
@@ -705,6 +707,9 @@ oiio = build.cmake(
                     ('unset.*PYTHON_LIBRARY','#unset( PYTHON_LIBRARY'),
                     ('/usr/include/python','${PYTHON_ROOT}/include/python'),
                 ],
+                'CMakeLists.txt' : [
+                    ('lib/python/site-packages','lib/python${PYTHON_VERSION_MAJOR}/site-packages'),
+                ],
             },
         },
         download=[
@@ -725,7 +730,7 @@ oiio = build.cmake(
 #            'LD'  : '/usr/bin/ld',
 #        },
 #        cmd = [
-#            'cmake $SOURCE_FOLDER && '
+#            'cmake $SOURCE_FOLDER',
 #            'make -j $DCORES && make install'
 #        ],
 )
@@ -750,6 +755,7 @@ qt = build.configure(
         ]
 )
 build.allDepend.append(qt)
+
 sip = build.pythonSetup(
         ARGUMENTS,
         'sip',
@@ -764,7 +770,12 @@ sip = build.pythonSetup(
         python=allPythonVersions,
         src = 'configure.py',
         cmd = [
-            'python configure.py install --prefix=$TARGET_FOLDER',
+            'python configure.py --sysroot=$TARGET_FOLDER '
+                'CC="$CC" '
+                'CXX="$CXX" '
+                'CFLAGS="-I$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR $CFLAGS" '
+                'CXXFLAGS="-I$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR $CXXFLAGS" ',
+            'make -j $DCORES && make -j $DCORES install',
         ],
 )
 pyqt = build.pythonSetup(
@@ -780,27 +791,32 @@ pyqt = build.pythonSetup(
         ],
         depend=[sip],
         python=allPythonVersions,
-        src = 'configure.py',
+        src = 'configure-ng.py',
         cmd = [
-            'python configure.py install --prefix=$TARGET_FOLDER',
+            'python configure-ng.py --confirm-license --assume-shared --sysroot=$TARGET_FOLDER '
+                'CC="$CC" '
+                'CXX="$CXX" '
+                'CFLAGS="-I$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR $CFLAGS" '
+                'CXXFLAGS="-I$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR $CXXFLAGS" ',
+            'make -j $DCORES && make -j $DCORES install',
         ],
 )
 build.allDepend.append(pyqt)
 
 
 
-appleseed = build.cmake(
-        ARGUMENTS,
-        'appleseed',
-        download=[
-          (
-            'https://github.com/appleseedhq/appleseed/archive/1.1.0-beta.tar.gz',
-            'appleseed-1.1.0-beta.tar.gz',
-            '1.0.0b',
-            'ad6eb4d6d58743a3192098bff9da15ab'
-          ),
-        ],
-)
+#appleseed = build.cmake(
+#        ARGUMENTS,
+#        'appleseed',
+#        download=[
+#          (
+#            'https://github.com/appleseedhq/appleseed/archive/1.1.0-beta.tar.gz',
+#            'appleseed-1.1.0-beta.tar.gz',
+#            '1.0.0b',
+#            'ad6eb4d6d58743a3192098bff9da15ab'
+#          ),
+#        ],
+#)
 
 
 

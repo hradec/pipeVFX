@@ -14,7 +14,7 @@ class configure(generic):
     src = 'configure'
     cmd = [
         './configure  --enable-shared',
-        'make && make  install',
+        'make -j $DCORES  && make  install',
     ]
 
     def fixCMD(self, cmd):
@@ -44,16 +44,16 @@ class openssl(configure):
         
 class boost(configure):
     src = './bootstrap.sh'
-    environ = {
-        'CC'        : 'gcc -fPIC',
-        'CPP'       : 'g++ -fPIC',
-        'CXX'       : 'g++ -fPIC',
-        'CXXCPP'    : 'g++ -fPIC',
-        'CPPFLAGS'  : 'g++ -fPIC',
-    }
+#    environ = {
+#        'CC'        : 'gcc -fPIC',
+#        'CPP'       : 'g++ -fPIC',
+#        'CXX'       : 'g++ -fPIC',
+#        'CXXCPP'    : 'g++ -fPIC',
+#        'CPPFLAGS'  : 'g++ -fPIC',
+#    }
     cmd = [
         './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-        './b2 -j %d cxxflags=-fPIC -d+2 install' % (CORES*2),
+        './b2 -j $DCORES cxxflags=-fPIC -d+2 install',
     ]
 
 #    def installer(self, target, source, env):

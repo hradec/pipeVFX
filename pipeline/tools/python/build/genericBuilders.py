@@ -1,6 +1,7 @@
 from  SCons.Environment import *
 from  SCons.Builder import *
 from devRoot import *
+from process_isolation import import_isolated
 import pipe
 from pipe.bcolors import bcolors
 from glob import glob
@@ -24,6 +25,25 @@ pythonpath_original = ':'.join([
 os.environ['PYTHONPATH'] = pythonpath_original 
 environ_original = os.environ.copy()
 
+os.popen("rm -rf build/tmp.*").readlines()
+
+# check if we have a faulty libGL.la installed by nvidia
+file = '/usr/lib64/libGL.la'
+if os.popen('''cat %s 2>&1 | grep "'/usr/lib'"''' % file).readlines():
+    raise Exception(bcolors.WARNING+'''
+        WARNING!
+        
+        The file %s is pointing to the wrong lib folder, 
+        and this WILL CAUSE freeglut build to fail. 
+        This is usually caused by an NVidia driver which writes 
+        x64 libGL.la pointing to the x32 version!
+
+        This can be fixed in 2 ways:
+            1. remove %s (it builds fine without it!)
+            2. install a newer Nvidia driver, which fixes this (since it's their fault it seems newer drivers fix it!!)
+                                                                
+    ''' % (file,file) + bcolors.END )
+
 
 class gcc:
     system=0
@@ -41,7 +61,6 @@ class generic:
         self.className = str(self.__class__).split('.')[-1]
         self.GCCFLAGS = GCCFLAGS
         self.args = args
-        self.compiler = compiler
         
         # dependency
         self.dependOn = depend
@@ -94,6 +113,7 @@ class generic:
 
         
         # store the compiler type to use
+        self.compiler = compiler
         self.set( "BUILD_COMPILER", self.compiler )
         
         # store all string variables in the class inside the current scons ENV
@@ -144,7 +164,7 @@ class generic:
                 # build and install folder
                 self.buildFolder[p].append( os.path.join(buildFolder(self.args),download[n][1].replace('.tar.gz',pythonDependency)) )
                 self.targetFolder[p].append( os.path.join( self.installPath,  self.name, download[n][2] ) )
-                self.env['TARGET_FOLDER'] = self.targetFolder[p][-1]
+                self.env['TARGET_FOLDER_%s' % download[n][2].replace('.','_')] = self.targetFolder[p][-1]
                 os.environ['%s_TARGET_FOLDER' % self.name.upper()] = self.targetFolder[p][-1]
                 
                 setup = os.path.join(self.buildFolder[p][-1], self.src)
@@ -224,8 +244,8 @@ class generic:
         ''' the generic builder method, used by all classes 
         it simple executes all commands specified by self.cmd list '''
         lastlogFile = "%s/lastlog" % os.path.dirname(str(target[0]))
-        if len(str(target[0]).split('python')) > 1:
-                pythonVersion = str(target[0]).split('python')[-1].split('.done')[0]
+        if len(str(target[0]).split('.python')) > 1:
+                pythonVersion = str(target[0]).split('.python')[-1].split('.done')[0]
                 lastlogFile = "%s/lastlog.%s" % (os.path.dirname(str(target[0])), pythonVersion[:3])
         
         lastlog = self.__check_target_log__( lastlogFile )
@@ -240,22 +260,18 @@ class generic:
                 if self.className.upper() in name:
                     vars[name] = cmd
             
-            buildCompiler = filter(lambda x: 'BUILD_COMPILER' in x[0], env.items())[0]
-            
             # so we can sort then and use in order
             ids=vars.keys()
             ids.sort()
             for name in ids:
                 cmd = vars[name]
                 if cmd.strip():
-                    print bcolors.GREEN+"\t%s" % name,
-                    os.environ['BUILD_COMPILER'] = buildCompiler[1]
-                    self.runCMD(cmd, target, source)
+                    self.runCMD(cmd, target, source, env)
      
             # if building for multiple python versions
             # store all files in lib folder into lib/python$PYTHON_VERSION_MAJOR
-            if len(str(target[0]).split('python')) > 1:
-                pythonVersion = str(target[0]).split('python')[-1].split('.done')[0]
+            if len(str(target[0]).split('.python')) > 1:
+                pythonVersion = str(target[0]).split('.python')[-1].split('.done')[0]
                 targetFolder = os.path.dirname(str(target[0]))
                 folder = "%s/lib/python%s/" % (targetFolder,pythonVersion[:3])
                 os.popen("mkdir -p %s" % folder).readlines()
@@ -291,72 +307,77 @@ class generic:
         return ret
 
 
-    def runCMD(self, cmd , target, source):
+    def runCMD(self, cmd , target, source, env):
         ''' the main method to run system calls, like configure, make, cmake, etc '''
-        buildCompiler = os.environ['BUILD_COMPILER']
+        buildCompiler = int(filter(lambda x: 'BUILD_COMPILER' in x[0], env.items())[0][1])
         
         # restore original environment before ruuning anything.
-        for each in filter(lambda x: x not in environ_original.keys(), os.environ.keys()):
-            del os.environ[each]
-        for each in environ_original:
-            os.environ[each] = environ_original[each]
+        os_environ={}
+        os_environ.update( os.environ )  
         
         # first, cleanup pipe gcc/bin folder from path, if any
-        os.environ['PATH'] = os.environ['PATH'].replace(pipe.build.gcc(),'').replace('::',':')
+        os_environ['PATH'] = os_environ['PATH'].replace(pipe.build.gcc(),'').replace('::',':')
         
         # now check if we want to use pipes gcc or not!
         if buildCompiler == gcc.pipe:
-            os.environ['PATH'] = ':'.join([
+            os_environ['PATH'] = ':'.join([
                     pipe.build.gcc(),
-                    os.environ['PATH'],
+                    os_environ['PATH'],
             ])
         
                 
         target=str(target[0])
+        pkgVersion = os.path.basename(os.path.dirname(target))
         dirLevels = '..%s' % os.sep * (len(str(source[0]).split(os.sep))-1)
         installDir = os.path.dirname(target)
 
         # set a python version if none is set
         pythonVersion = pipe.apps.baseApp("python").version()
-        if not os.environ.has_key('PYTHON_VERSION_MAJOR'):
-            os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
-        if not os.environ.has_key('PYTHON_VERSION'):
-            os.environ['PYTHON_VERSION'] = pythonVersion
+        os_environ['PYTHON_VERSION'] = pythonVersion
+        os_environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
                
         # adjust env vars for the current selected python version
         sys.stdout.write( bcolors.FAIL )
-        if len(target.split('python')) > 1:
-            pythonVersion = target.split('python')[-1].split('.done')[0]
+        if len(target.split('.python')) > 1:
+            pythonVersion = target.split('.python')[-1].split('.done')[0]
         
-        print " "+pythonVersion 
-        pipe.versionLib.set(python=pythonVersion)
-        pipe.version.set(python=pythonVersion)
+        print  os_environ['PYTHON_VERSION']+" "+pythonVersion 
+#        pipe.versionLib.set(python=pythonVersion)
+#        pipe.version.set(python=pythonVersion)
     
-        for var in os.environ.keys():
+        for var in os_environ.keys():
             pp = []
-            for each in os.environ[var].split(':'):
-                each = each.replace('python%s' % os.environ['PYTHON_VERSION_MAJOR'], 'python%s' % pythonVersion[:3])
+            for each in os_environ[var].split(':'):
+                each = each.replace('python%s' % os_environ['PYTHON_VERSION_MAJOR'], 'python%s' % pythonVersion[:3])
                 if '/python/' in each:
-                    each = each.replace(os.environ['PYTHON_VERSION'], pythonVersion)
+                    each = each.replace(os_environ['PYTHON_VERSION'], pythonVersion)
                 pp.append(each)
-            os.environ[var] = ':'.join(pp)
+            os_environ[var] = ':'.join(pp)
 
-        site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
-        os.environ['PYTHONPATH'] = ':'.join( [
+        
+        os_environ['PYTHON_VERSION'] = pythonVersion
+        os_environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
+
+#        site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
+        site_packages = '/'.join([
+            self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')],
+            'lib/python%s/site-packages' % pythonVersion[:3]
+        ])
+        os_environ['PYTHONPATH'] = ':'.join( [
             site_packages,
-            os.environ['PYTHONPATH'] ,
+            os_environ['PYTHONPATH'] ,
         ])
         
-        os.environ['PYTHON_VERSION'] = pythonVersion
-        os.environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
-            
-        os.environ.update( {
-            'CC'                : 'gcc',
+        prefix = ''
+        if buildCompiler == gcc.pipe:
+            prefix = 'x86_64-unknown-linux-gnu-'
+        os_environ.update( {
+            'CC'                : '%sgcc' % prefix,
             'CPP'               : 'cpp',
-            'CXX'               : 'g++',
+            'CXX'               : '%sg++' % prefix,
             'CXXCPP'            : 'cpp',
             'LD'                : 'ld',
-            'LDSHARED'          : 'gcc -shared',
+            'LDSHARED'          : '%sgcc -shared' % prefix,
             'LDFLAGS'           : '',
             'CFLAGS'            : '',
             'CPPFLAGS'          : '',
@@ -366,8 +387,8 @@ class generic:
             'LD_LIBRARY_PATH'   : '',
         })
         
-        if not os.environ.has_key('INCLUDE'):
-            os.environ['INCLUDE'] = ''
+        if not os_environ.has_key('INCLUDE'):
+            os_environ['INCLUDE'] = ''
             
         CFLAGS=['-fPIC']
         LDFLAGS=[]
@@ -382,10 +403,10 @@ class generic:
                         p = k[-1]
                             
 #                    print dependOn.name.upper(), dependOn.targetFolder[p][depend_n]
-                    os.environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = dependOn.targetFolder[p][depend_n]
-                    os.environ['PKG_CONFIG_PATH'] = ':'.join([
+                    os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = dependOn.targetFolder[p][depend_n]
+                    os_environ['PKG_CONFIG_PATH'] = ':'.join([
                         '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
-                        os.environ['PKG_CONFIG_PATH'],
+                        os_environ['PKG_CONFIG_PATH'],
                     ])
                     # if dependency in explicit in GCCFLAGS or 
                     # if dependency doesn't have a lib/pkconfig/*.pc file, 
@@ -395,81 +416,96 @@ class generic:
                     LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
                     LDFLAGS.append("-L%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
                         
-                    os.environ['LD_LIBRARY_PATH'] = ':'.join([
-                        os.environ['LD_LIBRARY_PATH'],
+                    os_environ['LD_LIBRARY_PATH'] = ':'.join([
+                        os_environ['LD_LIBRARY_PATH'],
                         "%s/lib/" % dependOn.targetFolder[p][depend_n],
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                     ])
-                    os.environ['INCLUDE'] = ':'.join([
+                    os_environ['INCLUDE'] = ':'.join([
                         "%s/include/" % dependOn.targetFolder[p][depend_n],
-                        os.environ['INCLUDE'],
+                        os_environ['INCLUDE'],
                     ])
-                    os.environ['PYTHONPATH'] = ':'.join([
+                    os_environ['PYTHONPATH'] = ':'.join([
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
-                        os.environ['PYTHONPATH'],
+                        os_environ['PYTHONPATH'],
                     ])
-                    os.environ['PATH'] = ':'.join([
+                    os_environ['PATH'] = ':'.join([
                         "%s/bin/" % (dependOn.targetFolder[p][depend_n]),
-                        os.environ['PATH'],
+                        os_environ['PATH'],
                     ])
         
         
         if CFLAGS:
-            os.environ['CFLAGS']    = "%s" % ' '.join(CFLAGS+LDFLAGS)
-            os.environ['CPPFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
-            os.environ['CXXFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
-            os.environ['CPPCXXFLAGS']  = "%s" % ' '.join(CFLAGS+LDFLAGS)
-            os.environ['LDFLAGS']   = "-L/usr/lib64 %s" % ' '.join(LDFLAGS)
-                        
-        os.environ['LD_LIBRARY_PATH'] = ':'.join([
-            os.path.dirname(''.join(os.popen('which gcc').readlines()))+'/../lib64/',
-            os.environ['LD_LIBRARY_PATH'],
-            '/usr/lib64', # temporary workaround for redhat systems
-        ])
-        os.environ['LIB'] = os.environ['LD_LIBRARY_PATH']
-        os.environ['LIBRARY_PATH'] = ':'.join([
-                   os.environ['LD_LIBRARY_PATH'],
+            os_environ['CFLAGS']        = "%s" % ' '.join(CFLAGS+LDFLAGS)
+            os_environ['CPPFLAGS']      = "%s" % ' '.join(CFLAGS+LDFLAGS)
+            os_environ['CXXFLAGS']      = "%s" % ' '.join(CFLAGS+LDFLAGS)
+            os_environ['CPPCXXFLAGS']   = "%s" % ' '.join(CFLAGS+LDFLAGS)
+            os_environ['LDFLAGS']       = "-L/usr/lib64 %s" % ' '.join(LDFLAGS)
+
+        if buildCompiler == gcc.pipe:
+            os_environ['LD_LIBRARY_PATH'] = ':'.join([
+                pipe.build.gcc()+'/../lib64/',
+                os_environ['LD_LIBRARY_PATH'],
+    #            '/usr/lib64', # temporary workaround for redhat systems
+            ])
+        os_environ['LIB'] = os_environ['LD_LIBRARY_PATH']
+        os_environ['LIBRARY_PATH'] = ':'.join([
+                   os_environ['LD_LIBRARY_PATH'],
                    '/usr/lib/x86_64-linux-gnu/',
         ])
-        os.environ['PATH'] = ':'.join([
-            pipe.libs.python().path('bin'),
-            os.environ['PATH'],
+        os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
+        os_environ['PATH'] = ':'.join([
+            pipe.apps.python().path('bin'),
+            os_environ['PATH'],
         ])
-        os.environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER']
-        os.environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
+        
+        # if running in fedora
+#        if os.path.exists('/etc/fedora-release'):
+#            os_environ['LIBRARY_PATH']      += ":/usr/lib64"
+#            os_environ['LTDL_LIBRARY_PATH'] += ":/usr/lib64"
+#            os_environ['LD_LIBRARY_PATH']   += ":/usr/lib64"
+#            os_environ['LIB']               += ":/usr/lib64"
+        
+        os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
+        os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
         
         # set extra env vars that were passed to the builder class in the environ parameter!
         for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
             #print name.split('ENVIRON_')[-1], v.strip()
-            os.environ[name.split('ENVIRON_')[-1]] = v.strip()
+            os_environ[name.split('ENVIRON_')[-1]] = v.strip()
 
         # set lastlog filename
-        lastlog = '%s/lastlog' % os.environ['TARGET_FOLDER']
+        extraLabel = ''
+        lastlog = '%s/lastlog' % os_environ['TARGET_FOLDER']
         if len(target.split('python')) > 1:
-            lastlog = '%s.%s' % (lastlog,os.environ['PYTHON_VERSION_MAJOR'])
+            lastlog = '%s.%s' % (lastlog,os_environ['PYTHON_VERSION_MAJOR'])
+            extraLabel = '(python %s)' % os_environ['PYTHON_VERSION']
         # reset lastlog
         open(lastlog,'w').close()
             
         # run sed inline patch mechanism
-        self.runSED(os.environ['SOURCE_FOLDER'])
+        self.runSED(os_environ['SOURCE_FOLDER'])
         
         # run the command from inside ppython, so all pipe env vars get properly set!
         try:
             cmd = self.fixCMD(cmd)
             cmd = cmd.replace('"','\"').replace('$','\$')
             for l in cmd.split('&&'):
-                print '\t\t%s %s  %s ' % (bcolors.GREEN,l.strip(),bcolors.END)
+                print bcolors.WARNING+'\t%s%s : %s %s  %s ' % ('.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]),extraLabel,bcolors.GREEN,l.strip(),bcolors.END)
             # we need to save the current pythonpath to set it later inside pythons system call
-            os.environ['BUILD_PYTHONPATH__'] = os.environ['PYTHONPATH']
+            os_environ['BUILD_PYTHONPATH__'] = os_environ['PYTHONPATH']
             # and then we need to setup a clean PYTHONPATH so ppython can find pipe, build and the correct modules
-            os.environ['PYTHONPATH'] = pythonpath_original
-            cmd = 'PYTHONPATH=\"\$BUILD_PYTHONPATH__\" && ' + cmd
-            cmd = 'cd "%s" && ' %  os.environ['SOURCE_FOLDER'] + cmd
-            cmd = '''nice -n 10 ppython --python_version $PYTHON_VERSION --logd -c '''+\
+#            os_environ['PYTHONPATH'] = pythonpath_original
+            os_environ['PYTHONPATH'] = '%s/pipeline/tools/python' % pipe.depotRoot()
+            cmd = 'PYTHONPATH=\\"\$BUILD_PYTHONPATH__\\" && ' + cmd
+            cmd = 'cd \\"%s\\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
+            cmd = '''nice -n 10 %s/pipeline/tools/scripts/ppython --python_version %s --logd -c ''' % (pipe.depotRoot(),os_environ['PYTHON_VERSION'])+\
                   '''"import os,sys;ret=os.system(\'\'\''''+cmd+\
                   '''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)" >%s 2>&1''' % lastlog
-            os.popen(cmd).readlines()
+#            os.popen(cmd).readlines()
+            from subprocess import Popen
+            Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ).wait()
             ret = self.__check_target_log__(lastlog)
             if ret == 0:
                 f = open(target,'a')
@@ -485,6 +521,9 @@ class generic:
             print '-'*120
             print bcolors.FAIL,
             traceback.print_exc()
+            for l in os_environ["PYTHON_VERSION"].split(':'):
+                print l
+            print cmd
             print '-'*120
             sys.stdout.flush()
             raise Exception('Error!')
@@ -542,16 +581,16 @@ class generic:
             t = os.path.abspath(str(target[n]))
             md5 = self.md5(source[n])
             if md5 == url[3]:
+                import random
+                tmp = int(random.random()*10000000)
+                tmp = "%s/tmp.%s" % (os.path.dirname(os.path.dirname(str(target[n]))), str(tmp))
 #                print "\tMD5 OK for file ", source[n], 
 #                print "... uncompressing... "
-                os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) )
-                cmd = "cd %s && tar xf %s 2>&1" % (os.path.dirname(os.path.dirname(str(target[n]))),s)
-#                print cmd
+                os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
+                cmd = "mkdir %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                 lines = os.popen(cmd).readlines()
-                cmd =  "mv %s %s 2>&1" % (s.replace('.tar.gz',''), os.path.dirname(t))
-#                print cmd
-                if s.replace('.tar.gz','') != os.path.dirname(t):
-                    os.system( cmd )
+                cmd =  "mv %s/%s %s && rm -rf %s 2>&1" % (tmp, os.path.basename(s.replace('.tar.gz','')), os.path.dirname(t), tmp)
+                lines += os.popen( cmd ).readlines()
                 if not os.path.exists(str(target[n])):
                     print '-'*120
                     for l in lines:

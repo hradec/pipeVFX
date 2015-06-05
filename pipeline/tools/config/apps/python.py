@@ -19,7 +19,7 @@
 # =================================================================================
 
 
-class python(baseLib):
+class python(baseApp):
     '''
     WARNING: in newer debian/ubuntu distros, we need this to make things work correctly:
         sudo ln -s /usr/lib/python2.7/config-x86_64-linux-gnu/ /usr/lib/python2.7/config
@@ -33,10 +33,13 @@ class python(baseLib):
         # we have to remove this once OIIO and OCIO are properly build with the pipe gcc!
         self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libstdc++.so.6")
         self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libgcc_s.so.1")
+
+        self['PYTHON_VERSION_MAJOR'] = pipe.apps.version.get('python')[:3]
+        
 #        if self.parent() not in ['houdini']:
 
         # if nuke version < 8.0 or gaffer, force to load our libpython shared lib
-        sharedLib = self.path('lib/libpython%s.so.1.0' % pipe.libs.version.get('python')[:3])
+        sharedLib = self.path('lib/libpython$PYTHON_VERSION_MAJOR.so.1.0')
         if os.path.exists(sharedLib):
             if (self.parent()=='nuke' and float(pipe.version.get('nuke')[:3])<8) or self.parent() in ['gaffer']:
                 self['LD_PRELOAD'] = sharedLib 

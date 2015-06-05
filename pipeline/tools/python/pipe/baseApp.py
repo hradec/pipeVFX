@@ -297,6 +297,8 @@ class libsDB(appsDB):
 # initialize global cache of versions!
 if not os.environ.has_key('__DB_LATEST'):
     os.environ['__DB_LATEST'] = str(appsDB().latest)
+original_argv = []
+original_argv.extend(sys.argv)
 class version:
     '''
         a namespace class for initialization and access of the global __version database.
@@ -339,6 +341,12 @@ class version:
                 v = appsDB()[appName]['versions']
         else:
             v = _version
+            
+        # handle --<pkg>_version <version> command line options
+        # ex: maya --maya_version 2013
+        for each in filter(lambda x: '--%s_version' % appName in x, original_argv):
+            v = original_argv[ original_argv.index(each)+1 ]
+            
         return v
 
 
@@ -389,6 +397,12 @@ class versionLib:
                 v = libsDB()[appName]['versions']
         else:
             v = _versionLib
+            
+        # handle --<pkg>_version <version> command line options
+        # ex: maya --maya_version 2013
+        for each in filter(lambda x: '--%s_version' % appName in x, original_argv):
+            v = original_argv[ original_argv.index(each)+1 ]
+
         return v
 
 
@@ -680,11 +694,6 @@ class baseApp(_environ):
     def bin(self):
         '''returns the app bin folder (from appsDB)'''
         ret = self.appFromDB.bin()
-
-#        sys.stderr.write("%s\n" % str(ret))
-#        sys.stderr.flush()
-
-
         if self.has_key('%s_BIN' % self.className.upper()):
             ret = self['%s_BIN' % self.className.upper()]
         return ret
@@ -766,13 +775,15 @@ class baseApp(_environ):
         # handle --<pkg>_version <version> command line options
         # ex: maya --maya_version 2013
         for each in filter(lambda x: '--' in x and '_version' in x, sys.argv):
-            name = each.split('--')[1].split('_version')[0].lower()
-            v = sys.argv[ sys.argv.index(each)+1 ]
-            if self.globalVersion.get(name) != v:
-                self.globalVersion.set({name : v})
+#            name = each.split('--')[1].split('_version')[0].lower()
+#            v = sys.argv[ sys.argv.index(each)+1 ]
+#            if self.globalVersion.get(name) != v:
+#                self.globalVersion.set({name : v})
+
             del sys.argv[ sys.argv.index(each)+1 ]
             del sys.argv[ sys.argv.index(each) ]
-
+            
+        
         __version = self.globalVersion.get(self.className)
         if __version:
             self.appFromDB.version( self.globalVersion.get(self.className) )
@@ -988,6 +999,10 @@ class baseApp(_environ):
             # last, run self license
             self._license()
 
+        # force python env vars to be set just in case python app was not added 
+        self['PYTHON_VERSION'] = self.globalVersion.get('python')
+        self['PYTHON_VERSION_MAJOR'] = self['PYTHON_VERSION'][:3]
+
         # expand all environment variables stored in this class to 
         # actual os.environ vars
         self.expand()
@@ -1104,6 +1119,7 @@ class baseApp(_environ):
         if '--fix' in sys.argv:
             del sys.argv[sys.argv.index('--fix')]
             fixit = True
+
         
         # construct cmd string!!
         cmd = '%s %s %s %s' % (
