@@ -19,7 +19,7 @@ class cmake(make):
     ''' a class to handle cmake installs '''
     src = 'CMakeLists.txt'
     cmd = [
-        'cmake $SOURCE_FOLDER',
+        'cmake $SOURCE_FOLDER && '
         'make -j $DCORES && make install'
     ]
     

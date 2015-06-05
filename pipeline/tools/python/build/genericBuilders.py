@@ -1,7 +1,6 @@
 from  SCons.Environment import *
 from  SCons.Builder import *
 from devRoot import *
-from process_isolation import import_isolated
 import pipe
 from pipe.bcolors import bcolors
 from glob import glob
@@ -269,16 +268,22 @@ class generic:
                     self.runCMD(cmd, target, source, env)
      
             # if building for multiple python versions
-            # store all files in lib folder into lib/python$PYTHON_VERSION_MAJOR
             if len(str(target[0]).split('.python')) > 1:
                 pythonVersion = str(target[0]).split('.python')[-1].split('.done')[0]
                 targetFolder = os.path.dirname(str(target[0]))
                 folder = "%s/lib/python%s/" % (targetFolder,pythonVersion[:3])
                 os.popen("mkdir -p %s" % folder).readlines()
                 for each in glob("%s/lib/*" % targetFolder):
+                    # store all files in lib folder into lib/python$PYTHON_VERSION_MAJOR
                     if not os.path.isdir(each):
                         cmd ="mv %s %s" % (each, folder)
                         os.popen(cmd).readlines()
+                    # and move everything inside a lib/python folder to lib/python$PYTHON_VERSION_MAJOR
+                    # and remove lib/python
+                    if os.path.basename(each) == 'python' and os.path.isdir(each):
+                        cmd ="mv %s/* %s/ && rmdir %s" % (each, folder, each)
+                        os.popen(cmd).readlines()
+                        
                         
     
     def depend_n(self,dependOn,currVersion):
@@ -357,6 +362,7 @@ class generic:
         
         os_environ['PYTHON_VERSION'] = pythonVersion
         os_environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
+        pipe.apps.version.set(python=pythonVersion)
 
 #        site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
         site_packages = '/'.join([
