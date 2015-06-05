@@ -1,7 +1,8 @@
 #!/usr/bin/python 
 
 import sys, os
-del os.environ['ROOT']
+if os.environ.has_key('ROOT'):
+	del os.environ['ROOT']
 sys.path.insert( 0, os.path.abspath('../tools/python/') )
 import build, pipe
 
@@ -682,15 +683,6 @@ ocio = build.cmake(
         # ocio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
         # so we're forced to rely on the system gcc here,
         compiler = build.gcc.system,
-#        environ={
-#            'CC'  : '/usr/bin/gcc',
-#            'CXX' : '/usr/bin/g++',
-#            'LD'  : '/usr/bin/ld',
-#        },
-#        cmd = [
-#            'cmake $SOURCE_FOLDER && '
-#            'make -j $DCORES && make install'
-#        ],
 )
 build.allDepend.append(ocio)
 oiio = build.cmake(
@@ -724,10 +716,6 @@ oiio = build.cmake(
         # oiio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
         # so we're forced to rely on the system gcc here,
         compiler = build.gcc.system,
-        cmd = [
-            'cmake $SOURCE_FOLDER',
-            'make -j $DCORES && make install'
-        ],
 )
 build.allDepend.append(oiio)
 
