@@ -4,4 +4,4 @@ python:
 # command to install dependencies
 #install: "pip install scons"
 # command to run tests
-script: cd pipeline/build/ && . ../tools/init/bash && run scons
+script: cd pipeline/build/ && . ../tools/init/bash && run scons --python_version 2.7.6
