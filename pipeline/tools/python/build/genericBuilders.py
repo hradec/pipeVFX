@@ -16,6 +16,8 @@ os.environ['DCORES'] = '%d' % (2*CORES)
 
 allDepend = []
 
+if not os.environ.has_key('PYTHONPATH'):
+    os.environ['PYTHONPATH']=''
 #pythonpath_original = ':'.join(filter(lambda x: '/usr/'!=x[:5], sys.path))
 pythonpath_original = ':'.join([
         os.path.abspath('../tools/python/'),

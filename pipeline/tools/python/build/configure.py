@@ -44,13 +44,13 @@ class openssl(configure):
         
 class boost(configure):
     src = './bootstrap.sh'
-#    environ = {
-#        'CC'        : 'gcc -fPIC',
-#        'CPP'       : 'g++ -fPIC',
-#        'CXX'       : 'g++ -fPIC',
-#        'CXXCPP'    : 'g++ -fPIC',
-#        'CPPFLAGS'  : 'g++ -fPIC',
-#    }
+    environ = {
+        'CC'        : '$CC -fPIC',
+        'CPP'       : '$CPP -fPIC',
+        'CXX'       : '$CXX -fPIC',
+        'CXXCPP'    : '$CXXPP -fPIC',
+        'CPPFLAGS'  : '$CPPFLAGS -fPIC',
+    }
     cmd = [
         './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
         './b2 -j $DCORES cxxflags=-fPIC -d+2 install',
