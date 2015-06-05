@@ -41,7 +41,18 @@ class openssl(configure):
         os.popen("ln -s libssl.so %s/lib/libssl.so.10" % targetFolder).readlines()
         os.popen("ln -s libcrypto.so %s/lib/libcrypto.so.10" % targetFolder).readlines()
 
+
+
+class freetype(configure):
+    ''' a make class to exclusively build freetype package
+    we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
+    def installer(self, target, source, env):
+        t = os.path.dirname(str(target[0]))
+        if os.path.exists( "%s/include/freetype2" % t):
+            os.popen("ln -s freetype2 %s/include/freetype" % t).readlines()
+
         
+                
 class boost(configure):
     src = './bootstrap.sh'
     environ = {
@@ -49,11 +60,10 @@ class boost(configure):
         'CPP'       : '$CPP -fPIC',
         'CXX'       : '$CXX -fPIC',
         'CXXCPP'    : '$CXXPP -fPIC',
-        'CPPFLAGS'  : '$CPPFLAGS -fPIC',
     }
     cmd = [
         './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-        './b2 -j $DCORES cxxflags=-fPIC -d+2 install',
+        './b2 -j $DCORES cxxflags="-fPIC $CPPFLAGS" -d+2 install',
     ]
 
 #    def installer(self, target, source, env):

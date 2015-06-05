@@ -105,7 +105,7 @@ zlib = build.configure(
 )
 build.allDepend.append(zlib)
 
-bzip2 = build.configure(
+bzip2 = build.make(
         ARGUMENTS,
         'bzip2',
         download=[
@@ -115,6 +115,10 @@ bzip2 = build.configure(
             '1.0.6',
             '00b516f4704d4a7cb50a1d97e6e8e15b'
           ),
+        ],
+        cmd = [
+            'make -j $DCORES CC=$CC CFLAGS="$CFLAGS -O2 -g -D_FILE_OFFSET_BITS=64" LDFLAGS="$LDFLAGS" PREFIX=$TARGET_FOLDER',
+            'make -j $DCORES PREFIX=$TARGET_FOLDER install',
         ],
 )
 build.allDepend.append(bzip2)
@@ -339,7 +343,7 @@ freeglut = build.configure(
 )
 build.allDepend.append(freeglut)
 
-freetype = build.configure(
+freetype = build.freetype(
         ARGUMENTS,
         'freetype',
         download=[
