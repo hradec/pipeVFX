@@ -1,5 +1,6 @@
-pipeVFX
+pipeVFX 
 =======
+[![Build Status](https://travis-ci.org/hradec/pipeVFX.svg?branch=master)](https://travis-ci.org/hradec/pipeVFX)
 
 A Visual Effects pipeline to manage jobs, shots and software assignment, with a "simple asset manager" called SAM.
 
@@ -22,3 +23,4 @@ If you want to give it a try, simply fork and clone pipeVFX and run in a bash sh
 ```
 
 after that, your shell will be running inside pipeVFX!
+
