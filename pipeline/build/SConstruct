@@ -724,15 +724,10 @@ oiio = build.cmake(
         # oiio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
         # so we're forced to rely on the system gcc here,
         compiler = build.gcc.system,
-#        environ={
-#            'CC'  : '/usr/bin/gcc',
-#            'CXX' : '/usr/bin/g++',
-#            'LD'  : '/usr/bin/ld',
-#        },
-#        cmd = [
-#            'cmake $SOURCE_FOLDER',
-#            'make -j $DCORES && make install'
-#        ],
+        cmd = [
+            'cmake $SOURCE_FOLDER',
+            'make -j $DCORES && make install'
+        ],
 )
 build.allDepend.append(oiio)
 
