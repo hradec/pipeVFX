@@ -11,6 +11,19 @@ import build, pipe
 allPythonVersions = pipe.libsDB()['python']['versions']
 
 
+#delight = build.configure(
+#        ARGUMENTS,
+#        'delight',
+#        download=[
+#          (
+#            'http://www.3delight.com/downloads/free/3delight-Linux-x86_64.tar.xz.php',
+#            'gmp-6.0.0.tar.gz',
+#            '6.0.0',
+#            'b7ff2d88cae7f8085bd5006096eed470'
+#          ),
+#        ],
+#)
+
 #gmp = build.configure(
 #        ARGUMENTS,
 #        'gmp',
@@ -467,6 +480,12 @@ simpleModules = {
             '1.1.7',
             'fc14a54e1ce02a0225be8854bfba478e'
     )],    
+    'subprocess32' : [(
+            'https://pypi.python.org/packages/source/s/subprocess32/subprocess32-3.2.6.tar.gz',
+            'subprocess32-3.2.6.tar.gz',
+            '3.2.6',
+            '754c5ab9f533e764f931136974b618f1'
+    )],   
 #    'pygobject' : [(
 #            'https://pypi.python.org/packages/source/P/PyGObject/pygobject-2.28.3.tar.bz2#md5=aa64900b274c4661a5c32e52922977f9',
 #            'pygobject-2.28.3.tar.gz',
@@ -649,47 +668,30 @@ alembic = build.cmake(
                 ('/alembic-${VERSION}',' '),
             ],
         },
-    },
-)
-
-
-llvm = build.configure(
-        ARGUMENTS,
-        'llvm',
-        download=[
-          (
-            'http://llvm.org/releases/3.4.2/llvm-3.4.2.src.tar.gz',
-            'llvm-3.4.2.src.tar.gz',
-            '3.4.2',
-            'a20669f75967440de949ac3b1bad439c'
-          ),
-        ],
-        # llvm needs a newer GCC than 4.1.2, which we use in the pipe, unfortunatelly.
-        # so we're forced to rely on the system gcc here,
-        # hence the /usr/bin added to the top of PATH in the cmd
-        compiler = build.gcc.system,
-#        cmd=[
-#            'PATH=/usr/bin:$PATH ./configure',
-#            'PATH=/usr/bin:$PATH make -j $DCORES && make install',
-#        ],
-)
-osl = build.cmake(
-        ARGUMENTS,
-        'osl',
-        download=[
-          (
-            'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.5.12.tar.gz',
-            'OpenShadingLanguage-Release-1.5.12.tar.gz',
-            '1.5.12',
-            '484752a0f97df55962c3a667075deddc'
-          ),
-        ],
-        depend=[llvm]
+    },  
+#    environ = {
+##            'LDFLAGS' : '$LDFLAGS -lpthread',
+#    },
 )
 
 ocio = build.cmake(
         ARGUMENTS,
         'ocio',
+        # ocio for some reason doesn't add -fPIC when building the static external libraries,
+        # so we have to patch it or build fail with gcc 4.1.2
+        # also, we have to remove -fvisibility-inlines-hidden when building with gcc 4.1.2
+        sed = {
+            '0.0.0' : {
+                'ext/tinyxml_2_6_1.patch' : [
+                    ('-fPIC', '-fPIC -DPIC'),
+                    (' -fvisibility-inlines-hidden -fvisibility=hidden', ''), 
+                ],
+                'ext/yaml-cpp-0.3.0.patch' : [
+                    ('-fPIC', '-fPIC -DPIC'),
+                    (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
+                ],
+            },
+        },
         download=[
           (
             'https://github.com/imageworks/OpenColorIO/archive/v1.0.9.tar.gz',
@@ -698,14 +700,45 @@ ocio = build.cmake(
             '06d0efe9cc1b32d7b14134779c9d1251'
           ),
         ],
-        # ocio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
-        # so we're forced to rely on the system gcc here,
-        compiler = build.gcc.system,
+        python=allPythonVersions,
 )
 build.allDepend.append(ocio)
+
+
+yasm= build.configure(
+        ARGUMENTS,
+        'yasm',
+        download=[
+          (
+            'http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz',
+            'yasm-1.3.0.tar.gz',
+            '1.3.0',
+            'fc9e586751ff789b34b1f21d572d96af'
+          ),
+        ],
+)
+build.allDepend.append(yasm)
+ffmpeg = build.configure(
+        ARGUMENTS,
+        'ffmpeg',
+        download=[
+          (
+            'https://www.ffmpeg.org/releases/ffmpeg-2.7.1.tar.gz',
+            'ffmpeg-2.7.1.tar.gz',
+            '2.7.1',
+            '15ba2ca574ba389f2b69fceac766d953'
+          ),
+        ],
+        cmd = [
+            './configure  --enable-shared --enable-gpl --enable-nonfree --enable-nonfree',
+            'make -j $DCORES  && make  install',
+        ],
+)
+build.allDepend.append(ffmpeg)
 oiio = build.cmake(
         ARGUMENTS,
         'oiio',
+        python=allPythonVersions,
         # oiio has some hard-coded path to find python, and the only
         # way to make it respect the PYTHON related environment variables,
         # is to patch some files to force it!
@@ -724,18 +757,135 @@ oiio = build.cmake(
         },
         download=[
           (
-            'https://github.com/OpenImageIO/oiio/archive/Release-1.5.15.tar.gz',
-            'oiio-Release-1.5.15.tar.gz',
-            '1.5.15',
-            '152e9422d521b4ea790b3af71ebca5ae'
+            'https://github.com/OpenImageIO/oiio/archive/Release-1.5.16.tar.gz',
+            'oiio-Release-1.5.16.tar.gz',
+            '1.5.16',
+            '9e7f404dba4c6e6da99464830325418b'
           ),
+#          (
+#            'https://github.com/OpenImageIO/oiio/archive/Release-1.5.15.tar.gz',
+#            'oiio-Release-1.5.15.tar.gz',
+#            '1.5.15',
+#            '152e9422d521b4ea790b3af71ebca5ae'
+#          ),          
+#          (
+#            'https://github.com/OpenImageIO/oiio/archive/Release-1.6.3dev.tar.gz',
+#            'oiio-Release-1.6.3dev.tar.gz',
+#            '1.6.3.dev',
+#            '7d92f9de4d44d98e8d9a9bea1861d995'
+#          ),
         ],
-        python=allPythonVersions,
         # oiio needs a newer GCC than 4.1.2 (which is the version we use in pipeVFX), unfortunatelly.
         # so we're forced to rely on the system gcc here,
-        compiler = build.gcc.system,
+#        compiler = build.gcc.system,
 )
 build.allDepend.append(oiio)
+
+
+
+
+llvm = build.configure(
+        ARGUMENTS,
+        'llvm',
+        download=[
+          (
+            'http://llvm.org/releases/3.4.2/llvm-3.4.2.src.tar.gz',
+            'llvm-3.4.2.src.tar.gz',
+            '3.4.2',
+            'a20669f75967440de949ac3b1bad439c'
+          ),
+        ],
+        # llvm needs a newer GCC than 4.1.2, which we use in the pipe, unfortunatelly.
+        # so we're forced to rely on the system gcc here!
+        # TODO: build a newer gcc version as dependency for llvm!
+        compiler = build.gcc.system,
+)
+flex = build.configure(
+        ARGUMENTS,
+        'flex',
+        download=[
+          (
+            'http://downloads.sourceforge.net/project/flex/flex-2.5.39.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fflex%2Ffiles%2F&ts=1433811270&use_mirror=iweb',
+            'flex-2.5.39.tar.gz',
+            '2.5.39',
+            'e133e9ead8ec0a58d81166b461244fde'
+          ),
+        ],
+        compiler = build.gcc.system,
+)
+bison = build.configure(
+        ARGUMENTS,
+        'bison',
+        download=[
+          (
+            'http://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.gz',
+            'bison-3.0.4.tar.gz',
+            '3.0.4',
+            'a586e11cd4aff49c3ff6d3b6a4c9ccf8'
+          ),
+        ],
+        compiler = build.gcc.system,
+)
+osl = build.cmake(
+        ARGUMENTS,
+        'osl',
+        download=[
+#          (
+#            'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.5.12.tar.gz',
+#            'OpenShadingLanguage-Release-1.5.12.tar.gz',
+#            '1.5.12',
+#            '484752a0f97df55962c3a667075deddc'
+#            {oiio: "1.5.15"},
+#          ),
+#          (
+#            'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.6.6.tar.gz',
+#            'OpenShadingLanguage-Release-1.6.6.tar.gz',
+#            '1.6.6',
+#            'e6adfd8ed577aedca13bfa8ecd941c62'
+#            {oiio: "1.6.3.dev"},
+#          ),
+          (
+            'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.6.7.tar.gz',
+            'OpenShadingLanguage-Release-1.6.7.tar.gz',
+            '1.6.7',
+            'c104491312946e1458da4d2a30281147',
+            {oiio: "1.5.15"},
+          ),
+        ],
+        depend=[llvm, flex, bison],
+#        compiler = build.gcc.system,
+        sed = {
+            '0.0.0' : {
+                'CMakeLists.txt' : [
+                    ('add_definitions.*Wno.error=strict.overflow','#add_definitions ("-Wno-error=strict-overflow")'),
+                ],
+            },
+        },        
+        environ = {
+            'OPENIMAGEIOHOME' : '$OIIO_TARGET_FOLDER',
+            'LD_LIBRARY_PATH' : '$OIIO_TARGET_FOLDER/lib:$LD_LIBRARY_PATH',
+#            'LDFLAGS' : '$LDFLAGS -lpthread',
+        },
+        cmd = [
+            'make -j $DCORES '
+            'INSTALLDIR=$TARGET_FOLDER '
+            'MY_MAKE_FLAGS="'+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags))+\
+                    ' SELF_CONTAINED_INSTALL_TREE=1 ENABLERTTI=1" '
+            'MYCC=$CC MYCXX=$CXX '
+            'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
+            'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
+#            'LLVM_STATIC=1 '
+            'USE_LLVM_BITCODE=0 '
+            'USE_BOOST_WAVE=1 '
+            'PARTIO_HOME="" '
+            'BUILDSTATIC=0 '
+            'LINKSTATIC=0 '
+            'USE_MCJIT=1 '
+            'STOP_ON_WARNING=0 '
+        ],
+)
+
+
 
 
 # qt packages
@@ -756,7 +906,6 @@ qt = build.configure(
         ]
 )
 build.allDepend.append(qt)
-
 sip = build.pythonSetup(
         ARGUMENTS,
         'sip',
@@ -803,9 +952,6 @@ pyqt = build.pythonSetup(
         ],
 )
 build.allDepend.append(pyqt)
-
-
-
 #appleseed = build.cmake(
 #        ARGUMENTS,
 #        'appleseed',

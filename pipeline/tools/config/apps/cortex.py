@@ -144,6 +144,7 @@ class cortex(baseLib):
                 glsl = '%s/cortex/glsl' % each,
                 glslInclude = '%s/cortex/glsl/include' % each,
                 glFonts = '%s/cortex/fonts' % each,
+                scripts = '%s/cortex/python' % each,
             )     
             self['IECORE_ASSET_OP_PATHS'] = '%s/config/assets' % each
 

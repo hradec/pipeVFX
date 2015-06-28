@@ -1,5 +1,6 @@
 from  SCons.Environment import *
 from  SCons.Builder import *
+from  SCons.Action import *
 from devRoot import *
 import pipe
 from pipe.bcolors import bcolors
@@ -57,7 +58,7 @@ class generic:
     sed = {}
     environ = {}
 
-    def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend=None, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
+    def __init__(self, args, name, download, python=pipe.libs.version.get('python'), env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
         sys.stdout.write( bcolors.END )
         self.className = str(self.__class__).split('.')[-1]
         self.GCCFLAGS = GCCFLAGS
@@ -65,10 +66,18 @@ class generic:
         
         # dependency
         self.dependOn = depend
-        if type(self.dependOn) != type([]):
-            self.dependOn = [depend]
+        if type(depend) == type([]):
+            self.dependOn = {}
+            for d in depend:
+                self.dependOn[d] = None
+        # add download dependency
+        for d in download:
+            if len(d)>4:
+                self.dependOn.update(d[4])
         # add global dependency
-        self.dependOn += allDepend 
+        for d in allDepend:
+            if d not in self.dependOn:
+                self.dependOn[d] = None
         
         self.env = env
         if self.env==None:
@@ -100,7 +109,7 @@ class generic:
         
         self.env.AddMethod(self.downloader, 'downloader')
 
-        bld = Builder(action = self.uncompressor)
+        bld = Builder( action = Action( self.uncompressor, '%suncompress($SOURCE0 -> $TARGET)%s' % (bcolors.GREEN,bcolors.END) ) )
         self.env.Append(BUILDERS = {'uncompressor' : bld})
 
         os.popen( "mkdir -p %s" % buildFolder(self.args) )
@@ -193,9 +202,11 @@ class generic:
                         depend_n = self.depend_n(dependOn, download[n][2])
                         k = dependOn.depend.keys()
                         if p in k:
-                            source.append( dependOn.depend[p][depend_n] )
+                            if dependOn.depend[p][depend_n] not in source:
+                                source.append( dependOn.depend[p][depend_n] )
                         elif len(k)>0:
-                            source.append( dependOn.depend[k[-1]][depend_n] )
+                            if dependOn.depend[k[-1]][depend_n] not in source:
+                                source.append( dependOn.depend[k[-1]][depend_n] )
                 
                 # build
                 b = self.action( build, source )
@@ -205,13 +216,35 @@ class generic:
 
                 self.depend[p].append(t)
                 self.env.Alias( 'install', t )
+                self.env.Alias( 'build-%s' % name, t )
                 
     def registerSconsBuilder(self, *args):
 #        name = str(args[0]).split(' ')[2].split('.')[-1]
         name = self.className
-        bld = Builder(action = args[0])
+#        bld = Builder(action = args[0])
+#        bld = Builder(action = Action( args[0], '%s%s($TARGET)%s' % (bcolors.GREEN,self.className,bcolors.END) ) )
+        bld = Builder(action = Action( args[0], self.sconsPrint ) )
         self.env.Append(BUILDERS = {name : bld})
         return filter(lambda x: self.className==x[0], inspect.getmembers(self.env))[0][1]
+        
+    def sconsPrint(self, target, source, env):
+        t=str(target[0])
+        n=' '.join(t.split(os.path.sep)[-3:-1])
+        if '.python' in t:
+             n = "%s(py %s)" % (n, t.split('.python')[-1].split('.done')[0])
+        print bcolors.WARNING+':'+'='*120
+        print bcolors.WARNING+": "+bcolors.BLUE+"%s( %s )" % (
+            self.className,
+            n
+        )
+        print bcolors.WARNING+": "
+        d=map(lambda x: '.'.join(str(x).split(os.path.sep)[-3:-1]), source[1:])
+        print bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0])
+        for n in range(0,len(d),6):
+            print bcolors.WARNING+": "+bcolors.BLUE+"           %s" % ', '.join(d[n:n+6])
+        print bcolors.WARNING+": "+bcolors.END
+#        print bcolors.HEADER+'-'*120+bcolors.END
+                     
         
     def setInstaller(self, method):
         self.installer = method
@@ -288,19 +321,36 @@ class generic:
                         
                         
     
-    def depend_n(self,dependOn,currVersion):
+    def depend_n(self,dependOn,currVersion, dependencyList=None):
         ''' support function to find the same version of a depency
         # look in the dependency download list if we have
         # the same version number as the current package.
         # if so, use that targetFolder!
         # works for cases like openexr and ilmbase which are 
         # released with the same version!
+        # also, for packages who need an specific version of a dependency to build, sets it here!
         '''
         depend_n = -1
+        dependOnVersion = self.dependOn[dependOn]
+        # grab dependency version from download list
+        for download in filter(lambda x: x[2] == currVersion, self.downloadList):
+            if len(download)>4: # 5th element is a dependency list with version
+                if dependOn in download[4]:
+                    dependOnVersion = download[4][dependOn]
+        
         for each in range(len(dependOn.downloadList)):
+#            if currVersion == '1.6.7':
+#                print each, currVersion, dependOn.name, dependOn.downloadList[each][2], dependOnVersion
+#                for n in self.dependOn:
+#                    print n.name,self.dependOn[n]
+            if dependOnVersion:
+                if dependOn.downloadList[each][2] == dependOnVersion:
+                    depend_n = each
+                    break                    
             if dependOn.downloadList[each][2] == currVersion:
                 depend_n = each
                 break
+#        print depend_n
         return depend_n
 
     def __check_target_log__(self,target):
@@ -449,7 +499,7 @@ class generic:
             os_environ['CPPFLAGS']      = "%s" % ' '.join(CFLAGS+LDFLAGS)
             os_environ['CXXFLAGS']      = "%s" % ' '.join(CFLAGS+LDFLAGS)
             os_environ['CPPCXXFLAGS']   = "%s" % ' '.join(CFLAGS+LDFLAGS)
-            os_environ['LDFLAGS']       = "-L/usr/lib64 %s" % ' '.join(LDFLAGS)
+            os_environ['LDFLAGS']       = "%s -L/usr/lib64" % ' '.join(LDFLAGS)
 
         if buildCompiler == gcc.pipe:
             os_environ['LD_LIBRARY_PATH'] = ':'.join([
@@ -457,16 +507,6 @@ class generic:
                 os_environ['LD_LIBRARY_PATH'],
     #            '/usr/lib64', # temporary workaround for redhat systems
             ])
-        os_environ['LIB'] = os_environ['LD_LIBRARY_PATH']
-        os_environ['LIBRARY_PATH'] = ':'.join([
-                   os_environ['LD_LIBRARY_PATH'],
-                   '/usr/lib/x86_64-linux-gnu/',
-        ])
-        os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
-        os_environ['PATH'] = ':'.join([
-            pipe.apps.python().path('bin'),
-            os_environ['PATH'],
-        ])
         
         # if running in fedora
 #        if os.path.exists('/etc/fedora-release'):
@@ -481,7 +521,39 @@ class generic:
         # set extra env vars that were passed to the builder class in the environ parameter!
         for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
             #print name.split('ENVIRON_')[-1], v.strip()
-            os_environ[name.split('ENVIRON_')[-1]] = v.strip()
+            
+            env = name.split('ENVIRON_')[-1]
+            bkp = ''
+            
+            # expand $var if exists in os_environ
+            if ':' in v:
+                for p in v.strip().split(':'):
+                    if p[0]=='$':
+                        if p[1:] in os_environ.keys():
+                            bkp = os_environ[p[1:]]+':'+bkp
+                            continue
+                    bkp = p+':'+bkp
+            else:
+                for p in v.strip().split(' '):
+                    if p[0]=='$':
+                        if p[1:] in os_environ.keys():
+                            bkp = os_environ[p[1:]]+':'+bkp
+                            continue
+                    bkp = p+' '+bkp
+                
+            os_environ[env] = bkp
+        
+        # update LIB and LIBRARY_PATH
+        os_environ['LIB'] = os_environ['LD_LIBRARY_PATH']
+        os_environ['LIBRARY_PATH'] = ':'.join([
+                   os_environ['LD_LIBRARY_PATH'],
+                   '/usr/lib/x86_64-linux-gnu/',
+        ])
+        os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
+        os_environ['PATH'] = ':'.join([
+            pipe.apps.python().path('bin'),
+            os_environ['PATH'],
+        ])
 
         # set lastlog filename
         extraLabel = ''
@@ -594,6 +666,7 @@ class generic:
                 tmp = "%s/tmp.%s" % (os.path.dirname(os.path.dirname(str(target[n]))), str(tmp))
 #                print "\tMD5 OK for file ", source[n], 
 #                print "... uncompressing... "
+#                print  "rm -rf %s 2>&1" % os.path.dirname(t)
                 os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                 cmd = "mkdir %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                 lines = os.popen(cmd).readlines()
@@ -636,8 +709,8 @@ class generic:
         ids.reverse()
         url = filter(lambda x: os.path.basename(t).split('.python')[0] in x[1], self.downloadList)[0]
         for version in ids:
-            v  = map(lambda x: int(x), version.split('.'))
-            vv = map(lambda x: int(x), url[2].split('.'))
+            v  = map(lambda x: int(x), version.split('.')[:3])
+            vv = map(lambda x: int(x), url[2].split('.')[:3])
             if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]: 
                 for each in self.sed[version]:
                     file = "%s/%s" % (t,each)

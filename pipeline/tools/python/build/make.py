@@ -20,8 +20,49 @@ class cmake(make):
     src = 'CMakeLists.txt'
     cmd = [
         'cmake $SOURCE_FOLDER && '
-        'make -j $DCORES && make install'
+        'make -j $DCORES VERBOSE=1 && make install'
     ]
+    flags = [    
+            '-Wno-dev',
+            '-DUSE_SIMD=0',
+            '-DUSE_FFMPEG=0',
+            '-DUSE_OPENCV=0',
+            '-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER',
+            '-DCMAKE_CC_COMPILER=$CC',
+            '-DCMAKE_CXX_COMPILER=$CXX',
+            '-DCMAKE_CPP_COMPILER=$CPP',
+            '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
+            '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
+            '-DCMAKE_LINKER=$LD',
+            '-DSTOP_ON_WARNING=0',
+            '-DBoost_NO_SYSTEM_PATHS=1',
+            '-DBoost_DETAILED_FAILURE_MSG=1',
+            '-DBoost_USE_STATIC_LIBS=false',
+#            '-DBoost_USE_MULTITHREADED=false',
+#            '-DBoost_USE_STATIC_RUNTIME=false',
+            '-DLIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
+            '-DPYTHON_ROOT=$PYTHON_ROOT',
+            '-DPYTHON_INCLUDE_DIR=$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR/',
+            '-DPYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+            '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
+            '-DBOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+            '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+            '-Wno-dev',
+            '-DVERBOSE=1',
+            '-DALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
+            '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+            '-DMAYA_ROOT=$MAYA_ROOT',
+            '-DARNOLD_ROOT=$ARNOLD_ROOT',
+            '-DPRMAN_ROOT=$PRMAN_ROOT',
+            '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
+            '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+            '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
+            '-DPYILMBASE_LIBRARY_DIR=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+            '-DGCC_VERSION=%s' % pipe.build.distro.split('-')[-1],
+            # we need libXmi and libXi from the main system
+            "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2))",
+            "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
+        ]
     
     def fixCMD(self, cmd):
         ''' cmake is kindy picky with environment variables and has lots of 
@@ -44,39 +85,14 @@ class cmake(make):
             'CMAKE_CXX_COMPILER=$CXX',
             'CMAKE_CC_LINKER_PREFERENCE=$LD',
             'CMAKE_CXX_LINKER_PREFERENCE=$LD',
+            'CMAKE_LINKER=$LD',
         ]
-        extra = [    
-            '-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER',
-            '-DCMAKE_CC_COMPILER=$CC',
-            '-DCMAKE_CXX_COMPILER=$CXX',
-            '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
-            '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
-            '-DCMAKE_LINKER=$LD',
-            '-DSTOP_ON_WARNING=0',
-            '-DBoost_USE_STATIC_LIBS=0',
-            '-DBoost_USE_MULTITHREADED=1',
-            '-DBoost_USE_STATIC_RUNTIME=0',
-            '-DLIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
-            '-DPYTHON_ROOT=$PYTHON_ROOT',
-            '-DPYTHON_INCLUDE_DIR=$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR/',
-            '-DPYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
-            '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
-            '-DBOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
-            '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
-            '-Wno-dev',
-            '-DALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
-            '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
-            '-DMAYA_ROOT=%s' % maya,
-            '-DARNOLD_ROOT=%s' % arnold,
-            '-DPRMAN_ROOT=%s' % prman,
-            '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
-            '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
-            '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
-            # we need libXmi and libXi from the main system
-            "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2))",
-            "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
+        environ += [
+            'MAYA_ROOT=%s'   % maya,
+            'ARNOLD_ROOT=%s' % arnold,
+            'PRMAN_ROOT=%s'  % prman,
         ]
-        for each in extra:
+        for each in self.flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
                 cmd = cmd.replace('cmake','cmake '+each+' ')
         

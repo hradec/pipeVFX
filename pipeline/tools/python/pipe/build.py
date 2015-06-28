@@ -36,6 +36,7 @@ def gcc():
 def env():
     ''' return the PATH to add our custom gcc, so when we build something, it will use pipes gcc'''
     return '''
-        PATH=%s:$PATH
-    ''' % (gcc)
+        export PATH=%s:$PATH
+        export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/  ## we need this to make our gcc work in debian/ubuntu systems!
+    ''' % (gcc())
 
