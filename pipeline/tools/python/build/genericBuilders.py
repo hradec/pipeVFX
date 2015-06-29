@@ -741,6 +741,8 @@ class generic:
                 os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                 cmd = "mkdir %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                 lines = os.popen(cmd).readlines()
+                for l in lines:
+                    print lines
                 cmd =  "mv %s/%s %s && rm -rf %s 2>&1" % (tmp, os.path.basename(s.replace('.tar.gz','')), os.path.dirname(t), tmp)
                 lines += os.popen( cmd ).readlines()
                 if not os.path.exists(str(target[n])):
