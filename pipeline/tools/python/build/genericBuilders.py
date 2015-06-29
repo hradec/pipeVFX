@@ -731,6 +731,7 @@ class generic:
             s = os.path.abspath(str(source[n]))
             t = os.path.abspath(str(target[n]))
             md5 = self.md5(source[n])
+            print "..%s...%s..." % (md5, url[3])
             if md5 == url[3]:
                 import random
                 tmp = int(random.random()*10000000)
@@ -741,8 +742,6 @@ class generic:
                 os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                 cmd = "mkdir %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                 lines = os.popen(cmd).readlines()
-                for l in lines:
-                    print lines
                 cmd =  "mv %s/%s %s && rm -rf %s 2>&1" % (tmp, os.path.basename(s.replace('.tar.gz','')), os.path.dirname(t), tmp)
                 lines += os.popen( cmd ).readlines()
                 if not os.path.exists(str(target[n])):
