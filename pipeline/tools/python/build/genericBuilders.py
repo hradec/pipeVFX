@@ -693,10 +693,10 @@ class generic:
 
     def md5(self, file):
         import hashlib
-        value=''
-        if os.path.exists(file):
-            value = open(file).read()
-        return hashlib.md5(value).hexdigest()
+        value=hashlib.md5('').hexdigest()
+        if os.path.exists(str(file)):
+            value = hashlib.md5(open(str(file)).read()).hexdigest()
+        return value
 #        return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()
 
     def downloader( self, env, source, _url=None):        
