@@ -3,8 +3,8 @@ language:
   - cpp
 
 before_install:
-	- sudo apt-get update -qq
-	- sudo apt-get install -qq libc6-dev
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libc6-dev
 
 python:
   - "2.7"
