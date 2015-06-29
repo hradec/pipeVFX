@@ -63,7 +63,7 @@ class boost(configure):
     }
     cmd = [
         './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-        './b2 -j $DCORES cxxflags="-fPIC $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+        './b2 -j $DCORES cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
     ]
 
 #    def installer(self, target, source, env):

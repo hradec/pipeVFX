@@ -11,12 +11,21 @@ import os, traceback, sys, inspect
 
 import multiprocessing
 
+# initialize CORES and DCORES(double cores) env var based on the number of cores 
+# the host machine has
 CORES=int(multiprocessing.cpu_count())
 os.environ['CORES'] = '%d' % CORES
 os.environ['DCORES'] = '%d' % (2*CORES)
 
+# we store in this list all builds that we want to make
+# subsequent builds depend on. 
+# As we store the scons build class, we have all the info we need 
+# for the subsequent builds, including all versions build information
+# so we a build can pick and choose its dependency version, if needed!
 allDepend = []
 
+
+# cleanup pythonpath env var!
 if not os.environ.has_key('PYTHONPATH'):
     os.environ['PYTHONPATH']=''
 #pythonpath_original = ':'.join(filter(lambda x: '/usr/'!=x[:5], sys.path))
@@ -27,6 +36,7 @@ pythonpath_original = ':'.join([
 os.environ['PYTHONPATH'] = pythonpath_original 
 environ_original = os.environ.copy()
 
+# cleanup tmp folders
 os.popen("rm -rf build/tmp.*").readlines()
 
 # check if we have a faulty libGL.la installed by nvidia
@@ -48,10 +58,66 @@ if os.popen('''cat %s 2>&1 | grep "'/usr/lib'"''' % file).readlines():
 
 
 class gcc:
+    ''' a simple "enum" class so we can use gcc.system/gcc.pipe instead of numbers in the code'''
     system=0
     pipe=1
 
 class generic:
+    '''
+        The main build class in our system. All other build classes derive from this one, so we can put most of the
+        build logic in just one place. 
+        Download of packages, uncompression, running the build command, setting the environment and dealing 
+        with dependencies, is all done in here.
+        Also, the installation prefix is defined here.
+        The parameters:
+
+            name        = the name of the package, as it will be installed. 
+                          ex: name=openexr will generate a folder structre like <libs folder>/openexr/2.0.0/<install files>
+                          
+            download    = its a list, where each component is a tupple of minimum 4 strings, being: 
+                          ( url to download pkg , pkg file name "openexer-2.0.0.tar.gz", version "2.0.0", md5 for the file )
+                          note: the pkg filename must match the folder name after uncompressing it. 
+                          note: tar.gz extension must be used (if its a tar.bz2 or tgz, just put tar.gz and the class will figure out)
+                          note: md5 will be show when building, if not specified. The build will fail, but it will give you the md5 to
+                                copy/paste in the tupple. 
+                          a 5th dict element can be added to the tupple, to specify dependency version for each pkg version, like this:
+                          ( 
+                            "http://oiio.com/oiio-1.5.0.tar.gz", 
+                            "oiio-1.5.0.tar.gz", 
+                            "1.5.0", 
+                            "8c54705c424513fa2be0042696a3a162"
+                            {ocio : "1.6.3"}
+                          )
+                          the dict has a ocio build class (previously defined), with a string telling the build should 
+                          use ocio 1.6.3 to build this oiio pkg version 1.5.0.
+            
+            python      = a list of strings with the python versions we should build the pkgs for. 
+                          if not specified, the pkg doesnt need python.
+            
+            depend      = a dict specifying dependency for all the pkg versions in the build, specified just like the example 
+                          above (5th tupple element of download)
+            
+            sed         = a dinamic patch mechanism, where we can replace strings on files before building.
+                          { 
+                              '0.0.0' : {  # initial version this sed will be applied to - 0.0.0 applies to all!
+                                    'ext/tinyxml_2_6_1.patch' : [ # lets patch file ext/tinyxml_2_6_1.patch
+                                        ('-fPIC', '-fPIC -DPIC'), # add -DPIC after every -fPIC
+                                        (' -fvisibility-inlines-hidden -fvisibility=hidden', ''), # remove all fvisibility 
+                                    ],
+                               }
+                          }
+            
+            environ     = a dict that replaces environment variables before a build.
+                          { "LDFLAGS" : "$LDFLAGS -lglib" } # adding glib library to linking
+            
+            compiler    = set what compiler to use when building. 
+                          Options are gcc.pipe (pipe gcc 4.1.2) and gcc.system (whatever version that is installed in the host system)
+            
+            src         = a string that tells the build what file to look at when uncompressing. ex: Makefile when building a make based pkg
+            
+            cmd         = a list of commands to build the pkg and install!
+                    
+    '''
     src   = ''
     cmd   = ''
     extra = ''
@@ -582,7 +648,7 @@ class generic:
             cmd = 'cd \\"%s\\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
             cmd = '''nice -n 10 %s/pipeline/tools/scripts/ppython --python_version %s --logd -c ''' % (pipe.depotRoot(),os_environ['PYTHON_VERSION'])+\
                   '''"import os,sys;ret=os.system(\'\'\''''+cmd+\
-                  '''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)" >%s 2>&1''' % lastlog
+                  '''\'\'\');print '@runCMD_ERROR@'+str(ret)+'@runCMD_ERROR@';sys.exit(ret)" > %s 2>&1''' % lastlog
 #            os.popen(cmd).readlines()
             from subprocess import Popen
             Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ).wait()
@@ -626,7 +692,9 @@ class generic:
             
 
     def md5(self, file):
-        return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()
+        import hashlib
+        return hashlib.md5(open(file).read()).hexdigest()
+#        return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()
 
     def downloader( self, env, source, _url=None):        
         ''' this method is a builder responsible to download the packages to be build '''
