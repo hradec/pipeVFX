@@ -648,7 +648,7 @@ hdf5 = build.configure(
         'hdf5',
         download=[
           (
-            'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.15.tar.gz',
+            'https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.15/src/hdf5-1.8.15.tar.gz',
             'hdf5-1.8.15.tar.gz',
             '1.8.15',
             '03cccb5b33dbe975fdcd8ae9dc021f24'
