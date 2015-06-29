@@ -175,7 +175,7 @@ class generic:
         
         self.env.AddMethod(self.downloader, 'downloader')
 
-        bld = Builder( action = Action( self.uncompressor, '%suncompress($SOURCE0 -> $TARGET)%s' % (bcolors.GREEN,bcolors.END) ) )
+        bld = Builder( action = Action( self.uncompressor, 'uncompress($SOURCE0 -> $TARGET)') )
         self.env.Append(BUILDERS = {'uncompressor' : bld})
 
         os.popen( "mkdir -p %s" % buildFolder(self.args) )
@@ -549,6 +549,13 @@ class generic:
                         "%s/include/" % dependOn.targetFolder[p][depend_n],
                         os_environ['INCLUDE'],
                     ])
+                    for each in glob("%s/include/*" % dependOn.targetFolder[p][depend_n]):
+                        if os.path.isdir(each):
+                            os_environ['INCLUDE'] = ':'.join([
+                                each,
+                                os_environ['INCLUDE'],
+                            ])
+                        
                     os_environ['PYTHONPATH'] = ':'.join([
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
@@ -731,7 +738,7 @@ class generic:
             s = os.path.abspath(str(source[n]))
             t = os.path.abspath(str(target[n]))
             md5 = self.md5(source[n])
-            print "..%s...%s..." % (md5, url[3])
+#            print "..%s...%s..." % (md5, url[3])
             if md5 == url[3]:
                 import random
                 tmp = int(random.random()*10000000)
