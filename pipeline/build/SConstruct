@@ -11,14 +11,14 @@ import build, pipe
 allPythonVersions = pipe.libsDB()['python']['versions']
 
 
-#delight = build.configure(
+#delight = build.appInstall(
 #        ARGUMENTS,
 #        'delight',
 #        download=[
 #          (
-#            'http://www.3delight.com/downloads/free/3delight-Linux-x86_64.tar.xz.php',
-#            '3delight-Linux-x86_64.tar.gz',
-#            '6.0.0',
+#            'http://www.3delight.com/downloads/free/3delight-11.0.85-Linux-x86_64.tar.gz',
+#            '3delight-11.0.85-Linux-x86_64.tar.gz',
+#            '11.0.85',
 #            'b7ff2d88cae7f8085bd5006096eed470'
 #          ),
 #        ],
