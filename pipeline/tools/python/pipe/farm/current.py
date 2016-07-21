@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -19,4 +19,13 @@
 # =================================================================================
 
 
-from engines.qube import job as engine
+
+import os, pipe
+#pipe.baseApp().configFiles()
+if os.environ.has_key('PIPE_FARM_ENGINE'):
+    if 'afanasy' in os.environ['PIPE_FARM_ENGINE'].lower().strip():
+        from engines.afanasy import job as engine
+    else:
+        from engines.qube import job as engine
+else:
+    from engines.qube import job as engine

@@ -14,13 +14,16 @@ class configure(generic):
     src = 'configure'
     cmd = [
         './configure  --enable-shared',
-        'make -j $DCORES  && make  install',
+        'make -j $DCORES',
+        'make -j $DCORES install',
     ]
 
     def fixCMD(self, cmd):
         if 'configure' in cmd and '--prefix=' not in cmd:
             cmd = cmd.replace('configure', 'configure --prefix=$TARGET_FOLDER ')
-#        if 'make' in cmd:
+        if 'make' in cmd and 'cmake' not in cmd:
+            if not '-j' in cmd:
+                cmd = cmd.replace('make', "make -j $DCORES")
 #            cmd = cmd.replace('make', "make CC=$CC CXX=$CXX CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' ")
         return cmd 
     
@@ -49,7 +52,8 @@ class freetype(configure):
     def installer(self, target, source, env):
         t = os.path.dirname(str(target[0]))
         if os.path.exists( "%s/include/freetype2" % t):
-            os.popen("ln -s freetype2 %s/include/freetype" % t).readlines()
+            if not os.path.exists( "%s/include/freetype" % t):
+                os.popen("ln -s freetype2 %s/include/freetype" % t).readlines()
 
         
                 

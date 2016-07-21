@@ -24,4 +24,6 @@ from maya import maya
 from nuke import nuke
 from daily import daily
 from houdini import houdini
+from cmds import cmds
+
 

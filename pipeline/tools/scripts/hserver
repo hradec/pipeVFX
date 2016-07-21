@@ -1,6 +1,10 @@
 #!/bin/bash
 returncode=$?
 
-/atomo/apps/linux/x86_64/houdini/hfs13.0.509/bin/hserver
-/atomo/apps/linux/x86_64/houdini/hfs13.0.509/bin/hserver -S 192.168.0.249
+#/atomo/apps/linux/x86_64/houdini/hfs13.0.509/bin/hserver
+#/atomo/apps/linux/x86_64/houdini/hfs13.0.509/bin/hserver -S 192.168.0.249
+
+
+PYTHONPATH=/atomo/pipeline/tools/python  /usr/bin/python2 -c 'import pipe;h=pipe.apps.houdini();h.license();h.run("hserver")'
+
 exit 0

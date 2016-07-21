@@ -1,6 +1,6 @@
 #!/bin/sh
 
-/atomo/pipeline/tools/python/tcptools/__init__.py "$@"
+python2 /atomo/pipeline/tools/python/tcptools/__init__.py "$@"
 
 
 #if [[ $@ != **--nocolors** ]] ; then

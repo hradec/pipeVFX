@@ -24,7 +24,7 @@ import os
 
 
 class houdini(current.engine):
-    def __init__(self, scene, driver, renderer='mantra', outFile='', name='', extra='', CPUS=0, priority=9999, range=range(1,10), group='pipe'):
+    def __init__(self, scene, driver='mantra1', renderer='mantra', outFile='', name='', extra='', CPUS=0, priority=9999, range=range(1,10), group='pipe'):
         self.renderer = renderer
         self.output_driver = driver
         self.output_filename = outFile
@@ -34,28 +34,20 @@ class houdini(current.engine):
         current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group)
         
     def cook(self):
-        # if no output filename, create a default one based on 
-        # scene name and output driver node name!
-        if not self.output_filename:
-            self.output_filename = os.path.join(
-                os.path.dirname(self.scene),
-                'render',
-                os.path.splitext(os.path.basename(self.scene))[0],
-                '%s.$F4.exr' % os.path.basename(self.output_driver)
-            )
-            
-        # escape $F used by houdini 
-        self.output_filename = self.output_filename.replace("$F","\\\\\\\\\\$\\\\\\F")
-        
+
+        output_drivers = self.output_driver
+        if type(self.output_driver) == type([]):
+            output_drivers = ','.join(self.output_driver)
+       
         # if renderer os mantra, do a hrender normally. 
         # we can setup here different renders to do simulation, for example!
         if self.renderer == 'mantra': 
-            self.name += " | MANTRA v%s" % ''.join(filter( lambda x: x.isdigit(), pipe.apps.houdini().version() ))
+            self.name += " | HOUDINI v%s" % pipe.apps.houdini().version()[3:]
             #self.licenses['mantra'] = True
             
         self.cmd = ' '.join([
             'run hrender -e -f %s %s' % (self.frameNumber(),self.frameNumber()),
-            '-d "%s"' % self.output_driver,
+            '-d %s' % output_drivers,
 #            '-o "%s"' % self.output_filename,
             '\\\'%s\\\'' % self.scene
         ])

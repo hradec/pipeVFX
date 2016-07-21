@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -24,19 +24,21 @@ import os
 
 
 class maya(current.engine):
-    def __init__(self, scene, project, asset=None, renderer='3delight', ribs=[], name='', extra='', CPUS=0, priority=9999, range=range(1,10), group='pipe'):
+    def __init__(self, scene, project=None, asset=None, renderer=None, ribs=[], name='', extra='', CPUS=0, priority=9999, range=range(1,10), group='pipe'):
         self.renderer = renderer
         self.project = project
+        if not self.project:
+            self.project = os.path.dirname(os.path.dirname(scene))
         self.scene =  os.path.abspath( scene )
         self.ribs = ribs
         current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group,asset=asset)
-        
+
     def cook(self):
         asset=''
         if self.asset:
             asset= '--asset "%s"' % self.asset
 
-        if self.renderer == '3delight': 
+        if self.renderer == '3delight':
             self.name += " | 3DELIGHT v%s" % pipe.apps.delight().version()
             self.licenses['delight'] = True
             self.cmd = [
@@ -47,21 +49,42 @@ class maya(current.engine):
                 '"%s"' % self.scene,
                 asset,
             ]
-            
+
 
             for each in self.ribs:
                 self.cmd.append( '; run renderdl "%s" %s ' % (each, asset) )
-                
+
             self.cmd = ' '.join(self.cmd)
-            
+
         else:
-            self.name += " | MAYA v%s" % pipe.apps.maya().version()
+            pipe_asset = "_".join(self.asset.strip('/').split('/')[-2:]).replace('.','_')
+            
+            extra = ''
+            print "\n\n\n ======>%s \n\n\n" % self.renderer
+            if 'renderMan' in self.renderer:
+                extra = '-r rman -batchContext %s_%s' % (pipe_asset, self.frameNumber())
+                if 'RIS' in self.renderer:
+                    extra = extra+' -ris '
+                    
+            if 'mentalRay' in  self.renderer:
+                extra = ' -mr:v 5 '
+            
+            self.name += " | MAYA v%s (%s)" % (pipe.apps.maya().version(), self.renderer)
             self.cmd = ' '.join([
-                'run Render -s %s -e %s' % (self.frameNumber(), self.frameNumber()),
+                'export PIPE_ASSET="%s_%s" && ' % (pipe_asset, self.frameNumber()) ,
+                'run Render -s %s -e %s ' % (self.frameNumber(), self.frameNumber()),
                 '-proj "%s"' % self.project,
 #                '-renderer "%s"' % self.renderer,
+                extra,
                 '"%s"' % self.scene,
                 asset,
             ])
-        
             
+            #mel rmanSpoolImmediateRIBLocalRender()
+            
+            self.files = ["%s/images/none" % self.asset]
+            # add an extra postCmd to cleanup the pipe_asset folder inside renderman, if any!
+#            self.postCmd = {
+#                'name' : "(post cleanup)",
+#                'cmd'  : 'rm -rf "%s/renderman/%s"' % ( self.project, pipe_asset ),
+#            }

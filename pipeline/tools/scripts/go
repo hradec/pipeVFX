@@ -1,5 +1,17 @@
 #!/bin/bash
 
+if [ "$QBJOBID" != "" ] ; then 
+	export PIPE_FARM_USER=$(echo $(/atomo/apps/linux/x86_64/qube/current/qube-core/local/pfx/qube/bin/qbjobs 12424 | head -3 | tail -1) | cut -d' ' -f7)
+	export HOME=/atomo/home/$PIPE_FARM_USER
+	export USER=$PIPE_FARM_USER
+	[ -f /etc/profile ] && source /etc/profile
+	[ -f $HOME/.bash_profile ] && source $HOME/.bash_profile
+	source /atomo/pipeline/tools/init/bash
 
-eval "$(/usr/bin/python -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.go()" $BASH_SOURCE $@)" 
+	echo "===##############################################################" 
+	env 
+	echo "===##############################################################" 
+fi
 
+
+eval "$(/usr/bin/python2 -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.go()" $BASH_SOURCE $@)" 

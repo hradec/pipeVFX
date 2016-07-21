@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env ppython
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -37,19 +38,19 @@ except:
 
 
 def system(cmd):
-    ''' this function acts just like os.system, but it's able to capture the output and return as 
+    ''' this function acts just like os.system, but it's able to capture the output and return as
     text.
     it also properly handles farm execution, running the command as the proper user!'''
     if os.environ.has_key('PIPE_FARM_USER'):
-        # if running in the farm, we need to use sudo to run as 
-        # the original user 
+        # if running in the farm, we need to use sudo to run as
+        # the original user
         s = sudo()
         s.cmd( "su -l %s -s /bin/bash -c '%s'" % (os.environ['PIPE_FARM_USER'], cmd) )
         return s.run()
     else:
         # if running as the user, just run the cmd
         return runProcess( cmd )
-    
+
 
 
 
@@ -58,7 +59,7 @@ class sudo():
 #        self.___sudo = 'ssh root@atomoweb.local "%s" 2>&1'
 #        self.___sudo = 'ssh root@localhost "%s" 2>&1'
         self.__cmdbuffer = []
-            
+
 
     def cmd(self, cmd):
         self.__cmdbuffer.append(cmd)
@@ -69,6 +70,7 @@ class sudo():
         ret  = ''
         try:
             import dbus
+            from dbus.mainloop.glib import DBusGMainLoop
         except:
             traceback.print_exc()
             traceback.print_stack()
@@ -76,10 +78,8 @@ class sudo():
             print "This may be caused by launching an app from inside a running app, which in this case, ignore this error!"
             print "If this was caused by launching an app, please contact someone responsible for the pipeline and report this at once!!!"
             dbus=None
-            
+
         if dbus:
-            from dbus.mainloop.glib import DBusGMainLoop
-            
             done = False
             cmd  = ' ;; '.join(self.__cmdbuffer)
 
@@ -94,16 +94,16 @@ class sudo():
                 self.__hasService = False
 
             if self.__hasService:
-                # create a tempfile to use as a comunication pipe to 
+                # create a tempfile to use as a comunication pipe to
                 # dbusPipeService sudo method, which runs in background!!
                 file = tempfile.mkstemp("","dbusPipe_")
                 file = file[1]
                 open("%s_log" % file,'w').close() # touch it so we can delete later!
-                
-                # call dbusPipeService sudo method, passing our tempfile 
-                # so it can run in background and return the output to us through 
-                # the temp file! 
-                # this call will return right away, so no dbus annoying timeout will happen! 
+
+                # call dbusPipeService sudo method, passing our tempfile
+                # so it can run in background and return the output to us through
+                # the temp file!
+                # this call will return right away, so no dbus annoying timeout will happen!
                 # the return value is the PID of the process forked by dbus!
                 pid = self.__admServiceSudo([cmd,  file, str(os.getpid())])
 
@@ -115,32 +115,32 @@ class sudo():
                         os.remove(file)
                     if os.path.exists("%s_log" % file):
                         os.remove("%s_log" % file)
-                    raise 
+                    raise
 
                 # Set the signal handler and a 5-second alarm
                 signal.signal(signal.SIGTERM, handler)
                 signal.signal(signal.SIGABRT, handler)
                 signal.signal(signal.SIGQUIT, handler)
-                
-                # run a loop monitoring our tmp file for a DONE line. 
+
+                # run a loop monitoring our tmp file for a DONE line.
                 # dbus will add a DONE line to the file when it's done
                 # running in background!
                 try:
                     lastLines = []
                     while( 1 ):
-                        
+
                         # little tricky to display log live on farm
                         if os.path.exists("%s_log" % file):
-                            f = open( "%s_log" % file, 'r' ) 
+                            f = open( "%s_log" % file, 'r' )
                             llog = f.readlines()
                             f.close()
                             for l in filter(lambda x: x not in lastLines, llog):
                                 print l
                                 sys.stdout.flush()
-                            lastLines = llog 
-                        
+                            lastLines = llog
+
                         # real log pulling to check if sudo thread finished or not!
-                        f = open( file, 'r' ) 
+                        f = open( file, 'r' )
                         lines = f.readlines()
                         f.close()
                         if filter( lambda x: 'DONE' in x, lines ):
@@ -149,8 +149,8 @@ class sudo():
                             break
                         else:
                             time.sleep(3.0)
-                            
-                except: 
+
+                except:
                      handler()
                      raise
             else:
@@ -174,7 +174,7 @@ class sudo():
                 self.cmd( "chown %s '%s'" % (owner, path) )
         else:
                 self.cmd( "chown %s '%s'" % (owner, path) )
-        
+
     def chmod(self, perm, path):
 #        self.cmd( "setfacl -b %s" % path )
         self.cmd( "chmod %s '%s'" % (perm, path) )
@@ -183,10 +183,10 @@ class sudo():
         u = "$(getfacl %s 2>&1 | grep '^user::' | cut -d':' -f3 | sed 's/---/@/' | sed 's/-//g' | sed 's/@/-/')" % path
         g = "$(getfacl %s 2>&1 | grep '^group::' | cut -d':' -f3 | sed 's/---/@/' | sed 's/-//g' | sed 's/@/-/')" % path
         o = "$(getfacl %s 2>&1 | grep '^other::' | cut -d':' -f3 | sed 's/---/@/' | sed 's/-//g' | sed 's/@/-/')" % path
-        
+
         #self.cmd( "setfacl -m d:u::%s,d:g::%s,d:g:artists:%s,o::%s %s" % (u,g,g,o,path) )
 #        self.cmd( "chmod %s '%s'" % (perm, path) )
-        
+
     def mkdir(self, path):
         if not os.path.exists(path):
             self.cmd( "mkdir -p '%s'" % path )
@@ -213,10 +213,11 @@ class sudo():
 
 def username():
     user = pwd.getpwuid( os.getuid() )[ 0 ]
-    if user == 'qubeproxy' and os.environ.has_key('PIPE_FARM_USER'):
+    #if user == 'qubeproxy' and os.environ.has_key('PIPE_FARM_USER'):
+    if os.environ.has_key('PIPE_FARM_USER'):
         user = os.environ['PIPE_FARM_USER']
     return user
-    
+
 class job(sudo):
     def __init__(self, projectID=None, projectName=None, adminUser=":artists"):
         if not projectID:
@@ -226,19 +227,19 @@ class job(sudo):
                 projectName = '.'.join(tmp[1:])
             else:
                 raise Exception("ERROR: No Job Set!!")
-                
+
         sudo.__init__(self)
         self.root = roots.jobs()
         self.proj = "%04d.%s" % (int(projectID), projectName.lower())
         self.__user = adminUser
         self.projPath = "%s/%s" % (self.root, self.proj)
-        
+
     def path(self, subpath=''):
         ret = "%s/%s" % (self.root, self.proj)
         if subpath:
             ret = "%s/%s" % (ret, subpath)
         return ret
-    
+
     def fixPerm(self, path, perms=["u+rwx","g+rx"], recursive=False):
         self.chown( self.__user, path, recursive )
         self.chmod( "a-rwx", path )
@@ -253,7 +254,7 @@ class job(sudo):
         self.fixPerm(toPath, perms)
         if username:
             self.chown( "%s:artists" % username, toPath )
-    
+
     def mkdir(self, path, username='', perm=[]):
         perms=["u+rwx","g+rx"]
         perms.extend( perm )
@@ -269,48 +270,50 @@ class job(sudo):
             beach = os.path.basename(each)
             if os.path.isdir(each) and beach not in ignore:
                 self.mkdir( "%s/%s" % (path, beach), username )
-                
+
     def mkpublished(self, path):
 #        self.mkdir( self.path("%s/published" % path) )
         # temp hack - everyone from group can write here!
-        self.mkdir( self.path("%s/published" % path), perm=["g+wx"] )
-        self.mkdir( self.path("%s/published/ref" % path), perm=["g+wx"] )
-                
+        self.mkdir( self.path("%s/published" % path), perm=["a+rwx"] )
+        self.mkdir( self.path("%s/published/ref" % path), perm=["a+rwx"] )
+
     def mkfootage(self, path):
         self.mkdir( self.path("%s/footage" % path), perm=["a+rwx"] )
-                
+
     def mkshot(self, path):
         self.mkdir( self.path(path) )
         self.mkdir( self.path("%s/users" % path) )
+        self.mkdir( self.path("%s/users/MAC" % path), perm=["a+rwx"] )
         self.mkpublished( path )
         self.mkfootage( path )
-    
+
+
     def mkreference(self, path=''):
         self.mkdir( self.path("reference"), perm=["g+w"] )
 
     def mkarchive(self, path=''):
         self.mkdir( self.path("archive"), perm=["a+rwx"] )
-        
+
     def mkref_artwork(self, path=''):
         folders='''
             ref_artwork
-            ref_artwork/01_RECEBIDOS  
-            ref_artwork/01_RECEBIDOS/BOARDS    
-            ref_artwork/01_RECEBIDOS/CRONOGRAMA  
-            ref_artwork/01_RECEBIDOS/REFERENCIAS  
-            ref_artwork/01_RECEBIDOS/ROTEIROS  
+            ref_artwork/01_RECEBIDOS
+            ref_artwork/01_RECEBIDOS/BOARDS
+            ref_artwork/01_RECEBIDOS/CRONOGRAMA
+            ref_artwork/01_RECEBIDOS/REFERENCIAS
+            ref_artwork/01_RECEBIDOS/ROTEIROS
             ref_artwork/01_RECEBIDOS/STILL
             ref_artwork/02_OFFLINE_XML
-            ref_artwork/02_OFFLINE_XML/MOVS  
+            ref_artwork/02_OFFLINE_XML/MOVS
             ref_artwork/02_OFFLINE_XML/XML
             ref_artwork/02_OFFLINE_XML/PROJETO_MM
-            ref_artwork/03_ARTES_FONTES 
-            ref_artwork/03_ARTES_FONTES/CARTELAS  
-            ref_artwork/03_ARTES_FONTES/CLAQUETES  
-            ref_artwork/03_ARTES_FONTES/FONTES  
-            ref_artwork/03_ARTES_FONTES/IMGs  
+            ref_artwork/03_ARTES_FONTES
+            ref_artwork/03_ARTES_FONTES/CARTELAS
+            ref_artwork/03_ARTES_FONTES/CLAQUETES
+            ref_artwork/03_ARTES_FONTES/FONTES
+            ref_artwork/03_ARTES_FONTES/IMGs
             ref_artwork/03_ARTES_FONTES/LOGO_ASSINATURA
-            ref_artwork/04_AUDIOS  
+            ref_artwork/04_AUDIOS
             ref_artwork/05_RELATORIOS
             ref_artwork/05_RELATORIOS/DECUPAGEM
         '''
@@ -331,7 +334,148 @@ class job(sudo):
         '''
         for each in folders.split():
             self.mkdir( self.path(each), perm=["a+rwx"] )
-                
+
+    def mkPROJETO(self, path=''):
+        structure='''
+── PROJETO
+│   ├── ARTWORKS
+│   │   ├── CONCEPTS
+│   │   │   └── _data
+│   │   │       └── _hora
+│   │   └── MATERIAL
+│   │       ├── 3D
+│   │       │   └── _data
+│   │       │       └── _hora
+│   │       ├── AUDIOS
+│   │       │   └── _data
+│   │       │       └── _hora
+│   │       ├── FONTES
+│   │       │   └── _data
+│   │       │       └── _hora
+│   │       ├── FOOTAGES
+│   │       │   └── _data
+│   │       │       └── _hora
+│   │       └── IMAGENS
+│   │           ├── CARTELAS
+│   │           │   └── _data
+│   │           │       └── _hora
+│   │           ├── LOGOS
+│   │           │   └── _data
+│   │           │       └── _hora
+│   │           └── SOURCEIMAGES
+│   │               └── _data
+│   │                   └── _hora
+│   ├── MASTER
+│   │   ├── BASE_LIMPA
+│   │   └── _versao
+│   ├── OFFLINE_XML
+│   │   └── _data
+│   ├── PRODUCAO
+│   │   ├── COPIA
+│   │   │   ├── CLAQUETES
+│   │   │   └── PEDIDOS
+│   │   ├── CRONOGRAMA
+│   │   ├── REFERENCIAS
+│   │   │   ├── BOARDS
+│   │   │   └── MONSTRO
+│   │   ├── RELATORIOS
+│   │   └── ROTEIRO
+│   │       └── DATA_NOME
+│   └── SAIDAS
+│       ├── OFFLINE
+│       │   └── _data
+│       │       └── _hora
+│       │           └── _projeto_info_data_hora
+│       ├── ONLINE
+│       │   └── _data
+│       │       └── _hora
+│       │           └── _projeto_info_data_hora
+│       └── WIP
+│           ├── 3D
+│           │   └── _data
+│           │       └── _hora
+│           │           └── _projeto_info_data_hora
+│           ├── AFTER_EFFECTS
+│           │   └── _data
+│           │       └── _hora
+│           │           └── _projeto_info_data_hora
+│           ├── DAVINCI
+│           │   └── _data
+│           │       └── _hora
+│           │           └── _projeto_info_data_hora
+│           ├── NUKE
+│           │   └── _data
+│           │       └── _hora
+│           │           └── _projeto_info_data_hora
+│           ├── PHOTOSHOP
+│           │   └── _data
+│           │       └── _hora
+│           │           └── _projeto_info_data_hora
+│           ├── PREMIERE
+│           │   └── _data
+│           │       └── _hora
+│           │           └── _projeto_info_data_hora
+│           └── SMOKE
+│               └── _data
+│                   └── _hora
+│                       └── _projeto_info_data_hora
+'''
+        clean = ['|','└','─','├','│','\xc2','\xa0','\xc2','\xa0']
+        for each in clean:
+            structure = structure.replace(each,' ')
+
+        # parse the folder structure in the string above
+        # and store in a dict
+        # it also creates a mkdirs dict with all folders that need to be created!
+        zstruct = {}
+        mkdirs = {}
+        index = {}
+        old = ''
+        oldSpaces = 0
+        oldSpacesId = {}
+        mkdir = ""
+        mkdirList = []
+        for l in structure.split('\n'):
+            spaces = l.count(' ')
+            #print l,spaces
+            l = l.strip()
+            if spaces>0:
+                if spaces > oldSpaces:
+                    sid = oldSpaces
+                    oldSpacesId[spaces] = oldSpaces
+                    mkdirs[spaces] = mkdir
+                else:
+                    sid = oldSpacesId[spaces]
+                    mkdirList.append(mkdir)
+                    mkdir = mkdirs[spaces]
+                if spaces < 4:
+                    sid = spaces
+                    oldSpacesId[spaces] = oldSpaces
+                    oldSpaces = spaces
+                    zstruct[l] = {}
+                    old = zstruct[l]
+                    index[sid] = zstruct[l]
+                    mkdir = l
+                    mkdirs[spaces] = mkdir
+                else:
+                    index[sid][l] = {}
+                    index[spaces] = index[sid][l]
+                    oldSpaces = spaces
+                    mkdir += "/"+l
+
+        #from pprint import pprint
+        #pprint( zstruct )
+
+        # create folders!!
+        for d in mkdirList:
+            path = "."
+            for p in d.split('/')[1:]:
+                path = path+'/'+p
+                self.mkdir( self.path(path), perm=["a+rwx"] )
+
+
+
+
     def mkuser(self, path, subpath="", user=None):
         if not user:
             user = username()
@@ -340,43 +484,46 @@ class job(sudo):
         self.mkdir( "%s/%s"        % (basePath, subpath), user )
 #        self.mkdir( "%s/tools"      % basePath, user )
 #        self.mktools( "%s/users/%s/tools"    % (path, user), user )
-        
+
     def client( self, name ):
         self.toFile( name, self.path('.cliente') )
 
     def data( self, data ):
         self.toFile( str(data), self.path('.data') )
-        
+
     def getData( self ):
         ret = {}
         if os.path.exists(self.path('.data')):
             ret = ''.join( open( self.path('.data'), 'r' ).readlines() )
             ret = eval(ret)
         return ret
-        
+
     def mkroot(self):
         # main project path
         self.mkdir(self.path())
-        
-        self.mkdir(self.path("archive"))
-        self.mkarchive()
-        self.mkref_artwork()
-        self.mksaidas()
-        self.mkdir(self.path("reference"))
-        self.mkreference()
-        
+
+        #self.mkdir(self.path("archive"))
+        #self.mkarchive()
+
+        #self.mkref_artwork()
+        #self.mksaidas()
+        #self.mkdir(self.path("reference"))
+        #self.mkreference()
+
+        self.mkPROJETO()
+
         self.mkdir(self.path("shots"))
-        
+
         self.mkdir(self.path("assets"))
 #        self.mkshot( "assets" )
-        
+
         self.mktools( self.path("tools"), 'rhradec' )
         if not os.path.exists( self.path("tools/config/versions.py") ):
             self.cp( "%s/config/versions.py" % roots.tools(), self.path("tools/config"), 'rhradec' )
-        
+
     def create(self):
         return self.run()
-        
+
     @staticmethod
     def current():
         ret = None
@@ -384,7 +531,7 @@ class job(sudo):
             ret = job()
         finally:
             return ret
-        
+
     class shot():
         def __init__(self):
             import os
@@ -395,7 +542,7 @@ class job(sudo):
                 self.shot = values[1]
             else:
                  raise Exception("ERROR: No Shot Set!")
-        
+
         @staticmethod
         def current():
             ret = None
@@ -403,18 +550,18 @@ class job(sudo):
                 ret = job.shot()
             finally:
                 return ret
-        
+
         def path(self, subpath=''):
             ret = "%s/%ss/%s" % (job().path(), self.basePath, self.shot)
             if subpath:
                 ret = "%s/%s" % (ret, subpath)
             return ret
-    
+
         class user():
             def __init__(self):
                 self.job = job()
                 self.shot = job.shot()
-                
+
             def path(self, subpath=''):
                 ret = "%s/users/%s" % (self.shot.path(), username())
                 if subpath:
@@ -424,16 +571,16 @@ class job(sudo):
             def mktools(self):
                 self.mkdir('tools')
                 self.job.mktools( self.path( 'tools' ), username() )
-                
+
             def mkdir(self, subpath=''):
                 self.job.mkdir( self.path( subpath ), username() )
                 if not os.path.exists( self.path() ):
                     self.job.fixPerm(self.path(), recursive=True)
-                
+
             def toFile( self, data, file ):
                 self.job.toFile( '\n'.join(data), self.path(file) )
                 self.job.chown( "%s:artists" % username(), self.path(file) )
-            
+
             def create(self):
                 self.job.create()
 
@@ -446,7 +593,7 @@ class job(sudo):
         if not job:
             return ''
         return "%s/%s" % (roots.jobs(), job)
-        
+
 
     @staticmethod
     def currentShot(j=None, values=None):
@@ -460,7 +607,7 @@ class job(sudo):
 
 
 
-        
+
 if __name__=='__main__':
     import sys
     j = job(sys.argv[1])
@@ -469,7 +616,3 @@ if __name__=='__main__':
     j.mkshot( "shots/02" )
     j.mkuser( "shots/02" )
     j.create()
-
-
-
-

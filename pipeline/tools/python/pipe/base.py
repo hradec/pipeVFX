@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -21,24 +21,54 @@
 
 import os,sys,glob,shutil
 
-def runProcess(exe):    
-    ''' run a shell command and captures the output at 
+def runProcess(exe):
+    ''' run a shell command and captures the output at
     the same time it displays it in the shell log.
     returns a tupple with exit code and log!'''
-    
+
     import subprocess
     log = ''
     ret = None
-    p = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, close_fds=False )
+    p = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, close_fds=True,bufsize = 1)
+    prefix = 'pipeLog: '
+    if os.environ.has_key('PIPE_FARM_USER'):
+        prefix = '\tpipeLog: '
     while(True):
+      std, err = (None,None)
+      for std in iter(p.stdout.readline,''):
+          if std:
+              if '%' in std:
+                    if 'progr:' in std:
+                        std = std.replace('progr:', 'PROGRESS:')
+                    else:
+                        std = filter(lambda x: x.strip(), std.strip().split(' '))
+                        #std = ' '.join(std[:-1]+['PROGRESS: ']+[std[-1]])+"\n"
+                        std = map(lambda x: "PROGRESS: "+x if '%' in x else x, std)
+                        std = ' '.join(std)+"\n"
+              sys.stdout.write( prefix + std )
+              log += std
+              sys.stdout.flush()
+          if err:
+              sys.stderr.write( "ERROR: " + err )
+              log += "ERROR: " + std
+              sys.stderr.flush()
+
       retcode = p.poll() #returns None while subprocess is running
-      line = p.stdout.readline()
-      if line:
-            sys.stdout.write("pipeLog: "+line)
-            sys.stdout.flush()
-      log += line
-      if(retcode is not None):
-        return (retcode,log)
+      if(p.returncode is not None):
+        try:
+            p.send_signal(9)
+            p.terminate()
+            p.kill()
+        except:
+            pass
+        break
+    
+    ret = p.returncode
+    if 'OSError' in log:
+        ret = 255
+    if 'PARSE ERROR' in log:
+        ret = 255
+    return (ret,log)
 
 
 
@@ -46,7 +76,7 @@ bits = os.popen('uname -m').readlines()[0].strip().lower()
 arch='x86_64'
 if bits[0]=='i':
     arch='x86_32'
-    
+
 if '--arch' in sys.argv:
     index = sys.argv.index('--arch')
     arch=sys.argv[index+1]
@@ -75,7 +105,7 @@ elif LIN in sys.platform.lower():
     platform = LIN
     LD_LIBRARY_PATH = 'LD_LIBRARY_PATH'
     lin=True
-    
+
 
 
 
@@ -93,7 +123,10 @@ def getDistro():
     if platform == OSX:
         distro = 'gcc-llvm5.1'
     else:
-        distro='gcc-4.1.2'
+        version = '4.1.2'
+        try: version = filter( lambda x: x.isdigit() or x=='.', os.popen('gcc --version').readlines()[0])
+        except: pass
+        distro = 'gcc-%s' % version
     return distro
 
 distro = getDistro()
@@ -167,11 +200,11 @@ class roots:
     def tools(plat=None, subpath=''):
         if subpath:
             subpath = '/%s' % subpath
-        
+
         root = depotRoot()
         if plat:
             root = roots.apps(plat)
-        
+
         return os.path.abspath( '%s/pipeline/tools/%s' % (root, subpath) )
 
 

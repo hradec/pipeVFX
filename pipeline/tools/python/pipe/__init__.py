@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -20,6 +20,10 @@
 
 
 import os, glob, sys
+# avoid creating .pyc since it can cause trouble between Intel and AMD
+sys.dont_write_bytecode = True
+
+
 if not hasattr(sys,'argv'):
     sys.argv = []
 
@@ -27,16 +31,16 @@ moduleRootPath = os.path.abspath( os.path.dirname(__file__) )
 sys.path.insert(0,moduleRootPath)
 
 curdir = os.getcwd()
+'''
 os.chdir(moduleRootPath)
 #os.system('rm %s/*.pyc' % moduleRootPath)
-'''
 for each in glob.glob('%s/*.py' %  moduleRootPath):
     module = os.path.splitext(os.path.basename(each))[0]
     if module not in __file__:
         exec( 'import %s;reload(%s);del %s' %  (module,module,module) )
     del each, module
-'''
 os.chdir(curdir)
+'''
 
 from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name
 
@@ -46,17 +50,15 @@ if osx:
     if sys.executable == '/usr/bin/python':
         sys.path.insert(0, '/usr/local/lib/python2.7/site-packages/gtk-2.0/')
         sys.path.insert(0, '/usr/local/lib/python2.7/site-packages/')
-        
+
     # load dbus session, if needed!
     if not ''.join(os.popen('launchctl list | grep "dbus-session" 2>&1').readlines()).strip():
         os.system('launchctl load /usr/local/Cellar/d-bus/org.freedesktop.dbus-session.plist')
 
 import log
-import build
 from baseApp import version, versionLib, appsDB, app, libsDB, lib, baseApp, baseLib, disable, roots
-
 try:
-    import admin 
+    import admin
 except:
     admin=None
 import apps
@@ -69,6 +71,7 @@ import frame
 import job
 from output import output
 import frame
+import build
 
 
 
@@ -76,7 +79,7 @@ import frame
 def studio(name=None):
     import os
     #os.environ['STUDIO'] = name
-    # studio is already set at initialization, based on .root file location! 
+    # studio is already set at initialization, based on .root file location!
     # it's actually $(basename $ROOT), were ROOT env var is the path of .root file!
     return os.environ['STUDIO']
 
@@ -86,7 +89,7 @@ def include(currentFile):
     f = ''.join( open( '%s/../include/%s.py' % ( os.path.dirname(currentFile), version ), 'r' ).readlines() )
     return f
 
-        
+
 def alias(withlibs=True):
     from glob import glob
     import os
@@ -99,17 +102,17 @@ def alias(withlibs=True):
         '.a',
     ]
     aliasScript = []
-    
-    pythonBin = "/usr/bin/python"
+
+    pythonBin = "/usr/bin/python2"
 #    if osx:
 #        import glob
 #        paths = glob.glob( '%s/python/2.6*' % roots.libs() )
 #        if paths:
 #            paths.sort()
 #            pythonBin = "%s/bin/python" % paths[-1]
-        
-        
-        
+
+
+
     for appname in libsDB():
         classType = 'apps'
         try:
@@ -117,14 +120,14 @@ def alias(withlibs=True):
             appClass = eval("apps.%s()" % appname)
         except:
             appClass = None
-        
+
         if withlibs or os.environ.has_key('PIPE_RUN_WITH_LIBS'):
             try:
                 classType = 'libs'
                 appClass = eval("libs.%s()" % appname)
             except:
                 appClass = None
-            
+
 #        import sys
 #        print >>sys.stderr, appname, classType
         if appClass:
@@ -158,7 +161,7 @@ def init():
         #only run if enviroment is set and not root!
         if os.environ['UID'] == '0':
             return ""
-            
+
     from base import depotRoot
     root = os.path.abspath("%s/../../" % moduleRootPath)
 
@@ -167,23 +170,23 @@ def init():
 
     pythonpath = ''
     path = ''
-    
+
     # user level:
     if  os.environ.has_key('HOME'):
         user_pythonpath = '%s/tools/python' % os.environ['HOME']
         if os.path.exists(user_pythonpath):
-            pythonpath += user_pythonpath+':' 
+            pythonpath += user_pythonpath+':'
 
         user_path = '%s/tools/scripts' % os.environ['HOME']
         if os.path.exists(user_path):
-            path += user_path+':' 
+            path += user_path+':'
 
     pythonpath += '%s/python' % root
     if os.environ.has_key('PYTHONPATH'):
         tmp = os.environ['PYTHONPATH']
         tmp = tmp.replace(pythonpath,'').replace('::',':')
         pythonpath += ':%s' % tmp
-        
+
     # custom init for OSX
     # sets pythonpath to use pipe python-dbus so things work
     # without having to install python-dbus into the machine itself!
@@ -193,7 +196,7 @@ def init():
         if paths:
             paths.sort()
             pythonpath += ':%s/lib/python2.6/site-packages/' % paths[-1]
-    
+
     path += '%s/bin:%s/scripts' % (root,root)
     if os.environ.has_key('HOME'):
         path = '%s/tools/scripts:%s' % (os.environ['HOME'],path)
@@ -215,9 +218,8 @@ def init():
         export __PATH=$PATH
         export __PYTHONPATH=$PYTHONPATH
         export EDITOR=nano
-        %s
-    ''' % (root, depotRoot(), alias(), path, pythonpath, build.env())
-    
+    ''' % (root, depotRoot(), alias(), path, pythonpath)
+
     if '___PATH' not in os.environ.keys():
         envs += '''
             export ___PATH=$PATH
@@ -253,7 +255,7 @@ def init():
     return envs
 
 def initBash():
-    import os    
+    import os
     envs = init()
     initBash = '/tmp/initBash_%s.sh' % os.environ['USER']
     if os.path.exists( initBash ):
@@ -272,31 +274,31 @@ def go():
     if os.environ.has_key('HOME'):
         goHist = '%s/.go' % os.environ['HOME']
     args = sys.argv[sys.argv.index(filter(lambda x: '/scripts/go' in x,sys.argv)[0]):]
-    
+
     job = None
     if os.environ.has_key('PIPE_JOB'):
         job = os.environ['PIPE_JOB']
-        
+
     shot = None
     if os.environ.has_key('PIPE_SHOT'):
         shot = os.environ['PIPE_SHOT']
-    
-    # if go was called without any arguments, and we have PIPE_JOB and PIPE_SHOT set, 
+
+    # if go was called without any arguments, and we have PIPE_JOB and PIPE_SHOT set,
     # use it!
     newArgs  = []
     if len(args) < 2:
-        if job: 
+        if job:
             newArgs.append( job )
         if shot:
             shot = shot.split('@')
             newArgs.append( shot[0] )
             newArgs.append( shot[1] )
-    
+
     # if we have a history file
     if goHist:
         lines = None
         argsHist = []
-        
+
         # and the history file exists...
         if os.path.exists( goHist ):
             # read it and store in a list called argsHist
@@ -310,7 +312,7 @@ def go():
                     except:
                         pass
             f.close()
-            
+
             # show the history list
             if '-h' in args:
                 id=0-len(argsHist)
@@ -318,41 +320,47 @@ def go():
                     print >>sys.stderr,'\t%d = go %s' % (id, ' '.join(each[1:]))
                     id += 1
                 return ''
-            
+
             # if go was called without arguments, grab the last one from the history
             elif len(args) < 2:
                 newArgs = argsHist[-1]
-                
+
             # if a -N argument is passed, use the -N element of the history as arguments
             elif args[1][0] == '-':
-                id = int(args[1]) 
+                id = int(args[1])
                 if id < 0:
                     newArgs = argsHist[id]
-        
-            # if go was called with only one argument (a job), 
+
+            # if go was called with only one argument (a job),
             # find the last entry with that job in the list and use it
             elif len(args) < 3:
-                result = filter(lambda x: args[1] in x[1], argsHist)
-                if result:
-                    newArgs = result[-1]
-                    
-    # if we have new arguments from the history, use then 
+                try:
+                    result = filter(lambda x: args[1] in x[1], argsHist)
+                    if result:
+                        newArgs = result[-1]
+                except: 
+                    pass
+
+    # if we have new arguments from the history, use then
     # and skip creating a new history for then
     if newArgs:
         args = newArgs
-            
+
     # if we have no arguments from history, create a new history entry
     # for the passed ones!
-    f = open( goHist, 'w' )
-    if lines:
-        for each in lines[-20:]:
-            if str(args) != each.strip():
-                print >>f, each.strip()
-    print >>f, args
-    f.close()
-        
-       
-            
+    try:
+        f = open( goHist, 'w' )
+        if lines:
+            for each in lines[-20:]:
+                if str(args) != each.strip():
+                    print >>f, each.strip()
+        print >>f, args
+        f.close()
+    except:
+        pass
+
+
+
     return __go(args)
 
 def __go(args):
@@ -362,20 +370,20 @@ def __go(args):
     from  job import currentShot
 
     args = map( lambda x: x.lower(), args )
-    
+
     if 'reset' in args or '-r' in args:
         return "\n".join([
             'unset PIPE_JOB',
             'unset PIPE_SHOT',
             '''PROMPT_COMMAND='echo -ne "\033]0;No Job/Shot set!!\007"' ''',
         ])
-    
+
     reserved = ['asset', 'shot', 'shot']
-    
+
     job = None
 #    if os.environ.has_key('PIPE_JOB'):
 #        job = os.environ['PIPE_JOB']
-        
+
     shot = None
 #    if os.environ.has_key('PIPE_SHOT'):
 #        shot = os.environ['PIPE_SHOT']
@@ -383,7 +391,7 @@ def __go(args):
     env = []
     # passed arguments
     if len(args)>1:
-            
+
         if args[1].lower() not in reserved:
             jobs = filter( lambda x: args[1] in x, glob( "%s/*" % roots.jobs() ) )
             if not jobs:
@@ -402,11 +410,11 @@ def __go(args):
                         ret.append( "echo '\t %s'" % beach )
                 ret.append( "echo ' '")
                 return "\n".join(ret)
-                
-                
+
+
             job = os.path.basename(jobs[0])
             env.append( 'export PIPE_JOB="%s"' % job )
-        
+
 
         env.append( 'unset PIPE_SHOT' )
         for each in reserved:
@@ -418,30 +426,30 @@ def __go(args):
                         raise
                     shot = "%s@%s" %  (each, value)
                     env.append( 'export PIPE_SHOT="%s"' %  shot )
-                    
+
                 except:
                     ret = ["echo 'ERROR: %s %s doesnt exist!\n\nOptions are:'" % (each, value)]
-                    
+
                     for l in glob( '%s/%s/%ss/*' % (roots.jobs(), job, each) ):
                         ret.append( "echo '\t%s %s'" % (each, os.path.basename(l)) )
                     ret.append( "echo ' '")
                     return "\n".join(ret)
-    
+
     if not job:
         return "\n".join([
             "echo 'ERROR: No current job set.'",
             '''PROMPT_COMMAND='echo -ne "\033]0;No Job/Shot set!!\007"' ''',
         ])
 
-        
+
     # cd to job
     env.append( 'cd "%s"' % currentJob(job) )
-    # add job tools/python to pythonpath 
+    # add job tools/python to pythonpath
     path = '%s/tools/scripts' % currentJob(job)
     env.append( 'export PATH=%s:$__PATH' % path )
     pythonpath = '%s/tools/python' % currentJob(job)
     env.append( 'export PYTHONPATH=%s:$__PYTHONPATH' % pythonpath )
-               
+
     # deal with shot
     values = ['Shot','']
     if shot:
@@ -451,21 +459,21 @@ def __go(args):
             env.append( 'cd "%s/users"' % currentShot(job, shot) )
         values = shot.split('@')
         values[0] = "%s%s" % (values[0][0].upper(), values[0][1:])
-        
-        # add shot/user/tools/python to pythonpath 
+
+        # add shot/user/tools/python to pythonpath
         path += ':%s/tools/scripts' % currentShot(job, shot)
         path += ':%s/users/%s/tools/scripts' % (currentShot(job, shot), admin.username())
         pythonpath += ':%s/tools/python' % currentShot(job, shot)
         pythonpath += ':%s/users/%s/tools/python' % (currentShot(job, shot), admin.username())
-        
-        
+
+
     env.append( 'export PATH=%s:$__PATH' % path )
     env.append( 'export PYTHONPATH=%s:$__PYTHONPATH' % pythonpath )
-        
+
     env.append( 'echo "Job: %s\n%s: %s\nPath: $(pwd)"' % (job, values[0], values[1] ) )
-    
+
     env.append( '''PROMPT_COMMAND='echo -ne "\033]0;Job: %s | %s: %s\007"' ''' % (job, values[0], values[1]) )
-    
+
 
     # if running in Qube, set PIPE_FARM_USER
     if os.environ.has_key('QBJOBID'):
@@ -479,6 +487,3 @@ def __go(args):
         
        
     return '%s \n %s' % (init(), '\n'.join(env))
-
-
-

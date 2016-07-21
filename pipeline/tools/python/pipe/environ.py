@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -68,7 +68,7 @@ class environ(dict):
         for each in v:
             if each not in dict.__getitem__(self,key):
                 dict.__getitem__(self,key).append(each)
-    
+
     def insert(self, key, index, v):
         if not self.has_key(key):
             dict.__setitem__(self,key,[])
@@ -78,7 +78,7 @@ class environ(dict):
             if each in dict.__getitem__(self,key):
                 dict.__getitem__(self,key).remove(each)
             dict.__getitem__(self,key).insert(index, each)
-        
+
 
     def update(self, environClass={}, **e):
         '''
@@ -112,8 +112,10 @@ class environ(dict):
         '''
             evaluates all keys as environment variables.
         '''
-#        global initialized
-#        os.environ.update( initialized )
+        global initialized
+        # if we're running inside another app, don't reset os.environ
+        if not initialized.has_key('__DB_LATEST'):
+            os.environ.update( initialized )
         paths = {}
         for each in self.keys():
             l = self[each]
@@ -122,9 +124,9 @@ class environ(dict):
             else:
                 if each == 'LD_LIBRARY_PATH':
                     each = LD_LIBRARY_PATH
-                    # reset environment LD_LIBRARY_PATH to avoid 
+                    # reset environment LD_LIBRARY_PATH to avoid
                     # one app affecting the lib path of another
-#                    del os.environ[each] 
+#                    del os.environ[each]
                 if type(l) == type(""):
                     l=[l]
 #                l.reverse()
@@ -132,7 +134,7 @@ class environ(dict):
 
                     if not os.environ.has_key(each):
                         os.environ[each]=''
-                        
+
                     p = value
                     if p[0] in ['/']:
                         if os.path.abspath(p) not in os.environ[each].split(os.pathsep):
@@ -150,16 +152,15 @@ class environ(dict):
             os.environ[each] = expandvars( os.environ[each] )
             # remove empty entries
             os.environ[each] = os.environ[each].replace(os.pathsep+os.pathsep,os.pathsep)
-            log.debug( "%20s = %s "  % ( each, 
+            log.debug( "%20s = %s "  % ( each,
                 (os.pathsep+'\n'+' '*23).join(os.environ[each].split(os.pathsep)),
 #                (os.pathsep+'\n'+' '*23).join(self[each].split(os.pathsep))
             ) )
-            
+
             if each=='PYTHONPATH':
                 sys.path.extend( os.environ[each].split(os.pathsep) )
-        
-        log.debug( bcolors.WARNING+"="*200+bcolors.END )
-        
-        # set opengl over ssh just in case
-        os.environ['LIBGL_ALWAYS_INDIRECT'] = '1'
 
+        log.debug( bcolors.WARNING+"="*200+bcolors.END )
+
+        # set opengl over ssh just in case
+        #os.environ['LIBGL_ALWAYS_INDIRECT'] = '1'

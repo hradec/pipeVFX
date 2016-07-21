@@ -38,13 +38,16 @@ class nuke(current.engine):
         self.cmd = os.path.abspath( self.cmd )
         self.name += "| NUKE %s" % pipe.apps.nuke().version()
         self.cmd = ' '.join([
-            'run nuke',
+            'run nuke --log-level verbose -V 2 ',
 #            '-t -x -X "%s"' % writeNodes,
 #            '-V --',
+            '-t', # terminal mode - render license!!
             '-f -X "%s"' % writeNodes,
             '-F %s' % self.frameNumber(),
             '"%s"' %  os.path.abspath( self.scene ),
 #            '%s,%s,1' % (self.frameNumber(), self.frameNumber()),
         ])
+        
+        self.files = ["%s/images/none" % self.asset]
         
 #"/usr/local/Nuke7.0v4/Nuke7.0" -t -x -X "Write1" -V -- "/mnt/Projetos/0216_HOOPONOPONO/SHOTS/_shot_01/DAN/NUKE/Comp_v031.nk"  138,138,1

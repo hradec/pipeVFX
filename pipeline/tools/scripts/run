@@ -23,13 +23,20 @@ fi
 
 
 # source the pipeline init script, if it hasn't being sourced yet!
+export CD="$(pwd)"
 source $(dirname $BASH_SOURCE)/../init/bash
 
+
+if [ "$PIPE_JOB" != "" ]  && [ "$PIPE_SHOT" != "" ] ; then 
+	#source $(dirname $BASH_SOURCE)/../scripts/go $PIPE_JOB $(echo $PIPE_SHOT | sed 's/@/ /')
+	cd "$CD"
+fi
+
 #echo $(dirname $BASH_SOURCE)/../init/bash
-#echo $(which python)
+#echo $(which python2)
 #echo "$(basename $SHELL)"
 #echo ..$NOPIPE..
-#echo "$(/usr/bin/python -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.init()" $BASH_SOURCE)"
+#echo "$(/usr/bin/python2 -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.init()" $BASH_SOURCE)"
 #echo "================="
 
 #echo $@
@@ -38,4 +45,7 @@ source $(dirname $BASH_SOURCE)/../init/bash
 # run the alias as a command line!
 cmd=`alias $1 | cut -d"'" -f2` 
 #echo $cmd "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" "${23}" "${24}" "${25}" "${26}" "${27}" "${28}" "${29}" "${30}" # > /tmp/${USER}_run
-eval $cmd  "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" "${23}" "${24}" "${25}" "${26}" "${27}" "${28}" "${29}" "${30}" # 2>&1 >> /tmp/${USER}_run
+
+/usr/bin/env python2 -c "import sys,os;cmd=sys.argv[1]+' \"'+'\" \"'.join(sys.argv[3:])+'\"';os.system(cmd)" "$cmd" "$@"
+
+#eval $cmd  "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" "${23}" "${24}" "${25}" "${26}" "${27}" "${28}" "${29}" "${30}" # 2>&1 >> /tmp/${USER}_run
