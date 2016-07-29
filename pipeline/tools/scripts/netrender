@@ -1,0 +1,11 @@
+#!/usr/bin/python2
+
+import pipe, sys, os
+
+p = pipe.apps.prman()
+m = pipe.apps.maya()
+pv = p.version()
+mv = m.version()
+
+
+p.run("RenderManStudio-%s-maya%s/rmantree/bin/netrender" %  (pv,mv))

@@ -118,19 +118,6 @@ def findSharedLibrary(libname):
     libs = filter( lambda x: libname in x, ldconfig[arch] )
     return map(lambda x: x.split(' => ')[-1].strip(), libs)
 
-# hardcoded for now!!
-def getDistro():
-    if platform == OSX:
-        distro = 'gcc-llvm5.1'
-    else:
-        version = '4.1.2'
-        try: version = filter( lambda x: x.isdigit() or x=='.', os.popen('gcc --version').readlines()[0])
-        except: pass
-        distro = 'gcc-%s' % version
-    return distro
-
-distro = getDistro()
-
 
 def depotRoot(forceScan=False):
     root = os.path.dirname(__file__)
@@ -185,7 +172,9 @@ class roots:
         return os.path.abspath( '%s/buildStuff%s' % (roots.apps(plat), subpath) )
 
     @staticmethod
-    def libs(plat=platform, arch=bits, distro=distro, subpath=''):
+    def libs(plat=platform, arch=bits, distro=None, subpath=''):
+        if not distro:
+            distro = getDistro()
         if subpath:
             subpath = '/%s' % subpath
         return os.path.abspath( '%s/pipeline/libs/%s/%s/%s' % (depotRoot(), plat, arch, distro) )
@@ -206,6 +195,28 @@ class roots:
             root = roots.apps(plat)
 
         return os.path.abspath( '%s/pipeline/tools/%s' % (root, subpath) )
+
+
+# hardcoded for now!!
+def getDistro(check=True):
+    if platform == OSX:
+        distro = 'gcc-llvm5.1'
+    else:
+        version = ['4.1.2']
+        try: version.append( filter( lambda x: x.isdigit() or x=='.', os.popen('gcc --version').readlines()[0] ) )
+        except: pass
+        distro = 'gcc-%s' % version[-1]
+        if check:
+            version.sort()
+            for v in version:
+                if os.path.exists(roots.libs(distro='gcc-%s' % v)):
+                    distro = 'gcc-%s' % v
+    return distro
+
+distro = getDistro()
+
+
+
 
 
 apps        = os.path.abspath( '%s/pipeline/apps/darwin/%s' % (depotRoot(), bits) )

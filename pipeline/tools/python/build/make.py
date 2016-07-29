@@ -52,7 +52,7 @@ class cmake(make):
             '-DBOOST_HOME=$BOOST_TARGET_FOLDER',
             '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
             '-DBOOST_INCLUDEDIR=$BOOST_TARGET_FOLDER/include',
-            '-DBOOST_LIBRARYDIR=$( [ "$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)" == "" ] && ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 || echo "$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/")/',
+            '-DBOOST_LIBRARYDIR=$( if [ "$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)" == "" ] ; then ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 ; else echo "$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/" ; fi)/',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
             '-DVERBOSE=1',
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
@@ -70,8 +70,7 @@ class cmake(make):
             "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2))",
             "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
         ]
-    
-    
+
     
     def fixCMD(self, cmd):
         ''' cmake is kindy picky with environment variables and has lots of 
@@ -116,6 +115,16 @@ class cmake(make):
         return cmd 
 
 
+
+class download(make):
+    ''' a simple class to download and uncompress packages, so they can be used by other packages for building '''
+    src='CMakeLists.txt'
+    cmd=['']
+    # as we want this packages just to be used for building other packages, we don't need a installation target_folder 
+#    def installer(self, target, source, env):
+#        os.system("rm -rf %s" % os.path.abspath(os.path.dirname(os.path.dirname(str(target[0])))) )
+
+
 class glew(make):
     ''' a make class to exclusively build glew package
     glew requires a bunch of make calls to construct the source and build.
@@ -137,10 +146,12 @@ class glew(make):
         ''' just a small installation patch to link lib64 to lib, which is the
         expected shared library folder name, since pipeVFX organize packages in
         arch specific hierarchy - linux/x86_64/package '''
+        ret = []
         targetFolder = os.path.dirname(str(target[0]))
         if not os.path.exists("%s/lib" % targetFolder):
             if os.path.exists("%s/lib64" % targetFolder):
-                os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
+                ret = os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
+        return ret
 
 class tbb(make):
     ''' a make class to exclusively build intels TBB package

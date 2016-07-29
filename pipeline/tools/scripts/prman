@@ -1,0 +1,30 @@
+#!/usr/bin/python2
+
+import pipe, sys, os
+
+p = pipe.apps.prman()
+m = pipe.apps.maya()
+pv = p.version()
+mv = m.version()
+
+
+p.run("RenderManStudio-%s-maya%s/rmantree/bin/prman -loglevel 4 " %  (pv,mv))
+
+'''
+import prman, sys, os
+import IECore
+import IECoreRI
+
+
+ri = prman.Ri()
+#rif1 = Rif(ri)
+#prman.RifInit([rif1])  # you can build a list of rif instances, comprising a Rif Chain
+
+ri.Begin(ri.RENDER)
+for r in sys.argv[1:]:
+    r = os.path.abspath( r )
+    if 'maya' in r:
+        os.chdir( "%s/maya/" % r.split('/maya/')[0] )
+    ri.ReadArchive(os.path.abspath(r))
+ri.End()
+'''

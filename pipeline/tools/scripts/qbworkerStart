@@ -1,0 +1,1 @@
+env PYTHONPATH=/atomo/pipeline/tools/python /bin/python -c "import pipe;pipe.apps.qube().run('qube-worker/local/pfx/qube/sbin/worker')"

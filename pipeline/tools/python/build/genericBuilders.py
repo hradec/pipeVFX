@@ -188,6 +188,7 @@ class generic:
         self.installPath = installRoot(self.args)
         
         # cmds to build!
+        self.kargs = kargs
         if kargs.has_key('cmd'):
             self.cmd = kargs['cmd']
         if type(self.cmd)==str:
@@ -198,6 +199,7 @@ class generic:
         
         if kargs.has_key('flags'):
             self.flags = kargs['flags']
+
         
 #        bld = Builder(action = self.sed)
 #        self.env.Append(BUILDERS = {'sed' : bld})
@@ -277,7 +279,8 @@ class generic:
                 self.buildFolder[p].append( targetpath  )
                 self.targetFolder[p].append( installpath  )
                 self.env['TARGET_FOLDER_%s' % download[n][2].replace('.','_')] = self.targetFolder[p][-1]
-                os.environ['%s_TARGET_FOLDER' % self.name.upper()] = self.targetFolder[p][-1]
+                os.environ['%s_TARGET_FOLDER' % self.name.upper()] = os.path.abspath(self.targetFolder[p][-1])
+                
 
                 setup = os.path.join(self.buildFolder[p][-1], self.src)
                 build = os.path.join( self.targetFolder[p][-1], 'build%s.done' % pythonDependency )
@@ -309,6 +312,17 @@ class generic:
                 source = [s]
                 for dependOn in self.dependOn:
                     if dependOn:
+                                        
+                        # check if this dependency applies to this version of the package! 
+                        # if the version has the dependency as None, we should NOT depend on 
+                        # it for this version! (ex: openssl for python 2.6 and not for python 2.7)
+                        if len(download[n])>4:
+                            __dependencyID = filter( lambda z: z.name == dependOn.name, download[n][4] )
+                            if __dependencyID:
+                                if not download[n][4][__dependencyID[0]]:
+                                    continue
+                        
+                        # now, add all dependencies needed!
                         depend_n = self.depend_n(dependOn, download[n][2])
                         k = dependOn.depend.keys()
                         if p in k:
@@ -428,10 +442,14 @@ class generic:
         # so we can sort then and use in order
         ids=vars.keys()
         ids.sort()
+        cmdz = []
         for name in ids:
             cmd = vars[name]
             if cmd.strip():
-                self.runCMD(cmd, target, source, env)
+                cmdz.append(cmd)
+        
+        if cmdz:
+            self.runCMD(' && '.join(cmdz), target, source, env)
  
         # if building for multiple python versions
         if len(str(target[0]).split('.python')) > 1:
@@ -481,18 +499,18 @@ class generic:
             if dependOn.downloadList[each][2] == currVersion:
                 depend_n = each
                 break
-#        print depend_n
         return depend_n
 
-    def __check_target_log__(self,target):
+    def __check_target_log__(self,target, install=None):
         ret=255
         if os.path.exists(target):
             lines = ''.join(open(target).readlines())
             if "@runCMD_ERROR@" in lines:
                 ret = int(lines.split("@runCMD_ERROR@")[-2].strip())
-                
-        if not glob("%s/*/*" % os.path.dirname(target)):
-            ret = 255
+              
+        if not self.installer or install:
+            if not glob("%s/*/*" % os.path.dirname(target)):
+                ret = 255
 
         return ret
 
@@ -513,6 +531,7 @@ class generic:
         if buildCompiler == gcc.pipe:
             os_environ['PATH'] = ':'.join([
                     pipe.build.gcc(),
+                    '%s/bin' % installDir,
                     os_environ['PATH'],
             ])
         
@@ -520,7 +539,8 @@ class generic:
         target=str(target[0])
         pkgVersion = os.path.basename(os.path.dirname(target))
         dirLevels = '..%s' % os.sep * (len(str(source[0]).split(os.sep))-1)
-        installDir = os.path.dirname(target)
+        installDir = os.path.abspath(os.path.dirname(target))
+
 
         # set a python version if none is set
         pythonVersion = '1.0.0'
@@ -551,14 +571,16 @@ class generic:
         pipe.apps.version.set(python=pythonVersion)
 
 #            site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
+        target_folder = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         site_packages = '/'.join([
-            self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')],
+            target_folder,
             'lib/python%s/site-packages' % pythonVersion[:3]
         ])
         os_environ['PYTHONPATH'] = ':'.join( [
             site_packages,
             os_environ['PYTHONPATH'] ,
         ])
+
             
         prefix = ''
         if buildCompiler == gcc.pipe:
@@ -576,7 +598,8 @@ class generic:
             'CXXFLAGS'          : '',
             'CPPCXXFLAGS'       : '',
             'PKG_CONFIG_PATH'   : '',
-            'LD_LIBRARY_PATH'   : '',
+            'LD_LIBRARY_PATH'   : "%s/lib/" % installDir,
+            'CLICOLOR_FORCE'    : '1',
         })
         
         if not os_environ.has_key('INCLUDE'):
@@ -585,8 +608,14 @@ class generic:
         CFLAGS=['-fPIC']
         LDFLAGS=[]
         dependList={}
+        sourceList = map(lambda x: os.path.basename(os.path.dirname(os.path.dirname(str(x)))), source)
         for dependOn in self.dependOn:
+#            print dir(dependOn)
             if dependOn and dependOn.name not in dependList:
+                # if not in the source list, skip it
+                if dependOn.name not in sourceList:
+                    continue
+ 
                 # deal with python dependency, specially because its a noBaseLib but it has 
                 # the paths for its own versions.
                 if 'python' in dependOn.name:
@@ -598,6 +627,7 @@ class generic:
                 depend_n = self.depend_n(dependOn, target.split('/')[-2])
                 k = dependOn.targetFolder.keys()
                 p = pythonVersion 
+                
                 if k:
                     p = filter(lambda x: p in x, k)
                     if p:
@@ -605,10 +635,18 @@ class generic:
                     else:
                         k.sort()
                         p = k[-1]
+                    
                             
                     dependList[dependOn.name] = dependOn.targetFolder[p][depend_n]
                     
-                    os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = dependOn.targetFolder[p][depend_n]
+                    os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
+                    os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
+
+                    if p in dependOn.buildFolder:
+                        os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
+                    else:
+                        os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder['noBaseLib'][depend_n])
+
                     os_environ['PKG_CONFIG_PATH'] = ':'.join([
                         '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
                         os_environ['PKG_CONFIG_PATH'],
@@ -791,7 +829,7 @@ class generic:
     
     def _installer(self, target, source, env):
         ''' a wrapper class to create target in case installer method is suscessfull! 
-        we do this so homever implements a installer don't have to bother!'''
+        we do this so whoever implements a installer don't have to bother!'''
         ret = self.installer( target, source, env )
         f=open(str(target[0]),'w')
    
@@ -925,8 +963,8 @@ class generic:
                     for sed in self.sed[version][each]:
                         cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
                             file,
-                            sed[0].replace('/','\/').replace('$','\$'), 
-                            sed[1].replace('/','\/').replace('$','\$')
+                            sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n'), 
+                            sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n')
                         )
                         #print cmd
                         os.popen(cmd).readlines()

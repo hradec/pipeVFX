@@ -1,0 +1,4 @@
+#!/bin/sh 
+
+export MAGICK_OCL_DEVICE=OFF
+/usr/sbin/convert "$@"

@@ -1,22 +1,50 @@
-#!/usr/bin/python 
+#!/usr/bin/python2
 
 import sys, os
 sys.path.insert( 0, os.path.abspath('../tools/python/') )
-import build, pipe
 
-import build.pkgs
+import pipe 
+nuke    = pipe.apps.nuke()
+maya    = pipe.apps.maya()
+prman   = pipe.apps.prman()
+houdini = pipe.apps.houdini()
 
+
+
+import build
+#SetOption('warn', 'no-all')
+print 'build.installRoot() =', build.installRoot()
 
 pkgs = build.pkgs.all(ARGUMENTS)
 
 
-#maya    = pipe.apps.maya()
-#nuke    = pipe.apps.nuke()
-#prman   = pipe.apps.prman()
-#houdini = pipe.apps.houdini()
 
+#cortex = {}
 #for mv in maya.versionList():
-#    print mv
+#    cortex[mv] = build.cortex(
+#        ARGUMENTS,
+#        'cortex',
+#        download=[(
+#            'https://github.com/ImageEngine/cortex/archive/9.11.3.tar.gz',
+#            'cortex-9.11.3.tar.gz',
+#            '9.11.3',
+#            '07d7b364984ddfda7bfc75333e55b19e'
+#        )],
+#        baseLibs = [pkgs.python],
+#        depend = [pkgs.tbb, pkgs.freeglut, pkgs.freetype, pkgs.libpng, pkgs.tiff, pkgs.jpeg, pkgs.alembic],
+#    )
+
+#python  = '2.6.8'
+#if packageToBuild=='maya' and int(maya.split('.')[0]) > 2013:
+#    python  = '2.7.6'
+
+#if packageToBuild=='nuke' and int(nuke.split('.')[0]) > 7:
+#    python  = '2.7.6'
+
+#if packageToBuild=='houdini' and int(houdini.split('.')[0][3:]) > 13:
+#    python  = '2.7.6'
+
+
 
 #for nv in nuke.versionList():
 #    print nv
@@ -27,20 +55,6 @@ pkgs = build.pkgs.all(ARGUMENTS)
 #for pv in prman.versionList():
 #    print pv
 
-#cortex = build.configure(
-#        ARGUMENTS,
-#        'cortex',
-#        src='SConstruct',
-#        download=[(
-#            'https://github.com/ImageEngine/cortex/archive/9.11.3.tar.gz',
-#            'cortex-9.11.3.tar.gz',
-#            '9.11.3',
-#            '07d7b364984ddfda7bfc75333e55b19e'
-#        )],
-#        baseLibs = [pkgs['python']],
-#        depend = [pkgs['tbb'], pkgs['freeglut'], pkgs['freetype'], pkgs['libpng'], pkgs['tiff'], pkgs['jpeg'], pkgs['alembic']],
-#        cmd = './build.py $SOURCE_FOLDER/ PKG=maya',
-#)
 
 #gaffer = build.configure(
 #        ARGUMENTS,

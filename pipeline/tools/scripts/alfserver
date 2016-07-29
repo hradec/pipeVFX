@@ -1,0 +1,101 @@
+#!/bin/python2 
+
+'''
+from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
+
+PORT_NUMBER = 21501
+
+#This class will handles any incoming request from
+#the browser 
+class myHandler(BaseHTTPRequestHandler):
+        def _set_headers(self):
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+                
+        #Handler for the GET requests
+        def do_GET(self):
+                self.send_response(200)
+                self.send_header('Content-type','text/html')
+                self.end_headers()
+                # Send the html message
+                #self.wfile.write("Hello World !")
+                return
+
+        def do_POST(self):
+                # Doesn't do anything with posted data
+                self._set_headers()
+                self.wfile.write("<html><body><h1>POST!</h1></body></html>")            
+                #self.send_response(200)
+                #self.send_header('Content-type','text/html')
+                #self.end_headers()
+                # Send the html message
+                #self.wfile.write("Hello World !")
+                return
+
+try:
+	#Create a web server and define the handler to manage the
+	#incoming request
+	server = HTTPServer(('', PORT_NUMBER), myHandler)
+	print 'Started httpserver on port ' , PORT_NUMBER
+	
+	#Wait forever for incoming htto requests
+	server.serve_forever()
+
+except KeyboardInterrupt:
+	print '^C received, shutting down the web server'
+	server.socket.close()
+
+
+'''
+import socket
+import sys
+
+# Create a TCP/IP socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+
+# Bind the socket to the port
+server_address = ('192.168.10.10', 21501)
+print >>sys.stderr, 'starting up on %s port %s' % server_address
+sock.bind(server_address)
+
+# Listen for incoming connections
+sock.listen(1)
+
+while True:
+    try:
+
+        #data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+        #print "received message:", data
+
+        # Wait for a connection
+        print >>sys.stderr, 'waiting for a connection'
+        connection, client_address = sock.accept()
+
+        print >>sys.stderr, 'connection from', client_address
+
+        # Receive the data in small chunks and retransmit it
+        while True:
+            data = connection.recv(255)
+            sys.stderr.write(data)
+            if 'ribfile' in data:
+                rib = data.split('{')[-1].split('}')[0]
+                print "\n\n==>",rib,"\n\n"
+            if 'RenderArgs' in data:
+                args = data.split('RenderArgs')[-1]
+                print "\n\n==>",args,"\n\n"
+            if data:
+                #print >>sys.stderr, 'sending data back to the client'
+                connection.sendall("1")
+                pass
+            else:
+                print >>sys.stderr, 'no more data from', client_address
+                break
+
+    finally:
+        # Clean up the connection
+        connection.close()
+        
+        

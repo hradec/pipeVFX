@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# set log level for kernel messages
+dmesg -n 7
+
+mkdir -p /sys/kernel/config/netconsole/target1
+cd /sys/kernel/config/netconsole/target1
+
+echo 0 > enabled
+
+# set local IP address
+echo $(echo $(ifconfig eth0 | grep 'inet ') | cut -d' ' -f2) > local_ip
+echo 192.168.1.5 > local_ip
+# set destination IP address
+echo 192.168.0.12 > remote_ip
+# set local network device name (find it trough ifconfig, examples: eth0, eno1, wlan0)
+echo eth0 > dev_name
+# find destination MAC address
+arping $(cat remote_ip) -f | grep -o ..:..:..:..:..:.. > remote_mac
+
+echo 1 > enabled
+
+

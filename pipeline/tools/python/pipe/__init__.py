@@ -487,3 +487,5 @@ def __go(args):
         
        
     return '%s \n %s' % (init(), '\n'.join(env))
+
+sys.path.remove(moduleRootPath)

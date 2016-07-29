@@ -1,0 +1,44 @@
+iptables -F
+iptables -t nat -F
+iptables -t mangle -F
+
+
+echo -e "eth0" | while read dev ;
+do 
+        tc qdisc del root dev $dev
+
+        # This line sets a HTB qdisc on the root of eth0, and it specifies that the class 1:30 is used by default. It sets the name of the root as 1:, for future references.
+        tc qdisc add dev $dev root handle 1: htb default 20
+
+        # This creates a class called 1:1, which is direct descendant of root (the parent is 1:), this class gets assigned also an HTB qdisc, and then it sets a max rate of 6mbits, with a burst of 15k
+        if [ "$dev" == "bond0" ] ; then 
+                tc class add dev $dev parent 1: classid 1:1 htb rate 3800mbit burst 3800k
+        else
+                tc class add dev $dev parent 1: classid 1:1 htb rate 900mbit burst 900k
+        fi
+
+        # The previous class has this branches:
+
+        # Class 1:10, NFS port 2050
+        tc class add dev $dev parent 1:1 classid 1:10 htb rate 700mbit burst 700k
+
+        # Class 1:20, NFS default and everything else
+        tc class add dev $dev parent 1:1 classid 1:20 htb rate 850mbit ceil 950mbit burst 850k
+
+
+        # Martin Devera, author of HTB, then recommends SFQ for beneath these classes:
+        tc qdisc add dev $dev parent 1:10 handle 10: sfq perturb 3
+        tc qdisc add dev $dev parent 1:20 handle 20: sfq perturb 3
+
+
+        # This command adds a filter to the qdisc 1: of dev eth0, set the
+        # priority of the filter to 1, matches packages with a
+        # destination port 22, and make the class 1:10 process the
+        # packages that match.
+        tc filter add dev $dev protocol ip parent 1: prio 1 u32 match ip dport 2050 0xffff flowid 1:10
+        tc filter add dev $dev protocol ip parent 1: prio 1 u32 match ip sport 2050 0xffff flowid 1:10
+
+#        tc filter add dev $dev protocol ip parent 1: prio 1 handle 6 fw flowid 1:10
+done
+
+

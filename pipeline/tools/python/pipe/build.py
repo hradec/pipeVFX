@@ -18,15 +18,19 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-from base import roots, platform, bits, arch, distro, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name
+from base import roots, platform, bits, arch, getDistro, distro, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name
 
 
-def install(plat=platform):
+def install(plat=platform, distro=None):
     ''' install directory for the current platform'''
+    if not distro:
+        distro = getDistro(check=False)
     return "%s/pipeline/libs/%s/%s/%s" % (depotRoot(),plat,arch,distro)
 
-def devInstall(plat=platform):
+def devInstall(plat=platform, distro=None):
     ''' development install directory for the current platform'''
+    if not distro:
+        distro = getDistro(check=False)
     return "%s/pipeline/build/%s/%s/%s" % (depotRoot(),plat,arch,distro)
 
 

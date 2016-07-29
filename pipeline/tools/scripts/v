@@ -1,0 +1,22 @@
+#!/bin/bash 
+
+s="vfxws-023.local"
+port="22"
+
+#s="atomo2.no-ip.org"
+#port="65001" 
+if [ "$1" != "" ] ; then 
+	s="$1"
+	port="22"
+fi
+if [ "$2" != "" ] ; then
+	port="$2"
+fi
+export port 
+
+if [ "$(echo $@ | grep stop)" != "" ] ; then 
+	/bin/xpra stop --ssh="ssh -p $port" ssh:$s:20 
+else
+	/bin/xpra start --ssh="ssh -p $port" ssh:$s:20 --start "vglrun terminology"
+fi
+
