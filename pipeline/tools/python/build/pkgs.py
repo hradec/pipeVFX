@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
-import sys, os
-import build, pipe
-import SCons 
+import build
+import SCons
 
 SCons.Script.SetOption('warn', 'no-all')
 #SCons.Script.SetOption('num_jobs', 8)
@@ -34,9 +33,8 @@ SCons.Script.SetOption('warn', 'no-all')
 #)
 #build.allDepend.append(curl)
 
-class all:
+class all: # noqa
     def __init__(self,ARGUMENTS):
-        all = {}
 
         bzip2 = build.make(
             ARGUMENTS,
@@ -53,7 +51,7 @@ class all:
             ],
         )
         self.bzip2 = bzip2
-        
+
 #        ncurses = build.configure(
 #                ARGUMENTS,
 #                'ncurses',
@@ -114,18 +112,18 @@ class all:
                 '2.6.9',
                 'bddbd64bf6f5344fc55bbe49a72fe4f3',
                 { readline : '5.2.0', openssl : '1.0.2h' },
-              ),(
+            ),(
                 'https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
                 'Python-2.7.12.tar.gz',
                 '2.7.12',
                 '88d61f82e3616a4be952828b3694109d',
                 { readline : '5.2.0', openssl : None },
-#              ),(
-#                'https://www.python.org/ftp/python/3.5.2/Python-3.5.2.tgz',
-#                'Python-3.5.2.tar.gz',
-#                '3.5.2',
-#                '3fe8434643a78630c61c6464fe2e7e72',
-#                { readline : '5.2.0', openssl : None },
+                # ),(
+                #     'https://www.python.org/ftp/python/3.5.2/Python-3.5.2.tgz',
+                #     'Python-3.5.2.tar.gz',
+                #     '3.5.2',
+                #     '3fe8434643a78630c61c6464fe2e7e72',
+                #     { readline : '5.2.0', openssl : None },
             )],
             depend = [readline,bzip2],
             pip = [
@@ -202,11 +200,11 @@ class all:
                 'freeglut-2.8.1.tar.gz',
                 '2.8.1',
                 '918ffbddcffbac83c218bc52355b6d5a',
-#              ),(
-#                'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
-#                'freeglut-3.0.0.tar.gz',
-#                '3.0.0',
-#                '90c3ca4dd9d51cf32276bc5344ec9754',
+                # ),(
+                # 'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
+                # 'freeglut-3.0.0.tar.gz',
+                # '3.0.0',
+                # '90c3ca4dd9d51cf32276bc5344ec9754',
             )],
             environ = {'LDFLAGS' : '$LDFLAGS -lm -lGL'}
         )
@@ -221,7 +219,7 @@ class all:
                 'jpeg-6b.tar.gz',
                 '6b',
                 'dbd5f3b47ed13132f04c685d608a7547'
-              ),(
+            ),(
                 'http://www.ijg.org/files/jpegsrc.v9a.tar.gz',
                 'jpeg-9a.tar.gz',
                 '9a',
@@ -243,12 +241,12 @@ class all:
                 'tiff-3.8.2.tar.gz',
                 '3.8.2',
                 'fbb6f446ea4ed18955e2714934e5b698'
-              ),(
+            ),(
                 'ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.3.tar.gz',
                 'tiff-4.0.3.tar.gz',
                 '4.0.3',
                 '051c1068e6a0627f461948c365290410',
-              ),(
+            ),(
                 'ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.6.tar.gz',
                 'tiff-4.0.6.tar.gz',
                 '4.0.6',
@@ -328,9 +326,21 @@ class all:
                 '90f7434759088acccfddf5ba61b1f908'
             )],
             baseLibs=[python],
-#            depend=[cython],
+            # depend=[cython],
         )
         self.numpy = numpy
+
+        self.scons = build.pythonSetup(
+            ARGUMENTS,
+            'scons',
+            download=[(
+                'http://downloads.sourceforge.net/project/scons/scons/1.0.0/scons-1.0.0.tar.gz',
+                'scons-1.0.0.tar.gz',
+                '1.0.0',
+                '9afdfe0cc6d957568cc4386567a7c19e'
+            )],
+            baseLibs=[python],
+        )
 
         # build all simple python modules here.
         # since its just a matter of running setup.py (hence "simple"),
@@ -339,29 +349,29 @@ class all:
         # without any special setup.
         simpleModules = {
             'pil' : [(
-                    'http://effbot.org/downloads/Imaging-1.1.7.tar.gz',
-                    'Imaging-1.1.7.tar.gz',
-                    '1.1.7',
-                    'fc14a54e1ce02a0225be8854bfba478e'
+                'http://effbot.org/downloads/Imaging-1.1.7.tar.gz',
+                'Imaging-1.1.7.tar.gz',
+                '1.1.7',
+                'fc14a54e1ce02a0225be8854bfba478e'
             )],
-#            'pythonldap' : [(
-#                    'https://pypi.python.org/packages/source/p/python-ldap/python-ldap-2.4.19.tar.gz#md5=b941bf31d09739492aa19ef679e94ae3',
-#                    'python-ldap-2.4.19.tar.gz',
-#                    '2.4.19',
-#                    'b941bf31d09739492aa19ef679e94ae3'
-#            )],                
-        #    'pygobject' : [(
-        #            'https://pypi.python.org/packages/source/P/PyGObject/pygobject-2.28.3.tar.bz2#md5=aa64900b274c4661a5c32e52922977f9',
-        #            'pygobject-2.28.3.tar.gz',
-        #            '2.28.3',
-        #            'aa64900b274c4661a5c32e52922977f9'
-        #    )],
-        #    'wxpython' : [(
-        #            'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
-        #            'PyOpenGL-3.1.0.tar.gz',
-        #            '3.1.0',
-        #            '0de021941018d46d91e5a8c11c071693'
-        #    )],
+            # 'pythonldap' : [(
+            #     'https://pypi.python.org/packages/source/p/python-ldap/python-ldap-2.4.19.tar.gz#md5=b941bf31d09739492aa19ef679e94ae3',
+            #     'python-ldap-2.4.19.tar.gz',
+            #     '2.4.19',
+            #     'b941bf31d09739492aa19ef679e94ae3'
+            # )],
+            # 'pygobject' : [(
+            #     'https://pypi.python.org/packages/source/P/PyGObject/pygobject-2.28.3.tar.bz2#md5=aa64900b274c4661a5c32e52922977f9',
+            #     'pygobject-2.28.3.tar.gz',
+            #     '2.28.3',
+            #     'aa64900b274c4661a5c32e52922977f9'
+            # )],
+            # 'wxpython' : [(
+            #     'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
+            #     'PyOpenGL-3.1.0.tar.gz',
+            #     '3.1.0',
+            #     '0de021941018d46d91e5a8c11c071693'
+            # )],
         }
         # run the builders for each module in the dict
         simpleModulesBuilders = []
@@ -387,20 +397,20 @@ class all:
             ARGUMENTS,
             'boost',
             download=[(
-#                'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
-#                'boost_1_56_0.tar.gz',
-#                '1.56.0',
-#                '8c54705c424513fa2be0042696a3a162',
-#            ),(
+                #     'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
+                #     'boost_1_56_0.tar.gz',
+                #     '1.56.0',
+                #     '8c54705c424513fa2be0042696a3a162',
+                # ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.58.0%2F&ts=1432347909&use_mirror=hivelocity',
                 'boost_1_58_0.tar.gz',
                 '1.58.0',
                 '5a5d5614d9a07672e1ab2a250b5defc5',
-#            ),(
-#                'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.61.0%2F&ts=1468795438&use_mirror=internode',
-#                'boost_1_61_0.tar.gz',
-#                '1.61.0',
-#                '5a5d5614d9a07672e1ab2a250b5defc5',
+            ),(
+                'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
+                'boost_1_61_0.tar.gz',
+                '1.61.0',
+                '874805ba2e2ee415b1877ef3297bf8ad',
             )],
             baseLibs=[python],
         )
@@ -414,12 +424,12 @@ class all:
                 'ilmbase-2.0.0.tar.gz',
                 '2.0.0',
                 '70f1413840c2a228783d1332b8b168e6'
-              ),(
+            ),(
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
                 'ilmbase-2.1.0.tar.gz',
                 '2.1.0',
                 '8ba2f608191ad020e50277d8a3ba0850'
-              ),(
+            ),(
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
                 'ilmbase-2.2.0.tar.gz',
                 '2.2.0',
@@ -427,7 +437,7 @@ class all:
             )],
         )
         self.ilmbase = ilmbase
-        
+
         openexr = build.configure(
             ARGUMENTS,
             'openexr',
@@ -449,7 +459,7 @@ class all:
             )],
             depend=[ilmbase],
         )
-        self.openexr = openexr 
+        self.openexr = openexr
 
         pyilmbase = build.configure(
             ARGUMENTS,
@@ -474,7 +484,7 @@ class all:
             depend=[ilmbase,openexr,boost,python,numpy],
             environ={'DCORES' : 1, 'CORES' : 1}
         )
-        self.pyilmbase = pyilmbase 
+        self.pyilmbase = pyilmbase
         build.allDepend.extend([
             ilmbase,
             openexr,
@@ -517,13 +527,13 @@ class all:
                 'alembic-1.5.8.tar.gz',
                 '1.5.8',
                 'a70ba5f2e80b47d346d15d797c28731a',
-                {ilmbase: "2.2.0",openexr: "2.2.0"},
+                {ilmbase: "2.2.0", openexr: "2.2.0"},
             ),(
                 'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
                 'alembic-1.6.1.tar.gz',
                 '1.6.1',
                 'e1f9f2cbe1899d3d55b58708b9307482',
-                {ilmbase: "2.2.0",openexr: "2.2.0"},
+                {ilmbase: "2.2.0", openexr: "2.2.0"},
             )],
             baseLibs=[python],
             # alembic has some hard-coded path to find python, and the only
@@ -559,14 +569,14 @@ class all:
             # so we have to patch it or build fail with gcc 4.1.2
             # also, we have to remove -fvisibility-inlines-hidden when building with gcc 4.1.2
             sed = {'0.0.0' : {
-                    'ext/tinyxml_2_6_1.patch' : [
-                        ('-fPIC', '-fPIC -DPIC'),
-                        (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
-                    ],
-                    'ext/yaml-cpp-0.3.0.patch' : [
-                        ('-fPIC', '-fPIC -DPIC'),
-                        (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
-                    ],
+                'ext/tinyxml_2_6_1.patch' : [
+                    ('-fPIC', '-fPIC -DPIC'),
+                    (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
+                ],
+                'ext/yaml-cpp-0.3.0.patch' : [
+                    ('-fPIC', '-fPIC -DPIC'),
+                    (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
+                ],
             }},
             download = [(
                 'https://github.com/imageworks/OpenColorIO/archive/v1.0.9.tar.gz',
@@ -604,12 +614,12 @@ class all:
                 'oiio-Release-1.5.24.tar.gz',
                 '1.5.24',
                 '8c1f9a0ec5b55a18eeea76d33ca7a02c'
-              ),(
+            ),(
                 'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
                 'oiio-Release-1.6.15.tar.gz',
                 '1.6.15',
                 '3fe2cef4fb5f7bc78b136d2837e1062f'
-              ),(
+            ),(
                 'https://github.com/OpenImageIO/oiio/archive/Release-1.7.3dev.tar.gz',
                 'oiio-Release-1.7.3dev.tar.gz',
                 '1.7.3dev',
@@ -632,14 +642,14 @@ class all:
                 'cfe-3.5.2.src.tar.gz',
                 '3.5.2',
                 'aba5d02251bf7845a2013d6bb0702ac7',
-              ),(
+            ),(
                 'http://llvm.org/releases/3.4.2/cfe-3.4.2.src.tar.gz',
                 'cfe-3.4.2.src.tar.gz',
                 '3.4.2',
                 '87945973b7c73038871c5f849a818588',
             )],
         )
-        self.clang = clang 
+        self.clang = clang
 
         llvm = build.configure(
             ARGUMENTS,
@@ -692,7 +702,7 @@ class all:
                 'a586e11cd4aff49c3ff6d3b6a4c9ccf8'
             )],
         )
-        self.bison = bison 
+        self.bison = bison
 
         osl = build.cmake(
             ARGUMENTS,
@@ -703,7 +713,7 @@ class all:
                 '1.7.3',
                 '42215e190d565c862043c0b02eca089b',
                 {oiio: "1.6.15", llvm : "3.5.2"},
-              ),(
+            ),(
                 'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.8.0dev.tar.gz',
                 'OpenShadingLanguage-Release-1.8.0dev.tar.gz',
                 '1.8.0dev',
@@ -740,40 +750,40 @@ class all:
         # qt packages
         # =============================================================================================================================================
         qt = build.configure(
-                ARGUMENTS,
-                'qt',
-                download=[(
-                    'https://download.qt.io/archive/qt/4.8/4.8.4/qt-everywhere-opensource-src-4.8.4.tar.gz',
-                    'qt-everywhere-opensource-src-4.8.4.tar.gz',
-                    '4.8.4',
-                    '89c5ecba180cae74c66260ac732dc5cb',
-                ),(
-                    'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
-                    'qt-everywhere-opensource-src-4.8.6.tar.gz',
-                    '4.8.6',
-                    '2edbe4d6c2eff33ef91732602f3518eb',
-                ),(
-                    'http://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
-                    'qt-everywhere-opensource-src-4.8.7.tar.gz',
-                    '4.8.7',
-                    'd990ee66bf7ab0c785589776f35ba6ad',
-#                ),(
-#                    'http://download.qt.io/official_releases/qt/5.7/5.7.0/single/qt-everywhere-opensource-src-5.7.0.tar.gz',
-#                    'qt-everywhere-opensource-src-5.7.0.tar.gz',
-#                    '5.7.0',
-#                    'd990ee66bf7ab0c785589776f35ba6ad',
-                )],
-                environ = {'LD' : 'g++'},
-                cmd = [
-    #                './configure  -opensource -shared --confirm-license  -no-webkit -silent',
-                    './configure  -opensource -shared --confirm-license -silent',
-                    'make -j $DCORES',
-                    'make -j $DCORES install',
-                ],
-                depend=[tiff,jpeg,libpng,freetype,freeglut,glew],
+            ARGUMENTS,
+            'qt',
+            download=[(
+                'https://download.qt.io/archive/qt/4.8/4.8.4/qt-everywhere-opensource-src-4.8.4.tar.gz',
+                'qt-everywhere-opensource-src-4.8.4.tar.gz',
+                '4.8.4',
+                '89c5ecba180cae74c66260ac732dc5cb',
+            ),(
+                'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
+                'qt-everywhere-opensource-src-4.8.6.tar.gz',
+                '4.8.6',
+                '2edbe4d6c2eff33ef91732602f3518eb',
+            ),(
+                'http://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
+                'qt-everywhere-opensource-src-4.8.7.tar.gz',
+                '4.8.7',
+                'd990ee66bf7ab0c785589776f35ba6ad',
+                # ),(
+                #     'http://download.qt.io/official_releases/qt/5.7/5.7.0/single/qt-everywhere-opensource-src-5.7.0.tar.gz',
+                #     'qt-everywhere-opensource-src-5.7.0.tar.gz',
+                #     '5.7.0',
+                #     'd990ee66bf7ab0c785589776f35ba6ad',
+            )],
+            environ = {'LD' : 'g++'},
+            cmd = [
+                # './configure  -opensource -shared --confirm-license  -no-webkit -silent',
+                './configure  -opensource -shared --confirm-license -silent',
+                'make -j $DCORES',
+                'make -j $DCORES install',
+            ],
+            depend=[tiff,jpeg,libpng,freetype,freeglut,glew],
         )
         self.qt = qt
-        
+
         sip = build.pythonSetup(
             ARGUMENTS,
             'sip',
@@ -796,7 +806,7 @@ class all:
             baseLibs=[python],
             src = 'configure.py',
             cmd = [
-#                'python configure.py --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+                # 'python configure.py --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
                 'python configure.py '
                 '-b $TARGET_FOLDER/bin '
                 '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
@@ -807,7 +817,7 @@ class all:
             ],
         )
         self.sip = sip
-        
+
         pyqt = build.pythonSetup(
             ARGUMENTS,
             'pyqt',
@@ -817,18 +827,18 @@ class all:
                 '4.11.4',
                 '2fe8265b2ae2fc593241c2c84d09d481',
                 {qt:'4.8.7', sip: '4.16.4'},
-#            ),(
-#                'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.7/PyQt5_gpl-5.7.tar.gz',
-#                'PyQt5_gpl-5.7.tar.gz',
-#                '5.7.0',
-#                '2fe8265b2ae2fc593241c2c84d09d481',
-#                {qt:'5.7.0', sip: '4.18.1'},
+                # ),(
+                #     'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.7/PyQt5_gpl-5.7.tar.gz',
+                #     'PyQt5_gpl-5.7.tar.gz',
+                #     '5.7.0',
+                #     '2fe8265b2ae2fc593241c2c84d09d481',
+                #     {qt:'5.7.0', sip: '4.18.1'},
             )],
             baseLibs=[python],
             depend=[sip,qt],
             src = 'configure-ng.py',
             cmd = [
-#                'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
+                # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
                 'python configure.py --confirm-license --assume-shared --verbose --no-designer-plugin '
                 '-b $TARGET_FOLDER/bin '
                 '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
@@ -838,7 +848,7 @@ class all:
                 'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install',
             ],
         )
-        self.pyqt = pyqt 
+        self.pyqt = pyqt
         # =============================================================================================================================================
 
         ##appleseed = build.cmake(

@@ -241,14 +241,14 @@ HOUDINI_CXX_FLAGS = [
     '-O2 -DDLLEXPORT="" -DMAKING_DSO -D_GNU_SOURCE -DSESI_LITTLE_ENDIAN ',
     '-DENABLE_THREADS -DUSE_PTHREADS -DENABLE_UI_THREADS -DGCC3 -DGCC4 -Wno-deprecated',
 ]
-HOUDINI_LINK_FLAGS = [
+os.environ['HOUDINI_LINK_FLAGS'] = ' '.join([
     '-Wl,-rpath /lib64',
     '-Wl,-rpath /usr/lib64/',
     '-Wl,-rpath,%s/dsolib' % HOUDINI_ROOT,
     '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
     '-Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder ',
     '-Wno-uninitialized -Wunused -Wno-unused-parameter -Wno-deprecated',
-]
+])
 
 LINKFLAGS = [
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/gcc/lib64"  % GCC,
