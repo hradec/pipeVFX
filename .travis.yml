@@ -7,8 +7,18 @@ before_install:
   - sudo apt-get install -qq libc6-dev
   - sudo apt-get install -qq wget
 
+compiler:
+  - gcc
+
 python:
   - "2.7"
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-5.3
 
 # command to install dependencies
 #install: "easy_install scons"
