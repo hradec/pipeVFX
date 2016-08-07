@@ -5,6 +5,7 @@ language:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libc6-dev
+  - sudo apt-get install -qq wget
 
 python:
   - "2.7"
