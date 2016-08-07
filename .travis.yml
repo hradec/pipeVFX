@@ -8,9 +8,11 @@ before_install:
 
 python:
   - "2.7"
+
 # command to install dependencies
-#install: "pip install scons"
+install: "pip install scons"
+
 # command to run tests
 #script: cd pipeline/build/ && . ../tools/init/bash && run scons --python_version 2.7.6
 
-script: cd pipeline/build/ && python ../libs/linux/x86_64/gcc-4.1.2/scons/2.3.4/script/scons
+script: cd pipeline/build/ && scons

@@ -21,12 +21,11 @@
 import log
 from environ import environ as _environ
 from base import depotRoot, roots, platform, py, arch, WIN, OSX, LIN, runProcess, taskset, vglrun
-import job
+
 import admin
 
-import os,sys, re, stat, shutil, traceback
+import os,sys, stat, shutil, traceback
 from glob import glob
-from pprint import pprint
 from multiprocessing import cpu_count
 
 from bcolors import bcolors
@@ -162,7 +161,7 @@ class appsDB(dict):
             'subpath' : '',
         }
         if hasattr(self, 'macfix'):
-            macfix(ret)
+            macfix(ret) # noqa
         return ret
 
     def path(self, subPath='', appName=None):
@@ -203,7 +202,7 @@ class appsDB(dict):
         for each in glob( self.path(subPath='lib/python*/site-packages/') ):
             version = each.split('/site-packages')[0].split('python')[-1]
             pythonPath[version] = [ each.replace(version,'$PYTHON_VERSION_MAJOR'),
-                       '/'.join(each.replace(version,'$PYTHON_VERSION_MAJOR').split('/')[:-2]) ]
+                '/'.join(each.replace(version,'$PYTHON_VERSION_MAJOR').split('/')[:-2]) ]
 
         for each in glob( self.path(subPath='lib/python/*/site-packages/') ):
             version = each.split('python/')[1].split('/')[0]
@@ -321,7 +320,7 @@ class version:
         os.environ['__DB_LATEST'] = str(_version)
 
     @staticmethod
-    def get( appName=None, all=False ):
+    def get( appName=None, all=False ): #noqa
         '''
             returns the version for the given app.
             if no app is specified, it will return a copy of the __version database dictionary
@@ -335,7 +334,7 @@ class version:
         if appName:
             if _version.has_key(appName):
                 v = _version[appName]
-            if all:
+            if all: #noqa
                 v = appsDB()[appName]['versions']
         else:
             v = _version
@@ -371,7 +370,7 @@ class versionLib:
         os.environ['__DB_LATEST_LIBS'] = str(_versionLib)
 
     @staticmethod
-    def get( appName=None, all=False ):
+    def get( appName=None, all=False ): #noqa
         '''
             returns the version for the given app.
             if no app is specified, it will return a copy of the __version database dictionary
@@ -385,7 +384,7 @@ class versionLib:
         if appName:
             if _versionLib.has_key(appName):
                 v = _versionLib[appName]
-            if all:
+            if all: #noqa
                 v = libsDB()[appName]['versions']
         else:
             v = _versionLib
@@ -453,7 +452,7 @@ class baseApp(_environ):
         TODO: a subsystem to automatically detect default version on
         the filesystem.
     '''
-    def __init__(self, app=None, platform=platform, arch=arch, DB=appsDB, versionClass=version, DB_EnvVar='__DB_LATEST'):
+    def __init__(self, app=None, platform=platform, arch=arch, DB=appsDB, versionClass=version, DB_EnvVar='__DB_LATEST', cache=True):
         '''
             the class init basically just sets the version according to the __version db,
             and calls refresh(), which does the actual env var initialization.
@@ -467,13 +466,6 @@ class baseApp(_environ):
             className = str(self.__class__).split('.')
             self.className = className[len(className)-1].strip("'>")
 
-        # eliminate recursion class creation
-        recursionCache = {}
-        if hasattr(sys, 'recursionCache'):
-            if sys.recursionCache.has_key(DB_EnvVar):
-                recursionCache = sys.recursionCache[DB_EnvVar]
-        else:
-            sys.recursionCache = {}
 
         # Look for the --disable command line option, which disables packages
         # ex: maya --disable delight,prman
@@ -512,6 +504,22 @@ class baseApp(_environ):
         # evaluate the version method, if class have it!
         if hasattr(self, 'versions'):
             self.versions()
+
+        # eliminate recursion class creation by using a cache buffer for the classes we evaluate.
+        # we store the cache buffer as an extra argument of sys, so its global to the whole python environment!
+        recursionCache = {}
+        if hasattr(sys, 'recursionCache'):
+            if sys.recursionCache.has_key(DB_EnvVar):
+                recursionCache = sys.recursionCache[DB_EnvVar]
+        else:
+            sys.recursionCache = {}
+
+        # check if the current class is cached, and if the current version changed.
+        # if thats the case, we have to delete the cache and re-cache everything again!
+        if recursionCache.has_key( self.className ):
+            if self.globalVersion.get(self.className) != recursionCache[self.className]["%s_VERSION" % self.className.upper()]:
+                sys.recursionCache[self.DB_EnvVar] = {}
+                recursionCache = sys.recursionCache[self.DB_EnvVar]
 
         # retrieve a previous evaluated version of this class, if any
         # so we don't waste time evaluating things more than once!
@@ -737,7 +745,7 @@ class baseApp(_environ):
             is a virtual method that must be defined by each app class.
         '''
         appName = self.className.upper()
-        if not self.has_key(appName): # prevent from adding twice!
+        if not self.has_key('%s_VERSION' % appName): # prevent from adding twice!
             self.replace( {
                 '%s_VERSION' % appName : self.appFromDB.version(),
                 '%s_ROOT'    % appName : os.path.abspath( self.appFromDB.path()+'/' ),
@@ -792,7 +800,7 @@ class baseApp(_environ):
     def versionList(self, numbersOnly=True):
         ''' returns all the versions available for the app'''
         zappsDB = self.DB(self.className)
-        if numbersOnly:
+        if numbersOnly and self.className != 'houdini':
             return filter(lambda x: x[0].isdigit(), zappsDB[self.className]['versions'])
         return zappsDB[self.className]['versions']
 
@@ -814,6 +822,7 @@ class baseApp(_environ):
         _environ.evaluate(self)
 
     def toolsPaths(self):
+        ''' return all the tools paths in the hierarqui, sorted correctly! '''
         #add tools paths
         toolsPaths = [roots.tools()]
         if admin.job.current():
@@ -909,11 +918,28 @@ class baseApp(_environ):
                 self.insert(each,0, top[each])
 
     def inFarm(self):
-        ret =  os.environ.has_key('PIPE_FARM_USER') 
+        ret =  os.environ.has_key('PIPE_FARM_USER')
 #        if os.environ.has_key('PIPE_FARM_ENGINE'):
 #            if os.envion['PIPE_FARM_ENGINE'] == 'afanasy':
 #                ret=False
         return ret
+
+    def fullEnvironment(self, binName=None):
+        # here is were we actually update self with all updated
+        # classes - the ones we do 'self.update(classApp())' in environ method!
+        for className in  self.updatedClasses.keys():
+            # evaluate all classes, but itself!
+            if className != self.parent():
+                self.updatedClasses[className].evaluate()
+                # first, run license method for all added classes
+                if binName:
+                    self.updatedClasses[className]._license(binName)
+                # then, update self with the class!
+                _environ.update(self, self.updatedClasses[className])
+
+        # last, run self license
+        if binName:
+            self._license(binName)
 
     def run(self, binName):
         ''' the application!!! '''
@@ -995,15 +1021,15 @@ class baseApp(_environ):
         if os.getuid()>0:
             # here is were we actually update self with all updated
             # classes - the ones we do 'self.update(classApp())' in environ method!
-            for className in  self.updatedClasses.keys():
-                self.updatedClasses[className].evaluate()
-                # first, run license method for all added classes
-                self.updatedClasses[className]._license(binName)
-                # then, update self with the class!
-                _environ.update(self, self.updatedClasses[className])
+            # for className in  self.updatedClasses.keys():
+            #     self.updatedClasses[className].evaluate()
+            #     # first, run license method for all added classes
+            #     self.updatedClasses[className]._license(binName)
+            #     # then, update self with the class!
+            #     _environ.update(self, self.updatedClasses[className])
+            self.fullEnvironment(binName)
 
-            # last, run self license
-            self._license(binName)
+
 
         # expand all environment variables stored in this class to
         # actual os.environ vars
@@ -1015,7 +1041,7 @@ class baseApp(_environ):
             sys.argv.extend( self.extraCommandLine(binName) )
 
         # run the software in GDB, if --debug in command line
-        runWithOsSystem = binName in ['python','houdini']
+        runWithOsSystem = binName in ['python','houdini','prman']
         if '--debug' in sys.argv:
             if self.className == 'maya':
                 binName += ' -d gdb '
@@ -1232,7 +1258,7 @@ class baseApp(_environ):
                     )
                     print "Running in farm as user: %s" % os.environ['PIPE_FARM_USER']
                     print '='*80
-                    print sucmd 
+                    print sucmd
                     # run it over dbusService!
                     sudo.cmd( sucmd )
                     try:

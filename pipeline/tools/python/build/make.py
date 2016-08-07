@@ -57,6 +57,7 @@ class cmake(make):
             '-DVERBOSE=1',
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
             '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+            '-DALEMBIC_SHARED_LIBS=1',
             '-DMAYA_ROOT=$MAYA_ROOT',
             '-DARNOLD_ROOT=$ARNOLD_ROOT',
             '-DPRMAN_ROOT=$PRMAN_ROOT',
