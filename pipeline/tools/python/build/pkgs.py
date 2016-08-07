@@ -261,7 +261,7 @@ class all: # noqa
             ARGUMENTS,
             'libpng',
             download=[(
-                'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.23.tar.gz',
+                'http://downloads.sourceforge.net/project/libpng/libpng16/1.6.23/libpng-1.6.23.tar.gz',
                 'libpng-1.6.23.tar.gz',
                 '1.6.23',
                 'a49e4cc48d968c79def53d082809c9f2'
