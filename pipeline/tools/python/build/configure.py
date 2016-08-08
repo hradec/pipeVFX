@@ -116,7 +116,7 @@ class cortex(configure):
     environ = {
     }
     cmd=[
-        'scons OPTIONS=%s/cortex.options.py -j $DCORES'         % os.path.abspath( os.path.dirname(__file__)),
+        # 'scons OPTIONS=%s/cortex.options.py -j $DCORES'         % os.path.abspath( os.path.dirname(__file__)),
         'scons OPTIONS=%s/cortex.options.py -j $DCORES install' % os.path.abspath( os.path.dirname(__file__)),
     ]
 
@@ -166,13 +166,8 @@ class cortex(configure):
                     cleanSearchPath.append(path)
                 self.os_environ[each] = ':'.join(cleanSearchPath)
 
+        self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+
         print
         #self.os_environ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self.os_environ['LD_LIBRARY_PATH']
         return cmd
-
-
-    def installer(self, target, source, env): # noqa
-        targetFolder = os.path.dirname(str(target[0]))
-        ret = os.popen("ln -s libssl.so %s/lib/libssl.so.10" % targetFolder).readlines()
-        ret += os.popen("ln -s libcrypto.so %s/lib/libcrypto.so.10" % targetFolder).readlines()
-        return ret

@@ -1,11 +1,11 @@
 
 
 
-import os, pipe
+import os, sys, pipe
 
 
 def installRoot(args={}):
-    if args.has_key('DOIT'):
+    if args.has_key('DOIT') or 'install' in sys.argv:
         # DOIT will install properly in the right place,
         # respecting the ROOT env var as the path for the pipeVFX root!
         dev = pipe.build.install()

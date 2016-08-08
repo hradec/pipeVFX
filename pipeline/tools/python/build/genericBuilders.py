@@ -278,9 +278,9 @@ class generic:
 
                 # if we have a real baseLib, add it as dependency
                 if 'noBaseLib' not in baselib.name:
-                    if baselib not in self.dependOn:
+                    # if baselib not in self.dependOn:
                     #    self.dependOn[baselib] = None
-                        self.dependOn.update( {baselib :  baselibDownloadList[2] } )
+                    self.dependOn.update( {baselib :  baselibDownloadList[2] } )
 
                 # build all versions of the package specified by the download parameter
                 for n in range(len(download)):
@@ -430,21 +430,21 @@ class generic:
         lastlogFile = self.__lastlog(target[0])
         lastlog = self.__check_target_log__( lastlogFile )
 
-#        if not lastlog:
-#            # check if dependency changed!
-#            for t in target:
-#                if os.path.exists("%s.depend" % t) and os.path.exists("%s.cmd" % t):
-#                    for l in open("%s.depend" % t,'r').readlines():
-#                        if l in source:
-#                            lastlog=255
-#                            break
-
-##                    if os.path.exists("%s.cmd" % t):
-##                        tmp = ''.join(open("%s.cmd" % t,'r').readlines()).strip()
-##                        if tmp != cmd.strip():
-##                            lastlog=255
-#                else:
-#                    lastlog=255
+        # if not lastlog:
+        #     # check if dependency changed!
+        #     for t in target:
+        #         if os.path.exists("%s.depend" % t) and os.path.exists("%s.cmd" % t):
+        #             for l in open("%s.depend" % t,'r').readlines():
+        #                 if l in source:
+        #                     lastlog=255
+        #                     break
+        #
+        #         # if os.path.exists("%s.cmd" % t):
+        #         #     tmp = ''.join(open("%s.cmd" % t,'r').readlines()).strip()
+        #         #     if tmp != cmd.strip():
+        #         #         lastlog=255
+        #         # else:
+        #         #     lastlog=255
 
         return lastlog
 
@@ -541,6 +541,9 @@ class generic:
 
     def runCMD(self, cmd , target, source, env):
         ''' the main method to run system calls, like configure, make, cmake, etc '''
+        # for each in  source:
+        #     print str(each)
+
         buildCompiler = int(filter(lambda x: 'BUILD_COMPILER' in x[0], env.items())[0][1])
 
         # restore original environment before ruuning anything.
@@ -567,14 +570,21 @@ class generic:
         # set a python version if none is set
         pythonVersion = '1.0.0'
         if '.python' in os.path.basename(target):
-#            pythonVersion = pipe.apps.baseApp("python").version()
-#            os_environ['PYTHON_VERSION'] = pythonVersion
-#            os_environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
+            # pythonVersion = pipe.apps.baseApp("python").version()
+            # os_environ['PYTHON_VERSION'] = pythonVersion
+            # os_environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
 
             # adjust env vars for the current selected python version
             sys.stdout.write( bcolors.FAIL )
             if len(target.split('.python')) > 1:
                 pythonVersion = target.split('.python')[-1].split('.done')[0]
+                tmp =''
+                for n in pythonVersion:
+                    if not n.isdigit() and n!='.':
+                        break
+                    tmp += n
+                pythonVersion = tmp
+
 
             for var in os_environ:
                 pp = []
@@ -657,7 +667,8 @@ class generic:
                         k.sort()
                         p = k[-1]
 
-
+                    if len(dependOn.targetFolder[p])==1:
+                        depend_n = 0
                     dependList[dependOn.name] = dependOn.targetFolder[p][depend_n]
 
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
@@ -996,8 +1007,8 @@ class generic:
                     for sed in self.sed[version][each]:
                         cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
                             f,
-                            sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#'),
-                            sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n')
+                            sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
+                            sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('"','\\"')
                         )
                         # print "\n\n"+cmd+"\n\n"
                         os.popen(cmd).readlines()

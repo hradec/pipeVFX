@@ -236,19 +236,21 @@ INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/$IECORE_NAME" % ab
 
 # build flags
 # =============================================================================================================================================================
-HOUDINI_CXX_FLAGS = [
-    '-DSIZEOF_VOID_P=8 -m64 -fPIC -DAMD64 -DLINUX -D__LINUX__ ',
-    '-O2 -DDLLEXPORT="" -DMAKING_DSO -D_GNU_SOURCE -DSESI_LITTLE_ENDIAN ',
-    '-DENABLE_THREADS -DUSE_PTHREADS -DENABLE_UI_THREADS -DGCC3 -DGCC4 -Wno-deprecated',
-]
-os.environ['HOUDINI_LINK_FLAGS'] = ' '.join([
-    '-Wl,-rpath /lib64',
-    '-Wl,-rpath /usr/lib64/',
+# we use houdinis hcustom command to figure out the cxx/link flags needed for the current houdini version
+hcustom = os.popen('''touch /tmp/test.cpp ; python -c "import pipe;pipe.apps.houdini().run('hcustom')" -t -e -i /tmp /tmp/test.cpp''').readlines()
+for l in hcustom:
+    if '-o /tmp/test.o' in l:
+        os.environ['HOUDINI_CXX_FLAGS'] = l.split('g++')[-1].split('-o')[0]
+    if '-shared' in l:
+        os.environ['HOUDINI_LINK_FLAGS'] = l.split('test.o')[-1].split('-o')[0]
+
+os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
+os.environ['HOUDINI_LINK_FLAGS'] += ' '.join([
     '-Wl,-rpath,%s/dsolib' % HOUDINI_ROOT,
     '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
-    '-Wall -W -Wno-parentheses -Wno-sign-compare -Wno-reorder ',
-    '-Wno-uninitialized -Wunused -Wno-unused-parameter -Wno-deprecated',
 ])
+HOUDINI_CXX_FLAGS = os.environ['HOUDINI_CXX_FLAGS']
+HOUDINI_LINK_FLAGS = os.environ['HOUDINI_LINK_FLAGS']
 
 LINKFLAGS = [
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/gcc/lib64"  % GCC,

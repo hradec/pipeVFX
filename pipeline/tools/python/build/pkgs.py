@@ -397,12 +397,17 @@ class all: # noqa
             ARGUMENTS,
             'boost',
             download=[(
-                #     'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
-                #     'boost_1_56_0.tar.gz',
-                #     '1.56.0',
-                #     '8c54705c424513fa2be0042696a3a162',
+                # 'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.56.0%2F&ts=1432347566&use_mirror=iweb',
+                # 'boost_1_56_0.tar.gz',
+                # '1.56.0',
+                # '8c54705c424513fa2be0042696a3a162',
                 # ),(
-                'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.58.0%2F&ts=1432347909&use_mirror=hivelocity',
+                # 'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz',
+                # 'boost_1_55_0.tar.gz',
+                # '1.55.0',
+                # '93780777cfbf999a600f62883bd54b17',
+            # ),(
+                'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz',
                 'boost_1_58_0.tar.gz',
                 '1.58.0',
                 '5a5d5614d9a07672e1ab2a250b5defc5',
