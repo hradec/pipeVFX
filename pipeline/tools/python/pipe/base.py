@@ -62,7 +62,7 @@ def runProcess(exe):
         except:
             pass
         break
-    
+
     ret = p.returncode
     if 'OSError' in log:
         ret = 255
@@ -203,14 +203,18 @@ def getDistro(check=True):
         distro = 'gcc-llvm5.1'
     else:
         version = ['4.1.2']
-        try: version.append( filter( lambda x: x.isdigit() or x=='.', os.popen('gcc --version').readlines()[0] ) )
-        except: pass
         distro = 'gcc-%s' % version[-1]
+        try:
+            version.append( filter( lambda x: x.isdigit() or x=='.', os.popen('gcc --version').readlines()[0] ) )
+        except: pass
+
         if check:
             version.sort()
             for v in version:
-                if os.path.exists(roots.libs(distro='gcc-%s' % v)):
+                if os.path.exists("%s/.ready" % roots.libs(distro='gcc-%s' % v)):
                     distro = 'gcc-%s' % v
+        else:
+            distro = 'gcc-%s' % version[-1]
     return distro
 
 distro = getDistro()

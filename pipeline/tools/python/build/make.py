@@ -4,7 +4,6 @@ from  SCons.Builder import *
 from  SCons.Defaults import *
 from devRoot import *
 from genericBuilders import *
-import utils
 import pipe
 import os,sys
 
@@ -23,8 +22,8 @@ class cmake(make):
         'cmake $SOURCE_FOLDER && '
         'make -j $DCORES VERBOSE=1 && make install'
     ]
-    
-    flags = [    
+
+    flags = [
             '-Wno-dev',
             '-DUSE_SIMD=0',
             '-DUSE_FFMPEG=0',
@@ -72,11 +71,11 @@ class cmake(make):
             "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
         ]
 
-    
+
     def fixCMD(self, cmd):
-        ''' cmake is kindy picky with environment variables and has lots of 
+        ''' cmake is kindy picky with environment variables and has lots of
         variables override to force it to find packages in non-usual places.
-        So here we force some env vars and command line overrides to make sure 
+        So here we force some env vars and command line overrides to make sure
         cmake finds pipeVFX packages first!'''
         try: arnold = pipe.apps.arnold().path('')
         except: arnold = ""
@@ -107,13 +106,13 @@ class cmake(make):
         for each in self.flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
                 cmd = cmd.replace('cmake','cmake '+each+' ')
-        
+
         if 'cmake' in cmd and os.environ.has_key('CMAKE_TARGET_FOLDER'):
             cmd = cmd.replace('cmake','$CMAKE_TARGET_FOLDER/bin/cmake')
-         
-        cmd = ' && '.join(environ)+" && "+cmd        
+
+        cmd = ' && '.join(environ)+" && "+cmd
         #cmd = 'find ./ -name CMakeCache.txt -exec rm -rf {} \; && '+cmd
-        return cmd 
+        return cmd
 
 
 
@@ -121,7 +120,7 @@ class download(make):
     ''' a simple class to download and uncompress packages, so they can be used by other packages for building '''
     src='CMakeLists.txt'
     cmd=['']
-    # as we want this packages just to be used for building other packages, we don't need a installation target_folder 
+    # as we want this packages just to be used for building other packages, we don't need a installation target_folder
 #    def installer(self, target, source, env):
 #        os.system("rm -rf %s" % os.path.abspath(os.path.dirname(os.path.dirname(str(target[0])))) )
 
@@ -129,11 +128,11 @@ class download(make):
 class glew(make):
     ''' a make class to exclusively build glew package
     glew requires a bunch of make calls to construct the source and build.
-    also, it install its libs in the lib64 folder, so we use a custom 
+    also, it install its libs in the lib64 folder, so we use a custom
     installer method to create a link lib -> lib64'''
     cmd = ' && '.join([
 #        './cmake-testbuild.sh'
-#        'cd auto && make destroy && make && cd ..', 
+#        'cd auto && make destroy && make && cd ..',
         'make GLEW_DEST=$TARGET_FOLDER install.all',
     ])
     sed = {
@@ -161,14 +160,14 @@ class tbb(make):
     cmd = ['make -j $DCORES ']
 
     def installer(self, target, source, env):
-        '''we use this method to do a custom tbb install 
+        '''we use this method to do a custom tbb install
         by copying files over.'''
         import build
-        path = os.path.abspath( os.path.dirname(str(source[-1])) ) 
-        target = os.path.abspath( os.path.dirname(str(target[0])) ) 
-        for n in range(len(self.buildFolder)):
+        path = os.path.abspath( os.path.dirname(str(source[-1])) )
+        target = os.path.abspath( os.path.dirname(str(target[0])) )
+        for n in range(len(self.buildFolder)): #noqa
             lines = os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (path, target)).readlines()
             for SHLIBEXT in build.SHLIBEXT:
-               lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
-               lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
+                lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
+                lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
         return lines

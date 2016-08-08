@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import build
-import SCons
+import build, devRoot
+import SCons, os
 
 SCons.Script.SetOption('warn', 'no-all')
 #SCons.Script.SetOption('num_jobs', 8)
@@ -854,6 +854,17 @@ class all: # noqa
             ],
         )
         self.pyqt = pyqt
+
+        # if all build is done correctly, make install folder ready!
+        SCons.Script.Alias( 'install',
+            SCons.Script.Command(
+                target = os.path.join( devRoot.installRoot(ARGUMENTS), '.ready'),
+                source = [self.pyqt, self.osl, self.alembic, self.boost, self.ilmbase, self.openexr]+build.allDepend,
+                action = "touch $TARGET"
+            )
+        )
+
+
         # =============================================================================================================================================
 
         ##appleseed = build.cmake(

@@ -265,6 +265,7 @@ class generic:
         self.buildFolder = {}
         self.targetFolder = {}
         self.depend = {}
+        self.installAll = []
         for baselib in self.baseLibs:
             for baselibDownloadList in baselib.downloadList:
                 p = baselib.name
@@ -312,7 +313,7 @@ class generic:
 
                     # if not installed, build!
                     if not os.path.exists(install):
-                        os.popen("rm -rf "+setup).readlines()
+                        os.popen("rm -rf "+self.buildFolder[p][-1]).readlines()
 
                     #download pkg
                     pkgs = self.download(archive)
@@ -352,8 +353,10 @@ class generic:
                     t = self.install( install, [b,source[0]] )
 
                     self.depend[p].append(t)
+                    self.installAll.append(t)
                     self.env.Alias( 'install', t )
                     self.env.Alias( 'build-%s' % name, t )
+
 
     def registerSconsBuilder(self, *args):
 #        name = str(args[0]).split(' ')[2].split('.')[-1]
@@ -409,7 +412,7 @@ class generic:
         ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.'''
         pass
 
-    def __lastlog(self, target, pythonVersion=None):
+    def __lastlog(self, target, pythonVersion="1.0"):
         lastlogFile = "%s/lastlog" % os.path.dirname(str(target))
 
         # if no pythonVersion specified, see if we can figure it out from target
@@ -423,6 +426,7 @@ class generic:
 
         if self.targetSuffix:
             lastlogFile = '%s.%s' % (lastlogFile, self.targetSuffix)
+
         return os.path.abspath( lastlogFile )
 
 
@@ -555,6 +559,7 @@ class generic:
 
         target=str(target[0])
         pkgVersion = os.path.basename(os.path.dirname(target))
+        pkgName    = os.path.basename(os.path.dirname(os.path.dirname(target)))
         installDir = os.path.abspath(os.path.dirname(target))
 
         # now check if we want to use pipes gcc or not!
@@ -568,8 +573,8 @@ class generic:
 
 
         # set a python version if none is set
-        pythonVersion = '1.0.0'
-        if '.python' in os.path.basename(target):
+        pythonVersion = '1.0.0' if pkgName != 'python' else pkgVersion
+        if '.python' in os.path.basename(target) or pkgName == 'python':
             # pythonVersion = pipe.apps.baseApp("python").version()
             # os_environ['PYTHON_VERSION'] = pythonVersion
             # os_environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
