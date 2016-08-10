@@ -45,17 +45,17 @@ class cmake(make):
 #            '-DBoost_USE_MULTITHREADED=false',
 #            '-DBoost_USE_STATIC_RUNTIME=false',
             '-DLIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
-            '-DPYTHON_ROOT=$PYTHON_ROOT',
-            '-DPYTHON_INCLUDE_DIR=$PYTHON_ROOT/include/python$PYTHON_VERSION_MAJOR/',
-            '-DPYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+            '-DPYTHON_ROOT=$PYTHON_TARGET_FOLDER',
+            '-DPYTHON_INCLUDE_DIR=$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/',
+            '-DPYTHON_LIBRARY=$PYTHON_TARGET_FOLDER/lib/libpython$PYTHON_VERSION_MAJOR.so',
             '-DBOOST_HOME=$BOOST_TARGET_FOLDER',
             '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
             '-DBOOST_INCLUDEDIR=$BOOST_TARGET_FOLDER/include',
             '-DBOOST_LIBRARYDIR=$( if [ "$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)" == "" ] ; then ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 ; else echo "$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/" ; fi)/',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
             '-DVERBOSE=1',
-            '-DALEMBIC_PYTHON_ROOT=$PYTHON_ROOT/lib/python$PYTHON_VERSION_MAJOR/config',
-            '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_ROOT/lib/libpython$PYTHON_VERSION_MAJOR.so',
+            '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
+            '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_TARGET_FOLDER/lib/libpython$PYTHON_VERSION_MAJOR.so',
             '-DALEMBIC_SHARED_LIBS=1',
             '-DMAYA_ROOT=$MAYA_ROOT',
             '-DARNOLD_ROOT=$ARNOLD_ROOT',
@@ -86,22 +86,17 @@ class cmake(make):
         try: maya = pipe.apps.maya().path('')
         except: maya = ""
         environ = [
-            'HDF5_ROOT=$HDF5_TARGET_FOLDER',
-            'HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
-            'HDF5_LIBRARIES=$HDF5_TARGET_FOLDER/lib/libhdf5.so',
-            'OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include',
-            'OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
-            'OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
-#            'CMAKE_CC_COMPILER=$CC',
-#            'CMAKE_CXX_COMPILER=$CXX',
-#            'CMAKE_CC_LINKER_PREFERENCE=$LD',
-#            'CMAKE_CXX_LINKER_PREFERENCE=$LD',
-#            'CMAKE_LINKER=$LD',
+            'export HDF5_ROOT=$HDF5_TARGET_FOLDER',
+            'export HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
+            'export HDF5_LIBRARIES=$HDF5_TARGET_FOLDER/lib/libhdf5.so',
+            'export OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include',
+            'export OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
+            'export OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
         ]
         environ += [
-            'MAYA_ROOT=%s'   % maya,
-            'ARNOLD_ROOT=%s' % arnold,
-            'PRMAN_ROOT=%s'  % prman,
+            'export MAYA_ROOT=%s'   % maya,
+            'export ARNOLD_ROOT=%s' % arnold,
+            'export PRMAN_ROOT=%s'  % prman,
         ]
         for each in self.flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
@@ -113,6 +108,86 @@ class cmake(make):
         cmd = ' && '.join(environ)+" && "+cmd
         #cmd = 'find ./ -name CMakeCache.txt -exec rm -rf {} \; && '+cmd
         return cmd
+
+
+class alembic(cmake):
+    def preSED(self, pkgVersion):
+        if float( '.'.join(pkgVersion.split('.')[:2]) ) < 1.60:
+            from subprocess import Popen
+            cmd = 'python ./build/bootstrap/alembic_bootstrap.py . ' #'> %s 2>&1' % lastlog
+            proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=self.os_environ, close_fds=True)
+            proc.wait()
+
+    def fixCMD(self, cmd):
+        # update the buld environment with all the enviroment variables
+        # specified in apps argument!
+        pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
+        pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
+        print bcolors.WARNING+": ", bcolors.BLUE+"  apps: ",
+        for (app, version) in self.apps:
+            className = str(app).split('.')[-1].split("'")[0]
+            pipe.version.set({className:version})
+            app = app()
+            app.fullEnvironment()
+            print "%s(%s)" % (className, version),
+            # get all vars from app class and add to cmd environ
+            for each in app:
+                if each not in ['LD_PRELOAD','PYTHON_VERSION','PYTHON_VERSION_MAJOR']:
+                    v = app[each]
+                    if type(v) == str:
+                        v=[v]
+                    if each not in self.os_environ:
+                        self.os_environ[each] = ''
+                    # if var value is paths
+                    if '/' in str(v):
+                        self.os_environ[each] = "%s:%s" % (self.os_environ[each], ':'.join(v))
+                    else:
+                        self.os_environ[each] = ' '.join(v)
+
+        # remove python paths that are not the same version!
+        for each in self.os_environ:
+            if '/' in str(v):
+                cleanSearchPath = []
+                for path in self.os_environ[each].split(':'):
+                    if not path.strip():
+                        continue
+                    if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
+                        pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
+                        pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
+                        # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
+                        if pathVersion1:
+                            if pathVersion1 != self.os_environ['PYTHON_VERSION']:
+                                continue
+                        if pathVersion2:
+                            if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
+                                continue
+                    cleanSearchPath.append(path)
+                self.os_environ[each] = ':'.join(cleanSearchPath)
+
+        self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+
+        environ = [
+            'export HDF5_ROOT=$HDF5_TARGET_FOLDER',
+            'export HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
+            'export HDF5_LIBRARIES=$HDF5_TARGET_FOLDER/lib/libhdf5.so',
+            'export OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include',
+            'export OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
+            'export OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
+        ]
+        for each in self.flags:
+            if 'cmake' in cmd and each.split('=')[0] not in cmd:
+                cmd = cmd.replace('cmake','cmake '+each+' ')
+
+        if 'cmake' in cmd and os.environ.has_key('CMAKE_TARGET_FOLDER'):
+            cmd = cmd.replace('cmake','$CMAKE_TARGET_FOLDER/bin/cmake')
+
+        cmd = ' && '.join(environ)+" && "+cmd
+
+        print
+        #self.os_environ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self.os_environ['LD_LIBRARY_PATH']
+        return cmd
+
+
 
 
 

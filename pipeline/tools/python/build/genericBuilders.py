@@ -368,6 +368,9 @@ class generic:
         return filter(lambda x: self.className==x[0], inspect.getmembers(self.env))[0][1]
 
     def sconsPrint(self, target, source, env, what=None):
+        lastlog = self.shouldBuild( target, source )
+        if lastlog==0:
+            return
         t=str(target[0])
         n=' '.join(t.split(os.path.sep)[-3:-1])
         if '.python' in t:
@@ -412,13 +415,18 @@ class generic:
         ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.'''
         pass
 
-    def __lastlog(self, target, pythonVersion="1.0"):
+    def __lastlog(self, target, pythonVersion=None):
         lastlogFile = "%s/lastlog" % os.path.dirname(str(target))
 
         # if no pythonVersion specified, see if we can figure it out from target
         if not pythonVersion:
             if len(str(target).split('.python')) > 1:
                 pythonVersion = str(target).split('.python')[-1].split('.done')[0][:3]
+            if os.path.basename(os.path.dirname(os.path.dirname(str(target)))) == 'python':
+                pythonVersion = '.'.join( os.path.basename(os.path.dirname(str(target))).split('.')[:2] )
+
+        if not pythonVersion:
+            pythonVersion = "1.0"
 
         # if we do have a python version after all, include it in the filename
         if pythonVersion:
@@ -427,6 +435,7 @@ class generic:
         if self.targetSuffix:
             lastlogFile = '%s.%s' % (lastlogFile, self.targetSuffix)
 
+        # print lastlogFile
         return os.path.abspath( lastlogFile )
 
 
@@ -561,15 +570,8 @@ class generic:
         pkgVersion = os.path.basename(os.path.dirname(target))
         pkgName    = os.path.basename(os.path.dirname(os.path.dirname(target)))
         installDir = os.path.abspath(os.path.dirname(target))
-
-        # now check if we want to use pipes gcc or not!
-        if buildCompiler == gcc.pipe:
-            os_environ['PATH'] = ':'.join([
-                pipe.build.gcc(),
-                '%s/bin' % installDir,
-                os_environ['PATH'],
-            ])
-
+        self.version = pkgVersion
+        self.versionMajor = float('.'.join(pkgVersion.split('.')[:2]))
 
 
         # set a python version if none is set
@@ -619,8 +621,6 @@ class generic:
 
 
         prefix = ''
-        if buildCompiler == gcc.pipe:
-            prefix = 'x86_64-unknown-linux-gnu-'
         os_environ.update( {
             'CC'                : '%sgcc' % prefix,
             'CPP'               : 'cpp',
@@ -643,6 +643,12 @@ class generic:
 
         CFLAGS=['-fPIC']
         LDFLAGS=[]
+        gcc={
+            'gcc' : 'gcc',
+            'g++' : 'g++',
+            'c++' : 'c++',
+            'cpp' : 'cpp',
+        }
         dependList={}
         sourceList = map(lambda x: os.path.basename(os.path.dirname(os.path.dirname(str(x)))), source)
         for dependOn in self.dependOn:
@@ -678,6 +684,12 @@ class generic:
 
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
+
+                    if dependOn.name == 'gcc':
+                        gcc['gcc'] = 'gcc-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
+                        gcc['g++'] = 'g++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
+                        gcc['cpp'] = 'cpp-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
+                        gcc['c++'] = 'c++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
 
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
@@ -733,12 +745,8 @@ class generic:
             os_environ['CPPCXXFLAGS']   = "%s" % ' '.join(CFLAGS+LDFLAGS)
             os_environ['LDFLAGS']       = "%s -L/usr/lib64" % ' '.join(LDFLAGS)
 
-        if buildCompiler == gcc.pipe:
-            os_environ['LD_LIBRARY_PATH'] = ':'.join([
-                pipe.build.gcc()+'/../lib64/',
-                os_environ['LD_LIBRARY_PATH'],
-            ])
 
+        os_environ['LD_RUN_PATH'] = os_environ['LD_LIBRARY_PATH']
         # if running in fedora
 #        if os.path.exists('/etc/fedora-release'):
 #            os_environ['LIBRARY_PATH']      += ":/usr/lib64"
@@ -798,6 +806,8 @@ class generic:
 
         # reset lastlog
         open(lastlog,'w').close()
+        if hasattr(self, 'preSED'):
+            self.preSED(pkgVersion, lastlog)
 
         # run sed inline patch mechanism
         self.runSED(os_environ['SOURCE_FOLDER'])
@@ -836,6 +846,23 @@ class generic:
                     if os.path.exists(p):
                         cleaned.append(p)
                 os_environ[each] = ':'.join(cleaned)
+
+        # use dependency gcc, if any!
+        os_environ['CC']  = "%s %s" % (gcc['gcc'], os_environ['CC'].replace(':',"").replace('gcc',''))
+        os_environ['CXX'] = "%s %s" % (gcc['g++'], os_environ['CXX'].replace(':',"").replace('g++',''))
+
+        if gcc['gcc'] != 'gcc':
+            tmp = glob('%s/lib/gcc/x86_64-pc-linux-gnu/*' % os_environ['GCC_TARGET_FOLDER'])
+            os_environ['LD_LIBRARY_PATH'] = ':'.join(tmp+[
+                'lib/gcc/x86_64-pc-linux-gnu/lib64/',
+                os_environ['LD_LIBRARY_PATH']
+            ])
+            os_environ['PATH'] = ':'.join([
+                '%s/bin' % os_environ['GCC_TARGET_FOLDER'],
+                os_environ['PATH'],
+            ])
+
+
 
         from subprocess import Popen
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import build, devRoot
+import build, devRoot, pipe
 import SCons, os
 
 SCons.Script.SetOption('warn', 'no-all')
@@ -36,6 +36,70 @@ SCons.Script.SetOption('warn', 'no-all')
 class all: # noqa
     def __init__(self,ARGUMENTS):
 
+        gmp = build.configure(
+               ARGUMENTS,
+               'gmp',
+               download=[
+                 (
+                   'https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2',
+                   'gmp-6.0.0.tar.gz',
+                   '6.0.0',
+                   'b7ff2d88cae7f8085bd5006096eed470'
+                 ),
+               ],
+        )
+        mpc = build.configure(
+               ARGUMENTS,
+               'mpc',
+               download=[
+                 (
+                   'ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
+                   'mpc-1.0.3.tar.gz',
+                   '1.0.3',
+                   'd6a1d5f8ddea3abd2cc3e98f58352d26'
+                 ),
+               ],
+        )
+        mpfr = build.configure(
+               ARGUMENTS,
+               'mpfr',
+               download=[
+                 (
+                   'http://www.mpfr.org/mpfr-current/mpfr-3.1.4.tar.gz',
+                   'mpfr-3.1.4.tar.gz',
+                   '3.1.4',
+                   '482ab3c120ffc959f631b4ba9ec59a46'
+                 ),
+               ],
+        )
+        gcc = build.gccBuild(
+               ARGUMENTS,
+               'gcc',
+               download=[
+                 (
+                   'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                   'gcc-4.1.2.tar.gz',
+                   '4.1.2',
+                   'dd2a7f4dcd33808d344949fcec87aa86'
+                 ),
+                #  (
+                #    'http://gcc.parentingamerica.com/releases/gcc-4.4.7/gcc-4.4.7.tar.gz',
+                #    'gcc-4.4.7.tar.gz',
+                #    '4.4.7',
+                #    'a755ac748de31dee53a39f54a0adacaf'
+                #  ),
+                #  (
+                #    'http://gcc.parentingamerica.com/releases/gcc-4.6.0/gcc-4.6.0.tar.gz',
+                #    'gcc-4.6.0.tar.gz',
+                #    '4.6.0',
+                #    '009f59ee0f9c8100c12939140698cf33'
+                #  ),
+               ],
+               depend = [ mpfr, mpc, gmp ],
+        )
+        self.gcc = gcc
+
+
         bzip2 = build.make(
             ARGUMENTS,
             'bzip2',
@@ -52,22 +116,22 @@ class all: # noqa
         )
         self.bzip2 = bzip2
 
-#        ncurses = build.configure(
-#                ARGUMENTS,
-#                'ncurses',
-#                download=[(
-#                    'http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz',
-#                    'ncurses-5.9.tar.gz',
-#                    '5.9.0',
-#                    '8cb9c412e5f2d96bc6f459aa8c6282a1'
-#                )],
-#                environ = {"CPPFLAGS" : "-P $CPPFLAGS",},
-#        #        cmd=[
-#        #            './configure --with-shared',
-#        #            'make -j $DCORES && make -j $DCORES install',
-#        #        ]
-#        )
-#        all['ncurses'] = ncurses
+        # ncurses = build.configure(
+        #         ARGUMENTS,
+        #         'ncurses',
+        #         download=[(
+        #             'http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz',
+        #             'ncurses-5.9.tar.gz',
+        #             '5.9.0',
+        #             '8cb9c412e5f2d96bc6f459aa8c6282a1'
+        #         )],
+        #         environ = {"CPPFLAGS" : "-P $CPPFLAGS",},
+        #         #        cmd=[
+        #         #            './configure --with-shared',
+        #         #            'make -j $DCORES && make -j $DCORES install',
+        #         #        ]
+        # )
+        # all['ncurses'] = ncurses
 
         readline = build.configure(
             ARGUMENTS,
@@ -135,6 +199,7 @@ class all: # noqa
             ]
         )
         self.python = python
+        build.allDepend.append(python)
 
         tbb = build.tbb(
             ARGUMENTS,
@@ -191,11 +256,11 @@ class all: # noqa
             ARGUMENTS,
             'freeglut',
             download=[(
-                'http://downloads.sourceforge.net/project/freeglut/freeglut/2.6.0/freeglut-2.6.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619050&use_mirror=iweb',
-                'freeglut-2.6.0.tar.gz',
-                '2.6.0',
-                '39f0f2de89f399529d2b981188082218'
-            ),(
+            #     'http://downloads.sourceforge.net/project/freeglut/freeglut/2.6.0/freeglut-2.6.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619050&use_mirror=iweb',
+            #     'freeglut-2.6.0.tar.gz',
+            #     '2.6.0',
+            #     '39f0f2de89f399529d2b981188082218'
+            # ),(
                 'http://downloads.sourceforge.net/project/freeglut/freeglut/2.8.1/freeglut-2.8.1.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619092&use_mirror=hivelocity',
                 'freeglut-2.8.1.tar.gz',
                 '2.8.1',
@@ -402,20 +467,24 @@ class all: # noqa
                 # '1.56.0',
                 # '8c54705c424513fa2be0042696a3a162',
                 # ),(
-                # 'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz',
-                # 'boost_1_55_0.tar.gz',
-                # '1.55.0',
-                # '93780777cfbf999a600f62883bd54b17',
             # ),(
-                'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz',
-                'boost_1_58_0.tar.gz',
-                '1.58.0',
-                '5a5d5614d9a07672e1ab2a250b5defc5',
-            ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
                 'boost_1_61_0.tar.gz',
                 '1.61.0',
                 '874805ba2e2ee415b1877ef3297bf8ad',
+                { gcc : '4.1.2' }
+            ),(
+                'http://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.gz',
+                'boost_1_58_0.tar.gz',
+                '1.58.0',
+                '5a5d5614d9a07672e1ab2a250b5defc5',
+                { gcc : '4.1.2' }
+            ),(
+                'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz',
+                'boost_1_55_0.tar.gz',
+                '1.55.0',
+                '93780777cfbf999a600f62883bd54b17',
+                { gcc : '4.1.2' }
             )],
             baseLibs=[python],
         )
@@ -487,7 +556,12 @@ class all: # noqa
             )],
             baseLibs=[python],
             depend=[ilmbase,openexr,boost,python,numpy],
-            environ={'DCORES' : 1, 'CORES' : 1}
+            environ={'DCORES' : 1, 'CORES' : 1},
+            cmd = [
+                'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
+                'make -j $DCORES',
+                'make -j $DCORES install',
+            ],
         )
         self.pyilmbase = pyilmbase
         build.allDepend.extend([
@@ -522,49 +596,62 @@ class all: # noqa
             )],
         )
         self.hdf5 = hdf5
-    #    build.allDepend.append(hdf5)
+        # build.allDepend.append(hdf5)
 
-        alembic = build.cmake(
-            ARGUMENTS,
-            'alembic',
-            download=[(
-                'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
-                'alembic-1.5.8.tar.gz',
-                '1.5.8',
-                'a70ba5f2e80b47d346d15d797c28731a',
-                {ilmbase: "2.2.0", openexr: "2.2.0"},
-            ),(
-                'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
-                'alembic-1.6.1.tar.gz',
-                '1.6.1',
-                'e1f9f2cbe1899d3d55b58708b9307482',
-                {ilmbase: "2.2.0", openexr: "2.2.0"},
-            )],
-            baseLibs=[python],
-            # alembic has some hard-coded path to find python, and the only
-            # way to make it respect the PYTHON related environment variables,
-            # is to patch some files to force it!
-            sed = {
-                '0.0.0' : {
-                    'python/PyAbcOpenGL/CMakeLists.txt' : [
-                        ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
-                        ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
-                        ('/usr/include/python','${PYTHON_ROOT}/include/python'),
-                        ('/lib/libpython','${PYTHON_ROOT}/lib/libpython'),
-                    ],
-                    'python/PyAlembic/CMakeLists.txt' : [
-                        ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
-                        ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
-                        ('/usr/include/python','${PYTHON_ROOT}/include/python'),
-                        ('/lib/libpython','${PYTHON_ROOT}/lib/libpython'),
-                    ],
-                    'CMakeLists.txt' : [
-                        ('/alembic-${VERSION}',' '),
-                    ],
+        # build alembic for each version of maya and prman!
+        maya = pipe.apps.maya()
+        prman = pipe.apps.prman()
+        mv = maya.versionList()
+        pv = prman.versionList()
+        pipe.version.set(python='1.0.0')
+        for n in range(2):
+            pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
+            pipe.version.set( prman = pv[0] if len(pv)<=n else pv[n] )
+
+            alembic = build.alembic(
+                ARGUMENTS,
+                'alembic',
+                download=[(
+                    'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
+                    'alembic-1.6.1.tar.gz',
+                    '1.6.1',
+                    'e1f9f2cbe1899d3d55b58708b9307482',
+                    {ilmbase: "2.2.0", openexr: "2.2.0"},
+                ),(
+                    'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
+                    'alembic-1.5.8.tar.gz',
+                    '1.5.8',
+                    'a70ba5f2e80b47d346d15d797c28731a',
+                )],
+                baseLibs=[python],
+                # alembic has some hard-coded path to find python, and the only
+                # way to make it respect the PYTHON related environment variables,
+                # is to patch some files to force it!
+                sed = {
+                    '0.0.0' : {
+                        'python/PyAbcOpenGL/CMakeLists.txt' : [
+                            ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+                            ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
+                            ('/usr/include/python','${PYTHON_TARGET_FOLDER}/include/python'),
+                            ('/lib/libpython','${PYTHON_TARGET_FOLDER}/lib/libpython'),
+                        ],
+                        'python/PyAlembic/CMakeLists.txt' : [
+                            ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+                            ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
+                            ('/usr/include/python','${PYTHON_TARGET_FOLDER}/include/python'),
+                            ('/lib/libpython','${PYTHON_TARGET_FOLDER}/lib/libpython'),
+                        ],
+                        'CMakeLists.txt' : [
+                            ('/alembic-${VERSION}',' '),
+                        ],
+                    },
                 },
-            },
-            depend=[hdf5,python,yasm,boost,pyilmbase],
-        )
+                depend=[hdf5,python,yasm,boost,pyilmbase],
+                apps = [
+                    ( pipe.apps.maya, pipe.version.get('maya')),
+                    ( pipe.apps.prman, pipe.version.get('prman')),
+                ]
+            )
         self.alembic = alembic
 
         ocio = build.cmake(
@@ -718,14 +805,14 @@ class all: # noqa
                 '1.7.3',
                 '42215e190d565c862043c0b02eca089b',
                 {oiio: "1.6.15", llvm : "3.5.2"},
-            ),(
-                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.8.0dev.tar.gz',
-                'OpenShadingLanguage-Release-1.8.0dev.tar.gz',
-                '1.8.0dev',
-                '167c049c96deae9edcb76a14651069fd',
-                {oiio: "1.6.15", llvm : "3.5.2"},
+            # ),(
+            #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.8.0dev.tar.gz',
+            #     'OpenShadingLanguage-Release-1.8.0dev.tar.gz',
+            #     '1.8.0dev',
+            #     '167c049c96deae9edcb76a14651069fd',
+            #     {oiio: "1.6.15", llvm : "3.5.2"},
             )],
-            depend=[llvm, flex, bison, oiio],
+            depend=[llvm, flex, bison, oiio, boost],
             sed = {
                 '0.0.0' : {
                     'CMakeLists.txt' : [
@@ -758,16 +845,16 @@ class all: # noqa
             ARGUMENTS,
             'qt',
             download=[(
-                'https://download.qt.io/archive/qt/4.8/4.8.4/qt-everywhere-opensource-src-4.8.4.tar.gz',
-                'qt-everywhere-opensource-src-4.8.4.tar.gz',
-                '4.8.4',
-                '89c5ecba180cae74c66260ac732dc5cb',
-            ),(
-                'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
-                'qt-everywhere-opensource-src-4.8.6.tar.gz',
-                '4.8.6',
-                '2edbe4d6c2eff33ef91732602f3518eb',
-            ),(
+            #     'https://download.qt.io/archive/qt/4.8/4.8.4/qt-everywhere-opensource-src-4.8.4.tar.gz',
+            #     'qt-everywhere-opensource-src-4.8.4.tar.gz',
+            #     '4.8.4',
+            #     '89c5ecba180cae74c66260ac732dc5cb',
+            # ),(
+            #     'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
+            #     'qt-everywhere-opensource-src-4.8.6.tar.gz',
+            #     '4.8.6',
+            #     '2edbe4d6c2eff33ef91732602f3518eb',
+            # ),(
                 'http://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
                 'qt-everywhere-opensource-src-4.8.7.tar.gz',
                 '4.8.7',
@@ -859,7 +946,7 @@ class all: # noqa
         SCons.Script.Alias( 'install',
             SCons.Script.Command(
                 target = os.path.join( devRoot.installRoot(ARGUMENTS), '.ready'),
-                source = [self.pyqt, self.osl, self.alembic, self.boost, self.ilmbase, self.openexr]+build.allDepend,
+                source = self.qt.installAll + self.osl.installAll + self.alembic.installAll + self.boost.installAll + self.ilmbase.installAll + self.openexr.installAll,
                 action = "touch $TARGET"
             )
         )

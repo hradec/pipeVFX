@@ -136,6 +136,7 @@ INSTALL_IECORE_OPS      = [
 
 
 
+
 GLEW_INCLUDE_PATH       = "%s/include/GL" % os.environ['GLEW_TARGET_FOLDER']
 GLEW_LIB_PATH           = "%s/lib"        % os.environ['GLEW_TARGET_FOLDER']
 
@@ -152,7 +153,7 @@ JPEG_INCLUDE_PATH       = "%s/include" % os.environ['JPEG_TARGET_FOLDER']
 JPEG_LIB_PATH           = "%s/lib"     % os.environ['JPEG_TARGET_FOLDER']
 
 BOOST_INCLUDE_PATH      = "%s/include" % os.environ['BOOST_TARGET_FOLDER']
-BOOST_LIB_PATH          = "%s/lib/python$PYTHON_VERSION_MAJOR/"     % os.environ['BOOST_TARGET_FOLDER']
+BOOST_LIB_PATH          = "%s/lib/python%s/"  % (os.environ['BOOST_TARGET_FOLDER'], PYTHON_MAJOR_VERSION)
 BOOST_LIB_SUFFIX        = ""
 
 TBB_INCLUDE_PATH        = "%s/include" % os.environ['TBB_TARGET_FOLDER']
@@ -173,6 +174,7 @@ ALEMBIC_LIB_SUFFIX      = ''
 
 HDF5_INCLUDE_PATH       = "%s/include" % os.environ['HDF5_TARGET_FOLDER']
 HDF5_LIB_PATH           = "%s/lib"     % os.environ['HDF5_TARGET_FOLDER']
+
 HDF5_LIB_SUFFIX         = ''
 
 # app paths
@@ -237,12 +239,15 @@ INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/$IECORE_NAME" % ab
 # build flags
 # =============================================================================================================================================================
 # we use houdinis hcustom command to figure out the cxx/link flags needed for the current houdini version
-hcustom = os.popen('''touch /tmp/test.cpp ; python -c "import pipe;pipe.apps.houdini().run('hcustom')" -t -e -i /tmp /tmp/test.cpp''').readlines()
-for l in hcustom:
-    if '-o /tmp/test.o' in l:
-        os.environ['HOUDINI_CXX_FLAGS'] = l.split('g++')[-1].split('-o')[0]
-    if '-shared' in l:
-        os.environ['HOUDINI_LINK_FLAGS'] = l.split('test.o')[-1].split('-o')[0]
+# hcustom = os.popen('''touch /tmp/test.cpp ; python -c "import pipe;pipe.apps.houdini().run('hcustom')" -t -e -i /tmp /tmp/test.cpp''').readlines()
+# for l in hcustom:
+#     if '-o /tmp/test.o' in l:
+#         os.environ['HOUDINI_CXX_FLAGS'] = l.split('g++')[-1].split('-o')[0]
+#     if '-shared' in l:
+#         os.environ['HOUDINI_LINK_FLAGS'] = l.split('test.o')[-1].split('-o')[0]
+
+os.environ['HOUDINI_CXX_FLAGS']  = [ l for l in os.popen('hcustom -c').readlines() if '-DVERSION' in l ][0].replace('pipeLog: ','').replace('-std=c++0x','').strip()
+os.environ['HOUDINI_LINK_FLAGS'] = [ l for l in os.popen('hcustom -m').readlines() if '-L' in l ][0].replace('pipeLog: ','').strip()
 
 os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
 os.environ['HOUDINI_LINK_FLAGS'] += ' '.join([
@@ -253,20 +258,21 @@ HOUDINI_CXX_FLAGS = os.environ['HOUDINI_CXX_FLAGS']
 HOUDINI_LINK_FLAGS = os.environ['HOUDINI_LINK_FLAGS']
 
 LINKFLAGS = [
+    '-L%s' % FREETYPE_LIB_PATH, # maya 2016.5 now has libfreetype in its lib folder, so we do this here to avoid using mayas!
+    # '-Wl,-rpath,%s' % BOOST_LIB_PATH,
+    # '-Wl,-rpath,%s' % TBB_LIB_PATH,
+    # '-Wl,-rpath,%s' % PYTHON_LIB_PATH,
+    # '-Wl,-rpath,%s' % FREETYPE_LIB_PATH,
+    # '-Wl,-rpath,%s' % PNG_LIB_PATH,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/gcc/lib64"  % GCC,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/zlib/1.2.3/lib/"  % GCC,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/jpeg/6b/lib/"  % GCC,
     # '-Wl,-rpath,%s' % os.path.dirname(INSTALL_LIB_NAME),
     # '-Wl,-rpath,%s' % os.path.dirname(INSTALL_PYTHONLIB_NAME),
-    # '-Wl,-rpath,%s' % FREETYPE_LIB_PATH,
-    # '-Wl,-rpath,%s' % TBB_LIB_PATH,
-    # '-Wl,-rpath,%s' % BOOST_LIB_PATH,
     # '-Wl,-rpath,%s' % OPENEXR_LIB_PATH,
     # '-Wl,-rpath,%s' % ILMBASE_LIB_PATH,
     # '-Wl,-rpath,%s' % GLEW_LIB_PATH,
-    # '-Wl,-rpath,%s' % PYTHON_LIB_PATH,
     # '-Wl,-rpath,%s' % TIFF_LIB_PATH,
-    # '-Wl,-rpath,%s' % PNG_LIB_PATH,
     # '-Wl,-rpath,%s/lib' % RMAN_ROOT, # IECoreMaya links against libprman, so we can't make its path static! :(
     # '-Wl,-rpath,%s/lib/linux_x64/gcc-4.1/' % VRAY_ROOT,
     # '-Wl,-rpath,/lib64',
@@ -298,10 +304,14 @@ PYTHON_LINK_FLAGS += ' '+' '.join([
 #     # '-Wl,-rpath %s/python/lib/' % HOUDINI_ROOT,
 ])
 
+CC = os.environ['CC']
+CPP = os.environ['CPP']
+CXX = os.environ['CXX']
 CXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-DAtUInt=AtUInt32']
 TESTCXXFLAGS = ['-pipe', '-Wall', '-O0']
 PYTHONCXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive']
 
+os.environ['LD_LIBRARY_PATH'] = '%s:%s' % (BOOST_LIB_PATH, os.environ['LD_LIBRARY_PATH'])
 
 popPrint('All Cortex Paths...')
 # =============================================================================================================================================================

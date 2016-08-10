@@ -45,9 +45,9 @@ for n in range(2):
     pipe.version.set( nuke      = nv[0] if len(nv)<=n else nv[n] )
     pipe.version.set( houdini   = hv[0] if len(hv)<=n else hv[n] )
 
-    pipe.version.set( maya      = '1.0' )
-    pipe.version.set( prman     = '1.0' )
-    pipe.version.set( nuke      = '1.0' )
+    # pipe.version.set( maya      = '1.0' )
+    # pipe.version.set( prman     = '1.0' )
+    # pipe.version.set( nuke      = '1.0' )
 
 
     sufix = "maya%sprman%snuke%shoudini%s" % (
@@ -67,7 +67,7 @@ for n in range(2):
             'cortex-9.11.3.tar.gz',
             '9.11.3',
             '07d7b364984ddfda7bfc75333e55b19e',
-            {pkgs.boost : "1.58.0", pkgs.alembic : "1.5.8"}
+            {pkgs.boost : "1.55.0", pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
         # ),(
         #     'https://github.com/ImageEngine/cortex/archive/9.11.4.tar.gz',
         #     'cortex-9.11.4.tar.gz',

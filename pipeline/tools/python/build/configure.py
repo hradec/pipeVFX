@@ -27,6 +27,47 @@ class configure(generic):
         return cmd
 
 
+class gccBuild(configure):
+    src = 'configure'
+    cmd = [
+        './configure  --enable-shared',
+        'make -j $DCORES',
+        'make -j $DCORES install',
+    ]
+
+    def fixCMD(self, cmd):
+        if self.versionMajor < 5.0:
+            cmd = ' && '.join([
+                # got this build options for arch AUR-mirror for gcc 4.1
+                # " sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in",
+                ''' sed -i -e 's@\./fixinc\.sh@-c true@' gcc/Makefile.in ''',
+                ''' sed -i -e 's/echo \$ldver |/echo \$ldver | cut -d"\)" -f2 | /' ./libstdc++-v3/configure''', # fix wrong LD version detection
+                # 'export CFLAGS="-fgnu89-inline -g -O2 $CFLAGS"',
+                # 'export CXXFLAGS="-fgnu89-inline -g -O2 $CXXFLAGS"',
+                "mkdir -p build",
+                "cd build",
+                '../configure  --prefix=$TARGET_FOLDER '
+                    '--mandir=$TARGET_FOLDER/share/man '
+                    '--libdir=$TARGET_FOLDER/lib '
+                    '--infodir=$TARGET_FOLDER/share/info '
+                    '--libexecdir=$TARGET_FOLDER/lib '
+                    '--enable-languages=c,c++ '
+                    '--enable-__cxa_atexit  '
+                    '--disable-multilib '
+                    '--enable-clocale=gnu '
+                    '--disable-libstdcxx-pch '
+                    '--disable-werror '
+                    '--enable-threads=posix '
+                    '--enable-version-specific-runtime-libs '
+                    '--enable-checking=release '
+                    '--program-suffix=-$(basename $TARGET_FOLDER)',
+                'sed -i.bak -e "s/CC = gcc/CC = gcc -fgnu89-inline/" -e "s/CXX = g++/CXX = g++ -fgnu89-inline/" Makefile',
+                'make -j $DCORES',
+                'make install',
+            ])
+        return cmd
+
+
 
 
 class openssl(configure):
@@ -68,10 +109,21 @@ class boost(configure):
         'CXX'       : '$CXX -fPIC',
         'CXXCPP'    : '$CXXPP -fPIC',
     }
-    cmd = [
-        './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-        './b2 -j $DCORES cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
-    ]
+
+    def fixCMD(self, cmd):
+        # generic build command for versions 1.58 and up
+        cmd = [
+            './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
+            './b2 -j $DCORES cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+        ]
+        # if version is below 1.58, use this build commands
+        if self.versionMajor < 1.58:
+            cmd = [
+                './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
+                'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
+                './b2 -j $DCORES --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS -std=gnu++11" linkflags="$LDFLAGS" -d+2 install',
+            ]
+        return ' && '.join(cmd)
 
 #    def installer(self, target, source, env):
 #        os.popen("rm -rf %s/lib/python*/*.a" % env['TARGET_FOLDER']).readlines()
@@ -167,6 +219,7 @@ class cortex(configure):
                 self.os_environ[each] = ':'.join(cleanSearchPath)
 
         self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+        self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
 
         print
         #self.os_environ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self.os_environ['LD_LIBRARY_PATH']
