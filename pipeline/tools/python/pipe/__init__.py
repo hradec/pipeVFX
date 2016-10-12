@@ -338,7 +338,7 @@ def go():
                     result = filter(lambda x: args[1] in x[1], argsHist)
                     if result:
                         newArgs = result[-1]
-                except: 
+                except:
                     pass
 
     # if we have new arguments from the history, use then
@@ -484,8 +484,8 @@ def __go(args):
         env.append( 'export PIPE_FARM_USER=%s' % user )
         env.append( 'export PIPE_FARM_JOBID=%s' % os.environ['QBJOBID'] )
 
-        
-       
+
+
     return '%s \n %s' % (init(), '\n'.join(env))
 
 sys.path.remove(moduleRootPath)

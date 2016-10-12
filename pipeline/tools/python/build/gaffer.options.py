@@ -13,6 +13,7 @@ def get(var, value):
     return value
 
 
+
 exec( ''.join( open( '%s/cortex.options.py' % os.path.dirname( sys.argv[1].split('=')[-1] ) ).readlines() ) )
 
 

@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -20,21 +20,33 @@
 
 
 
-
-import os, pipe
+import os, sys, pipe
 
 
 def installRoot(args={}):
-    dev = pipe.build.devInstall()
+    if args.has_key('DOIT') or 'install' in sys.argv:
+        # DOIT will install properly in the right place,
+        # respecting the ROOT env var as the path for the pipeVFX root!
+        dev = pipe.build.install()
+    else:
+        # we mangle the ROOT env var so we can get a install
+        # folder local to the current folder, by default!
+        tmp = None
+        if os.environ.has_key('ROOT'):
+            tmp = os.environ['ROOT']
+            del os.environ['ROOT']
+        dev = pipe.build.devInstall()
+        if tmp:
+            os.environ['ROOT'] = tmp
     if args.has_key('PREFIX'):
         dev = args['PREFIX']
     os.system("mkdir -p %s" % dev)
     return dev
 
 def buildFolder(args={}):
-	build = 'build'
+    build = '.build'
 
-	if args.has_key('BUILD_FOLDER'):
-		build = args['BUILD_FOLDER']
+    if args.has_key('BUILD_FOLDER'):
+        build = args['BUILD_FOLDER']
 
-	return build
+    return build

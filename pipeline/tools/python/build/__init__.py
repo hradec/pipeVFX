@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -31,6 +31,7 @@ from pythonModule import *
 from pythonSetup import *
 from sl import *
 from utils import *
+import pkgs
 
 SHLIBEXT=[
     '.so',

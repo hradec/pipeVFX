@@ -221,20 +221,11 @@ extraInstallPath  = '/boost%s' % os.environ['BOOST_VERSION']
 INSTALL_PREFIX                  = os.environ['TARGET_FOLDER']
 
 
-if 'installHoudini' in sys.argv:
+# if 'installHoudini' in sys.argv:
+if houdini != '0.0.0':
     # if we're installing houdini, make installPrefix be the houdini folder+version
     # so we can build the whole IECore* libraries with the houdini dependency!
     INSTALL_PREFIX                  = os.environ['TARGET_FOLDER'] + '/houdini/%s' % houdini
-    INSTALL_HOUDINILIB_NAME         = "$INSTALL_PREFIX/lib/$IECORE_NAME"
-    INSTALL_HOUDINIOTL_DIR          = "$INSTALL_PREFIX/otls/"
-    INSTALL_HOUDINIICON_DIR         = "$INSTALL_PREFIX/icons"
-    INSTALL_HOUDINITOOLBAR_DIR      = "$INSTALL_PREFIX/toolbar"
-    INSTALL_HOUDINIPLUGIN_NAME      = "$INSTALL_PREFIX/dso/$IECORE_NAME"
-    INSTALL_HOUDINIPYTHON_DIR       = "$INSTALL_PREFIX/lib/python%s/site-packages" % (PYTHON_MAJOR_VERSION)
-
-    INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX/lib/$IECORE_NAME"
-    INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX/dso/mantra/$IECORE_NAME"
-    INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX/dso/"
     extraInstallPath                = ""
 
 
@@ -266,6 +257,17 @@ INSTALL_MTOAEXTENSION_NAME      = "$INSTALL_PREFIX%s/mtoaExtensions/%s/$IECORE_N
 
 INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/lib/$IECORE_NAME" % abc
 INSTALL_ALEMBICPYTHON_DIR       = "$INSTALL_PREFIX/alembic/%s/lib/python%s/site-packages" % (abc, PYTHON_MAJOR_VERSION)
+
+INSTALL_HOUDINILIB_NAME         = "$INSTALL_PREFIX/lib/$IECORE_NAME"
+INSTALL_HOUDINIOTL_DIR          = "$INSTALL_PREFIX/otls/"
+INSTALL_HOUDINIICON_DIR         = "$INSTALL_PREFIX/icons"
+INSTALL_HOUDINITOOLBAR_DIR      = "$INSTALL_PREFIX/toolbar"
+INSTALL_HOUDINIPLUGIN_NAME      = "$INSTALL_PREFIX/dso/$IECORE_NAME"
+INSTALL_HOUDINIPYTHON_DIR       = "$INSTALL_PREFIX/lib/python%s/site-packages" % (PYTHON_MAJOR_VERSION)
+
+INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX/lib/$IECORE_NAME"
+INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX/dso/mantra/$IECORE_NAME"
+INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX/dso/"
 
 # build flags
 # =============================================================================================================================================================

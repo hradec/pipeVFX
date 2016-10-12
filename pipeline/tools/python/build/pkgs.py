@@ -137,7 +137,7 @@ class all: # noqa
                    'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
                    'gcc-4.8.3.tar.gz',
                    '4.8.3',
-                   'e2c60f5ef918be2db08df96c7d97d0c4'
+                   'bfe56e74d31d25009c8fb55fd3ca7e01'
                 )],
                 depend = [ mpfr, mpc, gmp ],
         )
