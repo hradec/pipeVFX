@@ -20,37 +20,29 @@
 
 
 import IECore, pipe
+import os
 exec( pipe.include( __file__ ) )
 
-try:
-    import hou
-except:
-    hou=None
-    
 
 class houdini( render ) :
     
     def __init__( self ) :
-        try:
-            import nuke
-        except:
-            nuke=None        
-
-        start = 0
-        end = 10
+        import pickle as db
+        pipe_root = pipe.roots.jobs()
+        pipe_job = os.environ['PIPE_JOB']
+        pipe_shot = os.environ['PIPE_SHOT'].split('@')[1]
+        pipe_user = os.environ['USER']
+        publish_data = '%s/%s/shots/%s/users/%s/houdini/.publish_data' % (
+                        pipe_root,pipe_job,pipe_shot,pipe_user)
+        publish_settings = db.load(open(publish_data))
+        hipfile = publish_settings['hipfile']
+        output_nodes=publish_settings['output']
+        start = int(publish_settings['frame_start'])
+        end = int(publish_settings['frame_end'])
         byFrameStep = 1
-
-        basePath = 'nuke'
-        if nuke:
-            basePath = nuke.root().knob('name').value() 
-            if not basePath:
-                raise Exception("ERROR: The scene needs to be saved on disk before publishing!")
-            
-            start       = nuke.root().frameRange().first()
-            byFrameStep = nuke.root().frameRange().increment()
-            end         = nuke.root().frameRange().last()
-
         
+        basePath = hipfile
+       
         disabled={"UI":{ "invertEnabled" : IECore.BoolData(True) }}
         
         pars = [
@@ -59,30 +51,29 @@ class houdini( render ) :
                 IECore.V3fParameter("range","Start, end and step of sequence to be published.",IECore.V3f(start, end, byFrameStep), userData=disabled),
             ],userData = { "UI": {"collapsed" : IECore.BoolData(False)}}),
         ]
+        # output_nodes=['mantra1','geo1','cortexWriter1']
         
-        
-        if hou:
-            rps = []
-            # get all write nodes that are enabled!!
-            for each in filter(lambda x: x.Class()=='Write', nuke.allNodes()):
-                if not each['disable'].getValue():
-                    rps.append(
-                                IECore.BoolParameter(
-                                    name=each.name(),
-                                    description = "Check to publish this node.",
-                                    defaultValue = IECore.BoolData(each in nuke.selectedNodes()),
-                                )
-                            )
-            pars.append( IECore.CompoundParameter("OutputNodes","",rps,userData = { "UI": {"collapsed" : IECore.BoolData(False)}}) )
+         
+        nodes_publish = []
+        # get all write nodes that are enabled!!
+        for each in output_nodes:
+            nodes_publish.append(
+                        IECore.BoolParameter(
+                            name=each,
+                            description = "Check to publish this node.",
+                            defaultValue = IECore.BoolData(False),
+                        )
+                    )
+        pars.append( IECore.CompoundParameter("OutputNodes","",nodes_publish,userData = { "UI": {"collapsed" : IECore.BoolData(False)}}) )
         
         render.__init__(self, 'houdini', 'hip', basePath, pars)
 
     def doOperation( self, operands ):
         # gather selected writenodes 
         self.writeNodes = []
-        if 'WriteNodes' in operands.keys():
-                for each in operands['WriteNodes'].keys():
-                    if operands['WriteNodes'][each].value:
+        if 'OutputNodes' in operands.keys():
+                for each in operands['OutputNodes'].keys():
+                    if operands['OutputNodes'][each].value:
                         self.writeNodes.append(each)
 
         if not self.writeNodes:
@@ -106,10 +97,10 @@ class houdini( render ) :
         for each in self.files:
             while '##' in each:
                 each.replace('##','#')
-            jobid = pipe.farm.nuke(
-                scene       = each.replace( '#', pipe.farm.nuke.frameNumber() ), 
-                writeNode   = self.writeNodes, 
-                name        = 'RENDER ASSET: %s_%s' % (data['assetName'],data['assetVersion']) , 
+            jobid = pipe.farm.houdini(
+                scene       = each.replace( '#', pipe.farm.houdini.frameNumber() ), 
+                driver   = self.writeNodes, 
+                name        = 'RENDER: %s_%s' % (data['assetName'],data['assetVersion']) , 
                 CPUS        = 9999, 
                 priority    = 9999, 
                 range       = range(int(frameRange.x), int(frameRange.y+frameRange.z), int(frameRange.z)), 
@@ -124,4 +115,4 @@ class houdini( render ) :
 
 
 
-IECore.registerRunTimeTyped( nuke )
+IECore.registerRunTimeTyped( houdini )

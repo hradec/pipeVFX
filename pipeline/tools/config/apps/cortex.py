@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -30,14 +30,14 @@ class cortex(baseLib):
 
     def environ(self):
         parent = self.parent()
-        
+
         self['PYTHON_VERSION_MAJOR'] = '.'.join(pipe.libs.version.get('python').split('.')[:2])
-        
+
         # we add this env var for easy copy/paste of houdini paths into other apps/cortex!
         if pipe.admin.job.current():
             self['HIP'] = '$SHOT/houdini'
 
-        
+
         # configure maya plugin/scripts/icons
         if parent == 'maya':
             maya.addon ( self,
@@ -48,17 +48,17 @@ class cortex(baseLib):
                     self.path('maya/$MAYA_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
                     self.path('maya/$MAYA_VERSION/lib'),
                 ],
-            
+
             )
             self['PYTHONPATH'] = self.path('maya/$MAYA_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
-        
+
         #configure delight
         if parent in ['delight', 'maya', 'gaffer', 'python']:
-            delight.addon( self, 
-                shader=self.path('delight/$DELIGHT_VERSION/rsl'), 
+            delight.addon( self,
+                shader=self.path('delight/$DELIGHT_VERSION/rsl'),
                 rsl=self.path('delight/$DELIGHT_VERSION/rsl'),
-                procedurals=self.path('delight/$DELIGHT_VERSION/procedurals'), 
-                display=self.path('delight/$DELIGHT_VERSION/displays'), 
+                procedurals=self.path('delight/$DELIGHT_VERSION/procedurals'),
+                display=self.path('delight/$DELIGHT_VERSION/displays'),
                 texture='',
                 lib = [
                     self.path('delight/$DELIGHT_VERSION/lib'),
@@ -68,22 +68,38 @@ class cortex(baseLib):
             self['PYTHONPATH'] = self.path('delight/$DELIGHT_VERSION/lib/python$PYTHON_VERSION_MAJOR')
             self['PYTHONPATH'] = self.path('delight/$DELIGHT_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
 
+        #configure prman
+        if parent in ['prman', 'maya', 'gaffer', 'python', 'houdini']:
+            prman.addon( self,
+                shader=self.path('prman/$PRMAN_VERSION/rsl'),
+                rsl=self.path('prman/$PRMAN_VERSION/rsl'),
+                procedurals=self.path('prman/$PRMAN_VERSION/procedurals'),
+                display=self.path('prman/$PRMAN_VERSION/displays'),
+                texture='',
+                lib = [
+                    self.path('prman/$PRMAN_VERSION/lib'),
+                    self.path('prman/$PRMAN_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
+                ],
+            )
+            self['PYTHONPATH'] = self.path('prman/$PRMAN_VERSION/lib/python$PYTHON_VERSION_MAJOR')
+            self['PYTHONPATH'] = self.path('prman/$PRMAN_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
+
         #configure arnold
         if parent in ['arnold', 'maya']:
-            arnold.addon( self, 
-                procedurals=self.path('arnold/$ARNOLD_VERSION/procedurals'), 
-                display=self.path('arnold/$ARNOLD_VERSION/displays'), 
-                extensions=self.path('arnold/$ARNOLD_VERSION/mtoaExtensions/$MAYA_VERSION/'), 
+            arnold.addon( self,
+                procedurals=self.path('arnold/$ARNOLD_VERSION/procedurals'),
+                display=self.path('arnold/$ARNOLD_VERSION/displays'),
+                extensions=self.path('arnold/$ARNOLD_VERSION/mtoaExtensions/$MAYA_VERSION/'),
                 lib = [
                     self.path('arnold/$ARNOLD_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
                     self.path('arnold/$ARNOLD_VERSION/lib'),
                 ],
             )
             self['PYTHONPATH'] = self.path('arnold/$ARNOLD_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
-        
+
         #configure nuke
         if parent == 'nuke':
-            nuke.addon( self, 
+            nuke.addon( self,
                 nukepath = self.path('nuke/$NUKE_VERSION/plugins'),
                 lib = [
                     self.path('nuke/$NUKE_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
@@ -91,15 +107,15 @@ class cortex(baseLib):
                 ],
             )
             self['PYTHONPATH'] = self.path('nuke/$NUKE_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
-        
+
         #configure houdini
         if parent in ['houdini', 'python']:
 #            if parent == 'python':
 #                self.update( houdini() )
-            houdini.addon(self, 
-                otl=self.path('houdini/$HOUDINI_VERSION/otls'), 
-                dso=self.path('houdini/$HOUDINI_VERSION/dso'), 
-                toolbar=self.path('houdini/$HOUDINI_VERSION/toolbar'), 
+            houdini.addon(self,
+                otl=self.path('houdini/$HOUDINI_VERSION/otls'),
+                dso=self.path('houdini/$HOUDINI_VERSION/dso'),
+                toolbar=self.path('houdini/$HOUDINI_VERSION/toolbar'),
                 icon=self.path('houdini/$HOUDINI_VERSION/icons'),
                 lib = [
                     self.path('houdini/$HOUDINI_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
@@ -107,32 +123,34 @@ class cortex(baseLib):
                 ],
             )
             self['PYTHONPATH'] = self.path('houdini/$HOUDINI_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
-            
+
         #configure python
-        self['PYTHONPATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages')        
-            
-        
+        self['PYTHONPATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages')
+        self['PYTHONPATH'] = self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages')
+
         #add cortex paths
-        cortex.addon(self, 
+        cortex.addon(self,
 #            scripts = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages'),
             procedurals = self.path('procedurals'),
             ops = self.path('ops'),
             glsl = self.path('glsl'),
             glslInclude = self.path('glsl'),
             lib = [
+                self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR'),
+                self.path('lib/boost$BOOST_VERSION'),
                 self.path('lib/python$PYTHON_VERSION_MAJOR'),
                 self.path('lib'),
-                self.path('alembic/1.1.1'),
+                self.path('alembic/$ALEMBIC_VERSION/lib'),
             ]
         )
-        
+
         #add tools paths
         for each in self.toolsPaths():
             studio = ""
 #            studio = "$STUDIO"
             if 'jobs' in each:
                 studio = ""
-            cortex.addon(self, 
+            cortex.addon(self,
                 procedurals = [
                         '%s/cortex/procedurals/%s' % (each, studio),
                         '%s/cortex/$CORTEX_VERSION/procedurals/%s' % (each, studio),
@@ -145,7 +163,7 @@ class cortex(baseLib):
                 glslInclude = '%s/cortex/glsl/include' % each,
                 glFonts = '%s/cortex/fonts' % each,
                 scripts = '%s/cortex/python' % each,
-            )     
+            )
             self['IECORE_ASSET_OP_PATHS'] = '%s/config/assets' % each
 
         self['IECORE_OP_PRESET_PATHS'] = '%s/.config/cortex/preset' % os.environ['HOME']
@@ -154,7 +172,7 @@ class cortex(baseLib):
     def bins(self):
         return [('cpython', 'cpython')]
 
-        
+
     @staticmethod
     def addon(caller, ops="", procedurals="", scripts="", glsl="", glslInclude="", glslTextures="", glFonts="", lib=""):
         caller['IECORE_PROCEDURAL_PATHS'] = procedurals
@@ -165,4 +183,3 @@ class cortex(baseLib):
         caller['IECOREGL_TEXTURE_PATHS'] = glslTextures
         caller['IECORE_FONT_PATHS'] = glFonts
         caller['LD_LIBRARY_PATH'] = lib
-

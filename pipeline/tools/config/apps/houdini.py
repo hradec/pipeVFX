@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -19,30 +19,65 @@
 # =================================================================================
 
 
-
 class houdini(baseApp):
-    def environ(self):
-        self['PYTHON_VERSION_MAJOR'] = '2.6'
-        self['HOUDINI_PYTHON_VERSION'] = '2.6'
-#        pipe.libs.version.set( python = '2.7.6' )
-        
-        self['PYTHONHOME'] = self.path('python')
-        self['HFS'] = self.path()
+    def versions(self):
+        ''' set the pipe python version according to houdinis python version '''
+        if self.parent() in ['houdini']:
+            pv = '2.7'
+            if float(pipe.version.get('houdini')[3:].split('.')[0]) < 14.0:
+                pv = '2.6'
 
-        # force loading houdini tbb
-#        self['LD_PRELOAD'] = self.path('dsolib/libtbb.so.2')
-#        self['LD_PRELOAD'] = self.path('dsolib/libtbbmalloc.so.2')
-        self['LD_PRELOAD'] = self.path('dsolib/libjpeg.so.62.0.0')
-        self['LD_PRELOAD'] = self.path('dsolib/libpng12.so.0.44.0')
+            pipe.libs.version.set(  python = pv )
+            pipe.version.set(  python = pipe.libs.version.get('python') )
+
+            pipe.libs.version.set(  boost = '1.51.0' )
+
+    def environ(self):
+        self['HFS'] = self.path()
+        self['HOUDINI_PYTHON_VERSION'] = '$PYTHON_VERSION_MAJOR'
+
+        pipe_root = pipe.roots.jobs()
+        try:
+            pipe_job = os.environ['PIPE_JOB']
+            # pipe_shot = os.environ['PIPE_SHOT'].split('@')[1]
+            # pipe_user = os.environ['USER']
+            self['HSITE'] = '%s/%s/tools/houdini' % (pipe_root,pipe_job)
+        except:
+            pass
+
+        # for loading houdini shared libraries
+    #    self['LD_PRELOAD'] = self.path('dsolib/libtbb.so.2')
+    #    self['LD_PRELOAD'] = self.path('dsolib/libtbbmalloc.so.2')
+        # self['LD_PRELOAD'] = self.path('dsolib/libjpeg.so.62.0.0')
+        # self['LD_PRELOAD'] = self.path('dsolib/libpng12.so.0.44.0')
+        # self['LD_PRELOAD'] = '/usr/lib/libz.so.1'
+        # self['LD_PRELOAD'] = '/usr/lib/libXcursor.so.1'
+        # self['LD_PRELOAD'] = pipe.libs.tbb().path('lib/libtbb.so.2')
+        # self['LD_PRELOAD'] = pipe.libs.tbb().path('lib/libtbbmalloc.so.2')
+        # self['LD_PRELOAD'] = pipe.libs.tbb().path('lib/libtbbmalloc_proxy.so.2')
+
+        # self['LD_PRELOAD'] = pipe.libs.boost().LD_PRELOAD()
+        # self['LD_PRELOAD'] = pipe.libs.python().LD_PRELOAD()
 
         # force our alembic libraries to be used!
-#        pipe.libs.alembic().LD_PRELOAD()
-        
+        # self.ignorePipeLib( "alembic" )
+
 #        self.ignorePipeLib( "zlib" )
-        self.ignorePipeLib( "alembic" )
-        if int(self.version().split('.')[0].replace('hfs','')) >= 14:
+        if int(self.version().split('.')[0].replace('hfs','')) == 14:
             self.ignorePipeLib( "qt" )
             self.ignorePipeLib( "tbb" )
+            self.ignorePipeLib( "hdf5" )
+        elif int(self.version().split('.')[0].replace('hfs','')) >= 15:
+            self.ignorePipeLib( "qt" )
+            self.ignorePipeLib( "tbb" )
+            self.ignorePipeLib( "openssl" )
+            # self['LD_PRELOAD'] = "/usr/lib/libstdc++.so.6"
+            self.ignorePipeLib( "python" )
+            # self['LD_PRELOAD'] = pipe.libs.alembic().LD_PRELOAD()
+            # self['LD_PRELOAD'] = pipe.libs.boost().LD_PRELOAD()
+            # self['LD_PRELOAD'] = pipe.libs.python().LD_PRELOAD()
+            self['LD_PRELOAD'] = self.path('python/lib/libpython2.7.so')
+            self['PYTHONHOME'] = self.path('python')
         else:
             self.ignorePipeLib( "tbb" )
 
@@ -52,27 +87,32 @@ class houdini(baseApp):
 #        self.insert('PYTHONPATH',0, self.path('houdini/python%slibs' % '.'.join(pipe.libs.version.get('python').split('.')[:2]) ))
 
         # sets default houdini search paths
-        houdini.addon( self, 
+        houdini.addon( self,
             script = '&',
             toolbar = '&',
             otl = '&',
             dso = '&',
             icon = '&',
+            # lib=[self.path('dsolib')],
         )
-        
+
         # add cortex to houdini
         self.update( python() )
         self.update( cortex() )
         self.update( gaffer() )
-        
+        #self.update( prman() ) # for some reason adds maya lib path!!!!
+        self.update( cgru() )
+
         # we need to force houdini python paths to the top
         self.insert('PYTHONPATH',0, self.path('python/lib/python$PYTHON_VERSION_MAJOR/site-packages'))
         self.insert('PYTHONPATH',0, self.path('python/lib/python$PYTHON_VERSION_MAJOR/'))
+        self.insert('PYTHONPATH',0, self.path('dsolib'))
+
 
     def bins(self):
         # we want to limit houdini wrappers to just houdini!
         return [
-            ('houdini'  ,'houdini'),
+            ('houdini'  ,'houdini-bin -foreground'),
             ('hbatch'   ,'hbatch'),
             ('hscript'  ,'hscript'),
             ('hython'   ,'hython'),
@@ -80,34 +120,35 @@ class houdini(baseApp):
             ('hconfig'  ,'hconfig'),
             ('hserver'  ,'hserver'),
             ('mantra'   ,'mantra'),
+            ('hcustom'  ,'hcustom'),
         ]
-        
+
     def preRun(self, cmd):
         # we need to fix left zeros in numbers, since hrender is picky
         # and doesn't like then!!
         newcmd  = cmd
         if 'hrender' in cmd and '-f' in cmd:
             tmp = cmd.split(' ')
-            # look for the frame range... 
-            # TODO: a proper fix for all numbers starting with 0!
+            # look for the frame range...
+            # __TODO: a proper fix for all numbers starting with 0!
             valuesToReplace = [
                 tmp[tmp.index('"-f"')+1],
                 tmp[tmp.index('"-f"')+2],
             ]
-            
-            # replace value by a simple integer 
+
+            # replace value by a simple integer
             for each in valuesToReplace:
                 newcmd = newcmd.replace(each, str(int(each.replace('"',''))))
-                
+
             # command do hbatch pra pegar a expresao q define o nome do arquivo
             # a ser rendido!
             # opparm out/mantra__letra vm_picture ( '$HIP/render/$HIPNAME/$OS/$OS.$F4.exr' )
 
-        return newcmd 
-    
+        return newcmd
+
 
     def postRun(self, cmd, returnCode, returnLog):
-        ''' this is called after a binary of this class has exited. 
+        ''' this is called after a binary of this class has exited.
         it's the perfect method to do postRender checks, for example!'''
         error = returnCode!=0
         if 'hrender' in cmd:
@@ -115,7 +156,7 @@ class houdini(baseApp):
 
             if 'StackTrace()' in str(returnCode):
                 return 255
-            
+
             displays = {}
             if 'hrender' in cmd and '-o' in cmd and '-f' in cmd:
                 tmp = cmd.split(' ')
@@ -126,10 +167,53 @@ class houdini(baseApp):
                         displays[ext] = []
                     displays[ext].append(file)
 
+
+            if "WRITING FILE:" in returnLog:
+                files = map(lambda a: a.split("WRITING FILE:")[-1].strip(), filter(lambda x: "WRITING FILE:" in x, returnLog.split('\n')) )
+                for f in files:
+                    # if the file doesn;t exist, erro! this should report error for cache generation!!
+                    if os.path.exists(f):
+                        print "HOUDINI CREATED FILE: %s" % f
+                    else:
+                        print "HOUDINI FAILED TO CREATED FILE: %s" % f
+                        print '[PARSER ERROR]'
+
+
+            try:
+                images=[]
+                if 'Generating Image:' in returnLog:
+                    # collect image files from output log
+                    images = map(lambda a: a.split('(')[0],
+                             map(lambda x: x.split('Generating Image:')[-1].replace(' ',''),
+                             filter(lambda x: 'Generating Image:' in x, returnLog.split('\n'))) )
+                    if 'Generating deep camera image:' in returnLog:
+                        # collect deep image files from houdini output log
+                        images += map(lambda c: c.split(':')[-1],
+                                  map(lambda a: a.split('Generating deep camera image:')[-1].replace(' ',''),
+                                  filter(lambda x: 'Generating deep camera image:' in x, returnLog.split('\n'))) )
+
+                if images:
+                    error = pipe.frame.check(images)
+                    if not error:
+                        if not self.asset:
+                            assetPath = None
+                            for each in cmd.split(' '):
+                                each = each.replace('"','')
+                                if os.path.splitext(each.lower())[-1] in ['.hip']:
+                                    assetPath = each
+                                    break
+                            pipe.frame.publish(images,assetPath)
+                        else:
+                            pipe.frame.publish(images,self.asset)
+                pipe.frame.publishLog(returnLog,self.asset,self.className)
+            except UnboundLocalError as e:
+                print 'Catching exception for images var: %s' % e
+                error=True
+
             if filter( lambda x: x!='.idisplay', displays.keys() ):
                 print '='*80
                 print 'Checking rendered displays...\n'
-                
+
                 openexr = pipe.libs.openexr()
                 # we add here a list of commands to execute for each filetype, to check if the file is readable!
                 checks={
@@ -163,40 +247,62 @@ class houdini(baseApp):
                                 # if so, it's error!
                                 if errors[filetype] in ''.join(lines):
                                     error = True
-                                
+
                                 # check which display failed!
                                 for d in displays[filetype]:
                                     line = filter( lambda x: d in x, lines )
                                     results[d] = False
                                     if line and errors[filetype] not in line[0]:
                                         results[d] = True
-                                        
+
                         # print result for each display
                         res = ['ERROR', 'OK']
                         for d in displays[filetype]:
                             print "% 10s -> %s" % (res[ results[d] ], d)
-                        
-                
+                            if 'ERROR' in res[ results[d] ]:
+                                error = True
+
+
                 # REMOVE ME! Temp fix for qube proxy mode
                 self.preRun(cmd)
-            
+
+
+        # fatal errors - must fail even if images were generated!!
+        fatalErrors = [
+                'OSError: [Errno 13] Permission denied',
+                'Zip Read Error',
+                'cannot be opened by RiReadArchive',
+                '(core dumped)',
+                'dbus.exceptions.DBusException',
+                'RuntimeError',
+                'fatal interrupt',
+                'encountered a fatal error',
+                'Error saving geome',
+                'hou.OperationFailed: The attempted operation failed.',
+                "can't open file '/hrender_af.py'",
+		'ImportError',
+        ]
+        for s in fatalErrors:
+            if s in str(returnLog) and not 'This may be caused by launching an app from inside a running app, which in this case, ignore this error!' in str(returnLog):
+                error = True
+                break
+
         # return an posix error code
         print '\n','='*80
-        return int(error)*255    
-    
-    
+        return int(error)*255
+
+
     def license(self):
         # make sure we have PIPE_HOUDINI_LICENSE_SERVERS env var set
         if 'PIPE_HOUDINI_LICENSE_SERVERS' not in os.environ.keys():
             raise Exception('No Houdini server setup! Please set houdini license server IP into PIPE_HOUDINI_LICENSE_SERVERS environment variable!')
-            
+
         # kill a current running hserver, if different than the current set version!
-        import shutil
         if os.popen('pidof hserver').readlines():
             serverVersion = os.popen("echo $(%s/bin/hserver -l | grep ^Version) | cut -d' ' -f2 | sed 's/Houdini/hfs/'" % self.path()).readlines()[0].strip()
             if serverVersion != self.version():
                 os.system( '%s/bin/hserver -q' % self.path() )
-        
+
         # write the file needed by hserver into user home folder, so it can find
         # the license server specified in PIPE_HOUDINI_LICENSE_SERVERS environment variable!
         f=open( "%s/.sesi_licenses.pref" % os.environ['HOME'] , 'w' )
@@ -212,3 +318,9 @@ class houdini(baseApp):
         caller['HOUDINI_TOOLBAR_PATH'] = toolbar
         caller['HOUDINI_UI_ICON_PATH'] = icon
         caller['LD_LIBRARY_PATH'] = lib
+
+
+    def userSetup(self, jobuser):
+        ''' this method is implemented when we want to do especial folder structure creation and setup
+        for a user in a shot'''
+        self['HIP'] = jobuser.path('houdini')

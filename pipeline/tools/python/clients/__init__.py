@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -26,13 +26,7 @@
 #
 #=================================================================================
 
-
-google_username='pipeline@atomovfx.com.br'
-google-password=''
-
 gdata = '2.0.17'
-
-
 
 import sys, os, traceback
 # add gdata to pythonpath so gdata can find atom!
@@ -41,8 +35,8 @@ sys.path.append( "%s/gdata-%s/src/" % (os.path.dirname( __file__ ), gdata) )
 
 #set proxy if needed
 if os.environ.has_key('PIPE_PROXY_SERVER'):
-    os.environ['http_proxy']  = "http://%s" % os.environ['PIPE_PROXY_SERVER'] 
-    os.environ['https_proxy'] = "http://%s" % os.environ['PIPE_PROXY_SERVER'] 
+    os.environ['http_proxy']  = "http://%s" % os.environ['PIPE_PROXY_SERVER']
+    os.environ['https_proxy'] = "http://%s" % os.environ['PIPE_PROXY_SERVER']
 
 
 try:
@@ -63,19 +57,21 @@ def min2secs(mins):
     return mins*60.0;
 
 class clients(object):
-    def __init__(self, email=google_username, password=google-password):
+    def __init__(self, email='pipeline@atomovfx.com.br', password='3datomo0'):
         self.gd_client = gdata.spreadsheet.service.SpreadsheetsService()
         self.gd_client.email = email
         self.gd_client.password = password
         self.gd_client.source = 'Spreadsheets GData Sample'
         self.curr_key = ''
-        self.curr_wksht_id = ''        
+        self.curr_wksht_id = ''
         self.internet = True
         #if os.popen('ping -c 1 8.8.8.8 | grep 100%').readlines():
         #    self.internet = False
         if self.internet:
-            self.gd_client.ProgrammaticLogin()
-        
+            try:
+                self.gd_client.ProgrammaticLogin()
+            except:
+                self.internet = False
 
     def _PrintFeed(self, feed):
      ''' dump data - perfect for debugging '''
@@ -87,12 +83,12 @@ class clients(object):
         # Print this row's value for each column (the custom dictionary is
         # built using the gsx: elements in the entry.)
         print 'Contents:'
-        for key in entry.custom:  
-          print '  %s: %s' % (key, entry.custom[key].text) 
+        for key in entry.custom:
+          print '  %s: %s' % (key, entry.custom[key].text)
         print '\n',
       else:
-        print '=%s %s\n' % (i, entry.title.text)      
-            
+        print '=%s %s\n' % (i, entry.title.text)
+
     def _returnDict(self, feed):
         ''' convert xml data from google to a dictionary '''
         from acentos import remover_acentos
@@ -122,10 +118,10 @@ class clients(object):
 
     def cellsUpdateAction(self, row, col, inputValue):
         if self.curr_wksht_id:
-           entry = self.gd_client.UpdateCell(row=row, col=col, inputValue=inputValue, 
+           entry = self.gd_client.UpdateCell(row=row, col=col, inputValue=inputValue,
             key=self.curr_key, wksht_id=self.curr_wksht_id)
 #        if isinstance(entry, gdata.spreadsheet.SpreadsheetsCell):
-#          print 'Updated!'            
+#          print 'Updated!'
 
     def live(self):
         if not self.curr_wksht_id:
@@ -139,7 +135,7 @@ class clients(object):
 
             id_parts = feed.entry[string.atoi(input)].id.text.split('/')
             self.curr_key = id_parts[len(id_parts) - 1]
-        
+
             # Get the list of worksheets
             feed = self.gd_client.GetWorksheetsFeed(self.curr_key)
 #                self._PrintFeed(feed)
@@ -154,47 +150,47 @@ class clients(object):
         to avoid hammering google docs, which can block us in that case!
         The cache have a 30 mins lifetime!
         '''
-        
+
         cache = "/usr/tmp/.%s_cache_clientes.dat" % os.environ['USER']
         refresh = True
         if os.path.exists(cache):
             (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(cache)
             if (time.time() - mtime) < min2secs(cacheLifetime):
                 refresh = force
-                
+
         ret = os.popen('/bin/ping  -c 1 8.8.8.8 | /bin/grep 100%').readlines()
         if ret:
             refresh = False
-        
+
         try:
             if refresh:
                 self.live()
                 feed = self.gd_client.GetCellsFeed(self.curr_key, self.curr_wksht_id)
-                
+
                 self.data = self._returnDict(feed)
-                
+
                 f=open(cache, "w")
                 f.write(str(self.data))
                 f.close()
-            else:    
+            else:
                 raise
 
         except:
-            if refresh: 
+            if refresh:
                 print '='*80
                 traceback.print_exc()
                 print '='*80
-            
+
         finally:
             # if less than 30 mins, just grab the cached data
             if not os.path.exists(cache):
                 f=open(cache, "w")
-                f.write(str({ "Could not retrieve Clients - Connection Error!" : 
+                f.write(str({ "Could not retrieve Clients - Connection Error!" :
                     {
                         'administrator' : '',
-                        'row': -1, 
-                        'email': '', 
-                        'senha': '', 
+                        'row': -1,
+                        'email': '',
+                        'senha': '',
                         'contato': ''
                     }
                 }))
@@ -208,7 +204,7 @@ class clients(object):
 def all(cacheLifetime=30):
     ''' return all clients in a dictionary.
     it caches the data locally in /usr/tmp/.cache_clientes.dat
-    to avoid hammering google docs, which can block us. 
+    to avoid hammering google docs, which can block us.
     the cache have a 30 mins lifetime!
     '''
     clientes = clients()

@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -24,26 +24,27 @@ class maya(baseApp):
     def environ(self, allPlugs=True):
         ''' this is the main method in a class to setup environment variables for an app.
         if not implemented, the pipe will try to figure it automatically from the folder structure'''
-        
+
         if self.osx:
             self['PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/plug-ins/translators/'
         # maya needs csh, libXp6 and libtiff3 installed to run!
-        
-        # we set this to avoid maya csh script to deal with LD_LIBRARY_PATH
-        # since its' too big for it to handle 
-        #(fix "word too long" error on some systems, like debian!!)
-        self['LD_LIBRARYN32_PATH'] = self.path("lib")
-        self['libn32'] = '1'
-        
-        
+
+        if float(self.version().split('.')[0]) <= 2016:
+            # we set this to avoid maya csh script to deal with LD_LIBRARY_PATH
+            # since its' too big for it to handle
+            #(fix "word too long" error on some systems, like debian!!)
+            self['LD_LIBRARYN32_PATH'] = self.path("lib")
+            self['libn32'] = '1'
+
+
 #        if pipe.OSX:
 #            self.replace( MAYA_LOCATION = self.path() )
-        
+
 #        pipe.libs.version.set( qt = '4.8.4' )
 #        self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()
-        
+
         # set the proper python version for the current maya version!
         if self.parent() in ['maya','arnold']:
             if int(self.version().split('.')[0]) >= 2014:
@@ -52,15 +53,16 @@ class maya(baseApp):
             else:
                 pipe.version.set( python = '2.6.8' )
                 pipe.libs.version.set( python = '2.6.8' )
-                
+
         # we need this to force maya to read its own python distribution files
         # or else we see a error on os module were it can't find urandom!!
         pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
         self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
         self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
         self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
-        self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
-        
+        if self.parent() in ['maya','arnold']:
+            self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
+
         # plugins
         if allPlugs:
             self.update( delight() )
@@ -70,24 +72,38 @@ class maya(baseApp):
             self.update( shave() )
             self.update( slum() )
             self.update( yeti() )
+            self.update( golaem() )
 
-        #add tools paths
-        for each in self.toolsPaths():        
-            maya.addon( self, 
+        # add tools paths
+        for each in self.toolsPaths():
+            maya.addon( self,
                 plugin = '%s/maya/$MAYA_VERSION/plugins' % each ,
                 script = '%s/maya/$MAYA_VERSION/scripts' % each ,
-                icon   = '%s/maya/$MAYA_VERSION/icons' % each , 
-                module   = '%s/maya/$MAYA_VERSION/modules' % each 
+                icon   = '%s/maya/$MAYA_VERSION/icons' % each ,
+                module   = '%s/maya/$MAYA_VERSION/modules' % each
             )
-            maya.addon( self, 
+            maya.addon( self,
                 plugin = '%s/maya/plugins' % each ,
                 script = '%s/maya/scripts' % each ,
                 icon   = '%s/maya/icons' % each ,
-                module = '%s/maya/modules' % each 
+                module = '%s/maya/modules' % each
             )
-            self['PYTHONPATH'] = '%s/maya/plugins' % each 
-            self['PYTHONPATH'] = '%s/maya/scripts' % each 
-        
+            self['PYTHONPATH'] = '%s/maya/plugins' % each
+            self['PYTHONPATH'] = '%s/maya/scripts' % each
+
+        # pipeline alembic plugins!
+        try:
+            alembic = pipe.libs.alembic()
+            maya.addon( self,
+                plugin = alembic.path('maya/$MAYA_VERSION/plugins'),
+            )
+        except:
+            pass
+
+        # add this only to the global one (last)
+        if float(self.version()) == 2016:
+            self['AUTODESK_ADLM_THINCLIENT_ENV'] = "%s/licenses/maya/2016_config.xml" % each
+
         self['PYTHONPATH'] = self.path('scripts')
         self['PYTHONPATH'] = self.path('plugins')
 
@@ -96,12 +112,18 @@ class maya(baseApp):
         if self.parent() in ['maya']:
             self['LD_PRELOAD'] = self.path('support/openssl/libcrypto.so.6')
             self['LD_PRELOAD'] = self.path('support/openssl/libssl.so.6')
-        
-        # our custom zlib give some error messages at startup of 
+            self['LD_PRELOAD'] = '/usr/lib/libjpeg.so.62'
+
+
+        # our custom zlib give some error messages at startup of
         # maya 2014!
         if int(self.version().split('.')[0]) >= 2014:
             self.ignorePipeLib( "zlib" )
-        
+
+        # xgen libraries
+        maya.addon( self, lib=self.path('plug-ins/xgen/lib/') )
+
+        self['MAYA_DISABLE_CIP']='1'
 
     def version(self, v=None):
         if v:
@@ -114,22 +136,35 @@ class maya(baseApp):
     def bins(self):
         ''' we override this method to return the commands we want to be visible for the users
         firt element is the command the user will type, and second is the command line executed'''
-        return [
+        ret = [
             ('maya', 'maya'),
             ('mayapy', 'mayapy'),
             ('Render', 'Render'),
             ('fcheck', 'fcheck'),
         ]
+        if float(self.version()) >= 2016.5:
+            ret[0] = ('maya', 'maya%s' % self.version())
+        return ret
+
+
+    def license(self):
+        if float(self.version()) >= 2016.5:
+            if 'LM_LICENSE_FILE' in self:
+                del self['LM_LICENSE_FILE']
+            self['MAYA_LICENSE']='unlimited'
+            self['MAYA_LICENSE_METHOD']='standalone'
+#        else:
+#            self['LM_LICENSE_FILE'] = "%s/licenses/%s/%s" % (roots.tools(), self.className.lower(), self.appFromDB.version() )
 
     def bg(self,cmd,bin):
         ''' return True if a cmd or binary should run in background '''
-        if bin[0] == 'maya':
-            return False
+        if 'maya' in bin[0]:
+            return True
         return False
-    
+
     @staticmethod
     def addon(caller, plugin="", script="", icon="", renderDesc='', lib='', preset='',module=''):
-        ''' the addon method MUST be implemented for all classes so other apps can set up 
+        ''' the addon method MUST be implemented for all classes so other apps can set up
         searchpaths for this app. For example, another app which has plugins for this one!'''
         if not pipe.osx:
             if type(icon) == type([]):
@@ -143,42 +178,75 @@ class maya(baseApp):
         caller['LD_LIBRARY_PATH']       = lib
         caller['MAYA_PRESET_PATH']      = preset
         caller['MAYA_MODULE_PATH']      = module
-  
-    
+
+
     def postRun(self, cmd, returnCode, returnLog=""):
-        ''' this is called after a binary of this class has exited. 
+        ''' this is called after a binary of this class has exited.
         it's the perfect method to do post render frame checks, for example!'''
         error = returnCode!=0
         images=[]
-                
-        # if Render in cmd 
+
+        # publish output log
+        pipe.frame.publishLog(returnLog, self.asset, self.className)
+
+        # if Render in cmd
         if 'Render' in cmd:
-            
+
+
             # and 'Finished Rendering' in the log, do a frame check!
             if 'Finished Rendering' in returnLog:
 
-                # collect image files from output log                
+                # collect image files from output log
                 images = map(lambda z: z.split('Finished Rendering ')[-1].split()[0].strip().strip('.'),
-                               filter(lambda x: 'Finished Rendering ' in x,returnLog.split('\n')) ) 
-                               
+                               filter(lambda x: 'Finished Rendering ' in x,returnLog.split('\n')) )
+
             # and Mental Ray Render in the log, do a frame check!
             if 'image file' in returnLog and 'Mayatomr.Nodes' in returnLog:
 
-                # collect image files from output log                
+                # collect image files from output log
                 images = map(lambda z: z.split('image file')[-1].split()[0],
-                               filter(lambda x: 'image file' in x,returnLog.split('\n')) ) 
-                               
+                               filter(lambda x: 'image file' in x,returnLog.split('\n')) )
+
             # or Arnold Render in the log, do a frame check!
             if 'writing file' in returnLog and 'mtoa_shaders.so' in returnLog:
-                
-                # collect image files from output log                
+
+                # collect image files from output log
                 images = map(lambda z: z.split('writing file')[-1].replace('`','').replace("'",'').strip(),
-                               filter(lambda x: 'writing file' in x,returnLog.split('\n')) ) 
-                               
+                               filter(lambda x: 'writing file' in x,returnLog.split('\n')) )
+
+            # or prman Render in the log, do a frame check!
+            if '(mode = ' in returnLog and 'Pixar PhotoRealistic RenderMan' in returnLog:
+
+                # collect image files from output log
+                unfiltered = map(lambda z: z.split('"')[1].strip(),
+                               filter(lambda x: '(mode = ' in x,returnLog.split('\n')) )
+
+                # if using denoise, return the filtered images, not the rendered ones.
+                filtered = []
+                if 'Filtering to produce ' in returnLog:
+                    filtered = map(lambda z: z.split('Filtering to produce ')[1].strip(),
+                                   filter(lambda x: 'Filtering to produce ' in x,returnLog.split('\n')) )
+
+#                images = {}
+#                for each in unfiltered:
+#                    if '_variance' not in each:
+#                        name = each.split('.')[-3]
+#                        name = ''.join(name[:-(len(name)-2)])
+#                        image = filter( lambda x: name in x, filtered )
+#                        if image:
+#                            for i in image:
+#                                images[i] = 1
+#                        else:
+#                            images[each] = 1
+#                images = images.keys()
+
+                images = filtered + unfiltered
+
+
         # run our pipe.frame.check generic frame check for the gathered image list
         if images:
-            error = pipe.frame.check( images )        
-            
+            error = pipe.frame.check( images )
+
             # move rendered frames to asset, if this render is an asset!
             if not error:
                 if not self.asset:
@@ -190,20 +258,53 @@ class maya(baseApp):
                         if os.path.splitext(each.lower())[-1] in ['.mb','.ma']:
                             assetPath = each
                             break
-                    pipe.frame.publish( images, assetPath, returnLog )
+                    pipe.frame.publish( images, assetPath ) #, returnLog )
                 else:
                     # if we have an asset reference already, use it!
                     pipe.frame.publish( images, self.asset )
-                
-        # publish output log
-        pipe.frame.publishLog(returnLog, self.asset, self.className)
-        
-        # return a posix error code if we got an error, so the farm engine 
+
+        # if no images and one of those strings found, fail frame render!
+        else:
+            errors = [
+                'RuntimeError',
+                'fatal interrupt',
+                'encountered a fatal error',
+                'ImportError:',
+                'Maya exited with status',
+                "can't create directory",
+                "Can't create file",
+                '(core dumped)',
+                'dbus.exceptions.DBusException',
+            ]
+            for s in errors:
+                if s in str(returnLog):
+                    print filter(lambda x: s in x, str(returnLog).split('\n'))
+                    error = True
+                    break
+
+        # fatal errors - must fail even if images were generated!!
+        fatalErrors = [
+                'Zip Read Error',
+                'cannot be opened by RiReadArchive',
+                "Cannot load scene",
+                'Error: T03007 Bad texture data in ',
+                'Error: X00002 Plugin error: ',
+                "Error: T02001 Can't open texture ",
+                "Error: R50005 License error",
+        ]
+        for s in fatalErrors:
+            if s in str(returnLog):
+                error = True
+                print filter(lambda x: s in x, str(returnLog).split('\n'))
+                break
+
+
+        # return a posix error code if we got an error, so the farm engine
         # will get a proper error!
         return int(error)*255
 
 
-        
+
     def userSetup(self, jobuser):
         ''' this method is implemented when we want to do especial folder structure creation and setup
         for a user in a shot'''
@@ -279,5 +380,3 @@ class maya(baseApp):
                 'workspace -fr "shaders" "renderData/shaders";',
             ], 'maya/workspace.mel' )
             jobuser.create()
-
-

@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -30,15 +30,15 @@ class rv(baseApp):
 #        RV_PREFS_OVERRIDE_PATH
 #        RV_PREFS_CLOBBER_PATH
 #        RV_SUPPORT_PATH
-        
+
     def dotAppName(self):
         return "RV64.app"
-        
+
     def bins(self):
         if self.osx:
-            return [('rv','RV')]
-        return [('rv','rv.bin')]
-        
+            return [('rv','RV  -noaudio')]
+        return [('rv','rv.bin -noaudio')]
+
     def license(self):
         self['RV_LICENSE_FILE'] = "/tmp/rv_license_%s.txt" % os.environ['USER']
 

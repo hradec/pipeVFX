@@ -1,3 +1,23 @@
+# =================================================================================
+#    This file is part of pipeVFX.
+#
+#    pipeVFX is a software system initally authored back in 2006 and currently
+#    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
+#
+#    pipeVFX is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Lesser General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    pipeVFX is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public License
+#    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
+# =================================================================================
+
 '''Elegant process isolation in pure Python.'''
 
 import os
@@ -340,7 +360,7 @@ class CallableObjectProxy(ObjectProxy):
     # Implement function-like special methods
     def __call__(self, *args, **kwargs):
         return self.client.call(self, *args, **kwargs)
-    
+
 class ExceptionProxy(Exception,ObjectProxy):
     def __init__(self, prime_id, prime_docstring=None):
         ObjectProxy.__init__(self, prime_id, prime_docstring)
@@ -472,7 +492,7 @@ class Server(object):
 
                 # Serialize the exception that was raised during pickling
                 try:
-                    # Run the delegate in the local environment 
+                    # Run the delegate in the local environment
                     # The delegate will wrap the result itself
                     result_str = cPickle.dumps(result)
                 except Exception as ex:
@@ -927,7 +947,7 @@ class IsolationContext(object):
         mod.__isolation_context__ = self
         return mod
 
-        
+
 
 
 def default_context():

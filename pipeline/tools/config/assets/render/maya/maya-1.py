@@ -129,13 +129,25 @@ class maya( render ) :
                     m.setAttr( par, value, type="string" )
                 else:
                     m.setAttr( par, value )                
+    
+    def addAttr(self, nodeAttr, value):
+        ''' create an attribute if one doesn't exist '''
+        if not m.objExists(nodeAttr):
+            if type(value) == str:
+                m.addAttr(nodeAttr.split('.')[0], ln=nodeAttr.split('.')[1], dt='string')
+            else:
+                m.addAttr(nodeAttr.split('.')[0], ln=nodeAttr.split('.')[1], at='double')
                 
+        if type(value) == str:
+            m.setAttr(nodeAttr,value, type="string")
+        else:
+            m.setAttr(nodeAttr,value)            
             
     
     def prePublish( self, operands ):
         ''' publish runs this method before publishing an asset.
         we can use it to prepare the asset to be published! '''
-        pass
+        pass    
 
     def postPublish(self, operands, finishedSuscessfuly=False):
         ''' publish runs this method after publishing an asset or after an error. 
@@ -186,7 +198,6 @@ class maya( render ) :
             # at this point, the scene has already being published, so 
             # we can save it safely without affecting the published asset!
             m.file(s=1)
-        
                     
     def doOperation( self, operands ):
         sceneName           = str(operands['mayaScene'])
@@ -201,11 +212,47 @@ class maya( render ) :
 
 
         if render != '3delight':
+            render = m.getAttr( "defaultRenderGlobals.currentRenderer" )
+            
+            # set proper verbosity for mentalray
+            self.msetAttr("mentalrayGlobals.renderVerbosity", 6)
+            self.msetAttr("mentalrayGlobals.exportVerbosity", 6)
+            
             # set proper verbosity and others for arnold!
             self.msetAttr("defaultArnoldRenderOptions.shaderNanChecks", 1)
             self.msetAttr("defaultArnoldRenderOptions.log_verbosity", 1)
             self.msetAttr("defaultArnoldRenderOptions.log_to_console", 1)
+            
+            # renderman setup to avoid race condition when creating rib files.
+            
+            self.msetAttr("renderManRISGlobals.rman__toropt___lazyRibGen",1)        
+            self.msetAttr("renderManRISGlobals.rman__toropt___ribCleanupFrame", 0)
+            self.msetAttr("renderManRISGlobals.rman__toropt___renderDataCleanupFrame", 0)
+            self.msetAttr("renderManRISGlobals.rman__toropt___textureCleanupFrame", 0)
+
+            self.msetAttr("renderManRISGlobals.rman__toropt___ribCleanupJob", 0)
+            self.msetAttr("renderManRISGlobals.rman__toropt___textureCleanupJob", 0)
+            self.msetAttr("renderManRISGlobals.rman__toropt___renderDataCleanupJob", 0)
+            self.msetAttr("renderManRISGlobals.rman__toropt___shaderCleanupJob", 0)
+            
+            # if denoise not set, set it to frame!
+            self.msetAttr("renderManRISGlobals.rman__torattr___denoise", 1)
+            self.msetAttr("renderManRISGlobals.rman__torattr___denoiseFilter", "default.filter.json")
+            
+            # make prman very verbose
+            self.msetAttr("renderManRISGlobals.rman__riopt__statistics_level", 3)
+            self.msetAttr("renderManRISGlobals.rman__riopt__statistics_filename", "stdout")
+            
+            # set filename format to maya_scene_name.####.ext
+            self.msetAttr("defaultRenderGlobals.animation", 1)
+            self.msetAttr("defaultRenderGlobals.extensionPadding", 4)
+            self.msetAttr("defaultRenderGlobals.outFormatControl", 0)
+            self.msetAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
+            self.msetAttr("defaultRenderGlobals.periodInExt", 1)
+            self.msetAttr("defaultRenderGlobals.imageFilePrefix", "")
+
             m.file(s=1)
+            self.msetAttr("renderManRISGlobals.rman__toropt___lazyRibGen",0)
         
         else:
             # self.files will be used by submission method 
@@ -309,6 +356,9 @@ class maya( render ) :
         render              = str(operands['RenderEngine'])
         frameRange          = operands['FrameRange']['range'].value
         
+        if render != '3delight':
+            render = m.getAttr( "defaultRenderGlobals.currentRenderer" )
+                
         if not hasattr( self, 'files' ):
             self.files = [publishFile]
             
@@ -325,7 +375,7 @@ class maya( render ) :
                 project     = self.projectRoot(assetPath), 
                 extra       = self.renderPasses,
                 renderer    = render, 
-                name        = 'RENDER ASSET: %s_%s' % (data['assetName'],data['assetVersion']) , 
+                name        = 'RENDER: %s_%s' % (data['assetName'],data['assetVersion']) , 
                 CPUS        = 9999, 
                 priority    = 9999, 
                 range       = range(int(frameRange.x), int(frameRange.y+frameRange.z), int(frameRange.z)), 

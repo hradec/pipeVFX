@@ -109,7 +109,7 @@ class nuke( render ) :
             jobid = pipe.farm.nuke(
                 scene       = each.replace( '#', pipe.farm.nuke.frameNumber() ), 
                 writeNode   = self.writeNodes, 
-                name        = 'RENDER ASSET: %s_%s' % (data['assetName'],data['assetVersion']) , 
+                name        = 'RENDER: %s_%s' % (data['assetName'],data['assetVersion']) , 
                 CPUS        = 9999, 
                 priority    = 9999, 
                 range       = range(int(frameRange.x), int(frameRange.y+frameRange.z), int(frameRange.z)), 

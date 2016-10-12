@@ -28,7 +28,7 @@ class zbrush(baseApp):
 #        pipe.version.set( wine = '1.4' )
         pipe.version.set( zbrush = '4.0.r4' )
     
-    def localCache(self, binFullName):
+'''    def localCache(self, binFullName):
         # we use this method just to make some a writable ZStartup
         # folder in the user home folder wine cache
         from glob import glob
@@ -54,3 +54,4 @@ class zbrush(baseApp):
                     shutil.copytree( each, pixologic+zbrush+beach, True )
         
         return binFullName
+'''

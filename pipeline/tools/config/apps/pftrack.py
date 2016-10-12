@@ -33,3 +33,16 @@ class pftrack(baseApp):
         self['PIXELFARM_KEEP_PYTHONPATH'] = '1'
         self['PIXELFARM_SPLASH_DURATION'] = '0'        
 #        self['PF_DATA_HOME'] = self.path()
+        
+    def license(self):
+        # install license for the current machine
+        self['PIXELFARM_LICENSE_FILE'] = "/tmp/pftrack_license_%s.txt" % os.environ['USER']
+
+        hostid = os.popen("%s/license/pflic -h | grep host" % self.path()).readlines()[0].strip().split()[-1]
+        os.popen( "cd /tmp && echo -e 'user\ncompany\n%s\n' | %s/license/keygen" % (hostid,self.path()) ).readlines()
+        cache.copy( "/tmp/license.txt", self['PIXELFARM_LICENSE_FILE'] )
+        cache.rmtree( "/tmp/license.txt" )
+
+        
+
+        

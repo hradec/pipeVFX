@@ -2,7 +2,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -52,8 +52,8 @@ def types():
                     dirname  = os.path.basename(os.path.dirname(id))
                     if basename == dirname:
                         d[os.path.dirname(id)] = True
-            return d                    
-                
+            return d
+
     ret = recursiveTree(root, ret)
     return ret.keys()
 
@@ -62,23 +62,20 @@ class AssetParameter( CompoundParameter ):
     def __init__(self, path=None, publish=True):
         if IECore:
             CompoundParameter.__init__(self, 'Asset',"", userData = { "UI": {"collapsed" : BoolData(False),}},)
-        
-        filter = '*'
-        if os.environ.has_key('PIPE_PUBLISH_FILTER'): 
-            filter = os.environ['PIPE_PUBLISH_FILTER'] 
+
+        opfilter = '*'
+        if os.environ.has_key('PIPE_PUBLISH_FILTER'):
+            opfilter = os.environ['PIPE_PUBLISH_FILTER']
 
         if IECore:
             self.classLoader = ClassLoader.defaultLoader( "IECORE_ASSET_OP_PATHS" )
 
         self.job = j = pipe.admin.job.current()
-        if not self.job:
-            return
-        self.jobData = j.getData()
-        self.shot = pipe.admin.job.shot()
-        self.user = pipe.admin.job.shot.user()
+#        if not self.job:
+#            return
         self.path = path
         self.publish = publish
-        
+
         if self.path:
             # be smart and figure if the path represents an valid asset by looking for a data.txt file
             p = self.path
@@ -87,45 +84,55 @@ class AssetParameter( CompoundParameter ):
                     self.path = p
                     break
                 p = os.path.dirname(p)
-                
-            # another little of smartness... if path has job/shot in it, update our internal job shot 
+
+            # another little of smartness... if path has job/shot in it, update our internal job shot
             # with it. This way we can access assets in different job/shots!
             if '/jobs/' in self.path:
                 jopPath = self.path.split('/jobs/')[1].split('/')[0].split('.')
                 self.job = j =  pipe.admin.job(jopPath[0], jopPath[1])
-                
+
 
             # store the path relative to the project
             if 'sam' in self.path:
                 self.path = self.path.split('sam/')[-1]
-            
         
+        __path = "/tmp/"
+        try:
+            self.jobData = self.job.getData()
+            self.shot = self.job.shot()
+            self.user = self.job.shot.user()
+            __path = self.job.path('sam/*')
+        except: pass
+
         current = {}
-        def recursiveGatherAllAssets(path=self.job.path('sam/*')):
+        def recursiveGatherAllAssets(path=__path):
             ret = {}
-            for each in glob('%s/*' % path):
-                assetName = os.path.basename(each)
-                if assetName[0].isdigit():
-                    id = each.replace(self.job.path('sam/'),'')
-                    # check if version is current!
-                    cur = os.path.dirname(each)
-                    if os.path.exists('%s/current' % cur):
-                        if not current.has_key(cur):
-                            current[cur] = open('%s/current' % cur,'r').readlines()[0].strip()
-                        # and add a '(current)' suffix to show to the user!
-                        if each == current[cur][:-1]:
-                            id += ' (current)'
-                    ret[id]=''
-                else:
-                    ret.update(recursiveGatherAllAssets(each))
+            if self.job:
+                for each in glob('%s/*' % path):
+                    assetName = os.path.basename(each)
+                    if assetName[0].isdigit():
+                        id = each.replace(self.job.path('sam/'),'')
+                        # check if version is current!
+                        cur = os.path.dirname(each)
+                        if os.path.exists('%s/current' % cur):
+                            if not current.has_key(cur):
+                                current[cur] = open('%s/current' % cur,'r').readlines()[0].strip()
+                            # and add a '(current)' suffix to show to the user!
+                            if each == current[cur][:-1]:
+                                id += ' (current)'
+                        ret[id]=each
+                    else:
+                        ret.update(recursiveGatherAllAssets(each))
             return ret
-        
+            
+
         allAssets = []
         #if publish:
         allAssets = recursiveGatherAllAssets().keys()
         allAssets.sort()
         AssetsPublicados = map( lambda x: (x,x), allAssets )
-        
+        self.published = allAssets 
+
         assetName = ""
         assetVersion = "1.-1.0"
         assetDesc  = ""
@@ -142,12 +149,20 @@ class AssetParameter( CompoundParameter ):
                 if assetVersion != "1.-1.0":
                     assetDesc = "\n(desc versao: %s) - %s " % (assetVersion,desc)
 
-                
-                
+        # set version and description to be the last one published
+        if assetName:
+            f = filter(lambda x: str(assetName) in x, self.published)
+            f.sort()
+            assetVersion = f[-1].split('/')[-1].replace(' (current)','').strip()
+            data = self.getAssetData(f[-1])
+            if data:
+                assetDesc  = "\n(desc versao: %s) - %s " % (assetVersion,data["assetDescription"]) 
+
+            
         if IECore:
             assetVersion = map( lambda x: int(x), assetVersion.split('.') )
             assetVersion = V3i(assetVersion[0], assetVersion[1]+1, assetVersion[2])
-            
+
             if publish:
                 type = ClassParameter(
                     "type",
@@ -155,7 +170,7 @@ class AssetParameter( CompoundParameter ):
                     "IECORE_ASSET_OP_PATHS",
                     userData = { "UI": {
                         "collapsed" : BoolData(False),
-                        "classNameFilter" : StringData(filter),
+                        "classNameFilter" : StringData(opfilter),
                     }},
                 )
                 self.addParameter(type)
@@ -174,7 +189,7 @@ class AssetParameter( CompoundParameter ):
                                 name="description",
                                 description = "quick description of the asset.",
                                 defaultValue = assetDesc ,
-                                userData = { "UI": { "multiLine" : BoolData(True) } },  
+                                userData = { "UI": { "multiLine" : BoolData(True) } },
                             ),
                             V3iParameter(
                                 name="version",
@@ -200,7 +215,7 @@ class AssetParameter( CompoundParameter ):
                                 defaultValue = True,
                             ),
                 ]
-                
+
             else:
                 par = [
                     StringParameter(
@@ -215,8 +230,8 @@ class AssetParameter( CompoundParameter ):
                         userData = { "UI": {"collapsed" : BoolData(False),}},
                     ),
                 ]
-                
-                    
+
+
             self.addParameters([
                     CompoundParameter(
                         "info",
@@ -225,25 +240,25 @@ class AssetParameter( CompoundParameter ):
                         userData = { "UI": {"collapsed" : BoolData(False),}},
                     )
             ])
-        
+
 #    @staticmethod
 #    def pathToAsset(path):
 #        /atomo/jobs/0345.minuano/assets/camisa/users/rhradec/maya/3delight/shot03_02.06.00/rib/shot03_02.06.00_renderPass_QB_FRAME_NUMBER.rib
-        
-    
+
+
     def frameRangeParameter(self):
         ''' returns a default frame range parameter to all assets! '''
         if IECore:
             if self.publish:
-                return IECore.CompoundParameter("FrameRange","",[   
+                return IECore.CompoundParameter("FrameRange","",[
                         IECore.V3fParameter("range","Inicio, fim e 'step' da sequencia a ser rendida.",IECore.V3f(start, end, byFrameStep), userData=disabled),
                     ],userData = { "UI": {"collapsed" : IECore.BoolData(False)}})
             else:
                 return None
-            
+
     def isValid(self):
         return os.path.exists( "%s/data.txt" % self.getFilePath() )
-            
+
 
     def getData(self):
         if self.path:
@@ -255,12 +270,12 @@ class AssetParameter( CompoundParameter ):
             f.close()
             return d
         return {}
-    
+
     def getFilePath(self):
         if self.job and self.path:
             return self.job.path("sam/%s" % self.path)
         return ""
-    
+
     def getAssetType(self):
         # get current select class type
         if IECore:
@@ -279,12 +294,12 @@ class AssetParameter( CompoundParameter ):
 
     def getAssetPathParameter(self):
         '''#find the assetPath parameter
-        # we look into userData section of every parameter from assetClass 
+        # we look into userData section of every parameter from assetClass
         # the parameter which has assetPath userdata, is the asset path parameter
         # and we use it's value as the asset path origin        assetPathParameter = None'''
         assetPath = None
         assetPathParameter = None
-        for each in self['type'].keys():            
+        for each in self['type'].keys():
             if self['type'][each].userData().has_key('assetPath'):
                 assetPathParameter = str(each)
                 assetPath = str(self['type'][each].getValue())
@@ -300,28 +315,29 @@ class AssetParameter( CompoundParameter ):
         return str( parameter.name )
 
     def getAssetData(self, relativeAssetPath):
-        ''' loads the asset data file for a given asset path and returns the data as a dict ''' 
-        fullpath = self.job.path( 'sam/%s/data.txt' % relativeAssetPath.split('/sam/')[-1] )
+        ''' loads the asset data file for a given asset path and returns the data as a dict '''
+        fullpath = self.job.path( 'sam/%s/data.txt' % relativeAssetPath.split('/sam/')[-1].replace(' (current)','').strip() )
         
         ret = None
         if os.path.exists( fullpath ):
             ret =  eval(''.join(open(fullpath,'r').readlines()).strip().replace('\n','\\n'))
         return ret
-    
+
     def getDataDict(self):
         ''' load data file based on current set name parameters '''
         assetData = {}
-        assetName = str(self['info']['name'].getValue())
-        if '/' in assetName:
-            assetName = assetName.split()[0].strip()
-            # we used the pop up menu to select an existing asset
-            assetData = self.getAssetData(assetName)
+        if self.has_key('info'):
+            assetName = str(self['info']['name'].getValue())
+            if '/' in assetName:
+                assetName = assetName.split()[0].strip()
+                # we used the pop up menu to select an existing asset
+                assetData = self.getAssetData(assetName)
         return assetData
-        
+
     def parameterChanged(self, parameter):
         forceVersionCheck = False
 #        print parameter.name,'=',parameter.getValue()
-           
+
         #if self.publish:
         if IECore:
             if parameter.name == 'name' or forceVersionCheck:
@@ -342,7 +358,7 @@ class AssetParameter( CompoundParameter ):
                     if assetData:
                         if hasattr( assetData, 'has_key' ):
                             if not self.publish:
-                                if 'type' in self.keys():   
+                                if 'type' in self.keys():
                                     for par in self['type'].keys():
                                         dataName = self.getDataName(self['type'][par])
                                         if assetData.has_key(dataName):
@@ -355,7 +371,7 @@ class AssetParameter( CompoundParameter ):
                                 for each in assetData['assetInfo'].keys():
                                     if each in self['info'].keys():
                                         self['info'][each].smartSetValue( assetData['assetInfo'][each] )
-                                
+
                                 if assetData['assetInfo'].has_key('description'):
                                     if 'description' in self['info'].keys():
                                         self['info']['description'].smartSetValue( "\n%s (desc versao: %s)" % (assetData['assetInfo']['description'], assetOldVersion) )
@@ -370,6 +386,4 @@ class AssetParameter( CompoundParameter ):
                         version = map(lambda x: int(x), os.path.basename(versions[-1]).split('.'))
                         self['info']['version'].smartSetValue(V3i(version[0],version[1]+1,version[2]))
                     else:
-                        self['info']['version'].smartSetValue(V3i(1,0,0))    
-
-
+                        self['info']['version'].smartSetValue(V3i(1,0,0))

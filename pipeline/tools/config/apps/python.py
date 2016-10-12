@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -19,37 +19,34 @@
 # =================================================================================
 
 
-class python(baseApp):
+class python(baseLib):
     '''
     WARNING: in newer debian/ubuntu distros, we need this to make things work correctly:
         sudo ln -s /usr/lib/python2.7/config-x86_64-linux-gnu/ /usr/lib/python2.7/config
-    
+
     when python complains it cant open config/Makefile!
     '''
     def environ(self):
         parent = self.parent()
-        # force the system libraries to be preloaded since we have OIIO and OCIO 
-        # compiled with the system libraries. 
+        # force the system libraries to be preloaded since we have OIIO and OCIO
+        # compiled with the system libraries.
         # we have to remove this once OIIO and OCIO are properly build with the pipe gcc!
-        self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libstdc++.so.6")
-        self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libgcc_s.so.1")
-
-        self['PYTHON_VERSION_MAJOR'] = pipe.apps.version.get('python')[:3]
-        
-#        if self.parent() not in ['houdini']:
+        if self.parent() not in ['nuke']:
+            self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libstdc++.so.6")
+            self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libgcc_s.so.1")
 
         # if nuke version < 8.0 or gaffer, force to load our libpython shared lib
-        sharedLib = self.path('lib/libpython$PYTHON_VERSION_MAJOR.so.1.0')
+        sharedLib = self.path('lib/libpython%s.so.1.0' % pipe.libs.version.get('python')[:3])
         if os.path.exists(sharedLib):
             if (self.parent()=='nuke' and float(pipe.version.get('nuke')[:3])<8) or self.parent() in ['gaffer']:
-                self['LD_PRELOAD'] = sharedLib 
+                self['LD_PRELOAD'] = sharedLib
 
-       
+
         # set PYTHONHOME for some apps...
-        if self.parent() in ['python','delight','houdini','cortex']:
+        if self.parent() in ['python','delight','houdini','cortex', 'qube']:
             self['PYTHONHOME'] = self.path()
-            
-        if self.parent() in ['python']:
+
+        if self.parent() in ['python','cortex','gaffer']:
             # initialize cortex environment so we can load its modules.
             self.update( cortex() )
             self.update( gaffer() )
@@ -57,14 +54,12 @@ class python(baseApp):
             # also, initialize buildStuff in case theres some pythonmodules there.
             self.update( buildStuff() )
 
-            # also, initialize wx 
+            # also, initialize wx
             self.update( wxpython() )
-
-        else:            
             self.update( qube() )
+            self.update( cgru() )
 
-        
+
 
     def bins(self):
         return [('python', 'python')]
-

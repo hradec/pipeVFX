@@ -20,10 +20,9 @@
 # =================================================================================
 
 
-server="ldap://authserver.atomovfx.lan"
-baseDN="dc=atomovfx,dc=lan"
 
 #cn=Admin,dc=atomovfx,dc=lan
+#Admin: Atomo2013openldap
 
 
 
@@ -36,11 +35,11 @@ def password(passwd):
 
 
 class server(object):
-    def __init__(self, server = server):
+    def __init__(self, server = "ldap://authserver.atomovfx.lan"):
         import ldap as __ldap
         try:
             self.__l = __ldap.initialize(server)
-            self.baseDN = baseDN
+            self.baseDN = "dc=atomovfx,dc=lan"
         except:
             self.__l = None
         self.search = self.__search

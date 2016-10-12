@@ -20,7 +20,7 @@
 
 class chrome(baseApp):
     def environ(self):
-        if os.popen('cat /proc/version | egrep "Debian|Ubuntu"').readlines():
+        if os.popen('cat /proc/version | egrep "Debian|Ubuntu|ARCH"').readlines():
             pipe.version.set( chrome = 'beta' )
             self.debian = True
    
@@ -45,9 +45,9 @@ class chrome(baseApp):
                         os.remove( singletonLock )
             
         # grab extra options for chrome from env var
-        extraOptions = ""
+        extraOptions = " --extra-plugin-dir=%s/../.plugins/ " % self.path()
         if os.environ.has_key('PIPE_PROXY_SERVER'):
-            extraOptions = '--proxy-server=%s  --proxy-bypass-list="*.local;127.0.0.1;localhost"' % os.environ['PIPE_PROXY_SERVER'] 
+            extraOptions += '--proxy-server=%s  --proxy-bypass-list="*.local;127.0.0.1;localhost"' % os.environ['PIPE_PROXY_SERVER'] 
             
         
         if self.osx:

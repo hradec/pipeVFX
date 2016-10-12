@@ -77,7 +77,7 @@ class delight(baseApp):
 #            self["_3DFM_TEMPLATES_PATH"]    = job.shot.user().path('delight')
 #            self["_3DFM_TEXTURES_PATH"]     = job.shot.user().path('delight')
 
-        self['RMANTREE'] = self.path()
+#        self['RMANTREE'] = self.path()
         self['DELIGHT'] = self.path()
         self['FRAMEBUFFER'] = 'i-display'
 
@@ -329,6 +329,7 @@ class delight(baseApp):
             pass
         else:
          # list of license servers to query for available licenses
+         licenseServers = []
          licenseServers = self.getLicenses()
 
          # run over all license servers and find an available license for us. 
@@ -344,11 +345,11 @@ class delight(baseApp):
                 # if running on the farm, set the least queued server
                 userConfig =  '%s/rendermn.ini' %  self['HOME'] 
 
-                cache.copy( self.path('rendermn.ini'), userConfig ) 
-                f = open( userConfig, 'a' )
-                f.write( '\n\n/3delight/licserver %s\n' % each)
-                f.write( '\n\n/3delight/licserver %s\n' % each)
-                f.close()
+                #cache.copy( self.path('rendermn.ini'), userConfig ) 
+                #f = open( userConfig, 'a' )
+                #f.write( '\n\n/3delight/licserver %s\n' % each)
+                #f.write( '\n\n/3delight/licserver %s\n' % each)
+                #f.close()
                 message = ""
                     
             else:
@@ -367,10 +368,10 @@ class delight(baseApp):
                     if availableLicenses >=2: # and availableLicenses > previous_availableLicenses):
                         # set config file for current user to the available license server
                         # if running on the farm, set the least queued server
-                        cache.copy( self.path('rendermn.ini'), userConfig ) 
-                        f = open( userConfig, 'a' )
-                        f.write( '\n\n/3delight/licserver %s\n' % each)
-                        f.close()
+                        #cache.copy( self.path('rendermn.ini'), userConfig ) 
+                        #f = open( userConfig, 'a' )
+                        #f.write( '\n\n/3delight/licserver %s\n' % each)
+                        #f.close()
                         message = ""
                     
                 

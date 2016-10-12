@@ -228,6 +228,8 @@ class appsDB(dict):
         return [
             self.path(subPath='lib'),
             self.path(subPath='lib/python$PYTHON_VERSION_MAJOR'),
+            self.path(subPath='lib/boost$BOOST_VERSION'),
+            self.path(subPath='lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR'),
         ]
 
     def bin(self, appName=None):
@@ -258,11 +260,13 @@ class appsDB(dict):
         ret = []
         if glob("%s/*%s" % (lib, self.so)):
             ret += [self.path(subPath='lib')]
+            ret += [self.path(subPath='lib/boost$BOOST_VERSION')]
         if platform==WIN:
             ret += [self.path(subPath='bin')]
 
         if glob("%s/python*/*%s" % (lib,self.so) ):
             ret += [self.path(subPath='lib/python$PYTHON_VERSION_MAJOR')]
+            ret += [self.path(subPath='lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')]
 
         # adds all pipeline based libraries right after app lib
 
@@ -292,6 +296,15 @@ class libsDB(appsDB):
         return versionLib.get( self.app )
 
 
+def versionSort(versions):
+    def method(v):
+        v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
+        return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
+    tmp =  sorted( versions, key=method, reverse=True )
+    # print tmp
+    return tmp
+
+
 
 # initialize global cache of versions!
 if not os.environ.has_key('__DB_LATEST'):
@@ -316,6 +329,18 @@ class version:
             _version = appsDB().latest
         else:
             for each in args:
+                v = appsDB()[each]['versions']
+                if args[each] not in v:
+                    try:
+                        vv = [ x for x in v if '.'.join(x.split('.')[:2]) == '.'.join(args[each].split('.')[:2]) ]
+                    except:
+                        try:
+                            vv = [ x for x in v if args[each] in x ]
+                        except: pass
+                    if vv:
+                        v = vv
+                    versions = versionSort(v)
+                    args[each] = versions[0]
                 _version[each] = args[each]
         os.environ['__DB_LATEST'] = str(_version)
 
@@ -339,6 +364,8 @@ class version:
         else:
             v = _version
         return v
+
+
 
 
 
@@ -366,6 +393,18 @@ class versionLib:
             _versionLib = libsDB().latest
         else:
             for each in args:
+                v = libsDB()[each]['versions']
+                if args[each] not in v:
+                    try:
+                        vv = [ x for x in v if '.'.join(x.split('.')[:2]) == '.'.join(args[each].split('.')[:2]) ]
+                    except:
+                        try:
+                            vv = [ x for x in v if args[each] in x ]
+                        except: pass
+                    if vv:
+                        v = vv
+                    versions = versionSort(v)
+                    args[each] = versions[0]
                 _versionLib[each] = args[each]
         os.environ['__DB_LATEST_LIBS'] = str(_versionLib)
 
@@ -673,12 +712,20 @@ class baseApp(_environ):
                         allLibs['PYTHONPATH'] = allLibs.updatedClasses[lib]['PYTHONPATH']
                         allLibs['INCLUDE'] = allLibs.updatedClasses[lib]['INCLUDE']
 
+                # set lib versions no matter what!!
+                for each in [ x for x in allLibs.updatedClasses[lib] if 'VERSION' in x ]:
+                    allLibs[each] = allLibs.updatedClasses[lib][each]
+                    extraUpdates[each] = 1
+
             self.insert('LD_LIBRARY_PATH', 0, allLibs['LD_LIBRARY_PATH'] )
             self['PYTHONPATH'] = allLibs['PYTHONPATH']
             self.insert('INCLUDE', 0, allLibs['INCLUDE'])
             self.insert('LD_LIBRARY_PATH', 0, self.path('lib'))
+            self.insert('LD_LIBRARY_PATH', 0, self.path('lib/boost$BOOST_VERSION'))
             self['LD_LIBRARY_PATH']=self.path('lib/python$PYTHON_VERSION_MAJOR')
+            self['LD_LIBRARY_PATH']=self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')
 
+            self['BOOST_VERSION'] = versionLib.get('boost')
             # if we have extra variables, just update itself with it!
             for each in extraUpdates:
                 self[each] = allLibs[each]
@@ -896,10 +943,10 @@ class baseApp(_environ):
                     self.userSetup( user )
                 self.user = user
 
-    def update(self, environClass={}, top={}, **e):
+    def update(self, environClass={}, top={}, noIgnoreLibs=False, **e):
         # recall all added classes to batch update later at RUN
         useSystemLibs = []
-        if os.environ.has_key('USE_SYSTEM_LIBRARY'):
+        if os.environ.has_key('USE_SYSTEM_LIBRARY') and not noIgnoreLibs:
             useSystemLibs = os.environ['USE_SYSTEM_LIBRARY'].split()
         if environClass:
             if environClass.className not in useSystemLibs:
@@ -1318,4 +1365,11 @@ class baseLib(baseApp):
 
 
     def LD_PRELOAD(self):
-        return glob( self.path('lib/*.so') )
+        pv = versionLib.get('python')
+        bv = versionLib.get('boost')
+        pvm = '.'.join(pv.split('.')[:2])
+        ret =  glob( self.path('lib/*.so') )
+        ret +=  glob( self.path('lib/python%s/*.so' % pvm) )
+        ret +=  glob( self.path('lib/boost%s/*.so' % bv) )
+        ret +=  glob( self.path('lib/boost%s/python%s/*.so' % (bv,pvm)) )
+        return ret

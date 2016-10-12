@@ -1,3 +1,23 @@
+# =================================================================================
+#    This file is part of pipeVFX.
+#
+#    pipeVFX is a software system initally authored back in 2006 and currently
+#    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
+#
+#    pipeVFX is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Lesser General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    pipeVFX is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public License
+#    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
+# =================================================================================
+
 import os, sys, pipe
 
 
@@ -29,16 +49,15 @@ def popPrint(msg,dd=locals()):
 pushPrint()
 
 
+def app_environ(name):
+    import os
+    if name in os.environ:
+        return os.environ[name]
+    return '0.0.0'
+
 # library verions
 # =============================================================================================================================================================
 prmanName       = 'prman'
-packageToBuild  = 'maya'
-if os.environ.has_key('PKG'):
-    packageToBuild = os.environ['PKG']
-pkg = filter( lambda x: 'PKG=' in x,sys.argv)
-if pkg:
-    packageToBuild = pkg[0].split('=')[1]
-del pkg
 
 # version setup
 png      = os.environ['LIBPNG_VERSION']
@@ -46,25 +65,19 @@ freetype = os.environ['FREETYPE_VERSION']
 python   = os.environ['PYTHON_VERSION']
 tbb      = os.environ['TBB_VERSION']
 boost    = os.environ['BOOST_VERSION']
-openexr = os.environ['OPENEXR_VERSION']
-ilmbase = os.environ['ILMBASE_VERSION']
-glew    = os.environ['GLEW_VERSION']
-glut    = os.environ['FREEGLUT_VERSION']
-abc     = os.environ['ALEMBIC_VERSION']
-hdf5    = os.environ['HDF5_VERSION']
-prman   = os.environ['PRMAN_VERSION']
-maya    = os.environ['MAYA_VERSION']
-nuke    = os.environ['NUKE_VERSION']
-houdini = os.environ['HOUDINI_VERSION']
-arnold  = os.environ['ARNOLD_VERSION']
+openexr  = os.environ['OPENEXR_VERSION']
+ilmbase  = os.environ['ILMBASE_VERSION']
+glew     = os.environ['GLEW_VERSION']
+glut     = os.environ['FREEGLUT_VERSION']
+abc      = os.environ['ALEMBIC_VERSION']
+hdf5     = os.environ['HDF5_VERSION']
+prman    = app_environ('PRMAN_VERSION')
+maya     = app_environ('MAYA_VERSION')
+nuke     = app_environ('NUKE_VERSION')
+houdini  = app_environ('HOUDINI_VERSION')
+arnold   = app_environ('ARNOLD_VERSION')
 
 popPrint('Versions being used to build cortex...')
-
-#OPENEXR_LIB_SUFFIX = '-%s' % openexr
-#if packageToBuild == 'arnold':
-#    boost   ='1.52.0'
-#if packageToBuild == 'houdini':
-#    boost   ='1.51.0'
 
 
 # python
@@ -155,6 +168,8 @@ JPEG_LIB_PATH           = "%s/lib"     % os.environ['JPEG_TARGET_FOLDER']
 BOOST_INCLUDE_PATH      = "%s/include" % os.environ['BOOST_TARGET_FOLDER']
 BOOST_LIB_PATH          = "%s/lib/python%s/"  % (os.environ['BOOST_TARGET_FOLDER'], PYTHON_MAJOR_VERSION)
 BOOST_LIB_SUFFIX        = ""
+if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the last version that uses -mt as suffix.
+    BOOST_LIB_SUFFIX        = "-mt"
 
 TBB_INCLUDE_PATH        = "%s/include" % os.environ['TBB_TARGET_FOLDER']
 TBB_LIB_PATH 	        = "%s/lib"     % os.environ['TBB_TARGET_FOLDER']
@@ -168,14 +183,16 @@ ILMBASE_LIB_PATH        = "%s/lib"     % os.environ['ILMBASE_TARGET_FOLDER']
 FREETYPE_INCLUDE_PATH   = "%s/include/freetype/" % os.environ['FREETYPE_TARGET_FOLDER']
 FREETYPE_LIB_PATH 	    = "%s/lib"     % os.environ['FREETYPE_TARGET_FOLDER']
 
-ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
-ALEMBIC_LIB_PATH        = "%s/lib"     % os.environ['ALEMBIC_TARGET_FOLDER']
-ALEMBIC_LIB_SUFFIX      = ''
-
 HDF5_INCLUDE_PATH       = "%s/include" % os.environ['HDF5_TARGET_FOLDER']
 HDF5_LIB_PATH           = "%s/lib"     % os.environ['HDF5_TARGET_FOLDER']
-
 HDF5_LIB_SUFFIX         = ''
+
+if 'installAlembic' in sys.argv:
+    ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
+    ALEMBIC_LIB_PATH        = "%s/lib/python%s" % ( os.environ['ALEMBIC_TARGET_FOLDER'], PYTHON_MAJOR_VERSION)
+    ALEMBIC_LIB_SUFFIX      = ''
+
+
 
 # app paths
 # =============================================================================================================================================================
@@ -197,13 +214,33 @@ installRootNuke   = "/nuke/%s" % nuke
 installRootPrman  = "/%s/%s" % (prmanName, prman)
 installRootArnold = "/arnold/%s" % arnold
 
+extraInstallPath  = '/boost%s' % os.environ['BOOST_VERSION']
+
 # install prefixes with per package version numbers!
 # =============================================================================================================================================================
 INSTALL_PREFIX                  = os.environ['TARGET_FOLDER']
 
-INSTALL_LIB_NAME                = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRoot
-INSTALL_PYTHONLIB_NAME          = "$INSTALL_PREFIX%s/lib/python%s/$IECORE_NAME" % (installRoot, PYTHON_MAJOR_VERSION)
-INSTALL_PYTHON_DIR              = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRoot, PYTHON_MAJOR_VERSION)
+
+if 'installHoudini' in sys.argv:
+    # if we're installing houdini, make installPrefix be the houdini folder+version
+    # so we can build the whole IECore* libraries with the houdini dependency!
+    INSTALL_PREFIX                  = os.environ['TARGET_FOLDER'] + '/houdini/%s' % houdini
+    INSTALL_HOUDINILIB_NAME         = "$INSTALL_PREFIX/lib/$IECORE_NAME"
+    INSTALL_HOUDINIOTL_DIR          = "$INSTALL_PREFIX/otls/"
+    INSTALL_HOUDINIICON_DIR         = "$INSTALL_PREFIX/icons"
+    INSTALL_HOUDINITOOLBAR_DIR      = "$INSTALL_PREFIX/toolbar"
+    INSTALL_HOUDINIPLUGIN_NAME      = "$INSTALL_PREFIX/dso/$IECORE_NAME"
+    INSTALL_HOUDINIPYTHON_DIR       = "$INSTALL_PREFIX/lib/python%s/site-packages" % (PYTHON_MAJOR_VERSION)
+
+    INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX/lib/$IECORE_NAME"
+    INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX/dso/mantra/$IECORE_NAME"
+    INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX/dso/"
+    extraInstallPath                = ""
+
+
+INSTALL_LIB_NAME                = "$INSTALL_PREFIX%s/lib%s/$IECORE_NAME" % (installRoot, extraInstallPath)
+INSTALL_PYTHONLIB_NAME          = "$INSTALL_PREFIX%s/lib%s/python%s/$IECORE_NAME" % (installRoot, extraInstallPath, PYTHON_MAJOR_VERSION)
+INSTALL_PYTHON_DIR              = "$INSTALL_PREFIX%s/lib%s/python%s/site-packages" % (installRoot, extraInstallPath, PYTHON_MAJOR_VERSION)
 
 INSTALL_NUKELIB_NAME            = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootNuke
 INSTALL_NUKEPLUGIN_NAME         = "$INSTALL_PREFIX%s/plugins/$IECORE_NAME" % installRootNuke
@@ -213,28 +250,22 @@ INSTALL_MAYALIB_NAME            = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % install
 INSTALL_MAYAICON_DIR            = "$INSTALL_PREFIX%s/icons" % installRootMaya
 INSTALL_MAYAPLUGIN_NAME         = "$INSTALL_PREFIX%s/plugins/$IECORE_NAME" % installRootMaya
 INSTALL_MEL_DIR                 = "$INSTALL_PREFIX%s/mel/$IECORE_NAME" % installRootMaya
+INSTALL_MAYAPYTHON_DIR          = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootMaya, PYTHON_MAJOR_VERSION)
 
 INSTALL_RMANLIB_NAME            = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootPrman
 INSTALL_RMANPROCEDURAL_NAME     = "$INSTALL_PREFIX%s/procedurals/$IECORE_NAME" % installRootPrman
 INSTALL_RMANDISPLAY_NAME        = "$INSTALL_PREFIX%s/displays/$IECORE_NAME" % installRootPrman
 INSTALL_RSL_HEADER_DIR          = "$INSTALL_PREFIX%s/rsl" % installRootPrman
+INSTALL_RMANPYTHON_DIR          = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootPrman, PYTHON_MAJOR_VERSION)
 
 INSTALL_ARNOLDLIB_NAME          = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootArnold
 INSTALL_ARNOLDPROCEDURAL_NAME   = "$INSTALL_PREFIX%s/procedurals/$IECORE_NAME" % installRootArnold
 INSTALL_ARNOLDOUTPUTDRIVER_NAME = "$INSTALL_PREFIX%s/displays/$IECORE_NAME" % installRootArnold
+INSTALL_ARNOLDPYTHON_DIR        = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootArnold, PYTHON_MAJOR_VERSION)
 INSTALL_MTOAEXTENSION_NAME      = "$INSTALL_PREFIX%s/mtoaExtensions/%s/$IECORE_NAME" % (installRootArnold, maya)
 
-INSTALL_HOUDINILIB_NAME         = "$INSTALL_PREFIX/houdini/%s/lib/$IECORE_NAME" % houdini
-INSTALL_HOUDINIOTL_DIR          = "$INSTALL_PREFIX/houdini/%s/otls/" % houdini
-INSTALL_HOUDINIICON_DIR         = "$INSTALL_PREFIX/houdini/%s/icons" % houdini
-INSTALL_HOUDINITOOLBAR_DIR      = "$INSTALL_PREFIX/houdini/%s/toolbar" % houdini
-INSTALL_HOUDINIPLUGIN_NAME      = "$INSTALL_PREFIX/houdini/%s/dso/$IECORE_NAME" % houdini
-
-INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX/houdini/%s/lib/$IECORE_NAME" % houdini
-INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX/houdini/%s/dso/mantra/$IECORE_NAME" % houdini
-INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX/houdini/%s/dso/" % houdini
-
-INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/$IECORE_NAME" % abc
+INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/lib/$IECORE_NAME" % abc
+INSTALL_ALEMBICPYTHON_DIR       = "$INSTALL_PREFIX/alembic/%s/lib/python%s/site-packages" % (abc, PYTHON_MAJOR_VERSION)
 
 # build flags
 # =============================================================================================================================================================
@@ -246,31 +277,88 @@ INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/$IECORE_NAME" % ab
 #     if '-shared' in l:
 #         os.environ['HOUDINI_LINK_FLAGS'] = l.split('test.o')[-1].split('-o')[0]
 
-os.environ['HOUDINI_CXX_FLAGS']  = [ l for l in os.popen('hcustom -c').readlines() if '-DVERSION' in l ][0].replace('pipeLog: ','').replace('-std=c++0x','').strip()
-os.environ['HOUDINI_LINK_FLAGS'] = [ l for l in os.popen('hcustom -m').readlines() if '-L' in l ][0].replace('pipeLog: ','').strip()
+LIBPATH = []
+if houdini != '0.0.0':
+    # INSTALL_LIB_NAME                = "$INSTALL_PREFIX%s/houdini/%s/lib/$IECORE_NAME" % (installRoot, houdini)
+    # INSTALL_PYTHONLIB_NAME          = "$INSTALL_PREFIX%s/houdini/%s/lib/python%s/$IECORE_NAME" % (installRoot, houdini, PYTHON_MAJOR_VERSION)
+    # INSTALL_PYTHON_DIR              = "$INSTALL_PREFIX%s/houdini/%s/lib/python%s/site-packages" % (installRoot, houdini, PYTHON_MAJOR_VERSION)
 
-os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
-os.environ['HOUDINI_LINK_FLAGS'] += ' '.join([
-    '-Wl,-rpath,%s/dsolib' % HOUDINI_ROOT,
-    '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
-])
-HOUDINI_CXX_FLAGS = os.environ['HOUDINI_CXX_FLAGS']
-HOUDINI_LINK_FLAGS = os.environ['HOUDINI_LINK_FLAGS']
 
-LINKFLAGS = [
-    '-L%s' % FREETYPE_LIB_PATH, # maya 2016.5 now has libfreetype in its lib folder, so we do this here to avoid using mayas!
-    # '-Wl,-rpath,%s' % BOOST_LIB_PATH,
-    # '-Wl,-rpath,%s' % TBB_LIB_PATH,
+    # BOOST_INCLUDE_PATH      = "%s/toolkit/include/boost/" % os.environ['HOUDINI_ROOT']
+    # BOOST_LIB_PATH          = "%s/lib/python%s/"  % (os.environ['BOOST_TARGET_FOLDER'], PYTHON_MAJOR_VERSION)
+    # BOOST_LIB_SUFFIX        = ""
+    # if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the last version that uses -mt as suffix.
+    #     BOOST_LIB_SUFFIX        = "-mt"
+
+
+    os.environ['HOUDINI_CXX_FLAGS']  = [ l for l in os.popen('hcustom -c').readlines() if '-DVERSION' in l ][0].replace('pipeLog: ','').replace('-std=c++0x','').strip()
+    os.environ['HOUDINI_LINK_FLAGS'] = [ l for l in os.popen('hcustom -m').readlines() if '-L' in l ][0].replace('pipeLog: ','').strip()
+
+    if 'GCC_VERSION' in os.environ:
+        if os.environ['GCC_VERSION'] == '4.1.2':
+            os.environ['HOUDINI_CXX_FLAGS'] += " -isystem %s/lib/gcc/x86_64-pc-linux-gnu/%s/include/c++/tr1/" % (os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION'])
+            os.environ['HOUDINI_CXX_FLAGS'] = os.environ['HOUDINI_CXX_FLAGS'].replace('-Wno-unused-local-typedefs','')
+        elif os.environ['GCC_VERSION'] == '4.8.5':
+            os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++11 -fexceptions "
+
+    os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
+    os.environ['HOUDINI_LINK_FLAGS'] += ' '+' '.join([
+        '-Wl,-rpath,%s/dsolib' % HOUDINI_ROOT,
+        '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
+    ])
+
+    if boost == '1.51.0':
+        os.environ['HOUDINI_CXX_FLAGS'] += " -D__GLIBC_HAVE_LONG_LONG"
+
+
+    HOUDINI_CXX_FLAGS = os.environ['HOUDINI_CXX_FLAGS']
+    HOUDINI_LINK_FLAGS = os.environ['HOUDINI_LINK_FLAGS']
+
+    if 'GCC_VERSION' in os.environ:
+        HOUDINI_LINK_FLAGS = " ".join([
+            os.environ['HOUDINI_LINK_FLAGS'],
+            "-Wl,-rpath,%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
+            "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
+        ])
+
+
+if 'GCC_VERSION' in os.environ:
+    PYTHON_LINK_FLAGS += ' '+' '.join([
+        "-Wl,-rpath,%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
+        "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
+    #     '-Wl,-rpath /lib64',
+    #     '-Wl,-rpath /usr/lib64/',
+    #     # '-Wl,-rpath %s/dsolib' % HOUDINI_ROOT,
+    #     # '-Wl,-rpath %s/python/lib/' % HOUDINI_ROOT,
+    ])
+
+    # LIBPATH is default to /usr/lib, so we make it look for the current GCC being used to build.
+    LIBPATH = [
+        "%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
+        "%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
+    ]
+
+    LINKFLAGS = [
+        "-Wl,-rpath,%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
+        "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
+    ]
+
+LIBPATH += [
+    "%s/lib/" % os.environ['ICU_TARGET_FOLDER']
+]
+LINKFLAGS += [
+    '-L%s' % FREETYPE_LIB_PATH, # we do this or else cortex will use maya's!!!
+    '-L%s' % TBB_LIB_PATH,      # we do this or else cortex will use maya's!!!
+    "-Wl,-rpath,%s/lib/"  % os.environ['ICU_TARGET_FOLDER'],
+    '-Wl,-rpath,%s' % BOOST_LIB_PATH,
     # '-Wl,-rpath,%s' % PYTHON_LIB_PATH,
-    # '-Wl,-rpath,%s' % FREETYPE_LIB_PATH,
     # '-Wl,-rpath,%s' % PNG_LIB_PATH,
-    # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/gcc/lib64"  % GCC,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/zlib/1.2.3/lib/"  % GCC,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/jpeg/6b/lib/"  % GCC,
     # '-Wl,-rpath,%s' % os.path.dirname(INSTALL_LIB_NAME),
     # '-Wl,-rpath,%s' % os.path.dirname(INSTALL_PYTHONLIB_NAME),
-    # '-Wl,-rpath,%s' % OPENEXR_LIB_PATH,
-    # '-Wl,-rpath,%s' % ILMBASE_LIB_PATH,
+    '-Wl,-rpath,%s' % OPENEXR_LIB_PATH,
+    '-Wl,-rpath,%s' % ILMBASE_LIB_PATH,
     # '-Wl,-rpath,%s' % GLEW_LIB_PATH,
     # '-Wl,-rpath,%s' % TIFF_LIB_PATH,
     # '-Wl,-rpath,%s/lib' % RMAN_ROOT, # IECoreMaya links against libprman, so we can't make its path static! :(
@@ -278,7 +366,6 @@ LINKFLAGS = [
     # '-Wl,-rpath,/lib64',
     # '-Wl,-rpath,/usr/lib64',
 ]
-
 #LINKFLAGS.append('-Wl,-rpath,%s' % os.path.dirname(INSTALL_NUKELIB_NAME))
 #LINKFLAGS.append('-Wl,-rpath %s' % NUKE_ROOT)
 #LINKFLAGS.append('-Wl,-rpath,%s' % os.path.dirname(INSTALL_RMANLIB_NAME))
@@ -287,31 +374,32 @@ LINKFLAGS = [
 #LINKFLAGS.append('-Wl,-rpath,%s' % os.path.dirname(INSTALL_MAYALIB_NAME))
 #LINKFLAGS.append('-Wl,-rpath %s/lib' % MAYA_ROOT)
 
+
+LINKFLAGS.append("-L%s" % os.path.dirname(INSTALL_LIB_NAME) )
+LINKFLAGS.append("-L%s" % os.path.dirname(INSTALL_PYTHONLIB_NAME) )
 LINKFLAGS.append('-L%s' % NUKE_ROOT)
 LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_NUKELIB_NAME))
 LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_RMANLIB_NAME))
 LINKFLAGS.append('-L%s/lib' % MAYA_ROOT)
 LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_MAYALIB_NAME))
 LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_HOUDINILIB_NAME))
-# LINKFLAGS.append('-L%s/bin' % ARNOLD_ROOT)
-# LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_ARNOLDLIB_NAME))
+LINKFLAGS.append('-L%s/bin' % ARNOLD_ROOT)
+LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_ARNOLDLIB_NAME))
+LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_ALEMBICLIB_NAME))
 
-
-PYTHON_LINK_FLAGS += ' '+' '.join([
-#     '-Wl,-rpath /lib64',
-#     '-Wl,-rpath /usr/lib64/',
-#     # '-Wl,-rpath %s/dsolib' % HOUDINI_ROOT,
-#     # '-Wl,-rpath %s/python/lib/' % HOUDINI_ROOT,
-])
-
-CC = os.environ['CC']
-CPP = os.environ['CPP']
-CXX = os.environ['CXX']
-CXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-DAtUInt=AtUInt32']
-TESTCXXFLAGS = ['-pipe', '-Wall', '-O0']
-PYTHONCXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive']
+# CC = os.environ['CC']
+# CPP = os.environ['CPP']
+# CXX = os.environ['CXX']
+CXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-DAtUInt=AtUInt32']  + os.environ['CXXFLAGS'].split(' ')
+if boost == '1.51.0':
+    CXXFLAGS += ["-D__GLIBC_HAVE_LONG_LONG"]
+TESTCXXFLAGS = ['-pipe', '-Wall', '-O0'] + os.environ['CXXFLAGS'].split(' ')
+PYTHONCXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive'] + os.environ['CXXFLAGS'].split(' ')
 
 os.environ['LD_LIBRARY_PATH'] = '%s:%s' % (BOOST_LIB_PATH, os.environ['LD_LIBRARY_PATH'])
+
+
+os.environ['LIBRARY_PATH'] += " /usr/lib/gcc/x86_64-pc-linux-gnu/6.2.1/"
 
 popPrint('All Cortex Paths...')
 # =============================================================================================================================================================
@@ -349,3 +437,5 @@ os.system( 'ln -s cortexPython%s %s/bin/cpython ' % (PYTHON_MAJOR_VERSION,INSTAL
 
 TEST_LIBPATH='./lib'
 DOXYGEN=os.popen('which doxygen').readlines()[0].strip()
+#
+# BUILD_CACHEDIR = "/tmp/"
