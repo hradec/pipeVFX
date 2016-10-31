@@ -129,15 +129,15 @@ class all: # noqa
                 #    '4.8.5',
                 #    'bfe56e74d31d25009c8fb55fd3ca7e01'
                 # ),(
-                   'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
-                   'gcc-4.1.2.tar.gz',
-                   '4.1.2',
-                   'dd2a7f4dcd33808d344949fcec87aa86'
-                ),(
                    'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
                    'gcc-4.8.3.tar.gz',
                    '4.8.3',
                    'bfe56e74d31d25009c8fb55fd3ca7e01'
+                ),(
+                   'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                   'gcc-4.1.2.tar.gz',
+                   '4.1.2',
+                   'dd2a7f4dcd33808d344949fcec87aa86'
                 )],
                 depend = [ mpfr, mpc, gmp ],
         )
@@ -272,6 +272,11 @@ class all: # noqa
                 '4.4.r20160526oss',
                 '6309541504a819dabe352130f27e57d5',
                 # { gcc : '4.1.2' }
+            ),(
+                'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb43_20150611oss_src.tgz',
+                'tbb43_20150611oss.tar.gz',
+                '4.3.6',
+                'bb144ec868c53244ea6be11921d86f03',
             )],
         )
         self.tbb = tbb

@@ -31,13 +31,14 @@ print 'build.installRoot() =', build.installRoot()
 pkgs = build.pkgs.all(ARGUMENTS) # noqa
 
 # cortex versions to build
+boostVersion = "1.51.0"
 download = [
     [
         'https://github.com/ImageEngine/cortex/archive/9.13.2.tar.gz',
         'cortex-9.13.2.tar.gz',
         '9.13.2',
         'a9f5ac8f19958a8d636d7706a5ca6be0',
-        {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+        {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
     ]
 ]
 
@@ -129,20 +130,24 @@ class cortexApps:
 cortexApps(download)
 
 # build gaffer
-gaffer = build.gaffer(
-    ARGUMENTS, # noqa
-    'gaffer',
-    targetSuffix = "",
-    download = [
-        [
-            'https://github.com/ImageEngine/gaffer/archive/0.28.3.0.tar.gz',
-            'gaffer-0.28.3.0.tar.gz',
-            '0.28.3.0',
-            'd20bc719696857cc19b117e538c16cc8',
-            {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
-        ]
-    ],
-    baseLibs = [pkgs.python],
-    depend =  depend + [ cortex['core.boost.%s' % '1.51.0'], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm ],
-    sconsInstall = "install"
-)
+gaffer = {}
+for prman in pv[:2]:
+    sufix = 'prman.'+ prman
+    gaffer = build.gaffer(
+        ARGUMENTS, # noqa
+        'gaffer',
+        targetSuffix = "",
+        download = [
+            [
+                'https://github.com/ImageEngine/gaffer/archive/0.28.3.0.tar.gz',
+                'gaffer-0.28.3.0.tar.gz',
+                '0.28.3.0',
+                'd20bc719696857cc19b117e538c16cc8',
+                {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+            ]
+        ],
+        baseLibs = [pkgs.python],
+        depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm ],
+        apps = ( 'prman', prman ),
+        sconsInstall = "install"
+    )

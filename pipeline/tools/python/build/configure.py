@@ -163,11 +163,11 @@ class gccBuild(configure):
             each = os.path.basename(each)
             if 'linux-gnu' not in each:
                 if versionMajor == 4.1:
-                    ret += os.popen( "ln -s %s %s/bin/%s" % (each, targetFolder, each.split('-')[0]) ).readlines()
+                    ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
                 if versionMajor == 4.8:
-                    ret += os.popen( "ln -s %s %s/bin/%s" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
+                    ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
                 else:
-                    ret += os.popen( "ln -s %s %s/bin/%s" % (each, targetFolder, each.split('-')[0]) ).readlines()
+                    ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
 
             # we add a couple of wrappers to ar and ranlib, so we don't have to build then.
             # the wrapper make sure they can load the correct libstdc++ from system
@@ -486,6 +486,8 @@ class gaffer(cortex):
     # disable Appleseed build since we don't have it building yet!
     sed={'0.0.0' : {
         'SConstruct' : [
-            ('if not haveRequiredOptions ', 'if not haveRequiredOptions or "applesed" in libraryName.lower() ')
+            ('if not haveRequiredOptions ', 'if not haveRequiredOptions or "applesed" in libraryName.lower() '),
+            ('"GafferAppleseed" : {',"''' "),
+            ('"GafferAppleseedUITest',"''' #")
         ]
     }}

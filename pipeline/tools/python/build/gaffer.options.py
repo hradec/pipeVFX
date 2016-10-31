@@ -46,9 +46,9 @@ llvm   = os.environ['LLVM_VERSION']
 osl    = os.environ['OSL_VERSION']
 
 
-INSTALL_DIR = os.environ['TARGET_FOLDER']
-BUILD_DIR=os.getcwd()+'/build/gaffer-${GAFFER_MAJOR_VERSION}.${GAFFER_MINOR_VERSION}.${GAFFER_PATCH_VERSION}-${GAFFER_PLATFORM}-python'+'.'.join(python.split('.')[:2])
-
+# INSTALL_DIR = os.environ['TARGET_FOLDER']
+BUILD_DIR='/tmp/build/gaffer-${GAFFER_MAJOR_VERSION}.${GAFFER_MINOR_VERSION}.${GAFFER_PATCH_VERSION}-${GAFFER_PLATFORM}-python'+'.'.join(python.split('.')[:2])
+BUILD_DIR=os.environ['TARGET_FOLDER']
 
 LOCATE_DEPENDENCY_CPPPATH=[]
 LOCATE_DEPENDENCY_LIBPATH=[]
@@ -83,6 +83,9 @@ LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['GLEW_TAR
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['FREEGLUT_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['FREEGLUT_TARGET_FOLDER'] ) )
+
+LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['JPEG_TARGET_FOLDER'] ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['JPEG_TARGET_FOLDER'] ) )
 
 #LOCATE_DEPENDENCY_CPPPATH.append( '%s/arnold/%s/include'  % ( libs, arnold ) )
 #LOCATE_DEPENDENCY_LIBPATH.append( '%s/arnold/%s/lib'      % ( libs, arnold ) )

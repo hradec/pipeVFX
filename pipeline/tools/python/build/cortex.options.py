@@ -60,6 +60,7 @@ def app_environ(name):
 prmanName       = 'prman'
 
 # version setup
+jpeg      = os.environ['LIBPNG_VERSION']
 png      = os.environ['LIBPNG_VERSION']
 freetype = os.environ['FREETYPE_VERSION']
 python   = os.environ['PYTHON_VERSION']
