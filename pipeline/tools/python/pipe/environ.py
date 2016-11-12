@@ -66,7 +66,9 @@ class environ(dict):
         if not type(v)==list:
             v = [v]
         for each in v:
-            if each not in dict.__getitem__(self,key):
+            if each and each not in dict.__getitem__(self,key):
+                # only add non-paths or paths that exists!
+                # if each[0]!='/' or '$' in each or os.path.exists(each):
                 dict.__getitem__(self,key).append(each)
 
     def insert(self, key, index, v):

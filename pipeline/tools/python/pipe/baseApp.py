@@ -56,8 +56,9 @@ class cache:
 
     @staticmethod
     def makedirs(path):
-        if not os.path.exists( path ):
-            os.makedirs( path )
+        if path:
+            if not os.path.exists( path ):
+                os.makedirs( path )
 
     @staticmethod
     def copy(pathFrom, pathTo, symlinks=True ):
@@ -329,7 +330,10 @@ class version:
             _version = appsDB().latest
         else:
             for each in args:
-                v = appsDB()[each]['versions']
+                try:
+                    v = appsDB()[each]['versions']
+                except:
+                    v = [args[each]]
                 if args[each] not in v:
                     try:
                         vv = [ x for x in v if '.'.join(x.split('.')[:2]) == '.'.join(args[each].split('.')[:2]) ]
@@ -393,7 +397,10 @@ class versionLib:
             _versionLib = libsDB().latest
         else:
             for each in args:
-                v = libsDB()[each]['versions']
+                try:
+                    v = libsDB()[each]['versions']
+                except:
+                    v = [args[each]]
                 if args[each] not in v:
                     try:
                         vv = [ x for x in v if '.'.join(x.split('.')[:2]) == '.'.join(args[each].split('.')[:2]) ]
@@ -405,6 +412,7 @@ class versionLib:
                         v = vv
                     versions = versionSort(v)
                     args[each] = versions[0]
+
                 _versionLib[each] = args[each]
         os.environ['__DB_LATEST_LIBS'] = str(_versionLib)
 

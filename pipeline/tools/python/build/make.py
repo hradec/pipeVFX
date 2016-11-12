@@ -42,7 +42,6 @@ class cmake(make):
         'cmake $SOURCE_FOLDER && '
         'make -j $DCORES VERBOSE=1 && make install'
     ]
-
     flags = [
             '-Wno-dev',
             '-DUSE_SIMD=0',

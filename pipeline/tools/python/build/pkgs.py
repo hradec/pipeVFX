@@ -107,7 +107,7 @@ class all: # noqa
                'mpfr',
                download=[
                  (
-                   'http://www.mpfr.org/mpfr-current/mpfr-3.1.4.tar.gz',
+                   'https://gforge.inria.fr/frs/download.php/file/35627/mpfr-3.1.4.tar.gz',
                    'mpfr-3.1.4.tar.gz',
                    '3.1.4',
                    '482ab3c120ffc959f631b4ba9ec59a46'
@@ -132,7 +132,8 @@ class all: # noqa
                    'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
                    'gcc-4.8.3.tar.gz',
                    '4.8.3',
-                   'bfe56e74d31d25009c8fb55fd3ca7e01'
+                   'e2c60f5ef918be2db08df96c7d97d0c4'
+                #    'bfe56e74d31d25009c8fb55fd3ca7e01'
                 ),(
                    'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
                    'gcc-4.1.2.tar.gz',
@@ -204,10 +205,10 @@ class all: # noqa
                 '5.2.0',
                 'e39331f32ad14009b9ff49cc10c5e751'
             ),(
-                'ftp://ftp.cwru.edu/pub/bash/readline-7.0-rc1.tar.gz',
-                'readline-7.0-rc1.tar.gz',
-                '7.0.0rc1',
-                'c5ed4d0fd48ec6c940d6da375e3f1b50'
+                'https://ftp.gnu.org/gnu/readline/readline-7.0.tar.gz',
+                'readline-7.0.tar.gz',
+                '7.0.0',
+                '205b03a87fc83dab653b628c59b9fc91'
             )],
             cmd = [
                 './configure',
@@ -410,17 +411,17 @@ class all: # noqa
             ARGUMENTS,
             'tiff',
             download=[(
-                'ftp://ftp.remotesensing.org/pub/libtiff/old/tiff-3.8.2.tar.gz',
+                'http://download.osgeo.org/libtiff/old/tiff-3.8.2.tar.gz',
                 'tiff-3.8.2.tar.gz',
                 '3.8.2',
                 'fbb6f446ea4ed18955e2714934e5b698'
             ),(
-                'ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.3.tar.gz',
+                'http://download.osgeo.org/libtiff/tiff-4.0.3.tar.gz',
                 'tiff-4.0.3.tar.gz',
                 '4.0.3',
                 '051c1068e6a0627f461948c365290410',
             ),(
-                'ftp://ftp.remotesensing.org/pub/libtiff/tiff-4.0.6.tar.gz',
+                'http://download.osgeo.org/libtiff/tiff-4.0.6.tar.gz',
                 'tiff-4.0.6.tar.gz',
                 '4.0.6',
                 'd1d2e940dea0b5ad435f21f03d96dd72',
@@ -434,10 +435,10 @@ class all: # noqa
             ARGUMENTS,
             'libpng',
             download=[(
-                'http://downloads.sourceforge.net/project/libpng/libpng16/1.6.23/libpng-1.6.23.tar.gz',
+                'http://ftp.osuosl.org/pub/blfs/conglomeration/libpng/libpng-1.6.23.tar.xz',
                 'libpng-1.6.23.tar.gz',
                 '1.6.23',
-                'a49e4cc48d968c79def53d082809c9f2'
+                '9b320a05ed4db1f3f0865c8a951fd9aa'
             )],
         )
         build.allDepend.append(libpng)
@@ -795,7 +796,7 @@ class all: # noqa
                 { gcc : '4.1.2' }
             )],
             baseLibs = [python],
-            depend   = [yasm,boost,gcc],
+            depend   = [yasm,boost,gcc,cmake],
             flags    = build.cmake.flags+['-DOCIO_BUILD_APPS=0 ']
         )
         self.ocio = ocio
@@ -839,7 +840,7 @@ class all: # noqa
             #     'bcef05f5ff7f15ac580d9b3b4b6f690b',
             #     { gcc : '4.1.2' }
             )],
-            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu],
+            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake],
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
             flags = ['-DUSE_PYTHON=0','-DUSE_PTEX=0','-DUSE_OCIO=0']+build.cmake.flags,
         )
@@ -873,7 +874,7 @@ class all: # noqa
                 'llvm-3.5.2.src.tar.gz',
                 '3.5.2',
                 'f5a4dc595f7e8bd23397684d0906d014',
-                { clang: '3.5.2' }
+                { clang: '3.5.2', gcc : '4.8.3' }
             )],
             sed = {'3.5.0' : {
                 # fix 3.5.2 with gcc 5!!
@@ -881,7 +882,7 @@ class all: # noqa
                     ('IntrusiveRefCntPtr.IntrusiveRefCntPtr.X.','friend class IntrusiveRefCntPtr;\ntemplate <class X> \nIntrusiveRefCntPtr(IntrusiveRefCntPtr<X>'),
                 ],
             },},
-            depend=[python, clang],
+            depend=[python, clang, gcc],
             compiler = build.gcc.system,
             # now we use the $CLANG_SRC_FOLDER env var to create a symlink
             # of clang into tools/clang folder, so llvm will build clang as well for us!
@@ -1071,7 +1072,7 @@ class all: # noqa
         # if all build is done correctly, make install folder ready!
         SCons.Script.Alias( 'install',
             SCons.Script.Command(
-                target = os.path.join( devRoot.installRoot(ARGUMENTS), '.ready'),
+                target = os.path.join( devRoot.installRoot(ARGUMENTS), '.done'),
                 source = self.qt.installAll + self.osl.installAll + self.alembic.installAll + self.boost.installAll + self.ilmbase.installAll + self.openexr.installAll,
                 action = "touch $TARGET"
             )

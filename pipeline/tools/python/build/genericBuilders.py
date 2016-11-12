@@ -407,7 +407,7 @@ class generic:
 
                     self.depend[p].append(t)
                     self.installAll.append(t)
-                    self.env.Alias( 'install', t )
+                    self.env.Default(self.env.Alias( 'install', t ))
                     self.env.Alias( 'build-%s' % name, t )
 
 
@@ -743,11 +743,11 @@ class generic:
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
 
-                    if dependOn.name == 'gcc':
-                        gcc['gcc'] = 'gcc-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
-                        gcc['g++'] = 'g++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
-                        gcc['cpp'] = 'cpp-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
-                        gcc['c++'] = 'c++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
+                    # if dependOn.name == 'gcc':
+                    #     gcc['gcc'] = 'gcc-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
+                    #     gcc['g++'] = 'g++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
+                    #     gcc['cpp'] = 'cpp-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
+                    #     gcc['c++'] = 'c++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
 
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
@@ -958,7 +958,6 @@ class generic:
             f = open("%s.cmd" % target,'w')
             f.write('%s\n' % cmd)
             f.close()
-            os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
         else:
             print  '-'*tcols
             os.system( 'cat %s.err | source-highlight -f esc -s errors' % lastlog )

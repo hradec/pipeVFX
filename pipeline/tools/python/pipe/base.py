@@ -198,23 +198,30 @@ class roots:
 
 
 # hardcoded for now!!
+exec( ''.join( [ p for p in open( "%s/config/versions.py" % roots.tools() ).readlines() if 'os.environ[' in p ] ) )
 def getDistro(check=True):
     if platform == OSX:
         distro = 'gcc-llvm5.1'
     else:
         version = ['4.1.2']
         distro = 'gcc-%s' % version[-1]
-        try:
-            version.append( filter( lambda x: x.isdigit() or x=='.', os.popen('gcc --version').readlines()[0] ) )
-        except: pass
 
-        if check:
-            version.sort()
-            for v in version:
-                if os.path.exists("%s/.ready" % roots.libs(distro='gcc-%s' % v)):
-                    distro = 'gcc-%s' % v
-        else:
-            distro = 'gcc-%s' % version[-1]
+        # autodetect most up2date gcc version
+        # try:
+        #     version.append( filter( lambda x: x.isdigit() or x=='.', os.popen('gcc --version').readlines()[0] ) )
+        # except: pass
+        #
+        # if check:
+        #     version.sort()
+        #     for v in version:
+        #         if os.path.exists("%s/.ready" % roots.libs(distro='gcc-%s' % v)):
+        #             distro = 'gcc-%s' % v
+        # else:
+        #     distro = 'gcc-%s' % version[-1]
+
+        # we can specify our current gcc version in versions.py, globally or on an per job/user basis!!
+        if 'GCC_VERSION' in os.environ:
+            distro = os.environ['GCC_VERSION']
     return distro
 
 distro = getDistro()

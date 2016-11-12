@@ -152,11 +152,17 @@ class AssetParameter( CompoundParameter ):
         # set version and description to be the last one published
         if assetName:
             f = filter(lambda x: str(assetName) in x, self.published)
-            f.sort()
-            assetVersion = f[-1].split('/')[-1].replace(' (current)','').strip()
-            data = self.getAssetData(f[-1])
-            if data:
-                assetDesc  = "\n(desc versao: %s) - %s " % (assetVersion,data["assetDescription"]) 
+            if f:
+                f.sort()
+                assetVersion = f[-1].split('/')[-1].replace(' (current)','').strip()
+                data = self.getAssetData(f[-1])
+                if data:
+                    assetDesc  = "\n(desc versao: %s) - %s " % (assetVersion,data["assetDescription"]) 
+            else:
+                assetName = ""
+                assetVersion = "1.-1.0"
+                assetDesc  = ""
+                
 
             
         if IECore:
