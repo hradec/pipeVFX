@@ -30,124 +30,183 @@ print 'build.installRoot() =', build.installRoot()
 # to use boost, just add pkgs.boost as a dependency
 pkgs = build.pkgs.all(ARGUMENTS) # noqa
 
-# cortex versions to build
-boostVersion = "1.51.0"
-download = [
-    [
-        'https://github.com/ImageEngine/cortex/archive/9.13.2.tar.gz',
-        'cortex-9.13.2.tar.gz',
-        '9.13.2',
-        'a9f5ac8f19958a8d636d7706a5ca6be0',
-        {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
-    ]
-]
-
-# cortex dependency
-depend = [
-    pkgs.icu, pkgs.scons, pkgs.tbb,
-    pkgs.freeglut, pkgs.freetype, pkgs.libpng, pkgs.hdf5,
-    pkgs.tiff, pkgs.jpeg, pkgs.alembic, pkgs.openssl,
-    pkgs.ilmbase, pkgs.openexr
-]
 
 # get installed app versions using pipe
 import pipe
-nuke    = pipe.apps.nuke()
-maya    = pipe.apps.maya()
-prman   = pipe.apps.prman()
-houdini = pipe.apps.houdini()
 
-# grab version lists
-mv = build.pkgs.versionSort( maya.versionList() )
-pv = build.pkgs.versionSort( prman.versionList() )
-nv = build.pkgs.versionSort( nuke.versionList() )
-hv = build.pkgs.versionSort( houdini.versionList() )
+# we need libraries for pipe to work, so if we don't have then yet,
+# we cant build cortex now!
+canBuildCortexNow = False
+try:
+    pipe.apps.nuke()
+    canBuildCortexNow = True
+except:
+    print '''
 
-# disable arnold!
-pipe.version.set(arnold='0.0.0')
+    It seems we don't have libraries built yet, so we can't build app dependent pkgs yet! (ex: cortex,alembic)
+    Run scons install again after this build finishes to complete the build!
 
-cortex = {}
-# build one version of IECore, IECorePython and IECoreGL libraries for each boost version
-for bv in pkgs.boost.versions:
-    if bv in ['1.51.0','1.55.0','1.56.0']:
-        # build cortex core libraries only
-        sufix = "core.boost.%s" % bv
+    '''
+
+
+if canBuildCortexNow:
+    nuke    = pipe.apps.nuke()
+    maya    = pipe.apps.maya()
+    prman   = pipe.apps.prman()
+    houdini = pipe.apps.houdini()
+
+    # grab version lists
+    mv = build.pkgs.versionSort( maya.versionList() )
+    pv = build.pkgs.versionSort( prman.versionList() )
+    nv = build.pkgs.versionSort( nuke.versionList() )
+    hv = build.pkgs.versionSort( houdini.versionList() )
+
+    # disable arnold!
+    pipe.version.set(arnold='0.0.0')
+
+
+    # build alembic for each version of maya and prman, so we get the plugins!
+    alembic = []
+    for n in range(2):
+        pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
+        pipe.version.set( prman = pv[0] if len(pv)<=n else pv[n] )
+
+        alembic.append( build.alembic(
+            ARGUMENTS,
+            'alembic',
+            targetSuffix = "maya%sprman%s" % (pipe.version.get('maya'),pipe.version.get('prman')),
+            download=[(
+            #     'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
+            #     'alembic-1.6.1.tar.gz',
+            #     '1.6.1',
+            #     'e1f9f2cbe1899d3d55b58708b9307482',
+            #     {ilmbase: "2.2.0", openexr: "2.2.0"},
+            # ),(
+                'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
+                'alembic-1.5.8.tar.gz',
+                '1.5.8',
+                'a70ba5f2e80b47d346d15d797c28731a',
+                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.1.2'},
+            )],
+            baseLibs=[pkgs.python],
+            depend=[pkgs.hdf5,pkgs.python,pkgs.yasm,pkgs.boost],
+            apps = [
+                ( pipe.apps.maya, pipe.version.get('maya')),
+                ( pipe.apps.prman, pipe.version.get('prman')),
+            ]
+        ))
+    pkgs.alembic = alembic[-1]
+
+
+    # cortex versions to build
+    boostVersion = "1.51.0"
+    download = [
+        [
+            'https://github.com/ImageEngine/cortex/archive/9.13.2.tar.gz',
+            'cortex-9.13.2.tar.gz',
+            '9.13.2',
+            'a9f5ac8f19958a8d636d7706a5ca6be0',
+            {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+        ]
+    ]
+
+    # cortex dependency
+    depend = [
+        pkgs.icu, pkgs.scons, pkgs.tbb,
+        pkgs.freeglut, pkgs.freetype, pkgs.libpng, pkgs.hdf5,
+        pkgs.tiff, pkgs.jpeg, pkgs.alembic, pkgs.openssl,
+        pkgs.ilmbase, pkgs.openexr
+    ]
+
+    # build cortex
+    cortex = {}
+    # build one version of IECore, IECorePython and IECoreGL libraries for each boost version
+    for bv in pkgs.boost.versions:
+        if bv in ['1.51.0','1.55.0','1.56.0']:
+            # build cortex core libraries only
+            sufix = "core.boost.%s" % bv
+            cortex[sufix] = build.cortex(
+                ARGUMENTS, # noqa
+                'cortex',
+                targetSuffix = sufix,
+                download = build.cortex.pkg(download, pkgs.boost, bv),
+                baseLibs = [pkgs.python],
+                depend = depend,
+                sconsInstall = "installCore installGL"
+            )
+
+    # now build IECoreAlembic for all versions of alembic
+    for v in pkgs.alembic.versions:
+        sufix = "core.alembic.%s" % v
         cortex[sufix] = build.cortex(
             ARGUMENTS, # noqa
             'cortex',
             targetSuffix = sufix,
-            download = build.cortex.pkg(download, pkgs.boost, bv),
+            download = build.cortex.pkg(download, pkgs.alembic, v),
+            sed = build.cortex.noIECoreSED(),
             baseLibs = [pkgs.python],
             depend = depend,
-            sconsInstall = "installCore installGL"
+            sconsInstall = "installAlembic"
         )
 
-# now build IECoreAlembic for all versions of alembic
-for v in pkgs.alembic.versions:
-    sufix = "core.alembic.%s" % v
-    cortex[sufix] = build.cortex(
-        ARGUMENTS, # noqa
-        'cortex',
-        targetSuffix = sufix,
-        download = build.cortex.pkg(download, pkgs.alembic, v),
-        sed = build.cortex.noIECoreSED(),
-        baseLibs = [pkgs.python],
-        depend = depend,
-        sconsInstall = "installAlembic"
-    )
-
-class cortexApps:
-    ''' # this class stores data to build cortex for all the apps.'''
-    name, versions, baseLibs, install, download = (0,1,2,3,4)
-    def __init__(self, download):
-        # disable alembic from now on...
-        pkg = build.cortex.pkg
-        noAlembic = pkg(download, pkgs.alembic, None)
-        self.builds = [
-            # IECoreRI needs to be build first since IECoreMaya depends on it!
-            ('prman',   pv[:2], pkgs.python, 'installRI',   noAlembic),
-            ('maya',    mv    , None,        'installMaya', noAlembic),
-            ('nuke',    nv[:2], None,        'installNuke', noAlembic),
-            # we remove gcc for houdini so it will use the system gcc!
-            ('houdini', hv[:2], None,        'installHoudini installMantra', pkg(pkg(noAlembic, pkgs.gcc, '4.8.3'), pkgs.boost, '1.51.0') ),
-        ]
-
-        # use the data in buildList to build cortex for all apps
-        for app in self.builds:
-            for v in app[ self.versions ]:
-                sufix = app[ self.name ] + v
-                cortex[sufix] = build.cortex(
-                    ARGUMENTS, # noqa
-                    'cortex',
-                    targetSuffix = sufix,
-                    download = app[ self.download ],
-                    sed = build.cortex.noIECoreSED(),
-                    baseLibs = app[ self.baseLibs ],
-                    depend = depend+[pkgs.python],
-                    apps = ( app[ self.name ], v ),
-                    sconsInstall = app[ self.install ],
-                )
-cortexApps(download)
-
-# build gaffer
-gaffer = {}
-for prman in pv[:2]:
-    sufix = 'prman.'+ prman
-    gaffer = build.gaffer(
-        ARGUMENTS, # noqa
-        'gaffer',
-        targetSuffix = "",
-        download = [
-            [
-                'https://github.com/ImageEngine/gaffer/archive/0.28.3.0.tar.gz',
-                'gaffer-0.28.3.0.tar.gz',
-                '0.28.3.0',
-                'd20bc719696857cc19b117e538c16cc8',
-                {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+    class cortexApps:
+        ''' # this class stores data to build cortex for all the apps.'''
+        name, versions, baseLibs, install, download = (0,1,2,3,4)
+        def __init__(self, download):
+            # disable alembic from now on...
+            pkg = build.cortex.pkg
+            noAlembic = pkg(download, pkgs.alembic, None)
+            self.builds = [
+                # IECoreRI needs to be build first since IECoreMaya depends on it!
+                ('prman',   pv[:2], pkgs.python, 'installRI',   noAlembic),
+                ('maya',    mv    , None,        'installMaya', noAlembic),
+                ('nuke',    nv[:2], None,        'installNuke', noAlembic),
+                ('houdini', hv[:2], None,        'installHoudini installMantra', pkg(pkg(noAlembic, pkgs.gcc, '4.8.3'), pkgs.boost, '1.51.0') ),
             ]
-        ],
-        baseLibs = [pkgs.python],
-        depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm ],
-        apps = ( 'prman', prman ),
-        sconsInstall = "install"
-    )
+
+            # use the data in buildList to build cortex for all apps
+            for app in self.builds:
+                for v in app[ self.versions ]:
+                    sufix = app[ self.name ] + v
+                    cortex[sufix] = build.cortex(
+                        ARGUMENTS, # noqa
+                        'cortex',
+                        targetSuffix = sufix,
+                        download = app[ self.download ],
+                        sed = build.cortex.noIECoreSED(),
+                        baseLibs = app[ self.baseLibs ],
+                        depend = depend+[pkgs.python],
+                        apps = ( app[ self.name ], v ),
+                        sconsInstall = app[ self.install ],
+                    )
+    cortexApps(download)
+
+    # build gaffer
+    gaffer = {}
+    for prman in pv[:2]:
+        sufix = 'prman.'+ prman
+        gaffer = build.gaffer(
+            ARGUMENTS, # noqa
+            'gaffer',
+            targetSuffix = "",
+            download = [
+                [
+                #     'https://github.com/ImageEngine/gaffer/archive/0.28.3.0.tar.gz',
+                #     'gaffer-0.28.3.0.tar.gz',
+                #     '0.28.3.0',
+                #     'd20bc719696857cc19b117e538c16cc8',
+                #     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                # ],[
+                    'https://github.com/GafferHQ/gaffer/archive/0.30.0.0.tar.gz',
+                    'gaffer-0.30.0.0.tar.gz',
+                    '0.30.0.0',
+                    'c02822b86f17de8af08aaabf7e61e1a2',
+                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                ]
+
+            ],
+            baseLibs = [pkgs.python],
+            depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm ],
+            apps = ( 'prman', prman ),
+            sconsInstall = "install"
+        )

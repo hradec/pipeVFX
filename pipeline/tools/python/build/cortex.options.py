@@ -101,7 +101,7 @@ except:
 WITH_GL                 = 1
 WITH_MANTRA             = True
 WITH_MAYA_PLUGIN_LOADER = 1
-ENV_VARS_TO_IMPORT      = "PATH"
+ENV_VARS_TO_IMPORT      = "PATH PYTHONPATH"
 
 
 INSTALL_IECORE_OPS      = [
@@ -188,7 +188,7 @@ HDF5_INCLUDE_PATH       = "%s/include" % os.environ['HDF5_TARGET_FOLDER']
 HDF5_LIB_PATH           = "%s/lib"     % os.environ['HDF5_TARGET_FOLDER']
 HDF5_LIB_SUFFIX         = ''
 
-if 'installAlembic' in sys.argv:
+if 'ALEMBIC_TARGET_FOLDER' in os.environ:
     ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
     ALEMBIC_LIB_PATH        = "%s/lib/python%s" % ( os.environ['ALEMBIC_TARGET_FOLDER'], PYTHON_MAJOR_VERSION)
     ALEMBIC_LIB_SUFFIX      = ''
@@ -221,13 +221,11 @@ extraInstallPath  = '/boost%s' % os.environ['BOOST_VERSION']
 # =============================================================================================================================================================
 INSTALL_PREFIX                  = os.environ['TARGET_FOLDER']
 
-
-# if 'installHoudini' in sys.argv:
-if houdini != '0.0.0':
-    # if we're installing houdini, make installPrefix be the houdini folder+version
-    # so we can build the whole IECore* libraries with the houdini dependency!
-    INSTALL_PREFIX                  = os.environ['TARGET_FOLDER'] + '/houdini/%s' % houdini
-    extraInstallPath                = ""
+# if houdini != '0.0.0':
+#     # if we're installing houdini, make installPrefix be the houdini folder+version
+#     # so we can build the whole IECore* libraries with the houdini dependency!
+#     INSTALL_PREFIX                  = os.environ['TARGET_FOLDER'] + '/houdini/%s' % houdini
+#     extraInstallPath                = ""
 
 
 INSTALL_LIB_NAME                = "$INSTALL_PREFIX%s/lib%s/$IECORE_NAME" % (installRoot, extraInstallPath)
@@ -270,6 +268,8 @@ INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX/lib/$IECORE_NAME"
 INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX/dso/mantra/$IECORE_NAME"
 INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX/dso/"
 
+os.environ['PYTHONPATH'] = INSTALL_PYTHON_DIR
+
 # build flags
 # =============================================================================================================================================================
 # we use houdinis hcustom command to figure out the cxx/link flags needed for the current houdini version
@@ -308,6 +308,8 @@ if houdini != '0.0.0':
     os.environ['HOUDINI_LINK_FLAGS'] += ' '+' '.join([
         '-Wl,-rpath,%s/dsolib' % HOUDINI_ROOT,
         '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
+        '-Wl,-rpath,%s' % os.path.dirname(INSTALL_LIB_NAME),
+        '-Wl,-rpath,%s' % os.path.dirname(INSTALL_PYTHONLIB_NAME),
     ])
 
     if boost == '1.51.0':
@@ -358,8 +360,6 @@ LINKFLAGS += [
     # '-Wl,-rpath,%s' % PNG_LIB_PATH,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/zlib/1.2.3/lib/"  % GCC,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/jpeg/6b/lib/"  % GCC,
-    # '-Wl,-rpath,%s' % os.path.dirname(INSTALL_LIB_NAME),
-    # '-Wl,-rpath,%s' % os.path.dirname(INSTALL_PYTHONLIB_NAME),
     '-Wl,-rpath,%s' % OPENEXR_LIB_PATH,
     '-Wl,-rpath,%s' % ILMBASE_LIB_PATH,
     # '-Wl,-rpath,%s' % GLEW_LIB_PATH,

@@ -19,7 +19,7 @@
 # =================================================================================
 
 
-import build, devRoot, pipe
+import build, devRoot
 import SCons, os
 
 SCons.Script.SetOption('warn', 'no-all')
@@ -735,43 +735,6 @@ class all: # noqa
         self.hdf5 = hdf5
         # build.allDepend.append(hdf5)
 
-        # build alembic for each version of maya and prman!
-        maya = pipe.apps.maya()
-        prman = pipe.apps.prman()
-        mv = versionSort( maya.versionList() )
-        pv = versionSort( prman.versionList() )
-        pipe.version.set(python='1.0.0')
-        alembic = []
-        for n in range(2):
-            pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
-            pipe.version.set( prman = pv[0] if len(pv)<=n else pv[n] )
-
-            alembic.append( build.alembic(
-                ARGUMENTS,
-                'alembic',
-                targetSuffix = "maya%sprman%s" % (pipe.version.get('maya'),pipe.version.get('prman')),
-                download=[(
-                #     'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
-                #     'alembic-1.6.1.tar.gz',
-                #     '1.6.1',
-                #     'e1f9f2cbe1899d3d55b58708b9307482',
-                #     {ilmbase: "2.2.0", openexr: "2.2.0"},
-                # ),(
-                    'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
-                    'alembic-1.5.8.tar.gz',
-                    '1.5.8',
-                    'a70ba5f2e80b47d346d15d797c28731a',
-                    {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.1.2'},
-                )],
-                baseLibs=[python],
-                depend=[hdf5,python,yasm,boost],
-                apps = [
-                    ( pipe.apps.maya, pipe.version.get('maya')),
-                    ( pipe.apps.prman, pipe.version.get('prman')),
-                ]
-            ))
-        self.alembic = alembic[-1]
-
         ocio = build.cmake(
             ARGUMENTS,
             'ocio',
@@ -849,23 +812,24 @@ class all: # noqa
 
         # use the download action as we only need this package to build llvm!
         # download action will avoid installing this package!
-        clang = build.download(
-            ARGUMENTS,
-            'clang',
-            download=[(
-                'http://llvm.org/releases/3.5.2/cfe-3.5.2.src.tar.xz',
-                'cfe-3.5.2.src.tar.gz',
-                '3.5.2',
-                'aba5d02251bf7845a2013d6bb0702ac7',
-            ),(
-                'http://llvm.org/releases/3.4.2/cfe-3.4.2.src.tar.gz',
-                'cfe-3.4.2.src.tar.gz',
-                '3.4.2',
-                '87945973b7c73038871c5f849a818588',
-            )],
-        )
-        self.clang = clang
+        # clang = build.download(
+        #     ARGUMENTS,
+        #     'clang',
+        #     download=[(
+        #         'http://llvm.org/releases/3.5.2/cfe-3.5.2.src.tar.xz',
+        #         'cfe-3.5.2.src.tar.gz',
+        #         '3.5.2',
+        #         'aba5d02251bf7845a2013d6bb0702ac7',
+        #     ),(
+        #         'http://llvm.org/releases/3.4.2/cfe-3.4.2.src.tar.gz',
+        #         'cfe-3.4.2.src.tar.gz',
+        #         '3.4.2',
+        #         '87945973b7c73038871c5f849a818588',
+        #     )],
+        # )
+        # self.clang = clang
 
+        clang_url = 'http://llvm.org/releases/3.5.2/cfe-3.5.2.src.tar.xz'
         llvm = build.configure(
             ARGUMENTS,
             'llvm',
@@ -874,7 +838,7 @@ class all: # noqa
                 'llvm-3.5.2.src.tar.gz',
                 '3.5.2',
                 'f5a4dc595f7e8bd23397684d0906d014',
-                { clang: '3.5.2', gcc : '4.8.3' }
+                { gcc : '4.8.3' }
             )],
             sed = {'3.5.0' : {
                 # fix 3.5.2 with gcc 5!!
@@ -882,12 +846,16 @@ class all: # noqa
                     ('IntrusiveRefCntPtr.IntrusiveRefCntPtr.X.','friend class IntrusiveRefCntPtr;\ntemplate <class X> \nIntrusiveRefCntPtr(IntrusiveRefCntPtr<X>'),
                 ],
             },},
-            depend=[python, clang, gcc],
+            depend=[python, gcc],
             compiler = build.gcc.system,
             # now we use the $CLANG_SRC_FOLDER env var to create a symlink
             # of clang into tools/clang folder, so llvm will build clang as well for us!
             cmd = [
-                'ln -s $CLANG_SRC_FOLDER ./tools/clang',
+                # 'ln -s $CLANG_SRC_FOLDER ./tools/clang',
+                'cd ./tools',
+                "curl '%s' | tar xJf - " % clang_url,
+                'ln -s cfe-3.5.2.src ./clang',
+                'cd ..',
                 'mkdir -p build && cd build',
                 ' && '.join(build.configure.cmd).replace('./configure','../configure --disable-docs'),
                 #'cmake .. && make -j $DCORES  install',
@@ -927,7 +895,7 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.7.3.tar.gz',
                 '1.7.3',
                 '42215e190d565c862043c0b02eca089b',
-                {oiio: "1.6.15", llvm : "3.5.2"},
+                {oiio: "1.6.15", llvm : "3.5.2", gcc: "4.8.3"},
             # ),(
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.8.0dev.tar.gz',
             #     'OpenShadingLanguage-Release-1.8.0dev.tar.gz',
@@ -951,7 +919,7 @@ class all: # noqa
                 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags))+' ENABLERTTI=1" '
                 'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
-                'BOOST_HOME=$BOOST_TARGET_FOLDER '
+                'BOOST_ROOT=$BOOST_TARGET_FOLDER '
                 'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
                 'PARTIO_HOME="" '
                 'STOP_ON_WARNING=0 '
@@ -1073,7 +1041,7 @@ class all: # noqa
         SCons.Script.Alias( 'install',
             SCons.Script.Command(
                 target = os.path.join( devRoot.installRoot(ARGUMENTS), '.done'),
-                source = self.qt.installAll + self.osl.installAll + self.alembic.installAll + self.boost.installAll + self.ilmbase.installAll + self.openexr.installAll,
+                source = self.qt.installAll + self.osl.installAll + self.boost.installAll + self.ilmbase.installAll + self.openexr.installAll,
                 action = "touch $TARGET"
             )
         )

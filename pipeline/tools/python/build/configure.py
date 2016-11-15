@@ -491,3 +491,23 @@ class gaffer(cortex):
             ('"GafferAppleseedUITest',"''' #")
         ]
     }}
+    def installer(self, target, source, env): # noqa
+        ''' we create/update the /atomo/app/.../gaffer folder since gaffer is also an app! '''
+        targetFolder = os.path.dirname(str(target[0]))
+        versionMajor = float( '.'.join( os.path.basename(targetFolder).split('.')[:2] ) )
+        ret = []
+        # for each in glob("%s/bin/*" % targetFolder):
+        #     each = os.path.basename(each)
+        #     if 'linux-gnu' not in each:
+        #         if versionMajor == 4.1:
+        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+        #         if versionMajor == 4.8:
+        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
+        #         else:
+        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+        #
+        #     # we add a couple of wrappers to ar and ranlib, so we don't have to build then.
+        #     # the wrapper make sure they can load the correct libstdc++ from system
+        #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ar \\$@" > %s/bin/ar ; chmod a+x %s/bin/ar' % (targetFolder,targetFolder) ).readlines()
+        #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ranlib \\$@" > %s/bin/ranlib ; chmod a+x %s/bin/ranlib' % (targetFolder,targetFolder) ).readlines()
+        return ret

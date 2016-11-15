@@ -21,6 +21,10 @@
 from  SCons.Environment import *
 from  SCons.Builder import *
 from  SCons.Action import *
+import os, traceback, sys, inspect
+
+
+
 from devRoot import *
 import pipe
 from pipe.bcolors import bcolors
@@ -33,7 +37,6 @@ crtl_file_lastlog = '.lastlog'
 _spinnerCount = 0
 
 
-import os, traceback, sys, inspect
 
 tcols = int(''.join(os.popen('tput cols').readlines()))-1
 
@@ -499,7 +502,8 @@ class generic:
         if lastlog==0:
             os.popen("touch %s" % str(target[0])).readlines()
             # remove build folder since it was indeed built suscessfully
-            os.system( 'rm -rf "%s"' % os.path.dirname(str(source[0])) )
+            # if '.tar' not in str(source[0]):
+            #     os.system( 'rm -rf "%s"' % os.path.dirname(str(source[0])) )
 
         # if not lastlog:
         #     # check if dependency changed!
@@ -1040,7 +1044,7 @@ class generic:
                         sys.stdout.flush()
                         self.error = True
             else:
-                open(str(source[n]), 'w').close()
+                open(str(source[n]), 'a').close()
 
         return source
 
@@ -1072,7 +1076,7 @@ class generic:
                 if '.python' in t:
                     python = '.'.join( t.split('.python')[-1].split('.')[:2] )
 
-                # print self.__lastlog(__pkgInstalled__[s],python)
+                # print self.__check_target_log__( self.__lastlog(__pkgInstalled__[s],python) )
 
                 # if not os.path.exists(self.__lastlog(__pkgInstalled__[s],python)):
                 if self.__check_target_log__( self.__lastlog(__pkgInstalled__[s],python) ):
@@ -1096,10 +1100,13 @@ class generic:
                         for file2update in os.popen('find %s -name %s 2>&1' % (os.path.dirname(t), updates) ).readlines():
                             os.popen( "cp %s/%s %s"   % (os.path.dirname(s), updates, file2update) )
                 else:
-                    os.mkdir(os.path.dirname(s))
-                    f=open(s, 'w')
-                    f.write(' ')
-                    f.close()
+                    # os.mkdir(os.path.dirname(s))
+                    # f=open(s, 'w')
+                    # f.write(' ')
+                    # f.close()
+                    if not os.path.exists(os.path.dirname(t)):
+                        os.mkdir(os.path.dirname(t))
+                        open(t, 'a').close()
 
 
     def runSED(self,t):
