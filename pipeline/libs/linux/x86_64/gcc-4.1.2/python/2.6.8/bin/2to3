@@ -1,6 +1,0 @@
-#!/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/python/2.6.8/bin/python2.6
-from lib2to3.main import main
-import sys
-import os
-
-sys.exit(main("lib2to3.fixes"))

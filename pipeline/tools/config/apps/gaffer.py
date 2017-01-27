@@ -20,16 +20,16 @@
 
 
 class gaffer(baseApp):
-    def versions(self):
-        if self.parent()  in ["gaffer"]:
-            pipe.libs.version.set( python='2.7.6' )
-            pipe.version.set( python='2.7.6' )
-            if float(pipe.version.get('gaffer')[:3]) >= 2.0:
-                pipe.libs.version.set( cortex='9.0.0.git_Oct_10_2014' )
-        elif self.parent()  in ["maya", "houdini", "nuke"]:
-            if float(pipe.libs.version.get('python')[:3]) < 2.7:
-                if float(pipe.version.get('gaffer')[:3]) >= 2.0:
-                    pipe.version.set( gaffer='0.95.0')
+    # def versions(self):
+    #     if self.parent()  in ["gaffer"]:
+    #         pipe.libs.version.set( python='2.7.6' )
+    #         pipe.version.set( python='2.7.6' )
+    #         if float(pipe.version.get('gaffer')[:3]) >= 2.0:
+    #             pipe.libs.version.set( cortex='9.0.0.git_Oct_10_2014' )
+    #     elif self.parent()  in ["maya", "houdini", "nuke"]:
+    #         if float(pipe.libs.version.get('python')[:3]) < 2.7:
+    #             if float(pipe.version.get('gaffer')[:3]) >= 2.0:
+    #                 pipe.version.set( gaffer='0.95.0')
 
 
     def environ(self):
@@ -52,8 +52,8 @@ class gaffer(baseApp):
 
         self['GAFFERUI_IMAGECACHE_MEMORY'] = '2000'
 
-        self.update( python() )
-        self.update( cortex() )
+        self.update( python()  )
+        self.update( cortex()  )
         self.update( delight() )
         self.insert( 'LD_LIBRARY_PATH', 0,  maya().path('support/openssl') )
 
@@ -65,8 +65,6 @@ class gaffer(baseApp):
                 if hasattr( pipe.libs, 'pyside' ):
                     self.insert( 'LD_LIBRARY_PATH', 0,  pipe.libs.pyside().path('lib') )
                     self.insert( 'PYTHONPATHPATH', 0,  pipe.libs.pyside().path('lib/python$PYTHON_VERSION_MAJOR/site-packages') )
-
-
 
         if hasattr( pipe.libs, 'ocio' ):
 #            self['LD_PRELOAD'] = pipe.libs.ocio().path('lib/libOpenColorIO.so.1')

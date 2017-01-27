@@ -44,6 +44,19 @@ oiio   = os.environ['OIIO_VERSION']
 ocio   = os.environ['OCIO_VERSION']
 llvm   = os.environ['LLVM_VERSION']
 osl    = os.environ['OSL_VERSION']
+boost  = os.environ['BOOST_VERSION']
+
+
+# app paths
+# =============================================================================================================================================================
+apps                    = pipe.roots().apps()
+MAYA_ROOT               = apps+"/maya/%s/"   % maya
+RMAN_ROOT               = apps+"/%s/%s/RenderManProServer-%s"  % (prmanName, prman, prman)
+NUKE_ROOT		        = apps+"/nuke/%s/"   % nuke
+HOUDINI_ROOT	        = apps+"/houdini/%s/" % houdini
+OSLHOME                 = '%s/include'          % ( os.environ['OSL_TARGET_FOLDER'] )
+#APPLESEED_ROOT
+
 
 
 # INSTALL_DIR = os.environ['TARGET_FOLDER']
@@ -68,6 +81,7 @@ LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['TBB_TARG
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['BOOST_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib/python%s'     % ( os.environ['BOOST_TARGET_FOLDER'],'.'.join(python.split('.')[:2]) ) )
+BOOST_LIB_SUFFIX = ''
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['OPENEXR_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include/OpenEXR'  % ( os.environ['OPENEXR_TARGET_FOLDER'] ) )
@@ -166,7 +180,7 @@ LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['OSL_TARG
 # LOCATE_DEPENDENCY_CPPPATH, LOCATE_DEPENDENCY_LIBPATH = rest( INSTALL_PREFIX, python, boost, LOCATE_DEPENDENCY_CPPPATH, LOCATE_DEPENDENCY_LIBPATH )
 
 # OPENEXR_LIB_SUFFIX = '-%s' % openexr
-#BOOST_LIB_SUFFIX = '-mt'
+
 
 #BUILD_DEPENDENCY_OIIO = True
 #OIIO_SRC_DIR = os.getcwd()+'/oiio'

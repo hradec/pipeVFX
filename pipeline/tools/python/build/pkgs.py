@@ -795,7 +795,7 @@ class all: # noqa
                 'oiio-Release-1.6.15.tar.gz',
                 '1.6.15',
                 '3fe2cef4fb5f7bc78b136d2837e1062f',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', boost : "1.51.0" }
             # ),(
             #     'https://github.com/OpenImageIO/oiio/archive/Release-1.7.3dev.tar.gz',
             #     'oiio-Release-1.7.3dev.tar.gz',
@@ -895,8 +895,13 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.7.3.tar.gz',
                 '1.7.3',
                 '42215e190d565c862043c0b02eca089b',
-                {oiio: "1.6.15", llvm : "3.5.2", gcc: "4.8.3"},
-            # ),(
+                {oiio: "1.6.15", llvm : "3.5.2", gcc: "4.8.3", boost: "1.51.0"},
+            ),(
+                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
+                'OpenShadingLanguage-Release-1.7.5.tar.gz',
+                '1.7.5',
+                '8b15d13c3fa510b421834d32338304c8',
+                {oiio: "1.6.15", llvm : "3.5.2", gcc: "4.8.3", boost: "1.51.0"},
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.8.0dev.tar.gz',
             #     'OpenShadingLanguage-Release-1.8.0dev.tar.gz',
             #     '1.8.0dev',
@@ -909,20 +914,31 @@ class all: # noqa
                     'CMakeLists.txt' : [
                         ('add_definitions.*Wno.error=strict.overflow','#add_definitions ("-Wno-error=strict-overflow")'),
                     ],
+                    'src/cmake/externalpackages.cmake' : [
+                        ('--libfiles', '--libfiles --system-libs'),
+                        ('string (REPLACE " " ";" LLVM_LIBRARY ${LLVM_LIBRARY})', 'string (REPLACE "\\\\\\n" " " LLVM_LIBRARY ${LLVM_LIBRARY})\nstring (REPLACE " " ";" LLVM_LIBRARY ${LLVM_LIBRARY})'),
+                    ]
                 },
             },
             cmd = [
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS="  -DOSL_BUILD_CPP11:BOOL=1 '+" ".join(build.cmake.flags)+'" '
+                'MY_CMAKE_FLAGS="-DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags)+'" '
                 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags))+' ENABLERTTI=1" '
-                'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
                 'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
+                'LLVM_STATIC=1 '
                 'PARTIO_HOME="" '
                 'STOP_ON_WARNING=0 '
+                'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
+                'OPENEXR_HOME=$OPENEXR_TARGET_FOLDER '
+                'BOOST_HOME=$BOOST_TARGET_FOLDER '
+                # 'VERBOS=1 '
+                'USE_LIBCPLUSPLUS=0 '
+                'HIDE_SYMBOLS=0 '
+                # 'install '
             ],
         )
         self.osl = osl
@@ -1036,6 +1052,58 @@ class all: # noqa
             ],
         )
         self.pyqt = pyqt
+
+
+        glfw = build.make(
+            ARGUMENTS,
+            'glfw',
+            download=[(
+                'https://github.com/glfw/glfw/archive/3.2.1.tar.gz',
+                'glfw-3.2.1.tar.gz',
+                '3.2.1',
+                '91b8250b6edcc26c9f5205555070a504',
+            )],
+            depend=[gcc],
+            src = 'README.md',
+            cmd = [
+                'mkdir build',
+                'cd build',
+                '$CMAKE_TARGET_FOLDER/bin/cmake -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER -DBUILD_SHARED_LIBS=ON $SOURCE_FOLDER ',
+                'make -j $DCORES install'
+            ],
+        )
+        self.glfw = glfw
+
+        log4cplus = build.configure(
+            ARGUMENTS,
+            'log4cplus',
+            download=[(
+                'https://github.com/log4cplus/log4cplus/archive/REL_1_2_0.tar.gz',
+                'log4cplus-REL_1_2_0.tar.gz',
+                '1.2.0',
+                'b39900d6b504726a20819f2ad73f5877',
+            )],
+            depend=[gcc],
+        )
+        self.log4cplus = log4cplus
+
+        # blosc = build.cmake(
+        #     ARGUMENTS,
+        #     'blosc',
+        #     download=[(
+        #         'https://github.com/Blosc/c-blosc/archive/v1.11.1.tar.gz',
+        #         'c-blosc-1.11.1.tar.gz',
+        #         '1.11.1',
+        #         'e236550640afa50155f3881f2d300206',
+        #     )],
+        #     depend=[gcc],
+        #     flags=['-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER '],
+        # )
+        # self.blosc = blosc
+
+
+
+
 
         # if all build is done correctly, make install folder ready!
         SCons.Script.Alias( 'install',

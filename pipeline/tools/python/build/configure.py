@@ -223,7 +223,7 @@ class boost(configure):
             cmd = [
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER ',
                 'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
-                './b2 -j $DCORES  --without-log variant=release  --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
+                './b2 -j $DCORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
                 # './b2 -j $DCORES --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS -std=gnu++11" linkflags="$LDFLAGS" -d+2 install',
             ]
 
@@ -238,7 +238,7 @@ class boost(configure):
             cmd = [
                 "curl -s 'http://www.boost.org/patches/1_55_0/001-log_fix_dump_avx2.patch' | sed 's/libs/.\/libs/g'| patch -p1",
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $DCORES  --without-log variant=release  cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                './b2 -j $DCORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if self.versionMajor == 1.54:
@@ -351,6 +351,39 @@ class cortex(configure):
             # ('corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest','riPythonProceduralForTest + riDisplayDriverForTest'),
             # ('Default(', '#Default('),
         ],
+        'mel/IECoreMaya/ieProceduralHolder.mel' : [
+            ('return $node;','''
+                addAttr -ln "rman__torattr___preShapeScript"  -dt "string"  $node;
+                setAttr -e-keyable true ($node+".rman__torattr___preShapeScript");
+                setAttr -type "string" ($node+".rman__torattr___preShapeScript") "python(\\"import IECoreMaya;IECoreMaya.ieExportPythonProcedural()\\")";
+
+                return $node;
+            ''')
+        ],
+        'python/IECoreMaya/__init__.py' : [
+            ('from FnSceneShape import FnSceneShape','''from FnSceneShape import FnSceneShape;from ieRMS import *''')
+        ],
+        'python/IECoreMaya/ieRMS.py' : [
+            ('','''def ieExportPythonProcedural():
+                import IECore
+                import IECoreRI
+                import IECoreMaya
+                import maya.cmds as m
+                from maya.mel import eval as meval
+                import os
+
+
+                bb = IECore.Box3f( IECore.V3f( 999999 ), IECore.V3f( 999999 ) )
+                converter = IECoreMaya.FromMayaDagNodeConverter.create('genericShape')
+                proc = converter.convert()
+                serialize = IECore.ParameterParser().serialise(proc.parameters(), proc.parameters().getValue())
+                pythonString = "IECoreRI.executeProcedural( '%s', %s, %s )" % (proc.path, proc.version, serialize)
+                meval('RiProcedural "DynamicLoad" "iePython" %f %f %f %f %f %f "%s";'  % (bb.min[0], bb.max[0], bb.min[1], bb.max[1], bb.min[2], bb.max[2], pythonString ))
+            ''')
+        ],
+
+
+
     }}
 
 
@@ -495,7 +528,10 @@ class gaffer(cortex):
         ''' we create/update the /atomo/app/.../gaffer folder since gaffer is also an app! '''
         targetFolder = os.path.dirname(str(target[0]))
         versionMajor = float( '.'.join( os.path.basename(targetFolder).split('.')[:2] ) )
+        app = '%s/%s' % (pipe.roots.apps(), '/'.join(targetFolder.split('/')[-2:]))
         ret = []
+        if not os.path.exists( app ):
+            ret += os.popen( 'sudo ln -s $TARGET_FOLDER  %s' % app ).readlines()
         # for each in glob("%s/bin/*" % targetFolder):
         #     each = os.path.basename(each)
         #     if 'linux-gnu' not in each:

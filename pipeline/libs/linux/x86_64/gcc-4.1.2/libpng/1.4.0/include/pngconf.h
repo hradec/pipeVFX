@@ -1,1 +1,0 @@
-libpng14/pngconf.h

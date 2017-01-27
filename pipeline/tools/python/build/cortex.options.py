@@ -210,12 +210,13 @@ HOUDINI_ROOT	        = apps+"/houdini/%s/" % houdini
 # installation paths
 # =============================================================================================================================================================
 installRoot = "" #os.environ['TARGET_FOLDER']
-installRootMaya   = "/maya/%s" % maya
-installRootNuke   = "/nuke/%s" % nuke
-installRootPrman  = "/%s/%s" % (prmanName, prman)
-installRootArnold = "/arnold/%s" % arnold
+installRootMaya    = "/maya/%s" % maya
+installRootNuke    = "/nuke/%s" % nuke
+installRootPrman   = "/%s/%s" % (prmanName, prman)
+installRootArnold  = "/arnold/%s" % arnold
+installRootHoudini = "/houdini/%s" % houdini
 
-extraInstallPath  = '/boost%s' % os.environ['BOOST_VERSION']
+extraInstallPath   = '/boost%s' % os.environ['BOOST_VERSION']
 
 # install prefixes with per package version numbers!
 # =============================================================================================================================================================
@@ -257,16 +258,16 @@ INSTALL_MTOAEXTENSION_NAME      = "$INSTALL_PREFIX%s/mtoaExtensions/%s/$IECORE_N
 INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/lib/$IECORE_NAME" % abc
 INSTALL_ALEMBICPYTHON_DIR       = "$INSTALL_PREFIX/alembic/%s/lib/python%s/site-packages" % (abc, PYTHON_MAJOR_VERSION)
 
-INSTALL_HOUDINILIB_NAME         = "$INSTALL_PREFIX/lib/$IECORE_NAME"
-INSTALL_HOUDINIOTL_DIR          = "$INSTALL_PREFIX/otls/"
-INSTALL_HOUDINIICON_DIR         = "$INSTALL_PREFIX/icons"
-INSTALL_HOUDINITOOLBAR_DIR      = "$INSTALL_PREFIX/toolbar"
-INSTALL_HOUDINIPLUGIN_NAME      = "$INSTALL_PREFIX/dso/$IECORE_NAME"
-INSTALL_HOUDINIPYTHON_DIR       = "$INSTALL_PREFIX/lib/python%s/site-packages" % (PYTHON_MAJOR_VERSION)
+INSTALL_HOUDINILIB_NAME         = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootHoudini
+INSTALL_HOUDINIOTL_DIR          = "$INSTALL_PREFIX%s/otls/" % installRootHoudini
+INSTALL_HOUDINIICON_DIR         = "$INSTALL_PREFIX%s/icons" % installRootHoudini
+INSTALL_HOUDINITOOLBAR_DIR      = "$INSTALL_PREFIX%s/toolbar" % installRootHoudini
+INSTALL_HOUDINIPLUGIN_NAME      = "$INSTALL_PREFIX%s/dso/$IECORE_NAME" % installRootHoudini
+INSTALL_HOUDINIPYTHON_DIR       = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootHoudini, PYTHON_MAJOR_VERSION)
 
-INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX/lib/$IECORE_NAME"
-INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX/dso/mantra/$IECORE_NAME"
-INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX/dso/"
+INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootHoudini
+INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX%s/dso/mantra/$IECORE_NAME" % installRootHoudini
+INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX%s/dso/" % installRootHoudini
 
 os.environ['PYTHONPATH'] = INSTALL_PYTHON_DIR
 
@@ -282,20 +283,11 @@ os.environ['PYTHONPATH'] = INSTALL_PYTHON_DIR
 
 LIBPATH = []
 if houdini != '0.0.0':
-    # INSTALL_LIB_NAME                = "$INSTALL_PREFIX%s/houdini/%s/lib/$IECORE_NAME" % (installRoot, houdini)
-    # INSTALL_PYTHONLIB_NAME          = "$INSTALL_PREFIX%s/houdini/%s/lib/python%s/$IECORE_NAME" % (installRoot, houdini, PYTHON_MAJOR_VERSION)
-    # INSTALL_PYTHON_DIR              = "$INSTALL_PREFIX%s/houdini/%s/lib/python%s/site-packages" % (installRoot, houdini, PYTHON_MAJOR_VERSION)
 
+    os.environ['HOUDINI_CXX_FLAGS']  = [ l for l in os.popen('HFS=$HOUDINI_ROOT hcustom -c' ).readlines() if '-DVERSION' in l ][0].replace('pipeLog: ','').replace('-std=c++0x','').strip()
+    os.environ['HOUDINI_LINK_FLAGS'] = [ l for l in os.popen('HFS=$HOUDINI_ROOT hcustom -m' ).readlines() if '-L' in l ][0].replace('pipeLog: ','').strip()
 
-    # BOOST_INCLUDE_PATH      = "%s/toolkit/include/boost/" % os.environ['HOUDINI_ROOT']
-    # BOOST_LIB_PATH          = "%s/lib/python%s/"  % (os.environ['BOOST_TARGET_FOLDER'], PYTHON_MAJOR_VERSION)
-    # BOOST_LIB_SUFFIX        = ""
-    # if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the last version that uses -mt as suffix.
-    #     BOOST_LIB_SUFFIX        = "-mt"
-
-
-    os.environ['HOUDINI_CXX_FLAGS']  = [ l for l in os.popen('hcustom -c').readlines() if '-DVERSION' in l ][0].replace('pipeLog: ','').replace('-std=c++0x','').strip()
-    os.environ['HOUDINI_LINK_FLAGS'] = [ l for l in os.popen('hcustom -m').readlines() if '-L' in l ][0].replace('pipeLog: ','').strip()
+    print os.environ['HOUDINI_CXX_FLAGS']
 
     if 'GCC_VERSION' in os.environ:
         if os.environ['GCC_VERSION'] == '4.1.2':
@@ -306,7 +298,7 @@ if houdini != '0.0.0':
 
     os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
     os.environ['HOUDINI_LINK_FLAGS'] += ' '+' '.join([
-        '-Wl,-rpath,%s/dsolib' % HOUDINI_ROOT,
+        '-Wl,-rpath,%s/dsolib/' % HOUDINI_ROOT,
         '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
         '-Wl,-rpath,%s' % os.path.dirname(INSTALL_LIB_NAME),
         '-Wl,-rpath,%s' % os.path.dirname(INSTALL_PYTHONLIB_NAME),
@@ -319,6 +311,7 @@ if houdini != '0.0.0':
     HOUDINI_CXX_FLAGS = os.environ['HOUDINI_CXX_FLAGS']
     HOUDINI_LINK_FLAGS = os.environ['HOUDINI_LINK_FLAGS']
 
+
     if 'GCC_VERSION' in os.environ:
         HOUDINI_LINK_FLAGS = " ".join([
             os.environ['HOUDINI_LINK_FLAGS'],
@@ -326,15 +319,15 @@ if houdini != '0.0.0':
             "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
         ])
 
+    PYTHON_LINK_FLAGS += ' '+HOUDINI_LINK_FLAGS
+
 
 if 'GCC_VERSION' in os.environ:
     PYTHON_LINK_FLAGS += ' '+' '.join([
         "-Wl,-rpath,%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
         "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
-    #     '-Wl,-rpath /lib64',
-    #     '-Wl,-rpath /usr/lib64/',
-    #     # '-Wl,-rpath %s/dsolib' % HOUDINI_ROOT,
-    #     # '-Wl,-rpath %s/python/lib/' % HOUDINI_ROOT,
+        # '-Wl,-rpath /lib64',
+        # '-Wl,-rpath /usr/lib64/',
     ])
 
     # LIBPATH is default to /usr/lib, so we make it look for the current GCC being used to build.
@@ -347,6 +340,7 @@ if 'GCC_VERSION' in os.environ:
         "-Wl,-rpath,%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
         "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
     ]
+
 
 LIBPATH += [
     "%s/lib/" % os.environ['ICU_TARGET_FOLDER']
@@ -393,7 +387,7 @@ LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_ALEMBICLIB_NAME))
 # CC = os.environ['CC']
 # CPP = os.environ['CPP']
 # CXX = os.environ['CXX']
-CXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-DAtUInt=AtUInt32']  + os.environ['CXXFLAGS'].split(' ')
+CXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-DAtUInt=AtUInt32', '-DCORTEX_HAS_NO_RSL']  + os.environ['CXXFLAGS'].split(' ')
 if boost == '1.51.0':
     CXXFLAGS += ["-D__GLIBC_HAVE_LONG_LONG"]
 TESTCXXFLAGS = ['-pipe', '-Wall', '-O0'] + os.environ['CXXFLAGS'].split(' ')
@@ -442,3 +436,101 @@ TEST_LIBPATH='./lib'
 DOXYGEN=os.popen('which doxygen').readlines()[0].strip()
 #
 # BUILD_CACHEDIR = "/tmp/"
+
+
+# If prman 21 and up, anulate SLO reading!
+# =============================================================================================================================================================
+if float('.'.join(prman.split('.')[:2])) > 20.0:
+    f=open('include/slo.h','w')
+    f.write('''
+    	#define Slo_SetShader(chr)  false
+    	#define Slo_EndShader()
+    	#define Slo_GetName() 			NULL
+    	#define Slo_TypetoStr(chr)  NULL
+    	#define Slo_GetNArgs()			0
+    	#define Slo_GetArgById(i)		NULL
+    	#define Slo_GetArrayArgElement( arg, j ) NULL
+    	#define Slo_GetNAnnotations()						 0
+    	#define Slo_GetAnnotationKeyById(i)			 NULL
+    	#define Slo_GetAnnotationByKey(k)				 NULL
+    	typedef enum {
+    	    SLO_TYPE_UNKNOWN,
+    	    SLO_TYPE_POINT,
+    	    SLO_TYPE_COLOR,
+    	    SLO_TYPE_SCALAR,
+    	    SLO_TYPE_STRING,
+    	    SLO_TYPE_SHADER,
+    	    SLO_TYPE_SURFACE,
+    	    SLO_TYPE_LIGHT,
+    	    SLO_TYPE_DISPLACEMENT,
+    	    SLO_TYPE_VOLUME,
+    	    SLO_TYPE_VECTOR,
+    	    SLO_TYPE_NORMAL,
+    	    SLO_TYPE_MATRIX,
+    	    SLO_TYPE_STRUCT,
+    	    SLO_TYPE_IMAGER
+      } SLO_TYPE;
+    	typedef enum {
+    	    SLO_STOR_UNKNOWN,
+    	    SLO_STOR_CONSTANT,
+    	    SLO_STOR_VARIABLE,
+    	    SLO_STOR_TEMPORARY,
+    	    SLO_STOR_PARAMETER,
+    	    SLO_STOR_OUTPUTPARAMETER,
+    	    SLO_STOR_GSTATE,
+    	    SLO_STOR_METHODINPUT,
+    	    SLO_STOR_METHODOUTPUT,
+    	    SLO_STOR_REFERENCE,
+    	    SLO_STOR_CONST_REFERENCE,
+    	    SLO_STOR_TYPE_DEF,
+    	    SLO_STOR_STRUCT_MEMBER
+      } SLO_STORAGE;
+    	typedef enum {
+    	    SLO_DETAIL_UNKNOWN,
+    	    SLO_DETAIL_VARYING,
+    	    SLO_DETAIL_UNIFORM,
+    	    SLO_DETAIL_DYNAMIC
+    	    } SLO_DETAIL;
+    	typedef struct {
+    	    float	xval;
+    	    float	yval;
+    	    float	zval;
+    	    } POINT3D;
+    	typedef POINT3D SLO_POINT;
+
+    	typedef float SCALAR;
+
+    	typedef int SLO_STRUCTID;
+
+    	typedef struct slostructinfo {
+    	    const char *structname;
+    	    SLO_STRUCTID id;
+    	    unsigned int nummembers;
+    	} SLO_STRUCTINFO;
+
+    	typedef struct slovissymdef {
+    	    char *svd_name;
+    	    SLO_TYPE svd_type;
+    	    SLO_STORAGE svd_storage;
+    	    SLO_DETAIL svd_detail;
+    	    char *svd_spacename;
+    	    union {
+    	        POINT3D        *pointval;
+    	        SCALAR         *scalarval;
+    	        char           *stringval;
+    	        float          *matrixval;
+    	        SLO_STRUCTINFO *structval;
+    	    } svd_default;
+    	    union svd_defaultvalu {
+    		POINT3D	svd_pointval;
+    		SCALAR	svd_scalarval;
+    	    } svd_defaultval;
+    	    unsigned svd_valisvalid : 1;
+    	    int svd_arraylen;
+    	    SLO_STRUCTINFO svd_structinfo;
+    	} SLO_VISSYMDEF;
+
+    	typedef void* SLO_METHOD;
+    	#define NULL_SLOVISSYMDEF ((SLO_VISSYMDEF *) 0)
+    ''')
+    f.close()

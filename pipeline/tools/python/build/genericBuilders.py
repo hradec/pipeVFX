@@ -1147,21 +1147,33 @@ class generic:
             if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]:
                 for each in self.sed[version]:
                     f = "%s/%s" % (t,each)
-                    # we make a copy of the original file, before running sed
-                    # if we already have a copy, we restore it before running sed
-                    if os.path.exists("%s.original" % f):
-                        os.popen("cp %s.original %s" % (f,f)).readlines()
+
+                    # sed a file if it exists!
+                    if os.path.exists("%s" % f):
+
+                        # we make a copy of the original file, before running sed
+                        # if we already have a copy, we restore it before running sed
+                        if os.path.exists("%s.original" % f):
+                            os.popen("cp %s.original %s" % (f,f)).readlines()
+                        else:
+                            os.popen("cp %s %s.original" % (f,f)).readlines()
+                        # apply seds
+                        for sed in self.sed[version][each]:
+                            cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
+                                f,
+                                sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
+                                sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
+                            )
+                            # print "\n\n"+cmd+"\n\n"
+                            os.popen(cmd).readlines()
+
+                    # if it doesnt exist, create it!!
                     else:
-                        os.popen("cp %s %s.original" % (f,f)).readlines()
-                    # apply seds
-                    for sed in self.sed[version][each]:
-                        cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
-                            f,
-                            sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
-                            sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('"','\\"')
-                        )
-                        # print "\n\n"+cmd+"\n\n"
-                        os.popen(cmd).readlines()
+                        ptr = open(f, 'w')
+                        for sed in self.sed[version][each]:
+                            ptr.write(sed[1])
+                        ptr.close()
+
                 break
 
     def install(self, target, source):

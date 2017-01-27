@@ -22,7 +22,7 @@
 class cortex(baseLib):
     def versions(self):
         if self.parent() in 'gaffer':
-            if float(pipe.version.get('gaffer')[:3]) < 2.0:
+            if float(pipe.version.get('gaffer')[:3]) < 2.0 and float(pipe.version.get('gaffer')[:3])!=0.30:
                 if float(pipe.libs.version.get('cortex')[:1]) >= 9:
                     pipe.libs.version.set(  cortex = '8.4.7' )
                     pipe.libs.version.set(  boost = '1.5.2' )
