@@ -648,6 +648,7 @@ class baseApp(_environ):
             if 'USE_SYSTEM_LIBRARY' not in os.environ:
                 os.environ['USE_SYSTEM_LIBRARY'] = ''
 
+        # print self.className, versionLib.get('boost')
 
     def configFiles(self):
         ''' Run over config files located in the pipeline and also in jobs '''
@@ -684,9 +685,10 @@ class baseApp(_environ):
     def ignorePipeLib(self, libname ):
         ''' set library names to ignore using from the pipe version and use
         system or application default ones!'''
-        if not os.environ.has_key('USE_SYSTEM_LIBRARY'):
-            os.environ['USE_SYSTEM_LIBRARY'] = ''
-        os.environ['USE_SYSTEM_LIBRARY'] += ' %s' % libname
+        if self.parent() == self.className:
+            if not os.environ.has_key('USE_SYSTEM_LIBRARY'):
+                os.environ['USE_SYSTEM_LIBRARY'] = ''
+            os.environ['USE_SYSTEM_LIBRARY'] += ' %s' % libname
 
 
     def updateLibs(self):
@@ -732,6 +734,10 @@ class baseApp(_environ):
             self.insert('LD_LIBRARY_PATH', 0, self.path('lib/boost$BOOST_VERSION'))
             self['LD_LIBRARY_PATH']=self.path('lib/python$PYTHON_VERSION_MAJOR')
             self['LD_LIBRARY_PATH']=self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')
+
+            # add all boost lib versions to search path, since boost is version controlled in its name
+            for each in glob( "%s/boost/*/lib/python%s/" % (roots.libs(), '.'.join(versionLib.get('python').split('.')[:2]))):
+                self['LD_LIBRARY_PATH'] = each
 
             self['BOOST_VERSION'] = versionLib.get('boost')
             # if we have extra variables, just update itself with it!
@@ -950,6 +956,31 @@ class baseApp(_environ):
                 if hasattr(self, 'userSetup'):
                     self.userSetup( user )
                 self.user = user
+        else:
+            if hasattr(self, 'userSetup'):
+                raise Exception(bcolors.FAIL+'''\n%s
+
+        SHELL WITHOUT A JOB AND SHOT!!!
+        -------------------------------
+
+        You must run this app from inside a job and shot!
+        -------------------------------------------------
+
+        Please run:
+
+                go <job name> shot <shot name>      or
+                go <job name> asset <asset name>
+
+        before running this app.
+
+
+        Ex:  go 9999.rnd shot dev
+             go (a shortcut to the last job/shot set)
+
+        Tip: Just look at the titlebar of a shell. If it shows the JOB/SHOT,
+             thats the JOB/SHOT set in that shell!!
+
+                \n%s''' % ('='*80, '='*80) +bcolors.END)
 
     def update(self, environClass={}, top={}, noIgnoreLibs=False, **e):
         # recall all added classes to batch update later at RUN
@@ -1098,10 +1129,10 @@ class baseApp(_environ):
         # run the software in GDB, if --debug in command line
         runWithOsSystem = binName in ['python','houdini','prman']
         if '--debug' in sys.argv:
-            if self.className == 'maya':
-                binName += ' -d gdb '
-            else:
-                debug = 'gdb -ex run --args'
+            # if self.className == 'maya':
+            #     binName += ' -d gdb '
+            # else:
+            debug = 'gdb -ex run --args'
             del sys.argv[sys.argv.index('--debug')]
             runWithOsSystem = True
 

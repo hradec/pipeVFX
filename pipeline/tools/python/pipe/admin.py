@@ -83,6 +83,12 @@ class sudo():
             done = False
             cmd  = ' ;; '.join(self.__cmdbuffer)
 
+            # cache executed cmds to avoid running more than once!
+            if not hasattr(dbus, '_cmd_history'):
+                dbus._cmd_history = []
+            if cmd in dbus._cmd_history:
+                return 'DONE'
+
             DBusGMainLoop(set_as_default=True)
             self.__hasService = True
             try:
@@ -144,11 +150,11 @@ class sudo():
                         lines = f.readlines()
                         f.close()
                         if filter( lambda x: 'DONE' in x, lines ):
-                            ret = ''.join(lines)
+                            ret = cmd+' -> '+''.join(lines)
                             os.remove( file )
                             break
                         else:
-                            time.sleep(3.0)
+                            time.sleep(0.5)
 
                 except:
                      handler()
@@ -166,12 +172,14 @@ class sudo():
             if ':' in owner:
                 u,g= owner.split(':')
             stat = os.stat(path)
-            user = pwd.getpwuid(stat.st_uid)[0]
-            group = grp.getgrgid(stat.st_gid)[0]
-            if recursive:
-                owner = '-R %s' % owner
-            if user != u:
-                self.cmd( "chown %s '%s'" % (owner, path) )
+            try:
+                user = pwd.getpwuid(stat.st_uid)[0]
+                group = grp.getgrgid(stat.st_gid)[0]
+                if recursive:
+                    owner = '-R %s' % owner
+                if user != u:
+                    self.cmd( "chown %s '%s'" % (owner, path) )
+            except: pass
         else:
                 self.cmd( "chown %s '%s'" % (owner, path) )
 
@@ -204,7 +212,7 @@ class sudo():
             self.cmd( "rm -f '%s'" % (file) )
 
     def ln(self, fromPath, toPath):
-        if os.path.exists(fromPath):
+        # if os.path.exists(fromPath):
             self.cmd( "ln -s '%s' '%s'" % (fromPath, toPath) )
 
     def toFile(self, txt, toPath):
@@ -262,6 +270,9 @@ class job(sudo):
         self.fixPerm(path, perms)
         if username:
             self.chown( "%s:artists" % username, path )
+
+    def symlink(self, source, target):
+        sudo.ln(self, source, target)
 
     def mktools(self, path='tools', username=''):
         ''' create the tools folder as a copy of pipeline/tools '''
@@ -576,6 +587,10 @@ class job(sudo):
                 self.job.mkdir( self.path( subpath ), username() )
                 if not os.path.exists( self.path() ):
                     self.job.fixPerm(self.path(), recursive=True)
+
+            def symlink(self, source, target):
+                if not os.path.exists( self.path(target) ):
+                    self.job.symlink( self.path(source), self.path(target) )
 
             def toFile( self, data, file ):
                 self.job.toFile( '\n'.join(data), self.path(file) )

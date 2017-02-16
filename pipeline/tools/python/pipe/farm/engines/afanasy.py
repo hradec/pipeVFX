@@ -49,9 +49,9 @@ class job(baseFarmJobClass):
         pipe.apps.cgru().expand()
         import af
         os.environ.update(osback)
-        
+
         if type(self.cmd) is type([]):
-            
+
             job = af.Job( "Command List: %s" % self.name )
             # create an afanasy job block
             block1 = af.Block("main", className )
@@ -60,42 +60,42 @@ class job(baseFarmJobClass):
             if hasattr( self, "files" ):
                 #block1.setFiles([os.path.dirname(self.files[0])+"/*"])
                 block1.setFiles(self.files)
-                
+
             blocks = [block1]
             n = 1
             for cmd in self.cmd:
                 task = af.Task("%s" % (str(n))) #, cmd.split('run')[-1].replace('/','_')))
-                realcmd = "/usr/sbin/runuser -l %s --session-command  ' PIPE_FARM_USER=%s ; unset LD_LIBRARY_PATH ;  unset LD_PRELOAD;  echo $HOSTNAME ; " % (pipe.admin.username(),pipe.admin.username())  + cmd.replace("'","\\'") + "  || echo '[PARSER ERROR]' ; echo $? ' ; echo $?"
+                realcmd = "/usr/sbin/runuser -l %s --session-command  ' PIPE_FARM_USER=%s ; unset NOPIPE ; unset USE_SYSTEM_LIBRARY ; unset LD_LIBRARY_PATH ;  unset LD_PRELOAD;  echo $HOSTNAME ; " % (pipe.admin.username(),pipe.admin.username())  + cmd.replace("'","\\'") + "  || echo [PARSER ERROR] ; echo $? ' ; echo $?"
                 task.setCommand(realcmd)
                 if hasattr( self, "files" ):
                     task.setFiles([self.files[n-1]])
                 block1.tasks.append(task)
                 n += 1
-                
-            
+
+
             if hasattr( self, "postCmd" ):
                 block2 = af.Block( self.postCmd['name'] )
-                block2.setDependMask( "main" ) 
-                #block2.setTasksDependMask( "main" ) 
+                block2.setDependMask( "main" )
+                #block2.setTasksDependMask( "main" )
                 task = af.Task( self.postCmd['cmd'] )
                 task.setCommand( self.postCmd['cmd'] )
                 block2.tasks.append(task)
-                
+
                 blocks.append(block2)
                 #mask = map( lambda n: "%s" % str(n+1), range(len( self.cmd )) )
-                #block2.setDependMask( self.postCmd['name'] ) 
+                #block2.setDependMask( self.postCmd['name'] )
                 #block2.setDependSubTask()
-            
-            
+
+
             for b in blocks:
                 job.blocks.append(b)
-            
+
             print '='*80
             print job.output(1)
             print '='*80
 
-            return job.send()            
-            
+            return job.send()
+
         else:
 
             # we use su to run the tasks as the user who submitted it!
@@ -119,16 +119,16 @@ class job(baseFarmJobClass):
             if hasattr( self, "files" ):
                 block1.setFiles(self.files)
 
-            
+
             r.sort()
             block1.setNumeric(r[0], r[-1], r[1]-r[0])
             block1.setSequential(0)
             job.blocks.append(block1)
-            
-            
+
+
             if hasattr( self, "postCmd" ):
                 block2 = af.Block( self.postCmd['name'] )
-                block2.setDependMask( self.name ) 
+                block2.setDependMask( self.name )
                 block2.setDependSubTask()
                 task   =  af.Task( self.postCmd['cmd'] )
                 task.setCommand( self.postCmd['cmd'] )
@@ -171,7 +171,3 @@ class job(baseFarmJobClass):
             print '='*80
 
             return job.send()
-
-
-
-

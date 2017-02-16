@@ -119,6 +119,15 @@ class environ(dict):
         if not initialized.has_key('__DB_LATEST'):
             os.environ.update( initialized )
         paths = {}
+
+        # # cleanup LD_LIBRARY_PATH from inexistent paths
+        # for VAR in ['LD_LIBRARY_PATH', 'PYTHONPATH']:
+        #     tmp = {}
+        #     for each in os.pathsep.join(self[VAR]).split(os.pathsep):
+        #         if os.path.exists(expandvars(each)):
+        #             tmp[each] = 1
+        #     dict.__setitem__( self, VAR, tmp.keys() )
+
         for each in self.keys():
             l = self[each]
             if not l:
@@ -139,11 +148,13 @@ class environ(dict):
 
                     p = value
                     if p[0] in ['/']:
+                        p = expandvars(p)
                         if os.path.abspath(p) not in os.environ[each].split(os.pathsep):
                             os.environ[each] = os.pathsep.join([ os.environ[each], os.path.abspath( p ) ])
                     else:
                         os.environ[each] = p
                     os.environ[each] = os.environ[each].strip(os.pathsep)
+
 
         keys = self.keys()
         keys.sort()
@@ -154,6 +165,10 @@ class environ(dict):
             os.environ[each] = expandvars( os.environ[each] )
             # remove empty entries
             os.environ[each] = os.environ[each].replace(os.pathsep+os.pathsep,os.pathsep)
+            # remove paths that don't exist
+            if each in [LD_LIBRARY_PATH, 'PYTHONPATH', 'LIB', 'INCLUDE', 'PATH']:
+                os.environ[each] = os.pathsep.join([ v for v in os.environ[each].split(os.pathsep) if os.path.exists(v) ])
+
             log.debug( "%20s = %s "  % ( each,
                 (os.pathsep+'\n'+' '*23).join(os.environ[each].split(os.pathsep)),
 #                (os.pathsep+'\n'+' '*23).join(self[each].split(os.pathsep))
@@ -161,6 +176,15 @@ class environ(dict):
 
             if each=='PYTHONPATH':
                 sys.path.extend( os.environ[each].split(os.pathsep) )
+
+        # cleanup LD_LIBRARY_PATH from inexistent paths
+        for VAR in [LD_LIBRARY_PATH, 'PYTHONPATH']:
+            tmp = []
+            for each in os.environ[VAR].split(os.pathsep):
+                if os.path.exists(each):
+                    tmp.append(each)
+            os.environ[VAR] = os.pathsep.join(tmp)
+
 
         log.debug( bcolors.WARNING+"="*200+bcolors.END )
 

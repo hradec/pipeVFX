@@ -100,6 +100,76 @@ if canBuildCortexNow:
         ))
     pkgs.alembic = alembic[-1]
 
+    sip = []
+    pyqt = []
+    for n in range(2):
+        version = mv[0] if len(mv)<=n else mv[n]
+        if float(version) > 2015:
+            pipe.version.set( maya  = version )
+
+            sip.append( build.pythonSetup(
+                ARGUMENTS,
+                'sip',
+                download=[(
+                    'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
+                    'sip-4.16.7.tar.gz',
+                    '4.16.7.maya%s' % version,
+                    '32abc003980599d33ffd789734de4c36',
+                    { pkgs.gcc : '4.1.2' }
+                )],
+                src = 'configure.py',
+                apps = [ (pipe.apps.maya, pipe.version.get('maya')) ],
+                cmd = [
+                    # 'export MAYA_LOCATION=$(/bin/python2 -c "import pipe;print pipe.roots.apps()")/maya/%s' % version,
+                    'mayapy configure.py '
+                    '-b $TARGET_FOLDER/bin '
+                    '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+                    '-e $TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
+                    '-v $TARGET_FOLDER/share/sip/ '
+                    'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+                    'make -j $DCORES && make -j $DCORES install',
+                ],
+            ))
+
+            pyqt.append( build.pythonSetup(
+                ARGUMENTS,
+                'pyqt',
+                download=[(
+                    'https://svwh.dl.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz',
+                    'PyQt-x11-gpl-4.11.4.tar.gz',
+                    '4.11.4.maya%s' % version,
+                    '2fe8265b2ae2fc593241c2c84d09d481',
+                    {sip[-1]: '4.16.7.maya2016.5', pkgs.gcc : '4.1.2'},
+                )],
+                # baseLibs=[pkgs.python],
+                depend=[sip[-1], pkgs.gcc],
+                apps = [ (pipe.apps.maya, pipe.version.get('maya')) ],
+                src = 'configure-ng.py',
+                cmd = [
+                    # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
+                    '''export PYTHON_VERSION_MAJOR=$(mayapy --version 2>&1 | awk '{split($2,a,"."); print a[1] "." a[2] }')'''
+                    'export QTDIR=$MAYA_LOCATION',
+                    'export QMAKESPEC=$MAYA_LOCATION/mkspecs/linux-g++-64',
+                    'export INCDIR_QT=$MAYA_LOCATION/include',
+                    'export LIBDIR_QT=$MAYA_LOCATION/lib',
+                    'export PATH=$MAYA_LOCATION/bin:$PATH',
+                    'mayapy configure.py --confirm-license --assume-shared --verbose --no-designer-plugin '
+                    '-b $TARGET_FOLDER/bin '
+                    '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+                    '-v $TARGET_FOLDER/share/sip/PyQt4 '
+                    'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                    'LIBDIR_QT=$MAYA_LOCATION/lib INCDIR_QT=$MAYA_LOCATION/include MOC=$MAYA_LOCATION/bin/moc -w -g ',
+                    'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+                    'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install',
+                ],
+            ))
+
+    if sip:
+        pkgs.sip_maya = sip[-1]
+        pkgs.pyqt_maya = pyqt[-1]
+
+
+
     # cortex versions to build
     boostVersion = "1.51.0"
     download = [
@@ -204,185 +274,49 @@ if canBuildCortexNow:
                     '0.30.0.0',
                     'c02822b86f17de8af08aaabf7e61e1a2',
                     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                ],[
+                    'https://github.com/GafferHQ/gaffer/archive/0.31.0.0.tar.gz',
+                    'gaffer-0.31.0.0.tar.gz',
+                    '0.31.0.0',
+                    'f2d0628faada546e8859b8e7882c3f94',
+                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
                 ]
 
             ],
-            baseLibs = [pkgs.python],
-            depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm ],
+            # baseLibs = [pkgs.python],
+            depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm, pkgs.python ],
             apps = ( 'prman', prman ),
             sconsInstall = "install"
         )
 
 
 
-
-
     # build openvdb for each version of maya, so we get the plugins!
-    pyVersions = pkgs.python.versions.keys()
-    pyVersions.sort()
     openvdb = []
     for n in range(2):
         pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
-        mayaPath = pipe.apps.maya().path()
 
-        openvdb.append( build.make(
+        openvdb.append( build.openvdb(
             ARGUMENTS,
             'openvdb',
             targetSuffix = "maya%s" % (pipe.version.get('maya')),
             download=[(
-            #     'https://github.com/dreamworksanimation/openvdb/archive/v4.0.0.tar.gz',
-            #     'openvdb-4.0.0.tar.gz',
-            #     '4.0.0',
-            #     '54068805fb2ebedd3eeee44d7ecd56a2',
-            #     {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
-            # ),(
+                'https://github.com/dreamworksanimation/openvdb/archive/v4.0.0.tar.gz',
+                'openvdb-4.0.0.tar.gz',
+                '4.0.0',
+                'c56d8a1a460f1d3327f2568e3934ca6a',
+                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
+            ),(
                 'https://github.com/dreamworksanimation/openvdb/archive/v3.2.0.tar.gz',
                 'openvdb-3.2.0.tar.gz',
                 '3.2.0',
                 '54068805fb2ebedd3eeee44d7ecd56a2',
                 {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
             )],
-            sed = {'0.0.0' : {
-                # Patch openvdb maya plugin to FIX rendering in the farm, without a DISPLAY being set!
-                'openvdb_maya/maya/OpenVDBVisualizeNode.cc' : [
-                    # ('namespace mvdb', '#include <maya/MGlobal.h>\n\nnamespace mvdb'),
-                    ('view.beginGL()', 'if(MGlobal::mayaState() == MGlobal::kBatch) return;\n\nview.beginGL()'),
-                    ('mSurfaceShader.setVertShader', 'if(MGlobal::mayaState() != MGlobal::kBatch) {\n\nmSurfaceShader.setVertShader'),
-                    ('mPointShader.build();', 'mPointShader.build();}'),
-                    # ('if (!inputVdb) return', 'mBBox = MBoundingBox(MPoint(-2.0, -1.0, -1.0), MPoint(1.0, 1.0, 1.0));if (!inputVdb) return'),
-                    ('return MBoundingBox(MPoint(-1.0, -1.0, -1.0), MPoint(1.0, 1.0, 1.0))', 'return mBBox'),
-                    ('if (plug == aCachedInternalNodes) {','''
-                        if(MGlobal::mayaState() == MGlobal::kBatch) {
-                            MPoint pMin, pMax;
-                            mBBoxBuffers.clear();
-                            mBBoxBuffers.resize(grids.size());
-
-                            for (size_t n = 0, N = grids.size(); n < N; ++n) {
-                                mvdb::BoundingBoxGeo drawBBox(mBBoxBuffers[n]);
-                                drawBBox(grids[n]);
-
-                                for (int i = 0; i < 3; ++i) {
-                                    pMin[i] = drawBBox.min()[i];
-                                    pMax[i] = drawBBox.max()[i];
-                                }
-                            }
-                            mBBox = MBoundingBox(pMin, pMax);
-
-                            MDataHandle outHandle = data.outputValue(aCachedBBox);
-                            outHandle.set(true);
-                        }
-
-                        if (plug == aCachedInternalNodes) {
-                    '''),
-                ],'openvdb_maya/maya/OpenVDBUtil.cc' : [
-                    # ('mProgram(0)', 'if(MGlobal::mayaState() == MGlobal::kBatch) return;mProgram(0)'),
-                    ('ShaderProgram() { clear()', 'ShaderProgram() { if(MGlobal::mayaState() != MGlobal::kBatch) clear()'),
-                    ('insertFrameNumber','''
-                        insertFrameNumberPrman(std::string& str, const MTime& time, int numberingScheme)
-                        {
-                            size_t pos = str.find_first_of("$F");
-                            if (pos != std::string::npos) {
-
-                                size_t length = str.find_last_of(".") - pos;
-                                size_t pad = atoi(str.substr(pos+2, length).c_str());
-
-                                // Current frame value
-                                double frame = time.as(MTime::uiUnit());
-
-                                // Frames per second
-                                const MTime dummy(1.0, MTime::kSeconds);
-                                const double fps = dummy.as(MTime::uiUnit());
-
-                                // Ticks per frame
-                                const double tpf = 6000.0 / fps;
-                                const int tpfDigits = int(std::log10(int(tpf)) + 1);
-
-                                const int wholeFrame = int(frame);
-                                std::stringstream ss;
-                                ss << std::setw(int(pad)) << std::setfill('0');
-
-                                if (numberingScheme == 1) { // Fractional frame values
-                                    ss << wholeFrame;
-
-                                    std::stringstream stream;
-                                    stream << frame;
-                                    std::string tmpStr = stream.str();;
-                                    tmpStr = tmpStr.substr(tmpStr.find('.'));
-                                    if (!tmpStr.empty()) ss << tmpStr;
-
-                                } else if (numberingScheme == 2) { // Global ticks
-                                    int ticks = int(openvdb::math::Round(frame * tpf));
-                                    ss << ticks;
-                                } else { // Frame.SubTick
-                                    ss << wholeFrame;
-                                    const int frameTick = (openvdb::math::Round(frame - double(wholeFrame)) * tpf);
-                                    if (frameTick > 0) {
-                                        ss << "." << std::setw(tpfDigits) << std::setfill('0') << frameTick;
-                                    }
-                                }
-
-                                str.replace(pos, length, ss.str());
-                            }
-                        }
-                        void insertFrameNumber
-                    '''),
-                ],'openvdb_maya/maya/OpenVDBUtil.h' : [
-                    ('<maya/MTime.h>', '<maya/MTime.h>\n#include <maya/MGlobal.h>'),
-                    ('mBuffer->genVertexBuffer(points)', 'if(MGlobal::mayaState() != MGlobal::kBatch) mBuffer->genVertexBuffer(points)'),
-                    ('mBuffer->genIndexBuffer(indices, GL_LINES)', 'if(MGlobal::mayaState() != MGlobal::kBatch) mBuffer->genIndexBuffer(indices, GL_LINES)'),
-                    ('insertFrameNumber',''' insertFrameNumberPrman(std::string& str, const MTime& time, int numberingScheme = 0); \nvoid\ninsertFrameNumber'''),
-                ],'openvdb_maya/maya/OpenVDBReadNode.cc' : [
-                    ('insertFrameNumber','insertFrameNumberPrman'),
-                ],
-
-            }#,'4.0.0' : {
+            depend=[ pkgs.hdf5, pkgs.boost, pkgs.glfw, pkgs.log4cplus, pkgs.numpy, pkgs.python ],
+            environ = {
+                'MAYA_VERSION' : pipe.version.get('maya'),
+                'MAYA_ROOT' : pipe.apps.maya().path(),
             },
-            # baseLibs=[pkgs.python],
-            depend=[ pkgs.hdf5, pkgs.boost, pkgs.glfw, pkgs.log4cplus, pkgs.numpy ],
-            cmd = [
-                'export PYTHON_VERSION="%s"' % pyVersions[-1],
-                'export PYTHON_VERSION_MAJOR="%s"' % '.'.join(pyVersions[-1].split('.')[:2]),
-                'cd openvdb',
-                'if [ ! -e $TARGET_FOLDER/lib/libopenvdb.so ] ; then make -j $DCORES lib install has_python=no '
-                    'DESTDIR=$TARGET_FOLDER '
-                    'PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
-                    'PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib/ '
-                    'BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include '
-                    'BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                    'ILMBASE_INCL_DIR=$ILMBASE_TARGET_FOLDER/include '
-                    'ILMBASE_LIB_DIR=$ILMBASE_TARGET_FOLDER/lib '
-                    'EXR_INCL_DIR=$EXR_TARGET_FOLDER/include '
-                    'EXR_LIB_DIR=$EXR_TARGET_FOLDER/lib '
-                    'TBB_INCL_DIR=$TBB_TARGET_FOLDER/include '
-                    'TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib '
-                    'LOG4CPLUS_INCL_DIR=$LOG4CPLUS_TARGET_FOLDER/include '
-                    'LOG4CPLUS_LIB_DIR=$LOG4CPLUS_TARGET_FOLDER/lib '
-                    'LOG4CPLUS_LIB=" -Wl,-rpath,$LOG4CPLUS_TARGET_FOLDER/lib -llog4cplus " '
-                    'BLOSC_INCL_DIR=/usr/include '
-                    'BLOSC_LIB_DIR=/usr/lib '
-                ';fi',
-                'cd ../openvdb_maya && make -j $DCORES install '
-                    'DESTDIR=$TARGET_FOLDER '
-                    'OPENVDB_INCL_DIR=$TARGET_FOLDER/include '
-                    'OPENVDB_LIB_DIR=$TARGET_FOLDER/lib '
-                    'OPENVDB_LIB="-Wl,-rpath,$TARGET_FOLDER/lib/ -lopenvdb" '
-                    'PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
-                    'PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib/ '
-                    'BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include '
-                    'BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                    'ILMBASE_INCL_DIR=$ILMBASE_TARGET_FOLDER/include '
-                    'ILMBASE_LIB_DIR=$ILMBASE_TARGET_FOLDER/lib '
-                    'EXR_INCL_DIR=$EXR_TARGET_FOLDER/include '
-                    'EXR_LIB_DIR=$EXR_TARGET_FOLDER/lib '
-                    'TBB_INCL_DIR=$TBB_TARGET_FOLDER/include '
-                    'TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib '
-                    'LOG4CPLUS_INCL_DIR=$LOG4CPLUS_TARGET_FOLDER/include '
-                    'LOG4CPLUS_LIB_DIR=$LOG4CPLUS_TARGET_FOLDER/lib '
-                    'BLOSC_INCL_DIR=/usr/include '
-                    'BLOSC_LIB_DIR=/usr/lib '
-                    'MAYA_DESTDIR=$TARGET_FOLDER/maya/%s/ '
-                    'MAYA_LOCATION=%s ' % (pipe.version.get('maya'), mayaPath),
-            ],
-            src = 'README.md'
         ))
     pkgs.openvdb = openvdb[-1]

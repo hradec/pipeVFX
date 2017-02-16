@@ -829,7 +829,7 @@ class all: # noqa
         # )
         # self.clang = clang
 
-        clang_url = 'http://llvm.org/releases/3.5.2/cfe-3.5.2.src.tar.xz'
+        clang_url = 'http://releases.llvm.org/3.5.2/cfe-3.5.2.src.tar.xz'
         llvm = build.configure(
             ARGUMENTS,
             'llvm',
@@ -857,8 +857,9 @@ class all: # noqa
                 'ln -s cfe-3.5.2.src ./clang',
                 'cd ..',
                 'mkdir -p build && cd build',
-                ' && '.join(build.configure.cmd).replace('./configure','../configure --disable-docs'),
-                #'cmake .. && make -j $DCORES  install',
+                '../configure  --enable-shared --disable-docs --enable-optimized --enable-assertions=no',
+                'env REQUIRES_RTTI=1 make -j $DCORES VERBOSE=1',
+                'make -j $DCORES install',
             ]
         )
         self.llvm = llvm
@@ -924,7 +925,7 @@ class all: # noqa
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS="-DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags)+'" '
+                'MY_CMAKE_FLAGS="-DENABLERTTI=1  -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags)+'" '
                 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags))+' ENABLERTTI=1" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
@@ -957,16 +958,17 @@ class all: # noqa
             #     '4.8.4',
             #     '89c5ecba180cae74c66260ac732dc5cb',
             # ),(
-            #     'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
-            #     'qt-everywhere-opensource-src-4.8.6.tar.gz',
-            #     '4.8.6',
-            #     '2edbe4d6c2eff33ef91732602f3518eb',
-            # ),(
-                'http://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
-                'qt-everywhere-opensource-src-4.8.7.tar.gz',
-                '4.8.7',
-                'd990ee66bf7ab0c785589776f35ba6ad',
+                'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
+                'qt-everywhere-opensource-src-4.8.6.tar.gz',
+                '4.8.6',
+                '2edbe4d6c2eff33ef91732602f3518eb',
                 { gcc : '4.1.2' }
+            # ),(
+                # 'http://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
+                # 'qt-everywhere-opensource-src-4.8.7.tar.gz',
+                # '4.8.7',
+                # 'd990ee66bf7ab0c785589776f35ba6ad',
+                # { gcc : '4.1.2' }
             # ),(
             #     'http://download.qt.io/official_releases/qt/5.7/5.7.0/single/qt-everywhere-opensource-src-5.7.0.tar.gz',
             #     'qt-everywhere-opensource-src-5.7.0.tar.gz',
@@ -1029,7 +1031,7 @@ class all: # noqa
                 'PyQt-x11-gpl-4.11.4.tar.gz',
                 '4.11.4',
                 '2fe8265b2ae2fc593241c2c84d09d481',
-                {qt:'4.8.7', sip: '4.16.4', gcc : '4.1.2'},
+                {qt:'4.8.6', sip: '4.16.4', gcc : '4.1.2'},
                 # ),(
                 #     'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.7/PyQt5_gpl-5.7.tar.gz',
                 #     'PyQt5_gpl-5.7.tar.gz',
@@ -1052,7 +1054,6 @@ class all: # noqa
             ],
         )
         self.pyqt = pyqt
-
 
         glfw = build.make(
             ARGUMENTS,
