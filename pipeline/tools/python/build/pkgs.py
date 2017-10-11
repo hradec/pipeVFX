@@ -259,6 +259,7 @@ class all: # noqa
                 'PyOpenGL-accelerate',
                 'cython',
                 'subprocess32',
+                'psutil',
             ]
         )
         self.python = python
@@ -448,15 +449,15 @@ class all: # noqa
             ARGUMENTS,
             'freetype',
             download=[(
-                'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.4.0.tar.gz',
-                'freetype-2.4.0.tar.gz',
-                '2.4.0',
-                'f900148ae8e258803eb1ab9f564f2151'
-            ),(
                 'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.5.5.tar.gz',
                 'freetype-2.5.5.tar.gz',
                 '2.5.5',
                 '7448edfbd40c7aa5088684b0a3edb2b8',
+            ),(
+                'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.4.0.tar.gz',
+                'freetype-2.4.0.tar.gz',
+                '2.4.0',
+                'f900148ae8e258803eb1ab9f564f2151'
             )],
         )
         build.allDepend.append(freetype)

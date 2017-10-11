@@ -21,10 +21,11 @@
 
 import sys, os, traceback
 sys.path.insert( 0, os.path.abspath('../tools/python/') )
+os.environ['GCC_VERSION'] = 'gcc-multi'
 
 # build all pkgs, if not already built!
 import build
-print 'build.installRoot() =', build.installRoot()
+print 'build.installRoot() = '+build.installRoot()
 
 # pkgs will have all scons builds as its parameters
 # to use boost, just add pkgs.boost as a dependency
@@ -74,6 +75,10 @@ if canBuildCortexNow:
         pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
         pipe.version.set( prman = ppv[0] if len(ppv)<=n else ppv[n] )
 
+        gcc = '4.1.2'
+        if float(pipe.version.get('prman')) >= 21:
+            gcc = '4.8.3'
+
         alembic.append( build.alembic(
             ARGUMENTS,
             'alembic',
@@ -89,7 +94,7 @@ if canBuildCortexNow:
                 'alembic-1.5.8.tar.gz',
                 '1.5.8',
                 'a70ba5f2e80b47d346d15d797c28731a',
-                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.1.2'},
+                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: gcc},
             )],
             baseLibs=[pkgs.python],
             depend=[pkgs.hdf5,pkgs.python,pkgs.yasm,pkgs.boost],
@@ -100,6 +105,7 @@ if canBuildCortexNow:
         ))
     pkgs.alembic = alembic[-1]
 
+    # build sip/pyqt for maya version!
     sip = []
     pyqt = []
     for n in range(2):
@@ -179,6 +185,12 @@ if canBuildCortexNow:
             '9.13.2',
             'a9f5ac8f19958a8d636d7706a5ca6be0',
             {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+        # ],[
+        #     'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
+        #     'cortex-9.18.0.tar.gz',
+        #     '9.18.0',
+        #     '88793f1f723583b7b40fa69d4fbf0352',
+        #     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
         ]
     ]
 
@@ -192,6 +204,13 @@ if canBuildCortexNow:
 
     # build cortex
     cortex = {}
+
+    # we use this to apply patches created when developing cortex
+    devPatch = []
+    patchFile = os.environ['HOME']+'/dev/cortex.git/patch'
+    if os.path.exists( patchFile ):
+        devPatch = [ ''.join(open(patchFile).readlines()) ]
+
     # build one version of IECore, IECorePython and IECoreGL libraries for each boost version
     for bv in pkgs.boost.versions:
         if bv in ['1.51.0','1.55.0','1.56.0']:
@@ -204,7 +223,8 @@ if canBuildCortexNow:
                 download = build.cortex.pkg(download, pkgs.boost, bv),
                 baseLibs = [pkgs.python],
                 depend = depend,
-                sconsInstall = "installCore installGL"
+                sconsInstall = "installCore installGL",
+                patch = devPatch,
             )
 
     # now build IECoreAlembic for all versions of alembic
@@ -218,8 +238,44 @@ if canBuildCortexNow:
             sed = build.cortex.noIECoreSED(),
             baseLibs = [pkgs.python],
             depend = depend,
-            sconsInstall = "installAlembic"
+            sconsInstall = "installAlembic",
+            patch = devPatch,
         )
+
+    # nuke_ocio = {'9.0' : '1.0.9'}
+    # ocio_nuke = []
+    # for n in range(1):
+    #     pipe.version.set( nuke  = nv[0] if len(nv)<=n else nv[n] )
+    #     nuke_version = pipe.version.get( 'nuke' )
+    #
+    #     # change the version name - add .nukeVersion
+    #     download = [ x for x in pkgs.ocio.download if nuke_ocio[nuke_version[:3]] in x[2] ]
+    #     newDownload = []
+    #     for n in range(len(download)):
+    #         newDownload.append((
+    #             download[n][0],
+    #             download[n][1],
+    #             download[n][2] + '.nuke%s' % nuke_version,
+    #             download[n][3],
+    #             download[n][4],
+    #         ))
+    #     print newDownload
+    #
+    #     ocio_nuke.append( build.cmake(
+    #         ARGUMENTS,
+    #         'ocio',
+    #         # ocio for some reason doesn't add -fPIC when building the static external libraries,
+    #         # so we have to patch it or build fail with gcc 4.1.2
+    #         # also, we have to remove -fvisibility-inlines-hidden when building with gcc 4.1.2
+    #         sed      = pkgs.ocio.sed,
+    #         download = newDownload,
+    #         baseLibs = pkgs.ocio.baseLibs,
+    #         depend   = pkgs.ocio.depend,
+    #         flags    = pkgs.ocio.flags,
+    #         environ  = {
+    #             'NUKE_INSTALL_PATH' : pipe.apps.nuke().path(),
+    #         },
+    #     ))
 
     class cortexApps:
         ''' # this class stores data to build cortex for all the apps.'''
@@ -236,6 +292,12 @@ if canBuildCortexNow:
                 ('houdini', hv[:2], None,        'installHoudini installMantra', pkg(pkg(pkg(noAlembic, pkgs.gcc, '4.8.3'), pkgs.boost, '1.55.0'), pkgs.tbb, None) ),
             ]
 
+            # we use this to apply patches created when developing cortex
+            devPatch = []
+            patchFile = os.environ['HOME']+'/dev/cortex.git/patch'
+            if os.path.exists( patchFile ):
+                devPatch = [ ''.join(open(patchFile).readlines()) ]
+
             # use the data in buildList to build cortex for all apps
             for app in self.builds:
                 for v in app[ self.versions ]:
@@ -250,6 +312,7 @@ if canBuildCortexNow:
                         depend = depend+[pkgs.python],
                         apps = ( app[ self.name ], v ),
                         sconsInstall = app[ self.install ],
+                        patch = devPatch,
                     )
     cortexApps(download)
 
@@ -263,12 +326,6 @@ if canBuildCortexNow:
             targetSuffix = "",
             download = [
                 [
-                #     'https://github.com/ImageEngine/gaffer/archive/0.28.3.0.tar.gz',
-                #     'gaffer-0.28.3.0.tar.gz',
-                #     '0.28.3.0',
-                #     'd20bc719696857cc19b117e538c16cc8',
-                #     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
-                # ],[
                     'https://github.com/GafferHQ/gaffer/archive/0.30.0.0.tar.gz',
                     'gaffer-0.30.0.0.tar.gz',
                     '0.30.0.0',
@@ -280,6 +337,18 @@ if canBuildCortexNow:
                     '0.31.0.0',
                     'f2d0628faada546e8859b8e7882c3f94',
                     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                ],[
+                    'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
+                    'gaffer-0.32.0.0.tar.gz',
+                    '0.32.0.0',
+                    '7e2e8fa206e33009d5a27dea65c75cc1',
+                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                ],[
+                    'https://github.com/GafferHQ/gaffer/archive/0.33.2.0.tar.gz',
+                    'gaffer-0.33.2.0.tar.gz',
+                    '0.33.2.0',
+                    '40302a9180ba09a915d99fbea650852e',
+                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
                 ]
 
             ],
@@ -289,6 +358,17 @@ if canBuildCortexNow:
             sconsInstall = "install"
         )
 
+    # for prman in pv[:2]:
+    #     sufix = 'prman.'+ prman
+    #     gaffer = build.gaffer(
+    #         ARGUMENTS, # noqa
+    #         'gaffer',
+    #         targetSuffix = "",
+    #         download = d,
+    #         depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm, pkgs.python ],
+    #         apps = ( 'prman', prman ),
+    #         sconsInstall = "install"
+    #     )
 
 
     # build openvdb for each version of maya, so we get the plugins!
@@ -319,4 +399,16 @@ if canBuildCortexNow:
                 'MAYA_ROOT' : pipe.apps.maya().path(),
             },
         ))
+
     pkgs.openvdb = openvdb[-1]
+
+
+
+
+
+
+
+
+
+
+#

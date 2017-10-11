@@ -79,22 +79,32 @@ class cmake(make):
             '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
             '-DILMBASE_HOME=$ILMBASE_TARGET_FOLDER',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
-            '-DILMBASE_LIBRARIES=\\"$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread\\" '
             '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
             '-DPYILMBASE_LIBRARY_DIR=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
             # '-DGCC_VERSION=%s' % pipe.build.distro.split('-')[-1],
             '-DGCC_VERSION=$GCC_VERSION',
             # we need libXmi and libXi from the main system
-            "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2))",
-            "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
+            "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | grep 'x86-64' | cut -d'>' -f2))",
+            "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | grep 'x86-64' | cut -d'>' -f2))",
         ]
 
+    doubleSlashDILMBASE_LIBRARIES = False
 
     def fixCMD(self, cmd, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
         cmake finds pipeVFX packages first!'''
+
+        if self.doubleSlashDILMBASE_LIBRARIES:
+            self.flags.append(
+                '-DILMBASE_LIBRARIES=\\"$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread\\" '
+            )
+        else:
+            self.flags.append(
+                '-DILMBASE_LIBRARIES="$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread" '
+            )
+
         environ += [
             'export HDF5_ROOT=$HDF5_TARGET_FOLDER',
             'export HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
@@ -312,6 +322,7 @@ class openvdb(make):
     ''' a make class to exclusively build OpenVDB package
     '''
     src = 'README.md'
+    doubleSlashDILMBASE_LIBRARIES = True
     cmd = [
         '''export PYTHON_VERSION=$($MAYA_ROOT/bin/mayapy --version 2>&1 | awk '{split($2,a,"."); print a[1] "." a[2] "." a[3] }')''',
         '''export PYTHON_VERSION_MAJOR=$($MAYA_ROOT/bin/mayapy --version 2>&1 | awk '{split($2,a,"."); print a[1] "." a[2] }')''',
@@ -449,6 +460,7 @@ class openvdb(make):
             ('mBuffer->genIndexBuffer(indices, GL_LINES)', 'if(MGlobal::mayaState() != MGlobal::kBatch) mBuffer->genIndexBuffer(indices, GL_LINES)'),
             ('insertFrameNumber',''' insertFrameNumberPrman(std::string& str, const MTime& time, int numberingScheme = 0); \nvoid\ninsertFrameNumber'''),
         ],'openvdb_maya/maya/OpenVDBReadNode.cc' : [
+            ('#include .../../libs/libmaya/MayaSceneArchiving.h.', ''),
             ('insertFrameNumber','insertFrameNumberPrman'),
             ('MObject aNodeInfo','''
                 MObject aNodeInfo;
