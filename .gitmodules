@@ -1,0 +1,2 @@
+[submodule "pipeline/tools/openscad/MCAD"]
+	url = https://github.com/D1plo1d/MCAD
