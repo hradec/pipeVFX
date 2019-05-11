@@ -25,33 +25,6 @@ import SCons, os
 SCons.Script.SetOption('warn', 'no-all')
 #SCons.Script.SetOption('num_jobs', 8)
 
-#zlib = build.configure(
-#        ARGUMENTS,
-#        'zlib',
-#        download=[
-#          (
-#            'http://zlib.net/zlib-1.2.8.tar.gz',
-#            'zlib-1.2.8.tar.gz',
-#            '1.2.8',
-#            '44d667c142d7cda120332623eab69f40'
-#          ),
-#        ],
-#)
-#build.allDepend.append(zlib)
-#curl = build.configure(
-#        ARGUMENTS,
-#        'curl',
-#        download=[
-#          (
-#            'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
-#            'curl-7.42.1.tar.gz',
-#            '7.42.1',
-#            '8df5874c4a67ad55496bf3af548d99a2'
-#          ),
-#        ],
-#)
-#build.allDepend.append(curl)
-
 def versionSort(versions):
     def method(v):
         v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
@@ -78,6 +51,33 @@ class all: # noqa
         To build a package with a specific version of GCC, just add gcc as a dependency to the package. (see python again!)
         '''
 
+        zlib = build.configure(
+               ARGUMENTS,
+               'zlib',
+               download=[
+                 (
+                   'http://zlib.net/fossils/zlib-1.2.8.tar.gz',
+                   'zlib-1.2.8.tar.gz',
+                   '1.2.8',
+                   '44d667c142d7cda120332623eab69f40'
+                 ),
+               ],
+        )
+        build.allDepend.append(zlib)
+        curl = build.configure(
+               ARGUMENTS,
+               'curl',
+               download=[
+                 (
+                   'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
+                   'curl-7.42.1.tar.gz',
+                   '7.42.1',
+                   '8df5874c4a67ad55496bf3af548d99a2'
+                 ),
+               ],
+        )
+        build.allDepend.append(curl)
+
         gmp = build.configure(
                ARGUMENTS,
                'gmp',
@@ -87,18 +87,6 @@ class all: # noqa
                    'gmp-6.0.0.tar.gz',
                    '6.0.0',
                    'b7ff2d88cae7f8085bd5006096eed470'
-                 ),
-               ],
-        )
-        mpc = build.configure(
-               ARGUMENTS,
-               'mpc',
-               download=[
-                 (
-                   'ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
-                   'mpc-1.0.3.tar.gz',
-                   '1.0.3',
-                   'd6a1d5f8ddea3abd2cc3e98f58352d26'
                  ),
                ],
         )
@@ -113,6 +101,20 @@ class all: # noqa
                    '482ab3c120ffc959f631b4ba9ec59a46'
                  ),
                ],
+               depend = [ gmp ],
+        )
+        mpc = build.configure(
+               ARGUMENTS,
+               'mpc',
+               download=[
+                 (
+                   'ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
+                   'mpc-1.0.3.tar.gz',
+                   '1.0.3',
+                   'd6a1d5f8ddea3abd2cc3e98f58352d26'
+                 ),
+               ],
+               depend = [ mpfr, gmp ],
         )
         gcc = build.gccBuild(
                 ARGUMENTS,
@@ -129,13 +131,12 @@ class all: # noqa
                 #    '4.8.5',
                 #    'bfe56e74d31d25009c8fb55fd3ca7e01'
                 # ),(
-                   'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
+                   'http://ftp.tsukuba.wide.ad.jp/software/gcc/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
                    'gcc-4.8.3.tar.gz',
                    '4.8.3',
                    'e2c60f5ef918be2db08df96c7d97d0c4'
-                #    'bfe56e74d31d25009c8fb55fd3ca7e01'
                 ),(
-                   'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                   'http://ftp.tsukuba.wide.ad.jp/software/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
                    'gcc-4.1.2.tar.gz',
                    '4.1.2',
                    'dd2a7f4dcd33808d344949fcec87aa86'
@@ -170,7 +171,7 @@ class all: # noqa
                 'http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz',
                 'bzip2-1.0.6.tar.gz',
                 '1.0.6',
-                '00b516f4704d4a7cb50a1d97e6e8e15b'
+                '527819af097ee3014e4d442315b6f283'
             )],
             cmd = [
                 'make -j $DCORES CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$TARGET_FOLDER',
@@ -417,7 +418,7 @@ class all: # noqa
                 '3.8.2',
                 'fbb6f446ea4ed18955e2714934e5b698'
             ),(
-                'http://download.osgeo.org/libtiff/tiff-4.0.3.tar.gz',
+                'http://download.osgeo.org/libtiff/old/tiff-4.0.3.tar.gz',
                 'tiff-4.0.3.tar.gz',
                 '4.0.3',
                 '051c1068e6a0627f461948c365290410',
@@ -727,7 +728,7 @@ class all: # noqa
             ARGUMENTS,
             'hdf5',
             download=[(
-                'https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
+                'https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
                 'hdf5-1.8.17.tar.gz',
                 '1.8.17',
                 '7d572f8f3b798a628b8245af0391a0ca'
@@ -970,11 +971,11 @@ class all: # noqa
                 # '4.8.7',
                 # 'd990ee66bf7ab0c785589776f35ba6ad',
                 # { gcc : '4.1.2' }
-            # ),(
-            #     'http://download.qt.io/official_releases/qt/5.7/5.7.0/single/qt-everywhere-opensource-src-5.7.0.tar.gz',
-            #     'qt-everywhere-opensource-src-5.7.0.tar.gz',
-            #     '5.7.0',
-            #     'd990ee66bf7ab0c785589776f35ba6ad',
+            ),(
+                'http://download.qt.io/official_releases/qt/5.6/5.6.1/single/qt-everywhere-opensource-src-5.6.1.tar.gz',
+                 'qt-everywhere-opensource-src-5.6.1.tar.gz',
+                 '5.6.1',
+                 'ed16ef2a30c674f91f8615678005d44c',
             )],
             environ = {'LD' : 'g++'},
             cmd = [
