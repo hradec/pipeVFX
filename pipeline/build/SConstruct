@@ -22,6 +22,7 @@
 import sys, os, traceback
 sys.path.insert( 0, os.path.abspath('../tools/python/') )
 os.environ['GCC_VERSION'] = 'gcc-multi'
+os.environ['LD_PRELOAD'] ='/atomo/pipeline/libs/linux/x86_64/gcc-multi/mpfr/3.1.4/lib/libmpfr.so.4'
 
 # build all pkgs, if not already built!
 import build
@@ -58,13 +59,13 @@ if canBuildCortexNow:
     houdini = pipe.apps.houdini()
 
     # grab version lists
-    mv = build.pkgs.versionSort( maya.versionList() )
+    mv = [ x for x in build.pkgs.versionSort( maya.versionList() ) if '2018' not in x ]
     pv = build.pkgs.versionSort( prman.versionList() )
     nv = build.pkgs.versionSort( nuke.versionList() )
     hv = build.pkgs.versionSort( houdini.versionList() )
 
     # disable arnold!
-    pipe.version.set(arnold='0.0.0')
+    #pipe.version.set(arnold='0.0.0')
 
 
     # build alembic for each version of maya and prman, so we get the plugins!
@@ -77,6 +78,8 @@ if canBuildCortexNow:
 
         gcc = '4.1.2'
         if float(pipe.version.get('prman')) >= 21:
+            gcc = '4.8.3'
+        if float(pipe.version.get('maya')) >= 2018:
             gcc = '4.8.3'
 
         alembic.append( build.alembic(
@@ -180,10 +183,10 @@ if canBuildCortexNow:
     boostVersion = "1.51.0"
     download = [
         [
-            'https://github.com/ImageEngine/cortex/archive/9.13.2.tar.gz',
-            'cortex-9.13.2.tar.gz',
-            '9.13.2',
-            'a9f5ac8f19958a8d636d7706a5ca6be0',
+            'https://github.com/ImageEngine/cortex/archive/10.0.0-a25.tar.gz',
+            'cortex-10.0.0-a25.tar.gz',
+            '10.0.0.a25',
+            '154613da4c7620a756c80f6082f1191a',
             {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
         # ],[
         #     'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
@@ -292,15 +295,17 @@ if canBuildCortexNow:
                 ('houdini', hv[:2], None,        'installHoudini installMantra', pkg(pkg(pkg(noAlembic, pkgs.gcc, '4.8.3'), pkgs.boost, '1.55.0'), pkgs.tbb, None) ),
             ]
 
-            # we use this to apply patches created when developing cortex
-            devPatch = []
-            patchFile = os.environ['HOME']+'/dev/cortex.git/patch'
-            if os.path.exists( patchFile ):
-                devPatch = [ ''.join(open(patchFile).readlines()) ]
 
             # use the data in buildList to build cortex for all apps
             for app in self.builds:
                 for v in app[ self.versions ]:
+                    # we use this to apply patches created when developing cortex
+                    devPatch = []
+                    print app[ self.download ]
+                    patchFile = os.environ['HOME']+'/dev/cortex.git/patch.$(basename $CORTEX_TARGET_FOLDER)' 
+                    if os.path.exists( patchFile ):
+                        devPatch = [ ''.join(open(patchFile).readlines()) ]
+
                     sufix = app[ self.name ] + v
                     cortex[sufix] = build.cortex(
                         ARGUMENTS, # noqa

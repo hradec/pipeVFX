@@ -873,6 +873,7 @@ class generic:
         os_environ['LIBRARY_PATH'] = ':'.join([
             os_environ['LD_LIBRARY_PATH'],
             '/usr/lib/x86_64-linux-gnu/',
+            '/usr/lib64/', # for centos
         ])
         os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
 

@@ -1,0 +1,37 @@
+###!/bin/bash  -i -l
+
+export PYTHONDONTWRITEBYTECODE=x
+if [ "bash" == "$(basename $SHELL)" ] && [ "$NOPIPE" == ""  ] ; then 
+
+    unset LD_PRELOAD
+    unset LD_LIBRARY_PATH
+    unset PYTHONPATH
+    unset PYTHONHOME
+    unset PYTHON_ROOT
+    unset USE_SYSTEM_LIBRARY
+    unset PARENT_BASE_CLASS
+    
+    #=========================================================================================================
+    # BASH COMPLETION
+    #=========================================================================================================
+    # as I found fedora 14 doesn't call bash completion by default, I decided to add it here!
+    if [ -f /etc/bash_completion.d ] ; then 
+        for f in $(ls /etc/bash_completion.d/); do
+           source /etc/bash_completion.d/$f
+        done
+    fi
+    # source our pipeline bash completion
+    for f in $(ls $(dirname $BASH_SOURCE)/bash_completion.d/); do
+       source $(dirname $BASH_SOURCE)/bash_completion.d/$f 
+    done
+
+    #=========================================================================================================
+    # ALIASES (WRAPPERS)
+    #=========================================================================================================
+    #source our dynamically created bash "script"
+    eval "$(env LD_PRELOAD='' /usr/bin/python -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.init()" $BASH_SOURCE)"
+fi
+
+
+# setup proxy for shell commands, like wget!
+#export http_proxy=http://192.168.0.10:8000
