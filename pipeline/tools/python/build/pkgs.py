@@ -82,24 +82,37 @@ class all: # noqa
                ARGUMENTS,
                'gmp',
                download=[
-                 (
-                   'https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2',
-                   'gmp-6.0.0.tar.gz',
-                   '6.0.0',
-                   'b7ff2d88cae7f8085bd5006096eed470'
-                 ),
+                   # (
+                   #   'https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2',
+                   #   'gmp-6.0.0.tar.gz',
+                   #   '6.0.0',
+                   #   'b7ff2d88cae7f8085bd5006096eed470'
+                   # ),
+                   (
+                     'https://gmplib.org/download/gmp/gmp-6.1.2.tar.lz',
+                     'gmp-6.1.2.tar.gz',
+                     '6.1.2',
+                     'b7ff2d88cae7f8085bd5006096eed470'
+                   ),
+
                ],
         )
         mpfr = build.configure(
                ARGUMENTS,
                'mpfr',
                download=[
-                 (
-                   'https://gforge.inria.fr/frs/download.php/file/35627/mpfr-3.1.4.tar.gz',
-                   'mpfr-3.1.4.tar.gz',
-                   '3.1.4',
-                   '482ab3c120ffc959f631b4ba9ec59a46'
-                 ),
+                   # (
+                   #   'https://gforge.inria.fr/frs/download.php/file/35627/mpfr-3.1.4.tar.gz',
+                   #   'mpfr-3.1.4.tar.gz',
+                   #   '3.1.4',
+                   #   '482ab3c120ffc959f631b4ba9ec59a46'
+                   # ),
+                   (
+                     'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
+                     'mpfr-3.1.6.tar.gz',
+                     '3.1.6',
+                     '482ab3c120ffc959f631b4ba9ec59a46'
+                   ),
                ],
                depend = [ gmp ],
         )
