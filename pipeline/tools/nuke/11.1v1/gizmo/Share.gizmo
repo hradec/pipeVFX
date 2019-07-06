@@ -1,0 +1,16 @@
+#! C:/Program Files/Nuke7.0v2/Nuke7.0.exe -nx
+version 7.0 v2
+Gizmo {
+ inputs 0
+ addUserKnob {20 Share}
+ addUserKnob {2 File1 l file}
+ addUserKnob {22 Import T "b = nuke.tcl(\"value File1\")\nnuke.nodePaste(b)\nn = nuke.toNode(\"Output1\") \nn.knob('selected').setValue(True)\nn.setInput(0, nuke.toNode(\"Write1\") )" +STARTLINE}
+ addUserKnob {22 Reload -STARTLINE T "o = nuke.toNode(\"Output1\") \nfor n in nuke.allNodes():\n\tn.knob('selected').setValue(True)\n\to.knob('selected').setValue(False)\nfor s in nuke.selectedNodes():\n\tnuke.delete(s)\nb = nuke.tcl(\"value File1\")\nnuke.nodePaste(b)\n \no.knob('selected').setValue(True)\no.setInput(0, nuke.toNode(\"Write1\") )"}
+}
+ Output {
+  inputs 0
+  name Output1
+  xpos 31
+  ypos 144
+ }
+end_group

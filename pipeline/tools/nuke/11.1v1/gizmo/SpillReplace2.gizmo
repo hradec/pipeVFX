@@ -1,0 +1,749 @@
+#! /Applications/Nuke6.0v3-32/Nuke6.0v3.app/Contents/MacOS/Nuke6.0v3 -nx
+version 6.0 v3
+Gizmo {
+ inputs 2
+ addUserKnob {20 User}
+ addUserKnob {20 Info l SpillReplace2 n 1}
+ Info 0
+ addUserKnob {26 Info2 l "" +STARTLINE T "by Michael Habenicht\nwww.tinitron.de\n\nbased on the shake macro by Christian Wieser"}
+ addUserKnob {20 endGroup n -1}
+ addUserKnob {4 spillColor M {Red Green Blue}}
+ spillColor Green
+ addUserKnob {7 limiterColorBalance}
+ limiterColorBalance 0.5
+ addUserKnob {18 spillReplace}
+ spillReplace {0.5 0.5 0.5}
+ addUserKnob {6 useReplaceImage +STARTLINE}
+ addUserKnob {18 spillBias}
+ spillBias {0.5 0.5 0.5}
+ addUserKnob {7 neutralizer}
+ addUserKnob {41 which l restoreLuminance T Dissolve1.which}
+ addUserKnob {20 spillMatte}
+ addUserKnob {26 divider3 l Grade}
+ addUserKnob {41 blackpoint T Grade1.blackpoint}
+ addUserKnob {41 whitepoint T Grade1.whitepoint}
+ addUserKnob {41 black l lift T Grade1.black}
+ addUserKnob {41 white l gain T Grade1.white}
+ addUserKnob {41 multiply T Grade1.multiply}
+ addUserKnob {41 add l offset T Grade1.add}
+ addUserKnob {41 gamma T Grade1.gamma}
+ addUserKnob {41 black_clamp l "black clamp" T Grade1.black_clamp}
+ addUserKnob {41 white_clamp l "white clamp" -STARTLINE T Grade1.white_clamp}
+ addUserKnob {26 divider1 l Erode}
+ addUserKnob {41 size T FilterErode1.size}
+ addUserKnob {41 filter T FilterErode1.filter}
+ addUserKnob {26 divider2 l Blur}
+ addUserKnob {41 size_1 l size T Blur1.size}
+ addUserKnob {41 filter_1 l filter T Blur1.filter}
+}
+ BackdropNode {
+  inputs 0
+  name BackdropNode2
+  tile_color 0xd0196ff
+  label Blue
+  note_font_size 42
+  note_font_color 0x499602d2
+  xpos -1103
+  ypos -126
+  bdwidth 204
+  bdheight 299
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode1
+  tile_color 0x499602d2
+  label Green
+  note_font_size 42
+  note_font_color 0x499602d2
+  xpos -1354
+  ypos -126
+  bdwidth 204
+  bdheight 299
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode3
+  tile_color 0x961901ff
+  label Red
+  note_font_size 42
+  note_font_color 0x499602d2
+  xpos -1597
+  ypos -126
+  bdwidth 204
+  bdheight 299
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode5
+  tile_color 0x11d96ff
+  label Blue
+  note_font_size 42
+  note_font_color 0x499602d2
+  xpos -50
+  ypos -130
+  bdwidth 198
+  bdheight 275
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode4
+  tile_color 0x499602d2
+  label Green
+  note_font_size 42
+  note_font_color 0x499602d2
+  xpos -280
+  ypos -130
+  bdwidth 198
+  bdheight 275
+ }
+ BackdropNode {
+  inputs 0
+  name BackdropNode6
+  tile_color 0x962101ff
+  label Red
+  note_font_size 42
+  note_font_color 0x499602d2
+  xpos -509
+  ypos -130
+  bdwidth 198
+  bdheight 275
+ }
+ Input {
+  inputs 0
+  name In
+  xpos -741
+  ypos -585
+ }
+set N17ce1430 [stack 0]
+ Shuffle {
+  red green
+  blue green
+  name G
+  xpos 218
+  ypos -441
+ }
+set N17ce2c90 [stack 0]
+ Dot {
+  name Dot2
+  xpos 717
+  ypos -102
+ }
+set N1c123060 [stack 0]
+push $N17ce1430
+ Shuffle {
+  red blue
+  green blue
+  name B
+  xpos 620
+  ypos -441
+ }
+set N1c124910 [stack 0]
+push $N17ce1430
+ Shuffle {
+  green red
+  blue red
+  name R
+  xpos -211
+  ypos -441
+ }
+set N1c12d050 [stack 0]
+ Dot {
+  name Dot1
+  xpos 600
+  ypos -102
+ }
+set N1c128630 [stack 0]
+ Group {
+  inputs 3
+  name BlueMatte
+  xpos 740
+  ypos -33
+ }
+  Input {
+   inputs 0
+   name B
+   xpos 680
+   ypos -129
+   number 1
+  }
+  Input {
+   inputs 0
+   name G
+   xpos 531
+   ypos -129
+   number 2
+  }
+  Input {
+   inputs 0
+   name R
+   xpos 350
+   ypos -129
+  }
+  Merge2 {
+   inputs 2
+   operation max
+   name Max
+   xpos 350
+   ypos -57
+  }
+  Merge2 {
+   inputs 2
+   operation minus
+   name Merge1
+   xpos 497
+   ypos 15
+  }
+  Output {
+   name Output1
+   xpos 497
+   ypos 87
+  }
+ end_group
+push $N1c123060
+push $N1c124910
+push $N1c128630
+ Group {
+  inputs 3
+  name GreenMatte
+  xpos 620
+  ypos -33
+ }
+  Input {
+   inputs 0
+   name G
+   xpos 531
+   ypos -129
+   number 2
+  }
+  Input {
+   inputs 0
+   name B
+   xpos 680
+   ypos -129
+   number 1
+  }
+  Input {
+   inputs 0
+   name R
+   xpos 350
+   ypos -129
+  }
+  Merge2 {
+   inputs 2
+   operation max
+   name Max
+   xpos 350
+   ypos -57
+  }
+  Merge2 {
+   inputs 2
+   operation minus
+   name Merge1
+   xpos 497
+   ypos 15
+  }
+  Output {
+   name Output1
+   xpos 497
+   ypos 87
+  }
+ end_group
+push $N1c123060
+push $N1c124910
+push $N1c128630
+ Group {
+  inputs 3
+  name RedMatte
+  xpos 496
+  ypos -33
+ }
+  Input {
+   inputs 0
+   name R
+   xpos 350
+   ypos -129
+  }
+  Input {
+   inputs 0
+   name B
+   xpos 680
+   ypos -129
+   number 1
+  }
+  Input {
+   inputs 0
+   name G
+   xpos 531
+   ypos -129
+   number 2
+  }
+  Merge2 {
+   inputs 2
+   operation max
+   name Max
+   selected true
+   xpos 620
+   ypos -57
+  }
+  Merge2 {
+   inputs 2
+   operation minus
+   name Merge1
+   xpos 497
+   ypos 15
+  }
+  Output {
+   name Output1
+   xpos 497
+   ypos 87
+  }
+ end_group
+ Switch {
+  inputs 3
+  which {{spillColor i}}
+  name Switch2
+  xpos 620
+  ypos 39
+ }
+ Shuffle {
+  red black
+  green black
+  blue black
+  alpha green
+  name Shuffle1
+  xpos 620
+  ypos 79
+ }
+ Grade {
+  channels alpha
+  name Grade1
+  xpos 620
+  ypos 103
+ }
+ FilterErode {
+  size 0
+  filter gaussian
+  name FilterErode1
+  xpos 620
+  ypos 137
+ }
+ Blur {
+  channels alpha
+  name Blur1
+  xpos 620
+  ypos 171
+ }
+set N1e5f41e0 [stack 0]
+ Dot {
+  name Dot4
+  xpos 654
+  ypos 1050
+ }
+push $N1e5f41e0
+ Input {
+  inputs 0
+  name BG
+  xpos 415
+  ypos -571
+  number 1
+ }
+push $N17ce1430
+ Shuffle {
+  red white
+  green white
+  blue white
+  alpha white
+  name White
+  xpos -55
+  ypos -441
+ }
+set N1e5fad10 [stack 0]
+ Multiply {
+  channels rgb
+  value {{spillReplace.r i} {spillReplace.g i} {spillReplace.b i} 1}
+  name ReplaceColor
+  xpos 180
+  ypos 495
+ }
+ Switch {
+  inputs 2
+  which {{useReplaceImage i}}
+  name Switch1
+  xpos 203
+  ypos 543
+ }
+push $N1c124910
+push $N17ce2c90
+ Merge2 {
+  inputs 2
+  operation min
+  name MaxNewB1
+  xpos 47
+  ypos -43
+ }
+push $N17ce2c90
+push $N1c12d050
+ Merge2 {
+  inputs 2
+  operation max
+  name MaxNewR1
+  xpos -40
+  ypos -45
+ }
+push $N17ce2c90
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  name Copy8
+  xpos -40
+  ypos 10
+ }
+ Copy {
+  inputs 2
+  from0 rgba.blue
+  to0 rgba.blue
+  name Copy9
+  xpos -40
+  ypos 70
+ }
+push $N1c124910
+push $N17ce2c90
+ Merge2 {
+  inputs 2
+  operation max
+  name MaxNewB
+  xpos -182
+  ypos -45
+ }
+push $N17ce2c90
+push $N1c12d050
+ Merge2 {
+  inputs 2
+  operation max
+  name MaxNewR
+  xpos -270
+  ypos -46
+ }
+push $N17ce2c90
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  name Copy2
+  xpos -270
+  ypos 10
+ }
+ Copy {
+  inputs 2
+  from0 rgba.blue
+  to0 rgba.blue
+  name Copy3
+  xpos -270
+  ypos 70
+ }
+push $N17ce2c90
+push $N1c124910
+ Merge2 {
+  inputs 2
+  operation max
+  name MaxNewB2
+  xpos -411
+  ypos -42
+ }
+push $N1c12d050
+push $N17ce2c90
+ Merge2 {
+  inputs 2
+  operation min
+  name MaxNewR2
+  xpos -499
+  ypos -44
+ }
+push $N17ce2c90
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  name Copy10
+  xpos -499
+  ypos 10
+ }
+ Copy {
+  inputs 2
+  from0 rgba.blue
+  to0 rgba.blue
+  name Copy11
+  xpos -499
+  ypos 68
+ }
+ Switch {
+  inputs 3
+  which {{spillColor i}}
+  name Switch4
+  xpos -270
+  ypos 231
+ }
+push $N1c124910
+push $N17ce2c90
+push $N1c12d050
+ Dissolve {
+  inputs 2
+  channels rgb
+  which {{limiterColorBalance i}}
+  name MixRB1
+  xpos -1093
+  ypos -41
+ }
+push $N1e5fad10
+ Multiply {
+  channels rgb
+  value {{fabs(min(spillBias.r,spillBias.g)-spillBias.b) i} {fabs(min(spillBias.r,spillBias.g)-spillBias.b) i} {fabs(min(spillBias.r,spillBias.g)-spillBias.b) i} 1}
+  name BiasDifference1
+  xpos -999
+  ypos -41
+ }
+ Merge2 {
+  inputs 2
+  operation minus
+  name ISubBias1
+  xpos -1093
+  ypos 7
+ }
+ Merge2 {
+  inputs 2
+  operation min
+  name Min1
+  xpos -1093
+  ypos 55
+ }
+push $N17ce1430
+ Copy {
+  inputs 2
+  from0 rgba.blue
+  to0 rgba.blue
+  name Copy6
+  xpos -1093
+  ypos 98
+ }
+push $N17ce2c90
+push $N1c124910
+push $N1c12d050
+ Dissolve {
+  inputs 2
+  channels rgb
+  which {{limiterColorBalance i}}
+  name MixRB
+  xpos -1344
+  ypos -41
+ }
+push $N1e5fad10
+ Multiply {
+  channels rgb
+  value {{fabs(min(spillBias.r,spillBias.b)-spillBias.g) i} {fabs(min(spillBias.r,spillBias.b)-spillBias.g) i} {fabs(min(spillBias.r,spillBias.b)-spillBias.g) i} 1}
+  name BiasDifference
+  xpos -1250
+  ypos -41
+ }
+ Merge2 {
+  inputs 2
+  operation minus
+  name ISubBias
+  xpos -1344
+  ypos 7
+ }
+ Merge2 {
+  inputs 2
+  operation min
+  name Min
+  xpos -1344
+  ypos 55
+ }
+push $N17ce1430
+ Copy {
+  inputs 2
+  from0 rgba.green
+  to0 rgba.green
+  name Copy1
+  xpos -1344
+  ypos 98
+ }
+push $N1c12d050
+push $N1c124910
+push $N17ce2c90
+ Dissolve {
+  inputs 2
+  channels rgb
+  which {{limiterColorBalance i}}
+  name MixRB2
+  xpos -1587
+  ypos -42
+ }
+push $N1e5fad10
+ Multiply {
+  channels rgb
+  value {{fabs(min(spillBias.b,spillBias.g)-spillBias.r)} {fabs(min(spillBias.b,spillBias.g)-spillBias.r)} {fabs(min(spillBias.b,spillBias.g)-spillBias.r)} 1}
+  name BiasDifference2
+  xpos -1489
+  ypos -33
+ }
+ Merge2 {
+  inputs 2
+  operation minus
+  name ISubBias2
+  xpos -1587
+  ypos 7
+ }
+ Merge2 {
+  inputs 2
+  operation min
+  name Min2
+  xpos -1587
+  ypos 55
+ }
+push $N17ce1430
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  name Copy7
+  xpos -1587
+  ypos 98
+ }
+ Switch {
+  inputs 3
+  which {{spillColor i}}
+  name Switch3
+  xpos -1344
+  ypos 231
+ }
+ Dissolve {
+  inputs 2
+  channels rgb
+  which {{neutralizer i}}
+  name MixNeutralizer
+  xpos -370
+  ypos 423
+ }
+ Keymix {
+  inputs 3
+  channels rgba
+  name Keymix1
+  xpos 203
+  ypos 615
+ }
+set N23081c80 [stack 0]
+push $N17ce1430
+ Dot {
+  name Dot6
+  xpos -707
+  ypos 714
+ }
+set N230846a0 [stack 0]
+ Dot {
+  name Dot5
+  xpos 94
+  ypos 714
+ }
+set N230844d0 [stack 0]
+push $N23081c80
+ Merge2 {
+  inputs 2
+  operation minus
+  name Merge2
+  xpos 60
+  ypos 777
+ }
+ Clamp {
+  channels rgb
+  name Clamp1
+  xpos 60
+  ypos 801
+ }
+ Expression {
+  expr0 0.3*r+0.59*g+0.11*b
+  expr1 0.3*r+0.59*g+0.11*b
+  expr2 0.3*r+0.59*g+0.11*b
+  name Expression1
+  xpos 60
+  ypos 825
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge3
+  xpos 60
+  ypos 849
+ }
+push $N23081c80
+push $N230844d0
+ Merge2 {
+  inputs 2
+  operation minus
+  name Merge4
+  xpos 290
+  ypos 801
+ }
+ Clamp {
+  channels rgb
+  name Clamp2
+  xpos 290
+  ypos 825
+ }
+ Expression {
+  expr0 0.3*r+0.59*g+0.11*b
+  expr1 0.3*r+0.59*g+0.11*b
+  expr2 0.3*r+0.59*g+0.11*b
+  name Expression2
+  xpos 290
+  ypos 849
+ }
+ Merge2 {
+  inputs 2
+  operation minus
+  name Merge5
+  xpos 122
+  ypos 897
+ }
+push $N23081c80
+ Dissolve {
+  inputs 2
+  channels rgb
+  name Dissolve1
+  xpos 203
+  ypos 945
+ }
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name Copy5
+  xpos 203
+  ypos 1042
+ }
+push $N230846a0
+ Dot {
+  name Dot3
+  xpos -707
+  ypos 1146
+ }
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  from1 rgba.green
+  to1 rgba.green
+  from2 rgba.blue
+  to2 rgba.blue
+  from3 rgba.alpha
+  to3 rgba.alpha
+  name Copy4
+  xpos 203
+  ypos 1121
+ }
+ Output {
+  name Output1
+  xpos 203
+  ypos 1215
+ }
+end_group

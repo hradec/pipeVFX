@@ -1,0 +1,261 @@
+#! C:/Program Files/Nuke7.0v2/Nuke7.0.exe -nx
+version 7.0 v2
+Gizmo {
+ addUserKnob {20 Aberration}
+ addUserKnob {20 endGroup n -1}
+ addUserKnob {26 teste l Distort: T ""}
+ addUserKnob {7 RED R -0.3 0.3}
+ RED 0.004
+ addUserKnob {7 GREEN R -0.3 0.3}
+ addUserKnob {7 BLUE R -0.3 0.3}
+ BLUE 0.005
+ addUserKnob {26 Div l "" +STARTLINE T " "}
+ addUserKnob {20 Blur l Blur: n 1}
+ Blur 0
+ addUserKnob {7 RBlur l RED R 0 100}
+ RBlur 3
+ addUserKnob {7 GBlur l GREEN R 0 100}
+ GBlur 5.8
+ addUserKnob {7 BBlur l BLUE R 0 100}
+ BBlur 3.4
+ addUserKnob {6 Bfilter l Gaussian +STARTLINE}
+ Bfilter {{"\[if \{\[value this]==\"true\"\} \{\[set seq\[knob Blur1.filter 3]\[knob Blur2.filter 3]\[knob Blur3.filter 3]; return \"true\"]\} else \{\[set seq\[knob Blur1.filter 0]\[knob Blur2.filter 0]\[knob Blur3.filter 0]; return \"false\"]\}]" x69 0}}
+ addUserKnob {20 endGroup_1 l endGroup n -1}
+ addUserKnob {26 ""}
+ addUserKnob {12 Center}
+ addUserKnob {6 SetBlur l Blur -STARTLINE}
+ SetBlur {{"\[if \{\[value this]==\"false\"\} \{\[set seq \[knob Blur1.size 0]\[knob Blur2.size 0]\[knob Blur3.size 0]; return \"false\"]\} else \{\[set seq \[knob Blur1.size parent.RBlur]\[knob Blur2.size parent.GBlur]\[knob Blur3.size parent.BBlur]; return \"true\"]\}]" x69 0}}
+ addUserKnob {12 Asymmetric}
+ addUserKnob {6 Anamorphic -STARTLINE}
+ Anamorphic {{"\[if \{\[value this]==\"true\"\} \{\[set seq \[knob LensDistortion1.lensType 1]\[knob LensDistortion2.lensType 1]\[knob LensDistortion3.lensType 1]; return \"true\"]\} else \{\[set seq \[knob LensDistortion1.lensType 0]\[knob LensDistortion2.lensType 0]\[knob LensDistortion3.lensType 0]; return \"false\"]\}]" x69 0}}
+ addUserKnob {20 Offset}
+ addUserKnob {26 Position l " Channels:" T ""}
+ addUserKnob {30 OSRed l RED}
+ addUserKnob {14 RSize l "" -STARTLINE R 0 100}
+ RSize 1
+ addUserKnob {30 OFGreen l GREEN}
+ addUserKnob {14 GSize l "" -STARTLINE R 0 100}
+ GSize 1
+ addUserKnob {30 OSBlue l BLUE}
+ addUserKnob {14 BSize l "" -STARTLINE R 0 100}
+ BSize 1
+ addUserKnob {26 div l "" +STARTLINE T " "}
+ addUserKnob {20 Skew l Skew: n 1}
+ Skew 0
+ addUserKnob {7 SXRed l "RED x"}
+ addUserKnob {7 SYRed l y -STARTLINE}
+ addUserKnob {7 SXGreen l "GREEN x"}
+ addUserKnob {7 SYGreen l y -STARTLINE}
+ addUserKnob {7 SXBlue l "BLUE x"}
+ addUserKnob {7 SYBlue l y -STARTLINE}
+ addUserKnob {20 endGroup_2 l endGroup n -1}
+ addUserKnob {26 "" +STARTLINE}
+ addUserKnob {26 Mute l "" +STARTLINE T "     MUTE   "}
+ addUserKnob {6 RSolo l R -STARTLINE}
+ RSolo {{"\[if \{\[value this]==\"true\"\} \{\[set seq \[knob Remove1.channels \"RED\"]; return \"true\"]\} else \{\[set seq \[knob Remove1.channels \"alpha\"]; return \"false\"]\}]" x69 0}}
+ addUserKnob {6 GSolo l G -STARTLINE}
+ GSolo {{"\[if \{\[value this]==\"true\"\} \{\[set seq \[knob Remove1.channels2 \"GREEN\"]; return \"true\"]\} else \{\[set seq \[knob Remove1.channels2 \"alpha\"]; return \"false\"]\}]" K x69 0}}
+ addUserKnob {6 BSolo l B -STARTLINE}
+ BSolo {{"\[if \{\[value this]==\"true\"\} \{\[set seq \[knob Remove1.channels3 \"BLUE\"]; return \"true\"]\} else \{\[set seq \[knob Remove1.channels3 \"alpha\"]; return \"false\"]\}]" x69 0}}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos -1
+  ypos -21
+ }
+ Dot {
+  name Dot4
+  xpos 33
+  ypos 16
+ }
+set N1930d170 [stack 0]
+ LensDistortion {
+  serializeKnob ""
+  serialiseKnob "22 serialization::archive 9 0 0 0 0 0 0 0 0 0 0 0 0"
+  distortion2 {{parent.BLUE}}
+  distortionCenter {{parent.Center.x} {parent.Center.y}}
+  asymmetricDistortion {{parent.LensDistortion1.asymmetricDistortion.x} {parent.LensDistortion1.asymmetricDistortion.y}}
+  name LensDistortion2
+  xpos 192
+  ypos 140
+ }
+set N19405c30 [stack 0]
+ Shuffle {
+  alpha blue
+  name Shuffle3
+  xpos 101
+  ypos 140
+ }
+ Dot {
+  name Dot3
+  xpos 135
+  ypos 220
+ }
+push $N19405c30
+ Blur {
+  size {0}
+  filter box
+  name Blur3
+  xpos 192
+  ypos 164
+ }
+ Merge2 {
+  inputs 2
+  operation matte
+  name Merge3
+  xpos 192
+  ypos 217
+ }
+ Transform {
+  translate {{parent.OSBlue.u} {parent.OSBlue.v}}
+  scale {{parent.BSize} {parent.BSize}}
+  skewX {{parent.SXBlue}}
+  skewY {{parent.SYBlue}}
+  center {{Input1.width/2} {Input1.height/2}}
+  name Transform3
+  xpos 192
+  ypos 241
+ }
+ Dot {
+  name Dot31
+  xpos 226
+  ypos 345
+ }
+push $N1930d170
+ LensDistortion {
+  serializeKnob ""
+  serialiseKnob "22 serialization::archive 9 0 0 0 0 0 0 0 0 0 0 0 0"
+  distortion1 {{parent.RED}}
+  distortionCenter {{parent.Center.x} {parent.Center.y}}
+  asymmetricDistortion {{parent.Asymetric.x} {parent.Asymetric.y}}
+  filter Impulse
+  name LensDistortion1
+  xpos -196
+  ypos 135
+ }
+set N194077b0 [stack 0]
+ Shuffle {
+  alpha red
+  name Shuffle1
+  xpos -294
+  ypos 135
+ }
+ Dot {
+  name Dot1
+  xpos -260
+  ypos 209
+ }
+push $N194077b0
+ Blur {
+  size {0}
+  filter box
+  maskChannelMask -rgba.alpha
+  name Blur1
+  xpos -196
+  ypos 159
+ }
+ Merge2 {
+  inputs 2
+  operation matte
+  name Merge1
+  xpos -196
+  ypos 206
+ }
+ Transform {
+  translate {{parent.OSRed.u} {parent.OSRed.v}}
+  scale {{parent.RSize} {parent.RSize}}
+  skewX {{parent.SXRed}}
+  skewY {{parent.SYRed}}
+  center {{Input1.width/2} {Input1.height/2}}
+  name Transform1
+  xpos -196
+  ypos 230
+ }
+ Dot {
+  name Dot30
+  xpos -162
+  ypos 292
+ }
+push $N1930d170
+ LensDistortion {
+  serializeKnob ""
+  serialiseKnob "22 serialization::archive 9 0 0 0 0 0 0 0 0 0 0 0 0"
+  distortion1 {{parent.GREEN}}
+  distortionCenter {{parent.Center.x} {parent.Center.y}}
+  asymmetricDistortion {{parent.LensDistortion1.asymmetricDistortion.x} {parent.LensDistortion1.asymmetricDistortion.y}}
+  name LensDistortion3
+  xpos -1
+  ypos 141
+ }
+set N19409330 [stack 0]
+ Shuffle {
+  alpha green
+  name Shuffle2
+  xpos -95
+  ypos 141
+ }
+ Dot {
+  name Dot2
+  xpos -61
+  ypos 224
+ }
+push $N19409330
+ Blur {
+  size {0}
+  filter box
+  name Blur2
+  xpos -1
+  ypos 165
+ }
+ Merge2 {
+  inputs 2
+  operation matte
+  name Merge2
+  xpos -1
+  ypos 221
+ }
+ Transform {
+  translate {{parent.OFGreen.u} {parent.OFGreen.v}}
+  scale {{parent.GSize} {parent.GSize}}
+  skewX {{parent.SXGreen}}
+  skewY {{parent.SYGreen}}
+  center {{Input1.width/2} {Input1.height/2}}
+  name Transform2
+  xpos -1
+  ypos 245
+ }
+ ShuffleCopy {
+  inputs 2
+  green green
+  name ShuffleCopy1
+  xpos -1
+  ypos 289
+ }
+ ShuffleCopy {
+  inputs 2
+  blue blue
+  name ShuffleCopy2
+  xpos -1
+  ypos 342
+ }
+ Remove {
+  channels alpha
+  channels2 alpha
+  channels3 alpha
+  name Remove1
+  xpos -1
+  ypos 426
+ }
+ Output {
+  name Output1
+  xpos -1
+  ypos 500
+ }
+ Viewer {
+  input_process false
+  name Viewer1
+  xpos -1
+  ypos 546
+ }
+end_group
