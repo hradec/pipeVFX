@@ -1,6 +1,6 @@
 
-Projetos 	-fstype=smbfs,soft ://3d:@192.168.0.2/Projetos
-Projetos2	-fstype=smbfs,soft ://3d:@192.168.0.10/Projetos
-Install		-fstype=smbfs,soft ://3d:@192.168.0.2/Install
-Render		-fstype=smbfs,soft ://render:@192.168.0.3/Render
-Bruto		-fstype=smbfs,soft ://bruto:@192.168.0.3/bruto
+Projetos 	-fstype=smbfs,soft ://3d:3d@192.168.0.2/Projetos
+Projetos2	-fstype=smbfs,soft ://3d:3d@192.168.0.10/Projetos
+Install		-fstype=smbfs,soft ://3d:3d@192.168.0.2/Install
+Render		-fstype=smbfs,soft ://render:render@192.168.0.3/Render
+Bruto		-fstype=smbfs,soft ://bruto:bruto@192.168.0.3/bruto

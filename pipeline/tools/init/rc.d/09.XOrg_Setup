@@ -40,5 +40,10 @@ setupXorg(){
 #    [ "$(echo $(hostname) | grep farm)" != "" ] && service messagebus start
     sleep 0.1
 }
-setupXorg
 
+ 
+if [ ! -f /etc/arch-release ] ; then
+	setupXorg
+fi
+
+/atomo/pipeline/tools/init/amdgpu/install

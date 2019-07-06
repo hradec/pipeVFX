@@ -48,8 +48,10 @@ mountCentralHome(){
     mount --bind $homeCentral /home/3d
 }
 
-if [ "$home" != "" ] ; then 
-    mountLocalHome
-else
-    mountCentralHome
+if [ ! -f /etc/arch-release ] ; then
+    if [ "$home" != "" ] ; then 
+        mountLocalHome
+    else
+        mountCentralHome
+    fi
 fi

@@ -1,0 +1,18 @@
+************************************* Invoked: Fri Dec 16 16:13:22 2016
+Operations start: 0
+Operations end: 0
+Resource count: 0
+Data block size: 32
+Magic marker: 302133812
+Magic cookie: 14007050384008702200
+Index size: 48
+End of data: 19943936
+Operations start: 145699
+Operations end: 95928
+Resource count: 1
+Data block size: 241731
+Magic marker: 302133812
+Magic cookie: 14007050384008702201
+Index size: 48
+End of data: 241731
+Number of operations: 48

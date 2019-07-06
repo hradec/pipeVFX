@@ -1,0 +1,434 @@
+#!/bin/bash
+#
+# Sets up a readonly root filesystem to be used as a normal
+# writable root filesystem! 
+#
+# We need to add this to the top of /etc/rc.sysinit
+# so it runs before the whole fedora initialization!!!
+#
+#
+
+version=1.0.0
+
+#clear 
+getarg(){
+    for each in $(echo $(cat /proc/cmdline)) ; do 
+        [ "$(echo $each | cut -d'=' -f1)" == "$1" ] && echo $(echo $each | cut -d'=' -f2)
+    done
+}
+
+cache(){
+#  for line in $(cat /proc/partitions | grep sd.. | cut -d's' -f2 | sed 's/d/sd/g'); do
+#        echo "$(/sbin/blkid /dev/$line | grep CACHE | cut -d':' -f1)"
+#        /sbin/blkid /dev/$line >&2
+#        echo $line >&2
+#  done
+#  cacheVol=$(cache)
+#  /sbin/blkid >&2
+  if [ "$cacheVol" == "" ] ; then
+        cacheVol=$(/sbin/blkid | grep CACHE | cut -d':' -f1)
+  fi
+  #echo "cacheVol: $cacheVol" >&2
+  echo $(echo $cacheVol)
+}
+getCacheType(){
+	cacheVol=$(cache)
+	if [ "$cacheVol" != "" ] ; then
+		mkdir -p /dev/shm/cache 
+		mount $cacheVol /dev/shm/cache
+		type=$(mount | grep  $cacheVol | cut -d' ' -f5) 
+		umount /dev/shm/cache
+		echo $type
+	fi
+}
+
+
+
+lsmod
+
+#/bin/sh
+root=$(getarg root)
+if [ "$root" == "" ] ; then 
+   root="192.168.0.11:/RAID/atomo"
+fi
+pipe=$(getarg pipe)
+distro=$(getarg distro)
+studio=$(getarg studio)
+liveInit=$(getarg liveInit)
+nfsRoot="$pipe/$distro"
+nfsRoot2="$root/$distro"
+nfsOpts="vers=3,rsize=32768,wsize=32768,timeo=1200,acl,retry=5,intr,udp,noatime,nodiratime"
+#nfsOpts="vers=3,rsize=8192,wsize=8192,timeo=1200,acl,retry=5,intr,tcp,noatime,nodiratime,fsc"
+
+cacheVol=$(cache)
+cacheVolType=$(getCacheType)
+
+echo cache:$cacheVol:
+
+root=$nfsRoot
+stringContain() { [ -z "${2##*$1*}" ]; }
+if stringContain squash $distro  ; then
+	mkdir -p /dev/shm/nfs
+	mount $pipe /dev/shm/nfs -o ro,nolock
+	root=/dev/shm/nfs/$distro
+	if [ "$cacheVol" != "" ] ; then 
+		if [ "$cacheVolType" == "ext4" ] ;  then
+			cacheVolOptions="-o rw,relatime,journal_checksum,journal_async_commit"
+		fi
+		mkdir -p /dev/shm/cache
+		mount $cacheVol /dev/shm/cache $cacheVolOptions
+		touch /dev/shm/cache/root.squash
+		if [ $(stat -c %s /dev/shm/cache/root.squash) -ne $(stat -c %s  /dev/shm/nfs/$distro) ] ; then
+			rm -f /dev/shm/cache/*
+			echo cp -v /dev/shm/nfs/$distro  /dev/shm/cache/root.squash
+			time cp -v /dev/shm/nfs/$distro  /dev/shm/cache/root.squash 
+			sync
+		fi
+		distro=/dev/shm/cache/root.squash
+		root=$distro
+		umount /dev/shm/nfs 
+	fi
+fi
+
+echo "=============================================================="
+echo Pipe Boot script version $version
+echo ""
+echo "Pipe....: $pipe"
+echo "Distro..: $distro"
+echo "liveInit: $liveInit"
+
+ulimit -n 131072
+
+#/sbin/modprobe squashfs
+#/sbin/modprobe fuse
+
+# create folders to hold read-only and read-write filesystems. 
+mkdir -p /root
+mkdir -p /boot
+mount -t tmpfs -o size=16G tmpfs /boot
+mkdir -p /boot/rootRO
+mkdir -p /boot/rootRW
+mkdir -p /boot/rootRW/$studio
+mkdir -p /boot/rootRW/3DSERVER/
+mkdir -p /boot/rootRW/3dserver/
+ln -s /mnt/Projetos /boot/rootRW/3DSERVER/
+ln -s /mnt/Projetos /boot/rootRW/3dserver/
+
+chmod a-w /boot/rootRO
+
+if stringContain squash $distro  ; then
+	mount -o loop,xattrs -t squashfs $root /boot/rootRO
+else
+	mount -r -o ro,nolock,$nfsOpts $nfsRoot2 /boot/rootRO
+fi
+
+#mount -r -o ro,nolock,$nfsOpts $nfsRoot /boot/rootRO
+mount -t tmpfs -o size=16G  tmpfs  /boot/rootRW
+#mount -t tmpfs -o size=16G  tmpfs  /newroot
+#for l in $(find /boot/rootRO/ -maxdepth 1 -type d) ; do
+#	b=$(basename $l)
+#	mkdir -p /newroot/$b
+#	mkdir -p /boot/rootRW/$b
+#	mount  -o dirs=/boot/rootRW/$b=rw:/boot/rootRO/$b=ro -t aufs none /newroot/$b
+#done
+
+
+# mount writable folders for booting
+#busybox mount -o dirs=/boot/rootRW=rw:/boot/rootRO=ro -t aufs aufs /newroot
+mkdir -p /boot/rootRW/0
+mkdir -p /boot/rootRW/1
+mount -t overlay -o lowerdir=/boot/rootRO,upperdir=/boot/rootRW/0,workdir=/boot/rootRW/1 overlay /newroot
+
+mkdir -p /newroot/boot/rootRW
+mount --bind /boot/rootRW  /newroot/boot/rootRW
+mkdir -p /newroot/boot/rootRO
+mount --bind /boot/rootRO  /newroot/boot/rootRO
+
+
+# setup sssd log folder, or else sssd won't start!!
+mkdir -p /newroot/root
+mkdir -p /newroot/tmp
+mkdir -p /newroot/usr/tmp
+mkdir -p /newroot/var/log
+mkdir -p /newroot/nuke_sd_cache
+if [ "$cacheVol" == "" ] ; then 
+	mount -t tmpfs  tmpfs /newroot/nuke_sd_cache
+else
+	cacheVolOptions="defaults"
+	if [ "$cacheVolType" == "ext4" ] ;  then
+		cacheVolOptions="rw,relatime,journal_checksum,journal_async_commit"
+	fi
+	mount --bind /dev/shm/cache  /newroot/nuke_sd_cache 
+	#mount -o $cacheVolOptions /newroot/nuke_sd_cache
+	#fsck -y $cacheVol
+fi
+#mount $cacheVol  /newroot/nuke_sd_cache -o $cacheVolOptions
+mkdir -p /newroot/nuke_sd_cache/netboot/tmp
+mkdir -p /newroot/nuke_sd_cache/netboot/usr/tmp
+mkdir -p /newroot/nuke_sd_cache/netboot/var/tmp
+mkdir -p /newroot/nuke_sd_cache/netboot/var/log
+mount --bind /newroot/nuke_sd_cache/netboot/tmp /newroot/tmp
+mount --bind /newroot/nuke_sd_cache/netboot/usr/tmp /newroot/usr/tmp
+mount --bind /newroot/nuke_sd_cache/netboot/var/tmp /newroot/var/tmp
+mount --bind /newroot/nuke_sd_cache/netboot/var/log /newroot/var/log
+
+chmod a+rwx /newroot/nuke_sd_cache/netboot/tmp
+chmod a+rwx /newroot/nuke_sd_cache/netboot/usr/tmp/
+chmod a+rwx /newroot/nuke_sd_cache/netboot/var/tmp
+chmod a+rwx /newroot/nuke_sd_cache/netboot/var/log
+mkdir -p /newroot/nuke_sd_cache/netboot/var/log/sssd
+#umount /newroot/tmp
+#umount /newroot/usr/tmp
+#umount /newroot/var/tmp
+#umount /newroot/var/log
+#umount /newroot/nuke_sd_cache 
+
+
+# if fedora:
+if [ -f /newroot/etc/rc.d/rc.local ] ; then
+    fedora=1
+fi
+
+# setup disk environment
+setupDiskEnvironment(){
+    devshm=/run/shm
+    # if fedora, fix path shared memory path
+    if [ -f /newroot/etc/rc.d/rc.local ] ; then
+        devshm=/dev/shm
+    fi
+
+#    rm /newroot/etc/fstab 
+    cat > /newroot/etc/fstab <<EOF
+rootfs 			/ 			rootfs 	rw 		0 0
+proc                    /proc                   proc    defaults        0 0
+dev                     /dev                    devtmpfs   defaults        0 0
+tmpfs                   $devshm                 tmpfs   defaults,size=16G         0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
+sysfs                   /sys                    sysfs   defaults        0 0
+$pipe                   /$studio                nfs     $nfsOpts,fsc
+#$root/home              /$studio/home           nfs     $nfsOpts
+#$root/pipeline          /$studio/pipeline       nfs     $nfsOpts
+EOF
+
+if [ "$cacheVol" != "" ] ; then 
+    cat >> /newroot/etc/fstab <<EOF
+
+#$cacheVol		/nuke_sd_cache  	$cacheVolType    $cacheVolOptions,force   0 0
+/nuke_sd_cache/netboot/tmp	/tmp			none 	bind	0 0
+/nuke_sd_cache/netboot/usr/tmp	/usr/tmp		none 	bind	0 0 
+/nuke_sd_cache/netboot/var/tmp	/var/tmp		none 	bind	0 0 
+/nuke_sd_cache/netboot/var/log	/var/log		none	bind	0 0 
+
+EOF
+fi
+    rm -rf    /newroot/etc/mtab
+    echo "" > /newroot/etc/mtab
+}
+setupDiskEnvironment
+
+#setup nvidia driver
+setupNVidiaDriver(){
+	if [ -f /nvidia.ko ] ; then 
+		d="/lib/modules/$(cat /proc/version | cut -d' ' -f3)/kernel/drivers/video/nvidia.ko"
+		if [ -f $d ] ; then
+			if  [ $(stat -c %s /nvidia.ko) -ne $(stat -c %s $d) ] ; then
+				docp=1
+			fi
+		else
+			docp=1
+		fi 
+		if [ $docp -eq 1 ] ; then
+			cp -rf /nvidia*.ko  /newroot/$(dirname $d)
+#			depmod -a -b /newroot/
+		fi
+		echo $d 
+	fi
+}
+nv=$(setupNVidiaDriver)
+
+
+# setup network environment
+setupNetworkFedora(){
+    rm /newroot/etc/resolv.conf 
+    cat > /newroot/etc/resolv.conf <<EOF
+domain $studio.local
+search $studio.local local
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+nameserver 192.168.0.1
+nameserver 208.67.222.222
+nameserver 208.67.220.220
+
+options single-request-reopen
+
+
+EOF
+
+    rm -rf /newroot/etc/sysconfig/network-scripts/ifcfg-eth*
+    rm -rf /newroot/etc/rc?.d/*NetworkManager*
+    rm -rf /newroot/etc/rc?.d/*ware*
+    rm -rf /newroot/etc/rc?.d/*kdump*
+    rm -rf /newroot/etc/rc?.d/*sendmail*
+
+    rm /newroot/etc/networks 
+    cat >  /newroot/etc/networks <<EOF
+default 0.0.0.0
+loopback 127.0.0.0
+link-local 169.254.0.0
+
+iface eth0 inet manual
+iface eth1 inet manual
+iface eth2 inet manual
+EOF
+
+    mac=$(echo $(ifconfig | grep -B2 192.168 | grep HWadd) | cut -d' ' -f5)
+    rm /newroot/etc/NetworkManager/NetworkManager.conf
+    cat >  /newroot/etc/NetworkManager/NetworkManager.conf  <<EOF
+[main]
+plugins=ifcfg-rh,keyfile
+
+[ifupdown]
+managed=false
+
+
+[keyfile]
+unmanaged-devices=mac:$mac
+EOF
+}
+setupNetworkFedora
+
+# setup dbus environment
+setupDbus(){
+    # fix dbus service paths!
+    sed -i -e 's/<fork\/>/<fork\/>\n\n  <servicedir>\/usr\/share\/dbus-1\/system-services<\/servicedir>\n/g' /newroot/etc/dbus-1/system.conf  
+
+    #fix dbus for the current boot - remove previous machine-id, if any!
+    rm -rf /newroot/var/lib/dbus/machine-id
+}
+setupDbus
+
+
+#fix reboot
+fixReboot(){
+    halt=/newroot/etc/init.d/halt
+    reboot=/newroot/etc/init.d/halt
+    # if fedora, fix path for halt script
+    if [ -f /newroot/etc/rc.d/rc.local ] ; then
+        halt=/newroot/etc/rc.d/init.d/halt
+        reboot=/newroot/etc/rc.d/init.d/reboot
+        rm $halt
+        cat > $halt << EOF
+#! /bin/sh
+mount -t proc proc /proc
+echo 1 > /proc/sys/kernel/sysrq
+echo b > /proc/sysrq-trigger
+EOF
+        cp  $halt $reboot
+    fi
+}
+fixReboot
+
+
+# add pipeline rc.local to /etc/rc.local
+pipeSetup(){
+    # use the proper rc.local on debian and fedora!
+    export rclocal=/etc/rc.local
+    # if fedora:
+    if [ -f /newroot/etc/rc.d/rc.local ] ; then
+        rclocal=/etc/rc.d/rc.local
+        fedora=1
+    fi
+
+    # if not fedora, fix gdm
+    if [ "$fedora" == "" ] ; then
+        ln -s /etc/gdm3 /newroot/etc/gdm 
+        # disable GDM, so we can start it AFTER pipe rc.local!
+        for each in $(ls /newroot/etc/rc?.d/S*gdm*)
+        do
+            rm -rf $each
+        done
+    fi
+    
+    # blacklist nouveau, as we want to use nvidia drivers, if we have nvidia hardware
+    rm  /newroot/etc/blacklist-nouveau.conf 
+    cat > /newroot/etc/blacklist-nouveau.conf <<EOF
+# pipeVFX blacklist for nouveau driver - you need to run as root:
+# dracut -f /boot/initramfs-$(uname -r).img $(uname -r)
+# if nouveau is loaded despite this file.
+blacklist nouveau
+EOF
+
+
+    # hook pipe init script into bash init for all users
+    if [ -f /newroot/etc/bash.bashrc ] ; then
+        echo " " >> /newroot/etc/bash.bashrc
+        echo "# pipeline init script" >> /newroot/etc/bash.bashrc
+        echo "[ -f /atomo/pipeline/tools/init/bash ] && source /atomo/pipeline/tools/init/bash" >> /newroot/etc/bash.bashrc
+    fi
+
+    # copy the up2date rc.local from the pipeline template 
+    rm -rf /newroot/mountRootAsUnionFS.sh
+    liveInit=$(getarg liveInit)
+    toolsInitPath=$(dirname $(dirname $liveInit))
+    rm /newroot/$rclocal
+    cat > /newroot/$rclocal <<EOF
+#!/bin/bash
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin:$PATH
+mkdir -p /var/lock/subsys/
+touch /var/lock/subsys/local
+mount -a 
+cat /proc/mounts | grep nuke_sd_cache >> /etc/mtab
+
+modprobe drm
+insmod $nv
+insmod $(dirname $nv)/nvidia-uvm.ko
+
+depmod -A &
+
+
+source /$studio/$toolsInitPath/rc.local
+ulimit -n 131072
+
+mkdir -p  /dev/pts
+mount  /dev/pts
+
+cp /etc/mtab /tmp/mtab
+cat  /tmp/mtab | egrep -v 'tmpfs' > /etc/mtab
+rm -rf /tmp/mtab
+
+#	echo waiting for depmod to finish..
+#	while [ "$(pidof depmod)" != "" ] ; do
+#	 echo -n .
+#	 sleep 5
+#	done
+#	echo Done
+#sleep 5
+
+# if we are in debian 7 (we have /etc/gdm3)
+[ -d  /etc/gdm3 ] && service gdm3 start
+exit 0
+EOF
+
+    chmod +x    /newroot/$rclocal
+
+#cp /newroot/etc/rc.d/rc.sysinit /boot/s
+#rm /newroot/etc/rc.d/rc.sysinit
+#echo '#!/bin/bash' > /newroot/etc/rc.d/rc.sysinit
+#echo "fsck -y $cacheVol" >> /newroot/etc/rc.d/rc.sysinit
+#cat /boot/s >> /newroot/etc/rc.d/rc.sysinit 
+
+}
+pipeSetup
+
+echo "=============================================================="
+
+
+#touch /newroot/forcefsck
+umount /sys /proc 
+cp -rf /dev/console /newroot/dev/
+cp -rf /dev/tty /newroot/dev/
+cp -rf /dev/null /newroot/dev/
+#mount -t devtmpfs none /newroot/dev
+exec switch_root -c /dev/console /newroot /sbin/init
+
+

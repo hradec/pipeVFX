@@ -1,0 +1,23 @@
+# to install pipeVFX on your distro, just copy this service to /etc/systemd/system/dbusPipeVFX.service
+# and do:
+#     sudo systemctl daemon-reload
+#     sudo systemctl start dbusPipeVFX
+#     sudo systemctl enable dbusPipeVFX
+
+[Unit]
+Description=DBus PipeVFX  daemon
+After=network.target sshd-keygen.service multi-user.target autofs.service
+Conflicts=getty@tty1.service
+
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -l -c "source /atomo/pipeline/tools/init/bash && /atomo/pipeline/tools/scripts/run afrender -hostname $(hostname) -V"
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=always
+RestartSec=2s
+StandardInput=tty-force
+
+[Install]
+WantedBy=multi-user.target

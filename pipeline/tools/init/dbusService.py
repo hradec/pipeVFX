@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ import sys, os, traceback, time, subprocess
 sys.path.insert(0, os.path.abspath( "%s/../python" % os.path.dirname( __file__ ) ) )
 import pipe
 
-import gtk
+import gobject
 import pwd
 import dbus
 import dbus.service
@@ -34,11 +34,11 @@ from multiprocessing import Process
 pidof = 'pidof -x %s' % __file__
 if pipe.base.osx:
     pidof = 'pidof %s' % __file__
-    
+
 pids = os.popen(pidof).readlines()
 if pids:
     if len(pids[0].split()) > 1:
-        sys.exit(0) 
+        sys.exit(0)
 
 administrators = [
 ]
@@ -54,6 +54,8 @@ nonAdmCmds = [
     'su',
     'setfacl',
     'getfacl',
+    'convert',
+    'montage',
 ]
 
 
@@ -61,7 +63,7 @@ _ps = 'ps -AHfc'
 _ps2 = 'ps -Hfcp'
 # write a new rule and put it /etc/dbus-1/system.d/ (fedora only?)
 # so we can create our systemBus service as root user!
-# this rule allows our service name to be created by root, 
+# this rule allows our service name to be created by root,
 # and also allows anyone to access it!
 punchRule = '''
 <!DOCTYPE busconfig PUBLIC
@@ -81,25 +83,25 @@ punchRule = '''
 
 if pipe.base.osx:
     '''
-        As OSX doesn't have DBUS, we rely on "brew" to install a OSX port of the 
-        linux dbus message system. 
-        
+        As OSX doesn't have DBUS, we rely on "brew" to install a OSX port of the
+        linux dbus message system.
+
         We only need to install it once, using brew like this:
-    
+
            brew install homebrew/python/python-dbus
            brew install pygtk
            brew install pidof
-           
+
         This script will take care of run system wide dbus when it starts up.
         Installing system dbus using OSX launcher is too messy and complicated, so I've decided
-        to just run it from here instead, which seems to work perfectly! 
-        
-        The only thing needed, after manually installing dbus and dependencies with brew, is 
+        to just run it from here instead, which seems to work perfectly!
+
+        The only thing needed, after manually installing dbus and dependencies with brew, is
         startup this dbusService.py script at boot as root, just like we do in linux!
     '''
-        
-    
-    # make sure OSX messagebus user exists and is properly setup, 
+
+
+    # make sure OSX messagebus user exists and is properly setup,
     # so we can run system dbus instead of session dbus!
     os.system('''
         dscl . -create /Users/messagebus
@@ -108,11 +110,11 @@ if pipe.base.osx:
         dscl . -create /Users/messagebus PrimaryGroupID 1000
         dscl . -passwd /Users/messagebus 3datomo
     ''')
-        
+
     _ps = 'ps -Aj'
     _ps2 = 'ps -fp'
 
-    # in OSX, punchRule lives inside brew path, since 
+    # in OSX, punchRule lives inside brew path, since
     # pipe uses brew dbus as dbus backend in OSX!
     os.system('mkdir -p /usr/local/etc/dbus-1/session.d/')
     os.system('mkdir -p /usr/local/etc/dbus-1/system.d/')
@@ -123,7 +125,7 @@ if pipe.base.osx:
     f=open('/usr/local/etc/dbus-1/system.d/org.pipe.adminservice.conf', 'w')
     f.write( punchRule )
     f.close( )
-    # also, setup brew dbus to run system dbus properly. 
+    # also, setup brew dbus to run system dbus properly.
     # this way we don't need to manually setup dbus system!
     systemPlist = '/usr/local/Cellar/d-bus/org.freedesktop.dbus-system.plist'
     f=open(systemPlist , 'w')
@@ -151,7 +153,7 @@ if pipe.base.osx:
                 </dict>
             </dict>
         </dict>
-        </plist>           
+        </plist>
     ''' )
     f.close( )
 #    os.system('launchctl unload -w  %s' % systemPlist  )
@@ -193,8 +195,8 @@ if pipe.base.osx:
         </plist>
     ''' )
     f.close( )
-    
-   
+
+
 else:
     os.system('mkdir -p /etc/dbus-1/system.d/')
     f=open('/etc/dbus-1/system.d/org.pipe.adminservice.conf', 'w')
@@ -208,8 +210,8 @@ class pipeAdminDBUSService(dbus.service.Object):
         self.pids = {}
         bus_name = dbus.service.BusName('org.pipe.adminservice', bus=dbus.SystemBus())
         dbus.service.Object.__init__(self, bus_name, '/org/pipe/adminservice')
- 
- 
+
+
     def __runCMD(self, each, firstCmd, tmpfile):
         ret = ''
         if firstCmd == 'write':
@@ -219,8 +221,11 @@ class pipeAdminDBUSService(dbus.service.Object):
             f.write( '\n' )
             f.close()
         else:
-            ret = ''.join( os.popen("%s 2>&1 >%s" % (each, "%s_log" % tmpfile)).readlines() )
-            ret = ''.join( open("%s_log" % tmpfile,'r').readlines() )
+            ret = ''.join( os.popen("%s 2>&1 " % (each)).readlines() )
+            print '---',ret
+            f=open("%s_log" % tmpfile,'w')
+            f.write(ret+'\n')
+            f.close()
 #            exitCode, ret = pipe.base.runProcess(each)
         return ret
 
@@ -240,9 +245,9 @@ class pipeAdminDBUSService(dbus.service.Object):
                     getChildren(pid, l)
             return l
 
-        # kill all children 
+        # kill all children
         for each in getChildren(pid2kill):
-            print  'kill -9 %s' % each 
+            print  'kill -9 %s' % each
             os.system( 'kill -9 %s' % each )
 
     def loadCFG(self):
@@ -270,8 +275,8 @@ class pipeAdminDBUSService(dbus.service.Object):
             self.killPIDandChildren(pid)
             del self.pids[pid]
         return ""
-        
- 
+
+
     @dbus.service.method('org.pipe.adminservice', in_signature='as', out_signature='s', sender_keyword='sender')
     def sudo(self, array, sender):
         cmd = array[0]
@@ -280,9 +285,9 @@ class pipeAdminDBUSService(dbus.service.Object):
         bus = dbus.SystemBus().get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
         uid = dbus.Interface(bus, 'org.freedesktop.DBus').GetConnectionUnixUser(sender)
         uname = pwd.getpwuid( uid )[ 0 ]
-        
+
         administrators = self.loadCFG()
-        
+
         def threadedMainLoop():
             ret = ' '
             current = ''
@@ -294,22 +299,24 @@ class pipeAdminDBUSService(dbus.service.Object):
                         firstCmd = each.split()[0].strip()
 
                         # check the specified paths and see if we can execute the command
-                        # on those paths! 
+                        # on those paths!
                         pathsOK = True
                         for path in filter( lambda x: x.strip()[0]=='/', each.replace('\ ','').split() ):
-                            # check if the path is /tmp/<something or a job path 
-                            if  path[0:5] not in ['/tmp/','/opt/','/var/', '/Libr'] \
+                            # check if the path is /tmp/<something or a job path
+                            if  path[0:5] not in ['/tmp/','/opt/','/var/','/usr/', '/Libr', '/dev/'] \
                                 and  path[0:len(pipe.roots.jobs())]!=pipe.roots.jobs() \
                                 and path[0:30] not in ['/atomo/pipeline/tools/licenses']:
                                     pathsOK = False
-                            print path,pathsOK 
-                            
+                            print path,firstCmd,pathsOK
+
                         # if any of the paths is not in /tmp/ or in /<studio>/jobs/
-                        # don't do it!! 
-                            
+                        # don't do it!!
+
                         # if first cmd is any of those 3...
-                        if pathsOK and firstCmd in ['mkdir','chmod','chown', 'su', 'cp', 'rm'] or firstCmd == 'su':
-                            ret += self.__runCMD(each, firstCmd, tmpfile)                            
+                        if pathsOK and firstCmd in ['mkdir','chmod','chown', 'su', 'cp', 'rm'] or firstCmd in ['su', 'runuser', 'convert', 'montage']:
+                            print "__runCMD", each, '|', firstCmd, '|', tmpfile
+                            ret += self.__runCMD(each, firstCmd, tmpfile)
+                            print '|',ret,'|'
                         elif pathsOK:
                             ret += '-------------\n%s\n------------' %  each.split('taskset')[-1]
                             path = each.split('taskset')[-1].split(pipe.roots.jobs())[1].split()[0].strip()
@@ -342,16 +349,20 @@ class pipeAdminDBUSService(dbus.service.Object):
                             ret += 'ERROR: The org.pipe.adminservice DBUS can only do operations in %s - (%s)!!\n' % (pipe.roots.jobs(), each)
             except:
                 ret += "\n\t".join(traceback.format_exc().split('\n'))
-                
+
             ret += '\n\nDONE\n'
-            # only write if the file exists, to avoid writing files to dead caller processes, which 
-            # won't be cleaned up later! 
-            if os.path.exists(tmpfile):
-                f=open(tmpfile, 'w')
-                f.write(ret)
-                f.close()
-        
-        # start the execution in a different thread, so we can return as soon as possible and avoid 
+            # only write if the file exists, to avoid writing files to dead caller processes, which
+            # won't be cleaned up later!
+            print tmpfile
+            os.system('chown root:artists  %s' % tmpfile)
+            os.system('chmod a-w  %s' % tmpfile)
+#            if os.path.exists(tmpfile):
+            f=open(tmpfile, 'w')
+            f.write(ret)
+            f.close()
+            os.system('chmod a+rwx  %s' % tmpfile)
+
+        # start the execution in a different thread, so we can return as soon as possible and avoid
         # dbus timeout annoying problem!!!
         p = Process(target=threadedMainLoop)
         print "\ndbusPipe: %s, %s, %s" % (tmpfile, uid, uname)
@@ -360,7 +371,7 @@ class pipeAdminDBUSService(dbus.service.Object):
         p.start()
 
         # monitor the caller process. If it dies before the thread is finished, we kill the thread
-        # as well!! 
+        # as well!!
         def threadedMonitorCaller():
             monitor = True
             pp = p
@@ -368,7 +379,7 @@ class pipeAdminDBUSService(dbus.service.Object):
             # a loop to monitor if the process is alive and if the caller process is also alive!
             while( monitor and is_alive ):
                 monitor  = filter( lambda x: x.strip(), os.popen( _ps2+' %s | grep -v UID | grep -v USER' % caller_pid ).readlines() )
-                is_alive = filter( lambda x: x.strip(), os.popen( _ps2+' %s | grep -v UID | grep -v USER' % pp.pid ).readlines() ) 
+                is_alive = filter( lambda x: x.strip(), os.popen( _ps2+' %s | grep -v UID | grep -v USER' % pp.pid ).readlines() )
                 time.sleep(10)
             if is_alive:
                 # kill the process and all children!
@@ -379,7 +390,7 @@ class pipeAdminDBUSService(dbus.service.Object):
         pm.start()
 
         # keep the pid so we can kill it if requested!
-        self.pids[p.pid] = p 
+        self.pids[p.pid] = p
         self.pids[pm.pid] = pm
 
         # cleanup pids dictionary!
@@ -388,11 +399,13 @@ class pipeAdminDBUSService(dbus.service.Object):
                 del self.pids[each]
 
         return str(p.pid)
-     
+
 DBusGMainLoop(set_as_default=True)
 pipeAdminService = pipeAdminDBUSService()
-gtk.main()
+#gtk.main()
 
+mainloop = gobject.MainLoop ()
+mainloop.run ()
 
 
 
@@ -428,6 +441,3 @@ gtk.main()
 #        clientsock, addr = serversock.accept()
 #        print '...connected from:', addr
 #        thread.start_new_thread(handler, (clientsock, addr))
-
-
-

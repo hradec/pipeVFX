@@ -5,8 +5,11 @@
 
 mountCentralTmp(){
     tmpCentral="/atomo/netboot/tmp/$(hostname)/"
-    
     usrTmpCentral="/atomo/netboot/usr/tmp/$(hostname)/"
+    if [ "$(mount | grep nuke_sd_cache)" == "" ] ; then
+      tmpCentral="/nuke_sd_cache/netboot/tmp/"
+      usrTmpCentral="/nuke_sd_cache/netboot/usr/tmp/"
+    fi
     if [ ! -d $tmpCentral ] ; then 
         mkdir -p $tmpCentral 2>&1 > /dev/null 
         chown -R root:root $tmpCentral
@@ -22,16 +25,16 @@ mountCentralTmp(){
     rm -rf $tmpCentral/*
     rm -rf $usrTmpCentral/*
     
-    mkdir -p /tmp
+#    mkdir -p /tmp
     mkdir -p /usr/tmp
     
-    mount --bind $tmpCentral /tmp
-    mount --bind $usrTmpCentral /usr/tmp
+    if [ "$(mount | grep nuke_sd_cache)" == "" ] ; then
+#       mount --bind $tmpCentral /tmp
+       mount --bind $usrTmpCentral /usr/tmp
+    fi
     chmod 1777 /tmp
     chmod 1777 /usr/tmp
 
 
 }
-
 mountCentralTmp
-
