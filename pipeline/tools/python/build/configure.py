@@ -184,7 +184,9 @@ class openssl(configure):
     cmd=[
         # './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$TARGET_FOLDER',
         # 'make depend && make && make install',
-        './config shared enable-tlsext --prefix=$TARGET_FOLDER',
+        '''echo "OPENSSL_$(basename $OPENSSL_TARGET_FOLDER | awk -F'.' '{print $1.$2.$3}') { global: *;};" | tee ./openssl.ld''',
+        '''echo "OPENSSL_$(basename $OPENSSL_TARGET_FOLDER | awk -F'.' '{print $1.$2.0}') { global: *;};" | tee -a ./openssl.ld''',
+        './config shared enable-tlsext --prefix=$TARGET_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
         'make -j $DCORES && make -j $DCORES install',
     ]
     def installer(self, target, source, env): # noqa
@@ -284,11 +286,13 @@ class python(configure):
             ('#_ssl _ssl','_ssl _ssl'),
             ('#	-DUSE_SSL','	-DUSE_SSL'),
             ('#	-L..SSL','	-L$(SSL'),
-        ]
+        ],
+
     }}
     cmd = [
-        'wget "https://bootstrap.pypa.io/ez_setup.py"',
+        'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
         './configure  --enable-shared --enable-unicode=ucs4',
+        '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
         'make -j $DCORES',
         'make -j $DCORES install',
         '$TARGET_FOLDER/bin/python ./ez_setup.py',
