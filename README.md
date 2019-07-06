@@ -3,7 +3,9 @@ pipeVFX
 [![Build Status](https://travis-ci.org/hradec/pipeVFX.svg?branch=master)](https://travis-ci.org/hradec/pipeVFX)
 
 
-REFACTORING IN PROGRESS
+REFACTORING IN PROGRESS - this readme is very outdated and will be updated in the next few days!
+
+---
 
 A Visual Effects pipeline to manage jobs, shots and software assignment, with a "simple asset manager" called SAM.
 
