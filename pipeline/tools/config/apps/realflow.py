@@ -41,9 +41,6 @@ class realflow(baseApp):
     def license(self):
         # install license for the current machine
         import os
-#        mac = getMacAddress()
-#        self['RV_LICENSE_FILE'] = "/tmp/rv_license_%s.txt" % os.environ['USER']
-#        os.system( "%s/licensegen -m %s %s 2>&1 1>/dev/null" % (self.path(), mac, self['RV_LICENSE_FILE']) )
 
         dir = '%s/.config/Next Limit Technologies' % os.environ['HOME']
         if not os.path.exists(dir):
@@ -51,20 +48,7 @@ class realflow(baseApp):
         file = '%s/RealFlow2012.conf' % dir
         if os.path.exists(file):
             os.remove(file)
-#         f = open( file, 'w' )
-#         f.write('''
-# [Licenses]
-# RF_2012_GUI\License%200\Product=RF_2012_GUI
-# RF_2012_GUI\License%200\Type=STANDARD
-# RF_2012_GUI\License%200\Key=931307CC56927C8A88F52F8156CD8A6E992C82B8CBDADB01E40BDAA34074F2B68208818AE325584C76AC12FCA1538C77A89CFEFBA81B8C17E7C18BEC2C951070
-# RF_2012_GUI\License%200\Name=MIKEPARADOX
-# RF_2012_GUI\License%200\Organization=MIKEPARADOX 2011
-# RF_2012_GUI\License%200\NumNodes=666
-# RF_2012_GUI\License%200\Issue=04072011
-# RF_2012_GUI\License%200\Valid=
-# RF_2012_GUI\License%200\Code=1372706997
-# ''')
-#         f.close()
+
         self['nextlimit_LICENSE']=os.environ['PIPE_REALFLOW_LICENSE']
 
 

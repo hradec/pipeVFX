@@ -24,12 +24,11 @@ class rv(baseApp):
         ''' as this is a python application, we don't have to setup anything
             since python is already setting it for us! '''
 
-
         self['RV_LUT_PATH']='/atomo/pipeline/tools/ocio/imageworks-OpenColorIO-Configs-f931d77/nuke-default/luts/'
         self['RV_LICENSE_DEBUG']='1'
-#        RV_PREFS_OVERRIDE_PATH
-#        RV_PREFS_CLOBBER_PATH
-#        RV_SUPPORT_PATH
+        # RV_PREFS_OVERRIDE_PATH
+        # RV_PREFS_CLOBBER_PATH
+        # RV_SUPPORT_PATH
 
     def dotAppName(self):
         return "RV64.app"
@@ -41,9 +40,6 @@ class rv(baseApp):
 
     def license(self):
         self['RV_LICENSE_FILE'] = "/tmp/rv_license_%s.txt" % os.environ['USER']
-
-    # def userSetup(self, jobuser):
-    #     os.chdir( jobuser.pwd )
 
     def runUserSetup(self, jobuser):
         return False

@@ -36,7 +36,7 @@ class substance(baseApp):
         self['QT_PLUGIN_PATH']  = self.path('painter/')
         self['QT_PLUGIN_PATH']  = self.path('painter/qml/')
         self['QT_PLUGIN_PATH']  = self.path('painter/resources/')
-        #
+        
         # self.ignorePipeLib( "readline" )
         # self.ignorePipeLib( "log4cplus" )
         # self['LD_PRELOAD'] = '/usr/lib/liblog4cplus-1.2.so.5'

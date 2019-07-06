@@ -55,26 +55,12 @@ class vray(baseApp):
 
         self['VRAY_OPENCL_PLATFORMS_x64']='gpu'
 
-
-    # def bins(self):
-    #     idx={}
-    #     for f in glob(self.path('RenderManProServer-%s/bin/*' % v)):
-    #         bf = os.path.basename(f).strip()
-    #         if bf not in idx:
-    #             if len(bf.split('.'))<2:
-    #                 idx[bf] = 'RenderManProServer-%s/bin/%s' % (v,bf)
-    #
-    #     return map(lambda x: (x, idx[x]), idx.keys() )
-
     def bins(self):
         return [( 'vrayslave','/autodesk/maya2016.5/bin/vrayslave' )]
 
     def license( self ):
-        #os.popen( '%s/autodesk/maya$MAYA_VERSION/vbin/setvrlservice -server=192.168.0.17 -port=30304' % self.path() )
+        # os.popen( '%s/autodesk/maya$MAYA_VERSION/vbin/setvrlservice -server=192.168.0.17 -port=30304' % self.path() )
         # f = os.popen( '%s/.ChaosGroup/vrlclient.xml' % os.environ["HOME"] )
-#        os.popen( '%s/autodesk/maya%s/vray/bin/setvrlservice -server=192.168.0.17 -port=30304' % (self.path(), maya().version() ) ).readlines()
+        # os.popen( '%s/autodesk/maya%s/vray/bin/setvrlservice -server=192.168.0.17 -port=30304' % (self.path(), maya().version() ) ).readlines()
         os.popen( '%s/autodesk/maya%s/vray/bin/setvrlservice -server=127.0.0.1 -port=30305 -server1=0.0.0.0 -port1=30306  -server2=192.168.0.17 -port2=30306' % (self.path(), maya().version() ) ).readlines()
-        os.system( '%s/docker/start.sh &' % self.path() ) 
-
-
-
+        os.system( '%s/docker/start.sh &' % self.path() )

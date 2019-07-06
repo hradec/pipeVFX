@@ -42,7 +42,7 @@ class yeti(baseApp):
 
     def license(self):
         self['peregrinel_LICENSE']=os.environ['PIPE_YETI_LICENSE']
-        #PEREGRINEL_LICENSE = 
+        # PEREGRINEL_LICENSE =
 
     def userSetup(self, jobuser):
         os.chdir( jobuser.pwd )

@@ -18,17 +18,10 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-
-
-
-
-
 #RMANTREE - establishes the location of your PRMan distribution.
 #RMANFB - establishes your framebuffer display program.
 #RDIR - speficies a directory where additional configuration files can be found, e.g. a site-specific rendermn.ini file.
 #PIXAR_LICENSE_FILE - can be used by systems administrators to define a location other than the default for the software license. This will normally point to a pixar.license file on a centrally mounted network drive.
-
-
 
 class prman(baseApp):
     def RMAN_MAYA_NAME(self):
@@ -82,7 +75,6 @@ class prman(baseApp):
             self['LD_LIBRARY_PATH'] = "%s/lib" % rmstree
             self['LD_LIBRARY_PATH'] = "%s/rmantree/lib" % rmstree
             self['RMS_SCRIPT_PATHS'] = '%s/etc/'     % rmstree
-
 
             # self['LD_LIBRARY_PATH'] = "%s/rmantree/lib" % rmstree
             # self['LD_LIBRARY_PATH'] = "%s/bin" % rmstree
@@ -224,18 +216,11 @@ class prman(baseApp):
 
     def license(self):
         import socket
-        if int(os.popen('ifconfig hostid0 2>&1 | wc -l').readlines()[0].strip()) > 1:
-            pv = float( pipe.version.get('prman') )
-            if pv > 20.0:
-                self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license.r%s' % (pipe.roots().tools(), int(pv))
-            else:
-                self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license' % pipe.roots().tools()
+        pv = float( pipe.version.get('prman') )
+        if pv > 20.0:
+            self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license.r%s' % (pipe.roots().tools(), int(pv))
         else:
-            for each in ['%s/tools/licenses/prman/' % os.environ['HOME']]+self.toolsPaths():
-                p = '%s/licenses/prman/%s.license' % (each, socket.gethostname())
-                if os.path.exists(p):
-                    self['PIXAR_LICENSE_FILE'] = p
-                    break
+            self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license' % pipe.roots().tools()
 
 
     def userSetup(self, jobuser):
@@ -257,9 +242,10 @@ class prman(baseApp):
                         os.chdir(  "%s/maya/" %  r[0]  )
         sys.stderr.write("\n%s\n" %  os.getcwd())
 
+        # remove maya shelf so it's recreated when maya starts
         os.system( 'find $HOME/maya/ -name "shelf_RenderMan*" -exec rm {} \;' )
 
-        # cleanup env vars if they already exist, to avoid problems!
+        # cleanup env vars if they already exist, to avoid problems
         if self.parent() in ['prman']:
             for env in ['RMANTREE', 'RMSTREE', 'SHADERS_PATH', 'TEXTURES_PATH' ]:
                 if os.environ.has_key(env):

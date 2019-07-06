@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -27,10 +27,6 @@ class mudbox(baseApp):
 
     def bins(self):
         return [('mudbox','mudbox')]
-                
-    def license(self):
-        # install license for the current machine
-#        cache.makedirs( "/var/opt/Autodesk/Adlm/Mudbox%s/" % self.version() )
-#        cache.copy( "%s/licenses/mudbox/%s/MudboxConfig.pit" % (roots.tools(), self.version()), "/var/opt/Autodesk/Adlm/Mudbox%s/MudboxConfig.pit" % self.version() )
-        pass
 
+    def license(self):
+        pass

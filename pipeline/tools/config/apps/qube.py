@@ -96,13 +96,13 @@ class qube(baseApp):
             ('qbgui', 'qubegui/local/pfx/qube/bin/qube'),
             ('qblock', 'qube-core/local/pfx/qube/bin/qblock'),
             ('qbworker', 'qube-worker/local/pfx/qube/sbin/worker'),
-#            ('qbupgrade-worker', 'qube-worker/local/pfx/qube/utils/upgrade_worker'),
-#            ('qbinstall_worker', 'qube-worker/local/pfx/qube/utils/install_worker'),
-#            ('qbuninstall_worker', 'qube-worker/local/pfx/qube/utils/uninstall_worker'),
+            ('qbupgrade-worker', 'qube-worker/local/pfx/qube/utils/upgrade_worker'),
+            ('qbinstall_worker', 'qube-worker/local/pfx/qube/utils/install_worker'),
+            ('qbuninstall_worker', 'qube-worker/local/pfx/qube/utils/uninstall_worker'),
         ]
-#        from glob import glob
-#        for each in glob( "%s/*" % self.path('qube-core/local/pfx/qube/bin') ):
-#            name = os.path.basename(each)
-#            ret.append( (name, 'qube-core/local/pfx/qube/bin/%s' % name) )
+        from glob import glob
+        for each in glob( "%s/*" % self.path('qube-core/local/pfx/qube/bin') ):
+            name = os.path.basename(each)
+            ret.append( (name, 'qube-core/local/pfx/qube/bin/%s' % name) )
 
         return ret
