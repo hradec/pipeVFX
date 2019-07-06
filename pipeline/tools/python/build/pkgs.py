@@ -78,18 +78,72 @@ class all: # noqa
         To build a package with a specific version of GCC, just add gcc as a dependency to the package. (see python again!)
         '''
 
+        zlib = build.configure(
+               ARGUMENTS,
+               'zlib',
+               download=[
+                 (
+                   'http://zlib.net/fossils/zlib-1.2.8.tar.gz',
+                   'zlib-1.2.8.tar.gz',
+                   '1.2.8',
+                   '44d667c142d7cda120332623eab69f40'
+                 ),
+               ],
+        )
+        build.allDepend.append(zlib)
+        # curl = build.configure(
+        #        ARGUMENTS,
+        #        'curl',
+        #        download=[
+        #          (
+        #            'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
+        #            'curl-7.42.1.tar.gz',
+        #            '7.42.1',
+        #            '8df5874c4a67ad55496bf3af548d99a2'
+        #          ),
+        #        ],
+        # )
+        # build.allDepend.append(curl)
         gmp = build.configure(
                ARGUMENTS,
                'gmp',
                download=[
-                 (
-                   'https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2',
-                   'gmp-6.0.0.tar.gz',
-                   '6.0.0',
-                   'b7ff2d88cae7f8085bd5006096eed470'
-                 ),
+                   # (
+                   #   'https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2',
+                   #   'gmp-6.0.0.tar.gz',
+                   #   '6.0.0',
+                   #   'b7ff2d88cae7f8085bd5006096eed470'
+                   # ),
+                   (
+                     'https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2',
+                     'gmp-6.1.2.tar.gz',
+                     '6.1.2',
+                     '8ddbb26dc3bd4e2302984debba1406a5'
+                   ),
+
                ],
         )
+        build.allDepend.append(gmp)
+        mpfr = build.configure(
+               ARGUMENTS,
+               'mpfr',
+               download=[
+                   # (
+                   #   'https://gforge.inria.fr/frs/download.php/file/35627/mpfr-3.1.4.tar.gz',
+                   #   'mpfr-3.1.4.tar.gz',
+                   #   '3.1.4',
+                   #   '482ab3c120ffc959f631b4ba9ec59a46'
+                   # ),
+                   (
+                     'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
+                     'mpfr-3.1.6.tar.gz',
+                     '3.1.6',
+                     '95dcfd8629937996f826667b9e24f6ff'
+                   ),
+               ],
+               depend = [ gmp ],
+        )
+        build.allDepend.append(mpfr)
         mpc = build.configure(
                ARGUMENTS,
                'mpc',
@@ -102,6 +156,7 @@ class all: # noqa
                  ),
                ],
         )
+        build.allDepend.append(mpc)
         mpfr = build.configure(
                ARGUMENTS,
                'mpfr',
@@ -146,7 +201,6 @@ class all: # noqa
         # lets use our own latest GCC to build everything!!!
         build.allDepend.append(gcc)
 
-
         icu = build.configure(
             ARGUMENTS,
             'icu',
@@ -167,7 +221,7 @@ class all: # noqa
             ARGUMENTS,
             'bzip2',
             download=[(
-                'http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz',
+                'https://downloads.sourceforge.net/project/bzip2/bzip2-1.0.6.tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fbzip2%2Ffiles%2Fbzip2-1.0.6.tar.gz%2Fdownload&ts=1557548225',
                 'bzip2-1.0.6.tar.gz',
                 '1.0.6',
                 '00b516f4704d4a7cb50a1d97e6e8e15b'
@@ -234,13 +288,13 @@ class all: # noqa
             ARGUMENTS,
             'python',
             download=[(
-                'https://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
+                'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
                 'Python-2.6.9.tar.gz',
                 '2.6.9',
                 'bddbd64bf6f5344fc55bbe49a72fe4f3',
                 { readline : '5.2.0', openssl : '1.0.2h' },
             ),(
-                'https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
+                'http://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
                 'Python-2.7.12.tar.gz',
                 '2.7.12',
                 '88d61f82e3616a4be952828b3694109d',

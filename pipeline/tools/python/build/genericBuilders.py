@@ -941,10 +941,16 @@ class generic:
                 'lib/gcc/x86_64-pc-linux-gnu/lib64/',
                 os_environ['LD_LIBRARY_PATH']
             ])
+
             os_environ['PATH'] = ':'.join([
                 '%s/bin' % os_environ['GCC_TARGET_FOLDER'],
                 os_environ['PATH'],
             ])
+
+        if 'GCC_TARGET_FOLDER' in os_environ:
+            os_environ['LIBRARY_PATH'] = os_environ['GCC_TARGET_FOLDER'] + \
+                '/lib/gcc/x86_64-pc-linux-gnu/lib64/:' + \
+                os_environ['LIBRARY_PATH']
 
         from subprocess import Popen
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
