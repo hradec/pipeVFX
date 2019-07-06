@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -22,10 +22,10 @@
 
 import IECore
 import Gaffer
-import GafferUI 
+import GafferUI
 import pipe
 
-# find images using GAFFERUI_IMAGE_PATHS search path for our 
+# find images using GAFFERUI_IMAGE_PATHS search path for our
 # dialogs
 def pipeImage(op):
     if type(op) == type(''):
@@ -48,13 +48,13 @@ class disable( GafferUI.DeferredPathPreview ) :
         self.__column = GafferUI.ListContainer( borderWidth = 8 )
         GafferUI.DeferredPathPreview.__init__( self, self.__column, path )
         self._updateFromPath()
-    
+
     def isValid( self ) :
-        return False 
+        return False
 
     def _load( self ) :
         return self.getPath().info()
-    
+
     def _deferredUpdate( self, o ) :
        pass
 GafferUI.PathPreviewWidget.registerType( "Op", disable )
@@ -70,39 +70,39 @@ class OpaMode( GafferUI.BrowserEditor.Mode ) :
             self.__classLoader = classLoader
         else :
             self.__classLoader = IECore.ClassLoader.defaultOpLoader()
-                
+
     def connect( self ) :
         GafferUI.BrowserEditor.Mode.connect( self )
-        self.__pathSelectedConnection = self.browser().pathChooser().pathListingWidget().pathSelectedSignal().connect( 
-            Gaffer.WeakMethod( self.__pathSelected ) 
+        self.__pathSelectedConnection = self.browser().pathChooser().pathListingWidget().pathSelectedSignal().connect(
+            Gaffer.WeakMethod( self.__pathSelected )
         )
-        self.__contextMenuConnection  = self.browser().pathChooser().pathListingWidget().contextMenuSignal().connect( 
+        self.__contextMenuConnection  = self.browser().pathChooser().pathListingWidget().contextMenuSignal().connect(
             Gaffer.WeakMethod( self.__menu )
         )
-               
+
     def disconnect( self ) :
         GafferUI.BrowserEditor.Mode.disconnect( self )
         self.__pathSelectedConnection = None
-    
+
     def _initialPath( self ) :
         return Gaffer.ClassLoaderPath( self.__classLoader, "/" )
-        
+
     def _initialDisplayMode( self ) :
         return GafferUI.PathListingWidget.DisplayMode.Tree
-    
+
     def _initialColumns( self ) :
         return [ GafferUI.PathListingWidget.defaultNameColumn ]
-            
+
     def __pathSelected( self, pathListing ) :
         selectedPaths = pathListing.getSelectedPaths()
         if not len( selectedPaths ) :
             return
-            
+
         op = selectedPaths[0].classLoader().load( str( selectedPaths[0] )[1:] )()
         opaDialogue = opaClasses.OpaDialogue( op )
         pathListing.ancestor( GafferUI.Window ).addChildWindow( opaDialogue )
         opaDialogue.setVisible( True )
-        
+
     def __opDialogueCommand( self, op ) :
         def showDialogue( menu ) :
             dialogue = opaClasses.OpaDialogue( op )
@@ -115,7 +115,7 @@ class OpaMode( GafferUI.BrowserEditor.Mode ) :
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
-        
+
 #        if self.__opMatcher is not None :
         selectedPaths = pathListing.getSelectedPaths()
         if len( selectedPaths ) == 1 :
@@ -127,12 +127,12 @@ class OpaMode( GafferUI.BrowserEditor.Mode ) :
 #        else :
 #            menuDefinition.append( "/Loading actions...", { "active" : False } )
 
-                
+
         self.__menu = GafferUI.Menu( menuDefinition )
         if len( menuDefinition.items() ) :
             self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )
         return True
-            
+
         return showDialogue
 
 # add the new mode in the browser main window!
@@ -144,7 +144,7 @@ class OpaDialogue(GafferUI.OpDialogue):
     def __init__( self, opInstance, title=None, opName="", sizeMode=GafferUI.Window.SizeMode.Manual, **kw ) :
         GafferUI.OpDialogue.__init__( self, opInstance, title, sizeMode, **kw )
         layout = self._getWidget().parent()
-        layout.insert(0, 
+        layout.insert(0,
             pipeImage(opName)
         )
         # resize the dialog to a better default size!
@@ -157,12 +157,12 @@ class OpaDialogue(GafferUI.OpDialogue):
 #        GafferUI.OpDialogue.__initiateExecution(self, *unused )
 
 #    def __finishExecution( self, result ) :
-    
+
 #        if isinstance( result, IECore.Object ) :
 #            # no error from normal execution, so run the farm method!
 #            print result.parameters().keys()
 #            result.doFarmOperation()
-        
+
 #        GafferUI.OpDialogue.__finishExecution(self, result)
 
 # gaffer browser preview!!
@@ -170,13 +170,13 @@ class OpaPathPreview( GafferUI.DeferredPathPreview ) :
     def __init__( self, path ) :
         self.__column = GafferUI.ListContainer( borderWidth = 8 )
         GafferUI.DeferredPathPreview.__init__( self, self.__column, path )
-        self._updateFromPath()   
+        self._updateFromPath()
 
     def isValid( self ) :
         path = self.getPath()
         if not isinstance( path, Gaffer.ClassLoaderPath ) :
             return False
-        
+
         if hasattr( path.classLoader(), "classType" ) :
             if not issubclass( path.classLoader().classType(), IECore.Op ) :
                 return False
@@ -184,25 +184,24 @@ class OpaPathPreview( GafferUI.DeferredPathPreview ) :
             if path.classLoader().searchPath() != IECore.ClassLoader.defaultOpLoader().searchPath() :
                 return False
         return path.isLeaf()
-                
+
     def _load( self ) :
         return self.getPath().load()()
-    
+
     def _deferredUpdate( self, op ) :
         del self.__column[:]
         self.__node = Gaffer.ParameterisedHolderNode()
         self.__node.setParameterised( op )
-        
+
         with self.__column :
             pipeImage(op)
             GafferUI.NodeUI.create( self.__node )
-            
+
             button = GafferUI.Button( "Execute" )
             self.__executeClickedConnection = button.clickedSignal().connect( self.__executeClicked )
 
     def __executeClicked( self, button ) :
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
             self.__node.getParameterised()[0]()
-            
+
 GafferUI.PathPreviewWidget.registerType( "Opa", OpaPathPreview )
-            
