@@ -1,5 +1,8 @@
 #!/bin/bash
 
+CD=$(dirname $(readlink -f $BASH_SOURCE))
+cd $CD/pipeline/tags/
+
 # loop over tags and creates the tag folders pulling the tar file from the github releases
 git tag | while read tag ; do 
 	echo $tag
