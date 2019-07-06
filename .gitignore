@@ -10,3 +10,4 @@ pipeline/build/linux
 pipeline/build/build
 .idea
 .svn
+pipeline/tags/*
