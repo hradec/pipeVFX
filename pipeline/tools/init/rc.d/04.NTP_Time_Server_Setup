@@ -22,5 +22,7 @@ EOF
         /usr/sbin/ntpd -c /etc/ntp.conf
     fi
 }
-ntpd_setup
 
+if [ ! -f /etc/arch-release ] ; then
+	ntpd_setup
+fi

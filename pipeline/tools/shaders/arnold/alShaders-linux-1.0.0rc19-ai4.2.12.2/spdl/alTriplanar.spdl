@@ -1,0 +1,371 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{572a3cc0-9d2b-448a-843b-2c48815d2548}";
+PropertySet "alTriplanar_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{b2b43c21-5a18-4ffc-9229-eec5067b1ada}";
+		Type = color;
+	}
+	Parameter "input" input
+	{
+		GUID = "{5dc19c04-27ce-4135-a5e2-7cc45e5d011f}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "texture" input
+	{
+		GUID = "{8b73c022-3e13-41a5-96f7-0183f8cea4d2}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "space" input
+	{
+		GUID = "{91e5237f-5402-4076-9ceb-898171802f18}";
+		Type = string;
+		Texturable = off;
+		Value = "world";
+	}
+	Parameter "normal" input
+	{
+		GUID = "{d6615f70-7f6b-462a-bb70-f780d6796f64}";
+		Type = string;
+		Texturable = off;
+		Value = "geometric";
+	}
+	Parameter "tiling" input
+	{
+		GUID = "{4dda854a-cff9-4c87-bc4a-d05f3fbbd1bc}";
+		Type = string;
+		Texturable = off;
+		Value = "regular";
+	}
+	Parameter "frequency" input
+	{
+		GUID = "{1673b9e3-b621-424c-b635-5b5df8651fc2}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "mipMapBias" input
+	{
+		GUID = "{184902a0-fcdb-4faa-bd82-5e9863204ab8}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "blendSoftness" input
+	{
+		GUID = "{23a8ef8c-bdd2-4bc5-91ae-a0084550d8a0}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.100000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "cellSoftness" input
+	{
+		GUID = "{997936dc-0b45-4a7e-b22b-6ddb6f791067}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.100000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "scalex" input
+	{
+		GUID = "{faaf26de-566c-4580-bb81-bf9f1675a166}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "scaley" input
+	{
+		GUID = "{39314af8-51c7-4823-a6b5-e753b08acdcc}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "scalez" input
+	{
+		GUID = "{4733b833-9cc8-4647-8202-9162f30d7816}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "offsetx" input
+	{
+		GUID = "{e2979df6-070c-4857-9298-481167484611}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "offsety" input
+	{
+		GUID = "{a650d29d-af42-47aa-9645-c8b477f7052b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "offsetz" input
+	{
+		GUID = "{13cc2b6f-dcdb-4d89-b55b-1dfa4be5e0ee}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "rotx" input
+	{
+		GUID = "{0d30e638-d03f-45b7-bfe5-9e39a7da5e51}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 360.000000;
+	}
+	Parameter "roty" input
+	{
+		GUID = "{52bf2817-5b8d-4f89-b72f-4a1c05760ecd}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 360.000000;
+	}
+	Parameter "rotz" input
+	{
+		GUID = "{a750547f-d150-4a3f-8f5c-664ee915a53d}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 360.000000;
+	}
+	Parameter "rotjitterx" input
+	{
+		GUID = "{f1546183-bfce-413a-ae8c-ae7cee47d5bc}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "rotjittery" input
+	{
+		GUID = "{49a279ad-1a74-41d4-aade-352791dcc262}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "rotjitterz" input
+	{
+		GUID = "{847c892a-6975-40f9-b9b8-3a86b0afee31}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+}
+MetaShader "alTriplanar_meta"
+{
+	Name = "ALS_Triplanar";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Triplanar";
+		Filename = "alTriplanar";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	input
+	{
+		Name = "Background";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	texture
+	{
+		Name = "Texture";
+	}
+	space
+	{
+		Name = "Space";
+		UIType = "Combo";
+		Items
+		{
+			"world" = "world";
+			"object" = "object";
+			"Pref" = "Pref";
+		}
+	}
+	normal
+	{
+		Name = "Normal";
+		UIType = "Combo";
+		Items
+		{
+			"geometric" = "geometric";
+			"smooth" = "smooth";
+			"smooth-NoBump" = "smooth-NoBump";
+		}
+	}
+	tiling
+	{
+		Name = "Tiling";
+		UIType = "Combo";
+		Items
+		{
+			"regular" = "regular";
+			"cellnoise" = "cellnoise";
+		}
+	}
+	frequency
+	{
+		Name = "Frequency";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	mipMapBias
+	{
+		Name = "Mip map bias";
+	}
+	blendSoftness
+	{
+		Name = "Blend Softness";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	cellSoftness
+	{
+		Name = "Cell Softness";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	scalex
+	{
+		Name = "X Scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	scaley
+	{
+		Name = "Y Scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	scalez
+	{
+		Name = "Z Scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	offsetx
+	{
+		Name = "X Offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	offsety
+	{
+		Name = "Y Offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	offsetz
+	{
+		Name = "Z Offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	rotx
+	{
+		Name = "X Rotation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	roty
+	{
+		Name = "Y Rotation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	rotz
+	{
+		Name = "Z Rotation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	rotjitterx
+	{
+		Name = "X Rotation Jitter";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	rotjittery
+	{
+		Name = "Y Rotation Jitter";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	rotjitterz
+	{
+		Name = "Z Rotation Jitter";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	input;
+	texture;
+	space;
+	normal;
+	tiling;
+	frequency;
+	mipMapBias;
+	Tab "Blending"
+	{
+		blendSoftness;
+		cellSoftness;
+	}
+	Tab "Positioning"
+	{
+		scalex;
+		scaley;
+		scalez;
+		offsetx;
+		offsety;
+		offsetz;
+		rotx;
+		roty;
+		rotz;
+		rotjitterx;
+		rotjittery;
+		rotjitterz;
+	}
+}
+Layout "RenderTree"
+{
+	input;
+	frequency;
+	Group "Blending"
+	{
+		blendSoftness;
+		cellSoftness;
+	}
+	Group "Positioning"
+	{
+		scalex;
+		scaley;
+		scalez;
+		offsetx;
+		offsety;
+		offsetz;
+		rotx;
+		roty;
+		rotz;
+		rotjitterx;
+		rotjittery;
+		rotjitterz;
+	}
+}
+Plugin = Shader
+{
+	Filename = "alTriplanar";
+}

@@ -3,6 +3,11 @@
 
 import os
 import sys
+
+
+#for n in range(5):
+#	os.system("pkill -fc -9 mantra")
+
 from optparse import OptionParser
 
 import parsers.hbatch

@@ -38,13 +38,18 @@ mountCache(){
 lsmod
 
 #/bin/sh
-
+root=$(getarg root)
+if [ "$root" == "" ] ; then 
+   root="192.168.0.11:/RAID/atomo"
+fi
 pipe=$(getarg pipe)
 distro=$(getarg distro)
 studio=$(getarg studio)
 liveInit=$(getarg liveInit)
 nfsRoot="$pipe/$distro"
-nfsOpts="vers=3,rsize=8192,wsize=8192,timeo=1200,acl,retry=5,intr,tcp"
+nfsRoot2="$root/$distro"
+nfsOpts="vers=3,rsize=32768,wsize=32768,timeo=1200,acl,retry=5,intr,tcp,noatime,nodiratime"
+#nfsOpts="vers=3,rsize=8192,wsize=8192,timeo=1200,acl,retry=5,intr,tcp,noatime,nodiratime,fsc"
 
 
 echo "=============================================================="
@@ -70,12 +75,17 @@ mkdir -p /boot/rootRW/3dserver/
 ln -s /mnt/Projetos /boot/rootRW/3DSERVER/
 ln -s /mnt/Projetos /boot/rootRW/3dserver/
 
-mount -r -o ro,nolock,$nfsOpts $nfsRoot /boot/rootRO
+mount -r -o ro,nolock,$nfsOpts $nfsRoot2 /boot/rootRO
+#mount -r -o ro,nolock,$nfsOpts $nfsRoot /boot/rootRO
 mount -t tmpfs -o size=16G  tmpfs  /boot/rootRW
 
 
 # mount writable folders for booting
 busybox mount -o dirs=/boot/rootRW=rw:/boot/rootRO=ro -t aufs none /newroot
+mkdir -p /newroot/boot/rootRW
+mount --bind /boot/rootRW  /newroot/boot/rootRW
+mkdir -p /newroot/boot/rootRO
+mount --bind /boot/rootRO  /newroot/boot/rootRO
 
 
 # setup sssd log folder, or else sssd won't start!!
@@ -86,7 +96,6 @@ mount -t tmpfs -o size=16G  tmpfs  /newroot/tmp/
 mount -t tmpfs -o size=16G  tmpfs  /newroot/var/tmp/
 chmod a+rwx /newroot/tmp
 chmod a+rwx /newroot/var/tmp
-
 
 # if fedora:
 if [ -f /newroot/etc/rc.d/rc.local ] ; then
@@ -107,6 +116,8 @@ tmpfs                   $devshm                 tmpfs   defaults,size=16G       
 devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
 sysfs                   /sys                    sysfs   defaults        0 0
 $pipe                   /$studio                nfs     $nfsOpts
+#$root/home              /$studio/home           nfs     $nfsOpts
+#$root/pipeline          /$studio/pipeline       nfs     $nfsOpts
 EOF
     rm -rf    /newroot/etc/mtab
     echo "" > /newroot/etc/mtab
@@ -119,8 +130,14 @@ setupNetwork(){
     cat > /newroot/etc/resolv.conf <<EOF
 domain $studio.local
 search $studio.local local
+nameserver 8.8.8.8
+nameserver 192.168.0.1
 nameserver 208.67.222.222
 nameserver 208.67.220.220
+
+options single-request-reopen
+
+
 EOF
 
     rm -rf /newroot/etc/sysconfig/network-scripts/ifcfg-eth*

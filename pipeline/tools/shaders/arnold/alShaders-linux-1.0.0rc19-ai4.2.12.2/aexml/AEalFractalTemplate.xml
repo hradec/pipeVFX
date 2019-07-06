@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalFractal">
+		<label>alFractal</label>
+		<description>The classic shading artist's best friend with support for both fractal Brownian motion and turbulent noise types.</description>
+		<attribute name="mode" type="maya.enum">
+			<label>Mode</label>
+			<description>Scalar outputs a black and white pattern, Vector outputs random colors.</description>
+		</attribute>
+		<attribute name="space" type="maya.enum">
+			<label>Space</label>
+			<description>Space in which to calculate the noise pattern.</description>
+		</attribute>
+		<attribute name="scale" type="maya.float3">
+			<label>Vector</label>
+			<description>Scale values of the noise space for each axis. Use this to stretch the noise along a certain direction.</description>
+		</attribute>
+		<attribute name="frequency" type="maya.float">
+			<label>Frequency</label>
+			<description>Frequency of the noise pattern. Larger numbers make it smaller, lower numbers make it bigger.</description>
+		</attribute>
+		<attribute name="time" type="maya.float">
+			<label>Time</label>
+			<description>4th dimension of the noise. Connect this to a time value to animate the noise.</description>
+		</attribute>
+		<attribute name="octaves" type="maya.int">
+			<label>Octaves</label>
+			<description>Number of octaves to calculate. Higher numbers give more detail but take longer to compute.</description>
+		</attribute>
+		<attribute name="distortion" type="maya.float">
+			<label>Distortion</label>
+			<description>Apply a random warp to the noise space.</description>
+		</attribute>
+		<attribute name="lacunarity" type="maya.float">
+			<label>Lacunarity</label>
+			<description>How much the frequency is increased with each octave.</description>
+		</attribute>
+		<attribute name="gain" type="maya.float">
+			<label>Gain</label>
+			<description>How much the intensity of the noise is scaled with each object.</description>
+		</attribute>
+		<attribute name="turbulent" type="maya.bool">
+			<label>Turbulent</label>
+			<description>Enable this to switch from fBM to Turbulent noise.</description>
+		</attribute>
+		<attribute name="RMPinputMin" type="maya.float">
+			<label>Input min</label>
+			<description>Sets the minimum input value. Use this to pull values outside of 0-1 into a 0-1 range.</description>
+		</attribute>
+		<attribute name="RMPinputMax" type="maya.float">
+			<label>Input max</label>
+			<description>Sets the maximum input value. Use this to pull values outside of 0-1 into a 0-1 range.</description>
+		</attribute>
+		<attribute name="RMPcontrast" type="maya.float">
+			<label>Contrast</label>
+			<description>Scales the contrast of the input signal.</description>
+		</attribute>
+		<attribute name="RMPcontrastPivot" type="maya.float">
+			<label>Pivot</label>
+			<description>Sets the pivot point around which the input signal is contrasted.</description>
+		</attribute>
+		<attribute name="RMPbias" type="maya.float">
+			<label>Bias</label>
+			<description>Bias the signal higher or lower. Values less than 0.5 push the average lower, values higher than 0.5 push it higher.</description>
+		</attribute>
+		<attribute name="RMPgain" type="maya.float">
+			<label>Gain</label>
+			<description>Adds gain to the signal, in effect a different form of contrast. Values less than 0.5 increase the gain, values greater than 0.5 decrease it.</description>
+		</attribute>
+		<attribute name="RMPoutputMin" type="maya.float">
+			<label>Output min</label>
+			<description>Sets the minimum value of the output. Use this to scale a 0-1 signal to a new range.</description>
+		</attribute>
+		<attribute name="RMPoutputMax" type="maya.float">
+			<label>Output max</label>
+			<description>Sets the maximum value of the output. Use this to scale a 0-1 signal to a new range.</description>
+		</attribute>
+		<attribute name="RMPclampEnable" type="maya.bool">
+			<label>Enable</label>
+			<description>When enabled, will clamp the output to Min-Max.</description>
+		</attribute>
+		<attribute name="RMPthreshold" type="maya.bool">
+			<label>Expand</label>
+			<description>When enabled, will expand the clamped range to 0-1 after clamping.</description>
+		</attribute>
+		<attribute name="RMPclampMin" type="maya.float">
+			<label>Min</label>
+			<description>Minimum value to clamp to.</description>
+		</attribute>
+		<attribute name="RMPclampMax" type="maya.float">
+			<label>Max</label>
+			<description>Maximum value to clamp to.</description>
+		</attribute>
+		<attribute name="color1" type="maya.float3">
+			<label>Color 1</label>
+			<description>Color to use when the noise result is 0.</description>
+		</attribute>
+		<attribute name="color2" type="maya.float3">
+			<label>Color 2</label>
+			<description>Color to use when the noise result is 1.</description>
+		</attribute>
+		<attribute name="P" type="maya.float3">
+			<label>P</label>
+			<description>Connect a point here to define a custom space for the noise to be calculated in. You can use alInputVector to get and transform points. This can be useful for animating noises in coordinate systems.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalFractal">
+			<property name="mode"/>
+			<property name="space"/>
+			<property name="scale"/>
+			<property name="frequency"/>
+			<property name="time"/>
+			<property name="octaves"/>
+			<property name="distortion"/>
+			<property name="lacunarity"/>
+			<property name="gain"/>
+			<property name="turbulent"/>
+			<group name="Remap">
+				<label>Remap</label>
+				<property name="RMPinputMin"/>
+				<property name="RMPinputMax"/>
+				<group name="Contrast">
+					<label>Contrast</label>
+					<property name="RMPcontrast"/>
+					<property name="RMPcontrastPivot"/>
+				</group>
+				<group name="Biasandgain">
+					<label>Bias and gain</label>
+					<property name="RMPbias"/>
+					<property name="RMPgain"/>
+				</group>
+				<property name="RMPoutputMin"/>
+				<property name="RMPoutputMax"/>
+				<group name="Clamp">
+					<label>Clamp</label>
+					<property name="RMPclampEnable"/>
+					<property name="RMPthreshold"/>
+					<property name="RMPclampMin"/>
+					<property name="RMPclampMax"/>
+				</group>
+			</group>
+			<property name="color1"/>
+			<property name="color2"/>
+			<property name="P"/>
+		</view>
+</templates>

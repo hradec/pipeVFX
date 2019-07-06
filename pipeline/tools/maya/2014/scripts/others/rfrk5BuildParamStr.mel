@@ -1,0 +1,803 @@
+proc string rfrk5GetRenderCam()
+{
+	if(!`about -batch`)
+		return getCurrentCamera();
+
+	string $allCams[] = `ls -type camera`;
+	for($cam in $allCams)
+	{
+		if(`getAttr ($cam + ".renderable")`)
+			return $cam;
+	}
+
+	if(size($allCams) > 0)
+		return $allCams[0];
+
+	return "perspShape";
+}
+
+proc int rfrk5GetCurrentTime(string $renderer)
+{
+	int $frame = `currentTime -q`;
+	string $cRenderer = `getAttr "defaultRenderGlobals.currentRenderer"`;
+	if( ($renderer == "rms") || (`objExists renderManGlobals`) )
+	{
+    	string $rmanGlobals;
+
+    	if( ( $cRenderer == "renderMan" ) )
+    	{
+    		$rmanGlobals = "renderManGlobals";
+    	}
+    	else if( $cRenderer == "renderManRIS" )
+   		{
+    		$rmanGlobals = "renderManRISGlobals";
+    	}
+
+    	int $mb = `getAttr ($rmanGlobals + ".rman__torattr___motionBlur")`;
+    	if(!$mb)
+    		return $frame;
+
+    	string $st = `getAttr ($rmanGlobals + ".rman__toropt___shutterTiming")`;
+    	if($st != "frameOpen")
+    		return $frame;
+
+    	string $subframe = `getAttr ($rmanGlobals + ".rman__toropt___motionBlurType")`;
+
+    	int $ang = `getAttr ($rmanGlobals + ".rman__toropt___shutterAngle")`;
+
+    	if( ( $subframe == "frame" ) || ($ang >= 360) )
+    		return $frame - 1;
+
+    	return $frame;
+	}
+	else if( $cRenderer == "arnold" )
+	{
+    	int $mb = `getAttr "defaultArnoldRenderOptions.motion_blur_enable"`;
+    	if(!$mb)
+      		return $frame;
+
+    	int $st = `getAttr "defaultArnoldRenderOptions.range_type"`;
+    	if($st != 0 )
+      		return $frame + 1;
+
+   		return $frame;
+	}
+	else
+	{
+    	return $frame;
+	}
+}
+
+proc string rfrk5ResolveFilePattern(string $pattern, int $frame, int $offset)
+{
+	string $frameSpec = match("$F[0-9]+", $pattern);
+	int $len = size($frameSpec);
+	if($len < 3)
+		return $pattern;
+
+	int $padding = int(substring($frameSpec, 3, $len));
+	string $frameStr = $frame - $offset;
+	int $numZeroes = $padding - size($frameStr);
+	for($i = 0; $i < $numZeroes; ++$i)
+		$frameStr = "0" + $frameStr;
+
+	$frameSpec = "\\" + $frameSpec;
+	string $resolved = substitute($frameSpec, $pattern, $frameStr);
+	return $resolved;
+}
+
+proc string rfrk5BuildFileList(string $shaderNode, int $frame)
+{
+	string $nodeType = `nodeType $shaderNode`;
+	$args = "";
+
+	int $seqFrame = `getAttr -t $frame ($shaderNode + ".frame")`;
+
+	int $numSeq = `getAttr -s ($shaderNode + ".files")`;
+	for($i = 0; $i < $numSeq; ++$i)
+	{
+		string $attrPrefix = $shaderNode + ".files[" + $i + "].";
+		if(`getAttr -t $frame ($attrPrefix + "mute")`)
+			continue;
+
+		string $file = `getAttr -t $frame ($attrPrefix + "pathAndPrefix")`;
+		string $offset = `getAttr -t $frame ($attrPrefix + "offset")`;
+
+		$args += " -rfrk_fileSeq \""				+ rfrk5ResolveFilePattern($file, $seqFrame, $offset) + "\"";
+		$args += " -rfrk_seqOffset "				+ $offset;
+		$args += " -rfrk_wait "						+ `getAttr -t $frame ($attrPrefix + "wait")`;
+
+		switch($nodeType)
+		{
+			case "rk_mesh5":
+			case "openvdb_rk_mesh5":
+				$args += " -rfrk_radius "			+ `getAttr -t $frame ($attrPrefix + "radius")`;
+				$args += " -rfrk_core "				+ `getAttr -t $frame ($attrPrefix + "core")`;
+				$args += " -rfrk_splash "			+ `getAttr -t $frame ($attrPrefix + "splash")`;
+				$args += " -rfrk_velocity "			+ `getAttr -t $frame ($attrPrefix + "maxVelocity")`;
+				$args += " -rfrk_subtractive "		+ `getAttr -t $frame ($attrPrefix + "subtractive")`;
+				break;
+
+			case "hybrido_mesh5":
+			case "openvdb_hybrido_mesh5":
+				$args += " -rfrk_radius "			+ `getAttr -t $frame ($attrPrefix + "radius")`;
+				$args += " -rfrk_velocity "			+ `getAttr -t $frame ($attrPrefix + "maxVelocity")`;
+				$args += " -rfrk_subtractive "		+ `getAttr -t $frame ($attrPrefix + "subtractive")`;
+				break;
+
+			case "rfrk_particler5":
+				$args += " -rfrk_radius "			+ `getAttr -t $frame ($attrPrefix + "radius")`;
+				$args += " -rfrk_radiusPP "			+ `getAttr -t $frame ($attrPrefix + "radiusPP")`;
+				$args += " -rfrk_core "				+ `getAttr -t $frame ($attrPrefix + "core")`;
+				$args += " -rfrk_splash "			+ `getAttr -t $frame ($attrPrefix + "splash")`;
+				$args += " -rfrk_maxVel "			+ `getAttr -t $frame ($attrPrefix + "maxVel")`;
+				break;
+		}
+	}
+
+	return $args;
+}
+
+proc string rfrk5BuildFilterList(string $shaderNode, int $frame)
+{
+	string $nodeType = `nodeType $shaderNode`;
+	$args = "";
+
+	int $numFilters = `getAttr -s ($shaderNode + ".openvdbfilters")`;
+	for($i = 0; $i < $numFilters; ++$i)
+	{
+		string $attrPrefix = $shaderNode + ".openvdbfilters[" + $i + "].";
+
+		int $mutte = `getAttr -t $frame ($attrPrefix + "muteFilter")`;
+		
+		$args += " -rfrk_volumeFilterType "  + `getAttr -t $frame ($attrPrefix + "typeFilter")`;
+		$args += " -rfrk_volumeFilterEnable " + !$mutte;
+		$args += " -rfrk_volumeFilterIterations "+ `getAttr -t $frame ($attrPrefix + "iterationsFilter")`;	
+		$args += " -rfrk_volumeFilterOffset "	+ `getAttr -t $frame ($attrPrefix + "offsetFilter")`;
+	}
+
+	return $args;
+}
+
+proc string rfrk5GetChannelArgs(string $shaderNode, int $frame)
+{
+	string $nodeType = `nodeType $shaderNode`;
+
+	string $args = " ";
+
+	// Channels common to all 3 shader types.
+	$args += " -rfrk_magVelocity "			+ `getAttr -t $frame ($shaderNode + ".velocity")`;
+	$args += " -rfrk_magTexture "			+ `getAttr -t $frame ($shaderNode + ".texture")`;
+	$args += " -rfrk_magVorticity "			+ `getAttr -t $frame ($shaderNode + ".vorticity")`;
+
+
+	// Channels found only in meshers.
+	if( ($nodeType == "rk_mesh5") || ($nodeType == "hybrido_mesh5") )
+	{
+		$args += " -rfrk_magSplashity "		+ `getAttr -t $frame ($shaderNode + ".splashity")`;
+		$args += " -rfrk_magCurvature "		+ `getAttr -t $frame ($shaderNode + ".curvature")`;
+		$args += " -rfrk_magPrecise "		+ `getAttr -t $frame ($shaderNode + ".precise")`;
+		$args += " -rfrk_magWeights "		+ `getAttr -t $frame ($shaderNode + ".weights")`;
+	}
+
+	// Channels found in rk_mesh5 and particler.
+	if( ($nodeType == "rk_mesh5") || ($nodeType == "rfrk_particler5") )
+	{
+		$args += " -rfrk_magForce "			+ `getAttr -t $frame ($shaderNode + ".force")`;
+		$args += " -rfrk_magNeighbors "		+ `getAttr -t $frame ($shaderNode + ".neighbors")`;
+		$args += " -rfrk_magAge "			+ `getAttr -t $frame ($shaderNode + ".age")`;
+		$args += " -rfrk_magIsolation "		+ `getAttr -t $frame ($shaderNode + ".isolation")`;
+		$args += " -rfrk_magViscosity "		+ `getAttr -t $frame ($shaderNode + ".viscosity")`;
+		$args += " -rfrk_magDensity "		+ `getAttr -t $frame ($shaderNode + ".density")`;
+		$args += " -rfrk_magPressure  "		+ `getAttr -t $frame ($shaderNode + ".pressure")`;
+		$args += " -rfrk_magMass "			+ `getAttr -t $frame ($shaderNode + ".mass")`;
+		$args += " -rfrk_magTemperature "	+ `getAttr -t $frame ($shaderNode + ".temperature")`;
+	}
+
+	// Normal is only defined for the particler.
+	if($nodeType == "rfrk_particler5")
+		$args += " -rfrk_magNormal "		+ `getAttr -t $frame ($shaderNode + ".normal")`;
+
+	return $args;
+}
+
+proc int rfrk5GetRendermanVersion()
+{
+	string $ver = `rman getversion`;
+    string $buf[];
+    tokenize $ver "." $buf;
+    return (int)$buf[0];
+}
+
+proc string rfrk5GetShutterArgs(string $renderer)
+{
+	string $args = "";
+
+	if($renderer == "arnold")
+	{
+		// FIXME: do we need to pass these to the Arnold shader? If yes, we need to take into
+		// account the modes and offsets introduced in MtoA 1.0.0.1.
+		return $args;
+	}
+
+    int $rmanVersion = rfrk5GetRendermanVersion();
+	if($rmanVersion < 4)
+	{
+		$args += " -rfrk_shutterOpen " + `getAttr renderManGlobals.rman__riopt__Hider_shutteropening0`;
+		$args += " -rfrk_shutterClose " + `getAttr renderManGlobals.rman__riopt__Hider_shutteropening1`;
+	}
+	else
+	{
+	  string $cRenderer = `getAttr "defaultRenderGlobals.currentRenderer"`;
+	  string $rmanGlobals;
+
+    if( $cRenderer == "renderMan" )
+    {
+      $rmanGlobals = "renderManGlobals";
+    }
+    else if( $cRenderer == "renderManRIS" )
+    {
+      $rmanGlobals = "renderManRISGlobals";
+    }
+
+
+		$args += " -rfrk_shutterOpen " + `getAttr( $rmanGlobals + ".rman__riopt__Camera_shutteropening0")`;
+		$args += " -rfrk_shutterClose " + `getAttr( $rmanGlobals + ".rman__riopt__Camera_shutteropening1")`;
+	}
+
+	return $args;
+}
+
+proc string rfrk5GetCameraArgs(string $shaderNode, int $frame, string $renderer)
+{
+	string $cam = rfrk5GetRenderCam();
+
+	$args =  " -rfrk_fps " + `getAttr -t $frame ($shaderNode + ".fps")`;
+	$args += " -rfrk_nearPlane " + `getAttr -t $frame ($cam + ".nearClipPlane")`;
+	$args += " -rfrk_farPlane " + `getAttr -t $frame ($cam + ".farClipPlane")`;
+
+	float $focalLen = `getAttr -t $frame ($cam + ".focalLength")`;
+	float $filmWidth = `getAttr -t $frame ($cam + ".horizontalFilmAperture")`;
+	float $filmHeight = `getAttr -t $frame ($cam + ".verticalFilmAperture")`;
+	// The film width is in inches and the focal length is in milimeters. The 12.7 term contains the
+	// appropriate conversion and the doubling of the focal length from the initial formula.
+	float $fov = rad_to_deg(2.0 * atan($filmWidth * 12.7 / $focalLen));
+	float $fovRatio = $filmWidth / $filmHeight;
+
+	$args += " -rfrk_fov " + $fov;
+	$args += " -rfrk_fovRatio " + $fovRatio;
+
+	float $camPos[] = `camera -q -p $cam`;
+	float $camTarget[] = `camera -q -wci $cam`;
+	float $camUp[] = `camera -q -wup $cam`;
+	$args += " -rfrk_cameraPosition " + $camPos[0] + " "  + $camPos[1] + " " + $camPos[2];
+	$args += " -rfrk_cameraTarget " + $camTarget[0] + " " + $camTarget[1] + " " + $camTarget[2];
+	$args += " -rfrk_cameraUp " + $camUp[0] + " " + $camUp[1] + " " + $camUp[2];
+	$args += rfrk5GetShutterArgs($renderer);
+	$args += " -rfrk_motionBlurType 2";
+	$args += " -rfrk_frame " + $frame;
+
+	if( ($renderer == "rms") && `objExists renderManGlobals`)
+	{
+	  string $cRenderer = `getAttr "defaultRenderGlobals.currentRenderer"`;
+	  string $rmanGlobals;
+
+	  if( $cRenderer == "renderMan" )
+    {
+      $rmanGlobals = "renderManGlobals";
+    }
+    else if( $cRenderer == "renderManRIS" )
+    {
+      $rmanGlobals = "renderManRISGlobals";
+    }
+
+		$args += " -rfrk_motionBlur " + `getAttr( $rmanGlobals + ".rman__torattr___motionBlur")`;
+		$args += " -rfrk_shutterAngle " + `getAttr( $rmanGlobals + ".rman__toropt___shutterAngle")`;
+		$args += " -rfrk_motionBlurSteps " + `getAttr( $rmanGlobals + ".rman__torattr___motionSamples")`;
+		$args += " -rfrk_motionBlurRMS 1 ";
+
+		string $motionBlurTimming =  `getAttr( $rmanGlobals + ".rman__toropt___shutterTiming")`;
+		if($motionBlurTimming == "frameOpen")
+		{
+			$args += " -rfrk_motionBlurTiming 0 ";
+		}
+		else if($motionBlurTimming == "frameCenter")
+		{
+			$args += " -rfrk_motionBlurTiming 1 ";
+		}
+		else
+		{
+			$args += " -rfrk_motionBlurTiming 2 ";
+		}
+	}
+
+	if( ($renderer == "arnold") && `objExists defaultArnoldRenderOptions`)
+	{
+	    int $mb = `getAttr "defaultArnoldRenderOptions.motion_blur_enable"`;
+		if($mb)
+		{
+			$args += " -rfrk_motionBlur 1 -rfrk_motionBlurType 2";
+
+			int $mbSteps		= `getAttr defaultArnoldRenderOptions.motion_steps`;
+			int $shutterPos		= `getAttr defaultArnoldRenderOptions.range_type`;
+			float $shutterLen	= `getAttr defaultArnoldRenderOptions.motion_frames`;
+			float $mbStart		= `getAttr defaultArnoldRenderOptions.motion_start`;
+			float $mbEnd		= `getAttr defaultArnoldRenderOptions.motion_end`;
+			switch($shutterPos)
+			{
+				case 0:
+					$mbStart = 0;
+					$mbEnd = $shutterLen;
+					break;
+				case 1:
+					$mbStart = -0.5 * $shutterLen;
+					$mbEnd = 0.5 * $shutterLen;
+					break;
+				case 2:
+					$mbStart = -$shutterLen;
+					$mbEnd = 0;
+					break;
+				case 3:
+					// We've already read mbStart and mbEnd from the custom parameters, so do nothing.
+					break;
+			}
+
+			float $interval = ($mbEnd  - $mbStart) / ($mbSteps - 1);
+			$args += " -shutter";
+			float $stepTime = $mbStart;
+			for($i = 0; $i < $mbSteps; ++$i)
+			{
+				$args += " " + $stepTime;
+				$stepTime += $interval;
+			}
+		}
+		else
+		{
+			$args += " -rfrk_motionBlur 0";
+		}
+	}
+
+	return $args;
+}
+
+proc string rfrk5GetLazyComputeArgs(string $shaderNode, int $frame)
+{
+	string $args = "";
+
+	string $abcFile = `getAttr -t $frame ($shaderNode + ".lazyComputeFile")`;
+	int $offset = `getAttr -t $frame ($shaderNode + ".lazyComputeOffset")`;
+	$abcFile = rfrk5ResolveFilePattern($abcFile, $frame, $offset);
+
+	int $lazyComputeAction = `getAttr -t $frame ($shaderNode + ".lazyComputeAction")`;
+
+	if($lazyComputeAction == 1)
+		$args += " -rfrk_exportMesh 1 -rfrk_exportMeshPath \"" + $abcFile + "\"";
+	else if($lazyComputeAction == 2)
+		$args += " -rfrk_lazyCompute 1 -rfrk_lazyComputePath \"" + $abcFile + "\"";
+
+	return $args;
+}
+
+proc string rfrk5GetClipArgs(string $shaderNode, int $frame)
+{
+	string $args = "";
+
+	$args += " -rfrk_objectClip "			+ `getAttr -t $frame ($shaderNode + ".objectClip")`;
+	$args += " -rfrk_cameraClip "			+ `getAttr -t $frame ($shaderNode + ".cameraClip")`;
+	$args += " -rfrk_outInside "			+ `getAttr -t $frame ($shaderNode + ".outInside")`;
+	int $numClipFiles = `getAttr -s ($shaderNode + ".clipFiles")`;
+	for($i = 0; $i < $numClipFiles; ++$i)
+	{
+		string $file = `getAttr -t $frame ($shaderNode + ".clipFiles[" + $i + "]")`;
+		$file = rfrk5ResolveFilePattern($file, $frame, 0);
+		$args += " -rfrk_filesClip \"" + $file + "\"";
+	}
+
+	return $args;
+}
+
+proc string rfrk5GetOBBArgs(string $shaderNode, int $frame)
+{
+	string $args = "";
+
+	string $components[3] = { "X", "Y", "Z" };
+
+	$args += " -rfrk_isBounded " + `getAttr -t $frame ($shaderNode + ".isBounded")`;
+
+	string $posArg = " -rfrk_boundedPosition ";
+	string $rotArg = " -rfrk_boundedRotation ";
+	string $scaleArg = " -rfrk_boundedScale ";
+	string $shearArg = " -rfrk_boundedShear ";
+	string $pivotArg = " -rfrk_boundedPivot ";
+
+	for($comp in $components)
+	{
+		$posArg += `getAttr -t $frame ($shaderNode + ".obbPosition" + $comp)` + " ";
+		$rotArg += `getAttr -t $frame ($shaderNode + ".obbRotation" + $comp)` + " ";
+		$scaleArg += `getAttr -t $frame ($shaderNode + ".obbScale" + $comp)` + " ";
+		$shearArg += `getAttr -t $frame ($shaderNode + ".obbShear" + $comp)` + " ";
+		$pivotArg += `getAttr -t $frame ($shaderNode + ".obbPivot" + $comp)` + " ";
+	}
+
+	$args += $posArg + $rotArg + $scaleArg + $shearArg + $pivotArg;
+	return $args;
+}
+
+proc string rfrk5GetMesherArgs(string $shaderNode, string $shapeNode, string $renderer)
+{
+	string $nodeType = `nodeType $shaderNode`; 
+	int $frame = rfrk5GetCurrentTime($renderer);
+	int $seqFrame = `getAttr -t $frame ($shaderNode + ".frame")`;
+
+	string $args = "rfrk5_mesher" + rfrk5BuildFileList($shaderNode, $frame);
+
+	if($nodeType == "openvdb_rk_mesh5")
+	{
+		$args += " -rfrk_openVDBMeshing 1 ";
+		$args += rfrk5BuildFilterList($shaderNode, $frame);
+	}
+	else
+	{
+		$args += " -rfrk_openVDBMeshing 0 ";
+	}
+
+	
+	$args += rfrk5GetLazyComputeArgs($shaderNode, $frame);
+
+	string $primTypeAttrName = ($renderer == "arnold") ? "rfrkArnoldPrimitiveType" : "rfrkRmsPrimitiveType";
+	int $primType = `attributeQuery -node $shaderNode -exists $primTypeAttrName` ? `getAttr -t $frame ($shaderNode + "." + $primTypeAttrName)` : 0;
+	int $delayedRead = `attributeQuery -node $shaderNode -exists "rfrkRmsDelayedReadArchive"` ? `getAttr -t $frame ($shaderNode + ".rfrkRmsDelayedReadArchive")` : 0;
+
+	$args += " -rfrk_primitiveType "		+ $primType;
+	$args += " -rfrk_delayedReadArchive "	+ $delayedRead;
+
+	$args += " -rfrk_polygonSize "			+ `getAttr -t $frame ($shaderNode + ".polygonSize")`;
+	$args += " -rfrk_isoLevel "				+ `getAttr -t $frame ($shaderNode + ".isoLevel")`;
+	$args += " -rfrk_axis "					+ `getAttr -t $frame ($shaderNode + ".axis")`;
+
+	if($nodeType == "rk_mesh5")
+	{
+		$args += " -rfrk_precise "				+ `getAttr -t $frame ($shaderNode + ".weightNormalization")`;
+		$args += " -rfrk_smooth "				+ `getAttr -t $frame ($shaderNode + ".smooth")`;
+		$args += " -rfrk_fieldType "			+ `getAttr -t $frame ($shaderNode + ".fieldType")`;
+		$args += " -rfrk_fixBoundingBox "		+ `getAttr -t $frame ($shaderNode + ".fixBoundingBox")`;
+	}
+
+	$args += " -rfrk_filterMesh "			+ `getAttr -t $frame ($shaderNode + ".filterMesh")`;
+	$args += " -rfrk_relax "				+ `getAttr -t $frame ($shaderNode + ".relax")`;
+	$args += " -rfrk_tension "				+ `getAttr -t $frame ($shaderNode + ".tension")`;
+	$args += " -rfrk_thinning "				+ `getAttr -t $frame ($shaderNode + ".thinning")`;
+	$args += " -rfrk_steps "				+ `getAttr -t $frame ($shaderNode + ".steps")`;
+
+	$args += rfrk5GetClipArgs($shaderNode, $frame);
+	$args += rfrk5GetOBBArgs($shaderNode, $frame);
+
+	$args += " -rfrk_optimize "				+ `getAttr -t $frame ($shaderNode + ".optimize")`;
+	$args += " -rfrk_cameraDistance "		+ `getAttr -t $frame ($shaderNode + ".cameraDistance")`;
+
+	string $rwFile = `getAttr -t $frame ($shaderNode + ".rwFile")`;
+	$args += " -rfrk_insertRealwave "		+ `getAttr -t $frame ($shaderNode + ".insertRealwave")`;
+	$args += " -rfrk_fileRW \""				+ rfrk5ResolveFilePattern($rwFile, $seqFrame, 0) + "\"";
+	$args += " -rfrk_rwPolygonSize "		+ `getAttr -t $frame ($shaderNode + ".rwPolygonSize")`;
+	$args += " -rfrk_rwResolution "			+ `getAttr -t $frame ($shaderNode + ".rwResolution")`;
+	$args += " -rfrk_rwRadius "				+ `getAttr -t $frame ($shaderNode + ".rwRadius")`;
+
+	string $binFile = `getAttr -t $frame ($shaderNode + ".binFile")`;
+	if($binFile != "")
+	{
+		$args += " -rfrk_insertMeshBin "	+ `getAttr -t $frame ($shaderNode + ".insertBinMesh")`;
+		$args += " -rfrk_fileMeshBin \""	+ rfrk5ResolveFilePattern($binFile, $seqFrame, 0) + "\"";
+		$args += " -rfrk_offsetMeshBin "	+ `getAttr -t $frame ($shaderNode + ".binOffset")`;
+		$args += " -rfrk_waitMeshBin "		+ `getAttr -t $frame ($shaderNode + ".binWait")`;
+	}
+	else
+		$args += " -rfrk_insertMeshBin 0";
+
+	$args += " -rfrk_threads "				+ `getAttr -t $frame ($shaderNode + ".threads")`;
+
+	$args += rfrk5GetChannelArgs($shaderNode, $frame);
+	$args += rfrk5GetCameraArgs($shaderNode, $frame, $renderer);
+
+	$args += " -rfrk_meshName " + $shapeNode;
+
+	return $args;
+}
+
+proc string rfrk5GetHybridoArgs(string $shaderNode, string $shapeNode, string $renderer)
+{
+	string $nodeType = `nodeType $shaderNode`; 
+
+	int $frame = rfrk5GetCurrentTime($renderer);
+	int $seqFrame = `getAttr -t $frame ($shaderNode + ".frame")`;
+
+	string $args = "rfrk5_mesher" + rfrk5BuildFileList($shaderNode, $frame);
+
+	if($nodeType == "openvdb_hybrido_mesh5")
+	{
+		$args += " -rfrk_openVDBMeshing 1 ";
+		$args += rfrk5BuildFilterList($shaderNode, $frame);
+	}
+	else
+	{
+		$args += " -rfrk_openVDBMeshing 0 ";
+	}
+
+	$args += rfrk5GetLazyComputeArgs($shaderNode, $frame);
+
+	string $primTypeAttrName = ($renderer == "arnold") ? "rfrkArnoldPrimitiveType" : "rfrkRmsPrimitiveType";
+	int $primType = `attributeQuery -node $shaderNode -exists $primTypeAttrName` ? `getAttr -t $frame ($shaderNode + "." + $primTypeAttrName)` : 0;
+	int $delayedRead = `attributeQuery -node $shaderNode -exists "rfrkRmsDelayedReadArchive"` ? `getAttr -t $frame ($shaderNode + ".rfrkRmsDelayedReadArchive")` : 0;
+	$args += " -rfrk_primitiveType "							+ $primType;
+	$args += " -rfrk_delayedReadArchive "						+ $delayedRead;
+
+	$args += " -rfrk_polygonSize "								+ `getAttr -t $frame ($shaderNode + ".polygonSize")`;
+	$args += " -rfrk_axis "										+ `getAttr -t $frame ($shaderNode + ".axis")`;
+
+	if($nodeType == "hybrido_mesh5")
+	{
+		$args += " -rfrk_precise "				+ `getAttr -t $frame ($shaderNode + ".weightNormalization")`;
+	}
+
+	string $dispFile = `getAttr -t $frame ($shaderNode + ".displacementFile")`;
+	string $dispOffset = `getAttr -t $frame ($shaderNode + ".displacementFileOffset")`;
+	$args += " -rfrk_displacement "								+ `getAttr -t $frame ($shaderNode + ".useDisplacement")`;
+	$args += " -rfrk_displacementFile \""						+ rfrk5ResolveFilePattern($dispFile, $seqFrame, $dispOffset) + "\"";
+	$args += " -rfrk_displacementOffset "						+ $dispOffset;
+	$args += " -rfrk_displacementVerticalScale "				+ `getAttr -t $frame ($shaderNode + ".verticalScale")`;
+	$args += " -rfrk_displacementChoppiness "					+ `getAttr -t $frame ($shaderNode + ".chopiness")`;
+	$args += " -rfrk_displacementRepeatU "						+ `getAttr -t $frame ($shaderNode + ".repeatU")`;
+	$args += " -rfrk_displacementRepeatV "						+ `getAttr -t $frame ($shaderNode + ".repeatV")`;
+	$args += " -rfrk_displacementSplashAttenuation "			+ `getAttr -t $frame ($shaderNode + ".splashAttenuation")`;
+	$args += " -rfrk_displacementSplashAttenuationFactor "		+ `getAttr -t $frame ($shaderNode + ".splashAttenuationFactor")`;
+	$args += " -rfrk_displacementVorticityAttenuation "			+ `getAttr -t $frame ($shaderNode + ".vorticityAttenuation")`;
+	$args += " -rfrk_displacementVorticityNormalizationFactor "	+ `getAttr -t $frame ($shaderNode + ".vorticityNormalizationFactor")`;
+	$args += " -rfrk_displacementVorticityAttenuationFactor "	+ `getAttr -t $frame ($shaderNode + ".vorticityAttenuationFactor")`;
+	$args += " -rfrk_displacementHeightAttenuation "			+ `getAttr -t $frame ($shaderNode + ".heightAttenuation")`;
+	$args += " -rfrk_displacementHeightAttenuationMin "			+ `getAttr -t $frame ($shaderNode + ".heightAttenuationMin")`;
+	$args += " -rfrk_displacementHeightAttenuationMax "			+ `getAttr -t $frame ($shaderNode + ".heightAttenuationMax")`;
+	$args += " -rfrk_displacementHeightAttenuationFactor "		+ `getAttr -t $frame ($shaderNode + ".heightAttenuationFactor")`;
+	$args += " -rfrk_displacementSpeedAttenuation "				+ `getAttr -t $frame ($shaderNode + ".speedAttenuation")`;
+	$args += " -rfrk_displacementSpeedAttenuationMin "			+ `getAttr -t $frame ($shaderNode + ".speedAttenuationMin")`;
+	$args += " -rfrk_displacementSpeedAttenuationMax "			+ `getAttr -t $frame ($shaderNode + ".speedAttenuationMax")`;
+	$args += " -rfrk_displacementSpeedAttenuationFactor "		+ `getAttr -t $frame ($shaderNode + ".speedAttenuationFactor")`;
+
+	int $iterations = `attributeQuery -node $shaderNode -exists "rfrkArnoldIterations"` ? `getAttr -t $frame ($shaderNode + ".rfrkArnoldIterations")` : 1;
+	$args += " -rfrk_subdivisionIter "							+ $iterations;
+
+	int $pixelError = `attributeQuery -node $shaderNode -exists "rfrkArnoldPixelError"` ? `getAttr -t $frame ($shaderNode + ".rfrkArnoldPixelError")` : 0;
+	$args += " -rfrk_subdivisionPixelError "					+ $pixelError;
+
+	int $dispPadding = `attributeQuery -node $shaderNode -exists "rfrkArnoldDispPadding"` ? `getAttr -t $frame ($shaderNode + ".rfrkArnoldDispPadding")` : 0;
+	$args += " -rfrk_displacementBoundsPadding "				+ $dispPadding;
+
+	$args += " -rfrk_displacementAutoEdgeLength "				+ `getAttr -t $frame ($shaderNode + ".autoEdgeLength")`;
+	$args += " -rfrk_displacementEdgeLength "					+ `getAttr -t $frame ($shaderNode + ".edgeLength")`;
+
+	$args += " -rfrk_UVWMappingType "							+ `getAttr -t $frame ($shaderNode + ".UVWMapping")`;
+	$args += " -rfrk_UVWMappingOffsetU "						+ `getAttr -t $frame ($shaderNode + ".offsetU")`;
+	$args += " -rfrk_UVWMappingOffsetV "						+ `getAttr -t $frame ($shaderNode + ".offsetV")`;
+
+	$args += " -rfrk_splashThinning "							+ `getAttr -t $frame ($shaderNode + ".splashThinning")`;
+	$args += " -rfrk_splashThinningThreshold "					+ `getAttr -t $frame ($shaderNode + ".splashThreshold")`;
+	$args += " -rfrk_splashThinningSize "						+ `getAttr -t $frame ($shaderNode + ".thinningSize")`;
+	$args += " -rfrk_coreSmoothing "							+ `getAttr -t $frame ($shaderNode + ".coreSmoothing")`;
+	$args += " -rfrk_coreSmoothingThreshold "					+ `getAttr -t $frame ($shaderNode + ".coreThreshold")`;
+	$args += " -rfrk_coreSmoothingSteps "						+ `getAttr -t $frame ($shaderNode + ".smoothingSteps")`;
+
+	$args += " -rfrk_filterMesh "								+ `getAttr -t $frame ($shaderNode + ".filterMesh")`;
+	$args += " -rfrk_relax "									+ `getAttr -t $frame ($shaderNode + ".relax")`;
+	$args += " -rfrk_tension "									+ `getAttr -t $frame ($shaderNode + ".tension")`;
+	$args += " -rfrk_thinning "									+ `getAttr -t $frame ($shaderNode + ".thinning")`;
+	$args += " -rfrk_steps " 									+ `getAttr -t $frame ($shaderNode + ".steps")`;
+
+	$args += rfrk5GetClipArgs($shaderNode, $frame);
+	$args += rfrk5GetOBBArgs($shaderNode, $frame);
+
+	int $openBounds = `getAttr -t $frame ($shaderNode + ".openBoundaries")`;
+	if($openBounds)
+	{
+		$args += " -rfrk_openBoundaries " +  $openBounds;
+
+		float $xMin = `getAttr -t $frame ($shaderNode + ".projectionBoxMinX")`;
+		float $yMin = `getAttr -t $frame ($shaderNode + ".projectionBoxMinY")`;
+		float $zMin = `getAttr -t $frame ($shaderNode + ".projectionBoxMinZ")`;
+
+		float $xMax = `getAttr -t $frame ($shaderNode + ".projectionBoxMaxX")`;
+		float $yMax = `getAttr -t $frame ($shaderNode + ".projectionBoxMaxY")`;
+		float $zMax = `getAttr -t $frame ($shaderNode + ".projectionBoxMaxZ")`;
+
+		$args += " -rfrk_projectionBox "						+ $xMin + " " + $yMin + " " + $zMin + " " + $xMax + " " + $yMax + " " + $zMax;
+		$args += " -rfrk_extension "							+ `getAttr -t $frame ($shaderNode + ".extension")`;
+		$args += " -rfrk_extensionInstance "					+ `getAttr -t $frame ($shaderNode + ".instance")`;
+		$args += " -rfrk_extensionUncoupled "					+ `getAttr -t $frame ($shaderNode + ".uncoupled")`;
+		$args += " -rfrk_extensionAutoSeaLevel "				+ `getAttr -t $frame ($shaderNode + ".seaLevelAuto")`;
+		$args += " -rfrk_extensionSeaLevel "					+ `getAttr -t $frame ($shaderNode + ".seaLevel")`;
+		$args += " -rfrk_extensionFallOff "						+ `getAttr -t $frame ($shaderNode + ".falloff")`;
+		$args += " -rfrk_extensionFalloffOffset "				+ `getAttr -t $frame ($shaderNode + ".falloffOffset")`;
+		$args += " -rfrk_extensionFalloffBandwidth "			+ `getAttr -t $frame ($shaderNode + ".falloffBandwidth")`;
+		$args += " -rfrk_extensionRepeatUpos "					+ `getAttr -t $frame ($shaderNode + ".repeat_U_pos")`;
+		$args += " -rfrk_extensionRepeatUneg "					+ `getAttr -t $frame ($shaderNode + ".repeat_U_neg")`;
+		$args += " -rfrk_extensionRepeatVpos "					+ `getAttr -t $frame ($shaderNode + ".repeat_V_pos")`;
+		$args += " -rfrk_extensionRepeatVneg "					+ `getAttr -t $frame ($shaderNode + ".repeat_V_neg")`;
+	}
+
+	$args += " -rfrk_optimize "									+ `getAttr -t $frame ($shaderNode + ".optimize")`;
+	$args += " -rfrk_cameraDistance "							+ `getAttr -t $frame ($shaderNode + ".cameraDistance")`;
+
+	$args += " -rfrk_threads 0";
+
+	$args += rfrk5GetChannelArgs($shaderNode, $frame);
+	$args += rfrk5GetCameraArgs($shaderNode, $frame, $renderer);
+
+	$args += " -rfrk_meshName " + $shapeNode;
+
+	if($renderer == "arnold")
+	{
+		string $sets[] = `listSets -t 1 -o $shapeNode`;
+		for($set in $sets)
+		{
+			if(`nodeType $set` == "shadingEngine")
+			{
+				string $dispSrc = `connectionInfo -sfd ($set + ".displacementShader")`;
+				if($dispSrc != "")
+					$args += " -rfrk_displacementShaderName " + $dispSrc;
+				break;
+			}
+		}
+	}
+
+	return $args;
+}
+
+proc string rfrk5GetCurveArgs(string $shaderNode, string $curveAttr, string $argPrefix, int $frame)
+{
+	$args = "";
+
+	string $arrayAttr = $shaderNode + "." + $curveAttr;
+	int $numElems = `getAttr -s $arrayAttr`;
+	for($i = 0; $i < $numElems; ++$i)
+	{
+		string $elemPrefix = $arrayAttr + "[" + $i + "]." + $curveAttr + "_";
+		$args += " " + $argPrefix + "Point " + `getAttr -t $frame ($elemPrefix + "Position")`;
+		$args += " " + $argPrefix + "Value " + `getAttr -t $frame ($elemPrefix + "FloatValue")`;
+		$args += " " + $argPrefix + "Type " + `getAttr -t $frame ($elemPrefix + "Interp")`;
+	}
+
+	return $args;
+}
+
+proc string rfrk5GetParticlerArgs(string $shaderNode, string $renderer)
+{
+	int $frame = rfrk5GetCurrentTime($renderer);
+
+	string $renderTypeAttr = ($renderer == "arnold") ? "rfrkArnoldRenderType" : "rfrkRmsRenderType";
+	int $renderType = `attributeQuery -node $shaderNode -exists $renderTypeAttr` ? `getAttr -t $frame ($shaderNode + "." + $renderTypeAttr)` : 2;
+
+	string $args = "rfrk5_particler" + rfrk5BuildFileList($shaderNode, $frame);
+
+	$args += " -rfrk_percentRandomSize "		+ `getAttr -t $frame ($shaderNode + ".randomVariation")`;
+	$args += " -rfrk_scaledByMagnitude "		+ `getAttr -t $frame ($shaderNode + ".scaledByChannel")`;
+	$args += " -rfrk_magnitude "				+ `getAttr -t $frame ($shaderNode + ".channel")`;
+	$args += rfrk5GetCurveArgs($shaderNode, "channelCurve", "-rfrk_magControl", $frame);
+	$args += " -rfrk_magMinValue "				+ `getAttr -t $frame ($shaderNode + ".channelMinValue")`;
+	$args += " -rfrk_magMaxValue "				+ `getAttr -t $frame ($shaderNode + ".channelMaxValue")`;
+
+	$args += " -rfrk_scaledByCameraDistance "	+ `getAttr -t $frame ($shaderNode + ".scaledByCameraDistance")`;
+	$args += rfrk5GetCurveArgs($shaderNode, "camCurve", "-rfrk_camControl", $frame);
+	$args += " -rfrk_camMinDistance "			+ `getAttr -t $frame ($shaderNode + ".camMinValue")`;
+	$args += " -rfrk_camMaxDistance "			+ `getAttr -t $frame ($shaderNode + ".camMaxValue")`;
+
+	$args += " -rfrk_renderType "				+ $renderType;
+	$args += " -rfrk_axis "						+ `getAttr -t $frame ($shaderNode + ".axis")`;
+	$args += " -rfrk_percentTotalParticles "	+ `getAttr -t $frame ($shaderNode + ".getPercentTotalParticles")`;
+
+	if($renderer == "arnold")
+	{
+		int $numBuckets = `attributeQuery -node $shaderNode -exists "rfrkArnoldNumBuckets"` ? `getAttr -t $frame ($shaderNode + ".rfrkArnoldNumBuckets")` : 0;
+		$args += " -rfrk_nBuckets " + $numBuckets;
+	}
+
+	$args += " -rfrk_cameraClip "				+ `getAttr -t $frame ($shaderNode + ".cameraClip")`;
+
+	$args += " -rfrk_isMultiPoint "				+ `getAttr -t $frame ($shaderNode + ".isMultiPoint")`;
+	$args += " -rfrk_mpDensity "				+ `getAttr -t $frame ($shaderNode + ".mpDensity")`;
+	$args += " -rfrk_mpDispersion "				+ `getAttr -t $frame ($shaderNode + ".mpDispersion")`;
+	$args += " -rfrk_mpDeformation "			+ `getAttr -t $frame ($shaderNode + ".mpDeformation")`;
+	$args += " -rfrk_mpSeed "					+ `getAttr -t $frame ($shaderNode + ".mpSeed")`;
+
+	$args += rfrk5GetChannelArgs($shaderNode, $frame);
+	$args += rfrk5GetCameraArgs($shaderNode, $frame, $renderer);
+
+	return $args;
+}
+
+global proc float[] rfrk5GetCloudBbox(string $shapeNode)
+{
+	string $curUnit = `currentUnit -q -linear`;
+	currentUnit -linear "cm";
+
+	float $ret[6];
+	$ret[0] = `getAttr ($shapeNode + ".bb.bbmn.bbnx")`;
+	$ret[1] = `getAttr ($shapeNode + ".bb.bbmn.bbny")`;
+	$ret[2] = `getAttr ($shapeNode + ".bb.bbmn.bbnz")`;
+	$ret[3] = `getAttr ($shapeNode + ".bb.bbmx.bbxx")`;
+	$ret[4] = `getAttr ($shapeNode + ".bb.bbmx.bbxy")`;
+	$ret[5] = `getAttr ($shapeNode + ".bb.bbmx.bbxz")`;
+	currentUnit -linear $curUnit;
+
+	return $ret;
+}
+
+proc string rfrk5GetCloudArgs(string $shaderNode, string $shapeNode, string $renderer)
+{
+	// The cloud is not a procedural anymore in Arnold.
+	if($renderer == "arnold")
+		return "";
+
+	int $frame = rfrk5GetCurrentTime($renderer);
+	int $seqFrame = `getAttr -t $frame ($shaderNode + ".frame")`;
+
+	$bbox = rfrk5GetCloudBbox($shapeNode);
+
+	string $args = "rfrk5_cloud";
+
+	string $file = `getAttr -t $frame ($shaderNode + ".pathAndPrefix")`;
+	$args += " -rfrk_fileSeq \""				+ rfrk5ResolveFilePattern($file, $seqFrame, 0) + "\"";
+	$args += " -rfrk_fieldType "				+ `getAttr -t $frame ($shaderNode + ".fieldType")`;
+	$args += " -rfrk_motionFactor "				+ `getAttr -t $frame ($shaderNode + ".motionFactor")`;
+	$args += " -rfrk_cellSize "					+ `getAttr -t $frame ($shaderNode + ".cellSize")`;
+	$args += " -rfrk_radius "					+ `getAttr -t $frame ($shaderNode + ".radius")`;
+	$args += " -rfrk_radiusPP "					+ `getAttr -t $frame ($shaderNode + ".radiusPP")`;
+
+	$args += rfrk5GetShutterArgs($renderer);
+	$args += " -rfrk_boundingBox " + $bbox[0] + " " + $bbox[3] + " " + $bbox[1] + " " + $bbox[4] + " " + $bbox[2] + " " + $bbox[5];
+	$args += " -rfrk_cloudName " + $shapeNode;
+	$args += " -rfrk_axis 2";
+	$args += " -rfrk_fps " + rfrk5GetFPS();
+
+	if(`objExists renderManGlobals`)
+	{
+		$args += " -rfrk_motionBlur " + `getAttr "renderManGlobals.rman__torattr___motionBlur"`;
+		$args += " -rfrk_motionBlurType 2";
+		$args += " -rfrk_shutterAngle " + `getAttr "renderManGlobals.rman__toropt___shutterAngle"`;
+		$args += " -rfrk_motionBlurSteps " + `getAttr "renderManGlobals.rman__torattr___motionSamples"`;
+		$args += " -rfrk_motionBlurRMS 1 ";
+
+		string $motionBlurTimming =  `getAttr "renderManGlobals.rman__toropt___shutterTiming"`;
+		if($motionBlurTimming == "frameOpen")
+		{
+			$args += " -rfrk_motionBlurTiming 0 ";
+		}
+		else if($motionBlurTimming == "frameCenter")
+		{
+			$args += " -rfrk_motionBlurTiming 1 ";
+		}
+		else
+		{
+			$args += " -rfrk_motionBlurTiming 2 ";
+		}
+	}
+
+	return $args;
+}
+
+global proc string rfrk5BuildParamStr(string $shaderNode, string $shapeNode, string $renderer)
+{
+	string $nodeType = `nodeType $shaderNode`;
+	switch($nodeType)
+	{
+		case "rk_mesh5":
+		case "openvdb_rk_mesh5":
+			return rfrk5GetMesherArgs($shaderNode, $shapeNode, $renderer);
+		case "hybrido_mesh5":
+		case "openvdb_hybrido_mesh5":
+			return rfrk5GetHybridoArgs($shaderNode, $shapeNode, $renderer);
+		case "rfrk_particler5":
+			return rfrk5GetParticlerArgs($shaderNode, $renderer);
+		case "rfrk_cloud5":
+			return rfrk5GetCloudArgs($shaderNode, $shapeNode, $renderer);
+		default:
+			return "";
+	}
+}
+

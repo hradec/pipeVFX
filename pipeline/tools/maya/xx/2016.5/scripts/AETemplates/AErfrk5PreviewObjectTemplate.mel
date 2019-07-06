@@ -1,0 +1,16 @@
+global proc AErfrk5PreviewObjectTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout "RFRK Preview Object" -collapse false;
+		editorTemplate -l "Enlarge BBox By (%)" -addControl "boundingBoxInc";
+	editorTemplate -endLayout;
+
+	AEabstractBaseCreateTemplate $nodeName;
+	
+	string $allAttrs[] = `listAttr $nodeName`;
+	for($attr in $allAttrs)
+		editorTemplate -suppress $attr;
+			
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

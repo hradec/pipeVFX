@@ -1,0 +1,5471 @@
+<XMLSerialization Version="7">
+	<golaemObject pointerID="1" typeName="glm::GolaemCharacter">
+		<name value="CMO-wom_golaem"/>
+		<mainAssetGroups>
+			<element index="0" value="0"/>
+			<element index="1" value="1"/>
+			<element index="2" value="2"/>
+			<element index="3" value="3"/>
+			<element index="4" value="4"/>
+			<element index="5" value="5"/>
+			<element index="6" value="6"/>
+			<element index="7" value="7"/>
+		</mainAssetGroups>
+		<allAssetGroups>
+			<element index="0" pointerID="2">
+				<name value="Hat"/>
+				<children>
+					<element index="0" pointerID="3">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="4">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="5">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+					<element index="3" pointerID="6">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="11"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+					<element index="2" value="50"/>
+					<element index="3" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="1" pointerID="7">
+				<name value="hair"/>
+				<children>
+					<element index="0" pointerID="8">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="12"/>
+					</element>
+					<element index="1" pointerID="9">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="13"/>
+					</element>
+					<element index="2" pointerID="10">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="14"/>
+					</element>
+					<element index="3" pointerID="11">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="15"/>
+					</element>
+					<element index="4" pointerID="12">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="16"/>
+					</element>
+					<element index="5" pointerID="13">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="17"/>
+					</element>
+					<element index="6" pointerID="14">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="18"/>
+					</element>
+					<element index="7" pointerID="15">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="19"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+					<element index="2" value="50"/>
+					<element index="3" value="50"/>
+					<element index="4" value="50"/>
+					<element index="5" value="50"/>
+					<element index="6" value="50"/>
+					<element index="7" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="2" pointerID="16">
+				<name value="glasses"/>
+				<children>
+					<element index="0" pointerID="17">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="20"/>
+					</element>
+					<element index="1" pointerID="18">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="21"/>
+					</element>
+					<element index="2" pointerID="19">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="22"/>
+					</element>
+					<element index="3" pointerID="20">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="11"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+					<element index="2" value="50"/>
+					<element index="3" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="3" pointerID="21">
+				<name value="Skirts and Pants"/>
+				<children>
+					<element index="0" pointerID="22">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="23">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="24"/>
+					</element>
+					<element index="2" pointerID="24">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="3" pointerID="25">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="26"/>
+					</element>
+					<element index="4" pointerID="26">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="27"/>
+					</element>
+					<element index="5" pointerID="27">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="28"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+					<element index="2" value="50"/>
+					<element index="3" value="50"/>
+					<element index="4" value="50"/>
+					<element index="5" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="4" pointerID="28">
+				<name value="Shoes"/>
+				<children>
+					<element index="0" pointerID="29">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="29"/>
+					</element>
+					<element index="1" pointerID="30">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="30"/>
+					</element>
+					<element index="2" pointerID="31">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="31"/>
+					</element>
+					<element index="3" pointerID="32">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="32"/>
+					</element>
+					<element index="4" pointerID="33">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="33"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+					<element index="2" value="50"/>
+					<element index="3" value="50"/>
+					<element index="4" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="5" pointerID="34">
+				<name value="Coats"/>
+				<children>
+					<element index="0" pointerID="35">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="1" pointerID="36">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="2" pointerID="37">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+					<element index="3" pointerID="38">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="4" pointerID="39">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="38"/>
+					</element>
+					<element index="5" pointerID="40">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="39"/>
+					</element>
+					<element index="6" pointerID="41">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="7" pointerID="42">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="8" pointerID="43">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="9" pointerID="44">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="43"/>
+					</element>
+					<element index="10" pointerID="45">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="44"/>
+					</element>
+					<element index="11" pointerID="46">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="45"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+					<element index="2" value="50"/>
+					<element index="3" value="50"/>
+					<element index="4" value="50"/>
+					<element index="5" value="50"/>
+					<element index="6" value="50"/>
+					<element index="7" value="50"/>
+					<element index="8" value="50"/>
+					<element index="9" value="50"/>
+					<element index="10" value="50"/>
+					<element index="11" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="6" pointerID="47">
+				<name value="CMO-woman_body_split"/>
+				<children>
+					<element index="0" pointerID="48">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="46"/>
+					</element>
+					<element index="1" pointerID="49">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="2" pointerID="50">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="3" pointerID="51">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="4" pointerID="52">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="5" pointerID="53">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="6" pointerID="54">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+					<element index="7" pointerID="55">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="53"/>
+					</element>
+					<element index="8" pointerID="56">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="54"/>
+					</element>
+					<element index="9" pointerID="57">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="55"/>
+					</element>
+					<element index="10" pointerID="58">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="56"/>
+					</element>
+					<element index="11" pointerID="59">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="57"/>
+					</element>
+					<element index="12" pointerID="60">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="58"/>
+					</element>
+					<element index="13" pointerID="61">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="59"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+					<element index="2" value="50"/>
+					<element index="3" value="50"/>
+					<element index="4" value="50"/>
+					<element index="5" value="50"/>
+					<element index="6" value="50"/>
+					<element index="7" value="50"/>
+					<element index="8" value="50"/>
+					<element index="9" value="50"/>
+					<element index="10" value="50"/>
+					<element index="11" value="50"/>
+					<element index="12" value="50"/>
+					<element index="13" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="7" pointerID="62">
+				<name value="Flag"/>
+				<children>
+					<element index="0" pointerID="63">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="60"/>
+					</element>
+					<element index="1" pointerID="64">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="61"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="8" pointerID="65">
+				<name value="WOM_MD_head_hat_beret"/>
+				<children>
+					<element index="0" pointerID="66">
+						<meshAssetIdx value="0"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="67">
+						<meshAssetIdx value="1"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="68">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="12"/>
+					</element>
+					<element index="1" pointerID="69">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="13"/>
+					</element>
+					<element index="2" pointerID="70">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="14"/>
+					</element>
+					<element index="3" pointerID="71">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="15"/>
+					</element>
+					<element index="4" pointerID="72">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="16"/>
+					</element>
+					<element index="5" pointerID="73">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="17"/>
+					</element>
+					<element index="6" pointerID="74">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="18"/>
+					</element>
+					<element index="7" pointerID="75">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="19"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="9" pointerID="76">
+				<name value="WOM_MD_head_hat_skiCap"/>
+				<children>
+					<element index="0" pointerID="77">
+						<meshAssetIdx value="2"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="78">
+						<meshAssetIdx value="3"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="79">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="14"/>
+					</element>
+					<element index="1" pointerID="80">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="15"/>
+					</element>
+					<element index="2" pointerID="81">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="16"/>
+					</element>
+					<element index="3" pointerID="82">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="17"/>
+					</element>
+					<element index="4" pointerID="83">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="18"/>
+					</element>
+					<element index="5" pointerID="84">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="19"/>
+					</element>
+					<element index="6" pointerID="85">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="13"/>
+					</element>
+					<element index="7" pointerID="86">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="12"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="10" pointerID="87">
+				<name value="WOM_MD_head_hat_baseBallCap"/>
+				<children>
+					<element index="0" pointerID="88">
+						<meshAssetIdx value="4"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="89">
+						<meshAssetIdx value="5"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="90">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="14"/>
+					</element>
+					<element index="1" pointerID="91">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="15"/>
+					</element>
+					<element index="2" pointerID="92">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="16"/>
+					</element>
+					<element index="3" pointerID="93">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="17"/>
+					</element>
+					<element index="4" pointerID="94">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="18"/>
+					</element>
+					<element index="5" pointerID="95">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="19"/>
+					</element>
+					<element index="6" pointerID="96">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="13"/>
+					</element>
+					<element index="7" pointerID="97">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="12"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="11" pointerID="98">
+				<name value="[empty]"/>
+				<children/>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="12" pointerID="99">
+				<name value="WOM_MD_top_hairLong_short"/>
+				<children>
+					<element index="0" pointerID="100">
+						<meshAssetIdx value="6"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="101">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="102">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="103">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="13" pointerID="104">
+				<name value="WOM_MD_top_hairLong_short1"/>
+				<children>
+					<element index="0" pointerID="105">
+						<meshAssetIdx value="7"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="106">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="107">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="108">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="14" pointerID="109">
+				<name value="WOM_MD_top_hairmiddle_ponytale"/>
+				<children>
+					<element index="0" pointerID="110">
+						<meshAssetIdx value="8"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="111">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="112">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="113">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="15" pointerID="114">
+				<name value="WOM_MD_top_hairLong_ponytale"/>
+				<children>
+					<element index="0" pointerID="115">
+						<meshAssetIdx value="9"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="116">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="117">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="118">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="16" pointerID="119">
+				<name value="WOM_MD_top_hairLong_topknot"/>
+				<children>
+					<element index="0" pointerID="120">
+						<meshAssetIdx value="10"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="121">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="122">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="123">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="17" pointerID="124">
+				<name value="WOM_MD_head_hairAfroLong_01"/>
+				<children>
+					<element index="0" pointerID="125">
+						<meshAssetIdx value="11"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="126">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="127">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="128">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="18" pointerID="129">
+				<name value="WOM_MD_head_hairAfroShort_01"/>
+				<children>
+					<element index="0" pointerID="130">
+						<meshAssetIdx value="12"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="131">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="132">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="133">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="19" pointerID="134">
+				<name value="WOM_MD_top_hairLong_earsOut"/>
+				<children>
+					<element index="0" pointerID="135">
+						<meshAssetIdx value="13"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="136">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+					<element index="1" pointerID="137">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="2" pointerID="138">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="20" pointerID="139">
+				<name value="WOM_MD_head_glasses_sun_round"/>
+				<children>
+					<element index="0" pointerID="140">
+						<meshAssetIdx value="14"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="141">
+						<meshAssetIdx value="15"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="21" pointerID="142">
+				<name value="WOM_MD_head_glasses_std_B"/>
+				<children>
+					<element index="0" pointerID="143">
+						<meshAssetIdx value="16"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="144">
+						<meshAssetIdx value="17"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="22" pointerID="145">
+				<name value="WOM_MD_head_glasses_std_round"/>
+				<children>
+					<element index="0" pointerID="146">
+						<meshAssetIdx value="18"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="147">
+						<meshAssetIdx value="19"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="23" pointerID="148">
+				<name value="WOM_MD_legs_dress_long"/>
+				<children>
+					<element index="0" pointerID="149">
+						<meshAssetIdx value="20"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="150">
+						<meshAssetIdx value="21"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="151">
+						<meshAssetIdx value="22"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="152">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="31"/>
+					</element>
+					<element index="1" pointerID="153">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="32"/>
+					</element>
+					<element index="2" pointerID="154">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="3" pointerID="155">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="4" pointerID="156">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="5" pointerID="157">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="38"/>
+					</element>
+					<element index="6" pointerID="158">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="39"/>
+					</element>
+					<element index="7" pointerID="159">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="8" pointerID="160">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="9" pointerID="161">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="10" pointerID="162">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="43"/>
+					</element>
+					<element index="11" pointerID="163">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="44"/>
+					</element>
+					<element index="12" pointerID="164">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="45"/>
+					</element>
+					<element index="13" pointerID="165">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="46"/>
+					</element>
+					<element index="14" pointerID="166">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="15" pointerID="167">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="16" pointerID="168">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="17" pointerID="169">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="53"/>
+					</element>
+					<element index="18" pointerID="170">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="24" pointerID="171">
+				<name value="WOM_MD_legs_skirt"/>
+				<children>
+					<element index="0" pointerID="172">
+						<meshAssetIdx value="23"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="173">
+						<meshAssetIdx value="24"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="174">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="55"/>
+					</element>
+					<element index="1" pointerID="175">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="56"/>
+					</element>
+					<element index="2" pointerID="176">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="57"/>
+					</element>
+					<element index="3" pointerID="177">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="58"/>
+					</element>
+					<element index="4" pointerID="178">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="59"/>
+					</element>
+					<element index="5" pointerID="179">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="54"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="25" pointerID="180">
+				<name value="WOM_MD_legs_pants_short"/>
+				<children>
+					<element index="0" pointerID="181">
+						<meshAssetIdx value="25"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="182">
+						<meshAssetIdx value="22"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="183">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="1" pointerID="184">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="2" pointerID="185">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+					<element index="3" pointerID="186">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="4" pointerID="187">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="54"/>
+					</element>
+					<element index="5" pointerID="188">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="55"/>
+					</element>
+					<element index="6" pointerID="189">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="56"/>
+					</element>
+					<element index="7" pointerID="190">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="57"/>
+					</element>
+					<element index="8" pointerID="191">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="58"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="26" pointerID="192">
+				<name value="WOM_MD_legs_pants_long"/>
+				<children>
+					<element index="0" pointerID="193">
+						<meshAssetIdx value="26"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="194">
+						<meshAssetIdx value="27"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="195">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="31"/>
+					</element>
+					<element index="1" pointerID="196">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="32"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="27" pointerID="197">
+				<name value="WOM_MD_legs_pants_legging"/>
+				<children>
+					<element index="0" pointerID="198">
+						<meshAssetIdx value="28"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="199">
+						<meshAssetIdx value="27"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="200">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="32"/>
+					</element>
+					<element index="1" pointerID="201">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="56"/>
+					</element>
+					<element index="2" pointerID="202">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="57"/>
+					</element>
+					<element index="3" pointerID="203">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="58"/>
+					</element>
+					<element index="4" pointerID="204">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="59"/>
+					</element>
+					<element index="5" pointerID="205">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="31"/>
+					</element>
+					<element index="6" pointerID="206">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="54"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="28" pointerID="207">
+				<name value="WOM_MD_legs_pants_business"/>
+				<children>
+					<element index="0" pointerID="208">
+						<meshAssetIdx value="29"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="209">
+						<meshAssetIdx value="27"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="210">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="56"/>
+					</element>
+					<element index="1" pointerID="211">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="57"/>
+					</element>
+					<element index="2" pointerID="212">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="58"/>
+					</element>
+					<element index="3" pointerID="213">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="59"/>
+					</element>
+					<element index="4" pointerID="214">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="31"/>
+					</element>
+					<element index="5" pointerID="215">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="32"/>
+					</element>
+					<element index="6" pointerID="216">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="54"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="29" pointerID="217">
+				<name value="WOM_MD_legs_shoes_sport_1"/>
+				<children>
+					<element index="0" pointerID="218">
+						<meshAssetIdx value="30"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="30" pointerID="219">
+				<name value="WOM_MD_legs_shoes_Ballerina1"/>
+				<children>
+					<element index="0" pointerID="220">
+						<meshAssetIdx value="31"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="31" pointerID="221">
+				<name value="WOM_MD_legs_shoes_Boots"/>
+				<children>
+					<element index="0" pointerID="222">
+						<meshAssetIdx value="32"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="223">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="224">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="26"/>
+					</element>
+					<element index="2" pointerID="225">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="27"/>
+					</element>
+					<element index="3" pointerID="226">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="28"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="32" pointerID="227">
+				<name value="WOM_MD_legs_shoes_smallBoots"/>
+				<children>
+					<element index="0" pointerID="228">
+						<meshAssetIdx value="33"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="229">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="230">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="26"/>
+					</element>
+					<element index="2" pointerID="231">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="27"/>
+					</element>
+					<element index="3" pointerID="232">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="28"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="33" pointerID="233">
+				<name value="WOM_MD_legs_shoes_Ballerina"/>
+				<children>
+					<element index="0" pointerID="234">
+						<meshAssetIdx value="34"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="34" pointerID="235">
+				<name value="WOM_MD_torso_overcoat_jacket_sleaves"/>
+				<children>
+					<element index="0" pointerID="236">
+						<meshAssetIdx value="35"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="237">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="238">
+						<meshAssetIdx value="37"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="239">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="240">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="2" pointerID="241">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="3" pointerID="242">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="4" pointerID="243">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="5" pointerID="244">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="6" pointerID="245">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="7" pointerID="246">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="35" pointerID="247">
+				<name value="WOM_MD_torso_overcoat_coat"/>
+				<children>
+					<element index="0" pointerID="248">
+						<meshAssetIdx value="38"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="249">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="250">
+						<meshAssetIdx value="37"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="251">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="252">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="2" pointerID="253">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="3" pointerID="254">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="4" pointerID="255">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="5" pointerID="256">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="6" pointerID="257">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="7" pointerID="258">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="36" pointerID="259">
+				<name value="WOM_MD_torso_overcoat_trench"/>
+				<children>
+					<element index="0" pointerID="260">
+						<meshAssetIdx value="39"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="261">
+						<meshAssetIdx value="40"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="262">
+						<meshAssetIdx value="37"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="3" pointerID="263">
+						<meshAssetIdx value="41"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="264">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="265">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="2" pointerID="266">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="3" pointerID="267">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="4" pointerID="268">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="5" pointerID="269">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="6" pointerID="270">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="7" pointerID="271">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="37" pointerID="272">
+				<name value="WOM_MD_torso_overcoat_jacket"/>
+				<children>
+					<element index="0" pointerID="273">
+						<meshAssetIdx value="42"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="274">
+						<meshAssetIdx value="43"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="275">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="3" pointerID="276">
+						<meshAssetIdx value="37"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="277">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="278">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="2" pointerID="279">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+					<element index="3" pointerID="280">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="4" pointerID="281">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="5" pointerID="282">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="6" pointerID="283">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="7" pointerID="284">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="38" pointerID="285">
+				<name value="WOM_MD_torso_shirt_longSleevesA"/>
+				<children>
+					<element index="0" pointerID="286">
+						<meshAssetIdx value="44"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="287">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="288">
+						<meshAssetIdx value="37"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="289">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="290">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="46"/>
+					</element>
+					<element index="2" pointerID="291">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="3" pointerID="292">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="4" pointerID="293">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="5" pointerID="294">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="6" pointerID="295">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="53"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="39" pointerID="296">
+				<name value="WOM_MD_torso_sweatshirt_standard"/>
+				<children>
+					<element index="0" pointerID="297">
+						<meshAssetIdx value="45"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="298">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="299">
+						<meshAssetIdx value="37"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="300">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="301">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="2" pointerID="302">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="3" pointerID="303">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="4" pointerID="304">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="5" pointerID="305">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+					<element index="6" pointerID="306">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="40" pointerID="307">
+				<name value="WOM_MD_torso_tshirt_std1"/>
+				<children>
+					<element index="0" pointerID="308">
+						<meshAssetIdx value="46"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="309">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="310">
+						<meshAssetIdx value="47"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="311">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="312">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="46"/>
+					</element>
+					<element index="2" pointerID="313">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="3" pointerID="314">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="4" pointerID="315">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="5" pointerID="316">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="6" pointerID="317">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+					<element index="7" pointerID="318">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="53"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="41" pointerID="319">
+				<name value="WOM_MD_torso_tshirt_noSleeve"/>
+				<children>
+					<element index="0" pointerID="320">
+						<meshAssetIdx value="48"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="321">
+						<meshAssetIdx value="21"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="322">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="323">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="46"/>
+					</element>
+					<element index="2" pointerID="324">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="3" pointerID="325">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="4" pointerID="326">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="5" pointerID="327">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="6" pointerID="328">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+					<element index="7" pointerID="329">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="53"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="42" pointerID="330">
+				<name value="WOM_MD_torso_tshirt_noSleeve1"/>
+				<children>
+					<element index="0" pointerID="331">
+						<meshAssetIdx value="49"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="332">
+						<meshAssetIdx value="21"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="333">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="334">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="46"/>
+					</element>
+					<element index="2" pointerID="335">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="3" pointerID="336">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="4" pointerID="337">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="5" pointerID="338">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="6" pointerID="339">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+					<element index="7" pointerID="340">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="53"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="43" pointerID="341">
+				<name value="WOM_MD_torso_pull_turtleneck"/>
+				<children>
+					<element index="0" pointerID="342">
+						<meshAssetIdx value="50"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="343">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="344">
+						<meshAssetIdx value="37"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="345">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="346">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="2" pointerID="347">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="48"/>
+					</element>
+					<element index="3" pointerID="348">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="4" pointerID="349">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="5" pointerID="350">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="6" pointerID="351">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="52"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="44" pointerID="352">
+				<name value="WOM_MD_torso_tshirt_std5"/>
+				<children>
+					<element index="0" pointerID="353">
+						<meshAssetIdx value="51"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="354">
+						<meshAssetIdx value="52"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="355">
+						<meshAssetIdx value="40"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="356">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="357">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="53"/>
+					</element>
+					<element index="2" pointerID="358">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="3" pointerID="359">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+					<element index="4" pointerID="360">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="5" pointerID="361">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="47"/>
+					</element>
+					<element index="6" pointerID="362">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="46"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="45" pointerID="363">
+				<name value="WOM_MD_torso_tshirt_std4"/>
+				<children>
+					<element index="0" pointerID="364">
+						<meshAssetIdx value="53"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="365">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="2" pointerID="366">
+						<meshAssetIdx value="52"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="367">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="368">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="46"/>
+					</element>
+					<element index="2" pointerID="369">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="49"/>
+					</element>
+					<element index="3" pointerID="370">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="51"/>
+					</element>
+					<element index="4" pointerID="371">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="50"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="46" pointerID="372">
+				<name value="WOM_MD_body_arms_hands"/>
+				<children>
+					<element index="0" pointerID="373">
+						<meshAssetIdx value="37"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="374">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="375">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="38"/>
+					</element>
+					<element index="2" pointerID="376">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="3" pointerID="377">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="4" pointerID="378">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="5" pointerID="379">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="44"/>
+					</element>
+					<element index="6" pointerID="380">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="45"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="47" pointerID="381">
+				<name value="WOM_MD_body_arms_medium"/>
+				<children>
+					<element index="0" pointerID="382">
+						<meshAssetIdx value="54"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="383">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="384">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="2" pointerID="385">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="3" pointerID="386">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+					<element index="4" pointerID="387">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="5" pointerID="388">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="39"/>
+					</element>
+					<element index="6" pointerID="389">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="7" pointerID="390">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="8" pointerID="391">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="9" pointerID="392">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="43"/>
+					</element>
+					<element index="10" pointerID="393">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="44"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="48" pointerID="394">
+				<name value="WOM_MD_body_arms_biceps"/>
+				<children>
+					<element index="0" pointerID="395">
+						<meshAssetIdx value="52"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="396">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="397">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="2" pointerID="398">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="3" pointerID="399">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+					<element index="4" pointerID="400">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="5" pointerID="401">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="38"/>
+					</element>
+					<element index="6" pointerID="402">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="39"/>
+					</element>
+					<element index="7" pointerID="403">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="8" pointerID="404">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="9" pointerID="405">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="10" pointerID="406">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="43"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="49" pointerID="407">
+				<name value="WOM_MD_body_arms_full"/>
+				<children>
+					<element index="0" pointerID="408">
+						<meshAssetIdx value="47"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="409">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="410">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="2" pointerID="411">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="3" pointerID="412">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+					<element index="4" pointerID="413">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="5" pointerID="414">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="38"/>
+					</element>
+					<element index="6" pointerID="415">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="39"/>
+					</element>
+					<element index="7" pointerID="416">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="8" pointerID="417">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="9" pointerID="418">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="10" pointerID="419">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="43"/>
+					</element>
+					<element index="11" pointerID="420">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="44"/>
+					</element>
+					<element index="12" pointerID="421">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="45"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="50" pointerID="422">
+				<name value="WOM_MD_body_head_arms_longShore"/>
+				<children>
+					<element index="0" pointerID="423">
+						<meshAssetIdx value="55"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="424">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="1" pointerID="425">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="2" pointerID="426">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+					<element index="3" pointerID="427">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="4" pointerID="428">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="38"/>
+					</element>
+					<element index="5" pointerID="429">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="39"/>
+					</element>
+					<element index="6" pointerID="430">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="7" pointerID="431">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="8" pointerID="432">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="9" pointerID="433">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="43"/>
+					</element>
+					<element index="10" pointerID="434">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="44"/>
+					</element>
+					<element index="11" pointerID="435">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="45"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="51" pointerID="436">
+				<name value="WOM_MD_body_head_arms_full"/>
+				<children>
+					<element index="0" pointerID="437">
+						<meshAssetIdx value="21"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="438">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="1" pointerID="439">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="2" pointerID="440">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+					<element index="3" pointerID="441">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="4" pointerID="442">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="38"/>
+					</element>
+					<element index="5" pointerID="443">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="39"/>
+					</element>
+					<element index="6" pointerID="444">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="43"/>
+					</element>
+					<element index="7" pointerID="445">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="44"/>
+					</element>
+					<element index="8" pointerID="446">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="45"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="52" pointerID="447">
+				<name value="WOM_MD_body_head_torso_tiny"/>
+				<children>
+					<element index="0" pointerID="448">
+						<meshAssetIdx value="40"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="449">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="34"/>
+					</element>
+					<element index="1" pointerID="450">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="35"/>
+					</element>
+					<element index="2" pointerID="451">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="36"/>
+					</element>
+					<element index="3" pointerID="452">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="37"/>
+					</element>
+					<element index="4" pointerID="453">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="39"/>
+					</element>
+					<element index="5" pointerID="454">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="6" pointerID="455">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="7" pointerID="456">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="8" pointerID="457">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="43"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="53" pointerID="458">
+				<name value="WOM_MD_body_head"/>
+				<children>
+					<element index="0" pointerID="459">
+						<meshAssetIdx value="36"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="460">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="23"/>
+					</element>
+					<element index="1" pointerID="461">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="38"/>
+					</element>
+					<element index="2" pointerID="462">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="40"/>
+					</element>
+					<element index="3" pointerID="463">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="41"/>
+					</element>
+					<element index="4" pointerID="464">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="42"/>
+					</element>
+					<element index="5" pointerID="465">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="44"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="54" pointerID="466">
+				<name value="WOM_MD_body_legs_full"/>
+				<children>
+					<element index="0" pointerID="467">
+						<meshAssetIdx value="22"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="468">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="24"/>
+					</element>
+					<element index="1" pointerID="469">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="2" pointerID="470">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="27"/>
+					</element>
+					<element index="3" pointerID="471">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="28"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="55" pointerID="472">
+				<name value="WOM_MD_body_legs_foots"/>
+				<children>
+					<element index="0" pointerID="473">
+						<meshAssetIdx value="27"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="474">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="24"/>
+					</element>
+					<element index="1" pointerID="475">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="56" pointerID="476">
+				<name value="WOM_MD_body_legs_short"/>
+				<children>
+					<element index="0" pointerID="477">
+						<meshAssetIdx value="56"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="478">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="24"/>
+					</element>
+					<element index="1" pointerID="479">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="2" pointerID="480">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="27"/>
+					</element>
+					<element index="3" pointerID="481">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="28"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="57" pointerID="482">
+				<name value="WOM_MD_body_legs_short2"/>
+				<children>
+					<element index="0" pointerID="483">
+						<meshAssetIdx value="57"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="484">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="24"/>
+					</element>
+					<element index="1" pointerID="485">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="2" pointerID="486">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="27"/>
+					</element>
+					<element index="3" pointerID="487">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="28"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="58" pointerID="488">
+				<name value="WOM_MD_body_legs_medium02"/>
+				<children>
+					<element index="0" pointerID="489">
+						<meshAssetIdx value="24"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="490">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="24"/>
+					</element>
+					<element index="1" pointerID="491">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="25"/>
+					</element>
+					<element index="2" pointerID="492">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="27"/>
+					</element>
+					<element index="3" pointerID="493">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="28"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="59" pointerID="494">
+				<name value="WOM_MD_body_legs_medium"/>
+				<children>
+					<element index="0" pointerID="495">
+						<meshAssetIdx value="58"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="496">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="24"/>
+					</element>
+					<element index="1" pointerID="497">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="27"/>
+					</element>
+					<element index="2" pointerID="498">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="28"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="60" pointerID="499">
+				<name value="Flag_Group"/>
+				<children>
+					<element index="0" pointerID="500">
+						<meshAssetIdx value="59"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="501">
+						<meshAssetIdx value="60"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="61" pointerID="502">
+				<name value="[Empty]"/>
+				<children/>
+				<weights/>
+				<excludedAssets/>
+			</element>
+		</allAssetGroups>
+		<meshAssets>
+			<element index="0" pointerID="503">
+				<name value="WOM_MD_head_hat_beret_hat"/>
+				<shadingGroups>
+					<element index="0" value="0"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="504">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="1" pointerID="505">
+				<name value="WOM_MD_head_hair_underHat1"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="506">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="2" pointerID="507">
+				<name value="WOM_MD_head_hat_skiCap_hat"/>
+				<shadingGroups>
+					<element index="0" value="2"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="508">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="3" pointerID="509">
+				<name value="WOM_MD_head_hair_underHat2"/>
+				<shadingGroups>
+					<element index="0" value="3"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="510">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="4" pointerID="511">
+				<name value="WOM_MD_head_hat_baseBallCap_hat"/>
+				<shadingGroups>
+					<element index="0" value="4"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="512">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="5" pointerID="513">
+				<name value="WOM_MD_head_hair_underHat3"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="514">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="6" pointerID="515">
+				<name value="WOM_MD_top_hairLong_short"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="516">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="7" pointerID="517">
+				<name value="WOM_MD_top_hairLong_short1"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="518">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="8" pointerID="519">
+				<name value="WOM_MD_top_hairmiddle_ponytale"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="520">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="9" pointerID="521">
+				<name value="WOM_MD_top_hairLong_ponytale"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="522">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="10" pointerID="523">
+				<name value="WOM_MD_top_hairLong_topknot"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="524">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="11" pointerID="525">
+				<name value="WOM_MD_head_hairAfroLong_01"/>
+				<shadingGroups>
+					<element index="0" value="5"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="526">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="12" pointerID="527">
+				<name value="WOM_MD_head_hairAfroShort_01"/>
+				<shadingGroups>
+					<element index="0" value="3"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="528">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="13" pointerID="529">
+				<name value="WOM_MD_top_hairLong_earsOut"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="530">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="14" pointerID="531">
+				<name value="WOM_MD_head_glasses_sun_round_lens"/>
+				<shadingGroups>
+					<element index="0" value="6"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="532">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="15" pointerID="533">
+				<name value="WOM_MD_head_glasses_sun_round_mount"/>
+				<shadingGroups>
+					<element index="0" value="7"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="534">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="16" pointerID="535">
+				<name value="WOM_MD_head_glasses_std_B_mount"/>
+				<shadingGroups>
+					<element index="0" value="7"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="536">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="17" pointerID="537">
+				<name value="WOM__MD_head_glasses_std_B_lens"/>
+				<shadingGroups>
+					<element index="0" value="8"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="538">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="18" pointerID="539">
+				<name value="WOM_MD_head_glasses_std_round_mount"/>
+				<shadingGroups>
+					<element index="0" value="7"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="540">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="19" pointerID="541">
+				<name value="WOM__MD_head_glasses_std_round_lens"/>
+				<shadingGroups>
+					<element index="0" value="8"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="542">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="20" pointerID="543">
+				<name value="WOM_MD_legs_dress_long"/>
+				<shadingGroups>
+					<element index="0" value="9"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="544">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="21" pointerID="545">
+				<name value="WOM_MD_body_head_arms_full"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="546">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="22" pointerID="547">
+				<name value="WOM_MD_body_legs_full"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="548">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="23" pointerID="549">
+				<name value="WOM_MD_legs_skirt"/>
+				<shadingGroups>
+					<element index="0" value="11"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="550">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="24" pointerID="551">
+				<name value="WOM_MD_body_legs_medium02"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="552">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="25" pointerID="553">
+				<name value="WOM_MD_legs_pants_short"/>
+				<shadingGroups>
+					<element index="0" value="12"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="554">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="26" pointerID="555">
+				<name value="WOM_MD_legs_pants_long"/>
+				<shadingGroups>
+					<element index="0" value="12"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="556">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="27" pointerID="557">
+				<name value="WOM_MD_body_legs_foots"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="558">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="28" pointerID="559">
+				<name value="WOM_MD_legs_pants_legging"/>
+				<shadingGroups>
+					<element index="0" value="13"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="560">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="29" pointerID="561">
+				<name value="WOM_MD_legs_pants_business"/>
+				<shadingGroups>
+					<element index="0" value="14"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="562">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="30" pointerID="563">
+				<name value="WOM_MD_legs_shoes_sport_1"/>
+				<shadingGroups>
+					<element index="0" value="15"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="564">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="31" pointerID="565">
+				<name value="WOM_MD_legs_shoes_Ballerina1"/>
+				<shadingGroups>
+					<element index="0" value="16"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="566">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="32" pointerID="567">
+				<name value="WOM_MD_legs_shoes_Boots"/>
+				<shadingGroups>
+					<element index="0" value="17"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="568">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="33" pointerID="569">
+				<name value="WOM_MD_legs_shoes_smallBoots"/>
+				<shadingGroups>
+					<element index="0" value="18"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="570">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="34" pointerID="571">
+				<name value="WOM_MD_legs_shoes_Ballerina"/>
+				<shadingGroups>
+					<element index="0" value="19"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="572">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="35" pointerID="573">
+				<name value="WOM_MD_torso_overcoat_jacket_sleaves"/>
+				<shadingGroups>
+					<element index="0" value="20"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="574">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="36" pointerID="575">
+				<name value="WOM_MD_body_head"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="576">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="37" pointerID="577">
+				<name value="WOM_MD_body_arms_hands"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="578">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="38" pointerID="579">
+				<name value="WOM_MD_torso_overcoat_coat"/>
+				<shadingGroups>
+					<element index="0" value="21"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="580">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="39" pointerID="581">
+				<name value="WOM_MD_torso_overcoat_trench"/>
+				<shadingGroups>
+					<element index="0" value="22"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="582">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="40" pointerID="583">
+				<name value="WOM_MD_body_head_torso_tiny"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="584">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="41" pointerID="585">
+				<name value="WOM_MD_torso_overcoat_jacket_Business_teeshirt"/>
+				<shadingGroups>
+					<element index="0" value="23"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="586">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="42" pointerID="587">
+				<name value="WOM_MD_torso_overcoat_jacket_jacket"/>
+				<shadingGroups>
+					<element index="0" value="24"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="588">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="43" pointerID="589">
+				<name value="WOM_MD_torso_overcoat_leatherjacket_teeshirt1"/>
+				<shadingGroups>
+					<element index="0" value="25"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="590">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="44" pointerID="591">
+				<name value="WOM_MD_torso_shirt_longSleevesA"/>
+				<shadingGroups>
+					<element index="0" value="26"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="592">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="45" pointerID="593">
+				<name value="WOM_MD_torso_sweatshirt_standard"/>
+				<shadingGroups>
+					<element index="0" value="27"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="594">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="46" pointerID="595">
+				<name value="WOM_MD_torso_tshirt_std1"/>
+				<shadingGroups>
+					<element index="0" value="23"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="596">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="47" pointerID="597">
+				<name value="WOM_MD_body_arms_full"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="598">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="48" pointerID="599">
+				<name value="WOM_MD_torso_tshirt_noSleeve"/>
+				<shadingGroups>
+					<element index="0" value="23"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="600">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="49" pointerID="601">
+				<name value="WOM_MD_torso_tshirt_noSleeve1"/>
+				<shadingGroups>
+					<element index="0" value="23"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="602">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="50" pointerID="603">
+				<name value="WOM_MD_torso_pull_turtleneck"/>
+				<shadingGroups>
+					<element index="0" value="28"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="604">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="51" pointerID="605">
+				<name value="WOM_MD_torso_tshirt_std5"/>
+				<shadingGroups>
+					<element index="0" value="23"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="606">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="52" pointerID="607">
+				<name value="WOM_MD_body_arms_biceps"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="608">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="53" pointerID="609">
+				<name value="WOM_MD_torso_tshirt_std4"/>
+				<shadingGroups>
+					<element index="0" value="23"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="610">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="54" pointerID="611">
+				<name value="WOM_MD_body_arms_medium"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="612">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="55" pointerID="613">
+				<name value="WOM_MD_body_head_arms_longShore"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="614">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="56" pointerID="615">
+				<name value="WOM_MD_body_legs_short"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="616">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="57" pointerID="617">
+				<name value="WOM_MD_body_legs_short2"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="618">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="58" pointerID="619">
+				<name value="WOM_MD_body_legs_medium"/>
+				<shadingGroups>
+					<element index="0" value="10"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="620">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="59" pointerID="621">
+				<name value="WOM_MD_stickFlag"/>
+				<shadingGroups>
+					<element index="0" value="29"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="622">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="60" pointerID="623">
+				<name value="WOM_MD_ClothFlag"/>
+				<shadingGroups>
+					<element index="0" value="30"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="624">
+					<filename value="/atomo/pipeline/tools/golaem/characterPack/5.2\golaem\characters\CMO-wom_golaem_ClothFlag.apx"/>
+				</clothAsset>
+			</element>
+		</meshAssets>
+		<geometryAssets>
+			<element index="0" pointerID="625">
+				<filename value="/atomo/pipeline/tools/golaem/characterPack/5.2/golaem/characters/CMO-woman_golaem.fbx"/>
+				<halfExtents x="3" y="3" z="3"/>
+			</element>
+		</geometryAssets>
+		<shadingGroups>
+			<element index="0" pointerID="626">
+				<name value="WOM_MD_head_hat_beret_SG"/>
+				<shaderAssets>
+					<element index="0" value="0"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="0"/>
+				</shaderAttributes>
+			</element>
+			<element index="1" pointerID="627">
+				<name value="WOM_MD_top_hairLong_SG"/>
+				<shaderAssets>
+					<element index="0" value="1"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="1"/>
+				</shaderAttributes>
+			</element>
+			<element index="2" pointerID="628">
+				<name value="WOM_MD_top_hat_skiCapHem_hat_SG"/>
+				<shaderAssets>
+					<element index="0" value="2"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="2"/>
+				</shaderAttributes>
+			</element>
+			<element index="3" pointerID="629">
+				<name value="WOM_MD_top_hairAfroShort_SG"/>
+				<shaderAssets>
+					<element index="0" value="3"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="3"/>
+				</shaderAttributes>
+			</element>
+			<element index="4" pointerID="630">
+				<name value="WOM_MD_top_hat_baseBallCap_SG"/>
+				<shaderAssets>
+					<element index="0" value="4"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="4"/>
+				</shaderAttributes>
+			</element>
+			<element index="5" pointerID="631">
+				<name value="WOM_MD_top_hairAfroLong_SG"/>
+				<shaderAssets>
+					<element index="0" value="5"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="5"/>
+				</shaderAttributes>
+			</element>
+			<element index="6" pointerID="632">
+				<name value="WOM_MD_head_glasses_sun_round_lens_SG"/>
+				<shaderAssets>
+					<element index="0" value="6"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="6"/>
+				</shaderAttributes>
+			</element>
+			<element index="7" pointerID="633">
+				<name value="WOM_MD_head_glasses_SG"/>
+				<shaderAssets>
+					<element index="0" value="7"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="7"/>
+					<element index="1" value="8"/>
+				</shaderAttributes>
+			</element>
+			<element index="8" pointerID="634">
+				<name value="WOM_MD_head_glasses_std_round_lens_SG"/>
+				<shaderAssets>
+					<element index="0" value="8"/>
+				</shaderAssets>
+				<shaderAttributes/>
+			</element>
+			<element index="9" pointerID="635">
+				<name value="WOM_MD_legs_dress_long_SG"/>
+				<shaderAssets>
+					<element index="0" value="9"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="9"/>
+				</shaderAttributes>
+			</element>
+			<element index="10" pointerID="636">
+				<name value="WOM_MD_body_SG"/>
+				<shaderAssets>
+					<element index="0" value="10"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="10"/>
+				</shaderAttributes>
+			</element>
+			<element index="11" pointerID="637">
+				<name value="WOM_MD_legs_skirtSG"/>
+				<shaderAssets>
+					<element index="0" value="11"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="11"/>
+				</shaderAttributes>
+			</element>
+			<element index="12" pointerID="638">
+				<name value="WOM_MD_legs_pants_SG"/>
+				<shaderAssets>
+					<element index="0" value="12"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="12"/>
+				</shaderAttributes>
+			</element>
+			<element index="13" pointerID="639">
+				<name value="WOM_MD_legs_pants_legging_SG"/>
+				<shaderAssets>
+					<element index="0" value="13"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="13"/>
+				</shaderAttributes>
+			</element>
+			<element index="14" pointerID="640">
+				<name value="WOM_MD_legs_pants_business_SG"/>
+				<shaderAssets>
+					<element index="0" value="14"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="14"/>
+				</shaderAttributes>
+			</element>
+			<element index="15" pointerID="641">
+				<name value="WOM_MD_legs_shoes_sport_SG"/>
+				<shaderAssets>
+					<element index="0" value="15"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="15"/>
+				</shaderAttributes>
+			</element>
+			<element index="16" pointerID="642">
+				<name value="WOM_MD_legs_shoes_ballerine02_SG"/>
+				<shaderAssets>
+					<element index="0" value="16"/>
+				</shaderAssets>
+				<shaderAttributes/>
+			</element>
+			<element index="17" pointerID="643">
+				<name value="WOM_MD_legs_shoes_bootsSG"/>
+				<shaderAssets>
+					<element index="0" value="17"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="16"/>
+				</shaderAttributes>
+			</element>
+			<element index="18" pointerID="644">
+				<name value="WOM_MD_legs_shoes_smallboots_SG"/>
+				<shaderAssets>
+					<element index="0" value="18"/>
+				</shaderAssets>
+				<shaderAttributes/>
+			</element>
+			<element index="19" pointerID="645">
+				<name value="WOM_MD_legs_shoes_ballerine_SG"/>
+				<shaderAssets>
+					<element index="0" value="19"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="17"/>
+				</shaderAttributes>
+			</element>
+			<element index="20" pointerID="646">
+				<name value="WOM_MD_torso_overcoat_jacketsleaves_SG"/>
+				<shaderAssets>
+					<element index="0" value="20"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="18"/>
+				</shaderAttributes>
+			</element>
+			<element index="21" pointerID="647">
+				<name value="WOM_MD_torso_overcoat_coat_SG"/>
+				<shaderAssets>
+					<element index="0" value="21"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="19"/>
+				</shaderAttributes>
+			</element>
+			<element index="22" pointerID="648">
+				<name value="WOM_MD_torso_overcoat_trench_SG"/>
+				<shaderAssets>
+					<element index="0" value="22"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="20"/>
+					<element index="1" value="21"/>
+				</shaderAttributes>
+			</element>
+			<element index="23" pointerID="649">
+				<name value="WOM_MD_torso_tshirt_SG"/>
+				<shaderAssets>
+					<element index="0" value="23"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="22"/>
+					<element index="1" value="23"/>
+				</shaderAttributes>
+			</element>
+			<element index="24" pointerID="650">
+				<name value="WOM_MD_torso_overcoat_jacket_SG"/>
+				<shaderAssets>
+					<element index="0" value="24"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="24"/>
+					<element index="1" value="25"/>
+				</shaderAttributes>
+			</element>
+			<element index="25" pointerID="651">
+				<name value="WOM_MD_torso_overcoat_underjacket_SG"/>
+				<shaderAssets>
+					<element index="0" value="25"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="26"/>
+				</shaderAttributes>
+			</element>
+			<element index="26" pointerID="652">
+				<name value="WOM_MD_torso_shirt_SG"/>
+				<shaderAssets>
+					<element index="0" value="26"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="27"/>
+				</shaderAttributes>
+			</element>
+			<element index="27" pointerID="653">
+				<name value="WOM_MD_torso_sweatshirt_SG"/>
+				<shaderAssets>
+					<element index="0" value="27"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="28"/>
+				</shaderAttributes>
+			</element>
+			<element index="28" pointerID="654">
+				<name value="WOM_MD_torso_pull_SG"/>
+				<shaderAssets>
+					<element index="0" value="28"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="29"/>
+				</shaderAttributes>
+			</element>
+			<element index="29" pointerID="655">
+				<name value="WOM_MD_flag_stickFlagSG"/>
+				<shaderAssets>
+					<element index="0" value="29"/>
+				</shaderAssets>
+				<shaderAttributes/>
+			</element>
+			<element index="30" pointerID="656">
+				<name value="WOM_MD_flag_clothFlagSG"/>
+				<shaderAssets>
+					<element index="0" value="30"/>
+				</shaderAssets>
+				<shaderAttributes/>
+			</element>
+		</shadingGroups>
+		<shaderAttributes>
+			<element index="0" pointerID="657">
+				<attributeName value="WOM_MD_head_hat_beret_lambert_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_head_hat_beret_lambert_l"/>
+			</element>
+			<element index="1" pointerID="658">
+				<attributeName value="WOM_MD_top_hairLong_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="2"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_top_hairLong_textureIdx"/>
+			</element>
+			<element index="2" pointerID="659">
+				<attributeName value="WOM_MD_top_hat_skiCapHem_hat_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_top_hat_skiCapHem_hat_h"/>
+			</element>
+			<element index="3" pointerID="660">
+				<attributeName value="WOM_MD_top_hairAfroShort_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_top_hairAfroShort_l"/>
+			</element>
+			<element index="4" pointerID="661">
+				<attributeName value="WOM_MD_top_hat_baseBallCap_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="4"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_top_hat_baseBallCap_textureIdx"/>
+			</element>
+			<element index="5" pointerID="662">
+				<attributeName value="WOM_MD_top_hairAfroLong_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_top_hairAfroLong_l"/>
+			</element>
+			<element index="6" pointerID="663">
+				<attributeName value="WOM_MD_head_glasses_sun_round_lens_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_head_glasses_sun_round_lens_l"/>
+			</element>
+			<element index="7" pointerID="664">
+				<attributeName value="WOM_MD_head_glasses_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_head_glasses_h"/>
+			</element>
+			<element index="8" pointerID="665">
+				<attributeName value="WOM_MD_head_glasses_s"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_head_glasses_s"/>
+			</element>
+			<element index="9" pointerID="666">
+				<attributeName value="WOM_MD_legs_dress_long_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="10" pointerID="667">
+				<attributeName value="WOM_MD_body_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="2"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_body_textureIdx"/>
+			</element>
+			<element index="11" pointerID="668">
+				<attributeName value="WOM_MD_legs_skirt2_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="12" pointerID="669">
+				<attributeName value="WOM_MD_legs_pants_l"/>
+				<attributeType value="1"/>
+				<minValue value="0"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_legs_pants_l"/>
+			</element>
+			<element index="13" pointerID="670">
+				<attributeName value="WOM_MD_legs_pants_legging_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="14" pointerID="671">
+				<attributeName value="WOM_MD_legs_pants_business_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="15" pointerID="672">
+				<attributeName value="WOM_MD_legs_shoes_sport_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="9"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_legs_shoes_sport_textureIdx"/>
+			</element>
+			<element index="16" pointerID="673">
+				<attributeName value="WOM_MD_legs_shoes_boots_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="17" pointerID="674">
+				<attributeName value="WOM_MD_legs_shoes_ballerine_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="18" pointerID="675">
+				<attributeName value="WOM_MD_torso_overcoat_jacket_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="3"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_torso_overcoat_jacket_textureIdx"/>
+			</element>
+			<element index="19" pointerID="676">
+				<attributeName value="WOM_MD_torso_overcoat_coat_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="20" pointerID="677">
+				<attributeName value="WOM_MD_torso_overcoat_trench_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="21" pointerID="678">
+				<attributeName value="WOM_MD_torso_overcoat_trench_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="22" pointerID="679">
+				<attributeName value="WOM_MD_torso_tshirt_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_torso_tshirt_h"/>
+			</element>
+			<element index="23" pointerID="680">
+				<attributeName value="WOM_MD_torso_tshirt_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="20"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_torso_tshirt_textureIdx"/>
+			</element>
+			<element index="24" pointerID="681">
+				<attributeName value="WOM_MD_torso_overcoat_jacket_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="25" pointerID="682">
+				<attributeName value="WOM_MD_torso_overcoat_jacket_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="26" pointerID="683">
+				<attributeName value="WOM_MD_torso_overcoat_underjacket_l"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value=""/>
+			</element>
+			<element index="27" pointerID="684">
+				<attributeName value="WOM_MD_torso_shirt_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="5"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_torso_shirt_textureIdx"/>
+			</element>
+			<element index="28" pointerID="685">
+				<attributeName value="WOM_MD_torso_sweatshirt_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="5"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_torso_sweatshirt_textureIdx"/>
+			</element>
+			<element index="29" pointerID="686">
+				<attributeName value="WOM_MD_torso_pull_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="WOM_MD_torso_pull_textureIdx"/>
+			</element>
+		</shaderAttributes>
+		<shaderAssets>
+			<element index="0" pointerID="687">
+				<name value="WOM_MD_head_hat_beret_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="1" pointerID="688">
+				<name value="WOM_MD_top_hairLong"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="2" pointerID="689">
+				<name value="WOM_MD_top_hat_skiCapHem_hat"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="3" pointerID="690">
+				<name value="WOM_MD_top_hairAfroShort"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="4" pointerID="691">
+				<name value="WOM_MD_top_hat_baseBallCap"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="5" pointerID="692">
+				<name value="WOM_MD_top_hairAfroLong"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="6" pointerID="693">
+				<name value="WOM_MD_head_glasses_sun_round_lens1"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="7" pointerID="694">
+				<name value="WOM_MD_head_glasses"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="8" pointerID="695">
+				<name value="WOM_MD_head_glasses_std_round_lens"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="9" pointerID="696">
+				<name value="WOM_MD_legs_dress_long_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="10" pointerID="697">
+				<name value="WOM_MD_body1"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="11" pointerID="698">
+				<name value="WOM_MD_legs_skirt_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="12" pointerID="699">
+				<name value="WOM_MD_legs_pants"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="13" pointerID="700">
+				<name value="WOM_MD_legs_pants_legging_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="14" pointerID="701">
+				<name value="WOM_MD_legs_pants_business_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="15" pointerID="702">
+				<name value="WOM_MD_legs_shoes_sport"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="16" pointerID="703">
+				<name value="WOM_MD_legs_shoes_ballerineB"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="17" pointerID="704">
+				<name value="WOM_MD_legs_shoes_boots_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="18" pointerID="705">
+				<name value="WOM_MD_legs_shoes_smallboots_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="19" pointerID="706">
+				<name value="WOM_MD_legs_shoes_ballerineA"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="20" pointerID="707">
+				<name value="WOM_MD_torso_overcoat_jacket2"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="21" pointerID="708">
+				<name value="WOM_MD_torso_overcoat_coat_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="22" pointerID="709">
+				<name value="WOM_MD_torso_overcoat_trench_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="23" pointerID="710">
+				<name value="WOM_MD_torso_tshirt"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="24" pointerID="711">
+				<name value="WOM_MD_torso_overcoat_jacketA_SH"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="25" pointerID="712">
+				<name value="WOM_MD_torso_overcoat_underjacket"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="26" pointerID="713">
+				<name value="WOM_MD_torso_shirt"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="27" pointerID="714">
+				<name value="WOM_MD_torso_sweatshirt"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="28" pointerID="715">
+				<name value="WOM_MD_torso_pull"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="29" pointerID="716">
+				<name value="WOM_MD_flag_stickFlag"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="30" pointerID="717">
+				<name value="WOM_MD_flag_clothFlag"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+		</shaderAssets>
+		<renderingTypes>
+			<element index="0" pointerID="718">
+				<name value="CrowdWoman"/>
+				<weightOverrides>
+					<element index="0" pointerID="719">
+						<groupIdx value="0"/>
+						<groupWeights>
+							<element index="0" value="5"/>
+							<element index="1" value="5"/>
+							<element index="2" value="5"/>
+							<element index="3" value="85"/>
+						</groupWeights>
+					</element>
+					<element index="1" pointerID="720">
+						<groupIdx value="1"/>
+						<groupWeights>
+							<element index="0" value="0"/>
+							<element index="1" value="10"/>
+							<element index="2" value="20"/>
+							<element index="3" value="50"/>
+							<element index="4" value="10"/>
+							<element index="5" value="10"/>
+							<element index="6" value="10"/>
+							<element index="7" value="10"/>
+						</groupWeights>
+					</element>
+					<element index="2" pointerID="721">
+						<groupIdx value="2"/>
+						<groupWeights>
+							<element index="0" value="5"/>
+							<element index="1" value="5"/>
+							<element index="2" value="5"/>
+							<element index="3" value="85"/>
+						</groupWeights>
+					</element>
+					<element index="3" pointerID="722">
+						<groupIdx value="3"/>
+						<groupWeights>
+							<element index="0" value="10"/>
+							<element index="1" value="10"/>
+							<element index="2" value="10"/>
+							<element index="3" value="10"/>
+							<element index="4" value="10"/>
+							<element index="5" value="10"/>
+						</groupWeights>
+					</element>
+					<element index="4" pointerID="723">
+						<groupIdx value="4"/>
+						<groupWeights>
+							<element index="0" value="35"/>
+							<element index="1" value="50"/>
+							<element index="2" value="50"/>
+							<element index="3" value="50"/>
+							<element index="4" value="50"/>
+						</groupWeights>
+					</element>
+					<element index="5" pointerID="724">
+						<groupIdx value="5"/>
+						<groupWeights>
+							<element index="0" value="10"/>
+							<element index="1" value="10"/>
+							<element index="2" value="10"/>
+							<element index="3" value="10"/>
+							<element index="4" value="10"/>
+							<element index="5" value="10"/>
+							<element index="6" value="10"/>
+							<element index="7" value="10"/>
+							<element index="8" value="10"/>
+							<element index="9" value="10"/>
+							<element index="10" value="20"/>
+							<element index="11" value="20"/>
+						</groupWeights>
+					</element>
+					<element index="6" pointerID="725">
+						<groupIdx value="6"/>
+						<groupWeights>
+							<element index="0" value="0"/>
+							<element index="1" value="0"/>
+							<element index="2" value="0"/>
+							<element index="3" value="0"/>
+							<element index="4" value="0"/>
+							<element index="5" value="0"/>
+							<element index="6" value="0"/>
+							<element index="7" value="0"/>
+							<element index="8" value="0"/>
+							<element index="9" value="0"/>
+							<element index="10" value="0"/>
+							<element index="11" value="0"/>
+							<element index="12" value="0"/>
+							<element index="13" value="0"/>
+						</groupWeights>
+					</element>
+					<element index="7" pointerID="726">
+						<groupIdx value="7"/>
+						<groupWeights>
+							<element index="0" value="0"/>
+							<element index="1" value="50"/>
+						</groupWeights>
+					</element>
+				</weightOverrides>
+				<parentRenderingType value="-1"/>
+			</element>
+			<element index="1" pointerID="727">
+				<name value="CrowdWoman_Flag"/>
+				<weightOverrides>
+					<element index="0" pointerID="728">
+						<groupIdx value="0"/>
+						<groupWeights>
+							<element index="0" value="5"/>
+							<element index="1" value="5"/>
+							<element index="2" value="5"/>
+							<element index="3" value="85"/>
+						</groupWeights>
+					</element>
+					<element index="1" pointerID="729">
+						<groupIdx value="1"/>
+						<groupWeights>
+							<element index="0" value="0"/>
+							<element index="1" value="10"/>
+							<element index="2" value="20"/>
+							<element index="3" value="50"/>
+							<element index="4" value="10"/>
+							<element index="5" value="10"/>
+							<element index="6" value="10"/>
+							<element index="7" value="10"/>
+						</groupWeights>
+					</element>
+					<element index="2" pointerID="730">
+						<groupIdx value="2"/>
+						<groupWeights>
+							<element index="0" value="5"/>
+							<element index="1" value="5"/>
+							<element index="2" value="5"/>
+							<element index="3" value="85"/>
+						</groupWeights>
+					</element>
+					<element index="3" pointerID="731">
+						<groupIdx value="3"/>
+						<groupWeights>
+							<element index="0" value="10"/>
+							<element index="1" value="10"/>
+							<element index="2" value="10"/>
+							<element index="3" value="10"/>
+							<element index="4" value="10"/>
+							<element index="5" value="10"/>
+						</groupWeights>
+					</element>
+					<element index="4" pointerID="732">
+						<groupIdx value="4"/>
+						<groupWeights>
+							<element index="0" value="35"/>
+							<element index="1" value="50"/>
+							<element index="2" value="50"/>
+							<element index="3" value="50"/>
+							<element index="4" value="50"/>
+						</groupWeights>
+					</element>
+					<element index="5" pointerID="733">
+						<groupIdx value="5"/>
+						<groupWeights>
+							<element index="0" value="10"/>
+							<element index="1" value="10"/>
+							<element index="2" value="10"/>
+							<element index="3" value="10"/>
+							<element index="4" value="10"/>
+							<element index="5" value="10"/>
+							<element index="6" value="10"/>
+							<element index="7" value="10"/>
+							<element index="8" value="10"/>
+							<element index="9" value="10"/>
+							<element index="10" value="20"/>
+							<element index="11" value="20"/>
+						</groupWeights>
+					</element>
+					<element index="6" pointerID="734">
+						<groupIdx value="6"/>
+						<groupWeights>
+							<element index="0" value="0"/>
+							<element index="1" value="0"/>
+							<element index="2" value="0"/>
+							<element index="3" value="0"/>
+							<element index="4" value="0"/>
+							<element index="5" value="0"/>
+							<element index="6" value="0"/>
+							<element index="7" value="0"/>
+							<element index="8" value="0"/>
+							<element index="9" value="0"/>
+							<element index="10" value="0"/>
+							<element index="11" value="0"/>
+							<element index="12" value="0"/>
+							<element index="13" value="0"/>
+						</groupWeights>
+					</element>
+					<element index="7" pointerID="735">
+						<groupIdx value="7"/>
+						<groupWeights>
+							<element index="0" value="50"/>
+							<element index="1" value="0"/>
+						</groupWeights>
+					</element>
+				</weightOverrides>
+				<parentRenderingType value="-1"/>
+			</element>
+		</renderingTypes>
+		<converterMapping pointerID="736">
+			<skeletonDescription pointerID="737">
+				<name value="Maya Skeleton: Reference"/>
+				<rootBone pointerID="738">
+					<name value="Reference"/>
+					<relativePos x="0" y="0" z="0"/>
+					<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+					<father pointerID="0"/>
+					<children>
+						<element index="0" pointerID="739">
+							<name value="Hips"/>
+							<relativePos x="0" y="0.90209007263183594" z="0.016605958342552185"/>
+							<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+							<father pointerID="738"/>
+							<children>
+								<element index="0" pointerID="740">
+									<name value="LeftUpLeg"/>
+									<relativePos x="0.097015984356403351" y="-0.052235286682844162" z="0.024530446156859398"/>
+									<localOri x="-0.00034057255834341049" y="-0.020392265170812607" z="0.99965256452560425" w="0.016695264726877213"/>
+									<father pointerID="739"/>
+									<children>
+										<element index="0" pointerID="741">
+											<name value="LeftLeg"/>
+											<relativePos x="6.4392937545841447e-016" y="0.40471825003623962" z="3.7470027081099033e-016"/>
+											<localOri x="-0.03930944949388504" y="-0.0011256592115387321" z="0.014020202681422234" w="0.99912804365158081"/>
+											<father pointerID="740"/>
+											<children>
+												<element index="0" pointerID="742">
+													<name value="LeftFoot"/>
+													<relativePos x="8.8817843293501503e-017" y="0.36250156164169312" z="-1.2667644541566447e-014"/>
+													<localOri x="0.56723988056182861" y="-0.0010189872700721025" z="-0.0019396783318370581" w="0.82354968786239624"/>
+													<father pointerID="741"/>
+													<children>
+														<element index="0" pointerID="743">
+															<name value="LeftFootThumb1"/>
+															<relativePos x="0.020808802917599678" y="0.1473056823015213" z="0.0075939558446407318"/>
+															<localOri x="0.18515172600746155" y="-0.006064058281481266" z="0.036195389926433563" w="0.98202437162399292"/>
+															<father pointerID="742"/>
+															<children>
+																<element index="0" pointerID="744">
+																	<name value="LeftFootThumb2"/>
+																	<relativePos x="-7.9936060949384823e-016" y="0.022642415016889572" z="-4.5685679157391086e-015"/>
+																	<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+																	<father pointerID="743"/>
+																	<children/>
+																	<specificBoneIndex value="6"/>
+																</element>
+															</children>
+															<specificBoneIndex value="5"/>
+														</element>
+													</children>
+													<specificBoneIndex value="4"/>
+												</element>
+											</children>
+											<specificBoneIndex value="3"/>
+										</element>
+									</children>
+									<specificBoneIndex value="2"/>
+								</element>
+								<element index="1" pointerID="745">
+									<name value="Spine"/>
+									<relativePos x="0" y="0.058934617787599564" z="0.0020358101464807987"/>
+									<localOri x="-0.021423099562525749" y="0" z="0" w="0.99977046251296997"/>
+									<father pointerID="739"/>
+									<children>
+										<element index="0" pointerID="746">
+											<name value="Spine1"/>
+											<relativePos x="0" y="0.11285511404275894" z="-8.8817843293501503e-017"/>
+											<localOri x="-0.12055451422929764" y="0" z="0" w="0.99270665645599365"/>
+											<father pointerID="745"/>
+											<children>
+												<element index="0" pointerID="747">
+													<name value="Spine2"/>
+													<relativePos x="0" y="0.11747530847787857" z="-1.3322676824897471e-016"/>
+													<localOri x="0.018499348312616348" y="0" z="0" w="0.99982881546020508"/>
+													<father pointerID="746"/>
+													<children>
+														<element index="0" pointerID="748">
+															<name value="Spine3"/>
+															<relativePos x="0" y="0.11629661172628403" z="1.7763568658700301e-016"/>
+															<localOri x="0.12345700711011887" y="0" z="0" w="0.99234986305236816"/>
+															<father pointerID="747"/>
+															<children>
+																<element index="0" pointerID="749">
+																	<name value="LeftShoulder"/>
+																	<relativePos x="0.034200001507997513" y="0.044027533382177353" z="0.1083773598074913"/>
+																	<localOri x="-0.15700227022171021" y="0.18298245966434479" z="-0.73653882741928101" w="0.63196367025375366"/>
+																	<father pointerID="748"/>
+																	<children>
+																		<element index="0" pointerID="750">
+																			<name value="LeftArm"/>
+																			<relativePos x="1.7763568658700301e-016" y="0.11977513134479523" z="4.9960038093365514e-017"/>
+																			<localOri x="0.20343703031539917" y="0.11502939462661743" z="-0.43803560733795166" w="0.86804741621017456"/>
+																			<father pointerID="749"/>
+																			<children>
+																				<element index="0" pointerID="751">
+																					<name value="LeftForeArm"/>
+																					<relativePos x="-8.8817841970012523e-016" y="0.30531322956085205" z="1.4710455605678916e-016"/>
+																					<localOri x="0.24597293138504028" y="0.0084914527833461761" z="0.03759930282831192" w="0.96850991249084473"/>
+																					<father pointerID="750"/>
+																					<children>
+																						<element index="0" pointerID="752">
+																							<name value="LeftHand"/>
+																							<relativePos x="8.8817841970012523e-016" y="0.23228226602077484" z="0"/>
+																							<localOri x="-0.032894227653741837" y="0.0094608301296830177" z="0.70822805166244507" w="0.70515352487564087"/>
+																							<father pointerID="751"/>
+																							<children>
+																								<element index="0" pointerID="753">
+																									<name value="LeftHandMiddle1"/>
+																									<relativePos x="0.083452850580215454" y="0.0069242455065250397" z="0.01358199305832386"/>
+																									<localOri x="0.10720667988061905" y="0.084950245916843414" z="-0.70203447341918945" w="0.69888323545455933"/>
+																									<father pointerID="752"/>
+																									<children>
+																										<element index="0" pointerID="754">
+																											<name value="LeftHandMiddle2"/>
+																											<relativePos x="2.6645353649794941e-016" y="0.040665622800588608" z="-3.5527137317400601e-016"/>
+																											<localOri x="0" y="0.12013527750968933" z="0" w="0.99275749921798706"/>
+																											<father pointerID="753"/>
+																											<children>
+																												<element index="0" pointerID="755">
+																													<name value="LeftHandMiddle3"/>
+																													<relativePos x="-5.436201178099509e-008" y="0.02626974880695343" z="-2.1745009348705935e-007"/>
+																													<localOri x="0" y="0.12013527750968933" z="0" w="0.99275749921798706"/>
+																													<father pointerID="754"/>
+																													<children/>
+																													<specificBoneIndex value="17"/>
+																												</element>
+																											</children>
+																											<specificBoneIndex value="16"/>
+																										</element>
+																									</children>
+																									<specificBoneIndex value="15"/>
+																								</element>
+																							</children>
+																							<specificBoneIndex value="14"/>
+																						</element>
+																					</children>
+																					<specificBoneIndex value="13"/>
+																				</element>
+																			</children>
+																			<specificBoneIndex value="12"/>
+																		</element>
+																	</children>
+																	<specificBoneIndex value="11"/>
+																</element>
+																<element index="1" pointerID="756">
+																	<name value="Neck"/>
+																	<relativePos x="0" y="0.1046726256608963" z="0.036964587867259979"/>
+																	<localOri x="0.17234884202480316" y="0" z="0" w="0.98503589630126953"/>
+																	<father pointerID="748"/>
+																	<children>
+																		<element index="0" pointerID="757">
+																			<name value="Head"/>
+																			<relativePos x="0" y="0.12149851769208908" z="0"/>
+																			<localOri x="-0.16991710662841797" y="0" z="0" w="0.98545831441879272"/>
+																			<father pointerID="756"/>
+																			<children/>
+																			<specificBoneIndex value="19"/>
+																		</element>
+																	</children>
+																	<specificBoneIndex value="18"/>
+																</element>
+																<element index="2" pointerID="758">
+																	<name value="RightShoulder"/>
+																	<relativePos x="-0.034200001507997513" y="0.044030219316482544" z="0.10837731510400772"/>
+																	<localOri x="0.63196367025375366" y="0.73653882741928101" z="0.18298245966434479" w="0.15700227022171021"/>
+																	<father pointerID="748"/>
+																	<children>
+																		<element index="0" pointerID="759">
+																			<name value="RightArm"/>
+																			<relativePos x="0" y="-0.11979999393224716" z="0"/>
+																			<localOri x="0.20343703031539917" y="0.11502939462661743" z="-0.43803560733795166" w="0.86804741621017456"/>
+																			<father pointerID="758"/>
+																			<children>
+																				<element index="0" pointerID="760">
+																					<name value="RightForeArm"/>
+																					<relativePos x="1.4237361938285176e-006" y="-0.30529999732971191" z="3.7413471432046208e-008"/>
+																					<localOri x="0.24596890807151794" y="0.0084912972524762154" z="0.037599340081214905" w="0.96851092576980591"/>
+																					<father pointerID="759"/>
+																					<children>
+																						<element index="0" pointerID="761">
+																							<name value="RightHand"/>
+																							<relativePos x="8.8817843293501503e-017" y="-0.23229999840259552" z="1.6977612631308148e-006"/>
+																							<localOri x="-0.032894782721996307" y="0.0094613851979374886" z="0.70822799205780029" w="0.70515346527099609"/>
+																							<father pointerID="760"/>
+																							<children>
+																								<element index="0" pointerID="762">
+																									<name value="RightHandMiddle1"/>
+																									<relativePos x="-0.083452425897121429" y="-0.0069246762432157993" z="-0.013582396320998669"/>
+																									<localOri x="0.10720667988061905" y="0.084950245916843414" z="-0.70203447341918945" w="0.69888323545455933"/>
+																									<father pointerID="761"/>
+																									<children>
+																										<element index="0" pointerID="763">
+																											<name value="RightHandMiddle2"/>
+																											<relativePos x="-7.012066021161445e-007" y="-0.040665976703166962" z="3.294215957794222e-007"/>
+																											<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+																											<father pointerID="762"/>
+																											<children>
+																												<element index="0" pointerID="764">
+																													<name value="RightHandMiddle3"/>
+																													<relativePos x="5.2824168506049318e-007" y="-0.026269612833857536" z="4.8595956059216405e-007"/>
+																													<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+																													<father pointerID="763"/>
+																													<children/>
+																													<specificBoneIndex value="26"/>
+																												</element>
+																											</children>
+																											<specificBoneIndex value="25"/>
+																										</element>
+																									</children>
+																									<specificBoneIndex value="24"/>
+																								</element>
+																							</children>
+																							<specificBoneIndex value="23"/>
+																						</element>
+																					</children>
+																					<specificBoneIndex value="22"/>
+																				</element>
+																			</children>
+																			<specificBoneIndex value="21"/>
+																		</element>
+																	</children>
+																	<specificBoneIndex value="20"/>
+																</element>
+															</children>
+															<specificBoneIndex value="10"/>
+														</element>
+													</children>
+													<specificBoneIndex value="9"/>
+												</element>
+											</children>
+											<specificBoneIndex value="8"/>
+										</element>
+									</children>
+									<specificBoneIndex value="7"/>
+								</element>
+								<element index="2" pointerID="765">
+									<name value="RightUpLeg"/>
+									<relativePos x="-0.097015902400016785" y="-0.052235312759876251" z="0.024530466645956039"/>
+									<localOri x="0.016695264726877213" y="-0.99965256452560425" z="-0.020392265170812607" w="0.00034057255834341049"/>
+									<father pointerID="739"/>
+									<children>
+										<element index="0" pointerID="766">
+											<name value="RightLeg"/>
+											<relativePos x="3.2388754789280938e-008" y="-0.40471789240837097" z="1.4503865664039495e-008"/>
+											<localOri x="-0.03930944949388504" y="-0.0011256592115387321" z="0.014020202681422234" w="0.99912804365158081"/>
+											<father pointerID="765"/>
+											<children>
+												<element index="0" pointerID="767">
+													<name value="RightFoot"/>
+													<relativePos x="3.195830444724379e-008" y="-0.36250185966491699" z="-3.5532934816728812e-008"/>
+													<localOri x="0.56723988056182861" y="-0.0010189872700721025" z="-0.0019396783318370581" w="0.82354968786239624"/>
+													<father pointerID="766"/>
+													<children>
+														<element index="0" pointerID="768">
+															<name value="RightFootThumb1"/>
+															<relativePos x="-0.020808760076761246" y="-0.1473059356212616" z="-0.0075940205715596676"/>
+															<localOri x="0.18515172600746155" y="-0.006064058281481266" z="0.036195389926433563" w="0.98202437162399292"/>
+															<father pointerID="767"/>
+															<children>
+																<element index="0" pointerID="769">
+																	<name value="RightFootThumb2"/>
+																	<relativePos x="-3.2005164740667169e-008" y="-0.022642211988568306" z="3.8202796481812129e-009"/>
+																	<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+																	<father pointerID="768"/>
+																	<children/>
+																	<specificBoneIndex value="31"/>
+																</element>
+															</children>
+															<specificBoneIndex value="30"/>
+														</element>
+													</children>
+													<specificBoneIndex value="29"/>
+												</element>
+											</children>
+											<specificBoneIndex value="28"/>
+										</element>
+									</children>
+									<specificBoneIndex value="27"/>
+								</element>
+							</children>
+							<specificBoneIndex value="1"/>
+						</element>
+					</children>
+					<specificBoneIndex value="0"/>
+				</rootBone>
+				<bones>
+					<element index="0" pointerID="738"/>
+					<element index="1" pointerID="739"/>
+					<element index="2" pointerID="740"/>
+					<element index="3" pointerID="741"/>
+					<element index="4" pointerID="742"/>
+					<element index="5" pointerID="743"/>
+					<element index="6" pointerID="744"/>
+					<element index="7" pointerID="745"/>
+					<element index="8" pointerID="746"/>
+					<element index="9" pointerID="747"/>
+					<element index="10" pointerID="748"/>
+					<element index="11" pointerID="749"/>
+					<element index="12" pointerID="750"/>
+					<element index="13" pointerID="751"/>
+					<element index="14" pointerID="752"/>
+					<element index="15" pointerID="753"/>
+					<element index="16" pointerID="754"/>
+					<element index="17" pointerID="755"/>
+					<element index="18" pointerID="756"/>
+					<element index="19" pointerID="757"/>
+					<element index="20" pointerID="758"/>
+					<element index="21" pointerID="759"/>
+					<element index="22" pointerID="760"/>
+					<element index="23" pointerID="761"/>
+					<element index="24" pointerID="762"/>
+					<element index="25" pointerID="763"/>
+					<element index="26" pointerID="764"/>
+					<element index="27" pointerID="765"/>
+					<element index="28" pointerID="766"/>
+					<element index="29" pointerID="767"/>
+					<element index="30" pointerID="768"/>
+					<element index="31" pointerID="769"/>
+				</bones>
+			</skeletonDescription>
+			<pelvisBoneIndex value="1"/>
+			<spineBones>
+				<element index="0" pointerID="770">
+					<type value="1"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="7"/>
+					<lastExtension value="10"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="1" y="0" z="0"/>
+					<extensionIkNomalPlane x="1" y="0" z="0"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+			</spineBones>
+			<limbBones>
+				<element index="0" pointerID="771">
+					<type value="2"/>
+					<firstAuxiliary value="11"/>
+					<lastAuxiliary value="12"/>
+					<firstExtension value="12"/>
+					<lastExtension value="14"/>
+					<coronalLocation value="2"/>
+					<transverseLocation value="0"/>
+					<sagittalLocation value="2"/>
+					<auxiliaryIkNomalPlane x="0.16047006845474243" y="-8.9406967163085938e-008" z="-0.98339122533798218"/>
+					<extensionIkNomalPlane x="0.98980402946472168" y="-1.862645149230957e-007" z="0.14243189990520477"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes>
+						<element index="0" pointerID="772">
+							<farEndBoneIdx value="14"/>
+							<rollBonesIdx/>
+							<rollWeights/>
+						</element>
+					</extRollAttributes>
+				</element>
+				<element index="1" pointerID="773">
+					<type value="3"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="2"/>
+					<lastExtension value="4"/>
+					<coronalLocation value="1"/>
+					<transverseLocation value="1"/>
+					<sagittalLocation value="2"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="-1" y="0" z="0"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="2" pointerID="774">
+					<type value="0"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="18"/>
+					<lastExtension value="19"/>
+					<coronalLocation value="1"/>
+					<transverseLocation value="0"/>
+					<sagittalLocation value="1"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="0.43382549285888672" y="0" z="0.0011259472230449319"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="3" pointerID="775">
+					<type value="2"/>
+					<firstAuxiliary value="20"/>
+					<lastAuxiliary value="21"/>
+					<firstExtension value="21"/>
+					<lastExtension value="23"/>
+					<coronalLocation value="2"/>
+					<transverseLocation value="0"/>
+					<sagittalLocation value="0"/>
+					<auxiliaryIkNomalPlane x="0.16151142120361328" y="-2.9802322387695313e-008" z="-0.98304849863052368"/>
+					<extensionIkNomalPlane x="0.98980408906936646" y="4.5411288738250732e-006" z="0.14243002235889435"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes>
+						<element index="0" pointerID="776">
+							<farEndBoneIdx value="23"/>
+							<rollBonesIdx/>
+							<rollWeights/>
+						</element>
+					</extRollAttributes>
+				</element>
+				<element index="4" pointerID="777">
+					<type value="3"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="27"/>
+					<lastExtension value="29"/>
+					<coronalLocation value="1"/>
+					<transverseLocation value="1"/>
+					<sagittalLocation value="0"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="-1" y="0" z="0"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+			</limbBones>
+			<effectorBones>
+				<element index="0" pointerID="778">
+					<type value="3"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="5"/>
+					<lastExtension value="6"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="-0.99377930164337158" y="2.7418136596679688e-006" z="2.5425106287002563e-007"/>
+					<extensionIkNomalPlane x="-0.65959280729293823" y="0.00052595138549804688" z="-0.75162148475646973"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="1" pointerID="779">
+					<type value="2"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="15"/>
+					<lastExtension value="17"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="0" y="0" z="-1"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="2" pointerID="780">
+					<type value="3"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="30"/>
+					<lastExtension value="31"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="-0.99378091096878052" y="3.643333911895752e-006" z="4.6007335186004639e-007"/>
+					<extensionIkNomalPlane x="-0.10472036153078079" y="-7.3835253715515137e-006" z="-0.99450081586837769"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="3" pointerID="781">
+					<type value="2"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="24"/>
+					<lastExtension value="26"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="0" y="0" z="-1"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+			</effectorBones>
+			<spineBoneNames>
+				<element index="0" value="Spine"/>
+			</spineBoneNames>
+			<limbBoneNames>
+				<element index="0" value="LeftArm"/>
+				<element index="1" value="LeftLeg"/>
+				<element index="2" value="Neck"/>
+				<element index="3" value="RightArm"/>
+				<element index="4" value="RightLeg"/>
+			</limbBoneNames>
+			<effectorBoneNames>
+				<element index="0" value="LeftFootThumb"/>
+				<element index="1" value="LeftHandMiddle"/>
+				<element index="2" value="RightFootThumb"/>
+				<element index="3" value="RightHandMiddle"/>
+			</effectorBoneNames>
+			<ikExcludedBones/>
+			<upAxis x="0" y="0.99999994039535522" z="0"/>
+			<frontAxis x="0" y="0" z="0.99999994039535522"/>
+			<boneConfigurations>
+				<element index="0" pointerID="782">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.13533644378185272" y="0" z="0.45112144947052002"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="1" pointerID="783">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.14000000059604645" y="0" z="0.05000000074505806"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="2" pointerID="784">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.060707703232765198" y="0" z="0.20235900580883026"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="3" pointerID="785">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.054375182837247849" y="0" z="0.18125060200691223"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="4" pointerID="786">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.090000003576278687" y="0.039999999105930328" z="0.05000000074505806"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="5" pointerID="787">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0033963588066399097" y="0.0033963588066399097" z="0.011321195401251316"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="6" pointerID="788">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0033963588066399097" y="0.0033963588066399097" z="0.0033963588066399097"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="7" pointerID="789">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.14000000059604645" y="0" z="0.10000000149011612"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.80000001192092896"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="8" pointerID="790">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.029368817806243896" y="0.029368817806243896" z="0.058737635612487793"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="9" pointerID="791">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.11999999731779099" y="0" z="0.059999998658895493"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="10" pointerID="792">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.03441246971487999" y="0" z="0.068824939429759979"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="0" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="11" pointerID="793">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.017966253682971001" y="0.017966253682971001" z="0.059887509793043137"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="12" pointerID="794">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.045796893537044525" y="0" z="0.15265630185604095"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="13" pointerID="795">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.034842267632484436" y="0" z="0.11614088714122772"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="14" pointerID="796">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.012725083157420158" y="0.012725083157420158" z="0.042416941374540329"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="15" pointerID="797">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0060998331755399704" y="0.0060998331755399704" z="0.020332776010036469"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="16" pointerID="798">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0039404537528753281" y="0.0039404537528753281" z="0.013134844601154327"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="17" pointerID="799">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0039404537528753281" y="0.0039404537528753281" z="0.0039404537528753281"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="18" pointerID="800">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.059999998658895493" y="0" z="0.059999998658895493"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="19" pointerID="801">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.079999998211860657" y="0" z="0.05000000074505806"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="20" pointerID="802">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.01796998642385006" y="0.01796998642385006" z="0.059899952262639999"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="21" pointerID="803">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.045795001089572906" y="0" z="0.15264999866485596"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="22" pointerID="804">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.034844990819692612" y="0" z="0.11614996939897537"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="23" pointerID="805">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.012725033797323704" y="0.012725033797323704" z="0.042416777461767197"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="24" pointerID="806">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0060998979024589062" y="0.0060998979024589062" z="0.020332992076873779"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="25" pointerID="807">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0039404397830367088" y="0.0039404397830367088" z="0.013134798966348171"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="26" pointerID="808">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0039404397830367088" y="0.0039404397830367088" z="0.0039404397830367088"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="27" pointerID="809">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.060707684606313705" y="0" z="0.20235894620418549"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="28" pointerID="810">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.054375279694795609" y="0" z="0.1812509298324585"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="29" pointerID="811">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.090000003576278687" y="0.039999999105930328" z="0.05000000074505806"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="30" pointerID="812">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0033963308669626713" y="0.0033963308669626713" z="0.011321102268993855"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="31" pointerID="813">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0033963308669626713" y="0.0033963308669626713" z="0.0033963308669626713"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+			</boneConfigurations>
+			<channelMirrorSources>
+				<element index="0" value="3"/>
+				<element index="1" value="4"/>
+				<element index="2" value="2"/>
+				<element index="3" value="0"/>
+				<element index="4" value="1"/>
+			</channelMirrorSources>
+			<effectorMirrorSources>
+				<element index="0" pointerID="814">
+					<effectorMirrorSourcesIdx>
+						<element index="0" value="0"/>
+					</effectorMirrorSourcesIdx>
+				</element>
+				<element index="1" pointerID="815">
+					<effectorMirrorSourcesIdx>
+						<element index="0" value="0"/>
+					</effectorMirrorSourcesIdx>
+				</element>
+				<element index="2" pointerID="816">
+					<effectorMirrorSourcesIdx/>
+				</element>
+				<element index="3" pointerID="817">
+					<effectorMirrorSourcesIdx>
+						<element index="0" value="0"/>
+					</effectorMirrorSourcesIdx>
+				</element>
+				<element index="4" pointerID="818">
+					<effectorMirrorSourcesIdx>
+						<element index="0" value="0"/>
+					</effectorMirrorSourcesIdx>
+				</element>
+			</effectorMirrorSources>
+			<groundHeightArray>
+				<element index="0" value="0"/>
+				<element index="1" value="0"/>
+				<element index="2" value="0"/>
+				<element index="3" value="0"/>
+				<element index="4" value="0"/>
+			</groundHeightArray>
+			<blindDataInfo/>
+			<squashStretchWeightsArray>
+				<element index="0" value="1"/>
+				<element index="1" value="1"/>
+				<element index="2" value="1"/>
+				<element index="3" value="1"/>
+				<element index="4" value="1"/>
+				<element index="5" value="1"/>
+				<element index="6" value="1"/>
+				<element index="7" value="1"/>
+				<element index="8" value="1"/>
+				<element index="9" value="1"/>
+				<element index="10" value="1"/>
+				<element index="11" value="1"/>
+				<element index="12" value="1"/>
+				<element index="13" value="1"/>
+				<element index="14" value="1"/>
+				<element index="15" value="1"/>
+				<element index="16" value="1"/>
+				<element index="17" value="1"/>
+				<element index="18" value="1"/>
+				<element index="19" value="1"/>
+				<element index="20" value="1"/>
+				<element index="21" value="1"/>
+				<element index="22" value="1"/>
+				<element index="23" value="1"/>
+				<element index="24" value="1"/>
+				<element index="25" value="1"/>
+				<element index="26" value="1"/>
+				<element index="27" value="1"/>
+				<element index="28" value="1"/>
+				<element index="29" value="1"/>
+				<element index="30" value="1"/>
+				<element index="31" value="1"/>
+			</squashStretchWeightsArray>
+			<cacheAllowed>
+				<element index="0" value="1"/>
+				<element index="1" value="1"/>
+				<element index="2" value="1"/>
+				<element index="3" value="1"/>
+				<element index="4" value="1"/>
+				<element index="5" value="1"/>
+				<element index="6" value="1"/>
+				<element index="7" value="1"/>
+				<element index="8" value="1"/>
+				<element index="9" value="1"/>
+				<element index="10" value="1"/>
+				<element index="11" value="1"/>
+				<element index="12" value="1"/>
+				<element index="13" value="1"/>
+				<element index="14" value="1"/>
+				<element index="15" value="1"/>
+				<element index="16" value="1"/>
+				<element index="17" value="1"/>
+				<element index="18" value="1"/>
+				<element index="19" value="1"/>
+				<element index="20" value="1"/>
+				<element index="21" value="1"/>
+				<element index="22" value="1"/>
+				<element index="23" value="1"/>
+				<element index="24" value="1"/>
+				<element index="25" value="1"/>
+				<element index="26" value="1"/>
+				<element index="27" value="1"/>
+				<element index="28" value="1"/>
+				<element index="29" value="1"/>
+				<element index="30" value="1"/>
+			</cacheAllowed>
+			<bonesSnsScaleModes>
+				<element index="0" value="0"/>
+				<element index="1" value="0"/>
+				<element index="2" value="0"/>
+				<element index="3" value="0"/>
+				<element index="4" value="0"/>
+				<element index="5" value="0"/>
+				<element index="6" value="0"/>
+				<element index="7" value="0"/>
+				<element index="8" value="0"/>
+				<element index="9" value="0"/>
+				<element index="10" value="0"/>
+				<element index="11" value="0"/>
+				<element index="12" value="0"/>
+				<element index="13" value="0"/>
+				<element index="14" value="0"/>
+				<element index="15" value="0"/>
+				<element index="16" value="0"/>
+				<element index="17" value="0"/>
+				<element index="18" value="0"/>
+				<element index="19" value="0"/>
+				<element index="20" value="0"/>
+				<element index="21" value="0"/>
+				<element index="22" value="0"/>
+				<element index="23" value="0"/>
+				<element index="24" value="0"/>
+				<element index="25" value="0"/>
+				<element index="26" value="0"/>
+				<element index="27" value="0"/>
+				<element index="28" value="0"/>
+				<element index="29" value="0"/>
+				<element index="30" value="0"/>
+				<element index="31" value="0"/>
+			</bonesSnsScaleModes>
+		</converterMapping>
+		<characterUserData pointerID="819">
+			<nodesPositions>
+				<element index="0" x="0" y="0"/>
+				<element index="1" x="0" y="-357.616943359375"/>
+				<element index="2" x="212.40914916992187" y="-616.88671875"/>
+				<element index="3" x="176.49203491210937" y="207.17691040039062"/>
+				<element index="4" x="0" y="-698.38812255859375"/>
+				<element index="5" x="-212.40914916992187" y="-616.88671875"/>
+				<element index="6" x="-176.49203491210937" y="207.17691040039062"/>
+				<element index="7" x="406.49203491210937" y="207.17691040039062"/>
+				<element index="8" x="442.40914916992187" y="-616.88671875"/>
+				<element index="9" x="-406.49203491210937" y="207.17691040039062"/>
+				<element index="10" x="-442.40914916992187" y="-616.88671875"/>
+				<element index="11" x="7.9925537109375" y="31.046142578125"/>
+				<element index="12" x="207.9925537109375" y="-2310.453857421875"/>
+				<element index="13" x="207.9925537109375" y="-1752.453857421875"/>
+				<element index="14" x="207.9925537109375" y="-1240.953857421875"/>
+				<element index="15" x="207.9925537109375" y="-822.453857421875"/>
+				<element index="16" x="207.9925537109375" y="-310.953857421875"/>
+				<element index="17" x="207.9925537109375" y="479.546142578125"/>
+				<element index="18" x="207.9925537109375" y="1688.546142578125"/>
+				<element index="19" x="207.9925537109375" y="2449.046142578125"/>
+				<element index="20" x="407.9925537109375" y="-2449.953857421875"/>
+				<element index="21" x="407.9925537109375" y="-2356.953857421875"/>
+				<element index="22" x="407.9925537109375" y="-2263.953857421875"/>
+				<element index="23" x="407.9925537109375" y="-2170.953857421875"/>
+				<element index="24" x="407.9925537109375" y="-2077.953857421875"/>
+				<element index="25" x="407.9925537109375" y="-1984.953857421875"/>
+				<element index="26" x="407.9925537109375" y="-1891.953857421875"/>
+				<element index="27" x="407.9925537109375" y="-1798.953857421875"/>
+				<element index="28" x="407.9925537109375" y="-1705.953857421875"/>
+				<element index="29" x="407.9925537109375" y="-1612.953857421875"/>
+				<element index="30" x="407.9925537109375" y="-1519.953857421875"/>
+				<element index="31" x="407.9925537109375" y="-1426.953857421875"/>
+				<element index="32" x="407.9925537109375" y="-1333.953857421875"/>
+				<element index="33" x="407.9925537109375" y="-1240.953857421875"/>
+				<element index="34" x="407.9925537109375" y="-1147.953857421875"/>
+				<element index="35" x="407.9925537109375" y="-1054.953857421875"/>
+				<element index="36" x="407.9925537109375" y="-961.953857421875"/>
+				<element index="37" x="407.9925537109375" y="-868.953857421875"/>
+				<element index="38" x="407.9925537109375" y="-775.953857421875"/>
+				<element index="39" x="407.9925537109375" y="-682.953857421875"/>
+				<element index="40" x="407.9925537109375" y="-589.953857421875"/>
+				<element index="41" x="407.9925537109375" y="-496.953857421875"/>
+				<element index="42" x="407.9925537109375" y="-403.953857421875"/>
+				<element index="43" x="407.9925537109375" y="-310.953857421875"/>
+				<element index="44" x="407.9925537109375" y="-217.953857421875"/>
+				<element index="45" x="407.9925537109375" y="-124.953857421875"/>
+				<element index="46" x="407.9925537109375" y="-31.953857421875"/>
+				<element index="47" x="407.9925537109375" y="61.046142578125"/>
+				<element index="48" x="407.9925537109375" y="154.046142578125"/>
+				<element index="49" x="407.9925537109375" y="247.046142578125"/>
+				<element index="50" x="407.9925537109375" y="340.046142578125"/>
+				<element index="51" x="407.9925537109375" y="433.046142578125"/>
+				<element index="52" x="407.9925537109375" y="526.046142578125"/>
+				<element index="53" x="407.9925537109375" y="619.046142578125"/>
+				<element index="54" x="407.9925537109375" y="712.046142578125"/>
+				<element index="55" x="407.9925537109375" y="805.046142578125"/>
+				<element index="56" x="407.9925537109375" y="898.046142578125"/>
+				<element index="57" x="407.9925537109375" y="991.046142578125"/>
+				<element index="58" x="407.9925537109375" y="1084.046142578125"/>
+				<element index="59" x="407.9925537109375" y="1177.046142578125"/>
+				<element index="60" x="407.9925537109375" y="1270.046142578125"/>
+				<element index="61" x="407.9925537109375" y="1363.046142578125"/>
+				<element index="62" x="407.9925537109375" y="1456.046142578125"/>
+				<element index="63" x="407.9925537109375" y="1549.046142578125"/>
+				<element index="64" x="407.9925537109375" y="1642.046142578125"/>
+				<element index="65" x="407.9925537109375" y="1735.046142578125"/>
+				<element index="66" x="407.9925537109375" y="1828.046142578125"/>
+				<element index="67" x="407.9925537109375" y="1921.046142578125"/>
+				<element index="68" x="407.9925537109375" y="2014.046142578125"/>
+				<element index="69" x="407.9925537109375" y="2107.046142578125"/>
+				<element index="70" x="407.9925537109375" y="2200.046142578125"/>
+				<element index="71" x="407.9925537109375" y="2293.046142578125"/>
+				<element index="72" x="407.9925537109375" y="2402.546142578125"/>
+				<element index="73" x="407.9925537109375" y="2512.046142578125"/>
+				<element index="74" x="0" y="0"/>
+				<element index="75" x="0" y="0"/>
+				<element index="76" x="0" y="0"/>
+				<element index="77" x="0" y="0"/>
+				<element index="78" x="0" y="0"/>
+				<element index="79" x="0" y="0"/>
+				<element index="80" x="0" y="0"/>
+				<element index="81" x="0" y="0"/>
+				<element index="82" x="0" y="0"/>
+				<element index="83" x="0" y="0"/>
+				<element index="84" x="0" y="0"/>
+				<element index="85" x="0" y="0"/>
+				<element index="86" x="0" y="0"/>
+				<element index="87" x="0" y="0"/>
+				<element index="88" x="0" y="0"/>
+				<element index="89" x="0" y="0"/>
+				<element index="90" x="0" y="0"/>
+				<element index="91" x="0" y="0"/>
+				<element index="92" x="0" y="0"/>
+				<element index="93" x="0" y="0"/>
+				<element index="94" x="0" y="0"/>
+				<element index="95" x="0" y="0"/>
+				<element index="96" x="0" y="0"/>
+				<element index="97" x="0" y="0"/>
+				<element index="98" x="0" y="0"/>
+				<element index="99" x="0" y="0"/>
+				<element index="100" x="0" y="0"/>
+				<element index="101" x="0" y="0"/>
+				<element index="102" x="0" y="0"/>
+				<element index="103" x="0" y="0"/>
+				<element index="104" x="0" y="0"/>
+				<element index="105" x="0" y="0"/>
+				<element index="106" x="0" y="0"/>
+				<element index="107" x="0" y="0"/>
+				<element index="108" x="0" y="0"/>
+				<element index="109" x="0" y="0"/>
+				<element index="110" x="0" y="0"/>
+				<element index="111" x="0" y="0"/>
+				<element index="112" x="0" y="0"/>
+				<element index="113" x="0" y="0"/>
+				<element index="114" x="0" y="0"/>
+				<element index="115" x="0" y="0"/>
+				<element index="116" x="0" y="0"/>
+				<element index="117" x="0" y="0"/>
+				<element index="118" x="0" y="0"/>
+				<element index="119" x="0" y="0"/>
+				<element index="120" x="0" y="0"/>
+				<element index="121" x="0" y="0"/>
+				<element index="122" x="0" y="0"/>
+				<element index="123" x="0" y="0"/>
+				<element index="124" x="0" y="0"/>
+				<element index="125" x="0" y="0"/>
+				<element index="126" x="0" y="0"/>
+				<element index="127" x="0" y="0"/>
+				<element index="128" x="0" y="0"/>
+				<element index="129" x="0" y="0"/>
+				<element index="130" x="0" y="0"/>
+				<element index="131" x="0" y="0"/>
+				<element index="132" x="0" y="0"/>
+				<element index="133" x="607.9925537109375" y="2371.046142578125"/>
+				<element index="134" x="607.9925537109375" y="2434.046142578125"/>
+				<element index="135" x="0" y="0"/>
+				<element index="136" x="0" y="0"/>
+				<element index="137" x="0" y="0"/>
+				<element index="138" x="0" y="0"/>
+				<element index="139" x="0" y="0"/>
+				<element index="140" x="0" y="0"/>
+				<element index="141" x="0" y="0"/>
+				<element index="142" x="0" y="0"/>
+				<element index="143" x="0" y="0"/>
+				<element index="144" x="0" y="0"/>
+				<element index="145" x="0" y="0"/>
+				<element index="146" x="0" y="0"/>
+				<element index="147" x="0" y="0"/>
+				<element index="148" x="0" y="0"/>
+				<element index="149" x="0" y="0"/>
+				<element index="150" x="0" y="0"/>
+				<element index="151" x="0" y="0"/>
+				<element index="152" x="0" y="0"/>
+				<element index="153" x="0" y="0"/>
+				<element index="154" x="0" y="0"/>
+				<element index="155" x="0" y="0"/>
+				<element index="156" x="0" y="0"/>
+				<element index="157" x="0" y="0"/>
+				<element index="158" x="0" y="0"/>
+				<element index="159" x="0" y="0"/>
+				<element index="160" x="0" y="0"/>
+				<element index="161" x="0" y="0"/>
+				<element index="162" x="0" y="0"/>
+				<element index="163" x="0" y="0"/>
+				<element index="164" x="807.9925537109375" y="2371.046142578125"/>
+				<element index="165" x="807.9925537109375" y="2434.046142578125"/>
+				<element index="166" x="0" y="0"/>
+				<element index="167" x="0" y="0"/>
+				<element index="168" x="0" y="0"/>
+				<element index="169" x="0" y="0"/>
+				<element index="170" x="0" y="0"/>
+				<element index="171" x="0" y="0"/>
+				<element index="172" x="0" y="0"/>
+				<element index="173" x="0" y="0"/>
+				<element index="174" x="0" y="0"/>
+				<element index="175" x="0" y="0"/>
+				<element index="176" x="0" y="0"/>
+				<element index="177" x="0" y="0"/>
+				<element index="178" x="0" y="0"/>
+				<element index="179" x="0" y="0"/>
+				<element index="180" x="0" y="0"/>
+				<element index="181" x="0" y="0"/>
+				<element index="182" x="0" y="0"/>
+				<element index="183" x="0" y="0"/>
+				<element index="184" x="0" y="0"/>
+				<element index="185" x="0" y="0"/>
+				<element index="186" x="0" y="0"/>
+				<element index="187" x="0" y="0"/>
+				<element index="188" x="0" y="0"/>
+				<element index="189" x="0" y="0"/>
+				<element index="190" x="0" y="0"/>
+				<element index="191" x="0" y="0"/>
+				<element index="192" x="0" y="0"/>
+				<element index="193" x="0" y="0"/>
+				<element index="194" x="0" y="0"/>
+				<element index="195" x="0" y="0"/>
+				<element index="196" x="0" y="0"/>
+				<element index="197" x="0" y="0"/>
+				<element index="198" x="0" y="0"/>
+				<element index="199" x="0" y="0"/>
+				<element index="200" x="0" y="0"/>
+				<element index="201" x="0" y="0"/>
+				<element index="202" x="0" y="0"/>
+				<element index="203" x="0" y="0"/>
+				<element index="204" x="0" y="0"/>
+				<element index="205" x="0" y="0"/>
+				<element index="206" x="0" y="0"/>
+				<element index="207" x="0" y="0"/>
+				<element index="208" x="0" y="0"/>
+				<element index="209" x="0" y="0"/>
+				<element index="210" x="0" y="0"/>
+				<element index="211" x="0" y="0"/>
+				<element index="212" x="0" y="0"/>
+				<element index="213" x="0" y="0"/>
+				<element index="214" x="0" y="0"/>
+				<element index="215" x="0" y="0"/>
+				<element index="216" x="0" y="0"/>
+				<element index="217" x="0" y="0"/>
+				<element index="218" x="0" y="0"/>
+				<element index="219" x="0" y="0"/>
+				<element index="220" x="0" y="0"/>
+				<element index="221" x="0" y="0"/>
+				<element index="222" x="0" y="0"/>
+				<element index="223" x="0" y="0"/>
+				<element index="224" x="0" y="0"/>
+				<element index="225" x="1007.9925537109375" y="2371.046142578125"/>
+				<element index="226" x="1007.9925537109375" y="2434.046142578125"/>
+			</nodesPositions>
+		</characterUserData>
+	</golaemObject>
+</XMLSerialization>
+

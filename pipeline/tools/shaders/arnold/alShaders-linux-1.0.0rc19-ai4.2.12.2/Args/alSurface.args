@@ -1,0 +1,258 @@
+<args format="1.0">
+<page name="Diffuse">
+	<param name="diffuseStrength" label="Strength"/>
+	<param name="diffuseColor" label="Color" widget="color"/>
+	<param name="diffuseRoughness" label="Roughness"/>
+	<page name="Backlight">
+		<param name="backlightStrength" label="Strength"/>
+		<param name="backlightColor" label="Color" widget="color"/>
+		<param name="backlightIndirectStrength" label="Indirect strength"/>
+	</page>
+	<page name="SSS">
+		<param name="sssMix" label="Mix"/>
+		<param name="sssMode" label="Mode" widget="popup">
+			<hintlist name="options">
+				<string value="cubic"/>
+				<string value="diffusion"/>
+				<string value="directional"/>
+				<string value="empirical"/>
+			</hintlist>
+		</param>
+		<param name="sssDensityScale" label="Density scale"/>
+		<param name="sssRadius" label="Distance 1"/>
+		<param name="sssWeight1" label="Weight 1"/>
+		<param name="sssRadiusColor" label="Color 1" widget="color"/>
+		<param name="sssRadius2" label="Distance 2"/>
+		<param name="sssWeight2" label="Weight 2"/>
+		<param name="sssRadiusColor2" label="Color 2" widget="color"/>
+		<param name="sssRadius3" label="Distance 3"/>
+		<param name="sssWeight3" label="Weight 3"/>
+		<param name="sssRadiusColor3" label="Color 3" widget="color"/>
+		<param name="sssTraceSet" label="Trace set"/>
+	</page>
+	<page name="Advanced">
+		<param name="diffuseExtraSamples" label="Diffuse extra samples" int="True"/>
+		<param name="sssExtraSamples" label="SSS extra samples" int="True"/>
+		<param name="diffuseIndirectStrength" label="Indirect strength"/>
+		<param name="diffuseIndirectClamp" label="Indirect clamp"/>
+		<param name="diffuseNormal" label="Normal"/>
+		<param name="traceSetDiffuse" label="Diffuse trace set"/>
+		<param name="traceSetBacklight" label="Backlight trace set"/>
+	</page>
+</page>
+<page name="Specular 1">
+	<param name="specular1Strength" label="Strength"/>
+	<param name="specular1Color" label="Color" widget="color"/>
+	<param name="specular1Roughness" label="Roughness"/>
+	<param name="specular1Anisotropy" label="Anisotropy"/>
+	<param name="specular1Rotation" label="Rotation"/>
+	<page name="Fresnel">
+		<param name="specular1FresnelMode" label="Mode" widget="popup">
+			<hintlist name="options">
+				<string value="dielectric"/>
+				<string value="metallic"/>
+			</hintlist>
+		</param>
+		<param name="specular1Ior" label="IOR"/>
+		<param name="specular1Reflectivity" label="Reflectivity" widget="color"/>
+		<param name="specular1EdgeTint" label="Edge tint" widget="color"/>
+	</page>
+	<page name="Advanced">
+		<param name="specular1RoughnessDepthScale" label="Roughness depth scale"/>
+		<param name="specular1ExtraSamples" label="Extra samples" int="True"/>
+		<param name="specular1Normal" label="Normal"/>
+		<param name="specular1IndirectStrength" label="Indirect strength"/>
+		<param name="specular1IndirectClamp" label="Indirect clamp"/>
+		<param name="traceSetSpecular1" label="Trace set"/>
+		<param name="specular1CausticPaths" label="Caustics" widget="checkBox"/>
+		<param name="specular1InternalDirect" label="Internal direct reflections" widget="checkBox"/>
+		<param name="specular1Distribution" label="Distribution" widget="popup">
+			<hintlist name="options">
+				<string value="beckmann"/>
+				<string value="ggx"/>
+			</hintlist>
+		</param>
+	</page>
+</page>
+<page name="Specular 2">
+	<param name="specular2Strength" label="Strength"/>
+	<param name="specular2Color" label="Color" widget="color"/>
+	<param name="specular2Roughness" label="Roughness"/>
+	<param name="specular2Anisotropy" label="Anisotropy"/>
+	<param name="specular2Rotation" label="Rotation"/>
+	<page name="Fresnel">
+		<param name="specular2FresnelMode" label="Mode" widget="popup">
+			<hintlist name="options">
+				<string value="dielectric"/>
+				<string value="metallic"/>
+			</hintlist>
+		</param>
+		<param name="specular2Ior" label="IOR"/>
+		<param name="specular2Reflectivity" label="Reflectivity" widget="color"/>
+		<param name="specular2EdgeTint" label="Edge tint" widget="color"/>
+	</page>
+	<page name="Advanced">
+		<param name="specular2RoughnessDepthScale" label="Roughness depth scale"/>
+		<param name="specular2ExtraSamples" label="Extra samples" int="True"/>
+		<param name="specular2Normal" label="Normal"/>
+		<param name="specular2IndirectStrength" label="Indirect strength"/>
+		<param name="specular2IndirectClamp" label="Indirect clamp"/>
+		<param name="traceSetSpecular2" label="Trace set"/>
+		<param name="specular2CausticPaths" label="Caustics" widget="checkBox"/>
+		<param name="specular2InternalDirect" label="Internal direct reflections" widget="checkBox"/>
+		<param name="specular2Distribution" label="Distribution" widget="popup">
+			<hintlist name="options">
+				<string value="beckmann"/>
+				<string value="ggx"/>
+			</hintlist>
+		</param>
+	</page>
+</page>
+<page name="Transmission">
+	<param name="transmissionStrength" label="Strength"/>
+	<param name="transmissionColor" label="Color" widget="color"/>
+	<param name="transmissionLinkToSpecular1" label="Link to specular 1" widget="checkBox"/>
+	<param name="transmissionRoughness" label="Roughness"/>
+	<param name="transmissionIor" label="IOR"/>
+	<page name="Attenuation">
+		<param name="ssAttenuationColor" label="Color" widget="color"/>
+		<param name="ssInScatteringStrength" label="Scattering"/>
+		<param name="ssDensityScale" label="Density scale"/>
+		<param name="ssDirection" label="Direction"/>
+	</page>
+	<page name="Advanced">
+		<param name="transmissionRoughnessDepthScale" label="Roughness depth scale"/>
+		<param name="transmissionExtraSamples" label="Extra samples" int="True"/>
+		<param name="transmissionEnableCaustics" label="Enable internal reflections" widget="checkBox"/>
+		<param name="rrTransmissionDepth" label="RR depth" int="True"/>
+		<param name="transmissionClamp" label="Indirect clamp"/>
+		<param name="ssSpecifyCoefficients" label="Specify attenuation coeffs." widget="checkBox"/>
+		<param name="ssScattering" label="Scattering" widget="color"/>
+		<param name="ssAbsorption" label="Absorption" widget="color"/>
+		<param name="traceSetTransmission" label="Trace set"/>
+		<param name="transmissionDoDirect" label="Direct lighting" widget="checkBox"/>
+		<param name="transmissionNormal" label="Normal"/>
+		<param name="transmissionCausticPaths" label="Caustics" widget="checkBox"/>
+	</page>
+</page>
+<page name="Emission">
+	<param name="emissionStrength" label="Strength"/>
+	<param name="emissionColor" label="Color" widget="color"/>
+</page>
+<param name="opacity" label="Opacity" widget="color"/>
+<page name="IDs">
+	<param name="id1" label="id1" widget="color"/>
+	<param name="id2" label="id2" widget="color"/>
+	<param name="id3" label="id3" widget="color"/>
+	<param name="id4" label="id4" widget="color"/>
+	<param name="id5" label="id5" widget="color"/>
+	<param name="id6" label="id6" widget="color"/>
+	<param name="id7" label="id7" widget="color"/>
+	<param name="id8" label="id8" widget="color"/>
+</page>
+<page name="AOVs">
+	<param name="crypto_asset_override" label="Crypto asset override"/>
+	<param name="crypto_object_override" label="Crypto object override"/>
+	<param name="crypto_material_override" label="Crypto material override"/>
+	<param name="standardCompatibleAOVs" label="Write standard AOVs only" widget="checkBox"/>
+	<param name="transmitAovs" label="Transmit AOVs" widget="checkBox"/>
+	<param name="aov_diffuse_color" label="Diffuse color"/>
+	<param name="aov_diffuse_color_clamp" label="Clamp"/>
+	<param name="aov_direct_diffuse" label="Direct diffuse"/>
+	<param name="aov_direct_diffuse_clamp" label="Clamp"/>
+	<param name="aov_direct_diffuse_raw" label="Direct diffuse (raw)"/>
+	<param name="aov_direct_diffuse_raw_clamp" label="Clamp"/>
+	<param name="aov_indirect_diffuse" label="Indirect diffuse"/>
+	<param name="aov_indirect_diffuse_clamp" label="Clamp"/>
+	<param name="aov_indirect_diffuse_raw" label="Indirect diffuse (raw)"/>
+	<param name="aov_indirect_diffuse_raw_clamp" label="Clamp"/>
+	<param name="aov_direct_backlight" label="Direct backlight"/>
+	<param name="aov_direct_backlight_clamp" label="Clamp"/>
+	<param name="aov_indirect_backlight" label="Indirect backlight"/>
+	<param name="aov_indirect_backlight_clamp" label="Clamp"/>
+	<param name="aov_direct_specular" label="Direct specular"/>
+	<param name="aov_direct_specular_clamp" label="Clamp"/>
+	<param name="aov_indirect_specular" label="Indirect specular"/>
+	<param name="aov_indirect_specular_clamp" label="Clamp"/>
+	<param name="aov_direct_specular_2" label="Direct specular 2"/>
+	<param name="aov_direct_specular_2_clamp" label="Clamp"/>
+	<param name="aov_indirect_specular_2" label="Indirect specular 2"/>
+	<param name="aov_indirect_specular_2_clamp" label="Clamp"/>
+	<param name="aov_single_scatter" label="Single scatter"/>
+	<param name="aov_single_scatter_clamp" label="Clamp"/>
+	<param name="aov_sss" label="SSS"/>
+	<param name="aov_sss_clamp" label="Clamp"/>
+	<param name="aov_refraction" label="Refraction"/>
+	<param name="aov_refraction_clamp" label="Clamp"/>
+	<param name="aov_emission" label="Emission"/>
+	<param name="aov_emission_clamp" label="Clamp"/>
+	<param name="aov_uv" label="UV"/>
+	<param name="aov_depth" label="Depth"/>
+	<param name="aov_light_group_1" label="Light group [1]"/>
+	<param name="aov_light_group_1_clamp" label="Clamp"/>
+	<param name="aov_light_group_2" label="Light group [2]"/>
+	<param name="aov_light_group_2_clamp" label="Clamp"/>
+	<param name="aov_light_group_3" label="Light group [3]"/>
+	<param name="aov_light_group_3_clamp" label="Clamp"/>
+	<param name="aov_light_group_4" label="Light group [4]"/>
+	<param name="aov_light_group_4_clamp" label="Clamp"/>
+	<param name="aov_light_group_5" label="Light group [5]"/>
+	<param name="aov_light_group_5_clamp" label="Clamp"/>
+	<param name="aov_light_group_6" label="Light group [6]"/>
+	<param name="aov_light_group_6_clamp" label="Clamp"/>
+	<param name="aov_light_group_7" label="Light group [7]"/>
+	<param name="aov_light_group_7_clamp" label="Clamp"/>
+	<param name="aov_light_group_8" label="Light group [8]"/>
+	<param name="aov_light_group_8_clamp" label="Clamp"/>
+	<param name="aov_id_1" label="ID [1]"/>
+	<param name="aov_id_2" label="ID [2]"/>
+	<param name="aov_id_3" label="ID [3]"/>
+	<param name="aov_id_4" label="ID [4]"/>
+	<param name="aov_id_5" label="ID [5]"/>
+	<param name="aov_id_6" label="ID [6]"/>
+	<param name="aov_id_7" label="ID [7]"/>
+	<param name="aov_id_8" label="ID [8]"/>
+	<param name="aov_crypto_asset" label="Crypto Asset"/>
+	<param name="aov_crypto_object" label="Crypto Object"/>
+	<param name="aov_crypto_material" label="Crypto Material"/>
+	<param name="aov_shadow_group_1" label="Shadow group [1]"/>
+	<param name="aov_shadow_group_2" label="Shadow group [2]"/>
+	<param name="aov_shadow_group_3" label="Shadow group [3]"/>
+	<param name="aov_shadow_group_4" label="Shadow group [4]"/>
+	<param name="aov_shadow_group_5" label="Shadow group [5]"/>
+	<param name="aov_shadow_group_6" label="Shadow group [6]"/>
+	<param name="aov_shadow_group_7" label="Shadow group [7]"/>
+	<param name="aov_shadow_group_8" label="Shadow group [8]"/>
+</page>
+<page name="Advanced">
+	<param name="rr" label="RR" widget="checkBox"/>
+	<param name="traceSetAll" label="Global trace set"/>
+	<param name="traceSetShadows" label="Shadow trace set"/>
+	<param name="debug" label="Debug" widget="popup">
+		<hintlist name="options">
+			<string value="off"/>
+			<string value="diffuse-strength"/>
+			<string value="diffuse-color"/>
+			<string value="diffuse-roughness"/>
+			<string value="backlight-strength"/>
+			<string value="backlight-color"/>
+			<string value="sss-mix"/>
+			<string value="sss-weight-1"/>
+			<string value="sss-color-1"/>
+			<string value="sss-weight-2"/>
+			<string value="sss-color-2"/>
+			<string value="sss-weight-3"/>
+			<string value="sss-color-3"/>
+			<string value="specular-1-strength"/>
+			<string value="specular-1-color"/>
+			<string value="specular-1-roughness"/>
+			<string value="specular-2-strength"/>
+			<string value="specular-2-color"/>
+			<string value="specular-2-roughness"/>
+			<string value="transmission-strength"/>
+			<string value="transmission-color"/>
+			<string value="transmission-roughness"/>
+		</hintlist>
+	</param>
+</page>
+</args>

@@ -1,0 +1,8 @@
+#!/bin/sh
+#
+# copy restartd.conf to /etc before running restartd!
+#
+
+
+
+cp -rf $tools/init/restartd.conf /etc/

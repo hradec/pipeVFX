@@ -1,0 +1,11 @@
+<args format="1.0">
+<param name="input" label="Input" widget="color"/>
+<param name="minSaturation" label="Min Saturation"/>
+<param name="maxSaturation" label="Max Saturation"/>
+<param name="minGain" label="Min Gain"/>
+<param name="maxGain" label="Max Gain"/>
+<param name="minHueOffset" label="Min Hue Offset"/>
+<param name="maxHueOffset" label="Max Hue Offset"/>
+<param name="clamp" label="Clamp" widget="checkBox"/>
+<param name="signal" label="Signal"/>
+</args>

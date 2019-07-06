@@ -6,11 +6,11 @@
 #---------------------------------------------------------------------------------------------------------
 # we grab the qube supervisor from the pipeline directly, so
 # we don't have to maintain 2 different places!
-QB_SUPERVISOR=$(env PYTHONPATH=$tools/python /usr/bin/python -c "import pipe;print pipe.apps.qube()['QB_SUPERVISOR']")
+QB_SUPERVISOR=$(env PYTHONPATH=$tools/python /usr/bin/python2 -c "import pipe;print pipe.apps.qube()['QB_SUPERVISOR']")
 
 # and the path for the worker
-QB_ROOT=$(env PYTHONPATH=$tools/python /usr/bin/python -c "import pipe;print pipe.apps.qube().path()")
-#QB_JOB_LOGS=$(env PYTHONPATH=$tools/python /usr/bin/python -c "import pipe;print pipe.apps.qube().logFolder()")
+QB_ROOT=$(env PYTHONPATH=$tools/python /usr/bin/python2 -c "import pipe;print pipe.apps.qube().path()")
+#QB_JOB_LOGS=$(env PYTHONPATH=$tools/python /usr/bin/python2 -c "import pipe;print pipe.apps.qube().logFolder()")
 QB_JOB_LOGS="/mnt/Projetos/TOOLS/.qube/logs"
 QBDIR=$QB_ROOT/qube-worker/local/pfx/qube/
 
@@ -40,10 +40,11 @@ qube_worker_stop() {
 qube_setup() {
     # fix qube central folder permissions
     mkdir -p  $QB_JOB_LOGS
-    chown -R admin:root  $QB_JOB_LOGS
-    chmod -R a+rwx $QB_JOB_LOGS
+    chown admin:root  $QB_JOB_LOGS
+    chmod a+rwx $QB_JOB_LOGS
 
     # create worker db folder or else it will leak memory until machine hangs!!
+    rm -rf  /var/spool/qube/
     mkdir -p /var/spool/qube/
     chmod a+rwx /var/spool/qube/
     $QB_ROOT/qube-worker/local/pfx/qube/utils/upgrade_worker --reset 
@@ -54,11 +55,13 @@ qube_setup() {
     fi
 
     # if qube not installed, install it! 
-    CORES=$(/usr/bin/python -c "import multiprocessing as m;print m.cpu_count()")
-    if [ ! -f /etc/init.d/worker ] ; then 
-        $QBDIR/utils/install_worker \
-            --prefix "$QBDIR" 2>&1 > \
-        /var/log/pipeBoot/qbinstall_worker.log
+    CORES=$(/usr/bin/python2 -c "import multiprocessing as m;print m.cpu_count()")
+    if [ ! -f /etc/arch-release ] ; then
+        if [ ! -f /etc/init.d/worker ] ; then 
+            $QBDIR/utils/install_worker \
+                --prefix "$QBDIR" 2>&1 > \
+            /var/log/pipeBoot/qbinstall_worker.log
+        fi
     fi
     mkdir -p /etc/sysconfig/
     cat > /etc/sysconfig/qube <<EOF
@@ -102,8 +105,8 @@ exit 0
 EOF
 }
 
-if [ -f $QBDIR/sbin/worker ] ; then 
-    qube_setup 1>&2
-    qube_gdm_setup
-    qube_worker_start
-fi
+#if [ -f $QBDIR/sbin/worker ] ; then 
+#    qube_setup 1>&2
+#    qube_gdm_setup
+#    qube_worker_start
+#fi

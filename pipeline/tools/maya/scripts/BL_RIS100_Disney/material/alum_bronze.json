@@ -1,0 +1,65 @@
+{
+    "alum_bronze_alum_bronze": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.44999998807907104, 
+                0.4124999940395355, 
+                0.35999998450279236
+            ], 
+            "baseColorB": 0.35999998450279236, 
+            "baseColorG": 0.4124999940395355, 
+            "baseColorR": 0.44999998807907104, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.44999998807907104, 
+                0.4124999940395355, 
+                0.35999998450279236
+            ], 
+            "colorB": 0.35999998450279236, 
+            "colorG": 0.4124999940395355, 
+            "colorR": 0.44999998807907104, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "metallic": 0.6000000238418579, 
+            "outColor": [
+                0.44999998807907104, 
+                0.4124999940395355, 
+                0.35999998450279236
+            ], 
+            "outColorB": 0.35999998450279236, 
+            "outColorG": 0.4124999940395355, 
+            "outColorR": 0.44999998807907104, 
+            "presence": 1.0, 
+            "roughness": 0.25, 
+            "sheenTint": 1.0, 
+            "shininess": 100.0, 
+            "specular": 0.009999999776482582, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "specularTint": 1.0, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

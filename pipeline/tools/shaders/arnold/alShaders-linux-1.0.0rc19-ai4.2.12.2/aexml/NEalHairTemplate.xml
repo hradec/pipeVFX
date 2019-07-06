@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalHair">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="melanin" type="maya.float">
+			<label>Melanin</label>
+		</attribute>
+		<attribute name="dyeColor" type="maya.float3">
+			<label>Dye color</label>
+		</attribute>
+		<attribute name="diffuseStrength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="diffuseColor" type="maya.float3">
+			<label>Tint</label>
+		</attribute>
+		<attribute name="specular1Strength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="specular1Color" type="maya.float3">
+			<label>Tint</label>
+		</attribute>
+		<attribute name="specular1WidthScale" type="maya.float">
+			<label>Width scale</label>
+		</attribute>
+		<attribute name="specular1Shift" type="maya.float">
+			<label>Shift offset</label>
+		</attribute>
+		<attribute name="specular2Strength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="specular2Color" type="maya.float3">
+			<label>Tint</label>
+		</attribute>
+		<attribute name="specular2WidthScale" type="maya.float">
+			<label>Width scale</label>
+		</attribute>
+		<attribute name="specular2Shift" type="maya.float">
+			<label>Shift offset</label>
+		</attribute>
+		<attribute name="transmissionStrength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="transmissionColor" type="maya.float3">
+			<label>Tint</label>
+		</attribute>
+		<attribute name="transmissionWidthScale" type="maya.float">
+			<label>Width scale</label>
+		</attribute>
+		<attribute name="transmissionShift" type="maya.float">
+			<label>Shift offset</label>
+		</attribute>
+		<attribute name="id1" type="maya.float3">
+			<label>id1</label>
+		</attribute>
+		<attribute name="id2" type="maya.float3">
+			<label>id2</label>
+		</attribute>
+		<attribute name="id3" type="maya.float3">
+			<label>id3</label>
+		</attribute>
+		<attribute name="id4" type="maya.float3">
+			<label>id4</label>
+		</attribute>
+		<attribute name="id5" type="maya.float3">
+			<label>id5</label>
+		</attribute>
+		<attribute name="id6" type="maya.float3">
+			<label>id6</label>
+		</attribute>
+		<attribute name="id7" type="maya.float3">
+			<label>id7</label>
+		</attribute>
+		<attribute name="id8" type="maya.float3">
+			<label>id8</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalHair">
+		<property name="outColor" />
+		<property name="melanin" />
+		<property name="dyeColor" />
+		<property name="diffuseStrength" />
+		<property name="diffuseColor" />
+		<property name="specular1Strength" />
+		<property name="specular1Color" />
+		<property name="specular1WidthScale" />
+		<property name="specular1Shift" />
+		<property name="specular2Strength" />
+		<property name="specular2Color" />
+		<property name="specular2WidthScale" />
+		<property name="specular2Shift" />
+		<property name="transmissionStrength" />
+		<property name="transmissionColor" />
+		<property name="transmissionWidthScale" />
+		<property name="transmissionShift" />
+		<property name="id1" />
+		<property name="id2" />
+		<property name="id3" />
+		<property name="id4" />
+		<property name="id5" />
+		<property name="id6" />
+		<property name="id7" />
+		<property name="id8" />
+		</view>
+</templates>

@@ -1,0 +1,2 @@
+cp $1 $1.bak
+sed 's/dynamic_rules_v025/dynamic_rules_v026/g' $1.bak  > $1

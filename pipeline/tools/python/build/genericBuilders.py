@@ -873,7 +873,6 @@ class generic:
         os_environ['LIBRARY_PATH'] = ':'.join([
             os_environ['LD_LIBRARY_PATH'],
             '/usr/lib/x86_64-linux-gnu/',
-            '/usr/lib64/', # for centos
         ])
         os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
 
@@ -895,9 +894,6 @@ class generic:
 
         # run sed inline patch mechanism
         self.runSED(os_environ['SOURCE_FOLDER'])
-
-        # run patch from patchs dict
-        self.runPATCHS(os_environ)
 
         # run the command from inside ppython, so all pipe env vars get properly set!
         self.os_environ = os_environ
@@ -945,10 +941,16 @@ class generic:
                 'lib/gcc/x86_64-pc-linux-gnu/lib64/',
                 os_environ['LD_LIBRARY_PATH']
             ])
+
             os_environ['PATH'] = ':'.join([
                 '%s/bin' % os_environ['GCC_TARGET_FOLDER'],
                 os_environ['PATH'],
             ])
+
+        if 'GCC_TARGET_FOLDER' in os_environ:
+            os_environ['LIBRARY_PATH'] = os_environ['GCC_TARGET_FOLDER'] + \
+                '/lib/gcc/x86_64-pc-linux-gnu/lib64/:' + \
+                os_environ['LIBRARY_PATH']
 
         from subprocess import Popen
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
@@ -1112,84 +1114,6 @@ class generic:
                         os.mkdir(os.path.dirname(t))
                         open(t, 'a').close()
 
-    def runPATCHS(self,os_environ):
-        ''' applies patches specified in a dict '''
-        if hasattr(self, 'patchs'):
-            version = os.path.basename( os_environ['TARGET_FOLDER'] )
-            source = os_environ['SOURCE_FOLDER']
-            if version in self.patchs:
-                for fileName in self.patchs[version]:
-                    def patchTextFormat(txt):
-                        patchText = []
-                        startColunm = -1
-                        for l in self.patchs[version][fileName].split('\n'):
-                            if '---' in l:
-                                startColunm = l.find('---')
-                            if startColunm>0:
-                                patchText.append( l[startColunm:] )
-                        return '\n'.join(patchText)
-
-                    patch = '%s/%s' % (source, fileName) + '.patch'
-                    f = open( patch, 'w' )
-                    f.write( patchTextFormat( self.patchs[version][fileName] ) )
-                    f.close()
-                    os.system( 'cd %s ; patch -p0 < %s' % (source, patch) )
-
-    @staticmethod
-    def SED( __sed, t, version='0.0.0' ):
-        ''' this method applies sed substitution to files specified in the sed dictionary.
-        The structure for the sed dict is as follow:
-            sed = {
-                '0.0.0' : { # the inital version of the package this sed will be applied
-                    'file' : [ # the filename to apply the sed to
-                        ( 'string to replace', 'string to replace' ), # a tupple with the replace strings
-                        ( 'string to replace 2', 'string to replace 2' ), # a tupple with the replace strings
-                    ],
-                    'file2' : [ # another filename to apply the sed to
-                        ( 'string to replace', 'string to replace' ), # a tupple with the replace strings
-                    ],
-                },
-                '2.1.0' : { # this sed will be applied to all versions equal or above 2.1.0, instead of sed 0.0.0
-                    ...
-                },
-            }
-
-        this way we can have multiple seds for different versions of packages.
-        a newer sed version means it replaces the older sed versions!!!
-
-        in the example above:
-            sed version 0.0.0 will be applied to all versions of the pkg up until 2.0.99...
-            sed version 2.1.0 will be applied to all versions from 2.1.0 up. In this case, 0.0.0 will NOT be applied!
-        '''
-        for each in __sed[version]:
-            f = "%s/%s" % (t,each)
-
-            # sed a file if it exists!
-            if os.path.exists("%s" % f):
-
-                # we make a copy of the original file, before running sed
-                # if we already have a copy, we restore it before running sed
-                if os.path.exists("%s.original" % f):
-                    os.popen("cp %s.original %s" % (f,f)).readlines()
-                else:
-                    os.popen("cp %s %s.original" % (f,f)).readlines()
-                # apply seds
-                for sed in __sed[version][each]:
-                    cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
-                        f,
-                        sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
-                        sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
-                    )
-                    # print "\n\n"+cmd+"\n\n"
-                    os.popen(cmd).readlines()
-
-            # if it doesnt exist, create it!!
-            else:
-                ptr = open(f, 'w')
-                for sed in __sed[version][each]:
-                    ptr.write(sed[1])
-                ptr.close()
-
 
     def runSED(self,t):
         ''' this method applies sed substitution to files specified in the sed dictionary.
@@ -1227,7 +1151,34 @@ class generic:
             v  = map(lambda x: int(x), version.split('.')[:3])
             vv = map(lambda x: int(''.join(filter(lambda z: z.isdigit(),x))), url[2].split('.')[:3])
             if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]:
-                generic.SED(self.sed, t, version)
+                for each in self.sed[version]:
+                    f = "%s/%s" % (t,each)
+
+                    # sed a file if it exists!
+                    if os.path.exists("%s" % f):
+
+                        # we make a copy of the original file, before running sed
+                        # if we already have a copy, we restore it before running sed
+                        if os.path.exists("%s.original" % f):
+                            os.popen("cp %s.original %s" % (f,f)).readlines()
+                        else:
+                            os.popen("cp %s %s.original" % (f,f)).readlines()
+                        # apply seds
+                        for sed in self.sed[version][each]:
+                            cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
+                                f,
+                                sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
+                                sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
+                            )
+                            # print "\n\n"+cmd+"\n\n"
+                            os.popen(cmd).readlines()
+
+                    # if it doesnt exist, create it!!
+                    else:
+                        ptr = open(f, 'w')
+                        for sed in self.sed[version][each]:
+                            ptr.write(sed[1])
+                        ptr.close()
 
                 break
 

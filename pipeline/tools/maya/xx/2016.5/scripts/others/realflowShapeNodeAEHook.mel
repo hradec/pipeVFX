@@ -1,0 +1,211 @@
+/*
+*	Default values for our custom attributes. Two entries for each attribute: name and value.
+*/
+string $rfAttributeDefaults[];
+$rfAttributeDefaults =
+{
+	"rfIgnore",							"0",
+	"rfExportDeformation",				"0"
+};
+
+/*
+*	Labels for the values of our custom enum attributes. The format of each entry is:
+*		- attribute name
+*		- number of values
+*		- list of values
+*/
+string $rfCustomEnumLabels[];
+$rfCustomEnumLabels = 
+{
+	"rfExportDeformation",				"3",	"Use Global Setting", "No", "Yes"
+};
+
+/*
+*	Finds the default value given an custom attribute name.
+*/
+proc int realflowFindDefaultInt(string $attrName)
+{
+	global string $rfAttributeDefaults[];
+	for($i = 0; $i < size($rfAttributeDefaults); $i += 2)
+	{
+		if($rfAttributeDefaults[$i] == $attrName)
+			return $rfAttributeDefaults[$i+1];
+	}
+	
+	return 0;
+}
+
+/*
+*	Called when a checkbox control linked to a custom bool attribute changes state.
+* If the new state is the default value for the attribute, the attribute is removed.
+* Otherwise, the attribute is added (if necessary) and set to the new value.
+*/
+global proc realflowCustomBoolChanged(string $attr)
+{
+	string $buffer[];
+	tokenize $attr "." $buffer;
+	string $nodeName = $buffer[0];
+	string $attrName = $buffer[size($buffer)-1];
+	
+	int $val = `checkBoxGrp -q -value1 $attrName`;
+	int $defVal = realflowFindDefaultInt($attrName);
+	if($defVal == $val)
+	{
+		if(`attributeQuery -node $nodeName -exists $attrName`)
+			deleteAttr $attr;
+	}
+	else
+	{
+		if(!`attributeQuery -node $nodeName -exists $attrName`)
+			addAttr -longName $attrName -attributeType "bool" -defaultValue $defVal $nodeName;
+		
+		setAttr $attr $val;
+	}
+}
+
+/*
+*	Creates a checkbox control for a custom bool attribute.
+*/
+global proc realflowCustomBoolNew(string $attr)
+{
+	string $buffer[];
+	tokenize $attr "." $buffer;
+	string $attrName = $buffer[size($buffer)-1];
+	
+	string $label = interToUI($attrName);
+	$label = substring($label, 3, size($label));
+	checkBoxGrp -label1 $label $attrName;
+	
+	realflowCustomBoolReplace($attr);
+}
+
+/*
+*	Connects a checkbox control to a custom bool attribute.
+*/
+global proc realflowCustomBoolReplace(string $attr)
+{
+	string $buffer[];
+	tokenize $attr "." $buffer;
+	string $nodeName = $buffer[0];
+	string $attrName = $buffer[size($buffer)-1];
+	
+	checkBoxGrp -e -changeCommand ("realflowCustomBoolChanged \"" + $attr + "\"") $attrName;
+	
+	int $val;
+	if(`attributeQuery -node $nodeName -exists $attrName`)
+		$val = `getAttr $attr`;
+	else
+		$val = realflowFindDefaultInt($attrName);
+		
+	checkBoxGrp -e -value1 $val $attrName;
+}
+
+/*
+*	Same as realflowCustomBoolChanged() above, but for enum attributes.
+*/
+global proc realflowCustomEnumChanged(string $attr)
+{
+	string $buffer[];
+	tokenize $attr "." $buffer;
+	string $nodeName = $buffer[0];
+	string $attrName = $buffer[size($buffer)-1];
+	
+	int $val = `optionMenuGrp -q -select $attrName` - 1;
+	int $defVal = realflowFindDefaultInt($attrName);
+	if($defVal == $val)
+	{
+		if(`attributeQuery -node $nodeName -exists $attrName`)
+			deleteAttr $attr;
+	}
+	else
+	{
+		if(!`attributeQuery -node $nodeName -exists $attrName`)
+			addAttr -longName $attrName -attributeType "long" -defaultValue $defVal $nodeName;
+		
+		setAttr $attr $val;
+	}
+}
+
+/*
+*	Creates a dropdown control for a custom enum attribute.
+*/
+global proc realflowCustomEnumNew(string $attr)
+{
+	string $buffer[];
+	tokenize $attr "." $buffer;
+	string $attrName = $buffer[size($buffer)-1];
+	
+	string $label = interToUI($attrName);
+	$label = substring($label, 3, size($label));
+	optionMenuGrp -label $label $attrName;
+	
+	// Find the value labels and create menu items for them.
+	global string $rfCustomEnumLabels[];
+	for($i = 0; $i < size($rfCustomEnumLabels); )
+	{
+		int $numValues = $rfCustomEnumLabels[$i+1];
+		if($rfCustomEnumLabels[$i] != $attrName)
+		{
+			$i += $numValues + 2;
+			continue;
+		}
+		
+		for($j = 0; $j < $numValues; ++$j)
+			menuItem -label $rfCustomEnumLabels[$i + 2 + $j];
+		
+		break;
+	}
+	
+	realflowCustomEnumReplace($attr);
+}
+
+/*
+*	Connects a dropdown control to a custom enum attribute.
+*/
+global proc realflowCustomEnumReplace(string $attr)
+{
+	string $buffer[];
+	tokenize $attr "." $buffer;
+	string $nodeName = $buffer[0];
+	string $attrName = $buffer[size($buffer)-1];
+	
+	optionMenuGrp -e -changeCommand ("realflowCustomEnumChanged \"" + $attr + "\"") $attrName;
+	
+	int $val;
+	if(`attributeQuery -node $nodeName -exists $attrName`)
+		$val = `getAttr $attr`;
+	else
+		$val = realflowFindDefaultInt($attrName);
+		
+	optionMenuGrp -e -select ($val+1) $attrName;
+}
+
+/*
+*	This function creates the "RealFlow" rollup in the mesh node AE. The rollup contains custom mesh attributes.
+* These attributes are only added to a node when the user sets them to a non-default value, to avoid cluttering up
+* the scene with dynamic attributes.
+*/
+proc realflowAddCustomMeshAttributes(string $nodeName)
+{
+	editorTemplate -beginLayout "RealFlow";
+		editorTemplate -callCustom "realflowCustomBoolNew" "realflowCustomBoolReplace" "rfIgnore";
+		editorTemplate -callCustom "realflowCustomEnumNew" "realflowCustomEnumReplace" "rfExportDeformation";
+	editorTemplate -endLayout;
+}
+
+/*
+*	This is the hook function we register through the AE hijack. It's going to be called just before the "Object Display"
+* rollup is built. We can create our "RealFlow" rollup here.
+*/
+global proc realflowShapeNodeAEHook(string $nodeName)
+{
+	string $type = `nodeType($nodeName)`;
+	switch($type)
+	{
+		case "mesh":
+		case "subdiv":
+		case "nurbsSurface":
+			realflowAddCustomMeshAttributes($nodeName);
+			break;
+	}
+}

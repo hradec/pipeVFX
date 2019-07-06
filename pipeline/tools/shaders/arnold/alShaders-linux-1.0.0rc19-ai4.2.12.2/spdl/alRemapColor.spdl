@@ -1,0 +1,171 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{73ae29ab-84c1-47e4-9340-20f9d68f5470}";
+PropertySet "alRemapColor_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{e31463f1-b1af-45c1-845e-5c6bd643bfb8}";
+		Type = color;
+	}
+	Parameter "input" input
+	{
+		GUID = "{897262d0-54e0-4ffb-a9a4-11f9ffd884d3}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "gamma" input
+	{
+		GUID = "{8a363837-eb07-4ea3-8a2a-8054453b42dd}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "saturation" input
+	{
+		GUID = "{b3b7ea0f-0128-4ad1-96d7-23272f7e2d76}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "hueOffset" input
+	{
+		GUID = "{b4bc7ab2-7f68-43f7-b76e-f3e1ff68742c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "contrast" input
+	{
+		GUID = "{81298749-4e30-4c2a-9ff9-959f1ec220d5}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "contrastPivot" input
+	{
+		GUID = "{b7d57b58-1c0c-4777-87c5-52ec43aa74b6}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.180000;
+	}
+	Parameter "gain" input
+	{
+		GUID = "{f2333ec6-7be3-42d1-9427-2e3631afd147}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "exposure" input
+	{
+		GUID = "{6e4f1a21-cb84-4472-9afd-ebfccb1a0f86}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "mask" input
+	{
+		GUID = "{4cc49f94-66e8-449c-902a-ceccb1280e5c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+}
+MetaShader "alRemapColor_meta"
+{
+	Name = "ALS_RemapColor";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_RemapColor";
+		Filename = "alRemapColor";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	input
+	{
+		Name = "Input";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	gamma
+	{
+		Name = "Gamma";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	saturation
+	{
+		Name = "Saturation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	hueOffset
+	{
+		Name = "Hue offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	contrast
+	{
+		Name = "Contrast";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	contrastPivot
+	{
+		Name = "Pivot";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	gain
+	{
+		Name = "Gain";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	exposure
+	{
+		Name = "Exposure";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	mask
+	{
+		Name = "Mask";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	input;
+	gamma;
+	saturation;
+	hueOffset;
+	Tab "Contrast"
+	{
+		contrast;
+		contrastPivot;
+	}
+	gain;
+	exposure;
+	mask;
+}
+Layout "RenderTree"
+{
+	input;
+	gamma;
+	saturation;
+	hueOffset;
+	Group "Contrast"
+	{
+		contrast;
+		contrastPivot;
+	}
+	gain;
+	exposure;
+	mask;
+}
+Plugin = Shader
+{
+	Filename = "alRemapColor";
+}

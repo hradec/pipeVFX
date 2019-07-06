@@ -1,0 +1,64 @@
+{
+    "colonial_maple_223_colonial_maple_223": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.35499998927116394, 
+                0.20989374816417694, 
+                0.16152499616146088
+            ], 
+            "baseColorB": 0.16152499616146088, 
+            "baseColorG": 0.20989374816417694, 
+            "baseColorR": 0.35499998927116394, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.35499998927116394, 
+                0.20989374816417694, 
+                0.16152499616146088
+            ], 
+            "colorB": 0.16152499616146088, 
+            "colorG": 0.20989374816417694, 
+            "colorR": 0.35499998927116394, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "outColor": [
+                0.35499998927116394, 
+                0.20989374816417694, 
+                0.16152499616146088
+            ], 
+            "outColorB": 0.16152499616146088, 
+            "outColorG": 0.20989374816417694, 
+            "outColorR": 0.35499998927116394, 
+            "presence": 1.0, 
+            "roughness": 0.5, 
+            "sheenTint": 0.5, 
+            "shininess": 100.0, 
+            "specular": 0.10000000149011612, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "specularTint": 0.5, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalCombineFloat">
+		<label>alCombineFloat</label>
+		<description>Simple mathematical operations for combining floats: multiplication, addition, division, subtraction and interpolation.</description>
+		<attribute name="input1" type="maya.float">
+			<label>input1</label>
+			<description>The first input to combine</description>
+		</attribute>
+		<attribute name="input2" type="maya.float">
+			<label>input2</label>
+			<description>The second input to combine</description>
+		</attribute>
+		<attribute name="input3" type="maya.float">
+			<label>input3</label>
+			<description>The third input used as a mix value when lerp mode is selected.</description>
+		</attribute>
+		<attribute name="combineOp" type="maya.enum">
+			<label>Combine Op</label>
+			<description>The operation to use to combine inputs 1 and 2.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalCombineFloat">
+			<property name="input1"/>
+			<property name="input2"/>
+			<property name="input3"/>
+			<property name="combineOp"/>
+		</view>
+</templates>

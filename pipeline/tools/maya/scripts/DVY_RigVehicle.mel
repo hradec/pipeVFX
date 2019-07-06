@@ -1,0 +1,731 @@
+
+///////////////////////////////////////////////////////////////////////////////
+/*			
+				
+	Copyright © 2006 DVY_RigVehicle. All rights reserved davvey@ntlworld.com
+					
+
+					- DVY_RigVehicle -
+						  
+	This script will build Vehicle rigg for wheel rotation, suspension
+	and steering. This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script current has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite ot scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging oif individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, use default values is you have named them 
+	as shown or selct each item in turn and load required field. Also you can type names
+	in the field as reuired. Script will error out if not all items are found.
+	Once all fields correct press "Rig Vehicle" button. 
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |	
+		  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+		This will tilt the Chassis group as reguired. Also each indiviual
+		Wheel can be moved up and down by moving each wheel Group Ground 
+		Locator to simulate ground variations. If these are Geometry constained
+		to a "grtound" object or plane to movement will be automatic.
+	
+
+
+*/
+//////////////////////////////////////////////////////////////////////////
+//					DVY_RigVehicle Procedure
+//////////////////////////////////////////////////////////////////////////
+
+//============================================================================
+//	GLOBAL VARIABLES
+//============================================================================
+	global int $DVYDebug;
+
+// Integer Flag that allows print statements to be output to
+// message field for tracking purposes.
+
+//============================================================================
+	
+global proc DVY_RigVehicle(string $GroupV_A[])
+ {
+	global string $GroupV_A[];
+	global string $DVY_VehName;
+	
+	float $VDataA[], $BDataA[], $SDataA[], $WDataFrA[],  $WDataRrA[], $TDataA[];
+	
+	global string $RigControlsA[]; string $DVYSel[];
+	
+	string $DJntsA[]; string $DLocs[]; string $Tmp[]; string $Groups[]; string $Sel[];
+	
+	string $DVYPref[] = {"LfFr_", "RtFr_", "LfRr_", "RtRr_"};
+	string $DVYPrefA[] = {"LfFr", "RtFr", "LfRr", "RtRr"};
+	
+	string $WJntA[] = {"Wheel_JnTA_1", "Wheel_JnTB_1", "Wheel_JnTC_1", "Wheel_JnTD_1", "Wheel_JnTE_1"};
+	string $SJntA[] = {"Susp_JnTA_1", "Susp_JnTB_1", "Susp_JnTC_1"};
+	string $WLocA[] = {"Wheel_LocA_1", "Wheel_LocB_1", "Wheel_LocC_1", "Wheel_LocD_1", "Wheel_LocE_1", "Wheel_LocGrd_1"};
+	string $SLocA[] = {"Susp_LocA_1", "Susp_LocB_1", "Susp_LocC_1", "Susp_LocD_1", "Susp_LocE_1", "Susp_LocGrd_1"};
+
+	int $i, $j, $k, $l, $s;
+	print "Ln No. 62 $GroupV_A is \n";
+	print $GroupV_A;
+	
+	// Create Display Layer for completed rig.
+	
+	string $DLayers[];
+	
+		$Dlayers[3] = `createDisplayLayer -name "JointsLayer" -number 4 -empty`;
+		setAttr ($Dlayers[3] + ".displayType") 2;
+		setAttr ($Dlayers[3] + ".visibility") 0;
+		
+		$Dlayers[2] = `createDisplayLayer -name "LocatorsLayer" -number 3 -empty`;
+		setAttr ($Dlayers[2] + ".displayType") 2;
+		setAttr ($Dlayers[2] + ".visibility") 0; 
+		
+		$Dlayers[1] = `createDisplayLayer -name "GeomLayer" -number 2 -empty`;
+		setAttr ($Dlayers[1] + ".displayType") 2;
+		setAttr ($Dlayers[1] + ".visibility") 1; 
+		
+		$Dlayers[0] = `createDisplayLayer -name "RigControlLayer" -number 1 -empty`;
+		setAttr ($Dlayers[0] + ".displayType") 0;
+		setAttr ($Dlayers[0] + ".visibility") 1; 
+	
+	for ($i = 3; $i <`size ($GroupV_A)`;$i++)
+		{ select -r $GroupV_A[$i]; CenterPivot;}
+	
+	// Collect data for Body postion and size.
+		$BDataA = `objectCenter $GroupV_A[3]`;
+		$TDataA = `xform -q -bb $GroupV_A[3]`;
+	
+		for ($s = 3; $s < 9; $s++ )
+			{ $BDataA[$s] = $TDataA[($s-3)];}
+		print "BodyShell Data is "; print $BDataA; print "© Davvey..\n";
+	
+	// Collect data for Front Wheel postion and size. 
+		$WDataFrA = `objectCenter $GroupV_A[4]`;
+		$TDataA = `xform -q -bb $GroupV_A[4]`;
+	
+		for ($s = 3; $s < 9; $s++ )
+			{ $WDataFrA[$s] = $TDataA[($s-3)];}
+		print "Front Wheel Data is ";	print $WDataFrA; print "© Davvey..\n";
+		
+	// Collect data for Rear Wheel postion and size. 
+		$WDataRrA = `objectCenter $GroupV_A[6]`;
+		$TDataA = `xform -q -bb $GroupV_A[6]`;
+	
+		for ($s = 3; $s < 9; $s++ )
+			{ $WDataRrA[$s] = $TDataA[($s-3)];}
+		print "Rear Wheel Data is ";	print $WDataFrA; print "© Davvey..\n";
+		
+	// Collect data for Suspension data. 
+		$SDataA[0] = ($BDataA[6] * 0.85);
+		$SDataA[1] = $BDataA[1];
+		$SDataA[2] = $WDataFrA[2];
+		$SDataA[5] = $WDataRrA[2];
+		
+		print "Suspension Data is ";print $SDataA; print "© Davvey..\n";
+		
+	// Create group nodes and controllers
+		
+		$Groups[0] = `group -em -name "Loc_GrdN_1"`;
+		$Groups[1] = `group -em -name "Loc_GrdRefN_1"`;
+		$Groups[2] = `group -em -name "Susp_LocGrpN_1"`;
+		$Groups[3] = `group -em -name "Wheel_LocGrpN_1"`;
+		$Groups[4] = `group -em -name "Susp_TopLocGrpN_1"`;	
+		$Groups[5] = `group -em -name "Joints_GrpN_1"`;	
+		$Groups[6] = `group -em -name "VehicleRotate_LocGrpN_1"`;
+		$Groups[12] = `group -em -name "Dummy_GrpN_1"`;	// Create Dummy Group Node for auto spin setup.
+
+		setAttr ($Groups[4] + ".translateY") $BDataA[4];
+		setAttr ($Groups[5] + ".translateY") $BDataA[4];
+		
+		for ($i = 0; $i < 7; $i++) { parent $Groups[$i] $GroupV_A[1];}
+		parent $Groups[12] $GroupV_A[1];
+				 
+	// Create additional rotate Group Node for each wheel.
+	$i = 0; $j = 0;
+		 
+		for ($i=7; $i<11; $i++)
+			{ 
+			  $Groups[$i] = `group -em -name ($DVYPref[$j] + "Wheel_GrpR_1")`;
+				delete `pointConstraint -offset 0 0 0 -weight 1 $GroupV_A[($j+4)] $Groups[$i]`;
+				makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		    	$Sel = `listRelatives -children $GroupV_A[($j+4)]`;
+				parent $Groups[$i] $GroupV_A[($j+4)]; 				
+			 	parent $Sel $Groups[$i];
+		      $j++;
+			}
+	// Create Vehicle Main Controller.
+		
+		$Temp = `polySphere -r ($BDataA[6] *0.3)  -sx 12 -sy 12 -ax 0 1 0 -tx 2 -ch 0 -name FSphere` ;
+		$RigControlsA[0] = $Temp[0];	
+		$TDataA[0] = (`getAttr ($GroupV_A[3] + ".boundingBoxSizeZ")` * 1.2);
+		$TDataA[1] = (`getAttr ($GroupV_A[3] + ".boundingBoxSizeX")` * 1.5);
+		
+		polyCylinder -r .25 -h $TDataA[0] -sx 8 -sy 5 -sz 1 -ax 0 1 0 -tx 1 -ch 0 -name ForwardA;
+		
+		polyCone -r .5 -h 2 -sx 8 -sy 1 -sz 0 -ax 0 1 0 -tx 1 -ch 0 -name FCone1;
+		setAttr "FCone1.translateY" ($TDataA[0]/2); 
+		polyCone -r .5 -h 2 -sx 8 -sy 1 -sz 0 -ax 0 1 0 -tx 1 -ch 0 -name FCone2;
+		setAttr "FCone2.translateY" ($TDataA[0]/-2); 
+		setAttr "FCone2.rotateX" -180;
+		
+		polyCylinder -r .25 -h $TDataA[1] -sx 8 -sy 5 -sz 1 -ax 0 1 0 -tx 1 -ch 0 -name ForwardB;
+		polyCone -r .5 -h 2 -sx 8 -sy 1 -sz 0 -ax 0 1 0 -tx 1 -ch 0 -name FCone3;
+		setAttr "FCone3.translateY" ($TDataA[1]/2); 
+		polyCone -r .5 -h 2 -sx 8 -sy 1 -sz 0 -ax 0 1 0 -tx 1 -ch 0 -name FCone4;
+		setAttr "FCone4.translateY" ($TDataA[1]/-2); 
+		setAttr "FCone4.rotateX" -180;
+
+		$Temp = `polyUnite -name Forward1 -ch 0 ForwardA FCone1 FCone2`;
+		setAttr "Forward1.rotateX" 90;
+		$Temp = `polyUnite -name Forward2 -ch 0 ForwardB FCone3 FCone4`;
+		setAttr "Forward2.rotateX" 90;
+		setAttr "Forward2.rotateY" 90;
+		$Temp = `polyUnite -name Forward -ch 0 Forward1 Forward2`;
+		$Temp = `polyUnite -name Rig_ControllerN_1 -ch 0 Forward FSphere`;
+		CenterPivot;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		$RigControlsA[0] = $Temp[0];
+		setAttr ($RigControlsA[0] + ".translateY") ($BDataA[7] * 1.3);
+		
+		
+	// Create Vehicle Steering Controller.
+
+		polyTorus -r ($BDataA[6] *0.5) -sr 0.25 -tw 0 -sx 36 -sy 8 -ax 0 1 0 -tx 1 -ch 0 -name Steering_ControllerN_1;
+		polyCut  -ws 1  -cd "Z" -df 1 -ch 0 Steering_ControllerN_1;
+		polyCone -r 0.5 -h 2 -sx 8 -sy 2 -sz 1 -ax 0 1 0 -tx 1 -ch 0;
+		setAttr "pCone1.translateX" ($BDataA[6] * 0.5);
+		polyCone -r 0.5 -h 2 -sx 8 -sy 2 -sz 1 -ax 0 1 0 -tx 1 -ch 0;
+		setAttr "pCone2.translateX" ($BDataA[6] * -0.5);
+		select -r pCone1 ; select -add pCone2 ;
+		rotate -r -eu -90 0 0 ; move -r 0 0 -1; 
+		
+	$Temp = `polyUnite -name Steering_ControllerN_1 -ch 0 pCone2 pCone1 Steering_ControllerN_1`;
+		$RigControlsA[1] = `rename $Temp[0] "Steering_ControllerN_1"`;
+		setAttr ($RigControlsA[1] + ".translateY") (($BDataA[7] * 1.2) + 3);
+		setAttr ($RigControlsA[1] + ".translateZ") -1;
+		xform -p 1 -rp 0 0 1 $RigControlsA[1];
+		xform -p 1 -sp 0 0 1 $RigControlsA[1];			
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		parent $RigControlsA[1] $RigControlsA[0];
+		
+	// Create Vehicle Grond position Controller.
+	
+	$Temp = `polyCone -r 1 -h 2 -sx 12 -sy 2 -sz 1 -ax 0 1 0 -tx 1 -ch 0 -name GrdConeRef_1`;
+		$RigControlsA[2] = $Temp[0];		
+		move -r 0 1 0 GrdConeRef_1;
+		xform -piv 0 -1 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+
+	// Create Vehicle Tilt Controller.
+	
+	$Temp = `polyTorus -r 1 -sr 0.1 -tw 0 -sx 24 -sy 8 -ax 0 1 0 -tx 1 -ch 0 -name Torus`;
+		setAttr "Torus.scaleX" 4; setAttr "Torus.scaleY" 4; setAttr "Torus.scaleZ" 4;
+		
+		polyCut  -ws 1 -cd "Z" -df 1 -ch 1 Torus;
+		setAttr "Torus.translateZ" -2; 
+		
+		xform -p 1 -rp 0 0 2 Torus;	 xform -p 1 -sp 0 0 .5 Torus;	
+		polyCut  -pcz 0 -cd "Z" -df 1 -ch 1 Torus;
+		setAttr "polyCut2.cutPlaneCenterZ" 0;
+	
+		polyCone -r .75 -h 3 -sx 8 -sy 1 -sz 0 -ax 0 1 0 -tx 1 -ch 0 -name Cone1;	
+		xform -p 1 -piv 0 -1.5 0 Cone1;		
+		setAttr "Cone1.rotateX" -90; setAttr "Cone1.rotateY" -30;
+		setAttr "Cone1.translateY" 1.5; setAttr "Cone1.translateX" 3.423223;
+		
+		polyCone -r .75 -h 3 -sx 8 -sy 1 -sz 0 -ax 0 1 0 -tx 1 -ch 0 -name Cone2;		
+		xform -p 1 -piv 0 -1.5 0 Cone2;		
+		setAttr "Cone2.rotateX" -90; setAttr "Cone2.rotateY" 30;
+		setAttr "Cone2.translateY" 1.5; setAttr "Cone2.translateX" -3.423223;
+		
+		polyUnite -ch 0 Cone2 Cone1 Torus;
+		setAttr "polySurface1.rotateX" -90;
+		scale -r 1.5 1 1;
+		select -r polySurface1 ;
+		duplicate -rr;
+		setAttr "polySurface2.rotateY" 90;
+		$Temp = `polyUnite -name Tilt_ControllerN_1 -ch 0 polySurface2 polySurface1`;
+		scale -r 1 0.5 1 ;
+		$RigControlsA[3] = "Tilt_ControllerN_1";
+		setAttr ($RigControlsA[3] + ".translateY") ($BDataA[7] * 1.7);
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		
+		parent $RigControlsA[3]  $RigControlsA[0];
+		select - r $RigControlsA[0];
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;	
+
+	float $WhSz[];
+	$WhSz[0] = `getAttr ($GroupV_A[4] + ".boundingBoxSizeX")`;
+	$WhSz[1] = `getAttr ($GroupV_A[4] + ".boundingBoxSizeY")`;
+	$WhSz[2] = `getAttr ($GroupV_A[4] + ".boundingBoxSizeZ")`;
+		
+		
+	$j = 1; $k = 1;
+	for ($i=0; $i<4; $i++)
+		{
+			$Temp = `polyCone -r 0.5 -h ($WhSz[1] * 0.25) -sx 12 -sy 2 -sz 1 -ax 0 1 0 -tx 1 -ch 0 -name ($DVYPref[$i] + "WheelFloor_CtrlN_1")`;
+			$RigControlsA[$i+4] = $Temp[0];	
+			xform -p 1 -piv 0 ($WhSz[1] * 0.125) 0 ;
+			delete `pointConstraint -offset 0 0 0 -skip y -weight 1 $GroupV_A[$i+4] $RigControlsA[$i+4]`;
+			move -r ($WhSz[0] * 0.5 * $k) ($WhSz[1] * -0.125) ($WhSz[0] * 0.3 * $j);
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		
+			$j = ($j * -1); 
+			if (($i == 1) || ($i == 3)) {$k = ($k * -1);}
+
+		}
+		
+	string $DAttrA[] = {".sx", ".sy", ".sz"};
+		for ($Att in $DAttrA) {setAttr -l true -k false ($RigControlsA[0] + $Att);}
+		
+	string $DAttrA[] = {".tx", ".ty", ".tz", ".rx", ".rz", ".sx", ".sy", ".sz"};
+		for ($Att in $DAttrA) {setAttr -l true -k false ($RigControlsA[1] + $Att);}
+		transformLimits -ry -60 60 -ery 1 1 $RigControlsA[1];
+		
+	$DAttrA = {".tx", ".ty", ".tz", ".ry", ".sx", ".sy", ".sz"};
+		for ($Att in $DAttrA) {setAttr -l true -k false ($RigControlsA[3] + $Att);}
+		transformLimits -rx -5 5 -erx 1 1 $RigControlsA[3];
+		transformLimits -rz -5 5 -erz 1 1 $RigControlsA[3];
+
+	$DAttrA = {".tx", ".ty", ".tz", ".rx", ".ry", ".rz", ".sx", ".sy", ".sz"};
+		for ($Att in $DAttrA) {setAttr -l true - k false ($Groups[5] + $Att);}	
+		for ($Att in $DAttrA) {setAttr -l true - k false ($Groups[12] + $Att);}
+		
+	$DAttrA = {".tx", ".tz", ".rx", ".ry", ".rz", ".sx", ".sy", ".sz"};
+	for ($i=4; $i<8; $i++) { for ($Att in $DAttrA) {setAttr -l true - k false ($RigControlsA[$i] + $Att);} }
+		
+		parent $RigControlsA[0] $GroupV_A[1];		
+		parent $RigControlsA[2] $Groups[0];
+		
+	select -cl;
+		
+	// Add custom attributes to Rig Controls for spin, steer and suspension.
+	
+	
+	string $DVYAttrA[] = {"WheelSpin"};
+	
+	string $DVYAttrB[] = {"RotateAngle", "PlusAngle", "NegAngle"};
+	
+	string $DVYAttrC[] = {"GrdDist", "GrdLimit", "JtDist", "TyreFlat", "SuspMax", "SuspMin", "MaxTr", "MinTr"};
+	
+	string $DVYAttrD[] = {"Move_MultSqNX_Out", "Move_MultSqNZ_Out", "MoveRig_AddN_Out",
+							"MoveRig_SqRtN_Out", "XZMoveCondN_Out", "XZMoveCond_AddN_Out",
+							"XZSumN_Out", "XMoveCondN_Out", "ZMoveCondN_Out"};
+	
+	string $DVYAttrE[] = {"WheelSpinMultiply", "WheelSpinCalc", "SpinWheelInValue"};
+	
+	string $DVYAttrF[] = {"PistonRange", "GrdDist", "JtDist", "MaxTr", "MinTr", "SuspMax", "SuspMin"};
+
+	if (`attributeExists "PistonRange" $RigControlsA[0]`) deleteAttr -at PistonRange $RigControlsA[0];
+		 addAttr -keyable 1 -ln PistonRange -at double  -min 0 -max 100 -dv 25 $RigControlsA[0];
+	
+	for($each in $DVYAttrA)
+	 { if (`attributeExists $each $RigControlsA[0]`) deleteAttr -at $each $RigControlsA[0];
+			 addAttr -keyable true -ln $each -at double $RigControlsA[0]; }
+
+	if (`attributeExists "AutoSpin" $RigControlsA[0]`) deleteAttr -at AutoSpin $RigControlsA[0];
+		 addAttr -keyable 1 -ln AutoSpin -at bool -min 0 -max 1 -dv 0 $RigControlsA[0];
+
+	for($each in $DVYAttrB)
+	 { if (`attributeExists $each $RigControlsA[0]`) deleteAttr -at $each $RigControlsA[0];
+			 addAttr -keyable false -ln $each -at double $RigControlsA[0];}
+
+	for($each in $DVYAttrC)
+	  {	if (`attributeExists $each $RigControlsA[0]`) deleteAttr -at $each $RigControlsA[0];
+			 addAttr -keyable false -ln $each -at double $RigControlsA[0]; }
+
+	for($each in $DVYAttrD)
+	  {	if (`attributeExists $each $RigControlsA[0]`) deleteAttr -at $each $RigControlsA[0];
+			 addAttr -keyable false  -ln $each -at double $RigControlsA[0];}
+
+	for($each in $DVYAttrE)
+	  {	if (`attributeExists $each $RigControlsA[0]`) deleteAttr -at $each $RigControlsA[0];
+			 addAttr -keyable false -ln $each -at double $RigControlsA[0];}
+	
+	
+	for ($i=0; $i<4; $i++)
+	  {	for($each in $DVYAttrF)
+			{ $each = ($DVYPrefA[$i] + $each);
+				if (`attributeExists $each $RigControlsA[0]`) deleteAttr -at $each $RigControlsA[0];
+				 addAttr -keyable false -ln $each -at double $RigControlsA[0]; }
+	  }
+		
+
+	// Add custom attributes for extra Wheel Spin for each Wheel Steering Controller.
+
+	for ($i=0; $i<4; $i++)
+	  {	
+		if (`attributeExists ($DVYPrefA[$i] + "WheelSpin") $RigControlsA[0]`) deleteAttr -at ($DVYPrefA[$i] + "WheelSpin") $RigControlsA[0];
+		 addAttr -keyable 1 -ln ($DVYPrefA[$i] + "WheelSpin") -at double  -min -10 -max 10 -dv 1 $RigControlsA[0];
+		 if (`attributeExists "FrSteer" $RigControlsA[1]`) deleteAttr -at FrSteer $RigControlsA[1];
+		 addAttr -keyable 1 -ln FrSteer -at bool -min 0 -max 1 -dv 1 $RigControlsA[1];
+		if (`attributeExists "FrSteerRatio" $RigControlsA[1]`) deleteAttr -at FrSteerRatio $RigControlsA[1];
+		 addAttr -keyable 1 -ln FrSteerRatio -at double -min -1 -max 1 -dv 1 $RigControlsA[1];
+		if (`attributeExists "RrSteer" $RigControlsA[1]`) deleteAttr -at RrSteer $RigControlsA[1];
+		 addAttr -keyable 1 -ln RrSteer -at bool -min 0 -max 1 -dv 0 $RigControlsA[1];
+		if (`attributeExists "RrSteerRatio" $RigControlsA[1]`) deleteAttr -at RrSteerRatio $RigControlsA[1];
+		 addAttr -keyable 1 -ln RrSteerRatio -at double -min -1 -max 1 -dv 1 $RigControlsA[1];
+	 }
+
+	select -cl;	
+	
+	// Build Main Joint Ccentral structure for Wheels and Suspension.
+			 
+		$DJntsA[0] = `joint -p 0 $BDataA[4] 0 -name "BodyShell_JnT_1"`;
+		$DJntsA[1] = `joint -p 0 0 0 -name "Grd_JnT_1"`;
+		select -r $DJntsA[0];
+		$DJntsA[2] = `joint -p 0 $WDataFrA[1] 0 -name "Cn_Wheel_JnT_1"`;
+		select -r $DJntsA[0];
+		$DJntsA[3] = `joint -p 0 $BDataA[1] 0 -name "Cn_Susp_JnT_1"`;
+		select -r $DJntsA[2];	
+		$DJntsA[4] = `joint -p 0 $WDataFrA[1] (getAttr ($GroupV_A[4] + ".boundingBoxCenterZ")) -name "CnFr_Wheel_JnT_1"`;
+		select -r $DJntsA[2];	
+		$DJntsA[5] = `joint -p 0 $WDataFrA[1] (getAttr ($GroupV_A[6] + ".boundingBoxCenterZ")) -name "CnRr_Wheel_JnT_1"`;
+		select -r $DJntsA[3];
+		$DJntsA[6] = `joint -p 0 $BDataA[1] (getAttr ($GroupV_A[4] + ".boundingBoxCenterZ")) -name "FrCn_Susp_JnT_1"`;
+		select -r $DJntsA[3];
+		$DJntsA[7] = `joint -p 0 $BDataA[1] (getAttr ($GroupV_A[6] + ".boundingBoxCenterZ")) -name "RrCn_Susp_JnT_1"`;
+
+		parent $DJntsA[0] $Groups[5];
+		
+	// Create Joints for Front Wheels and Suspension units.	
+
+		$i = 0; $s = 1; $j = 10; $k = 0;
+	select -r $DJntsA[4];
+	
+	for ($i = 1; $i < 3 ; $i++)
+	 {
+	  select -r $DJntsA[4];
+		$DJntsA[($i * $j)] = `joint -p (1 * $s) $WDataFrA[1] (getAttr ($GroupV_A[($i + 3)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[$k] + $WJntA[0])`;
+		$DJntsA[($i * $j) + 1] = `joint -p ($WDataFrA[3] * $s * 0.8) $WDataFrA[1] (getAttr ($GroupV_A[($i + 3)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $WJntA[1])`;	
+		$DJntsA[($i * $j) + 2] = `joint -p ($WDataFrA[3] * $s) $WDataFrA[1] (getAttr ($GroupV_A[($i + 3)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $WJntA[2])`;	
+		$DJntsA[($i * $j) + 3] = `joint -p ($WDataRrA[0] * $s) $WDataRrA[1] (getAttr ($GroupV_A[($i + 3)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $WJntA[3])`;;
+		$DJntsA[($i * $j) + 4] = `joint -p ($WDataFrA[6] * $s) $WDataFrA[1] (getAttr ($GroupV_A[($i + 3)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $WJntA[4])`;
+	
+	 select -r $DJntsA[6];	
+		$DJntsA[($i * $j) + 5] = `joint -p (1 * $s) $BDataA[1] (getAttr ($GroupV_A[($i + 3)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $SJntA[0])`;
+		$DJntsA[($i * $j) + 6] = `joint -p ($WDataFrA[3] * $s * 0.6) $BDataA[1] (getAttr ($GroupV_A[($i + 3)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $SJntA[1])`;
+		$DJntsA[($i * $j) + 7] = `joint -p ($WDataFrA[3] * $s * 0.8) $WDataFrA[1] (getAttr ($GroupV_A[($i + 3)] + ".boundingBoxCenterZ"))
+		-name ($DVYPref[($k)] + $SJntA[2])`;
+	
+		$s = ($s * -1); $k++;
+		print ($i + " " + $j + " " + $k + "\n");
+	}
+
+	// Create Joints for Rear Wheels and Suspension units.	
+		
+	$i = 0; $s = 1; $j = 10; $k = 2;
+	select -r $DJntsA[5];	
+		
+	for ($i = 1; $i < 3 ; $i++)
+	 {
+	  select -r $DJntsA[5];
+		$DJntsA[($i * $j) + 20] = `joint -p (1 * $s) $WDataRrA[1] (getAttr ($GroupV_A[($i + 5)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[$k] + $WJntA[0])`;
+		$DJntsA[($i * $j) + 21]= `joint -p ($BDataA[6] * 0.9 * $s) $WDataRrA[1] (getAttr ($GroupV_A[($i + 5)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $WJntA[1])`;	
+		$DJntsA[($i * $j) + 22] = `joint -p ($WDataRrA[3] * $s) $WDataRrA[1] (getAttr ($GroupV_A[($i + 5)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $WJntA[2])`;	
+		$DJntsA[($i * $j) + 23] = `joint -p ($WDataRrA[0] * $s) $WDataRrA[1] (getAttr ($GroupV_A[($i + 5)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $WJntA[3])`;
+		$DJntsA[($i * $j) + 24] = `joint -p ($WDataRrA[6] * $s) $WDataRrA[1] (getAttr ($GroupV_A[($i + 5)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $WJntA[4])`;
+
+	  select -r $DJntsA[7];	
+		$DJntsA[($i * $j) + 25] = `joint -p (1 * $s) $BDataA[1] (getAttr ($GroupV_A[($i + 5)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $SJntA[0])`;
+		$DJntsA[($i * $j) + 26] = `joint -p ($BDataA[6] * 0.6 * $s) $BDataA[1] (getAttr ($GroupV_A[($i + 5)] + ".boundingBoxCenterZ"))
+			-name ($DVYPref[($k)] + $SJntA[1])`;
+		$DJntsA[($i * $j) + 27] = `joint -p ($BDataA[6] * 0.9 * $s) $WDataRrA[1] (getAttr ($GroupV_A[($i + 5)] + ".boundingBoxCenterZ"))
+		-name ($DVYPref[($k)] + $SJntA[2])`;
+	
+		$s = ($s * -1); $k++;
+		print ($i + " " + $j + " " + $k + "\n");
+
+	 }
+	
+	// Section to create and set locators for all joint controls.
+		
+	$i = 0; $j = 0; $k = 0; $s = 0;
+		
+		for ($k = 1; $k < 5; $k++)
+			{$j = 0; $s = 0; $l = 0;
+		 	 for ($i = 0; $i < 8 ; $i++)
+				{			
+				  if (`objExists $DJntsA[($i + ($k * 10))]`)
+					{
+					 if ($s < 5 ) {$Temp = `spaceLocator -p 0 0 0 -name ($DVYPref[($k - 1)] + $WLocA[$j])`; $j++;}
+					 else
+						 {$Temp = `spaceLocator -p 0 0 0 -name ($DVYPref[($k - 1)] + $SLocA[$l])`;	$l++;}
+					 	   $DLocs[($i + ($k * 10))] = $Temp[0];
+						   select -r $DJntsA[($i + ($k * 10))]; select -add $DLocs[($i + ($k * 10))];
+					 	   delete `parentConstraint -weight 1`;
+					 }
+					  $s++;
+				}
+			}
+			
+	for ($i = 1; $i < 5; $i++)
+		{
+			$Temp = `spaceLocator -p 0 0 0 -name ($DVYPref[($i - 1)] + $SLocA[5])`;
+			$DLocs[($i * 10) + 9] = $Temp[0];
+	//		select -r $DLocs[($i * 10) + 3]; select -add $DLocs[($i * 10) + 9];
+			delete `parentConstraint -skipTranslate y -weight 1 $DLocs[($i * 10) + 3] $DLocs[($i * 10) + 9]`;	
+			parent $DLocs[($i * 10) + 9] $Groups[1];
+			$Temp = `spaceLocator -p 0 0 0 -name ($DVYPref[($i - 1)] + $WLocA[5])`;
+			$DLocs[($i * 10) + 8] = $Temp[0];
+		}
+		
+	for ($i=1; $i<5; $i++)
+	 	{
+	// Move Suspension LocatorA to line up with Bodyshell joint and top suspension pivot points.
+			
+			delete `pointConstraint -offset 0 0 0 -skip x -skip z -weight 1 $DJntsA[0] $DLocs[($i * 10) + 5]`;
+			delete `pointConstraint -offset 0 0 0 -skip y -weight 1 $DLocs[($i * 10) + 6] $DLocs[($i * 10) + 5]`;
+			
+	// Move the Wheel Ground Locators to line up with Suspension LocatorA and ground level.
+			
+			delete `parentConstraint -skipTranslate y -weight 1 $DLocs[($i * 10) + 9] $DLocs[($i * 10) + 8]`;	
+			delete `pointConstraint -offset 0 0 0 -skip y -weight 1 $DLocs[($i * 10) + 5] $DLocs[($i * 10) + 8]`;
+			pointConstraint -mo -weight 1 $DLocs[($i * 10) + 9] $DLocs[($i * 10) + 8];
+	  
+	// Parent the Wheel Locators to their respective Group Node
+
+			parent $DLocs[($i * 10) + 4] $DLocs[($i * 10) + 3] ;
+		  	parent $DLocs[($i * 10) + 3] $DLocs[($i * 10) + 2] ;
+			parent $DLocs[($i * 10) + 2] $DLocs[($i * 10) + 1] ;
+			parent $DLocs[($i * 10) + 1] $DLocs[($i * 10) + 0] ;
+			parent $DLocs[($i * 10) + 0] $Groups[3];
+	 
+	// Parent the Suspension Locators to their respective Group Node.
+			
+			parent $DLocs[($i * 10) + 5] $Groups[4];
+			parent $DLocs[($i * 10) + 6] $Groups[2];
+			parent $DLocs[($i * 10) + 7] $Groups[2];
+			parent $DLocs[($i * 10) + 8] $Groups[1];
+			
+	// Parent Constrain each Suspension GrdLocator to control Box.
+			parent $RigControlsA[$i+3] $Groups[1];
+			parentConstraint -mo -weight 1 $RigControlsA[$i + 3] $DLocs[($i * 10) + 9] ;
+
+	// Point Constrain the wheel joints to their respective Locators.
+			pointConstraint -weight 1 ($DVYPref[$i-1] + $WLocA[2]) ($DVYPref[$i-1] + $WJntA[2]);
+			pointConstraint -weight 1 ($DVYPref[$i-1] + $WLocA[3]) ($DVYPref[$i-1] + $WJntA[3]);
+			pointConstraint -weight 1 ($DVYPref[$i-1] + $WLocA[4]) ($DVYPref[$i-1] + $WJntA[4]);
+			
+	// Parent Constrain each wheel group Top Node to its respective Locator 
+			
+			parentConstraint -mo -weight 1 $DLocs[(($i * 10) + 4)] $GroupV_A[($i+3)];
+
+	// Orient and point Constrain the Wheel Rotate Group nodes to their respective joints e.g. LfFr_Wheel D Joint.
+			
+			orientConstraint -offset 0 0 0 -skip y -skip z -weight 1 $DJntsA[(($i*10)+3)] $Groups[($i + 6)] ;
+			
+		} 
+		
+//	 	orientConstraint -offset 0 0 0 -skip y -weight 1 $RigControlsA[3] $GroupV_A[(3)] ;
+		
+		transformLimits -rx -10 10 -erx 1 1  $GroupV_A[(3)];
+		transformLimits -rz -10 10 -erz 1 1  $GroupV_A[(3)];
+		
+		parentConstraint -mo -skipTranslate x -skipTranslate z -skipRotate x -skipRotate y -skipRotate z -weight 1 $RigControlsA[3] $DJntsA[6];
+		parentConstraint -mo -skipTranslate x -skipTranslate z -skipRotate x -skipRotate y -skipRotate z -weight 1 $RigControlsA[3] $DJntsA[7];
+
+		parentConstraint -mo -weight 1 $RigControlsA[0] $GroupV_A[2];
+		parentConstraint -mo -weight 1 $RigControlsA[0] $DJntsA[0];
+		parentConstraint -mo -weight 1 $DJntsA[0] $Groups[4];
+		parentConstraint -mo -weight 1 $GroupV_A[2] $Groups[0];
+		parentConstraint -mo -weight 1 $GroupV_A[2] $Groups[2];
+		parentConstraint -mo -weight 1 $GroupV_A[2] $Groups[3];
+		
+	print $Groups;
+	
+	DVY_Suspension_SetUp;
+	
+	DVY_VehicleTilt;	
+	
+	DVY_Steering;
+
+	DVY_WheelSpin;
+	
+	DVY_Move;
+	
+	DVY_VehicleRotate;
+			
+	select -r $RigControlsA[0]; reorder -relative -9 $RigControlsA[0] ;
+	select -r $RigControlsA[1]; reorder -relative -5 $RigControlsA[1] ;
+	select -r $RigControlsA[3]; reorder -relative -9 $RigControlsA[3] ;
+	select -r Wheel_LocGrpN_1 ; reorder -relative -3 Wheel_LocGrpN_1 ;
+	select -r Joints_GrpN_1 ;   reorder -relative -6 Joints_GrpN_1 ;
+	select -r Dummy_GrpN_1 ;reorder -relative 1 Dummy_GrpN_1 ;
+
+
+	//	Lock off all unrequired Geom transform Attribues.
+		
+	$DAttrA = {".tx", ".ty", ".tz", ".rx", ".ry", ".rz", ".sx", ".sy", ".sz"};
+		
+	select -r -hi $GroupV_A[2];	$DVYSel = `ls -et transform -sl`;
+	for ($each in $DVYSel) { for ($Att in $DAttrA){setAttr -l true - k false ($each + $Att);}  }
+
+	//	Lock off all unrequired Main Wheel Joint Attribues.
+			
+	$DAttrA = {".tx", ".ty", ".tz", ".rx", ".ry", ".rz", ".sx", ".sy", ".sz"};
+	
+	for ($Att in $DAttrA) {setAttr -l true - k false ($DJntsA[2]+ $Att);} 
+
+	//	Lock off all unrequired Centre Front and Rear Wheel Joint Attribues.
+	
+	$DAttrA = {".tx", ".ty", ".tz", ".ry", ".rz", ".sx", ".sy", ".sz"};
+
+	for ($Att in $DAttrA) {setAttr -l true - k false ($DJntsA[4] + $Att);} 
+	for ($Att in $DAttrA) {setAttr -l true - k false ($DJntsA[5] + $Att);} 
+	
+	//	Lock off all unrequired Front and Rear Wheel Joint chain Attribues.
+	
+	$i = 1; $j = 10; $k = 0;
+
+	for ($k=0; $k<4; $k++)
+	 {
+		for ($i = 0; $i < 5 ; $i++)
+		 {
+			$Sel = `select - r $DJntsA[($i + $j)]`; 
+			for ($Att in $DAttrA) {setAttr -l true -k false ($Sel[0] + $Att);}
+//			print ("Wheel Joint " + $DJntsA[($i + $j)]+ " Locked off. Davvey © 2006..\n");
+		 }
+		 
+		print ($DVYPrefA[$k] + " Side locked off. Davvey © 2006..\n");
+ 		$j = ($j + 10);
+	}
+	
+	$DAttrA = {".tx", ".ty", ".tz", ".rx", ".ry", ".rz", ".sx", ".sy", ".sz", ".v"};
+	
+	for ($each in $DLocs){ for ($Att in $DAttrA) {setAttr -l true-k false ($each + $Att);} }
+	  		
+	select -r Cn_Rotate_LocA_1 ; select -add RrCn_Rotate_LocA_1 ; select -add FrCn_Rotate_LocA_1 ;
+	$Sel = `ls - sl`;
+	for ($each in $Sel){ for ($Att in $DAttrA) {setAttr -l true-k false ($each + $Att);} }
+	
+
+	$DAttrA = {".tx", ".ty", ".tz", ".rx", ".ry", ".rz", ".sx", ".sy", ".sz", ".v"};
+		
+	for ($i = 0; $i < 7; $i++) 
+		{ $each = `select -r $Groups[$i]`;
+		  for ($Att in $DAttrA) {setAttr -l true -k false ($each + $Att);}
+		}
+
+	$DAttrB = {".sx", ".sy", ".sz"};
+ 	for ($Att in $DAttrB) {setAttr -l false -k false -cb 1 ($GroupV_A[1] + $Att);}
+
+
+	$DAttrA = {".tx", ".tz", ".rx", ".ry", ".rz", ".sx", ".sy", ".sz", ".v"};
+
+	for ($i=0; $i<4; $i++)
+		{ 
+			for ($Att in $DAttrA) {setAttr -l true -k false ($DVYPref[$i] + "WheelFloor_CtrlN_1" + $Att);}
+			for ($Att in $DAttrA) {setAttr -l true -k false ($DVYPref[$i] + "GrdConeRef_1" + $Att);}
+		}
+		
+	select -r $RigControlsA;
+	editDisplayLayerMembers RigControlLayer `ls -selection`;
+	
+	for ($i = 0; $i < 12; $i++)
+ 		{
+			disconnectAttr "RigControlLayer.drawInfo" ($RigControlsA[$i] + "Shape.drawOverride");
+		 	setAttr ($RigControlsA[$i] + "Shape.overrideEnabled") 1;
+		  	setAttr ($RigControlsA[$i] + "Shape.overrideShading") 0;
+		  	setAttr ($RigControlsA[$i] + "Shape.overrideDisplayType") 0;
+		  	setAttr ($RigControlsA[$i] + "Shape.overridePlayback") 0;
+		}
+
+		setAttr ($RigControlsA[0] + "Shape.overrideColor") 17;
+		setAttr ($RigControlsA[1] + "Shape.overrideColor") 16;
+		setAttr ($RigControlsA[2] + "Shape.overrideColor") 2;
+		setAttr ($RigControlsA[3] + "Shape.overrideColor") 24;
+		setAttr ($RigControlsA[4] + "Shape.overrideColor") 13;
+		setAttr ($RigControlsA[5] + "Shape.overrideColor") 6;
+		setAttr ($RigControlsA[6] + "Shape.overrideColor") 13;
+		setAttr ($RigControlsA[7] + "Shape.overrideColor") 6;
+
+	select -r -hi $GroupV_A[2];
+	editDisplayLayerMembers GeomLayer `ls -geometry -sl`;
+	
+	select -r -hi $Groups[5];
+	editDisplayLayerMembers JointsLayer `ls -et joint -sl`;
+	
+	select -r -hi $GroupV_A[1];
+	editDisplayLayerMembers LocatorsLayer `ls -et locator -sl`;
+	
+	select -r GrdConeRef_1;
+	for ($i=0; $i<4; $i++) {select -add ($DVYPref[$i] + "GrdConeRef_1");}
+	editDisplayLayerMembers LocatorsLayer `ls -selection`;
+	
+	int $idx;
+		for ($each in $DLocs)
+			{
+			 print ($DJntsA[$idx] + " index No. "  + $idx + " is located at " + $each + "\n");
+			  $idx++;
+			}
+		
+	print "Vehicle has been rigged ready for use. See help file for instructions on use. Davvey © 2006..\n";
+
+	select -r $RigControlsA[0];
+
+ }	// End of DVY_RigVehicle proc.

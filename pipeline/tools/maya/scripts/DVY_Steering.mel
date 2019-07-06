@@ -1,0 +1,153 @@
+
+/*
+
+DVY_Steering;
+
+*/
+
+
+///////////////////////////////////////////////////////////////////////////////
+/*			
+				
+	Copyright © 2006 DVY_Steering. All rights reserved davvey@ntlworld.com
+					
+
+					- DVY_Steering -
+						  
+	This script will build Vehicle rig to allow steering for both front and rear wheels.
+	Front wheels are enabled by default.
+	This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script current has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite ot scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging oif individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, fill in required fields and press
+	"Rig Vehicle" button. This script is called from within DVY_Vehicle Rigger.mel
+	and will set up all four wheels with independant and reversible spin.
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |	
+		  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+			This will tilt the Chassis group as reguired. Also each indiviual
+			Wheel can be moved up and down by moving each wheel Group Ground 
+			Locator to simulate ground variations. If these are Geometry constained
+			to a "grtound" object or plane to movement will be automatic.
+	
+
+
+*/
+//////////////////////////////////////////////////////////////////////////
+//					DVY_WheelSpin Procedure
+//////////////////////////////////////////////////////////////////////////
+
+//============================================================================
+//	GLOBAL VARIABLES
+//============================================================================
+	global int $DVYDebug;
+
+// Integer Flag that allows print statements to be output to
+// message field for tracking purposes.
+	
+//============================================================================
+	
+global proc DVY_Steering()
+ {
+	global string $GroupV_A[];
+	global string $DVY_VehName;
+	
+	float $VDataA[], $BDataA[], $SDataA[], $WDataFrA[],  $WDataRrA[], $TDataA[];
+	
+	global string $RigControlsA[]; 
+	
+	string $DJntsA[]; string $DLocs[]; string $Tmp[]; string $Groups[]; string $Sel[];
+	string $DSteer[];
+	
+	string $DVYPrefS[] = {"LfFr_", "RtFr_", "LfRr_", "RtRr_"};
+	string $WJntA[] = {"Wheel_JnTA_1", "Wheel_JnTB_1", "Wheel_JnTC_1", "Wheel_JnTD_1", "Wheel_JnTE_1"};
+	string $SJntA[] = {"Susp_JnTA_1", "Susp_JnTB_1", "Susp_JnTC_1"};
+	string $WLocA[] = {"Wheel_LocA_1", "Wheel_LocB_1", "Wheel_LocC_1", "Wheel_LocD_1", "Wheel_LocE_1"};
+	string $SLocA[] = {"Susp_LocA_1", "Susp_LocB_1", "Susp_LocC_1", "Susp_LocD_1", "Susp_LocE_1", "Susp_LocGrd_1"};
+
+	int $i = 0, $j = 0, $k = 0, $l = 0, $s = 0;
+	
+	for ($i=0; $i<2; $i++)
+		{
+	 		$DSteer[$j + $i] = `createNode multDoubleLinear -name ($DVYPrefS[$i] + "Steer_MultDvNA_1")`;
+			connectAttr -f -lock true ($RigControlsA[1] + ".rotateY") ($DSteer[$j+ $i] + ".input1");
+			connectAttr -f -lock true ($RigControlsA[1] + ".FrSteer") ($DSteer[$j + $i] + ".input2");
+	 		$DSteer[$j + $i + 1] = `createNode multDoubleLinear -name ($DVYPrefS[$i] + "SteerRatio_MultDvNA_1")`;
+			connectAttr -f -lock true ($DSteer[$j + $i] + ".output") ($DSteer[$j +$i  + 1] + ".input1");
+			connectAttr -f -lock true ($RigControlsA[1] + ".FrSteerRatio") ($DSteer[$j + $i + 1] + ".input2");
+			connectAttr -f -lock true ($DSteer[$j + $i+ 1] + ".output") ($DVYPrefS[$i] + $WLocA[(2)] + ".rotateY");
+			$j++; $j++;
+		}
+
+	for ($i=2; $i<4; $i++)
+		{
+	 		$DSteer[$j + $i] = `createNode multDoubleLinear -name ($DVYPrefS[$i] + "Steer_MultDvNA_1")`;
+			connectAttr -f -lock true ($RigControlsA[1] + ".rotateY") ($DSteer[$j+ $i] + ".input1");
+			connectAttr -f -lock true ($RigControlsA[1] + ".RrSteer") ($DSteer[$j + $i] + ".input2");
+	 		$DSteer[$j + $i + 1] = `createNode multDoubleLinear -name ($DVYPrefS[$i] + "SteerRatio_MultDvNA_1")`;
+			connectAttr -f -lock true ($DSteer[$j + $i] + ".output") ($DSteer[$j +$i  + 1] + ".input1");
+			connectAttr -f -lock true ($RigControlsA[1] + ".RrSteerRatio") ($DSteer[$j + $i + 1] + ".input2");
+			connectAttr -f -lock true ($DSteer[$j + $i+ 1] + ".output") ($DVYPrefS[$i] + $WLocA[(2)] + ".rotateY");
+			$j++; $j++;
+		}
+	
+	print "\n DVY_Steering has set up Nodes for steering front and rear wheels. See help file for more details. Davvey © 2006..\n";
+
+ }	// End of DVY_Steering proc

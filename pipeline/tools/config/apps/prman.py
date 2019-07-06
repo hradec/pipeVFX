@@ -18,74 +18,69 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-
-
-
-
-
 #RMANTREE - establishes the location of your PRMan distribution.
 #RMANFB - establishes your framebuffer display program.
 #RDIR - speficies a directory where additional configuration files can be found, e.g. a site-specific rendermn.ini file.
 #PIXAR_LICENSE_FILE - can be used by systems administrators to define a location other than the default for the software license. This will normally point to a pixar.license file on a centrally mounted network drive.
 
-
-
 class prman(baseApp):
+    def RMAN_MAYA_NAME(self):
+        RMAN_MAYA_NAME = 'RenderManStudio'
+        if float(self.version()) >= 21.0:
+            RMAN_MAYA_NAME = 'RenderManForMaya'
+        return RMAN_MAYA_NAME
+
+
     def environ(self):
         import socket
         from glob import glob
 
-        if int(os.popen('ifconfig hostid0 2>&1 | wc -l').readlines()[0].strip()) > 1:
-            self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license' % self.toolsPaths()[-1]
-        else:
-            for each in ['%s/tools/licenses/prman/' % os.environ['HOME']]+self.toolsPaths():
-                p = '%s/licenses/prman/%s.license' % (each, socket.gethostname())
-                if os.path.exists(p):
-                    self['PIXAR_LICENSE_FILE'] = p
-                    break
 
-        # cleanup env vars if they already exist, to avoid problems!
-        for env in ['RMANTREE', 'RMSTREE', 'SHADERS_PATH', 'TEXTURES_PATH' ]:
-            if os.environ.has_key(env):
-                del os.environ[env]
 
-        if self.parent() in ['prman']:
-            pipe.version.set( python = '2.7.6' )
-            pipe.libs.version.set( python = '2.7.6' )
-            self['LD_PRELOAD'] = pipe.libs.python().LD_PRELOAD()
-
-            self.update( cortex() )
-            
+        mayaPluginName = 'RenderManForMaya'
 
         folders=[]
-            
         rmantree = self.path('RenderManProServer-$PRMAN_VERSION')
-        folders.append(rmantree)
-        self['RMANTREE']        = rmantree
-        self['PATH']            = "%s/bin" % rmantree
-        self['PYTHONPATH']      = "%s/bin" % rmantree
-        self['LD_LIBRARY_PATH'] = "%s/lib/rif" % rmantree
-        self['LD_LIBRARY_PATH'] = "%s/bin" % rmantree
+        self['RMANTREE'] = rmantree
         self['LD_LIBRARY_PATH'] = "%s/lib" % rmantree
-        self['LD_LIBRARY_PATH'] = "%s/etc" % rmantree
 
+        if self.parent() in ['prman','houdini','gaffer']:
+            pipe.version.set( python = '2.7' )
+            pipe.libs.version.set( python = '2.7' )
+            self.update( cortex() )
+
+            folders.append(rmantree)
+            self['PATH']            = "%s/bin" % rmantree
+            self['PYTHONPATH']      = "%s/bin" % rmantree
+            self['LD_LIBRARY_PATH'] = "%s/lib" % rmantree
+            self['LD_LIBRARY_PATH'] = "%s/lib/rif" % rmantree
+            self['LD_LIBRARY_PATH'] = "%s/bin" % rmantree
+            self['LD_LIBRARY_PATH'] = "%s/etc" % rmantree
+            self.update( golaem() )
+            self.update( shave() )
+            if self.parent() not in ['gaffer']:
+                self.update( maya() )
+
+            if self.parent() in ['prman','gaffer']:
+                self['LD_PRELOAD'] = pipe.libs.python().LD_PRELOAD()
 
         # setup main renderman env vars!
+        rmstree = self.path('%s-$PRMAN_VERSION-maya$MAYA_VERSION' % self.RMAN_MAYA_NAME())
         if self.parent() not in ['houdini']:
-            rmstree = self.path('RenderManStudio-$PRMAN_VERSION-maya$MAYA_VERSION')
             folders.append(rmstree)
             self['RMSTREE']  = rmstree
             self['PATH']     = "%s/bin" % rmstree
             self['PATH']     = "%s/rmantree/bin" % rmstree
             self['LD_LIBRARY_PATH'] = "%s/lib/rif" % rmstree
             self['LD_LIBRARY_PATH'] = "%s/lib" % rmstree
-            self['LD_LIBRARY_PATH'] = "%s/bin" % rmstree
-            self['LD_LIBRARY_PATH'] = "%s/etc" % rmstree
             self['LD_LIBRARY_PATH'] = "%s/rmantree/lib" % rmstree
-            self['LD_LIBRARY_PATH'] = "%s/rmantree/bin" % rmstree
-            self['LD_LIBRARY_PATH'] = "%s/rmantree/etc" % rmstree
+            self['RMS_SCRIPT_PATHS'] = '%s/etc/'     % rmstree
 
-            self.update( maya() )
+            # self['LD_LIBRARY_PATH'] = "%s/rmantree/lib" % rmstree
+            # self['LD_LIBRARY_PATH'] = "%s/bin" % rmstree
+            # self['LD_LIBRARY_PATH'] = "%s/etc" % rmstree
+            # self['LD_LIBRARY_PATH'] = "%s/rmantree/bin" % rmstree
+            # self['LD_LIBRARY_PATH'] = "%s/rmantree/etc" % rmstree
             maya.addon(self,
                     plugin      = '%s/plug-ins' % rmstree,
                     script      = '%s/scripts'  % rmstree,
@@ -95,9 +90,28 @@ class prman(baseApp):
                     preset      = '%s/presets'  % rmstree,
                     module      = '%s/etc'      % rmstree,
                 )
-            
 
-        for p in glob("%s/prman/mayaLibrary/*"  % self.toolsPaths()[-1]):
+        prman.addon(self,
+            shader = [
+                "%s/lib/plugins/" % rmstree,
+                "%s/lib/plugins/" % rmantree,
+                "%s/lib/shaders/" % rmstree,
+                "%s/lib/shaders/" % rmantree,
+            ],
+            lib = [
+                "%s/lib/plugins/" % rmstree,
+                "%s/lib/plugins/" % rmantree,
+                "%s/lib/shaders/" % rmstree,
+                "%s/lib/shaders/" % rmantree,
+            ],
+            procedurals = [
+                    '%s/rmantree/etc' % rmstree,
+                    '%s/etc' % rmantree,
+                    "%s/lib/plugins/" % rmantree,
+        ])
+
+
+        for p in glob("%s/prman/mayaLibrary/*"  % pipe.roots().tools()):
             self['MAYA_SHADER_LIBRARY_PATH'] = p
 
         #if self.parent  in ['nuke']:
@@ -108,6 +122,7 @@ class prman(baseApp):
                     '%s/rfm'            % each,
                     '%s/lib/it/python/' % each,
                     '%s/lib/python2.7/' % each,
+                    '%s/lib/python2.7/site-packages' % each,
                 ],shader=[
                     '%s/lib/shaders'     % each,
                     '%s/lib/rsl/shaders' % each,
@@ -115,40 +130,56 @@ class prman(baseApp):
             ])
 
         # add tools paths
-        self['RMS_SCRIPT_PATHS'] = '%s/prman/scripts/' % self.toolsPaths()[-1]
-        self['RMS_SCRIPT_PATHS'] = '%s/prman/etc/' % self.toolsPaths()[-1]
-        self['RDIR'] 		 = '%s/prman/etc/' % self.toolsPaths()[-1]
-
+        self['CUSTOM_RENDERMAN_PATH'] = '%s/prman/'         % pipe.roots().tools()
+        self['RMS_SCRIPT_PATHS']      = '%s/prman/scripts/' % pipe.roots().tools()
+        self['RMS_SCRIPT_PATHS']      = '%s/prman/etc/%s'   % (pipe.roots().tools(), self.version())
+        self['RMS_SCRIPT_PATHS']      = '%s/prman/etc/'     % pipe.roots().tools()
+        self['RDIR'] 		          = '%s/prman/etc/%s'   % (pipe.roots().tools(), self.version())
+        self['RDIR'] 		          = '%s/prman/etc/'     % pipe.roots().tools()
         for each in self.toolsPaths():
             prman.addon(self,
-                python = '%s/prman/python'        % each,
-                shader = '%s/prman/shaders'     % each,
+                python = '%s/prman/python'      % each,
+                shader = [
+                    '%s/prman/shaders'     % each,
+                    '%s/prman/ris/pattern' % each,
+                ],
+                procedurals = [
+                    '%s/prman/procedurals' % each,
+                ]
             )
 
 
         # add houdini setup to use prman
         # http://archive.sidefx.com/docs/houdini15.0/render/renderman
         self['HOUDINI_DEFAULT_RIB_RENDERER']="prman%s" % self.version()
-        #HOUDINI_VIEW_RMAN=renderdl
-        #HOUDINI_RI_SHADERPATH
+        # HOUDINI_VIEW_RMAN=renderdl
+        # HOUDINI_RI_SHADERPATH
         #HOUDINI_RI_RIXPLUGINPATH
 
-        self.update( golaem() )
+        # self['RMSDEBUG'] = '1'
 
-        self.ignorePipeLib( "libpng" )
+        # self.ignorePipeLib( "libpng" )
 
     @staticmethod
     def addon( caller, shader='', procedurals='', script='',python='', display='', texture='', lib='', rsl='' ):
         caller['PYTHONPATH'] = script
         caller['PYTHONPATH'] = python
         caller['SHADERS_PATH'] = shader
-        caller['RMS_SHADER_PATH'] = shader
-        caller['TEXTURES_PATH'] = texture
+        caller['SHADERS_PATH'] = display
+        caller['DISPLAYS_PATH'] = display
+        caller['DISPLAY_PATH'] = display
         caller['PROCEDURALS_PATH'] = procedurals
         caller['PROCEDURAL_PATH'] = procedurals
+        caller['RMS_SHADER_PATH'] = shader
+        caller['RMS_DISPLAYS_PATH'] = display
         caller['RMS_PROCEDURAL_PATH'] = procedurals
+        caller['TEXTURES_PATH'] = texture
         caller['LD_LIBRARY_PATH'] = display
         caller['LD_LIBRARY_PATH'] = lib
+        # gaffer hack
+        caller['DL_SHADERS_PATH'] = shader
+        caller['DL_DISPLAYS_PATH'] = display
+
 
     def bg(self,cmd,bin):
         ''' return True if a cmd or binary should run in background '''
@@ -161,17 +192,18 @@ class prman(baseApp):
         import sys
         v = self.version()
         mv = maya().version()
+        RMAN_MAYA_NAME = self.RMAN_MAYA_NAME()
         ret = []
         idx = {}
-        for f in glob(self.path('RenderManStudio-%s-maya%s/bin/*' % (v,mv))):
+        for f in glob(self.path('%s-%s-maya%s/bin/*' % (RMAN_MAYA_NAME,v,mv))):
             bf = os.path.basename(f).strip()
             if len(bf.split('.'))<2:
-                idx[bf] = 'RenderManStudio-%s-maya%s/bin/%s' % (v,mv,bf)
+                idx[bf] = '%s-%s-maya%s/bin/%s' % (RMAN_MAYA_NAME,v,mv,bf)
 
-        for f in glob(self.path('RenderManStudio-%s-maya%s/rmantree/bin/*' % (v,mv))):
+        for f in glob(self.path('%s-%s-maya%s/rmantree/bin/*' % (RMAN_MAYA_NAME,v,mv))):
             bf = os.path.basename(f).strip()
             if len(bf.split('.'))<2:
-                idx[bf] = 'RenderManStudio-%s-maya%s/rmantree/bin/%s' % (v,mv,bf)
+                idx[bf] = '%s-%s-maya%s/rmantree/bin/%s' % (RMAN_MAYA_NAME,v,mv,bf)
 
         for f in glob(self.path('RenderManProServer-%s/bin/*' % v)):
             bf = os.path.basename(f).strip()
@@ -180,6 +212,16 @@ class prman(baseApp):
                     idx[bf] = 'RenderManProServer-%s/bin/%s' % (v,bf)
 
         return map(lambda x: (x, idx[x]), idx.keys() )
+
+
+    def license(self):
+        import socket
+        pv = float( pipe.version.get('prman') )
+        if pv > 20.0:
+            self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license.r%s' % (pipe.roots().tools(), int(pv))
+        else:
+            self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license' % pipe.roots().tools()
+
 
     def userSetup(self, jobuser):
         import os, sys
@@ -199,5 +241,12 @@ class prman(baseApp):
                     if len(r) > 1:
                         os.chdir(  "%s/maya/" %  r[0]  )
         sys.stderr.write("\n%s\n" %  os.getcwd())
-        
+
+        # remove maya shelf so it's recreated when maya starts
         os.system( 'find $HOME/maya/ -name "shelf_RenderMan*" -exec rm {} \;' )
+
+        # cleanup env vars if they already exist, to avoid problems
+        if self.parent() in ['prman']:
+            for env in ['RMANTREE', 'RMSTREE', 'SHADERS_PATH', 'TEXTURES_PATH' ]:
+                if os.environ.has_key(env):
+                    del os.environ[env]

@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -30,18 +30,19 @@ class yeti(baseApp):
             icon   = self.path('$MAYA_VERSION/icons'),
             renderDesc = self.path('mtoadeploy/$MAYA_VERSION/'),
         )
-        
-        delight.addon( self, 
+
+        delight.addon( self,
             shader = self.path('$MAYA_VERSION/shaders')
         )
-        
+
         self['LD_LIBRARY_PATH'] = self.path('bin')
-        
+
     def bins(self):
         return []
-        
+
     def license(self):
         self['peregrinel_LICENSE']=os.environ['PIPE_YETI_LICENSE']
+        # PEREGRINEL_LICENSE =
 
     def userSetup(self, jobuser):
         os.chdir( jobuser.pwd )

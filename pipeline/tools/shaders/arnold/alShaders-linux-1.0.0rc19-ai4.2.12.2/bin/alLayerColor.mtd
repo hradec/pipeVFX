@@ -1,0 +1,185 @@
+[node alLayerColor]
+	desc STRING "Layer up to eight color channels together with a variety of Photoshop-styl blending modes."
+	c4d.classification STRING "texture"
+	c4d.menu STRING "texture"
+	maya.name STRING "alLayerColor"
+	maya.classification STRING "utility/color"
+	maya.id INT 0x0011641C
+	houdini.icon STRING "COP2_composite"
+	houdini.category STRING "alShaders"
+	houdini.help_url STRING "http://www.anderslanglands.com/alshaders/alLayerColor.html"
+	houdini.parm.folder.ROOT STRING "Background;5;Layer 2;5;Layer 3;5;Layer 4;5;Layer 5;5;Layer 6;5;Layer 7;5;Layer 8;5;"
+	houdini.order STRING "clamp_result  ROOT"
+	houdini.order2 STRING " layer1name layer1enabled layer1 layer1a layer1blend"
+	houdini.order3 STRING " layer2name layer2enabled layer2 layer2a layer2blend"
+	houdini.order4 STRING " layer3name layer3enabled layer3 layer3a layer3blend"
+	houdini.order5 STRING " layer4name layer4enabled layer4 layer4a layer4blend"
+	houdini.order6 STRING " layer5name layer5enabled layer5 layer5a layer5blend"
+	houdini.order7 STRING " layer6name layer6enabled layer6 layer6a layer6blend"
+	houdini.order8 STRING " layer7name layer7enabled layer7 layer7a layer7blend"
+	houdini.order9 STRING " layer8name layer8enabled layer8 layer8a layer8blend"
+
+	[attr clamp_result]
+		houdini.label STRING "Clamp"
+		desc STRING "Clamp the result of the blend operations"
+		linkable BOOL FALSE
+	[attr layer1name]
+		houdini.label STRING "Name"
+		desc STRING "A descriptive name for this layer"
+		linkable BOOL FALSE
+	[attr layer1enabled]
+		houdini.label STRING "Enabled"
+		desc STRING "Toggle this layer on or off"
+		linkable BOOL FALSE
+	[attr layer1]
+		houdini.label STRING "Input"
+		desc STRING "The background layer (will be blended over black if its alpha is not 1."
+		linkable BOOL TRUE
+	[attr layer1a]
+		houdini.label STRING "Alpha"
+		desc STRING "The alpha of the background layer"
+		linkable BOOL TRUE
+	[attr layer1blend]
+		houdini.label STRING "Mode"
+		desc STRING "Blend mode for the background layer."
+		linkable BOOL FALSE
+	[attr layer2name]
+		houdini.label STRING "Name"
+		desc STRING "A descriptive name for this layer"
+		linkable BOOL FALSE
+	[attr layer2enabled]
+		houdini.label STRING "Enabled"
+		desc STRING "Toggle this layer on or off"
+		linkable BOOL FALSE
+	[attr layer2]
+		houdini.label STRING "Input"
+		desc STRING "The color to be layered"
+		linkable BOOL TRUE
+	[attr layer2a]
+		houdini.label STRING "Alpha"
+		desc STRING "The alpha used to blend this layer over the layers below."
+		linkable BOOL TRUE
+	[attr layer2blend]
+		houdini.label STRING "Mode"
+		desc STRING "The blend mode used to blend this layer over the layers below."
+		linkable BOOL FALSE
+	[attr layer3name]
+		houdini.label STRING "Name"
+		desc STRING "A descriptive name for this layer"
+		linkable BOOL FALSE
+	[attr layer3enabled]
+		houdini.label STRING "Enabled"
+		desc STRING "Toggle this layer on or off"
+		linkable BOOL FALSE
+	[attr layer3]
+		houdini.label STRING "Input"
+		desc STRING "The color to be layered"
+		linkable BOOL TRUE
+	[attr layer3a]
+		houdini.label STRING "Alpha"
+		desc STRING "The alpha used to blend this layer over the layers below."
+		linkable BOOL TRUE
+	[attr layer3blend]
+		houdini.label STRING "Mode"
+		desc STRING "The blend mode used to blend this layer over the layers below."
+		linkable BOOL FALSE
+	[attr layer4name]
+		houdini.label STRING "Name"
+		desc STRING "A descriptive name for this layer"
+		linkable BOOL FALSE
+	[attr layer4enabled]
+		houdini.label STRING "Enabled"
+		desc STRING "Toggle this layer on or off"
+		linkable BOOL FALSE
+	[attr layer4]
+		houdini.label STRING "Input"
+		desc STRING "The color to be layered"
+		linkable BOOL TRUE
+	[attr layer4a]
+		houdini.label STRING "Alpha"
+		desc STRING "The alpha used to blend this layer over the layers below."
+		linkable BOOL TRUE
+	[attr layer4blend]
+		houdini.label STRING "Mode"
+		desc STRING "The blend mode used to blend this layer over the layers below."
+		linkable BOOL FALSE
+	[attr layer5name]
+		houdini.label STRING "Name"
+		desc STRING "A descriptive name for this layer"
+		linkable BOOL FALSE
+	[attr layer5enabled]
+		houdini.label STRING "Enabled"
+		desc STRING "Toggle this layer on or off"
+		linkable BOOL FALSE
+	[attr layer5]
+		houdini.label STRING "Input"
+		desc STRING "The color to be layered"
+		linkable BOOL TRUE
+	[attr layer5a]
+		houdini.label STRING "Alpha"
+		desc STRING "The alpha used to blend this layer over the layers below."
+		linkable BOOL TRUE
+	[attr layer5blend]
+		houdini.label STRING "Mode"
+		desc STRING "The blend mode used to blend this layer over the layers below."
+		linkable BOOL FALSE
+	[attr layer6name]
+		houdini.label STRING "Name"
+		desc STRING "A descriptive name for this layer"
+		linkable BOOL FALSE
+	[attr layer6enabled]
+		houdini.label STRING "Enabled"
+		desc STRING "Toggle this layer on or off"
+		linkable BOOL FALSE
+	[attr layer6]
+		houdini.label STRING "Input"
+		desc STRING "The color to be layered"
+		linkable BOOL TRUE
+	[attr layer6a]
+		houdini.label STRING "Alpha"
+		desc STRING "The alpha used to blend this layer over the layers below."
+		linkable BOOL TRUE
+	[attr layer6blend]
+		houdini.label STRING "Mode"
+		desc STRING "The blend mode used to blend this layer over the layers below."
+		linkable BOOL FALSE
+	[attr layer7name]
+		houdini.label STRING "Name"
+		desc STRING "A descriptive name for this layer"
+		linkable BOOL FALSE
+	[attr layer7enabled]
+		houdini.label STRING "Enabled"
+		desc STRING "Toggle this layer on or off"
+		linkable BOOL FALSE
+	[attr layer7]
+		houdini.label STRING "Input"
+		desc STRING "The color to be layered"
+		linkable BOOL TRUE
+	[attr layer7a]
+		houdini.label STRING "Alpha"
+		desc STRING "The alpha used to blend this layer over the layers below."
+		linkable BOOL TRUE
+	[attr layer7blend]
+		houdini.label STRING "Mode"
+		desc STRING "The blend mode used to blend this layer over the layers below."
+		linkable BOOL FALSE
+	[attr layer8name]
+		houdini.label STRING "Name"
+		desc STRING "A descriptive name for this layer"
+		linkable BOOL FALSE
+	[attr layer8enabled]
+		houdini.label STRING "Enabled"
+		desc STRING "Toggle this layer on or off"
+		linkable BOOL FALSE
+	[attr layer8]
+		houdini.label STRING "Input"
+		desc STRING "The color to be layered"
+		linkable BOOL TRUE
+	[attr layer8a]
+		houdini.label STRING "Alpha"
+		desc STRING "The alpha used to blend this layer over the layers below."
+		linkable BOOL TRUE
+	[attr layer8blend]
+		houdini.label STRING "Mode"
+		desc STRING "The blend mode used to blend this layer over the layers below."
+		linkable BOOL FALSE

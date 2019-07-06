@@ -11,26 +11,66 @@ menu color cmdline 44;30 #FF000000
 menu background networkBootWorkstation/menu.png
 timeout 150
 
+label 0.AtomoVFX Fedora Workstation - Versao 2.2.0 - Local Disk Cache and NVidia 340
+   kernel networkBootWorkstation/vmlinuz.3.9.8.nfscache
+   append  initrd=networkBootWorkstation/vmlinuz.3.9.8.nfscache.img ip=dhcp  distro=netboot/distros/current_dev/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=soft
+
+
+label 0.AtomoVFX Fedora Workstation - Versao 2.2.0 - Local Disk Cache and NVidia 340
+   kernel networkBootWorkstation/vmlinuz.3.9.8.nfscache
+   append  initrd=networkBootWorkstation/vmlinuz.3.9.8.nfscache.img ip=dhcp  distro=netboot/distros/current_dev/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=soft
+
+
 
 label 1.AtomoVFX Fedora Workstation - Versao 2.0.4 
    kernel networkBootWorkstation/atomoLinux2.0.0_vmlinuz
    append initrd=networkBootWorkstation/atomoLinux2.0.4_initrd.img quiet distro=netboot/distros/networkBoot_fedora14_28_06_2013/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
 
-label 2.AtomoVFX Fedora Workstation - Versao 2.1.0 - nvidia 340 
-   kernel networkBootWorkstation/atomoLinux2.0.0_vmlinuz
-   append initrd=networkBootWorkstation/atomoLinux2.0.4_initrd.img quiet distro=netboot/distros/networkBoot_fedora14_27_10_2014/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
+
+label 97.AtomoVFX Fedora Workstation - Versao 2.2.0 - Local Disk Cache andNVidia 340 - EMERGENCY RW
+   kernel networkBootWorkstation/vmlinuz.3.9.8.nfscache.emergency
+   append  initrd=networkBootWorkstation/vmlinuz.3.9.8.nfscache.emergency.img ip=dhcp  distro=netboot/distros/current_dev/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInitEmergency nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=soft
 
 
-#label 2.AtomoVFX Linux Workstation - Versao Dev 
-#   kernel networkBootWorkstation/vmlinuz_dev
-#   append quiet initrd=networkBootWorkstation/initrd_dev.img  distro=netboot/distros/networkBoot_fedora14_28_06_2013/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau  rdblacklist=radeon radeon.modeset=0 iommu=pt
-#   append initrd=networkBootWorkstation/initrd_dev.img quiet distro=netboot/distros/networkBoot_fedora14_28_06_2013/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
-
-
-
-label 99.AtomoVFX Debian Workstation - Versao Dev
+label 98.AtomoVFX Fedora Workstation - Versao Dev NFSCache
    kernel networkBootWorkstation/vmlinuz_dev
-   append quiet initrd=networkBootWorkstation/initrd_dev.img  distro=netboot/distros/current_dev/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau  iommu=pt
+   append  initrd=networkBootWorkstation/initrd_dev.img ip=dhcp  distro=netboot/distros/current_dev/ studio=atomo pipe=192.168.0.10:/RAID/atomo/ fallback=192.168.0.10:/RAID_FALLBACK_RW/  liveInit=pipeline/tools/init/dracut/liveInitNFS nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=soft
+
+label 99.AtomoVFX Fedora Workstation - Versao Dev
+   kernel networkBootWorkstation/vmlinuz_dev
+   append  initrd=networkBootWorkstation/initrd_dev.img ip=dhcp  distro=netboot/distros/fedora14_28_09_2015B.squash  studio=atomo pipe=192.168.0.10:/RAID/atomo/ liveInit=pipeline/tools/init/dracut/liveInitDev nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=soft
+
+
+
+
+
+
+
+
+
+
+
+#label 2.AtomoVFX Fedora Workstation - Versao 2.1.0 - nvidia 340 
+#   kernel networkBootWorkstation/atomoLinux2.0.0_vmlinuz
+#   append initrd=networkBootWorkstation/atomoLinux2.0.4_initrd.img quiet distro=netboot/distros/networkBoot_fedora14_27_10_2014/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
+
+
+
+#label 2.AtomoVFX Fedora Workstation - Versao 2.1.0 - nvidia 340 
+#   kernel networkBootWorkstation/atomoLinux2.0.0_vmlinuz
+#   append initrd=networkBootWorkstation/atomoLinux2.0.4_initrd.img quiet distro=netboot/distros/networkBoot_fedora14_27_10_2014/ studio=atomo pipe=192.168.0.10:/RAID/atomo/  liveInit=pipeline/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau rdblacklist=radeon radeon.modeset=0 iommu=pt
+
+
+#label 3.AtomoVFX Debian Workstation - Versao Dev
+#   kernel networkBootWorkstation/vmlinuz_debian
+#   append quiet initrd=networkBootWorkstation/initrd_debian.img  distro=netboot/distros/debian_7_wheezy_aug_27_2014/ studio=atomo pipe=192.168.0.11:/RAID/atomo/  liveInit=jobs/9999.rnd/shots/hradec/users/rhradec/tools/init/dracut/liveInit nouveau.modeset=0 rdblacklist=nouveau  iommu=pt
+
+
+
+
+
+
+
 
 
 

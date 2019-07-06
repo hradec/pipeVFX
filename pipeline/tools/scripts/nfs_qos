@@ -1,9 +1,5 @@
-iptables -F
-iptables -t nat -F
-iptables -t mangle -F
 
-
-echo -e "eth0" | while read dev ;
+echo -e "$(ifconfig | grep 'inet ' -B 1 | grep mtu | egrep -v 'br-|docker|pan|ham|lo' | awk -F':' '{print $1}')" | while read dev ;
 do 
         tc qdisc del root dev $dev
 
@@ -12,9 +8,9 @@ do
 
         # This creates a class called 1:1, which is direct descendant of root (the parent is 1:), this class gets assigned also an HTB qdisc, and then it sets a max rate of 6mbits, with a burst of 15k
         if [ "$dev" == "bond0" ] ; then 
-                tc class add dev $dev parent 1: classid 1:1 htb rate 3800mbit burst 3800k
+                tc class add dev $dev parent 1: classid 1:1 htb rate 800mbit burst 800k
         else
-                tc class add dev $dev parent 1: classid 1:1 htb rate 900mbit burst 900k
+                tc class add dev $dev parent 1: classid 1:1 htb rate 700mbit burst 700k
         fi
 
         # The previous class has this branches:
@@ -23,7 +19,7 @@ do
         tc class add dev $dev parent 1:1 classid 1:10 htb rate 700mbit burst 700k
 
         # Class 1:20, NFS default and everything else
-        tc class add dev $dev parent 1:1 classid 1:20 htb rate 850mbit ceil 950mbit burst 850k
+        tc class add dev $dev parent 1:1 classid 1:20 htb rate 750mbit ceil 800mbit burst 800k
 
 
         # Martin Devera, author of HTB, then recommends SFQ for beneath these classes:
@@ -35,8 +31,8 @@ do
         # priority of the filter to 1, matches packages with a
         # destination port 22, and make the class 1:10 process the
         # packages that match.
-        tc filter add dev $dev protocol ip parent 1: prio 1 u32 match ip dport 2050 0xffff flowid 1:10
-        tc filter add dev $dev protocol ip parent 1: prio 1 u32 match ip sport 2050 0xffff flowid 1:10
+        tc filter add dev $dev protocol ip parent 1: prio 1 u32 match ip dport 2049 0xffff flowid 1:10
+        tc filter add dev $dev protocol ip parent 1: prio 1 u32 match ip sport 2049 0xffff flowid 1:10
 
 #        tc filter add dev $dev protocol ip parent 1: prio 1 handle 6 fw flowid 1:10
 done

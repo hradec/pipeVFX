@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEcryptomatteAOV">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="passthrough" type="maya.float3">
+			<label>Passthrough</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEcryptomatteAOV">
+		<property name="outColor" />
+		<property name="passthrough" />
+		</view>
+</templates>

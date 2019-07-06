@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalColorSpace">
+		<label>alColorSpace</label>
+		<description>Converts a color to linear Rec.709 from a given color space.</description>
+		<attribute name="input" type="maya.float3">
+			<label>input</label>
+			<description>Color to be transformed.</description>
+		</attribute>
+		<attribute name="sourceSpace" type="maya.enum">
+			<label>Source space</label>
+			<description>Source color space. The input will be transformed from this space to linear Rec.709.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalColorSpace">
+			<property name="input"/>
+			<property name="sourceSpace"/>
+		</view>
+</templates>

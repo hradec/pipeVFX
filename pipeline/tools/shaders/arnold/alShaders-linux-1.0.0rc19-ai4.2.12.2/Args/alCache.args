@@ -1,0 +1,3 @@
+<args format="1.0">
+<param name="input" label="input" widget="color"/>
+</args>

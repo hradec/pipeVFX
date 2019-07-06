@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalTriplanar">
+		<label>alTriplanar</label>
+		<description>Useful for quickly adding bombing patterns of texture to objects to add variation and breakup.</description>
+		<attribute name="input" type="maya.float3">
+			<label>Background</label>
+			<description>Background color over which to project the texture.</description>
+		</attribute>
+		<attribute name="texture" type="maya.string">
+			<label>Texture</label>
+			<description>The texture image to project over the background.</description>
+		</attribute>
+		<attribute name="space" type="maya.enum">
+			<label>Space</label>
+			<description>Space in which to project the texture.</description>
+		</attribute>
+		<attribute name="normal" type="maya.enum">
+			<label>Normal</label>
+			<description>Normal to use for projection.</description>
+		</attribute>
+		<attribute name="tiling" type="maya.enum">
+			<label>Tiling</label>
+			<description>Tiling pattern. regular gives a regular grid, cellnoise gives a random pattern.</description>
+		</attribute>
+		<attribute name="frequency" type="maya.float">
+			<label>Frequency</label>
+			<description>Frequency of the pattern. Higher numbers give more repetions, lower numbers give less.</description>
+		</attribute>
+		<attribute name="mipMapBias" type="maya.int">
+			<label>Mip map bias</label>
+			<description>Biases the lookup into the texture to select a higher or lower mipmap level. Positive numbers select a higher (blurrier) level, negative numbers select a lower (sharper) level.</description>
+		</attribute>
+		<attribute name="blendSoftness" type="maya.float">
+			<label>Blend Softness</label>
+			<description>The softness of the blends.</description>
+		</attribute>
+		<attribute name="cellSoftness" type="maya.float">
+			<label>Cell Softness</label>
+			<description>The softness of the cell borders.</description>
+		</attribute>
+		<attribute name="scalex" type="maya.float">
+			<label>X Scale</label>
+			<description></description>
+		</attribute>
+		<attribute name="scaley" type="maya.float">
+			<label>Y Scale</label>
+			<description></description>
+		</attribute>
+		<attribute name="scalez" type="maya.float">
+			<label>Z Scale</label>
+			<description></description>
+		</attribute>
+		<attribute name="offsetx" type="maya.float">
+			<label>X Offset</label>
+			<description></description>
+		</attribute>
+		<attribute name="offsety" type="maya.float">
+			<label>Y Offset</label>
+			<description></description>
+		</attribute>
+		<attribute name="offsetz" type="maya.float">
+			<label>Z Offset</label>
+			<description></description>
+		</attribute>
+		<attribute name="rotx" type="maya.float">
+			<label>X Rotation</label>
+			<description></description>
+		</attribute>
+		<attribute name="roty" type="maya.float">
+			<label>Y Rotation</label>
+			<description></description>
+		</attribute>
+		<attribute name="rotz" type="maya.float">
+			<label>Z Rotation</label>
+			<description></description>
+		</attribute>
+		<attribute name="rotjitterx" type="maya.float">
+			<label>X Rotation Jitter</label>
+			<description></description>
+		</attribute>
+		<attribute name="rotjittery" type="maya.float">
+			<label>Y Rotation Jitter</label>
+			<description></description>
+		</attribute>
+		<attribute name="rotjitterz" type="maya.float">
+			<label>Z Rotation Jitter</label>
+			<description></description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalTriplanar">
+			<property name="input"/>
+			<property name="texture"/>
+			<property name="space"/>
+			<property name="normal"/>
+			<property name="tiling"/>
+			<property name="frequency"/>
+			<property name="mipMapBias"/>
+			<group name="Blending">
+				<label>Blending</label>
+				<property name="blendSoftness"/>
+				<property name="cellSoftness"/>
+			</group>
+			<group name="Positioning">
+				<label>Positioning</label>
+				<property name="scalex"/>
+				<property name="scaley"/>
+				<property name="scalez"/>
+				<property name="offsetx"/>
+				<property name="offsety"/>
+				<property name="offsetz"/>
+				<property name="rotx"/>
+				<property name="roty"/>
+				<property name="rotz"/>
+				<property name="rotjitterx"/>
+				<property name="rotjittery"/>
+				<property name="rotjitterz"/>
+			</group>
+		</view>
+</templates>

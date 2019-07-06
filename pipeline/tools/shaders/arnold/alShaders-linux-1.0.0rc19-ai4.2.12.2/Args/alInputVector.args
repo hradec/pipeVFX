@@ -1,0 +1,38 @@
+<args format="1.0">
+<param name="input" label="Input" widget="popup">
+	<hintlist name="options">
+		<string value="P"/>
+		<string value="Po"/>
+		<string value="N"/>
+		<string value="Nf"/>
+		<string value="Ng"/>
+		<string value="Ngf"/>
+		<string value="Ns"/>
+		<string value="dPdu"/>
+		<string value="dPdv"/>
+		<string value="Ld"/>
+		<string value="Rd"/>
+		<string value="uv"/>
+		<string value="User"/>
+		<string value="Custom"/>
+	</hintlist>
+</param>
+<param name="userName" label="User name"/>
+<param name="vector" label="Custom"/>
+<param name="type" label="Type" widget="popup">
+	<hintlist name="options">
+		<string value="Point"/>
+		<string value="Vector"/>
+	</hintlist>
+</param>
+<page name="Transform">
+	<param name="matrix" label="Matrix"/>
+	<param name="coordinates" label="Coordinates" widget="popup">
+		<hintlist name="options">
+			<string value="cartesian"/>
+			<string value="spherical"/>
+			<string value="normalized spherical"/>
+		</hintlist>
+	</param>
+</page>
+</args>

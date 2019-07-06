@@ -24,14 +24,15 @@ import os
 
 
 class maya(current.engine):
-    def __init__(self, scene, project=None, asset=None, renderer=None, ribs=[], name='', extra='', CPUS=0, priority=9999, range=range(1,10), group='pipe'):
+    def __init__(self, scene, project=None, asset=None, renderer=None, ribs=[], name='', extra='', CPUS=0, priority=9999, range=range(1,10), group='pipe', description=''):
         self.renderer = renderer
         self.project = project
         if not self.project:
             self.project = os.path.dirname(os.path.dirname(scene))
         self.scene =  os.path.abspath( scene )
         self.ribs = ribs
-        current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group,asset=asset)
+        current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group,asset=asset, description=description)
+        self.description = description
 
     def cook(self):
         asset=''
@@ -58,30 +59,38 @@ class maya(current.engine):
 
         else:
             pipe_asset = "_".join(self.asset.strip('/').split('/')[-2:]).replace('.','_')
-            
+
             extra = ''
-            print "\n\n\n ======>%s \n\n\n" % self.renderer
+            pre = ''
+            pos = ''
+            print( "\n\n\n ======>%s \n\n\n" % self.renderer )
             if 'renderMan' in self.renderer:
-                extra = '-r rman -batchContext %s_%s' % (pipe_asset, self.frameNumber())
+                batchContext = "%s_%s" % (pipe_asset, self.frameNumber())
+                extra = '-r rman -batchContext %s' % batchContext
                 if 'RIS' in self.renderer:
                     extra = extra+' -ris '
-                    
+
+                pre = 'rm -rfv %s/renderman/%s_%s ; export error=$? ; echo $error ; [ $error -ne 0 ] && echo "[PARSER ERROR]" || ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
+                pos = ' && rm -rfv %s/renderman/%s_%s ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
+
             if 'mentalRay' in  self.renderer:
                 extra = ' -mr:v 5 '
-            
+
             self.name += " | MAYA v%s (%s)" % (pipe.apps.maya().version(), self.renderer)
             self.cmd = ' '.join([
                 'export PIPE_ASSET="%s_%s" && ' % (pipe_asset, self.frameNumber()) ,
+                pre,
                 'run Render -s %s -e %s ' % (self.frameNumber(), self.frameNumber()),
                 '-proj "%s"' % self.project,
 #                '-renderer "%s"' % self.renderer,
                 extra,
                 '"%s"' % self.scene,
                 asset,
+                pos
             ])
-            
+
             #mel rmanSpoolImmediateRIBLocalRender()
-            
+
             self.files = ["%s/images/none" % self.asset]
             # add an extra postCmd to cleanup the pipe_asset folder inside renderman, if any!
 #            self.postCmd = {

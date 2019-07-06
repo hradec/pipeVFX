@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for f in 1 2 3 ; do 
+	echo 1    > /sys/devices/platform/it87.552/pwm${f}_enable
+	echo 255  > /sys/devices/platform/it87.552/pwm$f
+
+	echo "pwm_enable = $(cat /sys/devices/platform/it87.552/pwm${f}_enable)"
+	echo "pwm        = $(cat /sys/devices/platform/it87.552/pwm${f})"
+done

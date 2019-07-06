@@ -30,19 +30,31 @@ os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 # setup apps global versions
 # ===================================================================
 pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
-pipe.version.set( maya      = '2016.5' )
-pipe.version.set( maya      = '2014' )
-pipe.version.set( nuke      = '9.0v8' )
-pipe.version.set( houdini   = 'hfs14.0.201.13' )
+pipe.version.set( maya      = '2018' )
+#pipe.version.set( maya      = '2016.5' )
+pipe.version.set( nuke      = '9.0v9' )
+pipe.version.set( nuke      = '11.1v1' )
 pipe.version.set( houdini   = 'hfs15.5.480' )
+pipe.version.set( houdini   = 'hfs16.0.557' )
 pipe.version.set( delight   = '11.0.12' )
 pipe.version.set( mari      = '2.0v1' )
 pipe.version.set( xpra      = '0.15.svn9672' )
-#pipe.version.set( arnold    = '1.4.2.4.1' )
-#pipe.version.set( arnold    = '4.1.3.3' )
-pipe.version.set( realflow  = '2015' )
-pipe.version.set( prman     = '20.11' )
-#pipe.version.set( slic3r    = '1.1.7' )
+pipe.version.set( arnold    = '5.1.0.1' )
+pipe.version.set( realflow  = '10.1' )
+pipe.version.set( prman     = '22.1' )
+pipe.version.set( unreal    = '4.22.0.opengl' )
+
+
+# version support dropped
+# ===================================================================
+if float(pipe.version.get('maya')) <= 2014:
+    # maximum versions for maya 2014
+    pipe.version.set( prman     = '20.11' )
+
+#if float(pipe.version.get('maya')) <= 2018:
+    # maximum versions for maya 2018
+#    pipe.version.set( prman     = '21.5' )
+
 
 # set global library versions
 # ===================================================================
@@ -54,6 +66,9 @@ if 'GCC_VERSION' in os.environ:
     pipe.libs.version.set( boost    = '1.51.0' )
     pipe.libs.version.set( openexr  = '2.2.0' )
     pipe.libs.version.set( ilmbase  = '2.2.0' )
+    pipe.libs.version.set( tbb      = '4.3.6' )
+    pipe.libs.version.set( pyqt     = '4.11.4' )
+    pipe.libs.version.set( readline = '99.99.99' )
 else:
     pipe.version.set( python        = '2.6.8' )
     pipe.libs.version.set( alembic  = '1.1.1' )
@@ -66,9 +81,9 @@ else:
 # gaffer and cortex version need to be tested toguether!
 # ===================================================================
 if 'GCC_VERSION' in os.environ:
-    pipe.version.set( gaffer      = '0.30' )
-    pipe.libs.version.set( gaffer = '0.30' )
-    pipe.libs.version.set( cortex = '9.11.3' )
+    pipe.version.set( gaffer      = '0.32' )
+    pipe.libs.version.set( gaffer = '0.32' )
+    pipe.libs.version.set( cortex = '9.13' )
 else:
     pipe.version.set( gaffer      = '2.0.0' )
     pipe.libs.version.set( cortex = '9.0.0.git_Oct_10_2014' )

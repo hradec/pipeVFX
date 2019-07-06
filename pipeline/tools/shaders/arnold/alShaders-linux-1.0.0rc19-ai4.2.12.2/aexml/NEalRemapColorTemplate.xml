@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalRemapColor">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="input" type="maya.float3">
+			<label>Input</label>
+		</attribute>
+		<attribute name="mask" type="maya.float">
+			<label>Mask</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalRemapColor">
+		<property name="outColor" />
+		<property name="input" />
+		<property name="mask" />
+		</view>
+</templates>

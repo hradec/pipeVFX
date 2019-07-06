@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalLayer">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="layer1" type="maya.float3">
+			<label>Layer 1</label>
+		</attribute>
+		<attribute name="layer2" type="maya.float3">
+			<label>Layer 2</label>
+		</attribute>
+		<attribute name="mix" type="maya.float">
+			<label>Mix</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalLayer">
+		<property name="outColor" />
+		<property name="layer1" />
+		<property name="layer2" />
+		<property name="mix" />
+		</view>
+</templates>

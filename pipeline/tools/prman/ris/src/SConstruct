@@ -1,0 +1,38 @@
+import pipe, os
+
+
+src = [
+    'AtomoAOV.cpp',
+    'AtomoOcc.cpp',
+#    'AtomoOcclusion.cpp',
+]
+
+def versionSort(versions):
+    def method(v):
+        v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
+        return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
+    tmp =  sorted( versions, key=method, reverse=True )
+    # print tmp
+    return tmp
+
+prman = pipe.apps.prman()
+
+for pv in versionSort(prman.versionList())[:2]:
+    env = Environment()
+    pipe.apps.version.set(prman = pv)
+
+    env['SHLIBPREFIX']  = ''
+    env['CC']           = 'g++'
+    env['LD']           = '$(CC) -shared'
+    env['CCFLAGS']      = '-Wno-deprecated -fPIC -I%s' % pipe.apps.prman().path('RenderManProServer-%s/include' % pv)
+    env['CCFLAGS']     += ' -I%s' % pipe.apps.prman().path('RenderManProServer-%s/lib/examples/RIS/plugins/bxdf/' % pv)
+
+    for s in src:
+        build = env.Command( 'build/%s/%s' % (pv,s), s, [
+            Delete("build/%s/" % pv),
+            Mkdir("build/%s/" % pv),
+            Copy("build/%s/" % pv, "$SOURCE"),
+        ])
+        shared = env.SharedLibrary( 'build/%s/%s' % (pv, os.path.splitext(s)[0]), build )
+        env.Alias('install', env.Install( '%s/prman/ris/%s/pattern/' % (pipe.roots().tools(), pv), shared ))
+        env.Alias('install', env.Install( '%s/prman/ris/%s/pattern/' % (pipe.roots().tools(), pv), s.replace('cpp','args') ))

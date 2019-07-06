@@ -1,0 +1,15 @@
+<args format="1.0">
+<page name="Shading">
+	<param name="surfaceShader" label="Surface shader" widget="color"/>
+	<param name="diffuseDirectStrength" label="Diffuse strength"/>
+	<param name="diffuseRamp" label="Diffuse ramp" widget="color"/>
+	<param name="diffuseIndirectStrength" label="Indirect diffuse strength"/>
+	<param name="diffuseIndirectSaturation" label="Indirect diffuse saturation"/>
+	<param name="diffuseIndirectTint" label="Indirect diffuse tint" widget="color"/>
+</page>
+<page name="AOVs">
+	<param name="aov_direct_diffuse_cel" label="Cel Diffuse"/>
+	<param name="aov_direct_diffuse_raw_cel" label="Cel Raw Diffuse"/>
+	<param name="aov_indirect_diffuse_cel" label="Cel Indirect Diffuse"/>
+</page>
+</args>

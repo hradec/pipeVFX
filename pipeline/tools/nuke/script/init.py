@@ -21,6 +21,16 @@
 import os
 from glob import glob
 
+# forcely set preference to force nuke to free up memory when in background
+# this allows for running multiple nukes at the same time, without running
+# out of memory all the time! 
+nuke.toNode('preferences').knob('pause_caching_in_background').setValue('true')
+nuke.toNode('preferences').knob('clear_cache_in_background').setValue('true')
+
+# force auto localize of all media available everywhere
+#nuke.toNode('preferences').knob('autoLocalCachePath').setValue('/')
+
+
 #we check all subfolders inside the current folder
 #and automatically add then to nuke path
 for each in glob('%s/*' % os.path.dirname(__file__)):
@@ -95,13 +105,18 @@ def sam_gather():
     GafferUI.EventLoop.mainEventLoop().start()
 
 
-
-
 try:
     menubar = nuke.menu ('Nuke')
     menubar.addCommand ('SAM/Publish/nuke asset', 'sam_publish()', icon="") 
     menubar.addCommand ('SAM/Gather/nuke asset', 'sam_gather()', icon="") 
     menubar.addCommand ('SAM/Gather/sequence asset', '', icon="") 
+
+    # KennTools * adcionado apenas esses dois aquivos para importar o geo tracker
+    nuke.pluginAddPath('icons')
+    nuke.pluginAddPath('plugin_libs')
+    #if int(os.environ['NUKE_VERSION'].split('.')[0]) < 10:
+    #    nuke.load('KeenTools')
+
 except:
     pass
 

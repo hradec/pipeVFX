@@ -1,0 +1,180 @@
+#!/bin/sh
+#
+# Looks for a CACHE named volume, and mount it to be used by nuke as cache!
+#
+# ===========================================================================================================================
+
+
+export DO_WE_HAVE_SWAP=$(cat /proc/swaps | grep -v Filename)
+mkdir -p /nuke_sd_cache
+
+
+
+cache(){
+  for line in $(cat /proc/partitions | grep sd.. | cut -d's' -f2 | sed 's/d/sd/g'); do
+    echo "$(/sbin/blkid /dev/$line | grep CACHE  | grep -v zfs_member | cut -d':' -f1)"
+    /sbin/blkid /dev/$line >&2
+    echo $line >&2
+  done
+}
+
+
+# ZFS import
+# ===========================================================================================================================
+# import if it doesnt import automatically
+zfsPOOL=$(zpool import | grep 'pool:' | awk '{print $2}')
+if [ "$zfsPOOL" != "" ] ; then 
+    zfsID=$(zpool import | grep 'id:' | awk '{print $2}')
+    zpool import -f $zfsID
+fi
+
+# ZFS cache - setup volumes for swap and nfscache
+# ===========================================================================================================================
+if [ "$(zpool status | grep CACHE)" != "" ] ; then 
+    zfs set overlay=on CACHE
+    # nfscache volume
+    if [ ! -e /dev/zvol/CACHE/nfscache ] ; then 
+        zfs create -V 100G -b $(getconf PAGESIZE) -o primarycache=metadata   -o com.sun:auto-snapshot=false CACHE/nfscache
+    fi
+    if [ -e /dev/zvol/CACHE/nfscache ] ; then 
+        echo -e '\n\n' | mkfs.ext4 -L NFSCACHE  /dev/zvol/CACHE/nfscache
+    fi
+
+    # create a ZFS swap volume if no swap was added so far!! (08.swap_setup brings swap up if any exists!!)
+    if [ "$DO_WE_HAVE_SWAP" == "" ] ; then 
+        if [ ! -e /dev/zvol/CACHE/swap ] ; then 
+            zfs create -V 16G -b $(getconf PAGESIZE) -o primarycache=metadata   -o com.sun:auto-snapshot=false CACHE/swap
+            mkswap -f /dev/zvol/CACHE/swap
+        fi
+        if [ -e /dev/zvol/CACHE/swap ] ; then 
+            swapon  /dev/zvol/CACHE/swap
+        fi
+    fi
+    sudo mount -o bind /CACHE /nuke_sd_cache
+    chmod a+rwx /nuke_sd_cache
+# ext4 cache
+# ===========================================================================================================================
+else
+
+    cacheVol=$(echo $(cache))
+    /sbin/blkid >&2
+    if [ "$cacheVol" == "" ] ; then
+        cacheVol=$(/sbin/blkid | grep CACHE | cut -d':' -f1)
+    fi
+    echo "cacheVol: [$cacheVol]" >&2
+    cat /proc/partitions >&2
+    echo $cacheVol >&2
+    if [ "$cacheVol" != "" ] ; then 
+        if [ "$(mount | grep nuke_sd_cache)" == "" ] ; then
+            fsck -p $cacheVol
+            #mount $cacheVol /nuke_sd_cache  -o  rw,relatime,journal_checksum,journal_async_commit
+            mount $cacheVol /nuke_sd_cache  -o  rw,relatime,journal_checksum
+        fi
+        chmod a+rwx /nuke_sd_cache
+         
+        if [ "$(mount | grep nuke_sd_cache | grep ext4)" != "" ] ; then 
+            # if we have no swap up already, create a swap file on the cache partition
+            if [ "$DO_WE_HAVE_SWAP" == "" ] ; then 
+                if [ ! -f /nuke_sd_cache/swap ] ; then 
+                    s=$(echo $(free | grep Mem) | cut -d" " -f2)
+                    let ss=$s/1024/100/2
+                    dd if=/dev/zero of=/nuke_sd_cache/swap bs=100M count=$ss
+                    mkswap /nuke_sd_cache/swap
+                fi
+                swapon /nuke_sd_cache/swap 
+            fi
+        fi
+    fi
+fi
+
+chmod a+rwx /nuke_sd_cache
+
+
+mkdir -p /usr/tmp
+
+# Remap tmp folder to use /nuke_sd_cache
+# ===========================================================================================================================
+localRootSquashfs(){
+    rsync -avzPp  /atomo/netboot/distros/arch/arch.squashfs  /nuke_sd_cache/ 
+    mount -n -o loop,remount,ro /nuke_sd_cache/arch.squashfs /boot/rootRO
+}
+remapTmpFolders(){
+    if [ "$(mount | grep nuke_sd_cache)" != "" ] ; then
+        mkdir -p /nuke_sd_cache/netboot/tmp
+        mkdir -p /nuke_sd_cache/netboot/.tmp_work
+        mkdir -p /nuke_sd_cache/netboot/usr/tmp
+        mkdir -p /nuke_sd_cache/netboot/log
+        mkdir -p /nuke_sd_cache/netboot/.log_work
+        chmod a+rwx  /nuke_sd_cache/netboot/tmp
+        chmod a+rwx  /nuke_sd_cache/netboot/.tmp_work
+        chmod a+rwx  /nuke_sd_cache/netboot/usr/tmp
+        chmod a+rwx  /nuke_sd_cache/netboot/log
+        chmod a+rwx  /nuke_sd_cache/netboot/.log_work
+        #mount --bind /nuke_sd_cache/netboot/tmp /tmp
+        mount --bind /nuke_sd_cache/netboot/usr/tmp /usr/tmp
+
+        #mount -t overlay overlay -o lowerdir=/tmp,upperdir=/nuke_sd_cache/netboot/tmp,workdir=/nuke_sd_cache/netboot/.tmp_work /tmp/
+        mount -t overlay overlay -o lowerdir=/var/log,upperdir=/nuke_sd_cache/netboot/log,workdir=/nuke_sd_cache/netboot/.log_work /var/log/
+        #mount --bind /nuke_sd_cache/netboot/log /log
+
+        # copy linux image to local cache, so next boot we can load from the local copy!
+        #localRootSquashfs &
+    fi
+}
+remapTmpFolders || echo "Can't remap tmp folders!"
+
+# fix permissions
+# ===========================================================================================================================
+chmod a+x /tmp
+chmod a+x /usr/tmp
+chmod a+x /var/log
+chmod 1777 /tmp
+chmod 1777 /usr/tmp
+
+
+# Setup nfscache on nuke_sd_cache
+# ===========================================================================================================================
+nfsCache(){
+    mkdir -p /nuke_sd_cache/fscache
+    createImg(){
+        if [ "$(mount | grep  /nuke_sd_cache/ | grep ext)" == ""  ] ; then 
+            if [ ! -f /nuke_sd_cache/nfscache ] ; then 
+                size=100
+                if [ "$cacheVol" == "" ] ; then 
+                    size=2
+                fi
+                dd if=/dev/zero of=/nuke_sd_cache/nfscache bs=100M count=$size
+                mkfs.ext4 -F /nuke_sd_cache/nfscache
+                tune2fs -o user_xattr  /nuke_sd_cache/nfscache
+            else
+                fsck -y  /nuke_sd_cache/nfscache || \
+                mkfs.ext4 -F /nuke_sd_cache/nfscache 
+                tune2fs -o user_xattr  /nuke_sd_cache/nfscache
+            fi
+            mount -o loop,user_xattr,rw,relatime,journal_checksum,journal_async_commit  /nuke_sd_cache/nfscache  /var/cache/fscache
+        fi
+    }
+    # nfscache
+    if [ "$(mount | grep sd_cache)" != "" ] ; then
+        createImg
+        echo ""
+    fi
+    nfscache=$(blkid | grep NFSCACHE | cut -d':' -f1)
+    if [ "$nfscache" != "" ] ; then
+        tune2fs -o user_xattr $nfscache > /dev/nul
+        mount -o user_xattr $nfscache /nuke_sd_cache/fscache
+    fi
+    cacheCFG() {
+    echo 'dir /nuke_sd_cache/fscache'
+        echo 'tag mycache'
+        echo 'brun 10%'
+        echo 'bcull 7%'
+        echo 'bstop 3%'
+        echo 'frun 10%'
+        echo 'fcull 7%'
+        echo 'fstop 3%'
+    }
+    cacheCFG > /etc/cachefilesd.conf
+    systemctl restart cachefilesd
+}
+nfsCache

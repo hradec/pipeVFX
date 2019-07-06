@@ -1,0 +1,13 @@
+STRINGTABLE ainode_alBlackbody
+{
+	ainode_alBlackbody   "Arnold alBlackbody node";
+
+	C4DAI_ALBLACKBODY_MAIN_GRP   "Main";
+	C4DAI_ALBLACKBODY_ADVANCED_GRP   "Advanced";
+
+	C4DAIP_ALBLACKBODY_TEMPERATURE   "Temperature";
+	C4DAIP_ALBLACKBODY_STRENGTH   "Strength";
+	C4DAIP_ALBLACKBODY_PHYSICALINTENSITY   "Physical intensity";
+	C4DAIP_ALBLACKBODY_PHYSICALEXPOSURE   "Physical exposure";
+}
+

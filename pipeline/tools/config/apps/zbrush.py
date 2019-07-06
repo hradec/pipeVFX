@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -20,14 +20,14 @@
 
 class zbrush(baseApp):
     def environ(self):
-#        self['__GL_ALWAYS_HANDLE_FORK'] = '1' 
+#        self['__GL_ALWAYS_HANDLE_FORK'] = '1'
         self['__GL_SYNC_TO_VBLANK'] = '0'
-        
-        
-    def versions(self):
-#        pipe.version.set( wine = '1.4' )
-        pipe.version.set( zbrush = '4.0.r4' )
-    
+
+
+#     def versions(self):
+# #        pipe.version.set( wine = '1.4' )
+#         pipe.version.set( zbrush = '4.0.r4' )
+
 '''    def localCache(self, binFullName):
         # we use this method just to make some a writable ZStartup
         # folder in the user home folder wine cache
@@ -37,7 +37,7 @@ class zbrush(baseApp):
         progFiles = '%s/drive_c/Program Files/' % prefix
         pixologic = '%sPixologic/' % progFiles
         zbrush = os.path.basename(glob( "%s/drive_c/Program Files/Pixologic/*" % self.path() )[0])+'/'
-        
+
         # make a local copy of zbrush with symlinks to all folders but ZStartup.
         # zbrush needs to be able to write to ZStartup folder for some stupid reason!
         # Isn't ProgramFiles supposed to be writeable only by Administrators in real windows?
@@ -52,6 +52,6 @@ class zbrush(baseApp):
                     os.symlink( each, pixologic+zbrush+beach )
                 else:
                     shutil.copytree( each, pixologic+zbrush+beach, True )
-        
+
         return binFullName
 '''

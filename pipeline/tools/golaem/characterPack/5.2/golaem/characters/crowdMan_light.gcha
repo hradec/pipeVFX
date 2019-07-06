@@ -1,0 +1,2115 @@
+<XMLSerialization Version="7">
+	<golaemObject pointerID="1" typeName="glm::GolaemCharacter">
+		<name value="CMO-man_golaem_light"/>
+		<mainAssetGroups>
+			<element index="0" value="0"/>
+			<element index="1" value="1"/>
+			<element index="2" value="2"/>
+			<element index="3" value="3"/>
+			<element index="4" value="4"/>
+			<element index="5" value="5"/>
+			<element index="6" value="6"/>
+			<element index="7" value="7"/>
+		</mainAssetGroups>
+		<allAssetGroups>
+			<element index="0" pointerID="2">
+				<name value="Hair"/>
+				<children>
+					<element index="0" pointerID="3">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="8"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="1" pointerID="4">
+				<name value="Undercoat"/>
+				<children>
+					<element index="0" pointerID="5">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+					<element index="1" pointerID="6">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="10"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="2" pointerID="7">
+				<name value="Pants"/>
+				<children>
+					<element index="0" pointerID="8">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="11"/>
+					</element>
+					<element index="1" pointerID="9">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="12"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="3" pointerID="10">
+				<name value="Shoes"/>
+				<children>
+					<element index="0" pointerID="11">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="13"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="4" pointerID="12">
+				<name value="Body_Head"/>
+				<children>
+					<element index="0" pointerID="13">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="14"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="5" pointerID="14">
+				<name value="Body_Arms"/>
+				<children>
+					<element index="0" pointerID="15">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="15"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="6" pointerID="16">
+				<name value="Body_Feet"/>
+				<children>
+					<element index="0" pointerID="17">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="16"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="7" pointerID="18">
+				<name value="Flag"/>
+				<children>
+					<element index="0" pointerID="19">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="17"/>
+					</element>
+					<element index="1" pointerID="20">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="18"/>
+					</element>
+				</children>
+				<weights>
+					<element index="0" value="50"/>
+					<element index="1" value="50"/>
+				</weights>
+				<excludedAssets/>
+			</element>
+			<element index="8" pointerID="21">
+				<name value="MAN_MD_top_hair_std"/>
+				<children>
+					<element index="0" pointerID="22">
+						<meshAssetIdx value="0"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="9" pointerID="23">
+				<name value="MAN_MD_torso_tshirt_std"/>
+				<children>
+					<element index="0" pointerID="24">
+						<meshAssetIdx value="1"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="25">
+						<meshAssetIdx value="2"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="26">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="15"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="10" pointerID="27">
+				<name value="MAN_MD_torso_sweatshirt_standard"/>
+				<children>
+					<element index="0" pointerID="28">
+						<meshAssetIdx value="3"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="11" pointerID="29">
+				<name value="MAN_MD_legs_pants_longFolds"/>
+				<children>
+					<element index="0" pointerID="30">
+						<meshAssetIdx value="4"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="12" pointerID="31">
+				<name value="MAN_MD_legs_pants_short"/>
+				<children>
+					<element index="0" pointerID="32">
+						<meshAssetIdx value="5"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="33">
+						<meshAssetIdx value="6"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="34">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="16"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="13" pointerID="35">
+				<name value="MAN_MD_legs_shoes_sport_1"/>
+				<children>
+					<element index="0" pointerID="36">
+						<meshAssetIdx value="7"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="14" pointerID="37">
+				<name value="MAN_MD_body_head"/>
+				<children>
+					<element index="0" pointerID="38">
+						<meshAssetIdx value="8"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="15" pointerID="39">
+				<name value="MAN_MD_body_arms_hands"/>
+				<children>
+					<element index="0" pointerID="40">
+						<meshAssetIdx value="9"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="41">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="9"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="16" pointerID="42">
+				<name value="MAN_MD_body_legs_foots"/>
+				<children>
+					<element index="0" pointerID="43">
+						<meshAssetIdx value="10"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets>
+					<element index="0" pointerID="44">
+						<meshAssetIdx value="-1"/>
+						<assetGroupIdx value="12"/>
+					</element>
+				</excludedAssets>
+			</element>
+			<element index="17" pointerID="45">
+				<name value="Flag_Group"/>
+				<children>
+					<element index="0" pointerID="46">
+						<meshAssetIdx value="11"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+					<element index="1" pointerID="47">
+						<meshAssetIdx value="12"/>
+						<assetGroupIdx value="-1"/>
+					</element>
+				</children>
+				<weights/>
+				<excludedAssets/>
+			</element>
+			<element index="18" pointerID="48">
+				<name value="[Empty]"/>
+				<children/>
+				<weights/>
+				<excludedAssets/>
+			</element>
+		</allAssetGroups>
+		<meshAssets>
+			<element index="0" pointerID="49">
+				<name value="MAN_MD_top_hair_std"/>
+				<shadingGroups>
+					<element index="0" value="0"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="50">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="1" pointerID="51">
+				<name value="MAN_MD_torso_tshirt_std"/>
+				<shadingGroups>
+					<element index="0" value="1"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="52">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="2" pointerID="53">
+				<name value="MAN_MD_body_arms_biceps"/>
+				<shadingGroups>
+					<element index="0" value="2"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="54">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="3" pointerID="55">
+				<name value="MAN_MD_torso_sweatshirt_standard"/>
+				<shadingGroups>
+					<element index="0" value="3"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="56">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="4" pointerID="57">
+				<name value="MAN_MD_legs_pants_longFolds"/>
+				<shadingGroups>
+					<element index="0" value="4"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="58">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="5" pointerID="59">
+				<name value="MAN_MD_legs_pants_short"/>
+				<shadingGroups>
+					<element index="0" value="4"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="60">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="6" pointerID="61">
+				<name value="MAN_MD_body_legs_full"/>
+				<shadingGroups>
+					<element index="0" value="2"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="62">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="7" pointerID="63">
+				<name value="MAN_MD_legs_shoes_sport_1"/>
+				<shadingGroups>
+					<element index="0" value="5"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="64">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="8" pointerID="65">
+				<name value="MAN_MD_body_head"/>
+				<shadingGroups>
+					<element index="0" value="2"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="66">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="9" pointerID="67">
+				<name value="MAN_MD_body_arms_hands"/>
+				<shadingGroups>
+					<element index="0" value="2"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="68">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="10" pointerID="69">
+				<name value="MAN_MD_body_legs_foots"/>
+				<shadingGroups>
+					<element index="0" value="2"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="70">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="11" pointerID="71">
+				<name value="MAN_MD_stickFlag"/>
+				<shadingGroups>
+					<element index="0" value="6"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="72">
+					<filename value=""/>
+				</clothAsset>
+			</element>
+			<element index="12" pointerID="73">
+				<name value="MAN_MD_ClothFlag"/>
+				<shadingGroups>
+					<element index="0" value="7"/>
+				</shadingGroups>
+				<excludedAssets/>
+				<clothAsset pointerID="74">
+					<filename value="/atomo/pipeline/tools/golaem/characterPack/5.2\golaem\characters\CMO-man_golaem_ClothFlag.apx"/>
+				</clothAsset>
+			</element>
+		</meshAssets>
+		<geometryAssets>
+			<element index="0" pointerID="75">
+				<filename value="/atomo/pipeline/tools/golaem/characterPack/5.2/golaem/characters/CMO-man_golaem_light.fbx"/>
+				<halfExtents x="3" y="3" z="3"/>
+			</element>
+		</geometryAssets>
+		<shadingGroups>
+			<element index="0" pointerID="76">
+				<name value="MAN_MD_top_hairSG"/>
+				<shaderAssets>
+					<element index="0" value="0"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="0"/>
+				</shaderAttributes>
+			</element>
+			<element index="1" pointerID="77">
+				<name value="MAN_MD_torso_tshirtSG"/>
+				<shaderAssets>
+					<element index="0" value="1"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="1"/>
+					<element index="1" value="2"/>
+				</shaderAttributes>
+			</element>
+			<element index="2" pointerID="78">
+				<name value="MAN_MD_bodySG"/>
+				<shaderAssets>
+					<element index="0" value="2"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="3"/>
+				</shaderAttributes>
+			</element>
+			<element index="3" pointerID="79">
+				<name value="MAN_MD_torso_sweatshirtSG"/>
+				<shaderAssets>
+					<element index="0" value="3"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="4"/>
+				</shaderAttributes>
+			</element>
+			<element index="4" pointerID="80">
+				<name value="MAN_MD_legs_pantsSG"/>
+				<shaderAssets>
+					<element index="0" value="4"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="5"/>
+				</shaderAttributes>
+			</element>
+			<element index="5" pointerID="81">
+				<name value="MAN_MD_legs_shoes_sportSG"/>
+				<shaderAssets>
+					<element index="0" value="5"/>
+				</shaderAssets>
+				<shaderAttributes>
+					<element index="0" value="6"/>
+				</shaderAttributes>
+			</element>
+			<element index="6" pointerID="82">
+				<name value="MAN_MD_stickFlagSG1"/>
+				<shaderAssets>
+					<element index="0" value="6"/>
+				</shaderAssets>
+				<shaderAttributes/>
+			</element>
+			<element index="7" pointerID="83">
+				<name value="MAN_MD_ClothFlagSG1"/>
+				<shaderAssets>
+					<element index="0" value="7"/>
+				</shaderAssets>
+				<shaderAttributes/>
+			</element>
+		</shadingGroups>
+		<shaderAttributes>
+			<element index="0" pointerID="84">
+				<attributeName value="MAN_MD_top_hair_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="2"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="MAN_MD_top_hair_textureIdx"/>
+			</element>
+			<element index="1" pointerID="85">
+				<attributeName value="MAN_MD_torso_tshirt_h"/>
+				<attributeType value="1"/>
+				<minValue value="-1"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="MAN_MD_torso_tshirt_h"/>
+			</element>
+			<element index="2" pointerID="86">
+				<attributeName value="MAN_MD_torso_tshirt_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="4"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="MAN_MD_torso_tshirt_textureIdx"/>
+			</element>
+			<element index="3" pointerID="87">
+				<attributeName value="MAN_MD_body_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="0"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="MAN_MD_body_textureIdx"/>
+			</element>
+			<element index="4" pointerID="88">
+				<attributeName value="MAN_MD_torso_sweatshirt_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="0"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="MAN_MD_torso_sweatshirt_textureIdx"/>
+			</element>
+			<element index="5" pointerID="89">
+				<attributeName value="MAN_MD_legs_pants_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="1"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="MAN_MD_legs_pants_textureIdx"/>
+			</element>
+			<element index="6" pointerID="90">
+				<attributeName value="MAN_MD_legs_shoes_sport_textureIdx"/>
+				<attributeType value="0"/>
+				<minValue value="0"/>
+				<maxValue value="0"/>
+				<fileName value=""/>
+				<useRandomValue value="1"/>
+				<ppAttr value="MAN_MD_legs_shoes_sport_textureIdx"/>
+			</element>
+		</shaderAttributes>
+		<shaderAssets>
+			<element index="0" pointerID="91">
+				<name value="MAN_MD_top_hair"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="1" pointerID="92">
+				<name value="MAN_MD_torso_tshirt"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="2" pointerID="93">
+				<name value="MAN_MD_body"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="3" pointerID="94">
+				<name value="MAN_MD_torso_sweatshirt"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="4" pointerID="95">
+				<name value="MAN_MD_legs_pants"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="5" pointerID="96">
+				<name value="MAN_MD_legs_shoes_sport"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="6" pointerID="97">
+				<name value="MAN_MD_flag_stickFlag"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+			<element index="7" pointerID="98">
+				<name value="MAN_MD_flag_clothFlag"/>
+				<category value="drawdb/shader/surface/blinn:shader/surface"/>
+			</element>
+		</shaderAssets>
+		<renderingTypes>
+			<element index="0" pointerID="99">
+				<name value="CrowdManLight"/>
+				<weightOverrides>
+					<element index="0" pointerID="100">
+						<groupIdx value="1"/>
+						<groupWeights>
+							<element index="0" value="50"/>
+							<element index="1" value="11"/>
+						</groupWeights>
+					</element>
+					<element index="1" pointerID="101">
+						<groupIdx value="7"/>
+						<groupWeights>
+							<element index="0" value="0"/>
+							<element index="1" value="50"/>
+						</groupWeights>
+					</element>
+				</weightOverrides>
+				<parentRenderingType value="-1"/>
+			</element>
+			<element index="1" pointerID="102">
+				<name value="CrowdManLight_Flag"/>
+				<weightOverrides>
+					<element index="0" pointerID="103">
+						<groupIdx value="1"/>
+						<groupWeights>
+							<element index="0" value="50"/>
+							<element index="1" value="11"/>
+						</groupWeights>
+					</element>
+					<element index="1" pointerID="104">
+						<groupIdx value="7"/>
+						<groupWeights>
+							<element index="0" value="50"/>
+							<element index="1" value="0"/>
+						</groupWeights>
+					</element>
+				</weightOverrides>
+				<parentRenderingType value="-1"/>
+			</element>
+		</renderingTypes>
+		<converterMapping pointerID="105">
+			<skeletonDescription pointerID="106">
+				<name value="Maya Skeleton: Reference"/>
+				<rootBone pointerID="107">
+					<name value="Reference"/>
+					<relativePos x="0" y="0" z="0"/>
+					<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+					<father pointerID="0"/>
+					<children>
+						<element index="0" pointerID="108">
+							<name value="Hips"/>
+							<relativePos x="0" y="0.94956856966018677" z="0.017479956150054932"/>
+							<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+							<father pointerID="107"/>
+							<children>
+								<element index="0" pointerID="109">
+									<name value="LeftUpLeg"/>
+									<relativePos x="0.10212209075689316" y="-0.054984509944915771" z="0.025821521878242493"/>
+									<localOri x="-0.00034057255834341049" y="-0.020392265170812607" z="0.99965256452560425" w="0.016695264726877213"/>
+									<father pointerID="108"/>
+									<children>
+										<element index="0" pointerID="110">
+											<name value="LeftLeg"/>
+											<relativePos x="6.6613381477509392e-016" y="0.42601919174194336" z="3.8302694878963493e-016"/>
+											<localOri x="-0.03930944949388504" y="-0.0011256592115387321" z="0.014020202681422234" w="0.99912804365158081"/>
+											<father pointerID="109"/>
+											<children>
+												<element index="0" pointerID="111">
+													<name value="LeftFoot"/>
+													<relativePos x="8.8817843293501503e-017" y="0.38158059120178223" z="-1.3350431871117507e-014"/>
+													<localOri x="0.56723988056182861" y="-0.0010189872700721025" z="-0.0019396783318370581" w="0.82354968786239624"/>
+													<father pointerID="110"/>
+													<children>
+														<element index="0" pointerID="112">
+															<name value="LeftFootThumb1"/>
+															<relativePos x="0.021904002875089645" y="0.1550586074590683" z="0.0079936375841498375"/>
+															<localOri x="0.18515172600746155" y="-0.006064058281481266" z="0.036195389926433563" w="0.98202437162399292"/>
+															<father pointerID="111"/>
+															<children>
+																<element index="0" pointerID="113">
+																	<name value="LeftFootThumb2"/>
+																	<relativePos x="0" y="0.023834120482206345" z="0"/>
+																	<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+																	<father pointerID="112"/>
+																	<children/>
+																	<specificBoneIndex value="6"/>
+																</element>
+															</children>
+															<specificBoneIndex value="5"/>
+														</element>
+													</children>
+													<specificBoneIndex value="4"/>
+												</element>
+											</children>
+											<specificBoneIndex value="3"/>
+										</element>
+									</children>
+									<specificBoneIndex value="2"/>
+								</element>
+								<element index="1" pointerID="114">
+									<name value="Spine"/>
+									<relativePos x="0" y="0.062036436051130295" z="0.0021429581101983786"/>
+									<localOri x="-0.021423099562525749" y="0" z="0" w="0.99977046251296997"/>
+									<father pointerID="108"/>
+									<children>
+										<element index="0" pointerID="115">
+											<name value="Spine1"/>
+											<relativePos x="0" y="0.11879485100507736" z="0"/>
+											<localOri x="-0.12055451422929764" y="0" z="0" w="0.99270665645599365"/>
+											<father pointerID="114"/>
+											<children>
+												<element index="0" pointerID="116">
+													<name value="Spine2"/>
+													<relativePos x="0" y="0.12365821748971939" z="0"/>
+													<localOri x="0.018499348312616348" y="0" z="0" w="0.99982881546020508"/>
+													<father pointerID="115"/>
+													<children>
+														<element index="0" pointerID="117">
+															<name value="Spine3"/>
+															<relativePos x="0" y="0.12241750210523605" z="2.2204460492503131e-016"/>
+															<localOri x="0.12345700711011887" y="0" z="0" w="0.99234986305236816"/>
+															<father pointerID="116"/>
+															<children>
+																<element index="0" pointerID="118">
+																	<name value="LeftShoulder"/>
+																	<relativePos x="0.064658239483833313" y="0.037854805588722229" z="0.078456051647663116"/>
+																	<localOri x="-0.15700227022171021" y="0.18298245966434479" z="-0.73653882741928101" w="0.63196367025375366"/>
+																	<father pointerID="117"/>
+																	<children>
+																		<element index="0" pointerID="119">
+																			<name value="LeftArm"/>
+																			<relativePos x="-0.0070333071053028107" y="0.092396281659603119" z="0.0048540728166699409"/>
+																			<localOri x="0.20343703031539917" y="0.11502939462661743" z="-0.43803560733795166" w="0.86804741621017456"/>
+																			<father pointerID="118"/>
+																			<children>
+																				<element index="0" pointerID="120">
+																					<name value="LeftForeArm"/>
+																					<relativePos x="-0.033439960330724716" y="0.32352808117866516" z="0.00067393376957625151"/>
+																					<localOri x="0.23019978404045105" y="0.0078792506828904152" z="0.037732344120740891" w="0.97237962484359741"/>
+																					<father pointerID="119"/>
+																					<children>
+																						<element index="0" pointerID="121">
+																							<name value="LeftHand"/>
+																							<relativePos x="-1.7763568658700301e-016" y="0.26921308040618896" z="8.8817843293501503e-017"/>
+																							<localOri x="-0.011022317223250866" y="-0.012305037118494511" z="0.70890581607818604" w="0.70510959625244141"/>
+																							<father pointerID="120"/>
+																							<children>
+																								<element index="0" pointerID="122">
+																									<name value="LeftHandMiddle1"/>
+																									<relativePos x="0.087845109403133392" y="0.0072886794805526733" z="0.014296834357082844"/>
+																									<localOri x="0.10720669478178024" y="0.084950245916843414" z="-0.70203447341918945" w="0.69888323545455933"/>
+																									<father pointerID="121"/>
+																									<children>
+																										<element index="0" pointerID="123">
+																											<name value="LeftHandMiddle2"/>
+																											<relativePos x="0" y="0.042805921286344528" z="0"/>
+																											<localOri x="0" y="0.12013527750968933" z="0" w="0.99275749921798706"/>
+																											<father pointerID="122"/>
+																											<children>
+																												<element index="0" pointerID="124">
+																													<name value="LeftHandMiddle3"/>
+																													<relativePos x="-5.7223171978648679e-008" y="0.02765236608684063" z="-2.2889483375365671e-007"/>
+																													<localOri x="0" y="0.12013527750968933" z="0" w="0.99275749921798706"/>
+																													<father pointerID="123"/>
+																													<children/>
+																													<specificBoneIndex value="17"/>
+																												</element>
+																											</children>
+																											<specificBoneIndex value="16"/>
+																										</element>
+																									</children>
+																									<specificBoneIndex value="15"/>
+																								</element>
+																							</children>
+																							<specificBoneIndex value="14"/>
+																						</element>
+																					</children>
+																					<specificBoneIndex value="13"/>
+																				</element>
+																			</children>
+																			<specificBoneIndex value="12"/>
+																		</element>
+																	</children>
+																	<specificBoneIndex value="11"/>
+																</element>
+																<element index="1" pointerID="125">
+																	<name value="Neck"/>
+																	<relativePos x="0" y="0.11868580430746078" z="0.041979949921369553"/>
+																	<localOri x="0.17234884202480316" y="0" z="0" w="0.98503589630126953"/>
+																	<father pointerID="117"/>
+																	<children>
+																		<element index="0" pointerID="126">
+																			<name value="Head"/>
+																			<relativePos x="-2.775557602921922e-018" y="0.088044606149196625" z="0.0089417500421404839"/>
+																			<localOri x="-0.16991710662841797" y="0" z="0" w="0.98545831441879272"/>
+																			<father pointerID="125"/>
+																			<children/>
+																			<specificBoneIndex value="19"/>
+																		</element>
+																	</children>
+																	<specificBoneIndex value="18"/>
+																</element>
+																<element index="2" pointerID="127">
+																	<name value="RightShoulder"/>
+																	<relativePos x="-0.064658239483833313" y="0.037854805588722229" z="0.078456051647663116"/>
+																	<localOri x="0.63196367025375366" y="0.73653882741928101" z="0.18298245966434479" w="0.15700227022171021"/>
+																	<father pointerID="117"/>
+																	<children>
+																		<element index="0" pointerID="128">
+																			<name value="RightArm"/>
+																			<relativePos x="0.0070333071053028107" y="-0.092396281659603119" z="-0.0048540728166699409"/>
+																			<localOri x="0.20343703031539917" y="0.11502939462661743" z="-0.43803560733795166" w="0.86804741621017456"/>
+																			<father pointerID="127"/>
+																			<children>
+																				<element index="0" pointerID="129">
+																					<name value="RightForeArm"/>
+																					<relativePos x="0.033442035317420959" y="-0.32352384924888611" z="-0.00067385047441348433"/>
+																					<localOri x="0.23019978404045105" y="0.0078792506828904152" z="0.037732344120740891" w="0.97237962484359741"/>
+																					<father pointerID="128"/>
+																					<children>
+																						<element index="0" pointerID="130">
+																							<name value="RightHand"/>
+																							<relativePos x="-2.8113133794249734e-006" y="-0.26921695470809937" z="1.787117071216926e-006"/>
+																							<localOri x="-0.011022317223250866" y="-0.012305037118494511" z="0.70890581607818604" w="0.70510959625244141"/>
+																							<father pointerID="129"/>
+																							<children>
+																								<element index="0" pointerID="131">
+																									<name value="RightHandMiddle1"/>
+																									<relativePos x="-0.087844662368297577" y="-0.0072891335003077984" z="-0.014297260902822018"/>
+																									<localOri x="0.10720669478178024" y="0.084950245916843414" z="-0.70203447341918945" w="0.69888323545455933"/>
+																									<father pointerID="130"/>
+																									<children>
+																										<element index="0" pointerID="132">
+																											<name value="RightHandMiddle2"/>
+																											<relativePos x="-7.3810559797493625e-007" y="-0.042806290090084076" z="3.4675954907470441e-007"/>
+																											<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+																											<father pointerID="131"/>
+																											<children>
+																												<element index="0" pointerID="133">
+																													<name value="RightHandMiddle3"/>
+																													<relativePos x="5.560481213251478e-007" y="-0.027652222663164139" z="5.1153637059542234e-007"/>
+																													<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+																													<father pointerID="132"/>
+																													<children/>
+																													<specificBoneIndex value="26"/>
+																												</element>
+																											</children>
+																											<specificBoneIndex value="25"/>
+																										</element>
+																									</children>
+																									<specificBoneIndex value="24"/>
+																								</element>
+																							</children>
+																							<specificBoneIndex value="23"/>
+																						</element>
+																					</children>
+																					<specificBoneIndex value="22"/>
+																				</element>
+																			</children>
+																			<specificBoneIndex value="21"/>
+																		</element>
+																	</children>
+																	<specificBoneIndex value="20"/>
+																</element>
+															</children>
+															<specificBoneIndex value="10"/>
+														</element>
+													</children>
+													<specificBoneIndex value="9"/>
+												</element>
+											</children>
+											<specificBoneIndex value="8"/>
+										</element>
+									</children>
+									<specificBoneIndex value="7"/>
+								</element>
+								<element index="2" pointerID="134">
+									<name value="RightUpLeg"/>
+									<relativePos x="-0.10212200134992599" y="-0.054984539747238159" z="0.025821542367339134"/>
+									<localOri x="0.016695264726877213" y="-0.99965256452560425" z="-0.020392265170812607" w="0.00034057255834341049"/>
+									<father pointerID="108"/>
+									<children>
+										<element index="0" pointerID="135">
+											<name value="RightLeg"/>
+											<relativePos x="3.4093428524784031e-008" y="-0.42601880431175232" z="1.5267227482240742e-008"/>
+											<localOri x="-0.03930944949388504" y="-0.0011256592115387321" z="0.014020202681422234" w="0.99912804365158081"/>
+											<father pointerID="134"/>
+											<children>
+												<element index="0" pointerID="136">
+													<name value="RightFoot"/>
+													<relativePos x="3.3640322527617172e-008" y="-0.38158091902732849" z="-3.7403090402676753e-008"/>
+													<localOri x="0.56723988056182861" y="-0.0010189872700721025" z="-0.0019396783318370581" w="0.82354968786239624"/>
+													<father pointerID="135"/>
+													<children>
+														<element index="0" pointerID="137">
+															<name value="RightFootThumb1"/>
+															<relativePos x="-0.021903958171606064" y="-0.15505887567996979" z="-0.0079937055706977844"/>
+															<localOri x="0.18515172600746155" y="-0.006064058281481266" z="0.036195389926433563" w="0.98202437162399292"/>
+															<father pointerID="136"/>
+															<children>
+																<element index="0" pointerID="138">
+																	<name value="RightFootThumb2"/>
+																	<relativePos x="-3.368964485161996e-008" y="-0.023833906278014183" z="4.0213472551897667e-009"/>
+																	<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+																	<father pointerID="137"/>
+																	<children/>
+																	<specificBoneIndex value="31"/>
+																</element>
+															</children>
+															<specificBoneIndex value="30"/>
+														</element>
+													</children>
+													<specificBoneIndex value="29"/>
+												</element>
+											</children>
+											<specificBoneIndex value="28"/>
+										</element>
+									</children>
+									<specificBoneIndex value="27"/>
+								</element>
+							</children>
+							<specificBoneIndex value="1"/>
+						</element>
+					</children>
+					<specificBoneIndex value="0"/>
+				</rootBone>
+				<bones>
+					<element index="0" pointerID="107"/>
+					<element index="1" pointerID="108"/>
+					<element index="2" pointerID="109"/>
+					<element index="3" pointerID="110"/>
+					<element index="4" pointerID="111"/>
+					<element index="5" pointerID="112"/>
+					<element index="6" pointerID="113"/>
+					<element index="7" pointerID="114"/>
+					<element index="8" pointerID="115"/>
+					<element index="9" pointerID="116"/>
+					<element index="10" pointerID="117"/>
+					<element index="11" pointerID="118"/>
+					<element index="12" pointerID="119"/>
+					<element index="13" pointerID="120"/>
+					<element index="14" pointerID="121"/>
+					<element index="15" pointerID="122"/>
+					<element index="16" pointerID="123"/>
+					<element index="17" pointerID="124"/>
+					<element index="18" pointerID="125"/>
+					<element index="19" pointerID="126"/>
+					<element index="20" pointerID="127"/>
+					<element index="21" pointerID="128"/>
+					<element index="22" pointerID="129"/>
+					<element index="23" pointerID="130"/>
+					<element index="24" pointerID="131"/>
+					<element index="25" pointerID="132"/>
+					<element index="26" pointerID="133"/>
+					<element index="27" pointerID="134"/>
+					<element index="28" pointerID="135"/>
+					<element index="29" pointerID="136"/>
+					<element index="30" pointerID="137"/>
+					<element index="31" pointerID="138"/>
+				</bones>
+			</skeletonDescription>
+			<pelvisBoneIndex value="1"/>
+			<spineBones>
+				<element index="0" pointerID="139">
+					<type value="1"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="7"/>
+					<lastExtension value="10"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="1" y="0" z="0"/>
+					<extensionIkNomalPlane x="1" y="0" z="0"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+			</spineBones>
+			<limbBones>
+				<element index="0" pointerID="140">
+					<type value="2"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="18"/>
+					<lastExtension value="19"/>
+					<coronalLocation value="2"/>
+					<transverseLocation value="0"/>
+					<sagittalLocation value="1"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="1" y="0" z="0"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="1" pointerID="141">
+					<type value="2"/>
+					<firstAuxiliary value="11"/>
+					<lastAuxiliary value="12"/>
+					<firstExtension value="12"/>
+					<lastExtension value="14"/>
+					<coronalLocation value="2"/>
+					<transverseLocation value="0"/>
+					<sagittalLocation value="2"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="-1"/>
+					<extensionIkNomalPlane x="0.99345606565475464" y="0.10278765112161636" z="-0.049756497144699097"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="2" pointerID="142">
+					<type value="3"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="2"/>
+					<lastExtension value="4"/>
+					<coronalLocation value="2"/>
+					<transverseLocation value="1"/>
+					<sagittalLocation value="2"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="-1" y="0" z="0"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="3" pointerID="143">
+					<type value="2"/>
+					<firstAuxiliary value="20"/>
+					<lastAuxiliary value="21"/>
+					<firstExtension value="21"/>
+					<lastExtension value="23"/>
+					<coronalLocation value="2"/>
+					<transverseLocation value="0"/>
+					<sagittalLocation value="0"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="-1"/>
+					<extensionIkNomalPlane x="0.99345338344573975" y="0.10279512405395508" z="-0.049796216189861298"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="4" pointerID="144">
+					<type value="3"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="27"/>
+					<lastExtension value="29"/>
+					<coronalLocation value="2"/>
+					<transverseLocation value="1"/>
+					<sagittalLocation value="0"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="-1" y="0" z="0"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+			</limbBones>
+			<effectorBones>
+				<element index="0" pointerID="145">
+					<type value="3"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="5"/>
+					<lastExtension value="6"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="0.84434348344802856" y="-0.00020196288824081421" z="0.53579992055892944"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="1" pointerID="146">
+					<type value="2"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="15"/>
+					<lastExtension value="17"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="-1"/>
+					<extensionIkNomalPlane x="0" y="0" z="-1"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="2" pointerID="147">
+					<type value="3"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="30"/>
+					<lastExtension value="31"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="0"/>
+					<extensionIkNomalPlane x="0.42578622698783875" y="-2.0287930965423584e-005" z="-0.90482312440872192"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+				<element index="3" pointerID="148">
+					<type value="2"/>
+					<firstAuxiliary value="-1"/>
+					<lastAuxiliary value="-1"/>
+					<firstExtension value="24"/>
+					<lastExtension value="26"/>
+					<coronalLocation value="3"/>
+					<transverseLocation value="3"/>
+					<sagittalLocation value="3"/>
+					<auxiliaryIkNomalPlane x="0" y="0" z="-1"/>
+					<extensionIkNomalPlane x="0" y="0" z="-1"/>
+					<auxiliaryComputeFullExtentLength value="1"/>
+					<extensionComputeFullExtentLength value="1"/>
+					<auxRollAttributes/>
+					<extRollAttributes/>
+				</element>
+			</effectorBones>
+			<spineBoneNames>
+				<element index="0" value="Spine"/>
+			</spineBoneNames>
+			<limbBoneNames>
+				<element index="0" value="Head"/>
+				<element index="1" value="LeftArm"/>
+				<element index="2" value="LeftLeg"/>
+				<element index="3" value="RightArm"/>
+				<element index="4" value="RightLeg"/>
+			</limbBoneNames>
+			<effectorBoneNames>
+				<element index="0" value="LeftFootThumb"/>
+				<element index="1" value="LeftHandMiddle"/>
+				<element index="2" value="RightFootThumb"/>
+				<element index="3" value="RightHandMiddle"/>
+			</effectorBoneNames>
+			<ikExcludedBones/>
+			<upAxis x="0" y="0.99999994039535522" z="0"/>
+			<frontAxis x="0" y="0" z="0.99999994039535522"/>
+			<boneConfigurations>
+				<element index="0" pointerID="149">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0" y="0" z="0"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000129699707031" y="-45.000129699707031" z="-45.000156402587891"/>
+					<_jointAngularUpperLimit x="45.000129699707031" y="45.000129699707031" z="45.000129699707031"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="1" pointerID="150">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.14000000059604645" y="0" z="0.05000000074505806"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="2" pointerID="151">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.063902847468852997" y="0" z="0.21300947666168213"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="3" pointerID="152">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.057237036526203156" y="0" z="0.19079011678695679"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="4" pointerID="153">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.090000003576278687" y="0.039999999105930328" z="0.05000000074505806"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="5" pointerID="154">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0035751152317970991" y="0.0035751152317970991" z="0.011917049996554852"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000484466552734" y="-45.000484466552734" z="-45.000511169433594"/>
+					<_jointAngularUpperLimit x="45.000511169433594" y="45.000511169433594" z="45.000484466552734"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="6" pointerID="155">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0035751152317970991" y="0.0035751152317970991" z="0.0035751152317970991"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000564575195312" y="-45.000564575195312" z="-45.000564575195312"/>
+					<_jointAngularUpperLimit x="45.000591278076172" y="45.000591278076172" z="45.000564575195312"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="7" pointerID="156">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.14000000059604645" y="0" z="0.10000000149011612"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="8" pointerID="157">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.030914561823010445" y="0.030914561823010445" z="0.061829123646020889"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="262144"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000320434570312" y="-45.000347137451172" z="-45.000347137451172"/>
+					<_jointAngularUpperLimit x="45.000320434570312" y="45.000320434570312" z="45.000320434570312"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="9" pointerID="158">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.11999999731779099" y="0" z="0.059999998658895493"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="10" pointerID="159">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.036681115627288818" y="0.036681115627288818" z="0.073362231254577637"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="4034560"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.80000001192092896"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="11" pointerID="160">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.01391858235001564" y="0.01391858235001564" z="0.046395272016525269"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000564575195312" y="-45.000564575195312" z="-45.000564575195312"/>
+					<_jointAngularUpperLimit x="45.000564575195312" y="45.000564575195312" z="45.000591278076172"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="12" pointerID="161">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.048787757754325867" y="0" z="0.16262584924697876"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="13" pointerID="162">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.040381882339715958" y="0" z="0.13460627198219299"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="14" pointerID="163">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.039999999105930328" y="0.029999999329447746" z="0.079999998211860657"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="15" pointerID="164">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0064208740368485451" y="0.0064208740368485451" z="0.021402912214398384"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000812530517578" y="-45.000812530517578" z="-45.000812530517578"/>
+					<_jointAngularUpperLimit x="45.000839233398438" y="45.000812530517578" z="45.000812530517578"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="16" pointerID="165">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0041478467173874378" y="0.0041478467173874378" z="0.013826155103743076"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.0009765625" y="-45.000946044921875" z="-45.000946044921875"/>
+					<_jointAngularUpperLimit x="45.0009765625" y="45.0009765625" z="45.0009765625"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="17" pointerID="166">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0041478467173874378" y="0.0041478467173874378" z="0.0041478467173874378"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.0009765625" y="-45.0009765625" z="-45.0009765625"/>
+					<_jointAngularUpperLimit x="45.0009765625" y="45.001003265380859" z="45.0009765625"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="18" pointerID="167">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.059999998658895493" y="0" z="0.059999998658895493"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="19" pointerID="168">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.079999998211860657" y="0" z="0.05000000074505806"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="20" pointerID="169">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.013918584212660789" y="0.013918584212660789" z="0.046395279467105865"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000591278076172" y="-45.000591278076172" z="-45.000591278076172"/>
+					<_jointAngularUpperLimit x="45.000564575195312" y="45.000591278076172" z="45.000621795654297"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="21" pointerID="170">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.04878723993897438" y="0" z="0.16262412071228027"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="22" pointerID="171">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.040382534265518188" y="0" z="0.13460844755172729"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="23" pointerID="172">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.039999999105930328" y="0.029999999329447746" z="0.079999998211860657"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="24" pointerID="173">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0064209392294287682" y="0.0064209392294287682" z="0.021403130143880844"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000755310058594" y="-45.000728607177734" z="-45.000701904296875"/>
+					<_jointAngularUpperLimit x="45.000728607177734" y="45.000728607177734" z="45.000701904296875"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="25" pointerID="174">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0041478336788713932" y="0.0041478336788713932" z="0.013826111331582069"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000839233398438" y="-45.000812530517578" z="-45.000812530517578"/>
+					<_jointAngularUpperLimit x="45.000839233398438" y="45.000812530517578" z="45.000839233398438"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="26" pointerID="175">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0041478336788713932" y="0.0041478336788713932" z="0.0041478336788713932"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000892639160156" y="-45.000919342041016" z="-45.000919342041016"/>
+					<_jointAngularUpperLimit x="45.000919342041016" y="45.000919342041016" z="45.000919342041016"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="27" pointerID="176">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.063902825117111206" y="0" z="0.21300940215587616"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="28" pointerID="177">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.057237140834331512" y="0" z="0.19079045951366425"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="2"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="29" pointerID="178">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="0.090000003576278687" y="0.039999999105930328" z="0.05000000074505806"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.15000000596046448"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45" y="-45" z="-45"/>
+					<_jointAngularUpperLimit x="45" y="45" z="45"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="30" pointerID="179">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0035750847309827805" y="0.0035750847309827805" z="0.011916948482394218"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000347137451172" y="-45.000347137451172" z="-45.000320434570312"/>
+					<_jointAngularUpperLimit x="45.000320434570312" y="45.000293731689453" z="45.000293731689453"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+				<element index="31" pointerID="180">
+					<color value="8421504"/>
+					<inUse value="0"/>
+					<automaticDimensions value="1"/>
+					<halfExtents x="0.0035750847309827805" y="0.0035750847309827805" z="0.0035750847309827805"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="1"/>
+					<localOrientationOffset x="0" y="0" z="0" w="1"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.05000000074505806"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="-45.000400543212891" y="-45.00042724609375" z="-45.000400543212891"/>
+					<_jointAngularUpperLimit x="45.000457763671875" y="45.000400543212891" z="45.00042724609375"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+			</boneConfigurations>
+			<channelMirrorSources>
+				<element index="0" value="0"/>
+				<element index="1" value="3"/>
+				<element index="2" value="4"/>
+				<element index="3" value="1"/>
+				<element index="4" value="2"/>
+			</channelMirrorSources>
+			<effectorMirrorSources>
+				<element index="0" pointerID="181">
+					<effectorMirrorSourcesIdx/>
+				</element>
+				<element index="1" pointerID="182">
+					<effectorMirrorSourcesIdx>
+						<element index="0" value="0"/>
+					</effectorMirrorSourcesIdx>
+				</element>
+				<element index="2" pointerID="183">
+					<effectorMirrorSourcesIdx>
+						<element index="0" value="0"/>
+					</effectorMirrorSourcesIdx>
+				</element>
+				<element index="3" pointerID="184">
+					<effectorMirrorSourcesIdx>
+						<element index="0" value="0"/>
+					</effectorMirrorSourcesIdx>
+				</element>
+				<element index="4" pointerID="185">
+					<effectorMirrorSourcesIdx>
+						<element index="0" value="0"/>
+					</effectorMirrorSourcesIdx>
+				</element>
+			</effectorMirrorSources>
+			<groundHeightArray>
+				<element index="0" value="0"/>
+				<element index="1" value="0"/>
+				<element index="2" value="0"/>
+				<element index="3" value="0"/>
+				<element index="4" value="0"/>
+			</groundHeightArray>
+			<blindDataInfo/>
+			<squashStretchWeightsArray>
+				<element index="0" value="1"/>
+				<element index="1" value="1"/>
+				<element index="2" value="1"/>
+				<element index="3" value="1"/>
+				<element index="4" value="1"/>
+				<element index="5" value="1"/>
+				<element index="6" value="1"/>
+				<element index="7" value="1"/>
+				<element index="8" value="1"/>
+				<element index="9" value="1"/>
+				<element index="10" value="1"/>
+				<element index="11" value="1"/>
+				<element index="12" value="1"/>
+				<element index="13" value="1"/>
+				<element index="14" value="1"/>
+				<element index="15" value="1"/>
+				<element index="16" value="1"/>
+				<element index="17" value="1"/>
+				<element index="18" value="1"/>
+				<element index="19" value="1"/>
+				<element index="20" value="1"/>
+				<element index="21" value="1"/>
+				<element index="22" value="1"/>
+				<element index="23" value="1"/>
+				<element index="24" value="1"/>
+				<element index="25" value="1"/>
+				<element index="26" value="1"/>
+				<element index="27" value="1"/>
+				<element index="28" value="1"/>
+				<element index="29" value="1"/>
+				<element index="30" value="1"/>
+				<element index="31" value="1"/>
+			</squashStretchWeightsArray>
+			<cacheAllowed>
+				<element index="0" value="1"/>
+				<element index="1" value="1"/>
+				<element index="2" value="1"/>
+				<element index="3" value="1"/>
+				<element index="4" value="1"/>
+				<element index="5" value="1"/>
+				<element index="6" value="1"/>
+				<element index="7" value="1"/>
+				<element index="8" value="1"/>
+				<element index="9" value="1"/>
+				<element index="10" value="1"/>
+				<element index="11" value="1"/>
+				<element index="12" value="1"/>
+				<element index="13" value="1"/>
+				<element index="14" value="1"/>
+				<element index="15" value="1"/>
+				<element index="16" value="1"/>
+				<element index="17" value="1"/>
+				<element index="18" value="1"/>
+				<element index="19" value="1"/>
+				<element index="20" value="1"/>
+				<element index="21" value="1"/>
+				<element index="22" value="1"/>
+				<element index="23" value="1"/>
+				<element index="24" value="1"/>
+				<element index="25" value="1"/>
+				<element index="26" value="1"/>
+				<element index="27" value="1"/>
+				<element index="28" value="1"/>
+				<element index="29" value="1"/>
+				<element index="30" value="1"/>
+			</cacheAllowed>
+			<bonesSnsScaleModes>
+				<element index="0" value="0"/>
+				<element index="1" value="0"/>
+				<element index="2" value="0"/>
+				<element index="3" value="0"/>
+				<element index="4" value="0"/>
+				<element index="5" value="0"/>
+				<element index="6" value="0"/>
+				<element index="7" value="0"/>
+				<element index="8" value="0"/>
+				<element index="9" value="0"/>
+				<element index="10" value="0"/>
+				<element index="11" value="0"/>
+				<element index="12" value="0"/>
+				<element index="13" value="0"/>
+				<element index="14" value="0"/>
+				<element index="15" value="0"/>
+				<element index="16" value="0"/>
+				<element index="17" value="0"/>
+				<element index="18" value="0"/>
+				<element index="19" value="0"/>
+				<element index="20" value="0"/>
+				<element index="21" value="0"/>
+				<element index="22" value="0"/>
+				<element index="23" value="0"/>
+				<element index="24" value="0"/>
+				<element index="25" value="0"/>
+				<element index="26" value="0"/>
+				<element index="27" value="0"/>
+				<element index="28" value="0"/>
+				<element index="29" value="0"/>
+				<element index="30" value="0"/>
+				<element index="31" value="0"/>
+			</bonesSnsScaleModes>
+		</converterMapping>
+		<characterUserData pointerID="186">
+			<nodesPositions>
+				<element index="0" x="0" y="0"/>
+				<element index="1" x="0" y="-357.616943359375"/>
+				<element index="2" x="0" y="-698.38812255859375"/>
+				<element index="3" x="212.40914916992187" y="-616.88671875"/>
+				<element index="4" x="176.49203491210937" y="207.17691040039062"/>
+				<element index="5" x="-212.40914916992187" y="-616.88671875"/>
+				<element index="6" x="-176.49203491210937" y="207.17691040039062"/>
+				<element index="7" x="406.49203491210937" y="207.17691040039062"/>
+				<element index="8" x="442.40914916992187" y="-616.88671875"/>
+				<element index="9" x="-406.49203491210937" y="207.17691040039062"/>
+				<element index="10" x="-442.40914916992187" y="-616.88671875"/>
+				<element index="11" x="-894.5408935546875" y="464.4339599609375"/>
+				<element index="12" x="-694.5408935546875" y="-17.0660400390625"/>
+				<element index="13" x="-694.5408935546875" y="122.4339599609375"/>
+				<element index="14" x="-694.5408935546875" y="308.4339599609375"/>
+				<element index="15" x="-694.5408935546875" y="447.9339599609375"/>
+				<element index="16" x="-694.5408935546875" y="540.9339599609375"/>
+				<element index="17" x="-694.5408935546875" y="633.9339599609375"/>
+				<element index="18" x="-694.5408935546875" y="726.9339599609375"/>
+				<element index="19" x="-694.5408935546875" y="882.9339599609375"/>
+				<element index="20" x="-494.5408935546875" y="-17.0660400390625"/>
+				<element index="21" x="-494.5408935546875" y="75.9339599609375"/>
+				<element index="22" x="-494.5408935546875" y="168.9339599609375"/>
+				<element index="23" x="-494.5408935546875" y="261.9339599609375"/>
+				<element index="24" x="-494.5408935546875" y="354.9339599609375"/>
+				<element index="25" x="-494.5408935546875" y="447.9339599609375"/>
+				<element index="26" x="-494.5408935546875" y="540.9339599609375"/>
+				<element index="27" x="-494.5408935546875" y="633.9339599609375"/>
+				<element index="28" x="-494.5408935546875" y="726.9339599609375"/>
+				<element index="29" x="-494.5408935546875" y="836.4339599609375"/>
+				<element index="30" x="-494.54092407226562" y="945.9339599609375"/>
+				<element index="31" x="-400" y="-31.5"/>
+				<element index="32" x="0" y="0"/>
+				<element index="33" x="0" y="0"/>
+				<element index="34" x="0" y="0"/>
+				<element index="35" x="0" y="0"/>
+				<element index="36" x="0" y="0"/>
+				<element index="37" x="0" y="0"/>
+				<element index="38" x="0" y="0"/>
+				<element index="39" x="0" y="0"/>
+				<element index="40" x="0" y="0"/>
+				<element index="41" x="0" y="0"/>
+				<element index="42" x="-294.5408935546875" y="804.9339599609375"/>
+				<element index="43" x="-294.5408935546875" y="867.9339599609375"/>
+				<element index="44" x="-200" y="-31.5"/>
+				<element index="45" x="0" y="0"/>
+				<element index="46" x="0" y="0"/>
+				<element index="47" x="0" y="0"/>
+				<element index="48" x="0" y="0"/>
+				<element index="49" x="0" y="0"/>
+				<element index="50" x="-94.5408935546875" y="804.9339599609375"/>
+				<element index="51" x="-94.5408935546875" y="867.9339599609375"/>
+				<element index="52" x="0" y="-63"/>
+				<element index="53" x="0" y="0"/>
+				<element index="54" x="0" y="0"/>
+				<element index="55" x="0" y="0"/>
+				<element index="56" x="0" y="0"/>
+				<element index="57" x="0" y="0"/>
+				<element index="58" x="0" y="0"/>
+				<element index="59" x="0" y="0"/>
+				<element index="60" x="0" y="0"/>
+				<element index="61" x="0" y="0"/>
+				<element index="62" x="0" y="0"/>
+				<element index="63" x="0" y="0"/>
+				<element index="64" x="0" y="0"/>
+				<element index="65" x="105.4591064453125" y="804.9339599609375"/>
+				<element index="66" x="105.4591064453125" y="867.9339599609375"/>
+			</nodesPositions>
+		</characterUserData>
+	</golaemObject>
+</XMLSerialization>
+

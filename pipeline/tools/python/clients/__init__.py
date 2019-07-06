@@ -64,7 +64,8 @@ class clients(object):
         self.gd_client.source = 'Spreadsheets GData Sample'
         self.curr_key = ''
         self.curr_wksht_id = ''
-        self.internet = True
+        self.internet = False
+        self.data = {}
         #if os.popen('ping -c 1 8.8.8.8 | grep 100%').readlines():
         #    self.internet = False
         if self.internet:
@@ -124,7 +125,8 @@ class clients(object):
 #          print 'Updated!'
 
     def live(self):
-        if not self.curr_wksht_id:
+
+        if self.internet and not self.curr_wksht_id:
             # Get the list of spreadsheets
             feed = self.gd_client.GetSpreadsheetsFeed()
 #            self._PrintFeed(feed)
@@ -150,6 +152,8 @@ class clients(object):
         to avoid hammering google docs, which can block us in that case!
         The cache have a 30 mins lifetime!
         '''
+        if not self.internet:
+            return
 
         cache = "/usr/tmp/.%s_cache_clientes.dat" % os.environ['USER']
         refresh = True
@@ -212,6 +216,6 @@ def all(cacheLifetime=30):
     return clientes.data
 
 def asPreset():
-    names = map( lambda x: (x,x), all().keys() )
+    names = map( lambda x: (x,x), ['no client','Could not retrieve Clients - Connection Error!']+all().keys() )
     names.sort()
     return tuple( names )

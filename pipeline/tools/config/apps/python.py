@@ -27,6 +27,7 @@ class python(baseLib):
     when python complains it cant open config/Makefile!
     '''
     def environ(self):
+        from glob import glob
         parent = self.parent()
         # force the system libraries to be preloaded since we have OIIO and OCIO
         # compiled with the system libraries.
@@ -36,10 +37,11 @@ class python(baseLib):
             self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libgcc_s.so.1")
 
         # if nuke version < 8.0 or gaffer, force to load our libpython shared lib
-        sharedLib = self.path('lib/libpython%s.so.1.0' % pipe.libs.version.get('python')[:3])
-        if os.path.exists(sharedLib):
-            if (self.parent()=='nuke' and float(pipe.version.get('nuke')[:3])<8) or self.parent() in ['gaffer']:
-                self['LD_PRELOAD'] = sharedLib
+        if parent in ['nuke','gaffer']:
+            sharedLib = self.path('lib/libpython%s.so.1.0' % pipe.libs.version.get('python')[:3])
+            if os.path.exists(sharedLib):
+                if (self.parent()=='nuke' and float(pipe.version.get('nuke')[:3])<8) or self.parent() in ['gaffer']:
+                    self['LD_PRELOAD'] = sharedLib
 
 
         # set PYTHONHOME for some apps...
@@ -47,6 +49,10 @@ class python(baseLib):
             self['PYTHONHOME'] = self.path()
 
         if self.parent() in ['python','cortex','gaffer']:
+            # if self.parent() in ['python']:
+            #     self.update( maya() )
+            #     self.ignorePipeLib( "qt" )
+
             # initialize cortex environment so we can load its modules.
             self.update( cortex() )
             self.update( gaffer() )
@@ -59,7 +65,11 @@ class python(baseLib):
             self.update( qube() )
             self.update( cgru() )
 
+        self['PYTHONPATH'] = self.path('/lib/python2.7/lib-dynload/')
 
+        if self.parent() in ['maya']:
+            for each in glob('%s/lib/python*/site-packages/*.egg' % self.path()):
+                self['PYTHONPATH'] = each
 
     def bins(self):
         return [('python', 'python')]

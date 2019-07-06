@@ -1,24 +1,6 @@
-# =================================================================================
-#    This file is part of pipeVFX.
-#
-#    pipeVFX is a software system initally authored back in 2006 and currently 
-#    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
-#
-#    pipeVFX is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Lesser General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    pipeVFX is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Lesser General Public License for more details.
-#
-#    You should have received a copy of the GNU Lesser General Public License
-#    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
-# =================================================================================
-
 #import bgNukes
+
+import collectFiles
 
 menubar = nuke.menu ('Nuke')
 # Nukepedia
@@ -35,6 +17,8 @@ menubar.addCommand('Nukepedia/Additive Keyer 2', 'nuke.createNode("AdditiveKeyer
 #menubar.addCommand('Nukepedia/Rotopaint to SplineWarp', 'nuke.createNode("RotopaintToSplineWarp_v2")')
 # Atomo
 
+menubar.addCommand('Atomo/Collect Files', 'collectFiles.collectFiles()')
+# collectFiles()
 menubar.addCommand('Atomo/Burnator (Nuke 8 ONLY)', 'nuke.createNode("Burnator")')
 # Boundary VFX Tools
 
@@ -42,3 +26,14 @@ menubar.addCommand('Atomo/Burnator (Nuke 8 ONLY)', 'nuke.createNode("Burnator")'
 #bvfxt = toolbar.addMenu("BoundaryVFX Tools")
 #bvfxt.addCommand('Locate files paths', "bvfx_findPath(False)")
 #bvfxt.addCommand('Make paths relative',"bvfx_relativize()") 
+
+# add KeenTools menu to Nodes toolbar
+#toolbar = nuke.menu('Nodes')
+#kt_menu = toolbar.addMenu('KeenTools', icon='KeenTools.png')
+#kt_menu.addCommand('GeoTracker', lambda: nuke.createNode('GeoTracker'), icon='GeoTracker.png')
+#kt_menu.addCommand('PinTool', lambda: nuke.createNode('PinTool'), icon='PinTool.png')
+#kt_menu.addCommand('ReadRiggedGeo', lambda: nuke.createNode('ReadRiggedGeo'), icon='ReadRiggedGeo.png')
+#if 'OFF' == 'ON':
+#    kt_menu.addCommand('FlowEvaluationTool', lambda: nuke.createNode('FlowEvaluationTool'), icon='KeenTools.png')
+#if 'OFF' == 'ON':
+#        kt_menu.addCommand('FlowEvaluationTool', lambda: nuke.createNode('FlowEvaluationTool'), icon='KeenTools.png')

@@ -1,0 +1,14 @@
+<args format="1.0">
+<param name="input1" label="input1"/>
+<param name="input2" label="input2"/>
+<param name="input3" label="input3"/>
+<param name="combineOp" label="Combine Op" widget="popup">
+	<hintlist name="options">
+		<string value="multiply 1*2"/>
+		<string value="add 1+2"/>
+		<string value="divide 1/2"/>
+		<string value="subtract 1-2"/>
+		<string value="lerp(1, 2, 3)"/>
+	</hintlist>
+</param>
+</args>

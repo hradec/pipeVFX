@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEcryptomatteAOV">
+		<label>cryptomatteAOV</label>
+		<description>Cryptomatte AOV Writer (pass-through)</description>
+		<attribute name="passthrough" type="maya.float3">
+			<label>Passthrough</label>
+			<description>Plug your surface in here to trigger shader evaluation</description>
+		</attribute>
+		<attribute name="crypto_asset_override" type="maya.string">
+			<label>Crypto asset override</label>
+			<description>Override the cryptomatte asset string for this shader</description>
+		</attribute>
+		<attribute name="crypto_object_override" type="maya.string">
+			<label>Crypto object override</label>
+			<description>Override the cryptomatte object string for this shader</description>
+		</attribute>
+		<attribute name="crypto_material_override" type="maya.string">
+			<label>Crypto material override</label>
+			<description>Override the cryptomatte material string for this shader</description>
+		</attribute>
+		<attribute name="aov_crypto_asset" type="maya.float3">
+			<label>Asset AOV name</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_object" type="maya.float3">
+			<label>Object AOV name</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_material" type="maya.float3">
+			<label>Material AOV name</label>
+			<description></description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEcryptomatteAOV">
+			<property name="passthrough"/>
+			<group name="AOVs">
+				<label>AOVs</label>
+				<property name="crypto_asset_override"/>
+				<property name="crypto_object_override"/>
+				<property name="crypto_material_override"/>
+				<property name="aov_crypto_asset"/>
+				<property name="aov_crypto_object"/>
+				<property name="aov_crypto_material"/>
+			</group>
+		</view>
+</templates>

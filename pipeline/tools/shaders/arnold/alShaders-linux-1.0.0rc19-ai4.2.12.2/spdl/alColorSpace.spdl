@@ -1,0 +1,72 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{c23228f1-75bc-4d27-9257-9702033c7f20}";
+PropertySet "alColorSpace_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{aadd438e-925d-48b2-94fa-6226c0adea09}";
+		Type = color;
+	}
+	Parameter "input" input
+	{
+		GUID = "{3362e9da-a940-443d-b253-47bd311c027f}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "sourceSpace" input
+	{
+		GUID = "{eb7c354e-6106-414e-8e8c-070f17e95078}";
+		Type = string;
+		Texturable = off;
+		Value = "sRGB";
+	}
+}
+MetaShader "alColorSpace_meta"
+{
+	Name = "ALS_ColorSpace";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_ColorSpace";
+		Filename = "alColorSpace";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	input
+	{
+		Name = "input";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sourceSpace
+	{
+		Name = "Source space";
+		UIType = "Combo";
+		Items
+		{
+			"sRGB" = "sRGB";
+			"Cineon" = "Cineon";
+			"LogC" = "LogC";
+		}
+	}
+}
+Layout "Default"
+{
+	input;
+	sourceSpace;
+}
+Layout "RenderTree"
+{
+	input;
+}
+Plugin = Shader
+{
+	Filename = "alColorSpace";
+}

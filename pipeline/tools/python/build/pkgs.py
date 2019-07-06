@@ -25,6 +25,33 @@ import SCons, os
 SCons.Script.SetOption('warn', 'no-all')
 #SCons.Script.SetOption('num_jobs', 8)
 
+#zlib = build.configure(
+#        ARGUMENTS,
+#        'zlib',
+#        download=[
+#          (
+#            'http://zlib.net/zlib-1.2.8.tar.gz',
+#            'zlib-1.2.8.tar.gz',
+#            '1.2.8',
+#            '44d667c142d7cda120332623eab69f40'
+#          ),
+#        ],
+#)
+#build.allDepend.append(zlib)
+#curl = build.configure(
+#        ARGUMENTS,
+#        'curl',
+#        download=[
+#          (
+#            'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
+#            'curl-7.42.1.tar.gz',
+#            '7.42.1',
+#            '8df5874c4a67ad55496bf3af548d99a2'
+#          ),
+#        ],
+#)
+#build.allDepend.append(curl)
+
 def versionSort(versions):
     def method(v):
         v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
@@ -64,20 +91,19 @@ class all: # noqa
                ],
         )
         build.allDepend.append(zlib)
-        curl = build.configure(
-               ARGUMENTS,
-               'curl',
-               download=[
-                 (
-                   'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
-                   'curl-7.42.1.tar.gz',
-                   '7.42.1',
-                   '8df5874c4a67ad55496bf3af548d99a2'
-                 ),
-               ],
-        )
-        build.allDepend.append(curl)
-
+        # curl = build.configure(
+        #        ARGUMENTS,
+        #        'curl',
+        #        download=[
+        #          (
+        #            'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
+        #            'curl-7.42.1.tar.gz',
+        #            '7.42.1',
+        #            '8df5874c4a67ad55496bf3af548d99a2'
+        #          ),
+        #        ],
+        # )
+        # build.allDepend.append(curl)
         gmp = build.configure(
                ARGUMENTS,
                'gmp',
@@ -89,14 +115,15 @@ class all: # noqa
                    #   'b7ff2d88cae7f8085bd5006096eed470'
                    # ),
                    (
-                     'https://gmplib.org/download/gmp/gmp-6.1.2.tar.lz',
+                     'https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2',
                      'gmp-6.1.2.tar.gz',
                      '6.1.2',
-                     'b7ff2d88cae7f8085bd5006096eed470'
+                     '8ddbb26dc3bd4e2302984debba1406a5'
                    ),
 
                ],
         )
+        build.allDepend.append(gmp)
         mpfr = build.configure(
                ARGUMENTS,
                'mpfr',
@@ -111,11 +138,12 @@ class all: # noqa
                      'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
                      'mpfr-3.1.6.tar.gz',
                      '3.1.6',
-                     '482ab3c120ffc959f631b4ba9ec59a46'
+                     '95dcfd8629937996f826667b9e24f6ff'
                    ),
                ],
                depend = [ gmp ],
         )
+        build.allDepend.append(mpfr)
         mpc = build.configure(
                ARGUMENTS,
                'mpc',
@@ -127,7 +155,19 @@ class all: # noqa
                    'd6a1d5f8ddea3abd2cc3e98f58352d26'
                  ),
                ],
-               depend = [ mpfr, gmp ],
+        )
+        build.allDepend.append(mpc)
+        mpfr = build.configure(
+               ARGUMENTS,
+               'mpfr',
+               download=[
+                 (
+                   'https://gforge.inria.fr/frs/download.php/file/35627/mpfr-3.1.4.tar.gz',
+                   'mpfr-3.1.4.tar.gz',
+                   '3.1.4',
+                   '482ab3c120ffc959f631b4ba9ec59a46'
+                 ),
+               ],
         )
         gcc = build.gccBuild(
                 ARGUMENTS,
@@ -144,12 +184,13 @@ class all: # noqa
                 #    '4.8.5',
                 #    'bfe56e74d31d25009c8fb55fd3ca7e01'
                 # ),(
-                   'http://ftp.tsukuba.wide.ad.jp/software/gcc/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
+                   'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
                    'gcc-4.8.3.tar.gz',
                    '4.8.3',
                    'e2c60f5ef918be2db08df96c7d97d0c4'
+                #    'bfe56e74d31d25009c8fb55fd3ca7e01'
                 ),(
-                   'http://ftp.tsukuba.wide.ad.jp/software/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                   'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
                    'gcc-4.1.2.tar.gz',
                    '4.1.2',
                    'dd2a7f4dcd33808d344949fcec87aa86'
@@ -159,7 +200,6 @@ class all: # noqa
         self.gcc = gcc
         # lets use our own latest GCC to build everything!!!
         build.allDepend.append(gcc)
-
 
         icu = build.configure(
             ARGUMENTS,
@@ -181,10 +221,10 @@ class all: # noqa
             ARGUMENTS,
             'bzip2',
             download=[(
-                'http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz',
+                'https://downloads.sourceforge.net/project/bzip2/bzip2-1.0.6.tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fbzip2%2Ffiles%2Fbzip2-1.0.6.tar.gz%2Fdownload&ts=1557548225',
                 'bzip2-1.0.6.tar.gz',
                 '1.0.6',
-                '527819af097ee3014e4d442315b6f283'
+                '00b516f4704d4a7cb50a1d97e6e8e15b'
             )],
             cmd = [
                 'make -j $DCORES CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$TARGET_FOLDER',
@@ -248,13 +288,13 @@ class all: # noqa
             ARGUMENTS,
             'python',
             download=[(
-                'https://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
+                'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
                 'Python-2.6.9.tar.gz',
                 '2.6.9',
                 'bddbd64bf6f5344fc55bbe49a72fe4f3',
                 { readline : '5.2.0', openssl : '1.0.2h' },
             ),(
-                'https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
+                'http://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
                 'Python-2.7.12.tar.gz',
                 '2.7.12',
                 '88d61f82e3616a4be952828b3694109d',
@@ -273,7 +313,6 @@ class all: # noqa
                 'PyOpenGL-accelerate',
                 'cython',
                 'subprocess32',
-                'psutil',
             ]
         )
         self.python = python
@@ -431,7 +470,7 @@ class all: # noqa
                 '3.8.2',
                 'fbb6f446ea4ed18955e2714934e5b698'
             ),(
-                'http://download.osgeo.org/libtiff/old/tiff-4.0.3.tar.gz',
+                'http://download.osgeo.org/libtiff/tiff-4.0.3.tar.gz',
                 'tiff-4.0.3.tar.gz',
                 '4.0.3',
                 '051c1068e6a0627f461948c365290410',
@@ -463,15 +502,15 @@ class all: # noqa
             ARGUMENTS,
             'freetype',
             download=[(
-                'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.5.5.tar.gz',
-                'freetype-2.5.5.tar.gz',
-                '2.5.5',
-                '7448edfbd40c7aa5088684b0a3edb2b8',
-            ),(
                 'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.4.0.tar.gz',
                 'freetype-2.4.0.tar.gz',
                 '2.4.0',
                 'f900148ae8e258803eb1ab9f564f2151'
+            ),(
+                'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.5.5.tar.gz',
+                'freetype-2.5.5.tar.gz',
+                '2.5.5',
+                '7448edfbd40c7aa5088684b0a3edb2b8',
             )],
         )
         build.allDepend.append(freetype)
@@ -741,7 +780,7 @@ class all: # noqa
             ARGUMENTS,
             'hdf5',
             download=[(
-                'https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
+                'https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
                 'hdf5-1.8.17.tar.gz',
                 '1.8.17',
                 '7d572f8f3b798a628b8245af0391a0ca'
@@ -844,7 +883,7 @@ class all: # noqa
         # )
         # self.clang = clang
 
-        clang_url = 'http://releases.llvm.org/3.5.2/cfe-3.5.2.src.tar.xz'
+        clang_url = 'http://llvm.org/releases/3.5.2/cfe-3.5.2.src.tar.xz'
         llvm = build.configure(
             ARGUMENTS,
             'llvm',
@@ -872,9 +911,8 @@ class all: # noqa
                 'ln -s cfe-3.5.2.src ./clang',
                 'cd ..',
                 'mkdir -p build && cd build',
-                '../configure  --enable-shared --disable-docs --enable-optimized --enable-assertions=no',
-                'env REQUIRES_RTTI=1 make -j $DCORES VERBOSE=1',
-                'make -j $DCORES install',
+                ' && '.join(build.configure.cmd).replace('./configure','../configure --disable-docs'),
+                #'cmake .. && make -j $DCORES  install',
             ]
         )
         self.llvm = llvm
@@ -940,7 +978,7 @@ class all: # noqa
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS="-DENABLERTTI=1  -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags)+'" '
+                'MY_CMAKE_FLAGS="-DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags)+'" '
                 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags))+' ENABLERTTI=1" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
@@ -973,22 +1011,21 @@ class all: # noqa
             #     '4.8.4',
             #     '89c5ecba180cae74c66260ac732dc5cb',
             # ),(
-                'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
-                'qt-everywhere-opensource-src-4.8.6.tar.gz',
-                '4.8.6',
-                '2edbe4d6c2eff33ef91732602f3518eb',
+            #     'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
+            #     'qt-everywhere-opensource-src-4.8.6.tar.gz',
+            #     '4.8.6',
+            #     '2edbe4d6c2eff33ef91732602f3518eb',
+            # ),(
+                'http://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
+                'qt-everywhere-opensource-src-4.8.7.tar.gz',
+                '4.8.7',
+                'd990ee66bf7ab0c785589776f35ba6ad',
                 { gcc : '4.1.2' }
             # ),(
-                # 'http://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
-                # 'qt-everywhere-opensource-src-4.8.7.tar.gz',
-                # '4.8.7',
-                # 'd990ee66bf7ab0c785589776f35ba6ad',
-                # { gcc : '4.1.2' }
-            ),(
-                'http://download.qt.io/official_releases/qt/5.6/5.6.1/single/qt-everywhere-opensource-src-5.6.1.tar.gz',
-                 'qt-everywhere-opensource-src-5.6.1.tar.gz',
-                 '5.6.1',
-                 'ed16ef2a30c674f91f8615678005d44c',
+            #     'http://download.qt.io/official_releases/qt/5.7/5.7.0/single/qt-everywhere-opensource-src-5.7.0.tar.gz',
+            #     'qt-everywhere-opensource-src-5.7.0.tar.gz',
+            #     '5.7.0',
+            #     'd990ee66bf7ab0c785589776f35ba6ad',
             )],
             environ = {'LD' : 'g++'},
             cmd = [
@@ -1046,7 +1083,7 @@ class all: # noqa
                 'PyQt-x11-gpl-4.11.4.tar.gz',
                 '4.11.4',
                 '2fe8265b2ae2fc593241c2c84d09d481',
-                {qt:'4.8.6', sip: '4.16.4', gcc : '4.1.2'},
+                {qt:'4.8.7', sip: '4.16.4', gcc : '4.1.2'},
                 # ),(
                 #     'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.7/PyQt5_gpl-5.7.tar.gz',
                 #     'PyQt5_gpl-5.7.tar.gz',
@@ -1069,6 +1106,7 @@ class all: # noqa
             ],
         )
         self.pyqt = pyqt
+
 
         glfw = build.make(
             ARGUMENTS,

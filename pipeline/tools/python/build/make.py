@@ -79,32 +79,22 @@ class cmake(make):
             '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
             '-DILMBASE_HOME=$ILMBASE_TARGET_FOLDER',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+            '-DILMBASE_LIBRARIES=\\"$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread\\" '
             '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
             '-DPYILMBASE_LIBRARY_DIR=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
             # '-DGCC_VERSION=%s' % pipe.build.distro.split('-')[-1],
             '-DGCC_VERSION=$GCC_VERSION',
             # we need libXmi and libXi from the main system
-            "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | grep 'x86-64' | cut -d'>' -f2))",
-            "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | grep 'x86-64' | cut -d'>' -f2))",
+            "-DGLUT_Xmu_LIBRARY=$(echo $(ldconfig -p | grep 'libXmu.so ' | cut -d'>' -f2))",
+            "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
         ]
 
-    doubleSlashDILMBASE_LIBRARIES = False
 
     def fixCMD(self, cmd, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
         cmake finds pipeVFX packages first!'''
-
-        if self.doubleSlashDILMBASE_LIBRARIES:
-            self.flags.append(
-                '-DILMBASE_LIBRARIES=\\"$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread\\" '
-            )
-        else:
-            self.flags.append(
-                '-DILMBASE_LIBRARIES="$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread" '
-            )
-
         environ += [
             'export HDF5_ROOT=$HDF5_TARGET_FOLDER',
             'export HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
@@ -316,211 +306,3 @@ class tbb(make):
                 lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
                 lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
         return lines
-
-
-class openvdb(make):
-    ''' a make class to exclusively build OpenVDB package
-    '''
-    src = 'README.md'
-    doubleSlashDILMBASE_LIBRARIES = True
-    cmd = [
-        '''export PYTHON_VERSION=$($MAYA_ROOT/bin/mayapy --version 2>&1 | awk '{split($2,a,"."); print a[1] "." a[2] "." a[3] }')''',
-        '''export PYTHON_VERSION_MAJOR=$($MAYA_ROOT/bin/mayapy --version 2>&1 | awk '{split($2,a,"."); print a[1] "." a[2] }')''',
-        'cd openvdb',
-        'if [ ! -e $TARGET_FOLDER/lib/libopenvdb.so ] ; then make -j $DCORES lib install has_python=no '
-            'DESTDIR=$TARGET_FOLDER '
-            'PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
-            'PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib/ '
-            'BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include '
-            'BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-            'ILMBASE_INCL_DIR=$ILMBASE_TARGET_FOLDER/include '
-            'ILMBASE_LIB_DIR=$ILMBASE_TARGET_FOLDER/lib '
-            'EXR_INCL_DIR=$EXR_TARGET_FOLDER/include '
-            'EXR_LIB_DIR=$EXR_TARGET_FOLDER/lib '
-            'TBB_INCL_DIR=$TBB_TARGET_FOLDER/include '
-            'TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib '
-            'LOG4CPLUS_INCL_DIR=$LOG4CPLUS_TARGET_FOLDER/include '
-            'LOG4CPLUS_LIB_DIR=$LOG4CPLUS_TARGET_FOLDER/lib '
-            'LOG4CPLUS_LIB=" -Wl,-rpath,$LOG4CPLUS_TARGET_FOLDER/lib -llog4cplus " '
-            'BLOSC_INCL_DIR=/usr/include '
-            'BLOSC_LIB_DIR=/usr/lib '
-        ';fi',
-        'cd ../openvdb_maya',
-        'make -j $DCORES install '
-            'DESTDIR=$TARGET_FOLDER '
-            'OPENVDB_INCL_DIR=$TARGET_FOLDER/include '
-            'OPENVDB_LIB_DIR=$TARGET_FOLDER/lib '
-            'OPENVDB_LIB="-Wl,-rpath,$TARGET_FOLDER/lib/ -lopenvdb" '
-            'PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
-            'PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib/ '
-            'BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include '
-            'BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-            'ILMBASE_INCL_DIR=$ILMBASE_TARGET_FOLDER/include '
-            'ILMBASE_LIB_DIR=$ILMBASE_TARGET_FOLDER/lib '
-            'EXR_INCL_DIR=$EXR_TARGET_FOLDER/include '
-            'EXR_LIB_DIR=$EXR_TARGET_FOLDER/lib '
-            'TBB_INCL_DIR=$TBB_TARGET_FOLDER/include '
-            'TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib '
-            'LOG4CPLUS_INCL_DIR=$LOG4CPLUS_TARGET_FOLDER/include '
-            'LOG4CPLUS_LIB_DIR=$LOG4CPLUS_TARGET_FOLDER/lib '
-            'BLOSC_INCL_DIR=/usr/include '
-            'BLOSC_LIB_DIR=/usr/lib '
-            'MAYA_DESTDIR=$TARGET_FOLDER/maya/$MAYA_VERSION/ '
-            'MAYA_LOCATION=$MAYA_ROOT ',
-    ]
-    sed = {'0.0.0' : {
-        # Patch openvdb maya plugin to FIX rendering in the farm, without a DISPLAY being set!
-        'openvdb_maya/maya/OpenVDBVisualizeNode.cc' : [
-            ('view.beginGL()', 'if(MGlobal::mayaState() == MGlobal::kBatch) return;\n\nview.beginGL()'),
-            ('mSurfaceShader.setVertShader', 'if(MGlobal::mayaState() != MGlobal::kBatch) {\n\nmSurfaceShader.setVertShader'),
-            ('mPointShader.build();', 'mPointShader.build();}'),
-            ('return MBoundingBox(MPoint(-1.0, -1.0, -1.0), MPoint(1.0, 1.0, 1.0))', 'return mBBox'),
-            ('if (plug == aCachedInternalNodes) {','''
-                if(MGlobal::mayaState() == MGlobal::kBatch) {
-                    MPoint pMin, pMax;
-                    mBBoxBuffers.clear();
-                    mBBoxBuffers.resize(grids.size());
-
-                    for (size_t n = 0, N = grids.size(); n < N; ++n) {
-                        mvdb::BoundingBoxGeo drawBBox(mBBoxBuffers[n]);
-                        drawBBox(grids[n]);
-
-                        for (int i = 0; i < 3; ++i) {
-                            pMin[i] = drawBBox.min()[i];
-                            pMax[i] = drawBBox.max()[i];
-                        }
-                    }
-                    mBBox = MBoundingBox(pMin, pMax);
-
-                    MDataHandle outHandle = data.outputValue(aCachedBBox);
-                    outHandle.set(true);
-                }
-
-                if (plug == aCachedInternalNodes) {
-            '''),
-            ('stat = addAttribute(aIsovalue','''
-                nAttr.setDefault(0.001);
-                stat = addAttribute(aIsovalue
-            ''')
-        ],'openvdb_maya/maya/OpenVDBUtil.cc' : [
-            # ('mProgram(0)', 'if(MGlobal::mayaState() == MGlobal::kBatch) return;mProgram(0)'),
-            ('ShaderProgram() { clear()', 'ShaderProgram() { if(MGlobal::mayaState() != MGlobal::kBatch) clear()'),
-            ('insertFrameNumber','''
-                insertFrameNumberPrman(std::string& str, const MTime& time, int numberingScheme)
-                {
-                    size_t pos = str.find_first_of("$F");
-                    if (pos != std::string::npos) {
-
-                        size_t length = str.find_last_of(".") - pos;
-                        size_t pad = atoi(str.substr(pos+2, length).c_str());
-
-                        // Current frame value
-                        double frame = time.as(MTime::uiUnit());
-
-                        // Frames per second
-                        const MTime dummy(1.0, MTime::kSeconds);
-                        const double fps = dummy.as(MTime::uiUnit());
-
-                        // Ticks per frame
-                        const double tpf = 6000.0 / fps;
-                        const int tpfDigits = int(std::log10(int(tpf)) + 1);
-
-                        const int wholeFrame = int(frame);
-                        std::stringstream ss;
-                        ss << std::setw(int(pad)) << std::setfill('0');
-
-                        if (numberingScheme == 1) { // Fractional frame values
-                            ss << wholeFrame;
-
-                            std::stringstream stream;
-                            stream << frame;
-                            std::string tmpStr = stream.str();;
-                            tmpStr = tmpStr.substr(tmpStr.find('.'));
-                            if (!tmpStr.empty()) ss << tmpStr;
-
-                        } else if (numberingScheme == 2) { // Global ticks
-                            int ticks = int(openvdb::math::Round(frame * tpf));
-                            ss << ticks;
-                        } else { // Frame.SubTick
-                            ss << wholeFrame;
-                            const int frameTick = (openvdb::math::Round(frame - double(wholeFrame)) * tpf);
-                            if (frameTick > 0) {
-                                ss << "." << std::setw(tpfDigits) << std::setfill('0') << frameTick;
-                            }
-                        }
-
-                        str.replace(pos, length, ss.str());
-                    }
-                }
-                void insertFrameNumber
-            '''),
-        ],'openvdb_maya/maya/OpenVDBUtil.h' : [
-            ('<maya/MTime.h>', '<maya/MTime.h>\n#include <maya/MGlobal.h>'),
-            ('mBuffer->genVertexBuffer(points)', 'if(MGlobal::mayaState() != MGlobal::kBatch) mBuffer->genVertexBuffer(points)'),
-            ('mBuffer->genIndexBuffer(indices, GL_LINES)', 'if(MGlobal::mayaState() != MGlobal::kBatch) mBuffer->genIndexBuffer(indices, GL_LINES)'),
-            ('insertFrameNumber',''' insertFrameNumberPrman(std::string& str, const MTime& time, int numberingScheme = 0); \nvoid\ninsertFrameNumber'''),
-        ],'openvdb_maya/maya/OpenVDBReadNode.cc' : [
-            ('#include .../../libs/libmaya/MayaSceneArchiving.h.', ''),
-            ('insertFrameNumber','insertFrameNumberPrman'),
-            ('MObject aNodeInfo','''
-                MObject aNodeInfo;
-                void postConstructor()
-            '''),
-            ('struct OpenVDBReadNode ','''
-                #include <maya/MDGModifier.h>
-                #include <maya/MSelectionList.h>
-
-                static MStatus
-                getObjectByName(const MString & name, MObject & object)
-                {
-                    object = MObject::kNullObj;
-
-                    MSelectionList sList;
-                    MStatus status = sList.add(name);
-                    if (status == MS::kSuccess)
-                    {
-                        status = sList.getDependNode(0, object);
-                    }
-
-                    return status;
-                }
-
-
-                MStatus
-                getPlugByName(const MString & objName, const MString & attrName, MPlug & plug)
-                {
-                    MObject object = MObject::kNullObj;
-                    MStatus status = getObjectByName(objName, object);
-                    if (status == MS::kSuccess)
-                    {
-                        MFnDependencyNode mFn(object, &status);
-                        if (status == MS::kSuccess)
-                            plug = mFn.findPlug(attrName, &status);
-                    }
-
-                    return status;
-                }
-
-                struct OpenVDBReadNode
-            '''),
-            ('MStatus OpenVDBReadNode::initialize','''
-                void OpenVDBReadNode::postConstructor()
-                {
-                    MStatus status;
-                    MObject thisNode = thisMObject();
-                    MFnDependencyNode fnDN(thisNode);
-
-                    MDGModifier modifier;
-                    MPlug srcPlug, dstPlug;
-
-                    // make connection: time1.outTime --> OpenVDBReadNode.time
-                    dstPlug = fnDN.findPlug("inputTime", true, &status);
-                    status = getPlugByName("time1", "outTime", srcPlug);
-                    status = modifier.connect(srcPlug, dstPlug);
-                    status = modifier.doIt();
-                }
-
-                MStatus OpenVDBReadNode::initialize
-            '''),
-        ],
-    }}

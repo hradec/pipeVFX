@@ -1,0 +1,72 @@
+proc string rfrkRmsUnescapeString(string $str)
+{
+	string $unescaped = "";
+	for($i = 1; $i < size($str); ++$i)
+	{
+		string $chr = substring($str, $i, $i);
+		if($chr != "\\")
+		{
+			$unescaped += $chr;
+			continue;
+		}
+		
+		string $nextChr = substring($str, $i + 1, $i + 1);
+		if($nextChr == "\\")
+		{
+			// This is an escaped backslash. Skip the second backslash, so that it's not eaten by the next iteration.
+			$unescaped += "\\";
+			++$i;
+		}
+	}
+	
+	// Add the last character unconditionally; it's not considered by the loop as it can't start an escape.
+	$unescaped += substring($str, size($str), size($str));
+	return $unescaped;
+}
+
+proc string rfrk5RmsGetSearchPath(string $type)
+{
+	string $projPath = `rman getvar RMSPROJ`;
+	
+	string $paths[] = `rman workspace GetSearchPaths $type`;
+	for($i = 0; $i < size($paths); ++$i)
+	{
+		string $unescPath = rfrkRmsUnescapeString($paths[$i]);
+		if($unescPath == "$RMSPROJ")
+			$paths[$i] = $projPath;
+		else
+			$paths[$i] = $unescPath;
+	}
+		
+	return stringArrayToString($paths, ":");
+}
+
+global proc rfrk5RmsInsertSearchPaths()
+{
+	string $installDir = fromNativePath(`getenv "RFCONNECT2015_ROOT"`);
+	string $shaderPath = rfrk5RmsGetSearchPath("shader");
+	string $proceduralPath = rfrk5RmsGetSearchPath("procedural");
+	
+	if(`about -linux`)
+	{
+		if($installDir == "")
+			$installDir = "/opt/RFConnect2015/RenderMan-x64";
+		$shaderPath += ":" + $installDir + "/shaders";
+		$proceduralPath += ":" + $installDir + "/procedurals";
+	}
+	else if(`about -mac`)
+	{
+		if($installDir == "")
+			$installDir = "/Applications/RFConnect2015";
+		$shaderPath += ":" + $installDir + "/shaders";
+		$proceduralPath += ":" + $installDir + "/procedurals";
+	}
+	else if(`about -win`)
+	{
+		$shaderPath += ":" + $installDir;
+		$proceduralPath += ":" + $installDir;
+	}
+
+	RiOption "searchpath" "string shader" $shaderPath;
+	RiOption "searchpath" "string procedural" $proceduralPath;
+}

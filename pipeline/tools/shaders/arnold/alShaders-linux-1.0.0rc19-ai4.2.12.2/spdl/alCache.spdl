@@ -1,0 +1,53 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{fdc178c9-422d-4562-8947-f966f55c1f08}";
+PropertySet "alCache_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{e5c92608-9755-44c0-9d6b-b7b2fc7bcecb}";
+		Type = color;
+	}
+	Parameter "input" input
+	{
+		GUID = "{12e78c8d-3172-4c1a-bf87-81298118e8f2}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+}
+MetaShader "alCache_meta"
+{
+	Name = "ALS_Cache";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Cache";
+		Filename = "alCache";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	input
+	{
+		Name = "input";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	input;
+}
+Layout "RenderTree"
+{
+	input;
+}
+Plugin = Shader
+{
+	Filename = "alCache";
+}

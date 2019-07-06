@@ -41,7 +41,7 @@ def system(cmd):
     ''' this function acts just like os.system, but it's able to capture the output and return as
     text.
     it also properly handles farm execution, running the command as the proper user!'''
-    if os.environ.has_key('PIPE_FARM_USER'):
+    if 'PIPE_FARM_USER' in os.environ:
         # if running in the farm, we need to use sudo to run as
         # the original user
         s = sudo()
@@ -74,9 +74,9 @@ class sudo():
         except:
             traceback.print_exc()
             traceback.print_stack()
-            print "No Dbus can be imported at the moment"
-            print "This may be caused by launching an app from inside a running app, which in this case, ignore this error!"
-            print "If this was caused by launching an app, please contact someone responsible for the pipeline and report this at once!!!"
+            print( "No Dbus can be imported at the moment" )
+            print( "This may be caused by launching an app from inside a running app, which in this case, ignore this error!")
+            print( "If this was caused by launching an app, please contact someone responsible for the pipeline and report this at once!!!")
             dbus=None
 
         if dbus:
@@ -114,25 +114,31 @@ class sudo():
                 pid = self.__admServiceSudo([cmd,  file, str(os.getpid())])
 
                 # we use this signal handler to cleanup the temp file
-                # in case our script if ended up by a signal in the farm!
+                # in case our script ended up by a signal in the farm!
                 def handler(signum=-1, frame=0):
                     self.__admServiceKill(pid)
                     if os.path.exists(file):
                         os.remove(file)
                     if os.path.exists("%s_log" % file):
                         os.remove("%s_log" % file)
-                    raise
+                    raise Exception("[PARSER ERROR]: The process was killed!! If runing in the farm, this is probably an job eject/stop/restart, BUT it can be a CRASH of a running render!")
 
                 # Set the signal handler and a 5-second alarm
-                signal.signal(signal.SIGTERM, handler)
-                signal.signal(signal.SIGABRT, handler)
-                signal.signal(signal.SIGQUIT, handler)
+                try:
+                    signal.signal(signal.SIGTERM, handler)
+                    signal.signal(signal.SIGABRT, handler)
+                    signal.signal(signal.SIGQUIT, handler)
+                except:
+                    pass
 
                 # run a loop monitoring our tmp file for a DONE line.
                 # dbus will add a DONE line to the file when it's done
                 # running in background!
                 try:
+                    import datetime,time
                     lastLines = []
+                    _start = time.time()
+                    prefix = ''
                     while( 1 ):
 
                         # little tricky to display log live on farm
@@ -141,8 +147,20 @@ class sudo():
                             llog = f.readlines()
                             f.close()
                             for l in filter(lambda x: x not in lastLines, llog):
-                                print l
-                                sys.stdout.flush()
+                                std=l
+                                if std.strip():
+                                    if '%' in std:
+                                        if 'progr:' in std:
+                                            std = std.replace('progr:', 'PROGRESS:')
+                                        else:
+                                            std = filter(lambda x: x.strip(), std.strip().split(' '))
+                                            #std = ' '.join(std[:-1]+['PROGRESS: ']+[std[-1]])+"\n"
+                                            std = map(lambda x: "PROGRESS: "+x if '%' in x else x, std)
+                                            std = ' '.join(std)+"\n"
+                                    secs = '%s | ' % str(datetime.timedelta( seconds = int(time.time()-_start) ))
+                                    sys.stdout.write( secs + prefix + std )
+                                    sys.stdout.flush()
+                                    sys.stdout.flush()
                             lastLines = llog
 
                         # real log pulling to check if sudo thread finished or not!
@@ -222,14 +240,14 @@ class sudo():
 def username():
     user = pwd.getpwuid( os.getuid() )[ 0 ]
     #if user == 'qubeproxy' and os.environ.has_key('PIPE_FARM_USER'):
-    if os.environ.has_key('PIPE_FARM_USER'):
+    if 'PIPE_FARM_USER' in os.environ:
         user = os.environ['PIPE_FARM_USER']
     return user
 
 class job(sudo):
     def __init__(self, projectID=None, projectName=None, adminUser=":artists"):
         if not projectID:
-            if os.environ.has_key('PIPE_JOB'):
+            if 'PIPE_JOB' in os.environ:
                 tmp = os.environ['PIPE_JOB'].split('.')
                 projectID = int(tmp[0])
                 projectName = '.'.join(tmp[1:])
@@ -546,7 +564,7 @@ class job(sudo):
     class shot():
         def __init__(self):
             import os
-            if os.environ.has_key('PIPE_SHOT'):
+            if 'PIPE_SHOT' in os.environ:
                 values = os.environ['PIPE_SHOT']
                 values = values.split('@')
                 self.basePath = values[0]
@@ -603,7 +621,7 @@ class job(sudo):
     def currentJob(job=None):
         import os
         if not job:
-            if os.environ.has_key('PIPE_JOB'):
+            if 'PIPE_JOB' in os.environ:
                 job = os.environ['PIPE_JOB']
         if not job:
             return ''
@@ -615,10 +633,17 @@ class job(sudo):
         import os
         if not values:
             values='shot@'
-            if os.environ.has_key('PIPE_SHOT'):
+            if 'PIPE_SHOT' in os.environ:
                 values = os.environ['PIPE_SHOT']
         values = values.split('@')
         return '%s/%ss/%s' % ( job.current(j), values[0], values[1] )
+
+
+    def listShots(self):
+        return [ os.path.basename(x) for x in  glob.glob(self.path('shots/*')) ]
+
+    def listAssets(self):
+        return [ os.path.basename(x) for x in  glob.glob(self.path('assets/*')) ]
 
 
 

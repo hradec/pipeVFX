@@ -1,0 +1,378 @@
+/*
+*	Returns the number of active sequences on an emitter node.
+*/
+proc int realflowGetNumSequences(string $nodeName)
+{
+	string $attrName = $nodeName + ".Paths";
+	int $numPaths = `getAttr -size $attrName`;
+
+	//  Since we cannot shrink array attributes, we'll mark deleted entries by storing
+	// "<end>" in their "Path" attribute. Iterate through the elements and stop when we
+	// find the first <end>. This will give us the true number of sequences.
+	int $numSeq;
+	for($numSeq = 0; $numSeq < $numPaths; ++$numSeq)
+	{
+		string $path = `getAttr ($attrName + "[" + $numSeq + "]")`;
+		if($path == "<end>")
+			break;
+	}
+	
+	return $numSeq;
+}
+
+/*
+*	Resets a sequence to its default values.
+*/
+proc realflowResetSequence(string $nodeName, int $seq)
+{
+	string $attrSuffix = "[" + $seq + "]";
+	setAttr ($nodeName + ".LoadSeqs" + $attrSuffix) 1;
+	setAttr ($nodeName + ".NameFormats" + $attrSuffix) 1;
+	setAttr ($nodeName + ".types" + $attrSuffix) 0;
+	setAttr ($nodeName + ".Paddings" + $attrSuffix) 5;
+
+	setAttr -type "string" ($nodeName + ".Paths" + $attrSuffix) "";
+	setAttr -type "string" ($nodeName + ".Prefixes" + $attrSuffix) "";
+
+	setAttr ($nodeName + ".Offsets" + $attrSuffix) 0;
+	setAttr ($nodeName + ".UseRanges" + $attrSuffix) 0;
+	setAttr ($nodeName + ".MinRanges" + $attrSuffix) 0;
+	setAttr ($nodeName + ".MaxRanges" + $attrSuffix) 100;
+	setAttr ($nodeName + ".ClipRanges" + $attrSuffix) 1;
+}
+
+/*
+*	This function is called the first time an AE is displayed for the RF emitter node.
+* Its purpose is to create the rollups which contain attributes for each sequence loaded
+* into the emitter node.
+*/
+global proc realflowEmitterSeqCreate(string $nodeNameWithDot) 
+{
+	global string $rfSeqFrame;
+	$rfSeqFrame = `setParent -q`;
+	realflowEmitterSeqReplace($nodeNameWithDot);
+}
+
+/*
+*	Called when the user presses the "Remove Sequence" button in a sequence rollup.
+*/
+global proc realflowRemoveSequence(string $nodeName, int $seq)
+{
+	string $copyAttrs[] = 
+	{
+		"LoadSeqs",		"0",
+		"NameFormats",	"0",
+		"types",		"0",
+		"Paddings",		"0",
+		"Paths",		"1",
+		"Prefixes",		"1",
+		"Offsets",		"0",
+		"UseRanges",	"0",
+		"MinRanges",	"0",
+		"MaxRanges",	"0",
+		"ClipRanges",	"0"
+	};
+	
+	int $numAttrs = size($copyAttrs) / 2;
+	
+	int $numSeq = realflowGetNumSequences($nodeName) - 1;
+	for($i = $seq; $i < $numSeq; ++$i)
+	{
+		for($attr = 0; $attr < $numAttrs; ++$attr)
+		{
+			string $toAttr = $nodeName + "." + $copyAttrs[2*$attr] + "[" + $i + "]";
+			string $fromAttr = $nodeName + "." + $copyAttrs[2*$attr] + "[" + ($i+1) + "]";
+			if($copyAttrs[2*$attr+1])
+			{
+				string $strVal = `getAttr $fromAttr`;
+				setAttr -type "string" $toAttr $strVal;
+			}
+			else
+				setAttr $toAttr `getAttr $fromAttr`;
+		}
+	}
+	
+	// Mark the last element as not present.
+	setAttr -type "string" ($nodeName + ".Paths[" + $numSeq + "]") "<end>";
+	
+	// Tell Maya to shrink the arrays, just in case.
+	for($attr = 0; $attr < $numAttrs; ++$attr)
+	{
+		string $attrName = $nodeName + "." + $copyAttrs[2*$attr];
+		setAttr -size $numSeq $attrName;
+	}
+
+	showEditor $nodeName;
+}
+
+/*
+*	Called when the user selects a new particle file for a "path" control.
+*/
+global proc realflowPartFileSelected(string $nodeName, string $seq, string $filePath, string $fileType)
+{
+	string $pathAttr = $nodeName + ".Paths[" + $seq + "]";
+	string $prefixAttr = $nodeName + ".Prefixes[" + $seq + "]";
+	string $typeAttr = $nodeName + ".types[" + $seq + "]";
+	
+	string $path = dirname($filePath);
+	setAttr -type "string" $pathAttr $path;
+	
+	string $fileName = basename($filePath, "");
+	int $nameFormat = `getAttr ($nodeName + ".NameFormats[" + $seq + "]")`;
+	int $padding = `getAttr ($nodeName + ".Paddings[" + $seq + "]")`;
+	string $prefix;
+	string $ext;
+	int $fnameLen = size($fileName);
+	switch($nameFormat)
+	{
+		case 0:
+			$prefix = substring($fileName, 1, $fnameLen - $padding - 5);
+			$ext = substring($fileName, $fnameLen - 3, $fnameLen);
+			break;
+		case 2:
+			$prefix = substring($fileName, 1, $fnameLen - $padding - 5);
+			$ext = substring($fileName, $fnameLen - $padding - 4, $fnameLen - $padding - 1);
+			break;
+		case 3:
+			$prefix = substring($fileName, 1, $fnameLen - $padding - 5);
+			$ext = substring($fileName, $fnameLen - 3, $fnameLen);
+			break;
+		case 1:
+		default:
+			$prefix = substring($fileName, 1, $fnameLen - $padding - 4);
+			$ext = substring($fileName, $fnameLen - 3, $fnameLen);
+			break;
+	}
+	
+	setAttr -type "string" $prefixAttr $prefix;
+	
+	$ext = tolower($ext);
+	if($ext == ".pxy")
+		$extId = 1;
+	else if($ext == ".rpc")
+		$extId = 2;
+	else
+		$extId = 0;
+	
+	setAttr $typeAttr $extId;
+}
+
+/*
+*	Manages the state of the range control based on the value of "use range".
+*/
+global proc realflowCheckUseRange(string $nodeName, int $seq)
+{
+	int $useRange = `getAttr ($nodeName + ".UseRanges[" + $seq + "]")`;
+	
+	string $ctrlPrefix = "rfSeq" + $seq + "Control";
+	layout -e -enable $useRange ($ctrlPrefix + "MinRange");
+	layout -e -enable $useRange ($ctrlPrefix + "MaxRange");
+	layout -e -enable $useRange ($ctrlPrefix + "ClipRange");
+}
+
+/*
+*	This function creates a rollup containing controls for a particle sequence.
+*/
+proc realflowCreateSeqControls(string $nodeName, int $seq)
+{
+	string $oldParent = `setParent -q`;
+	
+	string $ctrlPrefix = "rfSeq" + $seq + "Control";
+	string $attrSuffix = "[" + $seq + "]";
+	
+	string $layout = `frameLayout -l ("Sequence #" + ($seq+1)) -collapse false`;
+	columnLayout -adjustableColumn true;
+		rowLayout -numberOfColumns 1 -adjustableColumn 1 -columnAttach 1 "both" 120 -columnAlign 1 "center";
+			string $removeCmd = "realflowRemoveSequence(\"" + $nodeName + "\", " + $seq + ")";
+			button -l "Remove Sequence" -command $removeCmd ($ctrlPrefix + "RemoveSeqBtn");
+		setParent ..; 
+
+		realflowMakeCheckboxCtrl("Use Sequence", ($nodeName + ".LoadSeqs" + $attrSuffix), ($ctrlPrefix + "LoadSeqs"), "");
+		attrEnumOptionMenuGrp -label "Name Format" -attribute ($nodeName + ".NameFormats" + $attrSuffix) ($ctrlPrefix + "NameFormats");
+		realflowMakeNumericFieldCtrl("Padding", ($nodeName + ".Paddings" + $attrSuffix), ($ctrlPrefix + "Padding"), "int");
+		attrEnumOptionMenuGrp -label "Type" -attribute ($nodeName + ".types" + $attrSuffix) ($ctrlPrefix + "Types");
+	
+		// Make a file browse control for the path attribute. This is special because selecting a new file
+		// will split it into path and prefix and alter both the path and the prefix attributes.
+		rowLayout -nc 3 ($ctrlPrefix + "Path");
+			text -l "Path" "label";
+			textField "field";
+			string $attrName = $nodeName + ".Paths" + $attrSuffix;
+			connectControl -fileName "field" $attrName;
+			string $callbackCmd = "realflowPartFileSelected " + $nodeName + " " + $seq;
+			string $btnCmd = "realflowBrowseForFile 1 \"" + $attrName + "\" \"" + $callbackCmd + "\" \"*.bin;*.pxy;*.rpc\" 0";
+			symbolButton -image "navButtonBrowse.xpm" -command $btnCmd "button";
+		setParent ..;
+		
+		attrControlGrp -label "Prefix" -attribute ($nodeName + ".Prefixes" + $attrSuffix) ($ctrlPrefix + "Prefix");
+		realflowMakeNumericFieldCtrl("Offset", ($nodeName + ".Offsets" + $attrSuffix), ($ctrlPrefix + "Offset"), "int");
+		
+		string $changeCmd = "realflowCheckUseRange \"" + $nodeName + "\" " + $seq;
+		evalDeferred $changeCmd;
+		realflowMakeCheckboxCtrl("Use Range", ($nodeName + ".UseRanges" + $attrSuffix), ($ctrlPrefix + "UseRange"), $changeCmd);
+		realflowMakeNumericFieldCtrl("Range Start", ($nodeName + ".MinRanges" + $attrSuffix), ($ctrlPrefix + "MinRange"), "int");
+		realflowMakeNumericFieldCtrl("Range End", ($nodeName + ".MaxRanges" + $attrSuffix), ($ctrlPrefix + "MaxRange"), "int");
+		realflowMakeCheckboxCtrl("Clip To Range", ($nodeName + ".ClipRanges" + $attrSuffix), ($ctrlPrefix + "ClipRange"), "");
+	setParent $oldParent;
+}
+
+/*
+*	This function connects the controls inside an existing sequence rollup to the
+* given node.
+*/
+proc realflowConnectSeqControls(string $nodeName, int $seq, string $layout)
+{
+	if(!`frameLayout -q -visible $layout`)
+		frameLayout -e -visible true -collapse false $layout;
+		
+	string $oldParent = `setParent -q`;
+	setParent $layout;
+	
+	string $ctrlPrefix = "rfSeq" + $seq + "Control";
+	string $attrSuffix = "[" + $seq + "]";
+	
+	// Connect the simple attributes.
+	realflowConnectCheckboxCtrl(($ctrlPrefix + "LoadSeqs"), ($nodeName + ".LoadSeqs" + $attrSuffix), "");
+	attrEnumOptionMenuGrp -e -attribute ($nodeName + ".NameFormats" + $attrSuffix) ($ctrlPrefix + "NameFormats");
+	attrEnumOptionMenuGrp -e -attribute ($nodeName + ".types" + $attrSuffix) ($ctrlPrefix + "Types");
+	realflowConnectNumericFieldCtrl(($ctrlPrefix + "Padding"), ($nodeName + ".Paddings" + $attrSuffix));
+	realflowConnectStringField($nodeName + ".Prefixes" + $attrSuffix, $ctrlPrefix + "Prefix", "", "");
+	realflowConnectNumericFieldCtrl(($ctrlPrefix + "Offset"), ($nodeName + ".Offsets" + $attrSuffix));
+	
+	string $changeCmd = "realflowCheckUseRange \"" + $nodeName + "\" " + $seq;
+	evalDeferred $changeCmd;
+	realflowConnectCheckboxCtrl(($ctrlPrefix + "UseRange"), ($nodeName + ".UseRanges" + $attrSuffix), $changeCmd);
+	realflowConnectNumericFieldCtrl(($ctrlPrefix + "MinRange"), ($nodeName + ".MinRanges" + $attrSuffix));
+	realflowConnectNumericFieldCtrl(($ctrlPrefix + "MaxRange"), ($nodeName + ".MaxRanges" + $attrSuffix));
+	realflowConnectCheckboxCtrl(($ctrlPrefix + "ClipRange"), ($nodeName + ".ClipRanges" + $attrSuffix), "");
+
+	// Connect the path control.
+	setParent ($ctrlPrefix + "Path");
+		// Connect the browse button.
+		string $callbackCmd = "realflowPartFileSelected " + $nodeName + " " + $seq;
+		string $attrName = $nodeName + ".Paths" + $attrSuffix;
+		string $btnCmd = "realflowBrowseForFile 1 \"" + $attrName + "\" \"" + $callbackCmd + "\" \"*.bin;*.pxy;*.rpc\" 0";
+		symbolButton -e -command $btnCmd "button";
+		// Connect the control using -fileName.
+		connectControl -fileName "field" $attrName;
+	setParent $layout;
+
+	setParent $oldParent;
+}
+
+/*
+*	Function called when the AE should be updated with controls for a RF emitter node.
+*/
+global proc realflowEmitterSeqReplace(string $nodeNameWithDot)
+{
+	global string $rfSeqFrame;
+	setParent $rfSeqFrame;
+	
+	// The input string contains a dot at the end, remove it to find the node name.
+	string $nodeName = substring($nodeNameWithDot, 1, size($nodeNameWithDot)-1);
+	
+	int $numSeq = realflowGetNumSequences($nodeName);
+	
+	// See how many rollups are already present.
+	string $existingSeqLayouts[] = `layout -q -childArray $rfSeqFrame`;
+	int $numExistingSeqLayouts = size($existingSeqLayouts);
+	
+	// Hide extra rollups if we have more than we need.
+	for($i = $numSeq; $i < $numExistingSeqLayouts; ++$i)
+	{
+		frameLayout -e -collapse true $existingSeqLayouts[$i];
+		frameLayout -e -visible false $existingSeqLayouts[$i];
+	}
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	
+	// Connect the controls to the attributes of this node. This loop will also create
+	// extra sequence rollups if we have fewer than we need.
+	for($seq = 0; $seq < $numSeq; ++$seq)
+	{
+		if($seq < $numExistingSeqLayouts)
+			realflowConnectSeqControls($nodeName, $seq, $existingSeqLayouts[$seq]);
+		else
+			realflowCreateSeqControls($nodeName, $seq);
+	}
+	
+	setUITemplate -popTemplate;
+}
+
+/*
+*	Callback for the "Add Sequences" button.
+*/
+global proc realflowAddEmitterSequence(string $nodeName)
+{
+	int $numSeq = realflowGetNumSequences($nodeName);
+	realflowResetSequence($nodeName, $numSeq);
+	showEditor $nodeName;
+}
+
+/*
+*	Called to create the "Add Sequence" button.
+*/
+global proc realflowAddSeqBtnCreate(string $nodeNameWithDot)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	rowLayout -numberOfColumns 2;
+		text -l "";
+		button -l "Add Sequence" rfAddSeqBtn;
+	setParent ..;
+	separator -horizontal true -style "none";
+	setUITemplate -popTemplate;
+	
+	realflowAddSeqBtnReplace($nodeNameWithDot);
+}
+
+/*
+*	Called to connect the "Add Sequence" button to an emitter node.
+*/
+global proc realflowAddSeqBtnReplace(string $nodeNameWithDot)
+{
+	// The input string contains a dot at the end, remove it to find the node name.
+	string $nodeName = substring($nodeNameWithDot, 1, size($nodeNameWithDot)-1);
+	button -e -command ("realflowAddEmitterSequence \"" + $nodeName + "\"") rfAddSeqBtn; 
+}
+
+/*
+*	Creates the AE user interface for the RealFlow Emitter node.
+*/
+global proc AERealflowEmitterTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+	
+	editorTemplate -beginLayout "RealFlow Emitter" -collapse false;
+		editorTemplate -label "Level of Detail" -addControl "LevelOfDetail";
+		editorTemplate -label "Motion Blur Multiplier" -addControl "motionBlurMult";
+		editorTemplate -callCustom "realflowAddSeqBtnCreate" "realflowAddSeqBtnReplace" ""; 
+		editorTemplate -callCustom "realflowEmitterSeqCreate" "realflowEmitterSeqReplace" ""; 
+	editorTemplate -endLayout;
+
+	AEtransformMain $nodeName;
+	AEdynBaseTemplate $nodeName;
+	
+	string $suppressAttrs[] =
+	{
+		// Maya emitter attributes
+		"emitterType", "rate", "scaleRateByObjectSize", "useRatePP", "needParentUV", "cycleEmission", "cycleInterval",
+		"deltaTimeCycle", "maxDistance", "minDistance", "direction", "directionX", "directionY", "directionZ", "spread",
+		"speed", "speedRandom", "tangentSpeed", "normalSpeed", "currentTime", "inheritFactor", "isFull", "startTime",
+		"deltaTime", "emitCountRemainder", "ratePP", "parentId", "sweptGeometry", "output", "seed", "randState",
+		"randState.randStateX", "randState.randStateY", "randState.randStateZ", "enableTextureRate", "textureRate",
+		"textureRateR", "textureRateG", "textureRateB", "emitFromDark", "inheritColor", "inheritOpacity", "invertOpacity",
+		"useLuminance", "particleColor", "particleColorR", "particleColorG", "particleColorB", "volumeShape", "volumeOffset",
+		"volumeOffsetX", "volumeOffsetY", "volumeOffsetZ", "volumeEfficiency", "volumeSweep", "sectionRadius", "awayFromCenter",
+		"awayFromAxis", "alongAxis", "aroundAxis", "randomDirection", "directionalSpeed", "scaleSpeedBySize", "displaySpeed",
+		
+		// Our own attributes, since we handle them with custom callbacks.
+		"LoadSeqs", "NameFormats", "Paddings", "types", "Paths", "Prefixes", "Offsets", "UseRanges", "MinRanges", "MaxRanges", "ClipRanges"
+	};
+	
+	int $len = size($suppressAttrs);
+	for($i = 0; $i < $len; ++$i)
+		editorTemplate -suppress $suppressAttrs[$i];
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

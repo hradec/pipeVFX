@@ -1,0 +1,8 @@
+<args format="1.0">
+<param name="temperature" label="Temperature"/>
+<param name="strength" label="Strength"/>
+<page name="Advanced">
+	<param name="physicalIntensity" label="Physical intensity"/>
+	<param name="physicalExposure" label="Physical exposure"/>
+</page>
+</args>

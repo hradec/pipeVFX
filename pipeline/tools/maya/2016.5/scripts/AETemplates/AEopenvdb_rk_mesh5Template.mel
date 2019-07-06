@@ -1,0 +1,108 @@
+
+global proc AEopenvdb_rk_mesh5Template(string $nodeName)
+{
+  editorTemplate -beginScrollLayout;
+
+  rfrk5AddDisplayRollup($nodeName);
+
+  editorTemplate -beginLayout "Particle Files" -collapse false;
+    editorTemplate -callCustom "rfrk5FilesCreate" "rfrk5FilesReplace" "files";
+  editorTemplate -endLayout;
+
+
+  editorTemplate -beginLayout "Mesh" -collapse false;
+    editorTemplate -addControl "polygonSize";
+    editorTemplate -label "Surface Proximity" -addControl "isoLevel";
+    editorTemplate -addControl "axis";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Filtering" -collapse true;
+    editorTemplate -beginLayout "Volume Filters" -collapse false;
+      editorTemplate -callCustom "rfrk5FilterCreate" "rfrk5FilterReplace" "openvdbfilters";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout "Mesh Filters" -collapse false;
+      editorTemplate -addControl "filterMesh" "rfrk5MesherFiltersChanged";
+      editorTemplate -addControl "relax";
+      editorTemplate -addControl "tension";
+      editorTemplate -addControl "thinning";
+      editorTemplate -addControl "steps";
+    editorTemplate -endLayout;
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Clipping" -collapse true;
+    editorTemplate -addControl "objectClip" "rfrk5MesherUseObjectClipChanged";
+    editorTemplate -addControl "cameraClip";
+    editorTemplate -label "Bounded" -addControl "isBounded" "rfrk5CheckBoundsHelper";
+    editorTemplate -label "Inside" -addControl "outInside";
+    editorTemplate -callCustom "rfrk5ClipFilesCreate" "rfrk5ClipFilesReplace" "clipFiles";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Optimize" -collapse true;
+    editorTemplate -addControl "optimize" "rfrk5MesherUseOptimizeChanged";
+    editorTemplate -label "Distance" -addControl "cameraDistance";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Realwave" -collapse true;
+    editorTemplate -addControl "insertRealwave" "rfrk5MesherRealWaveChanged";
+    editorTemplate -callCustom "rfrk5FileCtrlCreate rfrkMrRealwaveCtrl Realwave \"rfrk5BrowseForFile sd 0\"" "rfrk5FileCtrlReplace rfrkMrRealwaveCtrl \"rfrk5BrowseForFile sd 0\"" "rwFile";
+    editorTemplate -label "Polygon Size" -addControl "rwPolygonSize";
+    editorTemplate -label "Resolution" -addControl "rwResolution";
+    editorTemplate -label "Radius" -addControl "rwRadius";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "BIN Mesh" -collapse true;
+    editorTemplate -label "Insert BIN Mesh" -addControl "insertBinMesh"  "rfrk5MesherBINMeshChanged";
+    editorTemplate -callCustom "rfrk5FileCtrlCreate rfrkMrBINMeshCtrl \"BIN Mesh\" \"rfrk5BrowseForFile bin 0\"" "rfrk5FileCtrlReplace rfrkMrBINMeshCtrl \"rfrk5BrowseForFile bin 0\"" "binFile";
+    editorTemplate -label "Offset" -addControl "binOffset";
+    editorTemplate -label "Wait" -addControl "binWait";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "System" -collapse true;
+    editorTemplate -addControl "threads";
+    editorTemplate -label "Polygons per Group" -addControl "polysPerGroup";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Export and Lazy Compute" -collapse true;
+    editorTemplate -label "Action" -addControl "lazyComputeAction" "rfrk5CheckLazyCompute";
+    editorTemplate -callCustom "rfrk5FileCtrlCreate rfrkMrLazyFileCtrl \"Alembic File\" \"rfrk5BrowseForFile abc 0\"" "rfrk5FileCtrlReplace rfrkMrLazyFileCtrl \"rfrk5BrowseForFile abc 0\"" "lazyComputeFile";
+    editorTemplate -label "Offset" -addControl "lazyComputeOffset";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Channels" -collapse true;
+    editorTemplate -annotation "Interpolate magnitudes in precise mode. Highly recomended if using weights" -addControl "precise";
+    editorTemplate -addSeparator;
+    editorTemplate -annotation "Export velocity from particles to vertice positions" -addControl "velocity";
+    editorTemplate -annotation "Export texture from particles to vertice positions" -addControl "texture";
+    editorTemplate -annotation "Export force from particles to vertice positions" -addControl "force";
+    editorTemplate -annotation "Export neighbors from particles to vertice positions" -addControl "neighbors";
+    editorTemplate -annotation "Export age from particles to vertice positions" -addControl "age";
+    editorTemplate -annotation "Export isolation from particles to vertice positions" -addControl "isolation";
+    editorTemplate -annotation "Export viscosity from particles to vertice positions" -addControl "viscosity";
+    editorTemplate -annotation "Export density from particles to vertice positions" -addControl "density";
+    editorTemplate -annotation "Export pressure from particles to vertice positions" -addControl "pressure";
+    editorTemplate -annotation "Export mass from particles to vertice positions" -addControl "mass";
+    editorTemplate -annotation "Export temperature from particles to vertice positions" -addControl "temperature";
+    editorTemplate -annotation "Export vorticity from particles to vertice positions" -addControl "vorticity";
+    editorTemplate -addSeparator;
+    editorTemplate -annotation "Compute splashity of the mesh in vertice positions" -addControl "splashity";
+    editorTemplate -annotation "Compute curvature of the mesh in vertice positions" -addControl "curvature";
+    editorTemplate -annotation "Compute fluids weights for mixing fluids" -addControl "weights";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Time" -collapse true;
+    editorTemplate -addControl "frame";
+    editorTemplate -addControl "fps";
+  editorTemplate -endLayout;
+
+  editorTemplate -suppress "obbPosition";
+  editorTemplate -suppress "obbRotation";
+  editorTemplate -suppress "obbScale";
+  editorTemplate -suppress "obbShear";
+  editorTemplate -suppress "obbPivot";
+
+  rfrk5AddRMSRollup($nodeName);
+  rfrk5AddMesherArnoldRollup($nodeName);
+
+  editorTemplate -addExtraControls;
+  editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+
+#---------------------------------------------------------------------------------------------------------
+# Virtual ethernet nic for hostID - SETUP 
+#---------------------------------------------------------------------------------------------------------
+#
+# creates a virtual nic with a fixed mac address on all machines
+# so software that depends on an specific mac address will run on
+# any machine!
+#
+
+virtual_hostid_setup(){
+ /sbin/rmmod dummy || echo ""
+ /sbin/modprobe dummy numdummies=2
+ /sbin/ip link set name hostid0 dev dummy0
+ /sbin/ifconfig hostid0 hw ether BC:AE:C5:50:61:86
+}
+
+
+virtual_hostid_setup 1>&2

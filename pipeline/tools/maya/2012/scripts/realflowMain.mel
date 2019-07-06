@@ -1,0 +1,758 @@
+/*
+*	Returns the major number from the Maya version.
+*/
+global proc int realflowGetMayaMajorVer()
+{
+	string $verStr = `about -v`;
+	string $buffer[];
+	tokenize $verStr "." $buffer;
+	tokenize $buffer[0] " " $buffer;
+	return $buffer[0];
+}
+
+/*
+*	fileBrowserWithFilter() doesn't work on Linux, so we must wrap this around our own code
+* and provide a fallback.
+*/
+global proc realflowFileBrowserDlg(string $callBack, string $action, string $title, string $type, int $mode, string $filters[], string $dir)
+{
+	if(realflowGetMayaMajorVer() >= 2011)
+	{
+		string $filterStr = "";
+		for($f in $filters)
+		{
+			string $buf[];
+			tokenize $f "," $buf;
+			$filterStr += $buf[0] + " (" + $buf[0] + ");;";
+		}
+		
+		// With the new dialog, 0 means write, 1 means read.
+		int $newMode = ($mode == 0) ? 1 : 0;
+		string $files[] = `fileDialog2 -cap $title -dir $dir -rf false -okc $action -ff $filterStr -sff $type -fm $newMode`;
+		if(size($files) == 1)
+		{
+			string $cmd = $callBack + " \"" + $files[0] + "\" \"\"";
+			eval $cmd;
+		}
+		
+		return;
+	}
+	
+	if(!`about -linux`)
+	{
+		fileBrowserWithFilter($callBack, $action, $title, $type, $mode, $filters, $dir);
+		return;
+	}
+	
+	// On Linux we have to close the file browser explicitly when the user selects a file.
+	$callBack = "window -e -visible false projectViewerWindow; " + $callBack;
+	fileBrowser($callBack, $action, $type, $mode);
+}
+                                        
+/*
+*	Displays a dialog box to notify the user that a plug-in update is available.
+*/
+global proc realflowNotifyUpdateAvailable(string $newerVer)
+{
+	$wnd = `window -sizeable false -visible false -title "RealFlow Plug-in" -iconName "RealFlow Plug-in"`;
+
+	string $downloadUrl;
+	if(`about -win`)
+		$downloadUrl = "http://www.realflow.com/kjsdfksn098404ndjvsnjdjdfr943/updates/realflow_maya_win_" + $newerVer + ".exe";
+	else if(`about -mac`)
+		$downloadUrl = "http://www.realflow.com/kjsdfksn098404ndjvsnjdjdfr943/updates/realflow_maya_osx_" + $newerVer + ".zip";
+	else if( (`about -linux`) || (`about -linux64`) )
+		$downloadUrl = "http://www.realflow.com/kjsdfksn098404ndjvsnjdjdfr943/updates/realflow_maya_linux_" + $newerVer + ".zip";
+	else
+		$downloadUrl = "";
+	string $crVer = `pluginInfo -q -version "realflow"`;
+	string $chgListCmd = "showHelp -absolute \"http://www.realflow.com/kjsdfksn098404ndjvsnjdjdfr943/updates/realflow_maya_changes_4.1.txt\"";
+	string $downloadCmd = "showHelp -absolute \"" + $downloadUrl + "\"; deleteUI " + $wnd;
+	string $closeCmd = "if(`checkBox -q -v rfIgnoreVer`) optionVar -stringValue realflowIgnoreVersion \"" + $newerVer + "\"; deleteUI " + $wnd;
+	
+	columnLayout -adjustableColumn true -columnAlign "left" -columnAttach "both" 10 -rowSpacing 5;
+		text -font "boldLabelFont" -l "A newer RealFlow plug-in is available.";
+		text -l ("Currently installed version: " + $crVer);
+		text -l ("Latest version: " + $newerVer);
+		checkBox -l "Don't notify me about this version again" rfIgnoreVer;
+		separator -horizontal true;
+		button -l "See the list of changes" -command $chgListCmd;
+		button -l "Download the new plug-in" -command $downloadCmd;
+		button -l "Close" -command $closeCmd;
+	setParent ..;
+	setParent ..;
+	
+	int $height = 210;
+	if(`about -mac`)
+		$height += 30;
+	window -e -width 310 -height $height $wnd;
+	showWindow $wnd;
+}
+
+/*
+*	Called when the user presses the "Export Last" toolbar button.
+*/
+global proc realflowSDExportLastSettings()
+{
+	if(`objExists realflowSDExportOptions`)
+	{
+		string $file = `getAttr realflowSDExportOptions.sdFile`;
+		if($file != "")
+		{
+			realflow -exportSD -useSettingsNode;
+			return;
+		}
+	}
+	
+	realflowSDExportDialog();
+}
+
+global proc realflowPerformSDImport(string $filePath, string $fileType)
+{
+	string $dir = dirname($filePath);
+	optionVar -stringValue "rfLastSDImportDir" $dir;
+	realflow -importSD $filePath;
+}
+
+/*
+*	Called when the user presses the "Import SD" toolbar button.
+*/
+global proc realflowImportSD()
+{
+	string $dir = `optionVar -q rfLastSDImportDir`;
+	if(!`filetest -d $dir`)
+		$dir = `workspace -q -active`;
+		
+	string $filters[];
+	$filters[0] = "*.sd,*.sd";
+	realflowFileBrowserDlg("realflowPerformSDImport", "Import", "Import", "*.sd", 0, $filters, $dir);
+}
+
+/*
+*	Called when the user presses the "Import Particles" toolbar button.
+*/
+global proc realflowImportParticles()
+{
+	string $dir = `optionVar -q rfLastSeqDir`;
+	if(!`filetest -d $dir`)
+		$dir = `workspace -q -active`;
+		
+	string $filters[3];
+	$filters[0] = "*.bin,*.bin";
+	$filters[1] = "*.pxy,*.pxy";
+	$filters[2] = "*.rpc,*.rpc";
+	realflowFileBrowserDlg("realflowImportParticleSequence", "Load", "Load Sequence", "*.bin", 0, $filters, $dir);
+}
+
+/*
+*	Called when the user presses the "Export Particles" or "Export Meshes" toolbar button. fileType is
+* 0 for particles, 1 for meshes.
+*/
+global proc realflowBINExportLastSettings(int $fileType)
+{
+	string $settingsNode = ($fileType == 0) ? "realflowBINExportOptions" : "realflowBINMeshExportOptions";
+
+	if(`objExists $settingsNode`)
+	{
+		string $path = `getAttr ($settingsNode + ".path")`;
+		if($path != "")
+		{
+			if($fileType == 0)
+				realflow -exportBIN -useSettingsNode;
+			else
+				realflow -exportBINMesh -useSettingsNode;
+			return;
+		}
+	}
+	
+	realflowBINExportDialog($fileType);
+}
+
+/*
+*	Called when the user wants to import a BIN mesh sequence.
+*/
+global proc realflowImportBINMesh()
+{
+	string $dir = `optionVar -q rfLastMeshSeqDir`;
+	if(!`filetest -d $dir`)
+		$dir = `workspace -q -active`;
+		
+	string $filters[2];
+	$filters[0] = "*.bin,*.bin";
+	realflowFileBrowserDlg("realflowImportMeshSequence", "Load", "Load Sequence", "*.bin", 0, $filters, $dir);
+}
+
+/*
+*	Ensures that an export settings node is present in the scene.
+*/
+global proc int realflowMakeExportOptionsNode(string $type, string $name)
+{
+	if(`objExists $name`)
+		return 0;
+		
+	string $selection[] = `ls -sl`;
+	createNode -shared -name $name $type;
+	string $newSelection[] = `ls -sl`;
+    if( (size($newSelection) == 1) && ( (size($selection) != 1) || ($newSelection[0] != $selection[0])))
+		select -noExpand $selection;
+	return 1;
+}
+
+/*
+*	Helper for realflowMakeFileControl(), called when the user confirms the file browsing dialog - attribute version.
+*/
+global proc realflowAssignFileToAttr(string $attr, string $filePath, string $fileType)
+{
+	setAttr -type "string" $attr $filePath;
+}
+
+/*
+*	Helper for realflowMakeFileControl(), called when the user confirms the file browsing dialog - text field version.
+*/
+global proc realflowAssignFileToField(string $field, string $filePath, string $fileType)
+{
+	textField -e -text $filePath $field;
+}
+
+global proc int realflowIsAbsolutePath(string $path)
+{
+	int $len = size($path);
+	if($len < 1)
+		return 0;
+		
+	string $firstChr = substring($path, 1, 1);
+	if( ($firstChr == "/") || ($firstChr == "\\") )
+		return 1;
+		
+	if( `about -win` && ($len > 2) )
+	{
+		string $driveDelim = substring($path, 2, 3);
+		if( ($driveDelim == ":/") || ($driveDelim == ":\\") )
+			return 1;
+	}
+	
+	return 0;
+}
+
+/*
+*	When "kind" is 0, "valSource" is the name of a text field. When "kind" is 1, "valSource"
+* is an attribute. $mode is 0 for read, 1 for write.
+*/
+global proc realflowBrowseForFile(int $kind, string $valSource, string $callbackCmd, string $mask, int $mode)
+{
+	string $dir;
+	
+	if($kind == 0)
+	{
+		string $val = `textField -q -text $valSource`;
+		$dir = dirname($val);
+	}
+	else if($kind == 1)
+	{
+		string $val = `getAttr $valSource`;
+		$dir = dirname($val);
+	}
+	else if($kind == 2)
+	{
+		if(`optionVar -exists $valSource`)
+			$dir = `optionVar -q $valSource`;
+		else
+			$dir = "";
+	}
+	
+	$dir = `realflow -expandEnv $dir`;
+	$workspaceDir = `workspace -q -active`;
+
+	if( ($dir != "") && !realflowIsAbsolutePath($dir) )
+	{
+		$dir = $workspaceDir + "/" + $dir;
+		if(!`filetest -d $dir`)
+			$dir = "";
+	}
+	
+	if($dir == "")
+		$dir = $workspaceDir;
+
+	string $filters[];
+	tokenize $mask ";" $filters;
+	string $defMask = $filters[0];
+	for($i = 0; $i < size($filters); ++$i)
+		$filters[$i] = $filters[$i] + "," + $filters[$i];
+
+	string $actionName;
+	if($mode == 0)
+		$actionName = "Use";
+	else
+		$actionName = "Export";
+		
+	realflowFileBrowserDlg($callbackCmd, $actionName, $actionName, $defMask, $mode, $filters, $dir);
+}
+
+/*
+*	Creates a file path control. $mode is 0 for read, 1 for write.
+*/
+global proc realflowMakeFileControl(string $label, string $attr, string $ctrl, string $changeCmd, string $mask, int $mode)
+{
+	rowLayout -nc 3 $ctrl;
+		text -l $label "label";
+		$fullFieldName = `textField -changeCommand $changeCmd "field"`;
+		string $callbackCmd;
+		if(size($attr) > 0)
+		{
+			connectControl -fileName "field" $attr;
+			$callbackCmd = "realflowAssignFileToAttr " + $attr;
+		}
+		else
+			$callbackCmd = "realflowAssignFileToField " + $fullFieldName;
+		string $btnCmd = "realflowBrowseForFile 0 \"" + $fullFieldName + "\" \"" + $callbackCmd + "\" \"" + $mask + "\" " + $mode;
+		symbolButton -image "navButtonBrowse.xpm" -command $btnCmd "button";
+	setParent ..;
+}
+
+/*
+*	Callback for the "browse" button contained in directory controls.
+*/
+global proc realflowBrowseForFolder(string $fieldName, string $callbackCmd)
+{
+	string $crDir = `textField -q -text $fieldName`;
+	
+	if(realflowGetMayaMajorVer() < 2011)
+	{
+		global string $gDefaultFileBrowserDir;
+		string $oldDir = $gDefaultFileBrowserDir;
+		$gDefaultFileBrowserDir = $crDir;
+		fileBrowser $callbackCmd "" "" 4;
+		$gDefaultFileBrowserDir = $oldDir;
+		return;
+	}
+	
+	string $dirs[] = `fileDialog2 -ds 2 -dir $crDir -rf false -fm 3`;
+	if(size($dirs) == 1)
+	{
+		$cmd = $callbackCmd + " \"" + $dirs[0] + "\" \"\"";
+		eval $cmd;
+	}
+}
+
+/*
+*	Creates a directory control.
+*/
+global proc realflowMakeDirControl(string $label, string $attr, string $ctrl)
+{
+	rowLayout -nc 3 $ctrl;
+		text -l $label "label";
+		$fullFieldName = `textField "field"`;
+		
+		string $callbackCmd;
+		if(size($attr) > 0)
+		{
+			connectControl "field" $attr;
+			$callbackCmd = "realflowAssignFileToAttr " + $attr;
+		}
+		else
+			$callbackCmd = "realflowAssignFileToField " + $fullFieldName;
+		string $btnCmd = "realflowBrowseForFolder \"" + $fullFieldName + "\" \"" + $callbackCmd + "\"";
+		symbolButton -image "navButtonBrowse.xpm" -command $btnCmd "button";
+	setParent ..;
+}
+
+/*
+*	Used to retrieve the file name from a file control.
+*/
+global proc string realflowGetFileControlVal(string $ctrl)
+{
+	string $oldParent = `setParent -q`;
+	setParent $ctrl;
+		string $ret = `textField -q -text "field"`;
+	setParent $oldParent;
+	return $ret;
+}
+
+/*
+*	Used to set the file name from a file control.
+*/
+global proc realflowSetFileControlVal(string $ctrl, string $val)
+{
+	string $oldParent = `setParent -q`;
+	setParent $ctrl;
+		textField -e -text $val "field";
+	setParent $oldParent;
+}
+
+/*
+*	This function is used instead of attrControlGrp for connecting an existing text field group to an attribute, because
+* attrControlGrp doesn't work. We also use it to connect file controls (i.e. label - text field - browse button groups).
+*/
+global proc realflowConnectStringField(string $attr, string $control, string $changeCmd, string $mask)
+{
+	string $oldParent = `setParent -q`;
+	setParent $control;
+		textField -e -changeCommand $changeCmd "field";
+		// If we have a symbol button in the layout, it's a file name control.
+		string $fullBtnPath = `setParent -q` + "|button";
+		if(`symbolButton -q -exists $fullBtnPath`)
+		{
+			// We need to connect the browse button.
+			string $callbackCmd = "realflowAssignFileToAttr " + $attr;
+			string $btnCmd = "realflowBrowseForFile 1 \"" + $attr + "\" \"" + $callbackCmd + "\" \"" + $mask + "\" 0";
+			symbolButton -e -command $btnCmd "button";
+			// Connect the control using -fileName.
+			connectControl -fileName "field" $attr;
+		}
+		else
+			connectControl "field" $attr;
+	setParent $oldParent;
+}
+
+/*
+*   Shape node AE scripts call a function named "AEshapeTemplate" to build a rollup for
+* common attributes (like "caching"). We redefine this function here to be able to run a set of hook
+* functions before that rollup. Alias does not provide a standardized way of doing this, but they seem
+* to suggest storing the hook function names in the global array $AEdependNodeHooks[] and running everything
+* that's in there. We'll do that as well, so we don't step on other plugins' toes.
+*/
+global string $AEshapeHooks[];
+
+global proc AEshapeTemplate(string $nodeName)
+{
+	// Run the hooks.
+	global string $AEshapeHooks[];
+	$numHooks = size($AEshapeHooks);
+	for($i = 0; $i < $numHooks; ++$i)
+		eval($AEshapeHooks[$i] + " \"" + $nodeName + "\"");
+
+	editorTemplate -beginLayout "Object Display";
+		AEdagNodeCommon $nodeName;
+	editorTemplate -endLayout;
+
+	AEdagNodeInclude $nodeName;
+}
+
+/*
+*	Creates a shader of the given type and assigns it to a mesh.
+*/
+global proc string realflowCreateShader(string $mesh, string $type)
+{
+	string $shader = `shadingNode -asShader $type`;
+	string $sg = `sets -renderable true -noSurfaceShader true -empty -name ($shader + "SG")`;
+	connectAttr -f ($shader + ".outColor") ($sg + ".surfaceShader");
+	
+	defaultNavigation -source $shader -destination ($mesh + ".instObjGroups[0]") -connectToExisting;
+	sets -edit -forceElement $sg $mesh;
+	
+	return $shader;
+}
+
+/*
+*	Create a texture node and connect it to the given shader. The specified texture file is loaded. A
+* placement node is also connected to the placement inputs of the texture node.
+*/
+global proc realflowCreateTexture(string $shader, string $textureFile)
+{
+	string $texNode = `renderCreateNode -as2DTexture "" "file" "" 0 0 1 0 0 ""`;
+	connectAttr -force ($texNode + ".outColor") ($shader + ".color");
+	setAttr -type "string" ($texNode + ".fileTextureName") $textureFile;
+}
+
+/*
+*	Called when the plug-in is loaded to perform initialization tasks.
+*/
+global proc realflowMain()
+{
+	// Build the shelf.
+	source "realflowAddShelfButtons";
+	realflowRegisterShelf();
+
+	// Register the AE hook for our custom attributes. If the user opened the AE before loading our plug-in,
+	// the window has already been built, so our hooks will be useless. Delete the window so that when the
+	// user opens it again, it gets rebuilt using our hook code.
+	global string $gAttributeEditorWindowName;
+	if(`window -q -exists $gAttributeEditorWindowName`)
+		deleteUI $gAttributeEditorWindowName;
+	global string $AEshapeHooks[];
+	// We need to source this explicitly to populate the "rfAttributeDefaults" global string array. If Maya compiles
+	// the file automatically it doesn't register the array.
+	source "realflowShapeNodeAEHook.mel";
+	$AEshapeHooks[size($AEshapeHooks)] = "realflowShapeNodeAEHook";
+}
+
+/*
+*	Determines the visibility of the display layer which contains the given object name.
+*/
+global proc int realflowObjLayerVisible(string $objName)
+{
+	string $attr = $objName + ".drawOverride";
+	if(!`objExists $attr`)
+		return true;
+		
+	string $src = `connectionInfo -sourceFromDestination $attr`;
+	if($src == "")
+		return true;
+		
+	string $buffer[];
+	tokenize $src "." $buffer;
+	string $layer = $buffer[0];
+	
+	$attr = $layer + ".visibility";
+	if(!`getAttr $attr`)
+		return false;
+	
+	$attr = $layer + ".displayType";
+	
+	// When the layer display type is set to "Template" (value 1) the objects have to be ignored.
+	if(`getAttr $attr` == 1)
+		return false;
+	
+	return true;
+}
+
+/*
+*	Find the blind data template node for the given ID and set its association type to "per vertex".
+* This is needed so that the blind data editor can do viewport coloring with our per-vertex data.
+* The default association mode is "any" so the blind data editor can't find our data.
+*/
+global proc realflowSetupBlindDataTemplate(int $id)
+{
+	string $blindDataTemplates[] = `ls -exactType blindDataTemplate`;
+
+	for($bdt in $blindDataTemplates)
+	{
+		if(`getAttr ($bdt + ".typeId")` == $id)
+		{
+			// Maya's blind data editor uses the "user info" attribute to specify various parameters.
+			// The indices inside this array attribute are hardcoded and their meaning can be found by
+			// looking at setUserDefinedAttr() in blindDataEditor.mel. The method for setting the
+			// association type can be seen in setAssocType() in the same file.
+			setAttr -type "string" ($bdt + ".bdui[1].bdun") "assocType";
+			setAttr -type "string" ($bdt + ".bdui[1].bduv") "vertex";
+			return;
+		}
+	}
+}
+
+/*
+*	Tries to guess the name format and padding for a given sequence name. The first element
+* of the returned array is the format code, the second is the padding, the third is the type
+* (BIN or PXY). This could have been much shorter if the "match" built-in was able to return
+* match positions.
+*/
+global proc int[] realflowFindFormatPadAndType(string $fileName)
+{
+	int $ret[3];
+	
+	string $fields[];
+	tokenize $fileName "." $fields;
+	
+	int $numFields = size($fields);
+	
+	string $ext = tolower($fields[$numFields-1]);
+	string $numericExt = match("[0-9]+", $ext);
+	if(size($ext) == size($numericExt))
+	{
+		$ret[0] = 2;
+		$ret[1] = size($ext);
+		$ret[2] = 0;
+		if($numFields > 1)
+		{
+			$ext = tolower($fields[$numFields-2]);
+			if($ext == "pxy")
+				$ret[2] = 1;
+		}
+			
+		return $ret;
+	}
+	
+	switch($ext)
+	{
+		case "bin":
+			$ret[2] = 0;
+			break;
+		case "pxy":
+			$ret[2] = 1;
+			break;
+		case "rpc":
+			$ret[2] = 2;
+			break;
+		default:
+			// We can't handle other extensions. Return defaults.
+			$ret[0] = 1;
+			$ret[1] = 5;
+			$ret[2] = 0;
+			return $ret;
+	}
+	
+	if(size($fields) > 2)
+	{
+		string $frame = $fields[size($fields)-2];
+		string $numericFrame = match("[0-9]+", $frame);
+		if( (size($frame) == size($numericFrame)) && (size($frame) > 0) )
+		{
+			// This looks like name.#.ext
+			$ret[0] = 0;
+			$ret[1] = size($frame);
+			return $ret;
+		}
+	}
+	
+	// Strip the extension.
+	string $baseName = substring($fileName, 1, size($fileName)-4);
+	int $pos;
+	for($pos = size($baseName) - 1; $pos > 0; --$pos)
+	{
+		string $chr = substring($baseName, $pos, $pos);
+		if(!gmatch($chr, "[0-9]"))
+			break;
+	}
+	
+	int $padding = size($baseName) - $pos;
+	if($padding < 1)
+	{
+		// Crap format, return defaults.
+		$ret[0] = 1;
+		$ret[1] = 5;
+		return $ret;
+	}
+	
+	string $sep = substring($baseName, $pos, $pos);
+	if($sep == "_")
+	{
+		// Looks like name_#.ext
+		$ret[0] = 3;
+		$ret[1] = $padding;
+		return $ret;
+	}
+	
+	// It's probably name#.ext. Hack: clamp the padding to 5 because RF exports prefixes like "Circle01".
+	if($padding > 5)
+		$padding = 5;
+		
+	$ret[0] = 1;
+	$ret[1] = $padding;
+	return $ret;
+}
+
+/*
+*	Called when the user modifies the name format or padding values in a BIN sequence import dialog. Updates
+* the "prefix" field. Returns 1 if the choices are valid (i.e. if we can arrive back at the file name using
+* the current format and padding) and 0 otherwise.
+*/
+global proc int realflowUpdateSeqPrefix(string $optWindow)
+{
+	setParent $optWindow;
+	
+	int $format = `optionMenuGrp -q -select nameFormatCtrl` - 1;
+	int $padding = `intFieldGrp -q -value1 paddingCtrl`;
+	string $ext;
+	if(`control -q -exists particleTypeCtrl`)
+	{
+		int $extId = `optionMenuGrp -q -select particleTypeCtrl`;
+		if($extId == 2)
+			$ext = ".pxy";
+		else if($extId == 3)
+			$ext = ".rpc";
+		else
+			$ext = ".bin";
+	}
+	else
+		$ext = ".bin";
+		
+	string $filePath = `textFieldGrp -q -text seqFileCtrl`;
+	string $fileName = basename($filePath, "");
+	
+	int $fnameLen = size($fileName);
+	string $fileFrame;	
+	string $prefix;
+	
+	switch($format)
+	{
+		case 0:
+			$fileFrame = substring($fileName, $fnameLen - $padding - 3, $fnameLen - 4);
+			$prefix = substring($fileName, 1, $fnameLen - $padding - 5);
+			break;
+		case 2:
+			$fileFrame = substring($fileName, $fnameLen - $padding + 1, $fnameLen);
+			$prefix = substring($fileName, 1, $fnameLen - $padding - 5);
+			break;
+		case 3:
+			$fileFrame = substring($fileName, $fnameLen - $padding - 3, $fnameLen - 4);
+			$prefix = substring($fileName, 1, $fnameLen - $padding - 5);
+			break;
+		case 1:
+		default:
+			$fileFrame = substring($fileName, $fnameLen - $padding - 3, $fnameLen - 4);
+			$prefix = substring($fileName, 1, $fnameLen - $padding - 4);
+			break;
+	}
+	
+	int $ok = 0;
+	string $numericFrame = match("[0-9]+", $fileFrame);
+	if(size($numericFrame) == $padding)
+	{
+		string $rebuiltFile;
+		switch($format)
+		{
+			case 0:
+				$rebuiltFile = $prefix + "." + $numericFrame + $ext;
+				break;
+			case 2:
+				$rebuiltFile = $prefix + $ext + "." + $numericFrame;
+				break;
+			case 3:
+				$rebuiltFile = $prefix + "_" + $numericFrame + $ext;
+				break;
+			default:
+			case 1:
+				$rebuiltFile = $prefix + $numericFrame + $ext;
+				break;
+		}
+		
+		if($rebuiltFile == $fileName)
+			$ok = 1;
+	}
+
+	if($ok)
+		textFieldGrp -e -text $prefix prefixCtrl;
+	else
+		textFieldGrp -e -text "<Format or padding don't match file name>" prefixCtrl;
+		
+	return $ok;
+}
+
+/*
+*	Function which creates a label/checkbox control group connected to the given attribute. We use this because attrControlGrp
+* is broken and sometimes refuses to work when trying to update the connection on an existing control.
+*/
+global proc realflowMakeCheckboxCtrl(string $label, string $attr, string $ctrlName, string $changeCmd)
+{
+	checkBoxGrp -numberOfCheckBoxes 1 -label1 $label -changeCommand1 $changeCmd $ctrlName;
+	connectControl -preventOverride true -index 2 $ctrlName $attr;
+}
+
+/*
+*	Connect an existing checkbox control to the given attribute. See the description for the function above.
+*/
+global proc realflowConnectCheckboxCtrl(string $ctrlName, string $attr, string $changeCmd)
+{
+	checkBoxGrp -e -changeCommand1 $changeCmd $ctrlName;
+	connectControl -preventOverride true -index 2 $ctrlName $attr;
+}
+
+/*
+*	Replacement for attrControlGrp for numeric fields. Similar to realflowMakeCheckboxCtrl().
+*/
+global proc realflowMakeNumericFieldCtrl(string $label, string $attr, string $ctrlName, string $type)
+{
+	if($type == "int")
+		intFieldGrp -numberOfFields 1 -label $label $ctrlName;
+	else
+		floatFieldGrp -numberOfFields 1 -label $label $ctrlName;
+	connectControl -preventOverride true -index 2 $ctrlName $attr;
+}
+
+/*
+*	Similar to realflowConnectCheckboxCtrl() above, but for float fields.
+*/
+global proc realflowConnectNumericFieldCtrl(string $ctrlName, string $attr)
+{
+	connectControl -preventOverride true -index 2 $ctrlName $attr;
+}

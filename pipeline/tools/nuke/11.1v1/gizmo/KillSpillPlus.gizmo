@@ -1,0 +1,237 @@
+set cut_paste_input [stack 0]
+version 6.1 v2
+push $cut_paste_input
+Group {
+ name killSpill_Plus
+ selected true
+ xpos -141
+ ypos -5
+ addUserKnob {20 User l "Kill Spill Plus"}
+ addUserKnob {4 screenT l "Screen Type" M {GREEN BLUE}}
+ addUserKnob {41 mode l "       luminance math" -STARTLINE T Saturation2.mode}
+ addUserKnob {26 "" +STARTLINE}
+ addUserKnob {18 ReplaceC l "Replace Color"}
+ ReplaceC {1 1 1}
+ addUserKnob {7 ScreenG l "Screen Gain"}
+ ScreenG 0.5
+ addUserKnob {26 "" +STARTLINE}
+ addUserKnob {7 HighlightsB l "Highlights Balance"}
+ HighlightsB 0.5
+ addUserKnob {7 midtonesB l "Midtones Balance"}
+ midtonesB 0.5
+ addUserKnob {7 ShadowsB l "Shadows Balance"}
+ ShadowsB 0.5
+ addUserKnob {26 "" +STARTLINE}
+ addUserKnob {7 midtonemap l "Mid Tone At"}
+ midtonemap 0.21
+ addUserKnob {26 "" +STARTLINE}
+ addUserKnob {22 Button l "     Kill Spill Plus  1.00   by   Luc Julien     " -STARTLINE T "import os\nimport sys\n\ntry:\n    import subprocess\n    def _run(cmd, shell, wait):\n        opener = subprocess.Popen(cmd, shell=shell)\n        if wait:\n            opener.wait()\n        return opener.pid\nexcept ImportError:\n    import popen2\n    def _run(cmd, shell, wait):\n        opener = popen2.Popen3(cmd)\n        if wait:\n            opener.wait()\n        return opener.pid\n\ndef _open(url, wait=0):\n    if sys.platform == \"darwin\":\n        cmd = \[\"open\", url]\n    elif hasattr(os, \"startfile\"):\n        return os.startfile(url)\n    elif os.environ.has_key(\"KDE_FULL_SESSION\") or os.environ.has_key(\"KDE_MULTIHEAD\") or \\\n        os.environ.has_key(\"GNOME_DESKTOP_SESSION_ID\") or os.environ.has_key(\"GNOME_KEYRING_SOCKET\"):\n        cmd = \[\"xdg-open\", url]\n    else:\n        raise OSError, \"Desktop not supported.\"\n\n    return _run(cmd, 0, wait)\n\n_open('http://www.linkedin.com/in/lucjulien')"}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos -96
+  ypos -532
+ }
+ Dot {
+  name Dot1
+  xpos -62
+  ypos -435
+ }
+set N1d7dde70 [stack 0]
+push $N1d7dde70
+ Dot {
+  name Dot8
+  xpos 8
+  ypos -435
+ }
+set N2466d270 [stack 0]
+ Keyer {
+  operation "luminance key"
+  range {{curve i} {curve i} {curve i} {parent.midtonemap i}}
+  name Keyer1
+  xpos -26
+  ypos -205
+ }
+set N2423a200 [stack 0]
+ Keyer {
+  operation "luminance key"
+  range {{parent.midtonemap/2 i x1 4.27186125e-05} {parent.midtonemap i x1 0.21} {parent.midtonemap i x1 0.21} {(1-parent.midtonemap)/2+parent.midtonemap i x1 0.9783321704}}
+  name Keyer2
+  xpos -26
+  ypos -106
+ }
+set N2469a900 [stack 0]
+push $N2466d270
+ Dot {
+  name Dot3
+  xpos 122
+  ypos -435
+ }
+set N1d16a6a0 [stack 0]
+ Dot {
+  name Dot4
+  xpos 183
+  ypos -435
+ }
+set N1e690870 [stack 0]
+ Dot {
+  name Dot6
+  xpos 237
+  ypos -435
+ }
+set N24666b10 [stack 0]
+ Dot {
+  name Dot2
+  xpos 284
+  ypos -435
+ }
+set N1d77cdd0 [stack 0]
+ Dot {
+  name Dot5
+  xpos 344
+  ypos -435
+ }
+set N1e6d2f90 [stack 0]
+ Dot {
+  name Dot7
+  xpos 412
+  ypos -435
+ }
+ Expression {
+  expr2 min(b,(r+g)*(colortune+.5)/2)
+  name Expression8
+  xpos 378
+  ypos -260
+  addUserKnob {20 Tune}
+  addUserKnob {7 colortune l "color Tune" R 0.5 1.5}
+  colortune {{parent.Expression7.colortune i}}
+ }
+push $N2423a200
+push $N1e6d2f90
+ Expression {
+  expr2 min(b,(r+g)*(colortune+.5)/2)
+  name Expression6
+  xpos 310
+  ypos -315
+  addUserKnob {20 Tune}
+  addUserKnob {7 colortune l "color Tune" R 0.5 1.5}
+  colortune {{parent.Expression5.colortune i}}
+ }
+push $N1d77cdd0
+ Expression {
+  expr2 min(b,(r+g)*(colortune+.5)/2)
+  name Expression2
+  xpos 250
+  ypos -374
+  addUserKnob {20 Tune}
+  addUserKnob {7 colortune l "color Tune" R 0.5 1.5}
+  colortune {{parent.Expression1.colortune i}}
+ }
+ Keymix {
+  inputs 3
+  channels rgba
+  name Keymix2
+  xpos 250
+  ypos -200
+ }
+ Keymix {
+  inputs 3
+  channels rgba
+  name Keymix4
+  xpos 250
+  ypos -101
+ }
+push $N2469a900
+push $N24666b10
+ Expression {
+  expr1 min(g,(r+b)*(colortune+.5)/2)
+  name Expression7
+  xpos 203
+  ypos -260
+  addUserKnob {20 Tune}
+  addUserKnob {7 colortune l "color Tune" R 0.5 1.5}
+  colortune {{parent.midtonesB i}}
+ }
+push $N2423a200
+push $N1e690870
+ Expression {
+  expr1 min(g,(r+b)*(colortune+.5)/2)
+  name Expression5
+  xpos 149
+  ypos -316
+  addUserKnob {20 Tune}
+  addUserKnob {7 colortune l "color Tune" R 0.5 1.5}
+  colortune {{parent.ShadowsB i}}
+ }
+push $N1d16a6a0
+ Expression {
+  expr1 min(g,(r+b)*(colortune+.5)/2)
+  name Expression1
+  xpos 89
+  ypos -374
+  addUserKnob {20 Tune}
+  addUserKnob {7 colortune l "color Tune" R 0.5 1.5}
+  colortune {{parent.HighlightsB i}}
+ }
+ Keymix {
+  inputs 3
+  channels rgba
+  name Keymix1
+  xpos 89
+  ypos -200
+ }
+ Keymix {
+  inputs 3
+  channels rgba
+  name Keymix3
+  xpos 89
+  ypos -101
+ }
+ Switch {
+  inputs 2
+  which {{parent.screenT i}}
+  name Switch_screen_type
+  xpos 159
+  ypos 13
+ }
+set N1d795330 [stack 0]
+ Merge2 {
+  inputs 2
+  operation minus
+  name Merge1
+  xpos -96
+  ypos 13
+ }
+ Saturation {
+  saturation 0
+  mode Maximum
+  name Saturation2
+  xpos -96
+  ypos 57
+ }
+ Grade {
+  channels {rgba.red rgba.green rgba.blue -rgba.alpha}
+  whitepoint {{white.r+white.g+white.b i}}
+  white {{parent.ReplaceC i} {parent.ReplaceC i} {parent.ReplaceC i} {parent.ReplaceC i}}
+  black_clamp false
+  name ReplaceColor
+  xpos -96
+  ypos 106
+ }
+push $N1d795330
+ Merge2 {
+  inputs 2
+  operation screen
+  mix {{parent.ScreenG i}}
+  name Merge47
+  selected true
+  xpos 159
+  ypos 106
+ }
+ Output {
+  name Output1
+  xpos 159
+  ypos 200
+ }
+end_group

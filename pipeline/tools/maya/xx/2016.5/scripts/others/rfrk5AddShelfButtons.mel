@@ -1,0 +1,50 @@
+global proc rfrk5AddShelfButtons()
+{
+	shelfButton
+		-label			"OpenVDB Mesher"
+		-annotation		"Create a mesher object"
+		-image1			"rfrk5OpenVDBMesher.png"
+		-command		("rfrk5ExecShelfCmd rfrk5CreateOpenVDBMesher");
+
+	shelfButton
+		-label			"OpenVDB Hybrido Mesher"
+		-annotation		"Create a Hybrido mesher object"
+		-image1			"rfrk5OpenVDBHybridoMesher.png"
+		-command		("rfrk5ExecShelfCmd rfrk5CreateOpenVDBHybridoMesher");
+
+	shelfButton
+		-label			"Mesher"
+		-annotation		"Create a mesher object"
+		-image1			"rfrk5Mesher.png"
+		-command		("rfrk5ExecShelfCmd rfrk5CreateMesher");
+
+	shelfButton
+		-label			"Hybrido Mesher"
+		-annotation		"Create a Hybrido mesher object"
+		-image1			"rfrk5HybridoMesh.png"
+		-command		("rfrk5ExecShelfCmd rfrk5CreateHybridoMesher");
+
+	shelfButton
+		-label			"Update Mesh"
+		-annotation		"Updates the viewport preview for the selected meshers"
+		-image1			"rfrk5UpdateVpMesh.png"
+		-command		("rfrk5ExecShelfCmd rfrk5UpdateVpMesh");
+
+	shelfButton
+		-label			"Particler"
+		-annotation		"Create a particler object"
+		-image1			"rfrk5Particler.png"
+		-command		("rfrk5ExecShelfCmd rfrk5MrCreateParticler");
+
+	shelfButton
+		-label			"Cloud"
+		-annotation		"Create a cloud object"
+		-image1			"rfrk5Cloud.png"
+		-command		("rfrk5ExecShelfCmd rfrk5MrCreateCloud");
+
+	shelfButton
+		-label			"Import XML"
+		-annotation		"Import XML scene"
+		-image1			"rfrk5ImportXML.png"
+		-command		("rfrk5ExecShelfCmd rfrk5ImportXmlScene");
+}

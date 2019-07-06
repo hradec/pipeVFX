@@ -1,0 +1,430 @@
+#! /Applications/Nuke5.1v2/Nuke5.1v2.app/Contents/MacOS/Nuke5.1v2 -nx
+version 5.1200
+Gizmo {
+ inputs 2
+ note_font "Bitstream Vera Sans"
+ addUserKnob {20 "" l SpillSuppress_v3}
+ addUserKnob {4 suppressChannel M {none red green blue}}
+ suppressChannel blue
+ addUserKnob {7 hueOffset R -60 60}
+ hueOffset -19.5
+ addUserKnob {7 secondaryRestore}
+ addUserKnob {7 peak l "peak white" t "Values above this threshold will be clipped." R 0 100}
+ peak 1
+ addUserKnob {26 ""}
+ addUserKnob {41 from0 l mask T Copy10.from0}
+ addUserKnob {6 invert -STARTLINE}
+ addUserKnob {4 maskInput M {useFgd useMaskInput}}
+ maskInput useMaskInput
+}
+ Input {
+  inputs 0
+  name Fgd
+  note_font "Bitstream Vera Sans"
+  xpos 0
+  ypos -227
+ }
+ Multiply {
+  channels {rgba.red rgba.green rgba.blue -rgba.alpha}
+  value {{1/Multiply1.value}}
+  name Multiply2
+  label "scale input"
+  note_font "Bitstream Vera Sans"
+  xpos 0
+  ypos -201
+ }
+set N326b6d20 [stack 0]
+ Dot {
+  name Dot1
+  note_font "Bitstream Vera Sans"
+  xpos 34
+  ypos -67
+ }
+set N32659500 [stack 0]
+ Dot {
+  name Dot8
+  note_font "Bitstream Vera Sans"
+  xpos -180
+  ypos -67
+ }
+ Dot {
+  name Dot9
+  note_font "Bitstream Vera Sans"
+  xpos -180
+  ypos 817
+ }
+set N3268b150 [stack 0]
+ Dot {
+  name Dot2
+  note_font "Bitstream Vera Sans"
+  xpos -180
+  ypos 880
+ }
+set N326b09d0 [stack 0]
+ Dot {
+  name Dot3
+  note_font "Bitstream Vera Sans"
+  xpos -180
+  ypos 956
+ }
+set N3269de30 [stack 0]
+ Input {
+  inputs 0
+  name Mask
+  note_font "Bitstream Vera Sans"
+  xpos -380
+  ypos -234
+  number 1
+ }
+push $N326b6d20
+ Switch {
+  inputs 2
+  which {{parent.maskInput}}
+  name Switch3
+  note_font "Bitstream Vera Sans"
+  xpos -380
+  ypos -114
+ }
+set N326b9ab0 [stack 0]
+push $N326b9ab0
+ Copy {
+  inputs 2
+  to0 rgba.alpha
+  name Copy10
+  note_font "Bitstream Vera Sans"
+  xpos -380
+  ypos 913
+ }
+ Invert {
+  channels {-rgba.red -rgba.green -rgba.blue rgba.alpha}
+  name Invert1
+  note_font "Bitstream Vera Sans"
+  xpos -380
+  ypos 965
+  disable {{!parent.invert}}
+ }
+set N326bfa60 [stack 0]
+ Merge2 {
+  inputs 2
+  operation out
+  also_merge all
+  name Out
+  note_font "Bitstream Vera Sans"
+  xpos -239
+  ypos 1171
+ }
+push $N3269de30
+push $N32659500
+ Dot {
+  name Dot4
+  note_font "Bitstream Vera Sans"
+  xpos 228
+  ypos -67
+ }
+set N326c6ab0 [stack 0]
+ Dot {
+  name Dot5
+  note_font "Bitstream Vera Sans"
+  xpos 291
+  ypos -67
+ }
+set N326c8050 [stack 0]
+ Shuffle {
+  red green
+  green blue
+  blue red
+  name GBR
+  note_font "Bitstream Vera Sans"
+  xpos 316
+  ypos -30
+ }
+push $N326c8050
+ Shuffle {
+  red blue
+  green red
+  blue green
+  name BRG
+  note_font "Bitstream Vera Sans"
+  xpos 413
+  ypos -29
+ }
+ Merge {
+  inputs 2
+  operation max
+  name Max
+  note_font "Bitstream Vera Sans"
+  xpos 365
+  ypos 21
+ }
+push $N326c6ab0
+ Merge {
+  inputs 2
+  operation min
+  name Min
+  note_font "Bitstream Vera Sans"
+  xpos 253
+  ypos 21
+ }
+set N326d3f30 [stack 0]
+push $N32659500
+ Copy {
+  inputs 2
+  from0 rgba.blue
+  to0 rgba.blue
+  name Copy1
+  note_font "Bitstream Vera Sans"
+  xpos 276
+  ypos 97
+ }
+push $N326d3f30
+push $N32659500
+ Copy {
+  inputs 2
+  from0 rgba.green
+  to0 rgba.green
+  name Copy2
+  note_font "Bitstream Vera Sans"
+  xpos 166
+  ypos 98
+ }
+push $N326d3f30
+push $N32659500
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  name Copy3
+  note_font "Bitstream Vera Sans"
+  xpos 59
+  ypos 102
+ }
+push $N32659500
+ Switch {
+  inputs 4
+  which {{parent.suppressChannel}}
+  name Switch1
+  note_font "Bitstream Vera Sans"
+  xpos 0
+  ypos 192
+ }
+ Dot {
+  name Dot7
+  note_font "Bitstream Vera Sans"
+  xpos 34
+  ypos 340
+ }
+ HSVTool {
+  huerotation {{parent.hueOffset}}
+  output -rgba.alpha
+  name HSVTool1
+  note_font "Bitstream Vera Sans"
+  xpos 0
+  ypos 414
+ }
+ Dot {
+  name Dot6
+  note_font "Bitstream Vera Sans"
+  xpos 34
+  ypos 483
+ }
+set N326e9cc0 [stack 0]
+ Dot {
+  name Dot10
+  note_font "Bitstream Vera Sans"
+  xpos 228
+  ypos 483
+ }
+set N326eb220 [stack 0]
+ Dot {
+  name Dot11
+  note_font "Bitstream Vera Sans"
+  xpos 291
+  ypos 483
+ }
+set N326ec770 [stack 0]
+ Shuffle {
+  red green
+  green blue
+  blue red
+  name GBR1
+  note_font "Bitstream Vera Sans"
+  xpos 316
+  ypos 520
+ }
+push $N326ec770
+ Shuffle {
+  red blue
+  green red
+  blue green
+  name BRG1
+  note_font "Bitstream Vera Sans"
+  xpos 413
+  ypos 521
+ }
+ Merge {
+  inputs 2
+  operation max
+  name Max1
+  note_font "Bitstream Vera Sans"
+  xpos 365
+  ypos 571
+ }
+push $N326eb220
+ Merge {
+  inputs 2
+  operation min
+  name Min1
+  note_font "Bitstream Vera Sans"
+  xpos 253
+  ypos 571
+ }
+set N326f81a0 [stack 0]
+push $N326e9cc0
+ Copy {
+  inputs 2
+  from0 rgba.blue
+  to0 rgba.blue
+  name Copy4
+  note_font "Bitstream Vera Sans"
+  xpos 276
+  ypos 647
+ }
+ HSVTool {
+  huerotation {{-parent.hueOffset}}
+  output -rgba.alpha
+  name HSVTool5
+  note_font "Bitstream Vera Sans"
+  xpos 276
+  ypos 776
+ }
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  from1 rgba.green
+  to1 rgba.green
+  mix {{parent.secondaryRestore}}
+  name Copy9
+  note_font "Bitstream Vera Sans"
+  xpos 276
+  ypos 938
+ }
+push $N326b09d0
+push $N326f81a0
+push $N326e9cc0
+ Copy {
+  inputs 2
+  from0 rgba.green
+  to0 rgba.green
+  name Copy5
+  note_font "Bitstream Vera Sans"
+  xpos 166
+  ypos 648
+ }
+ HSVTool {
+  huerotation {{-parent.hueOffset}}
+  output -rgba.alpha
+  name HSVTool3
+  note_font "Bitstream Vera Sans"
+  xpos 166
+  ypos 700
+ }
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  from2 rgba.blue
+  to2 rgba.blue
+  mix {{parent.secondaryRestore}}
+  name Copy7
+  note_font "Bitstream Vera Sans"
+  xpos 166
+  ypos 862
+ }
+push $N3268b150
+push $N326f81a0
+push $N326e9cc0
+ Copy {
+  inputs 2
+  from0 rgba.red
+  to0 rgba.red
+  name Copy6
+  note_font "Bitstream Vera Sans"
+  xpos 59
+  ypos 636
+ }
+ HSVTool {
+  huerotation {{-parent.hueOffset}}
+  output -rgba.alpha
+  name HSVTool4
+  note_font "Bitstream Vera Sans"
+  xpos 59
+  ypos 704
+ }
+ Copy {
+  inputs 2
+  from1 rgba.green
+  to1 rgba.green
+  from2 rgba.blue
+  to2 rgba.blue
+  mix {{parent.secondaryRestore}}
+  name Copy8
+  note_font "Bitstream Vera Sans"
+  xpos 59
+  ypos 792
+ }
+push $N326e9cc0
+ Switch {
+  inputs 4
+  which {{parent.suppressChannel}}
+  name Switch2
+  note_font "Bitstream Vera Sans"
+  xpos 0
+  ypos 1110
+ }
+set N345210f0 [stack 0]
+push $N326bfa60
+ Merge2 {
+  inputs 2
+  operation in
+  also_merge all
+  name In
+  note_font "Bitstream Vera Sans"
+  xpos -380
+  ypos 1172
+ }
+ Merge {
+  inputs 2
+  operation plus
+  also_merge all
+  name Plus
+  note_font "Bitstream Vera Sans"
+  xpos -315
+  ypos 1245
+ }
+push $N345210f0
+ Switch {
+  inputs 2
+  which {{parent.from0>0?1:0 i}}
+  name Switch4
+  note_font "Bitstream Vera Sans"
+  xpos -2
+  ypos 1328
+ }
+ Multiply {
+  channels {rgba.red rgba.green rgba.blue -rgba.alpha}
+  value {{parent.peak}}
+  name Multiply1
+  label "rescale output"
+  note_font "Bitstream Vera Sans"
+  selected true
+  xpos -2
+  ypos 1367
+ }
+ Output {
+  name Output1
+  note_font "Bitstream Vera Sans"
+  xpos 0
+  ypos 1446
+ }
+end_group

@@ -1,0 +1,118 @@
+/*
+*	Returns the shelf version recognized by this plug-in build.
+*/
+proc int realflowGetCurrentShelfVer()
+{
+	return 2011041502;
+}
+
+/*
+*	Creates the shelf buttons.
+*/
+proc realflowAddShelfButtons()
+{
+	shelfButton
+		-label			"SD Export Last"
+		-annotation		"Export SD using current options"
+		-image1			"realflowExportSD.xpm"
+		-command		("realflowExecShelfCmd realflowSDExportLastSettings");
+
+	shelfButton
+		-label			"SD Export Options"
+		-annotation		"Setup SD export options"
+		-image1			"realflowExportSDOpts.xpm"
+		-command		("realflowExecShelfCmd realflowSDExportDialog");
+
+	shelfButton
+		-label			"Export Particles"
+		-annotation		"Export particles as BIN files"
+		-image1			"realflowExportBIN.xpm"
+		-command		("realflowExecShelfCmd \"realflowBINExportLastSettings 0\"");
+
+	shelfButton
+		-label			"Export Particles Options"
+		-annotation		"Setup options for exporting particles as BIN files"
+		-image1			"realflowExportBINOpts.xpm"
+		-command		("realflowExecShelfCmd \"realflowBINExportDialog 0\"");
+
+	shelfButton
+		-label			"Export Meshes"
+		-annotation		"Export meshes as BIN files"
+		-image1			"realflowExportBINMesh.xpm"
+		-command		("realflowExecShelfCmd \"realflowBINExportLastSettings 1\"");
+
+	shelfButton
+		-label			"Export Meshes Options"
+		-annotation		"Setup options for exporting meshes as BIN files"
+		-image1			"realflowExportBINMeshOpts.xpm"
+		-command		("realflowExecShelfCmd \"realflowBINExportDialog 1\"");
+
+	shelfButton
+		-label			"SD Import"
+		-annotation		"Import SD file"
+		-image1			"realflowImportSD.xpm"
+		-command		("realflowExecShelfCmd realflowImportSD");
+
+	shelfButton
+		-label			"Import Particles"
+		-annotation		"Create a particle system which uses a RealFlow emitter"
+		-image1			"realflowImportBIN.xpm"
+		-command		("realflowExecShelfCmd realflowImportParticles");
+
+	shelfButton
+		-label			"Import BIN Mesh"
+		-annotation		"Import a BIN mesh"
+		-image1			"realflowImportBINMesh.xpm"
+		-command		("realflowExecShelfCmd realflowImportBINMesh");
+		
+	int $latestVer = realflowGetCurrentShelfVer();
+	optionVar -iv "rfShelfVersion" $latestVer;
+}
+
+/*
+*	Registers or updates the RealFlow shelf, if necessary.
+*/
+global proc realflowRegisterShelf()
+{
+	// No shelf manipulation in batch mode.
+	if(`about -batch`)
+		return;
+	
+	// If there's no shelf, make it.
+	if(!`shelfLayout -exists "RealFlow"`)
+	{
+		$shelf = addNewShelfTab("RealFlow");
+		setParent $shelf;
+		realflowAddShelfButtons();
+		return;
+	}
+	
+	// Check the version.
+	$installedVer = `optionVar -q "rfShelfVersion"`;
+	$latestVer = realflowGetCurrentShelfVer();
+	if($latestVer == $installedVer)
+		return;
+		
+	// The shelf exists, but it's the wrong version. Delete the buttons so we can add the right ones.
+	global string $gShelfTopLevel;
+	setParent ($gShelfTopLevel + "|RealFlow");
+	string $oldBtns[] = `shelfLayout  -q -childArray ($gShelfTopLevel + "|RealFlow")`;
+	for($i = 0; $i < size($oldBtns); ++$i)
+	{
+		deleteUI $oldBtns[$i];
+	}
+	
+	// Nuke the shelf file from the user directory.
+	string $shelfDirs = `internalVar -userShelfDir`;
+	string $shelfArray[];
+	string $PATH_SEPARATOR = `about -win`? ";" : ":";
+	tokenize($shelfDirs, $PATH_SEPARATOR, $shelfArray);
+	for($i = 0; $i < size($shelfArray); ++$i)
+	{
+		$fileName = ($shelfArray[$i] + "shelf_RealFlow.mel");
+		if(`filetest -r $fileName`)
+			sysFile -delete $fileName;
+	}
+
+	realflowAddShelfButtons();
+}

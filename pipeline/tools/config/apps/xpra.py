@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -23,8 +23,6 @@ class xpra(baseApp):
     def versions(self):
         pipe.version.set( python='2.7.6' )
         pipe.libs.version.set( python='2.7.6' )
-       # pipe.version.set( python='2.6.8' )
-       # pipe.libs.version.set( python='2.6.8' )
     def environ(self):
         self.forcePython = True
 
@@ -42,10 +40,10 @@ class xpra(baseApp):
         self['PYTHONPATH'] = self.path("lib64/python$PYTHON_VERSION_MAJOR/")
         self['PYTHONPATH'] = self.path("lib64/python$PYTHON_VERSION_MAJOR//site-packages/")
         if self.parent() == 'xpra':
-#            self['PYTHONPATH'] = '/usr/lib/python2.7/dist-packages/'
-#            self['PYTHONPATH'] = '/usr/lib/pymodules/python2.7/'
-#            self['PYTHONPATH'] = '/usr/lib64/python2.7/site-packages/'
-#            self['PYTHONPATH'] = '/usr/lib64/python2.7'
+            # self['PYTHONPATH'] = '/usr/lib/python2.7/dist-packages/'
+            # self['PYTHONPATH'] = '/usr/lib/pymodules/python2.7/'
+            # self['PYTHONPATH'] = '/usr/lib64/python2.7/site-packages/'
+            # self['PYTHONPATH'] = '/usr/lib64/python2.7'
             self['PYTHONPATH'] = self.path('lib64/python2.7/site-packages')
             self['PYTHONPATH'] = '/usr/lib64/python2.7/site-packages'
             self['PYTHONPATH'] = '/usr/lib64/python2.7/site-packages/gtk-2.0'
@@ -56,4 +54,3 @@ class xpra(baseApp):
 
     def bins(self):
         return [('xpra', 'xpra')]
-

@@ -1,0 +1,67 @@
+{
+    "blue_acrylic_blue_acrylic": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.12799999117851257, 
+                0.19199997186660767, 
+                0.3199999928474426
+            ], 
+            "baseColorB": 0.3199999928474426, 
+            "baseColorG": 0.19199997186660767, 
+            "baseColorR": 0.12799999117851257, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.12799999117851257, 
+                0.19199997186660767, 
+                0.3199999928474426
+            ], 
+            "colorB": 0.3199999928474426, 
+            "colorG": 0.19199997186660767, 
+            "colorR": 0.12799999117851257, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "outColor": [
+                0.12799999117851257, 
+                0.19199997186660767, 
+                0.3199999928474426
+            ], 
+            "outColorB": 0.3199999928474426, 
+            "outColorG": 0.19199997186660767, 
+            "outColorR": 0.12799999117851257, 
+            "presence": 1.0, 
+            "roughness": 0.125, 
+            "sheenTint": 0.5, 
+            "shininess": 100.0, 
+            "specular": 0.029999999329447746, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "subsurface": 0.02500000037252903, 
+            "subsurfaceColor": [
+                0.4610000252723694, 
+                0.691135048866272, 
+                1.0
+            ], 
+            "subsurfaceColorB": 1.0, 
+            "subsurfaceColorG": 0.691135048866272, 
+            "subsurfaceColorR": 0.4610000252723694
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

@@ -1,0 +1,12 @@
+[Unit]
+Description = Mount central filesystem
+After=network.target 
+
+[Mount]
+What=pipevfx.local:/RAID/atomo
+Where=/atomo
+Type=nfs
+Options=vers=3,nolock,sec=sys,noauto
+
+[Install]
+WantedBy = multi-user.target

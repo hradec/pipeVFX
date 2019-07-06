@@ -1,0 +1,1 @@
+sudo nvram boot-args="rootless=0"

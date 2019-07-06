@@ -1,0 +1,44 @@
+<args format="1.0">
+<param name="input" label="Background" widget="color"/>
+<param name="texture" label="Texture"/>
+<param name="space" label="Space" widget="popup">
+	<hintlist name="options">
+		<string value="world"/>
+		<string value="object"/>
+		<string value="Pref"/>
+	</hintlist>
+</param>
+<param name="normal" label="Normal" widget="popup">
+	<hintlist name="options">
+		<string value="geometric"/>
+		<string value="smooth"/>
+		<string value="smooth-NoBump"/>
+	</hintlist>
+</param>
+<param name="tiling" label="Tiling" widget="popup">
+	<hintlist name="options">
+		<string value="regular"/>
+		<string value="cellnoise"/>
+	</hintlist>
+</param>
+<param name="frequency" label="Frequency"/>
+<param name="mipMapBias" label="Mip map bias" int="True"/>
+<page name="Blending">
+	<param name="blendSoftness" label="Blend Softness"/>
+	<param name="cellSoftness" label="Cell Softness"/>
+</page>
+<page name="Positioning">
+	<param name="scalex" label="X Scale"/>
+	<param name="scaley" label="Y Scale"/>
+	<param name="scalez" label="Z Scale"/>
+	<param name="offsetx" label="X Offset"/>
+	<param name="offsety" label="Y Offset"/>
+	<param name="offsetz" label="Z Offset"/>
+	<param name="rotx" label="X Rotation"/>
+	<param name="roty" label="Y Rotation"/>
+	<param name="rotz" label="Z Rotation"/>
+	<param name="rotjitterx" label="X Rotation Jitter"/>
+	<param name="rotjittery" label="Y Rotation Jitter"/>
+	<param name="rotjitterz" label="Z Rotation Jitter"/>
+</page>
+</args>

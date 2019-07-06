@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalRemapFloat">
+		<attribute name="outValue" type="maya.float">
+		<label>Out Value</label>
+</attribute>
+		<attribute name="input" type="maya.float">
+			<label>Input</label>
+		</attribute>
+		<attribute name="mask" type="maya.float">
+			<label>Mask</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalRemapFloat">
+		<property name="outValue" />
+		<property name="input" />
+		<property name="mask" />
+		</view>
+</templates>

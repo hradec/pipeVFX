@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalBlackbody">
+		<label>alBlackbody</label>
+		<description>Useful for fire, lava, light colors and any self-illuminated object.</description>
+		<attribute name="temperature" type="maya.float">
+			<label>Temperature</label>
+			<description>The temperature value used to generate the color. From low to high the spectrum goes through red, orange, yellow, white, blue.</description>
+		</attribute>
+		<attribute name="strength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the brightness of the generated color.</description>
+		</attribute>
+		<attribute name="physicalIntensity" type="maya.float">
+			<label>Physical intensity</label>
+			<description>When set to the default of 1, the full range of physical brightness will be preserved. When set to 0, the generated colors will never be brighter than white.</description>
+		</attribute>
+		<attribute name="physicalExposure" type="maya.float">
+			<label>Physical exposure</label>
+			<description>An overall exposure value to apply to the color. This is useful to preserve the physical brightness curve but get low-temperature colors into a sensible range.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalBlackbody">
+			<property name="temperature"/>
+			<property name="strength"/>
+			<group name="Advanced">
+				<label>Advanced</label>
+				<property name="physicalIntensity"/>
+				<property name="physicalExposure"/>
+			</group>
+		</view>
+</templates>

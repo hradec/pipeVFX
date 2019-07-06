@@ -24,7 +24,7 @@ from base import depotRoot, roots, platform, py, arch, WIN, OSX, LIN, runProcess
 
 import admin
 
-import os,sys, stat, shutil, traceback
+import os, sys, stat, shutil, traceback
 from glob import glob
 from multiprocessing import cpu_count
 
@@ -88,6 +88,10 @@ class appsDB(dict):
     '''
 
     def root(self):
+        """
+
+        :return:
+        """
         return roots.apps(self.platform, self.arch)
 
     def __init__(self, appName=None, platform=platform, arch=arch):
@@ -308,7 +312,7 @@ def versionSort(versions):
 
 
 # initialize global cache of versions!
-if not os.environ.has_key('__DB_LATEST'):
+if not '__DB_LATEST' in os.environ:
     os.environ['__DB_LATEST'] = str(appsDB().latest)
 class version:
     '''
@@ -326,25 +330,25 @@ class version:
         '''
         _version = eval(os.environ['__DB_LATEST'])
         args.update(x)
-        if filter( lambda x: x.lower()=='reset', args.keys() ):
+        if [ x for x in args.keys() if x.lower()=='reset' ]:
             _version = appsDB().latest
         else:
             for each in args:
-                try:
-                    v = appsDB()[each]['versions']
-                except:
-                    v = [args[each]]
-                if args[each] not in v:
-                    try:
-                        vv = [ x for x in v if '.'.join(x.split('.')[:2]) == '.'.join(args[each].split('.')[:2]) ]
-                    except:
-                        try:
-                            vv = [ x for x in v if args[each] in x ]
-                        except: pass
-                    if vv:
-                        v = vv
-                    versions = versionSort(v)
-                    args[each] = versions[0]
+                # try:
+                #     v = appsDB()[each]['versions']
+                # except:
+                #     v = [args[each]]
+                # if args[each] not in v:
+                #     try:
+                #         vv = [ x for x in v if '.'.join(x.split('.')[:2]) == '.'.join(args[each].split('.')[:2]) ]
+                #     except:
+                #         try:
+                #             vv = [ x for x in v if args[each] in x ]
+                #         except: pass
+                #     if vv:
+                #         v = vv
+                #     versions = versionSort(v)
+                #     args[each] = versions[0]
                 _version[each] = args[each]
         os.environ['__DB_LATEST'] = str(_version)
 
@@ -361,7 +365,7 @@ class version:
 
         v = None
         if appName:
-            if _version.has_key(appName):
+            if appName in _version:
                 v = _version[appName]
             if all: #noqa
                 v = appsDB()[appName]['versions']
@@ -374,7 +378,7 @@ class version:
 
 
 # initialize global cache of lib versions!
-if not os.environ.has_key('__DB_LATEST_LIBS'):
+if not '__DB_LATEST_LIBS' in os.environ:
     os.environ['__DB_LATEST_LIBS'] = str(libsDB().latest)
 
 class versionLib:
@@ -429,7 +433,7 @@ class versionLib:
         _versionLib = eval(os.environ['__DB_LATEST_LIBS'])
         v = None
         if appName:
-            if _versionLib.has_key(appName):
+            if appName in _versionLib:
                 v = _versionLib[appName]
             if all: #noqa
                 v = libsDB()[appName]['versions']
@@ -479,7 +483,7 @@ class disable(object):
         if not get:
             cls.__disableList[app]=True
         else:
-            return cls.__disableList.has_key(app)
+            return app in cls.__disableList
 
 # extensionAutorun is a database to hold automatic launch of application
 # based on extension of a file.
@@ -513,6 +517,16 @@ class baseApp(_environ):
             className = str(self.__class__).split('.')
             self.className = className[len(className)-1].strip("'>")
 
+        # run job_config files before executing environment, so we can set flags
+        # to alter app configuration, like enable/disable plugins!
+        if '__executed_job_configs__' not in os.environ:
+            os.environ[ '__executed_job_configs__' ] = ""
+        job_config = [ "%s/config/job_config.py" % each for each in self.toolsPaths() ]
+        for each in job_config:
+            if each not in os.environ['__executed_job_configs__']:
+                os.environ[ '__executed_job_configs__' ] += " %s" % each
+                if os.path.exists(each):
+                    exec( ''.join( open(each,'r').readlines() ) )
 
         # Look for the --disable command line option, which disables packages
         # ex: maya --disable delight,prman
@@ -526,9 +540,9 @@ class baseApp(_environ):
 
         # source config files in the search path
         self.DB_EnvVar=DB_EnvVar
-        if not os.environ.has_key('PARENT_BASE_CLASS'):
+        if not 'PARENT_BASE_CLASS' in os.environ:
             os.environ['PARENT_BASE_CLASS'] = str(self.className)
-            self.configFiles()
+            # self.configFiles()
 
         # disable class if has being disabled in a config file
         if disable.app( self.className, get=True ):
@@ -556,21 +570,21 @@ class baseApp(_environ):
         # we store the cache buffer as an extra argument of sys, so its global to the whole python environment!
         recursionCache = {}
         if hasattr(sys, 'recursionCache'):
-            if sys.recursionCache.has_key(DB_EnvVar):
+            if DB_EnvVar in sys.recursionCache:
                 recursionCache = sys.recursionCache[DB_EnvVar]
         else:
             sys.recursionCache = {}
 
         # check if the current class is cached, and if the current version changed.
         # if thats the case, we have to delete the cache and re-cache everything again!
-        if recursionCache.has_key( self.className ):
+        if self.className in recursionCache:
             if self.globalVersion.get(self.className) != recursionCache[self.className]["%s_VERSION" % self.className.upper()]:
                 sys.recursionCache[self.DB_EnvVar] = {}
                 recursionCache = sys.recursionCache[self.DB_EnvVar]
 
         # retrieve a previous evaluated version of this class, if any
         # so we don't waste time evaluating things more than once!
-        if recursionCache.has_key( self.className ):
+        if self.className in recursionCache:
             _environ.__init__(self)
             _environ.update(self, recursionCache[self.className])
             self.appFromDB = recursionCache[self.className].appFromDB
@@ -595,13 +609,6 @@ class baseApp(_environ):
             # from evaluating the class more than once!!
             recursionCache[self.className] = self
             sys.recursionCache[self.DB_EnvVar] = recursionCache
-
-            # if we're in the farm, set the HOME folder to be /tmp/<username>
-            # so environ and all other methods will have it ready for use from
-            # the begining
-            if self.inFarm():
-                home = "/tmp/%s" % (os.environ['PIPE_FARM_USER'])
-                self['HOME'] = home
 
             if self.enable:
                 if self.osx:
@@ -636,6 +643,9 @@ class baseApp(_environ):
                     self.replace( PATH                = bin )
                     self.replace( INCLUDE             = include )
 
+                # read the versions.py one and cache it!
+                # self.configFiles()
+
                 self.evaluate()
 #                # evaluate license method of all classes, just in case!
 #                if hasattr( self, 'license' ):
@@ -650,43 +660,52 @@ class baseApp(_environ):
 
         # print self.className, versionLib.get('boost')
 
-    def configFiles(self):
+    @staticmethod
+    def configFiles(self=None):
         ''' Run over config files located in the pipeline and also in jobs '''
 
+        import sys
+        if not hasattr( sys, "versionsFile" ):
+            sys.versionsFile = []
 
-        # check for root config files
-        configs = [
-            "%s/config/versions.py" % roots.tools(),
-            "%s/config/licenses.py" % roots.tools(),
-        ]
+            # check for root config files
+            configs = [
+                "%s/config/versions.py" % roots.tools(),
+                "%s/config/licenses.py" % roots.tools(),
+            ]
 
-        # check for job config files
-        if os.environ.has_key('PIPE_JOB'):
-            configs.append( admin.job.current().path("tools/config/versions.py") )
+            # check for job config files
+            if 'PIPE_JOB' in os.environ:
+                configs.append( admin.job.current().path("tools/config/versions.py") )
 
-            # check for shot config files
-            if os.environ.has_key('PIPE_SHOT'):
-                configs.append( admin.job.current().shot().path("tools/config/versions.py") )
+                # check for shot config files
+                if 'PIPE_SHOT' in os.environ:
+                    configs.append( admin.job.current().shot().path("tools/config/versions.py") )
 
-                # check for user in shot config files
-                configs.append( admin.job.current().shot.user().path("tools/config/versions.py") )
-                configs.append( admin.job.current().shot.user().path("tools/config/licenses.py") )
+                    # check for user in shot config files
+                    configs.append( admin.job.current().shot.user().path("tools/config/versions.py") )
+                    configs.append( admin.job.current().shot.user().path("tools/config/licenses.py") )
 
-        # check for config file in the user folder
-        if os.environ.has_key('HOME'):
-            configs.append( "%s/tools/config/versions.py" % os.environ['HOME'] )
+            # check for config file in the user folder
+            if 'HOME' in os.environ:
+                configs.append( "%s/tools/config/versions.py" % os.environ['HOME'] )
+                configs.append( "%s/tools/config/licenses.py" % os.environ['HOME'] )
 
-        # exec configs in order
-        for each in configs:
-            if os.path.exists( each ):
-                exec( ''.join( open( each ).readlines() ) )
+            # exec configs in order
+            for each in configs:
+                if os.path.exists( each ):
+                    for line in [ x for x in open( each ).readlines() if x.strip() and x.strip()[0] != "#" ]:
+                        sys.versionsFile += [line]
+
+        version_py = ''.join(sys.versionsFile)
+        exec( version_py )
 
 
     def ignorePipeLib(self, libname ):
         ''' set library names to ignore using from the pipe version and use
         system or application default ones!'''
         if self.parent() == self.className:
-            if not os.environ.has_key('USE_SYSTEM_LIBRARY'):
+            if not 'USE_SYSTEM_LIBRARY' in os.environ:
                 os.environ['USE_SYSTEM_LIBRARY'] = ''
             os.environ['USE_SYSTEM_LIBRARY'] += ' %s' % libname
 
@@ -704,7 +723,7 @@ class baseApp(_environ):
             }
 
             # we use this variable to flag libraries that should be ignored!
-            if not os.environ.has_key('USE_SYSTEM_LIBRARY'):
+            if not 'USE_SYSTEM_LIBRARY' in os.environ:
                 os.environ['USE_SYSTEM_LIBRARY'] = ''
 
             extraUpdates = {}
@@ -756,7 +775,7 @@ class baseApp(_environ):
 #        sys.stderr.flush()
 
 
-        if self.has_key('%s_BIN' % self.className.upper()):
+        if '%s_BIN' % self.className.upper() in self:
             ret = self['%s_BIN' % self.className.upper()]
         return ret
 
@@ -806,7 +825,7 @@ class baseApp(_environ):
             is a virtual method that must be defined by each app class.
         '''
         appName = self.className.upper()
-        if not self.has_key('%s_VERSION' % appName): # prevent from adding twice!
+        if not '%s_VERSION' % appName in self: # prevent from adding twice!
             self.replace( {
                 '%s_VERSION' % appName : self.appFromDB.version(),
                 '%s_ROOT'    % appName : os.path.abspath( self.appFromDB.path()+'/' ),
@@ -824,7 +843,7 @@ class baseApp(_environ):
                 sys.stderr.write("python: %s\n" %  self.globalVersion.get('python'))
             py='.'.join( self.globalVersion.get('python').split('.')[:2] )
             pythonPaths = self.pythonPath()
-            if pythonPaths.has_key(py):
+            if py in pythonPaths:
                 self['PYTHONPATH'] = pythonPaths[py]
 
             # run the virtual environ() method of the app class, if any!
@@ -838,7 +857,6 @@ class baseApp(_environ):
             if a version is passed to this method, it will set it as current in the global __version db,
             refreshs itself with the data for the new version and will return that version.
         '''
-
         # handle --<pkg>_version <version> command line options
         # ex: maya --maya_version 2013
         for each in filter(lambda x: '--' in x and '_version' in x, sys.argv):
@@ -917,13 +935,14 @@ class baseApp(_environ):
         for license_script in license_scripts:
             if os.path.exists( license_script ):
                 try:
-                    exec(''.join(open(license_script).readlines()),globals(),locals())
+                    exec( ''.join(open(license_script).readlines()),globals(),locals() )
+                    print( license_script )
                     break
                 except:
-                    print bcolors.FAIL+'='*80
-                    print license_script+" ERROR:\n"
-                    print "\n\t".join(traceback.format_exc().split('\n'))
-                    print '='*80,bcolors.END
+                    print( bcolors.FAIL+'='*80 )
+                    print( license_script+" ERROR:\n" )
+                    print( "\n\t".join(traceback.format_exc().split('\n')) )
+                    print( '='*80,bcolors.END )
 
 
     def license(self):
@@ -931,7 +950,7 @@ class baseApp(_environ):
         '''
         self['LM_LICENSE_FILE'] = "%s/licenses/%s/%s" % (roots.tools(), self.className.lower(), self.appFromDB.version() )
 
-    def __userSetup(self, binName):
+    def _userSetup(self, binName=''):
         ignore = [ 'python', 'xnview', 'chrome', 'rv', 'qube'  ]
 
         # evaluate the noUserSetup() method, if one exists, to enable/disable
@@ -985,14 +1004,14 @@ class baseApp(_environ):
     def update(self, environClass={}, top={}, noIgnoreLibs=False, **e):
         # recall all added classes to batch update later at RUN
         useSystemLibs = []
-        if os.environ.has_key('USE_SYSTEM_LIBRARY') and not noIgnoreLibs:
+        if 'USE_SYSTEM_LIBRARY' in os.environ and not noIgnoreLibs:
             useSystemLibs = os.environ['USE_SYSTEM_LIBRARY'].split()
         if environClass:
             if environClass.className not in useSystemLibs:
                 self.updatedClasses[environClass.className] = environClass
                 self.updatedClasses.update( environClass.updatedClasses )
                 # we need to mantain the recursionCache up2date!!
-                if sys.recursionCache[self.DB_EnvVar].has_key(environClass.className):
+                if environClass.className in sys.recursionCache[self.DB_EnvVar]:
                     sys.recursionCache[self.DB_EnvVar][environClass.className].updatedClasses = self.updatedClasses
 
         # do 'e' update on the fly!
@@ -1004,7 +1023,8 @@ class baseApp(_environ):
                 self.insert(each,0, top[each])
 
     def inFarm(self):
-        ret =  os.environ.has_key('PIPE_FARM_USER')
+        return False
+        ret =  'PIPE_FARM_USER' in os.environ
 #        if os.environ.has_key('PIPE_FARM_ENGINE'):
 #            if os.envion['PIPE_FARM_ENGINE'] == 'afanasy':
 #                ret=False
@@ -1058,7 +1078,12 @@ class baseApp(_environ):
 
         # if we're in the farm, set the HOME folder to be /tmp/<username>
         if self.inFarm():
-            print "+"*80
+            print( "="*80 )
+            # if we're in the farm, set the HOME folder to be /tmp/<username>
+            # so environ and all other methods will have it ready for use from
+            # the begining
+            self['HOME'] = "/tmp/%s" % (os.environ['PIPE_FARM_USER'])
+
             # self['HOME'] is being initialized at __init__!!
             home = self['HOME']
             # use dbus service to create the temporary user folder
@@ -1067,23 +1092,28 @@ class baseApp(_environ):
             sudo = admin.sudo()
             sudo.cmd('mkdir -p %s' % home )
             sudo.cmd('chmod a+rwx %s' % home )
-            print sudo.run()
+            print( sudo.run() )
             # add pipe bash init script to be sourced in the fake
             # home folder just in case.
             f=open('%s/.bashrc' % home,'w')
             f.write('. %s/init/bash\n' % roots.tools())
             f.close()
 
+            # synchronize use maya folder
+            os.popen( 'rsync -avpP --exclude "projects" %s/maya/ %s/maya/' % (os.environ['HOME'], self['HOME']) ).readlines()
+            os.popen( 'rsync -avpP --delete %s/Adlm/ %s/Adlm/' % (os.environ['HOME'], self['HOME']) ).readlines()
+            os.popen( 'rsync -avpP --delete %s/.pixarPrefs/ %s/.pixarPrefs/' % (os.environ['HOME'], self['HOME']) ).readlines()
+
         # set JOB and SHOT env var for easy setup of paths relative to shot and job
         # inside applications - using $JOB or $SHOT
-        if os.environ.has_key('PIPE_JOB'):
+        if 'PIPE_JOB' in os.environ:
             os.environ['JOB'] = admin.job.current().path()
-            if os.environ.has_key('PIPE_SHOT'):
+            if 'PIPE_SHOT' in os.environ:
                 os.environ['SHOT'] = "%s/%s/users/" % ( os.environ['JOB'], os.environ['PIPE_SHOT'].replace('@','s/') )
 
         # if we are in a job/shot, make sure
         # the user has a writable folder to work!
-        self.__userSetup(binName)
+        self._userSetup(binName)
 
         # use /bin/sh to run apps...
         os.environ['SHELL'] = '/bin/sh'
@@ -1127,7 +1157,7 @@ class baseApp(_environ):
             sys.argv.extend( self.extraCommandLine(binName) )
 
         # run the software in GDB, if --debug in command line
-        runWithOsSystem = binName in ['python','houdini','prman']
+        runWithOsSystem = binName in ['python','houdini','prman','mayapy']
         if '--debug' in sys.argv:
             # if self.className == 'maya':
             #     binName += ' -d gdb '
@@ -1200,24 +1230,32 @@ class baseApp(_environ):
         # check if we have opengl hardware (local X11) or not (vnc/ssh)
         # if we don't, try running with virtualGL
         display=0
-        if os.environ.has_key('DISPLAY'):
+        if 'DISPLAY' in os.environ:
             display = float(os.environ['DISPLAY'].split(':')[-1])
         # we assume that ssh or any other remote connection will
         # have a DISPLAY bigger than 9 here, to detect if we need virtualGL or not!
-        if display > 9 and vglrun:
-#            debug = 'vglrun -c jpeg -q 30 %s %s' % (m32, debug)
+        if ( display > 15 or 'DOCKER' in os.environ ) and vglrun:
+            # debug = 'vglrun -c jpeg -q 30 %s %s' % (m32, debug)
             # find out what display is active
-            d = os.popen("echo $(ps -AHfc | grep Xorg | grep $(cat /sys/class/tty/tty0/active)) | cut -d' ' -f10").readlines()
-            if d:
-                d = d[0].strip()
-                if not d:
-                    d = os.popen("echo $(ps -AHfc | grep Xorg | grep -v grep) | cut -d' ' -f10").readlines()[0].strip()
-                    if not d:
-                        d = ":0"
-                d = "-d %s" % d
+            # d = os.popen("echo $(ps -AHfc | grep Xorg | grep $(cat /sys/class/tty/tty0/active)) | cut -d' ' -f10").readlines()
+            # if d:
+            #     d = d[0].strip()
+            #     if not d:
+            #         d = os.popen("echo $(ps -AHfc | grep Xorg | grep -v grep) | cut -d' ' -f10").readlines()[0].strip()
+            #         if not ':' in d:
+            #             d = ":0"
+            #     d = "-d %s" % d
+            d = os.popen("loginctl list-sessions | egrep -v 'SESSION|sessions' | awk '{print $1}' | while read s ; do loginctl show-session -p Display -p Active  $s ; done | grep 'Active=yes' -B1 | grep ':' | awk -F'=' '{print $2}'")
+            if not ':' in d:
+                d = ":0"
             else:
                 d = ""
+            if d:
+                d = "-d %s" % d
             debug = '%s +v %s %s %s env LD_LIBRARY_PATH=$LD_LIBRARY_PATH' % (vglrun, d, m32, debug)
+        elif display > 9:
+            debug = 'env QT_X11_NO_MITSHM=1 QT_GRAPHICSSYSTEM=opengl LIBGL_ALWAYS_INDIRECT=1  %s ' % (debug)
+
 
         # construct the command line to run the software
         binFullName = '%s/%s' % (self.bin(), binName)
@@ -1284,6 +1322,10 @@ class baseApp(_environ):
 
         log.debug(cmd)
 
+        # remove TBB_VERSION to avoid TBB spitting out information!!
+        if 'TBB_VERSION' in os.environ:
+            del os.environ['TBB_VERSION']
+
 
         # starup a shell instead of the software (usefull to debug environment)
         if '--shell' in sys.argv:
@@ -1308,56 +1350,52 @@ class baseApp(_environ):
                 # in this case, we use it to run the cmd line as that user, using dbus!
                 if self.inFarm():
 
-                    # send all class env vars to sudo
-                    allEnvs = self.keys()
-                    go = ' echo %s ; ' % ('='*200)
+                    # # send all class env vars to sudo
+                    # allEnvs = self.keys()
+                    # go = ' echo %s ; ' % ('='*200)
+                    #
+                    # # if we're in a job, send it over too!
+                    # if os.environ.has_key('PIPE_JOB'):
+                    #     allEnvs.append('PIPE_JOB')
+                    #     allEnvs.append('PIPE_SHOT')
+                    # go = ' ; '.join(map(lambda x: 'export %s=\\"%s\\"' % (x,os.environ[x]), allEnvs ))
+                    #
+                    # go += ' ; echo %s ' % ('='*200)
+                    #
+                    # jobPath = filter(lambda x: '/jobs/%s/' % os.environ['PIPE_JOB'] in x, cmd.replace('"','\\"').split())
+                    # if jobPath:
+                    #     jobPath = jobPath[0]
+                    # else:
+                    #     jobPath = "No Job!!!"
+                    #
+                    # sudo = admin.sudo()
+                    # # construct the su cmd line.
+                    # sucmd = '''runuser -l %s -c '/bin/bash -l -c "echo %s ; %s ; %s ; %s 2>&1 " ' ''' % (
+                    #     os.environ['PIPE_FARM_USER'],
+                    #     jobPath,
+                    #     go,
+                    #     'export HOME=\\"%s\\"' % self['HOME'],
+                    #     cmd.replace('"','\\"')
+                    # )
 
-                    # if we're in a job, send it over too!
-                    if os.environ.has_key('PIPE_JOB'):
-                        allEnvs.append('PIPE_JOB')
-                        allEnvs.append('PIPE_SHOT')
-                    go = ' ; '.join(map(lambda x: 'export %s=\\"%s\\"' % (x,os.environ[x]), allEnvs ))
+                    print( "Running in farm as user: %s" % os.environ['PIPE_FARM_USER'] )
+                    print( '='*80 )
+                    # print sucmd
+                    # # run it over dbusService!
+                    # sudo.cmd( sucmd )
+                    # try:
+                    #     returnLog = sudo.run()
+                    # except:
+                    #     returnLog = "\n\t".join(traceback.format_exc().split('\n'))
+                    #
+                    # print returnLog
+                    #
+                    # if 'error' in returnLog.lower() or 'StackTrace()' in returnLog:
+                    #     ret = 255
+                    # else:
+                    #     ret = 0
+                    ret, returnLog = runProcess(cmd)
 
-#                    if os.environ.has_key('PIPE_JOB'):
-#                        go  += 'source /atomo/pipeline/tools/scripts/go %s %s ' % (
-#                            os.environ['PIPE_JOB'],
-#                            os.environ['PIPE_SHOT'].replace('@',' ')
-#                        )
-
-                    go += ' ; echo %s ' % ('='*200)
-
-                    jobPath = filter(lambda x: '/jobs/%s/' % os.environ['PIPE_JOB'] in x, cmd.replace('"','\\"').split())
-                    if jobPath:
-                        jobPath = jobPath[0]
-                    else:
-                        jobPath = "No Job!!!"
-
-                    sudo = admin.sudo()
-                    # construct the su cmd line.
-                    #sucmd = 'su -l %s -s /bin/bash -c "echo %s ; %s ; %s ; %s 2>&1" 2>&1' % (
-                    sucmd = '''runuser -l %s -c '/bin/bash -l -c "echo %s ; %s ; %s ; %s 2>&1 " ' ''' % (
-                        os.environ['PIPE_FARM_USER'],
-                        jobPath,
-                        go,
-                        'export HOME=\\"%s\\"' % self['HOME'],
-                        cmd.replace('"','\\"')
-                    )
-                    print "Running in farm as user: %s" % os.environ['PIPE_FARM_USER']
-                    print '='*80
-                    print sucmd
-                    # run it over dbusService!
-                    sudo.cmd( sucmd )
-                    try:
-                        returnLog = sudo.run()
-                    except:
-                        returnLog = "\n\t".join(traceback.format_exc().split('\n'))
-
-                    print returnLog
-
-                    if 'error' in returnLog.lower() or 'StackTrace()' in returnLog:
-                        ret = 255
-                    else:
-                        ret = 0
                 else:
                     # as we need stdin for python, we use os.system for now until
                     # we find a solution for runprocess to be able to work with stdin!!
@@ -1374,16 +1412,17 @@ class baseApp(_environ):
                     ret = self.postRun(cmd, ret, returnLog)
 
             else:
-                print "\n\tThe Pipe won't run the requested app since it was launched with --fix, \n\tand the postRun() method says there's not need to run."
-                print "\n\tIf you want to run the app no matter what, please remove \n\tthe --fix optional parameter from the command line!\n"
-                print '='*80
+                print( "\n\tThe Pipe won't run the requested app since it was launched with --fix, \n\tand the postRun() method says there's not need to run." )
+                print( "\n\tIf you want to run the app no matter what, please remove \n\tthe --fix optional parameter from the command line!\n" )
+                print( '='*80 )
 
         sys.stdout.flush()
         sys.stderr.flush()
 
         # fix for afanasy to report a failed frame!!
         if ret:
-            print '[ PARSER ERROR ]'
+            print( '[ PARSER ERROR ]' )
+            ret = -2
         sys.exit(ret)
 
 class baseLib(baseApp):

@@ -1,0 +1,13 @@
+<args format="1.0">
+<param name="input" label="Input" widget="color"/>
+<param name="gamma" label="Gamma"/>
+<param name="saturation" label="Saturation"/>
+<param name="hueOffset" label="Hue offset"/>
+<page name="Contrast">
+	<param name="contrast" label="Contrast"/>
+	<param name="contrastPivot" label="Pivot"/>
+</page>
+<param name="gain" label="Gain"/>
+<param name="exposure" label="Exposure"/>
+<param name="mask" label="Mask"/>
+</args>

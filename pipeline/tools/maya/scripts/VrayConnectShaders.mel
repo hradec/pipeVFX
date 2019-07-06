@@ -1,0 +1,196 @@
+///////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
+/*
+Vray Reconnect Shaders to Vray proxy
+
+Updated :    17th August, 2015
+
+Author :    James Coore
+Contact :   jcoore77@googlemail.com
+
+Description :  Connects  multiple shaders assigned to a group of objects to an associated vray proxy's assigned mesh material.
+
+So if you have character for example with multiple objects body, clothes, hat etc. And you have generated a vray proxy from this group of objects which have various shaders. 
+This script will connect the shaders to the relevant index slots on the vray proxy mesh material.
+
+This process should work natively anyway on creation of a proxy. This tool is very useful if for some reason the connections have been lost (For example when swapping alembic cache files within the proxy).
+Or if working on a pipeline where the connection can't be made at the start. 
+
+How to use :	
+You need to have both the model (in a group) with all it's a shaders attached, and the vray proxy with default vray mesh material, loaded in the scene.
+1) Execute or source the script from script editor.
+2) Then type the command CS() in the command line/script editor and execute,(or add as a shelf button).
+2) Select the root node of the group of objects and add to "Object List".
+3) Select the vray proxy object and add to the destination proxy window. (This will automatically load its assigned vray mesh material)
+4) Press connect shaders.
+
+Note: If the group of objects and the shapes in the vray proxy objects don't match or are in the wrong order, you may get strange results.
+		
+History :    version 1.0.1
+        
+
+All Rights Reserved */
+///////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
+source "generateChannelMenu.mel";
+
+global proc VRAYDOUI ()
+{
+     global string $mappingList;
+     global string $vrayProxyList;
+
+
+    // If the window exists already, delete it.
+    if (`window -exists VVMultiShaderConnec`)
+    {
+        deleteUI VVMultiShaderConnec;
+    }
+
+    // Build the window.
+    global string $man_window;
+    string $man_window = `window -title " VrayMeshShaderConnect 1.1" -sizeable 0 -w 300 VVMultiShaderConnec`;
+    frameLayout -label "Description: Connect shaders to vay mesh material.";
+    rowLayout -width 540 -nc 2 -cw4 10 20 20 100;
+    // Object list section
+    frameLayout -label "Object List (Just select the root node of the geo)";
+    $mappingList = `textScrollList -width 600 -height 300`;
+    rowLayout -width 240 -nc 2 -cw2 120 120;
+    button -label "Add selected" -command "VVCS_addObjects ();" -width 120;
+    button -label "Remove selected" -command "VVCS_removeObjects ();" -width 120;
+    setParent ..;
+    rowLayout -width 240 -nc 2 -cw2 120 120;
+    button -label "Remove All" -command "VVCS_clearObjects ();" -width 240;
+    setParent ..;
+    setParent ..;
+    rowLayout -nc 3;
+    button -label "Create" -command "VRAYCONNECDO() " -width 140 -align center;
+    button -label "Close" -command "DAC_CloseUI() " -width 140 -align center;
+    setParent ..;
+    setParent ..;
+    // VrayMeshmaterial
+    frameLayout -label "Selected Mesh Material (Just select the vray proxy)";
+    $vrayProxyList = `textScrollList -width 600 -height 300`;
+    rowLayout -width 240 -nc 2 -cw2 120 120;
+    button -label "Add selected" -command "VVCS_addMM ();" -width 120;
+    button -label "Remove selected" -command "VVCS_removeMM ();" -width 120;
+    setParent ..;
+    setParent ..;
+    rowLayout -nc 3;
+    button -label "Connect Shaders" -command "VRAYCONNECDO() " -width 140 -align center;
+    button -label "Close" -command "DAC_CloseUI() " -width 140 -align center;
+    setParent ..;
+    setParent ..;
+
+// Show the window.
+showWindow VVMultiShaderConnec;
+}
+
+global proc string[] getShaders(string $from)
+{
+// get the shapes from the input
+string $shapes[] = ls("-o", "-dag", "-s", $from);
+// give me the connected "shadingEngines"
+string $shadingEngines[] = listConnections("-type","shadingEngine", $shapes);
+// list the connected materials (shaders) from that
+string $materials[] = ls("-mat", listConnections($shadingEngines));
+// remove duplicate occurrences.
+return (stringArrayRemoveDuplicates($materials));
+}
+
+//Add selected objects to list.
+global proc VVCS_addObjects ()
+{
+      global string $mappingList;
+      string $selectedshapes[] = `ls -sl -dag -lf -type "mesh"`;
+      //print $selectedshapes;
+      int $count = 0;
+
+if ($selectedshapes[0] != "")
+	{
+	    for ($i in $selectedshapes)
+	    {
+	      $count ++;
+	      textScrollList -edit -append $i $mappingList;
+	    }
+	}
+}
+
+//Add selected objects to list.
+global proc VVCS_addMM ()
+{
+      global string $vrayProxyList;
+      string $selectedshapes[] = `ls -sl -dag -lf -type "mesh"`;
+      string $selectedshape = $selectedshapes[0];
+      string $meshMaterials[] = getShaders($selectedshape);
+      string $currentmeshMaterial = $meshMaterials[0];
+
+if ($meshMaterials[0] != "")
+	{
+	      textScrollList -edit -append $currentmeshMaterial $vrayProxyList;
+	}
+}
+
+// Clear objects from list.
+global proc VVCS_clearObjects ()
+{
+    global string $mappingList;
+	textScrollList -e -ra $mappingList;
+}
+
+// Remove selected object from list.
+global proc VVCS_removeObjects ()
+{
+   global string $mappingList;
+
+    int $index [] = `textScrollList -query -selectIndexedItem $mappingList`;
+    if ($index [0] != 0)
+    {
+        textScrollList -edit -removeIndexedItem $index [0] $mappingList;
+    }
+   global string $mappingList;
+}
+
+
+global proc VRAYCONNECDO()
+{
+   	// UI Elements
+	global string $mappingList;
+	global string $vrayProxyList;
+	// Define user selected objects
+	string $selected_objects[] = `textScrollList -query -allItems $mappingList`;
+	string $meshMaterial[] = `textScrollList -query -allItems $vrayProxyList`;
+	int $i = 0;
+	//Progress bar
+	global string $gMainProgressBar;
+	
+	// Start the progress bar and adjust its max value for this operation.
+    int $steps = size($selected_objects);
+    progressBar -edit -beginProgress -isInterruptable true -status "Connecting shaders to mesh material ..." -maxValue $steps $gMainProgressBar;
+  
+	for ($i = 0; $i < size($selected_objects); $i ++)
+	{
+		string $surfaceShadernm []= getShaders($selected_objects[$i]);
+		//defaultNavigation -ce -d $meshMaterial.shaders[$i] -source $surfaceShadernm [0];
+		defaultNavigation -ce -d ($meshMaterial[0]+".shaders["+$i+"]") -source $surfaceShadernm [0];
+		//print ($myMaterial[$i]+"\n");
+		//print $surfaceShadernm[0];
+		// Check whether we've been cancelled.
+		if (`progressBar -query -isCancelled $gMainProgressBar`)
+		{
+			progressBar -edit -endProgress $gMainProgressBar;
+			return;
+		}
+	// Update the progress bar.
+	progressBar -edit -step 1 $gMainProgressBar;
+	}
+	// End the progress.
+	progressBar -edit -endProgress $gMainProgressBar;
+}
+
+
+global proc CS()
+{
+int $isit = `pluginInfo -query -l "vrayformaya"`;
+if ($isit != 0)VRAYDOUI ();
+else print("Vray isnot currently loaded.");
+}

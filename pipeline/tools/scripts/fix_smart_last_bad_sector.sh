@@ -1,17 +1,25 @@
 #!/bin/bash 
 
-r=$(python2 -c 'for n in range(8): print n,')
+r=$(/bin/python2 -c 'for n in range(8): print n,')
+echo $r
 
 run="1"
 while [ "$run" == "1" ]  ; do
 	smartctl -t long $1 > /tmp/null
 	smartctl -a $1 > /tmp/smart
 	echo "$(cat /tmp/smart | grep '# 1 ' | grep 'in progress')" 
-	while [ "$(cat /tmp/smart | grep '# 1 ' | grep 'in progress')" != "" ] ; do
-		cat /tmp/smart | tail -10 | grep progress
-		sleep 5
-		smartctl -a $1 > /tmp/smart
-	done
+#	while [ "$(cat /tmp/smart | grep '# 1 ' | grep 'in progress')" != "" ] ; do
+#		cat /tmp/smart | tail -10 | grep progress
+#		sleep 5
+#		smartctl -a $1 > /tmp/smart
+#		cat /tmp/smart | grep '# 1 '
+#	done
+#	while [ "$(cat /tmp/smart | grep 'Self-test execution status:' | grep -v 'The previous self-test routine completed$')" != "" ] ; do
+#		cat /tmp/smart | tail -10 | grep completed
+#		sleep 5
+#		smartctl -a $1 > /tmp/smart
+#		cat /tmp/smart | grep 'Self-test execution status:' -A1
+#	done
 
 	bad=$(echo $(cat /tmp/smart |grep "# 1 ") | cut -d" " -f10)
 	echo $bad 
@@ -29,3 +37,4 @@ while [ "$run" == "1" ]  ; do
 		run=0
 	fi
 done
+

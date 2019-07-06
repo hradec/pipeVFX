@@ -1,15 +1,24 @@
 #!/bin/bash  -i -l
 
-export PYTHONDONTWRITEBYTECODE=x
-if [ "bash" == "$(basename $SHELL)" ] && [ "$NOPIPE" == ""  ] ; then 
+export PYTHONDONTWRITEBYTECODE=1
+
+if [ "$HOSTNAME" == "" ] ; then
+    export HOSTNAME=$(hostname)
+fi
+
+#if [ "bash" == "$(basename $SHELL)" ] && [ "$NOPIPE" == ""  ] ; then 
+if [ "$NOPIPE" == ""  ] ; then 
 
     unset LD_PRELOAD
     unset LD_LIBRARY_PATH
+    unset LD_LIBRARYN32_PATH
+    unset LIB
     unset PYTHONPATH
     unset PYTHONHOME
     unset PYTHON_ROOT
     unset USE_SYSTEM_LIBRARY
     unset PARENT_BASE_CLASS
+    unset USE_SYSTEM_LIBRARY
     
     #=========================================================================================================
     # BASH COMPLETION
@@ -29,7 +38,7 @@ if [ "bash" == "$(basename $SHELL)" ] && [ "$NOPIPE" == ""  ] ; then
     # ALIASES (WRAPPERS)
     #=========================================================================================================
     #source our dynamically created bash "script"
-    eval "$(env LD_PRELOAD='' /usr/bin/python -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.init()" $BASH_SOURCE)"
+    eval "$(env LD_PRELOAD='' /usr/bin/python2 -c "import sys,os;py=os.path.abspath('%s/python' % os.path.dirname(os.path.dirname(sys.argv[1])));sys.path.insert(0,py);import pipe;print pipe.init()" $BASH_SOURCE)" || echo [PARSER ERROR]
 fi
 
 

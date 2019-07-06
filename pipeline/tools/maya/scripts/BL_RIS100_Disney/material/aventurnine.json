@@ -1,0 +1,67 @@
+{
+    "aventurnine_aventurnine": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.27800002694129944, 
+                0.30000001192092896, 
+                0.2760000228881836
+            ], 
+            "baseColorB": 0.2760000228881836, 
+            "baseColorG": 0.30000001192092896, 
+            "baseColorR": 0.27800002694129944, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.27800002694129944, 
+                0.30000001192092896, 
+                0.2760000228881836
+            ], 
+            "colorB": 0.2760000228881836, 
+            "colorG": 0.30000001192092896, 
+            "colorR": 0.27800002694129944, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "outColor": [
+                0.27800002694129944, 
+                0.30000001192092896, 
+                0.2760000228881836
+            ], 
+            "outColorB": 0.2760000228881836, 
+            "outColorG": 0.30000001192092896, 
+            "outColorR": 0.27800002694129944, 
+            "presence": 1.0, 
+            "roughness": 0.15000000596046448, 
+            "sheenTint": 0.5, 
+            "shininess": 100.0, 
+            "specular": 0.029999999329447746, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "subsurface": 0.30000001192092896, 
+            "subsurfaceColor": [
+                0.17634999752044678, 
+                0.20000000298023224, 
+                0.17419999837875366
+            ], 
+            "subsurfaceColorB": 0.17419999837875366, 
+            "subsurfaceColorG": 0.20000000298023224, 
+            "subsurfaceColorR": 0.17634999752044678
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

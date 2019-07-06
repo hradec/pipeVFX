@@ -20,6 +20,7 @@
 
 import pipe
 import os,sys, time
+import tempfile
 
 
 def check(frames, returnLog=""):
@@ -38,9 +39,9 @@ def check(frames, returnLog=""):
                 displays[ext] = []
             displays[ext].append(each)
 
-    
-    print '='*300
-    print 'Checking rendered images...\n'
+
+    print( '='*300 )
+    print( 'Checking rendered images...\n' )
     if displays:
 
         openexr = pipe.libs.openexr()
@@ -86,10 +87,10 @@ def check(frames, returnLog=""):
                                 error = True
                                 results[d] = False
 
-                print '\n','='*300
+                print( '\n','='*300 )
                 res = ['ERROR', 'OK']
                 for d in displays[filetype]:
-                    print "% 10s -> %s" % (res[ results[d] ], os.path.abspath(d))
+                    print( "% 10s -> %s" % (res[ results[d] ], os.path.abspath(d)) )
                 sys.stdout.flush()
                 #time.sleep(15)
 
@@ -97,54 +98,60 @@ def check(frames, returnLog=""):
         error = True
 
     if error:
-        print '[ PARSER ERROR ]'
-        print "ERROR - No Images rendered!!"
+        print( '[ PARSER ERROR ]' )
+        print( "ERROR - No Images rendered!!" )
 
-    print '\n','='*300
+    print( '\n','='*300 )
     return error
+
+
 
 
 def publish(frames, assetPath):
     # using the file path, check if its a valid asset
     import Asset, pipe, filecmp, time, glob
+    from threading import Thread
+    from Queue import Queue
+    import multiprocessing
+
     asset = Asset.AssetParameter(assetPath)
     # if we have asset data, means this maya scene is an asset, so
     # we move the images to its folder
     if asset.isValid():
-        print "Publishing images to render asset %s...\n" % asset.path
+        print( "Publishing images to render asset %s...\n" % asset.path )
         imagePath = "%s/images/" % asset.getFilePath()
         sudo = pipe.admin.sudo()
         sudo.mkdir( imagePath )
         sudo.mkdir( "%s/.rules" % imagePath )
         sudo.chmod( "a+rwx", "%s/.rules" % imagePath )
-        
-        sudo.mkdir( "%s/.webplayer/" % imagePath ) 
+
+        sudo.mkdir( "%s/.webplayer/" % imagePath )
         sudo.chown( "http", "%s/.webplayer/" % imagePath )
-        sudo.mkdir( "%s/.webplayer.commented/" % imagePath ) 
+        sudo.mkdir( "%s/.webplayer.commented/" % imagePath )
         sudo.chmod( "a+rwx", "%s/.webplayer.commented/" % imagePath )
-         
-        sudo.mkdir( "%s/.webplayer_montage/" % imagePath ) 
-        sudo.chown( "http", "%s/.webplayer_montage/" % imagePath ) 
-        sudo.mkdir( "%s/.webplayer_montage.commented/" % imagePath ) 
+
+        sudo.mkdir( "%s/.webplayer_montage/" % imagePath )
+        sudo.chown( "http", "%s/.webplayer_montage/" % imagePath )
+        sudo.mkdir( "%s/.webplayer_montage.commented/" % imagePath )
         sudo.chmod( "a+rwx", "%s/.webplayer_montage.commented/" % imagePath )
         sudo.run()
-        
+
         # check all published versions for sequences, and store all the latest ones!
         symlinks = {}
         published_images = {}
-        versions = glob.glob( "%s/??.??.??" % str(os.path.dirname(asset.getFilePath().rstrip('/'))) )
-        versions.sort()
-        for v in versions:
-            for each in glob.glob( "%s/images/*" % v):
-                symlinks[ os.path.basename(each) ] = each
-        
+        # versions = glob.glob( "%s/??.??.??" % str(os.path.dirname(asset.getFilePath().rstrip('/'))) )
+        # versions.sort()
+        # for v in versions:
+        #     for each in glob.glob( "%s/images/*" % v):
+        #         symlinks[ os.path.basename(each) ] = each
+
         # if found images on previous versions, symlink the latest ones in the current version
         symlink_images = []
-#        if symlinks:
-#            # now gather all files in current version!
-#            for each in symlinks:
-#                symlink_images.append( "%s/%s" % (imagePath, each) )
-            
+        # if symlinks:
+        #     # now gather all files in current version!
+        #     for each in symlinks:
+        #         symlink_images.append( "%s/%s" % (imagePath, each) )
+
         # mangle images into a list, if a dict
         images = frames
         if type(frames) == type({}):
@@ -153,89 +160,170 @@ def publish(frames, assetPath):
                 for each in frames[ext]:
                     images.append(each)
 
-        def getMontageArray(numberOfImages):
-            import math
-            x=numberOfImages
-            y=math.sqrt(x)
-            z=int(y)+(1 if y-int(y)>0 else 0)
-            zz=int(y+0.475 if (y-int(y))>0.0 else (z))
-            #print x,z,zz, z*zz
-            return (z,zz)
-            
-
-        
         montageImages  = []
+        images.sort()
+        for img in  images:
+            print( img )
         basenames = map(lambda x: os.path.basename(x), images)
-        for n in range(0,len(images)):
-            basename = basenames[n]
-            # if we have images with same file name,
-            # create unique names from the difference in folder name
-            equals = filter(lambda z: basenames[n] in z, images)
-            
-            # check if we have images with the same file name in 
-            # previous versions as well
-            previous_equals = filter(lambda z: basenames[n] in z, symlink_images)
-            
-            if len(equals) > 1:
-                 for t in range(len(equals[0])):
-                    if equals[0][t] != equals[1][t]:
-                        basename = images[n][t:].replace('/','_').replace(':','_')
-                        break
-            elif len(previous_equals) > 1:
-                # find basename from symlinks based on the first prefix name in the symlink
-                for p in previous_equals:
-                    prefix = p.split('/')[-1].split(basename)[0].strip('_')
-                    if prefix in images[n]:
-                        basename = p.split('/')[-1]
 
-            # publish the file!!
-            target = "%s%s" % (imagePath, basename)
-            published_images[ basename ] = target 
-            print "\n@IMAGE!@%s" % target
-            print "\n@IMAGE@%s"  % target
-            sys.stdout.flush()            
-            time.sleep(1)
-            sucess=False
-            for tries in range(5):
-                if tries>1:
-                    print "\t\t trying to copy again..."
-                    time.sleep(tries*tries)
+        def __thread01__(n, threads_return):
+                basename = basenames[n]
+                print( n )
+                # if we have images with same file name,
+                # create unique names from the difference in folder name
+                equals = filter(lambda z: basenames[n] in z, images)
+
+                # check if we have images with the same file name in
+                # previous versions as well
+                previous_equals = filter(lambda z: basenames[n] in z, symlink_images)
+
+                if len(equals) > 1:
+                    for t in range(len(equals[0])):
+                        if equals[0][t] != equals[1][t]:
+                            basename = images[n][t:].replace('/','_').replace(':','_')
+                            break
+                elif len(previous_equals) > 1:
+                    # find basename from symlinks based on the first prefix name in the symlink
+                    for p in previous_equals:
+                        prefix = p.split('/')[-1].split(basename)[0].strip('_')
+                        if prefix in images[n]:
+                            basename = p.split('/')[-1]
+
+                # publish the file!!
+                target = "%s%s" % (imagePath, basename)
+                published_images[ basename ] = target
+                print( "\n@IMAGE!@\"%s\"" % target )
+                print( "\n@IMAGE@\"%s\""  % target )
+                sys.stdout.flush()
+                time.sleep(1)
+                sucess=False
+                fileTemp = tempfile.mktemp()
+                for tries in range(5):
+                    if tries>1:
+                        print( "\t\t trying to copy again..." )
+                        time.sleep(tries*tries)
+
+                    # this is were we publish our images.
+                    sudo = pipe.admin.sudo()
+                    # sudo.rm( target )
+                    sudo.cp( os.path.abspath(images[n]), fileTemp )
+                    sudo.cp( fileTemp, target )
+                    cmd = ""
+
+                    # generate jpg preview images
+                    for cmd in webplayer(images[n], '%s/.webplayer' % imagePath, montageImages ):
+                        sudo.cmd( cmd )
+
+                    # execute commands as root
+                    print( sudo.run() )
+
+                    # check if publish was done suscessfuly
+                    if os.path.exists( target ):
+                        if filecmp.cmp( os.path.abspath(images[n]), target ):
+                            sucess=True
+                            break
+
 
                 sudo = pipe.admin.sudo()
-                sudo.rm( target )
-                sudo.cp( os.path.abspath(images[n]), target )
-                cmd = "convert '%s' -fill white  -undercolor '#00000080'  -gravity South -pointsize 30 -annotate +5+5  '   %s - %sMB   ' " % (os.path.abspath(images[n]), target, str(os.path.getsize(os.path.abspath(images[n]))/1024/1024))
-                montageImages.append( "%s/.webplayer/%s" % (imagePath, target.split('jobs/')[1].replace('/','_').replace(':','_').replace('__','_').replace('exr','jpg').replace('EXR','jpg')) )
-                cmd += ' "%s"' % montageImages[-1]
-                print '\n'+cmd
-                sudo.cmd( cmd )
-                sudo.run()    
-                if os.path.exists( target ):
-                    if filecmp.cmp( os.path.abspath(images[n]), target ):
-                        sucess=True
-                        break
+                sudo.rm( fileTemp )
+                print( sudo.run() )
+                if not sucess:
+                    threads_return.put(False)
 
 
 
-            if not sucess:
-                print '[ PARSER ERROR ]'
+        threads = []
+        threads_return = Queue()
+
+        # single thread
+        # for n in range(0,len(images)):
+        #     __thread01__(n, threads_return)
+
+        # multi threaded
+        threadMax=multiprocessing.cpu_count()
+        threads = []
+        for n in range(0,len(images)):
+            threads += [ Thread(target=__thread01__, args=(n,threads_return,)) ]
+            threads[-1].start()
+
+            # wait so only maxThreads at a time!!
+            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                time.sleep(1)
+
+
+        # wait for threads to finish!
+        print( "Waiting threads to finish..." )
+        for t in threads:
+            t.join()
+
+        # now check if we got a false success, and raise exception if any!
+        while not threads_return.empty():
+            if not threads_return.get():
+                print( '[ PARSER ERROR ]' )
                 raise Exception("SAM Error: Can't publish image since destination folder is unavailable")
 
-        # build pass montage sequence
-        montage = getMontageArray( len(montageImages) )
-        if len(montageImages) <= montage[0]*montage[0]:
-            montageImages += ['null:'] * (montage[0]*montage[0]-len(montageImages))
-            
-        montageCmd = '''montage %s -tile %sx  -geometry '%sx%s'   -background 'rgb(30,30,30)' ''' % ( 
-            ' '.join(montageImages), 
-            str(montage[0]),
-            str(int(1920/montage[0])),
-            str(int(1080/montage[0])),
-        )
-        sudo = pipe.admin.sudo()
-        print '\n\n'+montageCmd + '"%s/.webplayer_montage/montage.%s.jpg"' % (imagePath, basenames[n].split('.')[-2])
-        sudo.cmd( montageCmd + '"%s/.webplayer_montage/montage.%s.jpg"' % (imagePath, basenames[n].split('.')[-2]) )
-        sudo.run()
+
+        # if we have at least one filtered images, use only then for montage!
+        onlyFiltered = filter(lambda img: 'filtered' in img, montageImages)
+        if onlyFiltered:
+            montageImages = onlyFiltered
+
+        montageImages.sort()
+
+
+        # run montage commands as root
+        def __threadedSudoCmd__(cmd):
+            sudo = pipe.admin.sudo()
+            sudo.cmd( cmd )
+            print( sudo.run() )
+
+        #multi thread
+        threads = []
+        for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
+            threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
+            threads[-1].start()
+
+            # wait so only maxThreads at a time!!
+            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                time.sleep(1)
+
+
+        # fix filenames for webplayer
+        for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
+            threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
+            threads[-1].start()
+            # wait so only maxThreads at a time!!
+            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                time.sleep(1)
+
+        print( "Waiting threads to finish..." )
+        for t in threads:
+            t.join()
+
+
+        # remove montageImages after all threads have finished!
+        for each in montageImages:
+            threads += [ Thread(target=__threadedSudoCmd__, args=("rm -rf %s" % each,)) ]
+            threads[-1].start()
+            # wait so only maxThreads at a time!!
+            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                time.sleep(1)
+
+        print( "Waiting threads to finish..." )
+        for t in threads:
+            t.join()
+
+
+        # single thread
+        # sudo = pipe.admin.sudo()
+        # for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
+        #     sudo.cmd( cmd )
+        #
+        # # fix filenames for webplayer
+        # for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
+        #     sudo.cmd( cmd )
+        #
+        # print sudo.run()
 
         # check if frame was copied suscessfully and remove it from original folder!
         for each in images:
@@ -247,26 +335,23 @@ def publish(frames, assetPath):
                         pipe.admin.system( "rm -f %s" % each )
                     else:
                         Exception( "[ PARSER ERROR ]" )
-                    
-        # after publish all files, create symlinks for the ones 
+
+        # after publish all files, create symlinks for the ones
         # that did not publish, but exist in previous versions
-  #      if symlinks:
-  #          sudo = pipe.admin.sudo()
-  #          for each in symlinks:    
-  #              # compare the symlink basename -9 charactes from the end, so we cut out extension + frame number!
-  #              x = filter( lambda x: each[:-9] in x, published_images )
-  #              if not x:
-  #                  if not os.path.exists( "%s/%s" % (imagePath, os.path.basename(each)) ):
-  #                      sudo.ln( symlinks[each], imagePath )
-  #          sudo.run()    
-                    
-        print '\n','='*300
+        # if symlinks:
+        #     sudo = pipe.admin.sudo()
+        #     for each in symlinks:
+        #         # compare the symlink basename -9 charactes from the end, so we cut out extension + frame number!
+        #         x = filter( lambda x: each[:-9] in x, published_images )
+        #         if not x:
+        #             if not os.path.exists( "%s/%s" % (imagePath, os.path.basename(each)) ):
+        #                 sudo.ln( symlinks[each], imagePath )
+        #     sudo.run()
 
 
 
 
-#def webplayerCache(images):
-    
+        print( '\n','='*300 )
 
 
 def publishLog(log, assetPath, className):
@@ -289,10 +374,150 @@ def publishLog(log, assetPath, className):
         os.chmod(file,644)
 
         logFile = "%s%s_%s.log" % (logPath, className, os.environ['FRAME_NUMBER'])
-        print "\nstoring render log at %s" % logFile
+        print( "\nstoring render log at %s" % logFile )
         sudo = pipe.admin.sudo()
         sudo.mkdir( logPath )
         sudo.cp( file, logFile )
         sudo.run()
         os.remove(file)
-        print '\n','='*300
+        print( '\n','='*300 )
+
+        # store pixar statisc job file
+        # if 'Pixar PhotoRealistic RenderMan' in log:
+        #     imagePath = [ l for l in log.split('\n') if 'renderman/' in l and '(mode =' in l ]
+        #     if imagePath:
+        #         logXML = os.path.abspath( os.path.dirname( os.path.dirname( imagePath[0] ) ) )
+
+
+
+
+def webplayer(img, toFolder='.', montage=[]):
+    ''' generate jpg preview images '''
+    import tempfile
+    cmd = []
+    fileTemp = os.path.abspath( img )
+    hasLayers = False
+
+    # if EXR, look if it has layers. If so, use exr2tif to fix RGB layer for jpg preview
+    if '.exr' in os.path.abspath(img).lower():
+        if not len( os.popen("exrheader '%s' | egrep 'R,|G,|B,' | grep sampling" % fileTemp).readlines() ):
+            hasLayers = True
+    if hasLayers:
+        # if not RGB layer, we convert to tiff to get exr channels as RGB channels, so convert works properly on diffuse/specular/etc
+        ret = -1
+        count = 0
+        # fileTemp = "/tmp/PIPE_TMP_%s.tif" % (
+        #     os.path.abspath( img ).split('jobs/')[1].replace('/','_').replace(':','_').replace('__','_')
+        # )
+        fileTemp = tempfile.mktemp('.tif')
+
+        while ret < 0 :
+            ret = os.system("exr2tif.py '%s' '%s' " %  ( os.path.abspath( img ), fileTemp ) )
+            count += 1
+            if count > 10:
+                # raise Exception("[ PARSER ERROR ]\n\nIOError: \n\n")
+                break
+
+        # if our conversion failed, revert to the original exr
+        if not os.path.exists( fileTemp ):
+            fileTemp = img
+
+    # generate jpeg preview for our rendered images
+    # we use imagemagick convert - this is the conver line
+    cmd.append(
+        "convert '%s' -fill white  -undercolor '#00000080'  -gravity South -pointsize 30 -annotate +5+5  '   %s - %sMB   ' " % (
+            fileTemp,
+            os.path.basename(img),
+            str(os.path.getsize(os.path.abspath( img ))/1024/1024)
+        )
+    )
+
+    # images to use in the montage image
+    samImage = "%s/%s" % (
+        toFolder,
+        os.path.abspath( img ).split('jobs/')[1].replace('/','_').replace(':','_').replace('__','_').replace('exr','jpg').replace('EXR','jpg')
+    )
+    # tmpImage = "/tmp/PIPE_TMP_%s" % (
+    #     os.path.abspath( img ).split('jobs/')[1].replace('/','_').replace(':','_').replace('__','_').replace('exr','jpg').replace('EXR','jpg')
+    # )
+    tmpImage = tempfile.mktemp('.%s.jpg' % img.split('.')[-2], os.path.basename(img)+'.'  )
+
+
+    # only use filtered images for montage!
+    montage.append( tmpImage )
+
+    cmd[-1] += ' "%s" && cp -rfv "%s" "%s"' % (tmpImage, tmpImage, samImage)
+
+    # remove fileTemp if it's the converted (RGB fixed) TIF image
+    if hasLayers:
+        cmd.append( "rm -rf %s" % fileTemp )
+        if 'filtered' not in img:
+            cmd.append( "rm -rf %s" % tmpImage )
+
+    return cmd
+
+
+# build pass montage sequence
+def webplayerMontage(_montageImages, toFolder='.'):
+    ''' generate a 1080p montage of a bunch of images '''
+
+
+    # use filtered images ONLY for montage, if any!
+    montageImages = [n.strip() for n in _montageImages if 'filtered' in n or not [m for m in _montageImages if os.path.splitext(os.path.splitext(n)[0])[0]+'_filtered' in m or '_variance' in n] ]
+
+    if len(montageImages)<1:
+        montageImages = _montageImages
+
+    if len(montageImages)<1:
+        return []
+
+    cmd=[]
+    def getMontageArray(numberOfImages):
+        import math
+        sqrt = math.sqrt(numberOfImages)
+        print( "sqrt:", sqrt )
+        x=int(sqrt)
+        y=x
+        # if we have a non-integer sqrt(), we have to add empty spaces!
+        if sqrt-x > 0.0:
+            x += 1
+            y = int(sqrt+0.475)
+        if x < 1:
+            x=1
+            y=1
+        return (x,y)
+
+    nonDuplicated = {}
+    for each in montageImages:
+        if each.strip():
+            nonDuplicated[each.strip()] = 1
+    montageImages = nonDuplicated.keys()
+    montageImages.sort()
+    montage = getMontageArray( len(montageImages) )
+    if len(montageImages) <= montage[0]*montage[0]:
+        montageImages += ['null:'] * (montage[0]*montage[0]-len(montageImages))
+
+    # imagemagick montage command
+    montageCmd = '''montage %s -tile %sx  -geometry '%sx%s'   -background 'rgb(30,30,30)' ''' % (
+        ' '.join(montageImages),
+        str(montage[0]),
+        str(int(1920/montage[0])),
+        str(int(1080/montage[0])),
+    )
+    frame = os.path.basename(montageImages[0]).split('.')[-2]
+    cmd.append( montageCmd + '"%s/montage.%s.jpg"' % (toFolder, frame) )
+    # for each in montageImages:
+    #     cmd.append( "rm -rf %s" % each )
+    return cmd
+
+
+def fixFilenamesForWebplayer(montageImages, imagePath):
+    cmd=[]
+    for image in montageImages:
+        if '_images_' in image:
+            prefix = imagePath.split('jobs/')[-1].replace('/','_').replace(':','_')
+            webPlayer_image = '%s/.webplayer/%s' % (imagePath, "%s_%s" % (prefix, image.split('_images_')[-1]))
+            webPlayer_image = webPlayer_image.replace('__','_')
+            cmd += [ "rm -rf %s" % webPlayer_image ]
+            cmd += [ "ln -s %s %s" % (image, webPlayer_image) ]
+    return cmd

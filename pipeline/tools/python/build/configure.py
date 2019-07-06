@@ -184,7 +184,9 @@ class openssl(configure):
     cmd=[
         # './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$TARGET_FOLDER',
         # 'make depend && make && make install',
-        './config shared enable-tlsext --prefix=$TARGET_FOLDER',
+        '''echo "OPENSSL_$(basename $OPENSSL_TARGET_FOLDER | awk -F'.' '{print $1.$2.$3}') { global: *;};" | tee ./openssl.ld''',
+        '''echo "OPENSSL_$(basename $OPENSSL_TARGET_FOLDER | awk -F'.' '{print $1.$2.0}') { global: *;};" | tee -a ./openssl.ld''',
+        './config shared enable-tlsext --prefix=$TARGET_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
         'make -j $DCORES && make -j $DCORES install',
     ]
     def installer(self, target, source, env): # noqa
@@ -203,8 +205,6 @@ class freetype(configure):
         if os.path.exists( "%s/include/freetype2" % t):
             if not os.path.exists( "%s/include/freetype" % t):
                 ret = os.popen("ln -s freetype2 %s/include/freetype" % t).readlines()
-        if os.path.exists( "%s/include/freetype2/ft2build.h" % t):
-            ret += os.popen("ln -s freetype2/ft2build.h %s/include/" % t).readlines()
         return ret
 
 
@@ -284,11 +284,13 @@ class python(configure):
             ('#_ssl _ssl','_ssl _ssl'),
             ('#	-DUSE_SSL','	-DUSE_SSL'),
             ('#	-L..SSL','	-L$(SSL'),
-        ]
+        ],
+
     }}
     cmd = [
-        'wget "https://bootstrap.pypa.io/ez_setup.py"',
+        'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
         './configure  --enable-shared --enable-unicode=ucs4',
+        '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
         'make -j $DCORES',
         'make -j $DCORES install',
         '$TARGET_FOLDER/bin/python ./ez_setup.py',
@@ -322,22 +324,22 @@ class cortex(configure):
     # cortex patches
     sed = { "0.0.0" : {
         # patch IECoreRI to build with prman 20!
-        # 'src/IECoreRI/RendererImplementation.cpp' : [
-        #     ('RiProceduralV( data, riBound, procSubdivide, procFree, 1, tokens, values );','''
-        #         // prman 20.2 doesn't have RiProceduralV, only RiProcedural2V. So for now, just revert to RiProcedural as workaroud
-        #         #ifdef RiProceduralV
-        #                         RiProceduralV( data, riBound, procSubdivide, procFree, 1, tokens, values );
-        #         #else
-        #                         RiProcedural( data, riBound, procSubdivide, procFree );
-        #         #endif'''
-        #     ),('// RiProcDelayedReadArchive','''
-        #         // prman 20.2 doesn't have RiProcFree anymore, so just use c++ free in its place
-        #         #ifndef RiProcFree
-        #                         #define RiProcFree free
-        #         #endif
-        #         // RiProcDelayedReadArchive'''
-        #     ),
-        # ],
+        'src/IECoreRI/RendererImplementation.cpp' : [
+            ('RiProceduralV( data, riBound, procSubdivide, procFree, 1, tokens, values );','''
+                // prman 20.2 doesn't have RiProceduralV, only RiProcedural2V. So for now, just revert to RiProcedural as workaroud
+                #ifdef RiProceduralV
+                                RiProceduralV( data, riBound, procSubdivide, procFree, 1, tokens, values );
+                #else
+                                RiProcedural( data, riBound, procSubdivide, procFree );
+                #endif'''
+            ),('// RiProcDelayedReadArchive','''
+                // prman 20.2 doesn't have RiProcFree anymore, so just use c++ free in its place
+                #ifndef RiProcFree
+                                #define RiProcFree free
+                #endif
+                // RiProcDelayedReadArchive'''
+            ),
+        ],
         # fixes to option vars being treated as strings or lists.
         'SConstruct' : [
             ('houdiniEnv.Prepend( SHLINKFLAGS = "$HOUDINI_LINK_FLAGS" )', 'houdiniEnv.Prepend( SHLINKFLAGS = ["$HOUDINI_LINK_FLAGS"] )'),
@@ -353,36 +355,36 @@ class cortex(configure):
             # ('corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest','riPythonProceduralForTest + riDisplayDriverForTest'),
             # ('Default(', '#Default('),
         ],
-        # 'mel/IECoreMaya/ieProceduralHolder.mel' : [
-        #     ('return $node;','''
-        #         addAttr -ln "rman__torattr___preShapeScript"  -dt "string"  $node;
-        #         setAttr -e-keyable true ($node+".rman__torattr___preShapeScript");
-        #         setAttr -type "string" ($node+".rman__torattr___preShapeScript") "python(\\"import IECoreMaya;IECoreMaya.ieExportPythonProcedural()\\")";
-        #
-        #         return $node;
-        #     ''')
-        # ],
-        # 'python/IECoreMaya/__init__.py' : [
-        #     ('from FnSceneShape import FnSceneShape','''from FnSceneShape import FnSceneShape;from ieRMS import *''')
-        # ],
-        # 'python/IECoreMaya/ieRMS.py' : [
-        #     ('','''def ieExportPythonProcedural():
-        #         import IECore
-        #         import IECoreRI
-        #         import IECoreMaya
-        #         import maya.cmds as m
-        #         from maya.mel import eval as meval
-        #         import os
-        #
-        #
-        #         bb = IECore.Box3f( IECore.V3f( 999999 ), IECore.V3f( 999999 ) )
-        #         converter = IECoreMaya.FromMayaDagNodeConverter.create('genericShape')
-        #         proc = converter.convert()
-        #         serialize = IECore.ParameterParser().serialise(proc.parameters(), proc.parameters().getValue())
-        #         pythonString = "IECoreRI.executeProcedural( '%s', %s, %s )" % (proc.path, proc.version, serialize)
-        #         meval('RiProcedural "DynamicLoad" "iePython" %f %f %f %f %f %f "%s";'  % (bb.min[0], bb.max[0], bb.min[1], bb.max[1], bb.min[2], bb.max[2], pythonString ))
-        #     ''')
-        # ],
+        'mel/IECoreMaya/ieProceduralHolder.mel' : [
+            ('return $node;','''
+                addAttr -ln "rman__torattr___preShapeScript"  -dt "string"  $node;
+                setAttr -e-keyable true ($node+".rman__torattr___preShapeScript");
+                setAttr -type "string" ($node+".rman__torattr___preShapeScript") "python(\\"import IECoreMaya;IECoreMaya.ieExportPythonProcedural()\\")";
+
+                return $node;
+            ''')
+        ],
+        'python/IECoreMaya/__init__.py' : [
+            ('from FnSceneShape import FnSceneShape','''from FnSceneShape import FnSceneShape;from ieRMS import *''')
+        ],
+        'python/IECoreMaya/ieRMS.py' : [
+            ('','''def ieExportPythonProcedural():
+                import IECore
+                import IECoreRI
+                import IECoreMaya
+                import maya.cmds as m
+                from maya.mel import eval as meval
+                import os
+
+
+                bb = IECore.Box3f( IECore.V3f( 999999 ), IECore.V3f( 999999 ) )
+                converter = IECoreMaya.FromMayaDagNodeConverter.create('genericShape')
+                proc = converter.convert()
+                serialize = IECore.ParameterParser().serialise(proc.parameters(), proc.parameters().getValue())
+                pythonString = "IECoreRI.executeProcedural( '%s', %s, %s )" % (proc.path, proc.version, serialize)
+                meval('RiProcedural "DynamicLoad" "iePython" %f %f %f %f %f %f "%s";'  % (bb.min[0], bb.max[0], bb.min[1], bb.max[1], bb.min[2], bb.max[2], pythonString ))
+            ''')
+        ],
 
 
 
@@ -391,10 +393,8 @@ class cortex(configure):
 
     @staticmethod
     def noIECoreSED():
-        '''
-        # noIECoreSED adds some extra patches to SConstruct to avoid re-building IECore, IECorePython, IECoreGL
-        '''
         self = cortex
+        # noIECoreSED adds some extra patches to SConstruct to avoid re-building IECore, IECorePython, IECoreGL
         noIECoreSED = {}
         for v in self.sed:
             noIECoreSED[v] = self.sed[v].copy()
@@ -526,47 +526,8 @@ class gaffer(cortex):
             ('if not haveRequiredOptions ', 'if not haveRequiredOptions or "applesed" in libraryName.lower() '),
             ('"GafferAppleseed" : {',"''' "),
             ('"GafferAppleseedUITest',"''' #")
-        ],
-        # 'src/GafferUIBindings/PathListingWidgetBinding.cpp' : [
-        #     ('.def( init<>() )','''
-        #         .def( init<>() )
-        #         .def( "data", &FileIconColumn::data )
-        #         .def( "headerData", &FileIconColumn::headerData ))
-        #     '''),
-        # ],
+        ]
     }}
-
-    patchs = { '0.31.0.0' : {
-        'python/GafferSceneUI/SceneReaderPathPreview.py' : '''
-            --- python/GafferSceneUI/SceneReaderPathPreview.py
-            +++ python/GafferSceneUI/SceneReaderPathPreview.py.patch
-            @@ -75,8 +75,6 @@
-             		column.append( self.__viewer )
-             		column.append( GafferUI.Timeline( self.__script ) )
-
-            -		self.__script.selection().add( self.__script["camera"] )
-            -
-             		self._updateFromPath()
-
-             	def isValid( self ) :
-            @@ -111,6 +109,7 @@
-             		self.__script["ObjectPreview"]["fileName"].setValue( "" )
-
-             		if not self.isValid() :
-            +			self.__script.selection().clear()
-             			return
-
-             		path = self.getPath()
-            @@ -173,6 +172,7 @@
-             			GafferUI.Playback.acquire( self.__script.context() ).setFrameRange( startFrame, endFrame )
-
-             		# focus the viewer
-            +		self.__script.selection().add( self.__script["camera"] )
-             		with self.__script.context() :
-             			self.__viewer.viewGadgetWidget().getViewportGadget().frame( self.__script["OpenGLAttributes"]["out"].bound( "/" ) )
-        ''',
-    }}
-
     def installer(self, target, source, env): # noqa
         ''' we create/update the /atomo/app/.../gaffer folder since gaffer is also an app! '''
         targetFolder = os.path.dirname(str(target[0]))

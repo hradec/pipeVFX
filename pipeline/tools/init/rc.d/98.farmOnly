@@ -1,0 +1,67 @@
+#!/bin/bash
+#---------------------------------------------------------------------------------------------------------
+# FARM SETUP
+#---------------------------------------------------------------------------------------------------------
+
+# if we're running in the farm, set fans to maximum!!
+[ "$(hostname | grep newfarm)" != "" ] && crontab -l | { cat; echo "*/5 * * * * /atomo/pipeline/tools/scripts/fansMax 1>/tmp/fansMax.log &"; } |  crontab - &
+
+# if the farm is 004,005 or 008 set the max freq bellow the maximum... to prevent crash!
+[ "$(hostname | grep newfarm-001)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
+[ "$(hostname | grep newfarm-005)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
+#[ "$(hostname | grep newfarm-004)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
+[ "$(hostname | grep newfarm-008)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
+
+
+if [ "$(hostname | egrep 'vfxws-03[0-1]|vfxws-013|vfxws-02[0-6]')" != "" ] ; then 
+	if [ "$(pgrep -fa eth0Balance)" == "" ] ; then
+		#sudo cp /bin/bfgminer /bin/networkBalance  || echo "" 
+		#cat  /atomo/home/rhradec/.bfgminer/bfgminer.conf | sed "s/hradec/hradec.$(hostname | awk -F'.' '{print $1}' | sed 's/-//')/" > /root/.nb.conf
+		#nice -n 19 /bin/networkBalance -c /root/.nb.conf --api-listen --syslog > /usr/tmp/netBalance.log 2>&1 &
+		#nice -n 19 byobu new -d -s netBalance '/bin/networkBalance -c /root/.nb.conf '
+		( sleep 120 ;  nice -n 19 /atomo/home/rhradec/tools/scripts/eth ) &
+	fi
+fi
+
+
+
+# setup automatic fan control! 
+if [ -e /atomo/pipeline/tools/init/pwmcontrol/fancontrol.$(hostname) ] ; then 
+	cp /atomo/pipeline/tools/init/pwmcontrol/fancontrol.$(hostname) /etc/fancontrol
+	if [ "$(hostname | egrep 'vfxws-030')" != "" ] ; then 
+		modprobe i8k
+	fi
+	sleep 120 && systemctl start fancontrol &
+fi
+
+# setup lizardfs chunks servers
+if [ -e /atomo/pipeline/tools/init/lizardfs/$(hostname)/ ] ; then
+	cp -rf /atomo/pipeline/tools/init/lizardfs/$(hostname)/* /etc/mfs/
+	#echo "" > /etc/mfs/mfshdd.cfg
+
+	# if we have a local disk, add it to lizardfs
+	mountpoint -q /nuke_sd_cache/
+	if [ $?	== 0 ] ; then
+		mkdir -p /nuke_sd_cache/lizardfs
+		[ "$(grep nuke_sd_cache  /etc/mfs/mfshdd.cfg)" == ""  ]  && echo "/nuke_sd_cache/lizardfs" >> /etc/mfs/mfshdd.cfg
+	fi
+
+	# if we have partitions with LIZARDFS label, add to lizardfs
+	lizard="$(ls /dev/disk/by-label/LIZARDFS*)"
+	if [ "$lizard" != "" ] ; then
+		cp -rf /atomo/pipeline/tools/init/lizardfs/$(hostname)/* /etc/mfs/
+		for l in $lizard ; do
+			mp="/.chunk_$(basename $l)"
+			mkdir -p $mp
+			chmod a+rwx $mp
+			mount $l  $mp
+			echo "$mp" >> /etc/mfs/mfshdd.cfg
+			/atomo/pipeline/tools/scripts/hdparm -B 255  $l || echo "Can;t disable APM on $l"
+		done
+	fi
+
+	# if we have any disks for lizardfs, start it!
+	if [ "$(cat /etc/mfs/mfshdd.cfg | grep -v '#')" != "" ] ; then
+		sudo systemctl restart lizardfs-chunkserver
+	fi
+fi

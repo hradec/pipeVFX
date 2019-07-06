@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalJitterColor">
+		<label>alJitterColor</label>
+		<description>Use this in a network attached to multiple objects to add random color variation to each object.</description>
+		<attribute name="input" type="maya.float3">
+			<label>Input</label>
+			<description>The input color to be jittered.</description>
+		</attribute>
+		<attribute name="minSaturation" type="maya.float">
+			<label>Min Saturation</label>
+			<description>Minimum random saturation scale to apply.</description>
+		</attribute>
+		<attribute name="maxSaturation" type="maya.float">
+			<label>Max Saturation</label>
+			<description>Maximum random saturation scale to apply.</description>
+		</attribute>
+		<attribute name="minGain" type="maya.float">
+			<label>Min Gain</label>
+			<description>Minimum random gain to apply.</description>
+		</attribute>
+		<attribute name="maxGain" type="maya.float">
+			<label>Max Gain</label>
+			<description>Maximum random gain to apply.</description>
+		</attribute>
+		<attribute name="minHueOffset" type="maya.float">
+			<label>Min Hue Offset</label>
+			<description>Minimum hue offset to apply.</description>
+		</attribute>
+		<attribute name="maxHueOffset" type="maya.float">
+			<label>Max Hue Offset</label>
+			<description>Maximum hue offset to apply.</description>
+		</attribute>
+		<attribute name="clamp" type="maya.bool">
+			<label>Clamp</label>
+			<description>If enabled, the output color will be clamped to 0-1.</description>
+		</attribute>
+		<attribute name="signal" type="maya.float">
+			<label>Signal</label>
+			<description>Signal to use to drive the randomization. This wants to be a unique value per object such as the object id.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalJitterColor">
+			<property name="input"/>
+			<property name="minSaturation"/>
+			<property name="maxSaturation"/>
+			<property name="minGain"/>
+			<property name="maxGain"/>
+			<property name="minHueOffset"/>
+			<property name="maxHueOffset"/>
+			<property name="clamp"/>
+			<property name="signal"/>
+		</view>
+</templates>

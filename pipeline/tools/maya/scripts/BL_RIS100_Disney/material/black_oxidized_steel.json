@@ -1,0 +1,64 @@
+{
+    "black_oxidized_steel_black_oxidized_steel": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.20941010117530823, 
+                0.20999999344348907, 
+                0.2079000025987625
+            ], 
+            "baseColorB": 0.2079000025987625, 
+            "baseColorG": 0.20999999344348907, 
+            "baseColorR": 0.20941010117530823, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.20941010117530823, 
+                0.20999999344348907, 
+                0.2079000025987625
+            ], 
+            "colorB": 0.2079000025987625, 
+            "colorG": 0.20999999344348907, 
+            "colorR": 0.20941010117530823, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "metallic": 1.0, 
+            "outColor": [
+                0.20941010117530823, 
+                0.20999999344348907, 
+                0.2079000025987625
+            ], 
+            "outColorB": 0.2079000025987625, 
+            "outColorG": 0.20999999344348907, 
+            "outColorR": 0.20941010117530823, 
+            "presence": 1.0, 
+            "roughness": 0.6000000238418579, 
+            "sheenTint": 1.0, 
+            "shininess": 100.0, 
+            "specular": 1.0, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

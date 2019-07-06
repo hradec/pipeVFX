@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalSwitchFloat">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="inputA" type="maya.float">
+			<label>InputA</label>
+		</attribute>
+		<attribute name="inputB" type="maya.float">
+			<label>InputB</label>
+		</attribute>
+		<attribute name="inputC" type="maya.float">
+			<label>InputC</label>
+		</attribute>
+		<attribute name="inputD" type="maya.float">
+			<label>InputD</label>
+		</attribute>
+		<attribute name="inputE" type="maya.float">
+			<label>InputE</label>
+		</attribute>
+		<attribute name="inputF" type="maya.float">
+			<label>InputF</label>
+		</attribute>
+		<attribute name="inputG" type="maya.float">
+			<label>InputG</label>
+		</attribute>
+		<attribute name="inputH" type="maya.float">
+			<label>InputH</label>
+		</attribute>
+		<attribute name="mix" type="maya.float">
+			<label>mix</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalSwitchFloat">
+		<property name="outColor" />
+		<property name="inputA" />
+		<property name="inputB" />
+		<property name="inputC" />
+		<property name="inputD" />
+		<property name="inputE" />
+		<property name="inputF" />
+		<property name="inputG" />
+		<property name="inputH" />
+		<property name="mix" />
+		</view>
+</templates>

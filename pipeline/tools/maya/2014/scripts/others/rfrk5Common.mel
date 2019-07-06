@@ -1,0 +1,2853 @@
+global proc string rfrk5GetNodeName(string $attrName)
+{
+  string $buffer[];
+  tokenize $attrName "." $buffer;
+  return $buffer[0];
+}
+
+global proc string rfrk5GetUpstreamNode(string $attr)
+{
+  string $upstreamPlug = `connectionInfo -sfd $attr`;
+  if($upstreamPlug == "")
+    return "";
+
+  return rfrk5GetNodeName($upstreamPlug);
+}
+
+global proc rfrk5FileBrowserDlg(string $callBack, string $action, string $title, string $type, int $mode, string $filters[], string $dir)
+{
+  string $filterStr = "";
+  for($f in $filters)
+  {
+    string $buf[];
+    tokenize $f "," $buf;
+    $filterStr += $buf[0] + " (" + $buf[0] + ");;";
+  }
+
+  // With the new dialog, 0 means write, 1 means read.
+  int $newMode = ($mode == 0) ? 1 : 0;
+  string $files[] = `fileDialog2 -cap $title -dir $dir -rf false -okc $action -ff $filterStr -sff $type -fm $newMode`;
+  if(size($files) == 1)
+  {
+    string $cmd = $callBack + " \"" + $files[0] + "\" \"\"";
+    eval $cmd;
+  }
+}
+
+global proc string rfrk5GetPreviewNode(string $procNode)
+{
+  string $dest[] = `listConnections -source false -destination true -shapes true ($procNode + ".message")`;
+  for($node in $dest)
+  {
+    if(`nodeType $node` == "rfrk5PreviewObject")
+      return $node;
+  }
+
+  return "";
+}
+
+global proc rfrk5SyncPreviewEmitter(string $shapeName)
+{
+  string $previewNode = rfrk5GetPreviewNode($shapeName);
+  if($previewNode != "")
+  {
+    int $serial = `getAttr ($previewNode + ".updateSerial")`;
+    setAttr ($previewNode + ".updateSerial") ($serial + 1);
+    refresh;
+  }
+}
+
+global proc rfrk5ClearIncomingConnection(string $attr)
+{
+  string $srcAttr = `connectionInfo -sfd $attr`;
+  if($srcAttr != "")
+    disconnectAttr $srcAttr $attr;
+}
+
+global proc rfrk5UpdateFrameTitle(string $frame, string $prefixAttr)
+{
+  if( ($frame == "") || !`frameLayout -q -exists $frame` )
+    return;
+
+  string $prefix = `getAttr $prefixAttr`;
+
+  int $maxLen = 45;
+  int $len = size($prefix);
+  if($len > $maxLen)
+  {
+    int $leftStart = $maxLen / 2;
+    int $rightStart = $len - $maxLen / 2;
+    $prefix = substring($prefix, 1, $leftStart) + "..." + substring($prefix, $rightStart + 1, $len);
+  }
+
+  frameLayout -e -label ("Sequence: " + $prefix) $frame;
+}
+
+global proc rfrk5VpColorChanged(string $attr, string $ctrl)
+{
+  float $val[] = `colorSliderGrp -q -rgbValue $ctrl`;
+  setAttr $attr $val[0] $val[1] $val[2];
+  rfrk5SyncPreviewEmitter(rfrk5GetNodeName($attr));
+}
+
+global proc rfrk5ConnectSeqColorControl(string $nodeName, int $seqIdx, string $ctrl)
+{
+  if(`attributeQuery -node $nodeName -exists "rfrkVpSequenceColor"`)
+  {
+    string $colorAttr = $nodeName + ".rfrkVpSequenceColor[" + $seqIdx + "]";
+    string $changeCmd = "rfrk5VpColorChanged \"" + $colorAttr + "\" \"" + $ctrl + "\"";
+    float $vpColor[] = `getAttr $colorAttr`;
+    colorSliderGrp -e -enable 1 -rgbValue $vpColor[0] $vpColor[1] $vpColor[2] -changeCommand $changeCmd $ctrl;
+  }
+  else
+    colorSliderGrp -e -enable 0 $ctrl;
+}
+
+global proc rfrk5AddColorAttr(string $nodeName, string $attrName, int $isMulti, float $defVal[])
+{
+  if($isMulti)
+    addAttr -h true -ln $attrName -at "float3" -usedAsColor -multi $nodeName;
+  else
+    addAttr -h true -ln $attrName -at "float3" -usedAsColor $nodeName;
+
+  addAttr -h true -ln ($attrName + "R") -at "float" -parent $attrName -defaultValue $defVal[0] $nodeName;
+  addAttr -h true -ln ($attrName + "G") -at "float" -parent $attrName -defaultValue $defVal[1] $nodeName;
+  addAttr -h true -ln ($attrName + "B") -at "float" -parent $attrName -defaultValue $defVal[2] $nodeName;
+}
+
+global proc string rfrk5MakeFileCtrl(string $label)
+{
+  string $ctrlName = `rowLayout -nc 3`;
+    text -l $label;
+    textField "field";
+    symbolButton -image "navButtonBrowse.xpm" "button";
+  setParent ..;
+  return $ctrlName;
+}
+
+global proc rfrk5ConnectFileCtrl(string $ctrlName, string $browseFunc, string $attrName)
+{
+  string $oldParent = `setParent -q`;
+  setParent $ctrlName;
+    connectControl -fileName "field" $attrName;
+    string $btnCmd = $browseFunc + " \"" + $attrName + "\"";
+    symbolButton -e -command $btnCmd "button";
+  setParent $oldParent;
+}
+
+global proc rfrk5FileSelected(string $attrName, string $filePath, string $fileType)
+{
+  string $pattern = rfrk5DetectFilePattern($filePath);
+
+  // Set the attribute.
+  setAttr -type "string" $attrName $pattern;
+
+  // Store the directory.
+  string $nameParts[];
+  tokenize $attrName "." $nameParts;
+  string $varName = "rfrkLastDir_" + toupper($nameParts[size($nameParts) - 1]);
+  string $dir = dirname($filePath);
+  optionVar -stringValue $varName $dir;
+}
+
+global proc rfrk5BrowseForFile(string $mask, int $mode, string $attrName)
+{
+  string $nameParts[];
+  tokenize $attrName "." $nameParts;
+
+  string $callbackCmd = "rfrk5FileSelected " + $attrName;
+
+  // Extract the current directory to know where to open the file browser dialog.
+  string $val = `getAttr $attrName`;
+  string $dir = dirname($val);
+  if(!`filetest -d $dir`)
+  {
+    string $varName = "rfrkLastDir_" + toupper($nameParts[size($nameParts) - 1]);
+    $dir = `optionVar -q $varName`;
+  }
+
+  if(!`filetest -d $dir`)
+    $dir = `workspace -q -active`;
+
+  string $masks[];
+  string $filters[];
+
+  tokenize $mask ";" $masks;
+  int $nrMasks = `size masks`;
+  int $maskId;
+  for($maskId = 0; $maskId < $nrMasks; ++$maskId)
+  {
+    string $crMask = $masks[$maskId];
+    if(`size $crMask` == 0)
+      break;
+    $crMask = "*." + $crMask;
+    $filters[$maskId] = $crMask + "," + $crMask;
+  }
+  // If the function is called for the "lazyComputeFile" attribute, we must change the open mode
+  // depending on the value of the "lazyComputeAction" attribute.
+  string $buttonText;
+  if($nameParts[1] == "lazyComputeFile")
+  {
+    string $nodeName = $nameParts[0];
+    int $action = `getAttr ($nodeName + ".lazyComputeAction")`;
+    $mode = ($action == 1) ? 1 : 0;
+    $buttonText = ($mode == 1) ? "Save" : "Use";
+  }
+  else
+    $buttonText = "Use";
+
+  rfrk5FileBrowserDlg($callbackCmd, $buttonText, $buttonText, $mask, $mode, $filters, $dir);
+}
+
+global proc rfrk5AddDispSequence(string $attrName)
+{
+  int $numExisting = `getAttr -s $attrName`;
+  setAttr ($attrName + "[" + $numExisting + "].muteSeq") 0;
+}
+
+proc int rfrk5ConnectDispSeqAttrs(string $children[], string $attrPrefix, string $type)
+{
+  int $childIdx = 0;
+
+  connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "muteSeq");
+  ++$childIdx;
+
+  attrFieldSliderGrp -e -attribute ($attrPrefix + "intensity") $children[$childIdx];
+  ++$childIdx;
+
+  attrColorSliderGrp -e -attribute ($attrPrefix + "colorDisplace") $children[$childIdx];
+  ++$childIdx;
+
+  return $childIdx;
+}
+
+global proc rfrk5DeleteDispSequence(string $attrName, int $idx)
+{
+  string $type = `nodeType $attrName`;
+
+  int $numElems = `getAttr -size $attrName`;
+  int $last = $numElems - 1;
+
+  // Shift the array down one element.
+  for($i = $idx; $i < $last; ++$i)
+  {
+    string $srcPrefix = $attrName + "[" + ($i + 1) + "].";
+    string $destPrefix = $attrName + "[" + $i + "].";
+
+    setAttr ($destPrefix + "intensity") `getAttr ($srcPrefix + "intensity")`;
+    setAttr ($destPrefix + "muteSeq") `getAttr ($srcPrefix + "muteSeq")`;
+
+    if($type == "rfrk5RmsDisplacement")
+    {
+      setAttr ($destPrefix + "repeatS") `getAttr ($srcPrefix + "repeatS")`;
+      setAttr ($destPrefix + "repeatT") `getAttr ($srcPrefix + "repeatT")`;
+      continue;
+    }
+
+    string $destColor = $destPrefix + "colorDisplace";
+    string $srcColor = $srcPrefix + "colorDisplace";
+    string $upstreamPlug = `connectionInfo -sourceFromDestination $destColor`;
+    if($upstreamPlug != "")
+      disconnectAttr $upstreamPlug $destColor;
+
+    $upstreamPlug = `connectionInfo -sourceFromDestination $srcColor`;
+    if($upstreamPlug != "")
+    {
+      connectAttr -force $upstreamPlug $destColor;
+      disconnectAttr $upstreamPlug $srcColor;
+    }
+    else
+    {
+      float $color[] = `getAttr $srcColor`;
+      setAttr $destColor $color[0] $color[1] $color[2];
+    }
+  }
+
+  // Remove the last element.
+  string $cmd = "removeMultiInstance -break true " + $attrName + "[" + $last + "]";
+  evalDeferred $cmd;
+}
+
+global proc rfrk5DispSeqReplace(string $attrName)
+{
+  string $type = `nodeType $attrName`;
+  string $containerColumn = `setParent -q`;
+  string $currentItems[] = `columnLayout -q -childArray $containerColumn`;
+
+  // The first item is the row layout which contains the "add" button. Change the command on the button.
+  if(size($currentItems) < 1)
+    return;
+
+  setParent $currentItems[0];
+  string $rowChildren[] = `rowLayout -query -childArray $currentItems[0]`;
+  if(size($rowChildren) < 2)
+    return;
+
+  button -e -command ("rfrk5AddDispSequence(\"" + $attrName + "\")") $rowChildren[1];
+  setParent ..;
+
+  int $numCurrentElements = size($currentItems) - 1;
+  int $numNeededElements = `getAttr -size $attrName`;
+
+  // Connect the existing controls.
+  int $numReconnect;
+  if($numCurrentElements > $numNeededElements)
+    $numReconnect = $numNeededElements;
+  else
+    $numReconnect = $numCurrentElements;
+
+  for($i = 0; $i < $numReconnect; ++$i)
+  {
+    setParent $currentItems[$i + 1];
+      // Get to the column layout which contains the controls. The +1 is because the first child is the "add new" button.
+      $children = `frameLayout -q -childArray $currentItems[$i + 1]`;
+      setParent $children[0];
+        $children = `columnLayout -q -childArray $children[0]`;
+
+        string $attrPrefix = $attrName + "[" + $i + "].";
+        int $childIdx = rfrk5ConnectDispSeqAttrs($children, $attrPrefix, $type);
+
+        setParent $children[$childIdx];
+          $children = `rowLayout -q -childArray $children[$childIdx]`;
+          symbolButton -e -command ("rfrk5DeleteDispSequence " + $attrName + " " + $i) $children[2];
+        setParent ..;
+      setParent ..;
+    setParent ..;
+  }
+
+  setUITemplate -pushTemplate attributeEditorTemplate;
+
+  // Add any new elements.
+  for($i = $numCurrentElements; $i < $numNeededElements; ++$i)
+  {
+    frameLayout -collapsable true -label ("Sequence " + $i) -borderVisible true -collapse false;
+      columnLayout -adjustableColumn true;
+        string $attrPrefix = $attrName + "[" + $i + "].";
+
+        int $childIdx = 0;
+        $children[$childIdx] = `checkBoxGrp -numberOfCheckBoxes 1 -label1 "Mute"`;
+        ++$childIdx;
+
+        $children[$childIdx] = `attrFieldSliderGrp -label "Intensity"`;
+        ++$childIdx;
+
+        $children[$childIdx] = `attrColorSliderGrp -label "Color"`;
+        ++$childIdx;
+
+        rfrk5ConnectDispSeqAttrs($children, $attrPrefix, $type);
+
+        rowLayout -nc 3;
+          text -label "";
+          text -label "";
+          symbolButton -image "smallTrash.xpm" -command ("rfrk5DeleteDispSequence " + $attrName + " " + $i);
+        setParent ..;
+      setParent ..;
+    setParent ..;
+  }
+
+  setUITemplate -popTemplate;
+
+  // Delete unneeded elements.
+  for($i = $numNeededElements; $i < $numCurrentElements; ++$i)
+  {
+    deleteUI $currentItems[$i + 1];
+  }
+}
+
+global proc rfrk5DispSeqCreate(string $attrName)
+{
+  rowLayout -nc 2;
+    text -label "";
+    button -label "Add Sequence";
+  setParent ..;
+
+  rfrk5DispSeqReplace($attrName);
+}
+
+global proc rfrk5DriveCubeWithParticlesBBox(string $cube, string $previewObj)
+{
+  string $shapes[] = `listRelatives -fullPath -noIntermediate -shapes $cube`;
+  string $cubeShape = $shapes[0];
+
+  string $dimNames[3] = { "x", "y", "z" };
+
+  for($vtxIdx = 0; $vtxIdx < 8; ++$vtxIdx)
+  {
+    float $origPos[] = `getAttr ($cubeShape + ".vt[" + $vtxIdx + "]")`;
+    string $expr = "";
+
+    for($dim = 0; $dim < 3; ++$dim)
+    {
+      string $inAttr = ($origPos[$dim] < 0) ? "partBboxMin" : "partBboxMax";
+      $inAttr = $previewObj + "." + $inAttr + "." + $inAttr + $dim;
+      string $outAttr = $cubeShape + ".pnts[" + $vtxIdx + "].p" + $dimNames[$dim];
+
+      $expr += $outAttr + " = " + $inAttr + " - (" + $origPos[$dim] + "); ";
+    }
+
+    expression -s $expr -uc "none";
+  }
+
+  setAttr -lock true ($cube + ".t");
+  setAttr -lock true ($cube + ".r");
+  setAttr -lock true ($cube + ".s");
+}
+
+global proc rfrk5MakeScatteringPresetsMenu(string $prefix)
+{
+  rowLayout -nc 2;
+    text -l "Scattering Preset";
+    optionMenu ($prefix + "Menu");
+  setParent ..;
+
+  rowLayout -nc 2;
+    text -l "";
+    rowLayout -nc 2 -cw2 90 90 -ct2 "both" "both" -co2 0 0 -cl2 "center" "center";
+      button -l "Save Preset" ($prefix + "SaveBtn");
+      button -l "Delete Preset" ($prefix + "DeleteBtn");
+    setParent ..;
+  setParent ..;
+}
+
+global string $rfrk5BuiltinScatterPresetNames[];
+$rfrk5BuiltinScatterPresetNames = { "Isotropic", "Rayleigh", "Hazy Mie", "Murky Mie" };
+global float $rfrk5BuiltinScatterPresetValues[];
+$rfrk5BuiltinScatterPresetValues =
+{
+  // Isotropic
+  0.0,	0.0,	1.0,	0.0,
+  // Rayleigh
+  -0.46,	0.46,	0.5,	0.5,
+  // Hazy Mie
+  -0.5,	0.7,	0.12,	0.88,
+  // Murky Mie
+  -0.65,	0.91,	0.19,	0.81
+};
+
+proc string rfrk5GetScatterPresetName(int $index)
+{
+  if($index == 0)
+    return "";
+
+  global string $rfrk5BuiltinScatterPresetNames[];
+  if($index <= size($rfrk5BuiltinScatterPresetNames))
+    return $rfrk5BuiltinScatterPresetNames[$index - 1];
+
+  string $userPresetNames[];
+  if(`optionVar -exists rfrk5ScatterPresetNames`)
+    $userPresetNames = `optionVar -q rfrk5ScatterPresetNames`;
+
+  return $userPresetNames[$index - size($rfrk5BuiltinScatterPresetNames) - 1];
+}
+
+proc float[] rfrk5GetScatterPresetValues(int $index)
+{
+  global string $rfrk5BuiltinScatterPresetNames[];
+  global float $rfrk5BuiltinScatterPresetValues[];
+
+  float $vals[4];
+
+  if($index < size($rfrk5BuiltinScatterPresetNames))
+  {
+    for($i = 0; $i < 4; ++$i)
+      $vals[$i] = $rfrk5BuiltinScatterPresetValues[4*$index + $i];
+  }
+  else
+  {
+    float $userPresetValues[];
+    if(`optionVar -exists rfrk5ScatterPresetValues`)
+      $userPresetValues = `optionVar -q rfrk5ScatterPresetValues`;
+
+    for($i = 0; $i < 4; ++$i)
+      $vals[$i] = $userPresetValues[4*($index - 4) + $i];
+  }
+
+  return $vals;
+}
+
+proc rfrk5WriteNodeScatteringPreset(string $nodeName, int $index)
+{
+  if(!`attributeQuery -node $nodeName -exists "rfrkScatterPrefixIndex"`)
+    addAttr -h true -ln "rfrkScatterPrefixIndex" -dt "string" $nodeName;
+
+  string $presetName = rfrk5GetScatterPresetName($index);
+  setAttr -type "string" ($nodeName + ".rfrkScatterPrefixIndex") $presetName;
+}
+
+global proc rfrk5ScatteringPresetChanged(string $nodeName, string $prefix, string $cbArg)
+{
+  int $sel = `optionMenu -q -select ($prefix + "Menu")` - 1;
+  string $enableCallback = $prefix + "EnableCB \"" + $cbArg + "\" \"" + $nodeName + "\" ";
+  if($sel > 0)
+  {
+    float $values[] = rfrk5GetScatterPresetValues($sel - 1);
+    string $setCallback = $prefix + "SetCB \"" + $cbArg + "\" \"" + $nodeName + "\" ";
+    for($val in $values)
+      $setCallback += " " + $val;
+    eval $setCallback;
+
+    $enableCallback += "0";
+  }
+  else
+    $enableCallback += "1";
+
+  eval $enableCallback;
+  rfrk5WriteNodeScatteringPreset($nodeName, $sel);
+}
+
+proc rfrk5SavePresetVars(string $names[], float $values[], int $numPresets)
+{
+  optionVar -rm rfrk5ScatterPresetNames;
+  optionVar -rm rfrk5ScatterPresetValues;
+  for($i = 0; $i < $numPresets; ++$i)
+  {
+    optionVar -sva rfrk5ScatterPresetNames $names[$i];
+    for($j = 0; $j < 4; ++$j)
+      optionVar -fva rfrk5ScatterPresetValues $values[4*$i + $j];
+  }
+}
+
+global proc rfrk5SaveScatterPreset(string $nodeName, string $prefix, string $cbArg)
+{
+  global string $rfrk5BuiltinScatterPresetNames[];
+
+  string $dlgRes = `promptDialog -title "Save Scattering Preset" -message "Enter Name:" -button "Save" -button "Cancel" -defaultButton "Save" -cancelButton "Cancel" -dismissString "Cancel"`;
+  if($dlgRes != "Save")
+    return;
+
+  string $name = `promptDialog -query -text`;
+  if($name == "")
+  {
+    error "No preset name provided.";
+    return;
+  }
+
+  for($builtinName in $rfrk5BuiltinScatterPresetNames)
+  {
+    if($name == $builtinName)
+    {
+      error "Cannot overwrite the built-in presets.";
+      return;
+    }
+  }
+
+  if($name == "Custom")
+  {
+    error "'Custom' is an invalid name for a preset.";
+    return;
+  }
+
+  string $userPresetNames[];
+  if(`optionVar -exists rfrk5ScatterPresetNames`)
+    $userPresetNames = `optionVar -q rfrk5ScatterPresetNames`;
+
+  float $userPresetValues[];
+  if(`optionVar -exists rfrk5ScatterPresetValues`)
+    $userPresetValues = `optionVar -q rfrk5ScatterPresetValues`;
+
+  int $insertIdx;
+  for($insertIdx = 0; $insertIdx < size($userPresetNames); ++$insertIdx)
+  {
+    if($userPresetNames[$insertIdx] == $name)
+      break;
+  }
+
+  global float $rfrkScatterPresetsTmpBuf[];
+  string $getCallback = "global float $rfrkScatterPresetsTmpBuf[]; $rfrkScatterPresetsTmpBuf = `" + $prefix + "GetCB \"" + $cbArg + "\" \"" + $nodeName + "\"`";
+  eval($getCallback);
+
+  $userPresetNames[$insertIdx] = $name;
+  for($i = 0; $i < 4; ++$i)
+    $userPresetValues[4*$insertIdx + $i] = $rfrkScatterPresetsTmpBuf[$i];
+
+  rfrk5SavePresetVars($userPresetNames, $userPresetValues, size($userPresetNames));
+  rfrk5WriteNodeScatteringPreset($nodeName, $insertIdx + size($rfrk5BuiltinScatterPresetNames) + 1);
+
+  string $refreshCallback = $prefix + "RefreshCB \"" + $cbArg + "\" \"" + $nodeName + "\"";
+  eval($refreshCallback);
+}
+
+global proc rfrk5DeleteScatterPreset(string $nodeName, string $prefix, string $cbArg)
+{
+  global string $rfrk5BuiltinScatterPresetNames[];
+
+  int $sel = `optionMenu -q -select ($prefix + "Menu")` - 1;
+  if($sel < size($rfrk5BuiltinScatterPresetNames) + 1)
+  {
+    error "Cannot delete the built-in presets.";
+    return;
+  }
+
+  $sel -= size($rfrk5BuiltinScatterPresetNames) + 1;
+
+  string $userPresetNames[];
+  if(`optionVar -exists rfrk5ScatterPresetNames`)
+    $userPresetNames = `optionVar -q rfrk5ScatterPresetNames`;
+
+  float $userPresetValues[];
+  if(`optionVar -exists rfrk5ScatterPresetValues`)
+    $userPresetValues = `optionVar -q rfrk5ScatterPresetValues`;
+
+  for($i = $sel; $i < size($userPresetNames) - 1; ++$i)
+  {
+    $userPresetNames[$i] = $userPresetNames[$i + 1];
+    for($j = 0; $j < 4; ++$j)
+      $userPresetValues[4*$i + $j] = $userPresetValues[4*($i + 1) + $j];
+  }
+
+  rfrk5SavePresetVars($userPresetNames, $userPresetValues, size($userPresetNames) - 1);
+  rfrk5WriteNodeScatteringPreset($nodeName, 0);
+
+  string $refreshCallback = $prefix + "RefreshCB \"" + $cbArg + "\" \"" + $nodeName + "\"";
+  eval($refreshCallback);
+}
+
+global proc rfrk5ConnectScatteringPresetsMenu(string $nodeName, string $prefix, string $cbArg)
+{
+  global string $rfrk5BuiltinScatterPresetNames[];
+
+  string $userPresetNames[];
+  if(`optionVar -exists rfrk5ScatterPresetNames`)
+    $userPresetNames = `optionVar -q rfrk5ScatterPresetNames`;
+
+  // Clear the menu.
+  string $items[] = `optionMenu -query -itemListLong ($prefix + "Menu")`;
+  for($item in $items)
+    deleteUI -menuItem $item;
+
+  string $crPresetName;
+  if(`attributeQuery -node $nodeName -exists "rfrkScatterPrefixIndex"`)
+    $crPresetName = `getAttr ($nodeName + ".rfrkScatterPrefixIndex")`;
+  else
+    $crPresetName = "";
+
+  int $selIdx = 0;
+  for($i = 0; $i < size($rfrk5BuiltinScatterPresetNames); ++$i)
+  {
+    if($rfrk5BuiltinScatterPresetNames[$i] == $crPresetName)
+    {
+      $selIdx = $i + 1;
+      break;
+    }
+  }
+
+  setParent -m ($prefix + "Menu");
+    // Add the predefined items.
+    menuItem -label "Custom";
+    menuItem -label "Isotropic";
+    menuItem -label "Rayleigh";
+    menuItem -label "Hazy Mie";
+    menuItem -label "Murky Mie";
+    // Add the user items.
+    for($i = 0; $i < size($userPresetNames); ++$i)
+    {
+      menuItem -label $userPresetNames[$i];
+      if($userPresetNames[$i] == $crPresetName)
+        $selIdx = $i + size($rfrk5BuiltinScatterPresetNames) + 1;
+    }
+
+  string $enableCallback = $prefix + "EnableCB \"" + $cbArg + "\" \"" + $nodeName + "\" ";
+  if($selIdx == 0)
+    $enableCallback += "1";
+  else
+    $enableCallback += "0";
+  evalDeferred $enableCallback;
+
+  optionMenu -e -select ($selIdx + 1) ($prefix + "Menu");
+
+  string $changeCmd = "rfrk5ScatteringPresetChanged \"" + $nodeName + "\" \"" + $prefix + "\" \"" + $cbArg + "\"";
+  optionMenu -e -changeCommand $changeCmd ($prefix + "Menu");
+
+  string $saveCmd = "rfrk5SaveScatterPreset \"" + $nodeName + "\" \"" + $prefix + "\" \"" + $cbArg + "\"";
+  button -e -command $saveCmd ($prefix + "SaveBtn");
+
+  string $delCmd = "rfrk5DeleteScatterPreset \"" + $nodeName + "\" \"" + $prefix + "\" \"" + $cbArg + "\"";
+  button -e -command $delCmd ($prefix + "DeleteBtn");
+}
+
+global proc rfrk5AddDisplayFlags(string $nameWithDot)
+{
+  string $nodeName = rfrk5GetNodeName($nameWithDot);
+  string $nodeType = `nodeType $nodeName`;
+
+  if(!`attributeQuery -node $nodeName -exists "vpPointCloud"`)
+    addAttr -longName "vpPointCloud" -attributeType "bool" -defaultValue 1 $nodeName;
+
+  if(!`attributeQuery -node $nodeName -exists "vpParticlesLod"`)
+    addAttr -longName "vpParticlesLod" -attributeType "float" -defaultValue 10 -minValue 0 -maxValue 100 $nodeName;
+
+  if( ($nodeType == "rk_mesh5") || ($nodeType == "hybrido_mesh5") ||
+      ($nodeType == "openvdb_rk_mesh5") || ($nodeType == "openvdb_hybrido_mesh5") )
+  {
+    if(!`attributeQuery -node $nodeName -exists "vpMesh"`)
+      addAttr -longName "vpMesh" -attributeType "bool" -defaultValue 0 -storable 0 $nodeName;
+
+    if(!`attributeQuery -node $nodeName -exists "vpMeshLod"`)
+      addAttr -longName "vpMeshLod" -attributeType "float" -defaultValue 100 -minValue 0 -maxValue 100 $nodeName;
+
+    if(!`attributeQuery -node $nodeName -exists "vpMeshAutoUpdateFrame"`)
+      addAttr -longName "vpMeshAutoUpdateFrame" -attributeType "bool" -defaultValue 0 -storable 0 $nodeName;
+  }
+
+  if(!`attributeQuery -node $nodeName -exists "vpShowChannel"`)
+    addAttr -longName "vpShowChannel" -attributeType "enum" -enumName "Off:Velocity:Normals:Force:Neighbors:Texture:Age:Isolation:Viscosity:Density:Pressure:Mass:Temperature:Vorticity:Splashity:Curvature" -defaultValue 0  $nodeName;
+
+  if(!`attributeQuery -node $nodeName -exists "vpChannelAutoRange"`)
+    addAttr -longName "vpChannelAutoRange" -attributeType "bool" -defaultValue 1 $nodeName;
+
+  if(!`attributeQuery -node $nodeName -exists "vpChannelMinVal"`)
+    addAttr -longName "vpChannelMinVal" -attributeType "float" -defaultValue 0 $nodeName;
+
+  if(!`attributeQuery -node $nodeName -exists "vpChannelMinColor"`)
+  {
+    addAttr -longName "vpChannelMinColor" -usedAsColor -attributeType "float3" $nodeName;
+    addAttr -longName "vpChannelMinColorR" -attributeType "float" -parent "vpChannelMinColor" -defaultValue 0.0 $nodeName;
+    addAttr -longName "vpChannelMinColorG" -attributeType "float" -parent "vpChannelMinColor" -defaultValue 0.0 $nodeName;
+    addAttr -longName "vpChannelMinColorB" -attributeType "float" -parent "vpChannelMinColor" -defaultValue 0.9 $nodeName;
+  }
+
+  if(!`attributeQuery -node $nodeName -exists "vpChannelMaxVal"`)
+    addAttr -longName "vpChannelMaxVal" -attributeType "float" -defaultValue 100 $nodeName;
+
+  if(!`attributeQuery -node $nodeName -exists "vpChannelMaxColor"`)
+  {
+    addAttr -longName "vpChannelMaxColor" -usedAsColor -attributeType "float3" $nodeName;
+    addAttr -longName "vpChannelMaxColorR" -attributeType "float" -parent "vpChannelMaxColor" -defaultValue 0.9 $nodeName;
+    addAttr -longName "vpChannelMaxColorG" -attributeType "float" -parent "vpChannelMaxColor" -defaultValue 0.0 $nodeName;
+    addAttr -longName "vpChannelMaxColorB" -attributeType "float" -parent "vpChannelMaxColor" -defaultValue 0.0 $nodeName;
+  }
+}
+
+global proc rfrk5AERefreshVP(string $attrName)
+{
+  refresh;
+}
+
+global proc rfrk5UpdateMesherViewport(string $nodeName)
+{
+  string $dest[] = `listConnections -source false -destination true -shapes true ($nodeName + ".message")`;
+  for($node in $dest)
+  {
+    if(`nodeType $node` != "rfrk5PreviewObject")
+      continue;
+
+    int $serial = `getAttr ($node + ".meshSerial")`;
+    setAttr ($node + ".meshSerial") ($serial + 1);
+    break;
+  }
+}
+
+global proc float rfrk5GetFPS()
+{
+  string $unit = `currentUnit -q -time`;
+  switch($unit)
+  {
+    case "film":		return 24.0;
+    case "game":		return 15.0;
+    case "pal":			return 25.0;
+    case "ntsc":		return 30.0;
+    case "show":		return 48.0;
+    case "palf":		return 50.0;
+    case "ntscf":		return 60.0;
+    case "hour":		return 1.0 / 3600.0;
+    case "min":			return 1.0 / 60.0;
+    case "sec":			return 1.0;
+    case "millisec":	return 1000.0;
+  }
+
+  string $fps = `match "^[0-9]+" $unit`;
+  if(size($fps) > 0)
+    return (float)$fps;
+
+  return 24.0;
+}
+
+global proc string[] rfrk5GetSupportedFileTypes(string $nodeType)
+{
+  string $fileTypes[];
+  if($nodeType == "rfrk_cloud5")
+  {
+    $fileTypes[0] = "vdb";
+    $fileTypes[1] = "bin";
+    $fileTypes[2] = "rpc";
+    $fileTypes[3] = "pxy";
+    $fileTypes[4] = "abc";
+  }
+  else if($nodeType == "rfrk_displacement5")
+  {
+    $fileTypes[0] = "tif";
+    $fileTypes[1] = "exr";
+  }
+  else
+  {
+    $fileTypes[0] = "bin";
+    $fileTypes[1] = "rpc";
+    $fileTypes[2] = "pxy";
+    $fileTypes[3] = "abc";
+  }
+
+  return $fileTypes;
+}
+
+global proc string[] rfrk5BuildFilterList(string $supportedTypes[])
+{
+  string $filters[];
+  for($i = 0; $i < size($supportedTypes); ++$i)
+    $filters[$i] = "*." + $supportedTypes[$i] + ",*." + $supportedTypes[$i];
+  return $filters;
+}
+
+global proc rfrk5RefreshAE(string $nodeName)
+{
+  string $sel[] = `ls -selection`;
+  if(size($sel) == 0)
+  {
+    showEditor $nodeName;
+    return;
+  }
+
+  string $selType = `nodeType $sel[0]`;
+  setTabMarker($selType, $nodeName);
+  showEditor $sel[0];
+}
+
+global proc string rfrk5DetectFilePattern(string $filePath)
+{
+  // Find the extension.
+  int $len = size($filePath);
+  int $dot = $len;
+  while($dot > 0)
+  {
+    $chr = substring($filePath, $dot, $dot);
+    if($chr == ".")
+      break;
+    $dot -= 1;
+  }
+
+  if($dot == 0)
+    $dot = $len + 1;
+
+  // Detect the frame number padding. The maximum padding is set to 5.
+  int $frameNrLen = 0;
+  int $maxFrameNrLen = min(5, $dot - 1);
+  while($frameNrLen < $maxFrameNrLen)
+  {
+    int $pos = $dot - $frameNrLen - 1;
+    string $chr = substring($filePath, $pos, $pos);
+    if(match("[0-9]", $chr) != $chr)
+      break;
+    $frameNrLen += 1;
+  }
+
+  if($frameNrLen == 0)
+  {
+    // No frame number detected, use the path as-is.
+    return $filePath;
+  }
+
+  string $ext = substring($filePath, $dot, $len);
+  string $pattern = substring($filePath, 1, $dot - $frameNrLen - 1) + "$F" + $frameNrLen + $ext;
+  return $pattern;
+}
+
+global proc rfrk5SeqSelected(string $attrPrefix, string $frame, string $filePath, string $fileType)
+{
+  string $nodeName = rfrk5GetNodeName($attrPrefix);
+  string $nodeType = `nodeType $nodeName`;
+
+  if($nodeType == "rfrk_cloud5")
+    $attrPrefix = $nodeName;
+
+  string $pattern = rfrk5DetectFilePattern($filePath);
+  setAttr -type "string" ($attrPrefix + ".pathAndPrefix") $pattern;
+
+  // Keep the preview emitter in sync (if any).
+  rfrk5SyncPreviewEmitter($nodeName);
+
+  // Store the last directory.
+  string $dir = dirname($filePath);
+  optionVar -stringValue "rfrkLastParticleDir" $dir;
+
+  evalDeferred ("rfrk5RefreshAE \"" + $nodeName + "\"");
+
+  if($nodeType == "rfrk_cloud5")
+    evalDeferred ("rfrk5CloudFileChanged \"" + $nodeName + "\"");
+}
+
+global proc rfrk5BrowseForSeq(string $frame, string $attrName)
+{
+  string $buf[];
+  tokenize $attrName "." $buf;
+
+  string $nodeName = $buf[0];
+  string $nodeType = `nodeType $nodeName`;
+
+  string $attrPrefix = $nodeName;
+  for($i = 1; $i < size($buf)-1; ++$i)
+    $attrPrefix = $attrPrefix + "." + $buf[$i];
+
+  // Extract the current directory to know where to open the file browser dialog.
+  string $dir = `optionVar -q "rfrkLastParticleDir"`;
+  string $currentPath = "";
+
+  if($nodeType != "rfrk_cloud5")
+  {
+    string $arrayIdx = match("[0-9]+$", substring($attrPrefix, 1, size($attrPrefix) - 1));
+    string $arrayAttr = substring($attrPrefix, 1, size($attrPrefix) - size($arrayIdx) - 2);
+    int $arrayLen = `getAttr -s $arrayAttr`;
+    int $indexExists = ((int)$arrayIdx < $arrayLen);
+
+    if($indexExists)
+      $currentPath = `getAttr ($attrPrefix + ".pathAndPrefix")`;
+  }
+  else
+    $currentPath = `getAttr ($nodeName + ".pathAndPrefix")`;
+
+  string $crDir = dirname($currentPath);
+  if(`filetest -d $crDir`)
+    $dir = $crDir;
+
+  if(!`filetest -d $dir`)
+    $dir = `workspace -q -active`;
+
+  string $supportedTypes[] = rfrk5GetSupportedFileTypes($nodeType);
+  tokenize $currentPath "." $buf;
+  string $ext = (size($buf) > 1) ? $buf[size($buf) - 1] : $supportedTypes[0];
+  string $mask =  "*." + $ext;
+  string $filters[] = rfrk5BuildFilterList($supportedTypes);
+
+  string $callbackCmd = "rfrk5SeqSelected " + $attrPrefix + " " + $frame;
+  rfrk5FileBrowserDlg($callbackCmd, "Load", "Load", $mask, 0, $filters, $dir);
+}
+
+global proc rfrk5FileCtrlReplace(string $ctrlName, string $browseFunc, string $attrName)
+{
+  string $oldParent = `setParent -q`;
+  setParent $ctrlName;
+    connectControl -fileName "field" $attrName;
+    string $btnCmd = $browseFunc + " \"" + $attrName + "\"";
+    symbolButton -e -command $btnCmd "button";
+  setParent $oldParent;
+}
+
+global proc rfrk5FileCtrlCreate(string $ctrlName, string $label, string $browseFunc, string $attrName)
+{
+  if($ctrlName != "")
+    rowLayout -nc 3 $ctrlName;
+  else
+    $ctrlName = `rowLayout -nc 3`;
+
+  text -l $label;
+  textField "field";
+  symbolButton -image "navButtonBrowse.xpm" "button";
+  setParent ..;
+
+  rfrk5FileCtrlReplace($ctrlName, $browseFunc, $attrName);
+}
+
+global proc rfrk5BrowseCtrlCreate(string $ctrlName, string $label, string $browseMethod, string $browseMask, int $browseMode, string $attrName)
+{
+  string $browseFunc = $browseMethod + " \"" + $browseMask + "\" " + $browseMode;
+  rfrk5FileCtrlCreate $ctrlName $label $browseFunc $attrName;
+}
+
+global proc rfrk5BrowseCtrlReplace(string $ctrlName, string $browseMethod, string $browseMask, int $browseMode, string $attrName)
+{
+  string $browseFunc = $browseMethod + " \"" + $browseMask + "\" " + $browseMode;
+  rfrk5FileCtrlReplace $ctrlName $browseFunc $attrName;
+}
+
+global proc rfrk5AddSequence(string $attrName)
+{
+  int $numElements = `getAttr -size $attrName`;
+  string $elem = $attrName + "[" + $numElements + "].pathAndPrefix";
+  rfrk5BrowseForSeq("noRFRKSeqFrame", $elem);
+}
+
+global proc rfrk5DeleteSequence(string $attrName, int $idx)
+{
+  int $numElems = `getAttr -size $attrName`;
+  int $last = $numElems - 1;
+
+  string $buf[];
+  tokenize $attrName "." $buf;
+  string $nodeName = $buf[0];
+
+  string $childAttrs[] = `attributeQuery -node $nodeName -listChildren $buf[1]`;
+  int $hasVpColor = `attributeQuery -node $nodeName -exists "rfrkVpSequenceColor"`;
+
+  // Shift the array down one element.
+  for($i = $idx; $i < $last; ++$i)
+  {
+    string $srcPrefix = $attrName + "[" + ($i + 1) + "].";
+    string $destPrefix = $attrName + "[" + $i + "].";
+    for($j = 0; $j < size($childAttrs); ++$j)
+    {
+      string $srcAttr = $srcPrefix + $childAttrs[$j];
+      string $destAttr = $destPrefix + $childAttrs[$j];
+      string $type = `getAttr -type $srcAttr`;
+      if($type == "string")
+      {
+        string $valStr = `getAttr $srcAttr`;
+        setAttr -type "string" $destAttr $valStr;
+      }
+      else
+        setAttr $destAttr `getAttr $srcAttr`;
+    }
+
+    if($hasVpColor)
+    {
+      float $vpColor[] = `getAttr ($nodeName + ".rfrkVpSequenceColor[" + ($i + 1) + "]")`;
+      setAttr ($nodeName + ".rfrkVpSequenceColor[" + $i + "]") $vpColor[0] $vpColor[1] $vpColor[2];
+    }
+  }
+
+  // Remove the last element.
+  string $cmd = "removeMultiInstance -break true " + $attrName + "[" + $last + "]";
+  if($hasVpColor)
+    $cmd += "; removeMultiInstance -break true " + $nodeName + ".rfrkVpSequenceColor[" + $last + "]";
+  evalDeferred $cmd;
+
+  // Keep the preview emitter in sync (if any).
+  evalDeferred ("rfrk5SyncPreviewEmitter \"" + $nodeName + "\"");
+}
+
+global proc rfrk5DeleteFilter(string $attrName, int $idx)
+{
+  int $numElems = `getAttr -size $attrName`;
+  int $last = $numElems - 1;
+
+  string $buf[];
+  tokenize $attrName "." $buf;
+  string $nodeName = $buf[0];
+
+  string $childAttrs[] = `attributeQuery -node $nodeName -listChildren $buf[1]`;
+
+  // Shift the array down one element.
+  for($i = $idx; $i < $last; ++$i)
+  {
+    string $srcPrefix = $attrName + "[" + ($i + 1) + "].";
+    string $destPrefix = $attrName + "[" + $i + "].";
+    for($j = 0; $j < size($childAttrs); ++$j)
+    {
+      string $srcAttr = $srcPrefix + $childAttrs[$j];
+      string $destAttr = $destPrefix + $childAttrs[$j];
+      string $type = `getAttr -type $srcAttr`;
+      if($type == "string")
+      {
+        string $valStr = `getAttr $srcAttr`;
+        setAttr -type "string" $destAttr $valStr;
+      }
+      else
+        setAttr $destAttr `getAttr $srcAttr`;
+    }
+  }
+
+  // Remove the last element.
+  string $cmd = "removeMultiInstance -break true " + $attrName + "[" + $last + "]";
+  evalDeferred $cmd;
+}
+
+global proc string rfrk5GetArnoldRoot()
+{
+  string $installDir = fromNativePath(`getenv "RFCONNECT2015_ROOT"`);
+
+  if(`about -linux`)
+  {
+    if($installDir == "")
+      $installDir = "/opt/RFConnect2015/arnold";
+  }
+  else if(`about -mac`)
+  {
+    if($installDir == "")
+      $installDir = "/Applications/RFConnect2015/arnold";
+  }
+
+  return $installDir;
+}
+
+global proc rfrk5TimeAttrHack2016()
+{
+    // Maya 2016 has a bug which prevents connected attributes from evaluating properly if they belong to a plug-in node (mental ray, in this case).
+    // Therefore, we must go through all our nodes before each frame is rendered and force the time attribute to the current frame.
+    int $frame = `currentTime -q`;
+    string $types[] = { "openvdb_rk_mesh5", "openvdb_hybrido_mesh5", "rk_mesh5", "hybrido_mesh5", "rfrk_particler5", "rfrk_cloud5" };
+    for($type in $types)
+    {
+      string $nodes[] = `ls -type $type`;
+      for($node in $nodes)
+      {
+        setAttr ($node + ".frame") $frame;
+      }
+    }
+}
+
+global proc rfrk5SetupNode(string $nodeName, string $cubeName, string $primitiveType)
+{
+  // Add a dynamic attribute which will store the colors used for viewport display.
+  rfrk5AddColorAttr($nodeName, "rfrkVpSequenceColor", 1, {0.0, 0.0, 0.4});
+
+  if(`about -api` < 201600)
+  {
+    // Create an expression which sets the frame attribute to the current frame number. See the comment inside
+    // rfrk5TimeAttrHack2016 about why this is pointless in 2016.
+    expression -string ($nodeName + ".frame=frame");
+  }
+
+  // Create a cube.
+  string $cubeNodes[] = `polyCube -w 1 -h 1 -d 1 -sx 1 -sy 1 -sz 1 -ax 0 1 0 -cuv 4 -ch 0 -name $cubeName`;
+  string $cubeXform = $cubeNodes[0];
+
+  // Make the cube always display as a wireframe box in the viewport so that it doesn't
+  // obscure the preview object.
+  string $shapes[] = `listRelatives -fullPath -noIntermediate -shapes $cubeXform`;
+  string $cubeShape = $shapes[0];
+
+  setAttr ($cubeShape + ".overrideEnabled") 1;
+  setAttr ($cubeShape + ".overrideShading") 0;
+
+  // Add the renderman attributes.
+  addAttr -ln "rman__torattr___preShapeScript"				-dt "string"	$cubeShape;
+  addAttr -ln "rman__torattr___invis"							-at "long"		$cubeShape;
+  addAttr -ln "rman__torattr___blobbyVolume"					-at "long"		$cubeShape;
+  addAttr -ln "rman__riattr___ShadingRate"					-at "float"		$cubeShape;
+  addAttr -ln "rman__riattr__volume_depthrelativeshadingrate"	-at "float"		$cubeShape;
+  addAttr -ln "rman__riattr__volume_depthinterpolation"		-dt "string"	$cubeShape;
+
+  setAttr ($cubeShape + ".rman__torattr___preShapeScript") -type "string" "rfrk5RmsPreShape";
+  setAttr ($cubeShape + ".rman__torattr___invis") 2;
+  setAttr ($cubeShape + ".rman__torattr___blobbyVolume") 0;
+  setAttr ($cubeShape + ".rman__riattr___ShadingRate") 0.2;
+  setAttr ($cubeShape + ".rman__riattr__volume_depthrelativeshadingrate") 3;
+  setAttr ($cubeShape + ".rman__riattr__volume_depthinterpolation") -type "string" "constant";
+
+  string $previewNode;
+  if($primitiveType != "rfrk_cloud5")
+  {
+    // Create the preview object.
+    $previewNode = `createNode -parent $cubeXform rfrk5PreviewObject`;
+
+    // Assign our node as the geometry shader of the cube.
+    setAttr ($cubeXform + ".miExportGeoShader") 1;
+    connectAttr -force ($nodeName + ".message") ($cubeXform + ".miGeoShader");
+  }
+  else
+  {
+    string $arnoldVolume = "";
+
+    // Tell renderman this is a volumetric object.
+    setAttr ($cubeShape + ".rman__torattr___blobbyVolume") 1;
+
+	// Create the arnold node and drive it with the attributes of the mr node.
+    if(`renderer -exists "arnold"` && !catchQuiet(`attributeQuery -exists -type "aiRfrkCloud5" "Path_and_prefix"`))
+    {
+      $arnoldVolume = `shadingNode -asShader "aiRfrkCloud5"`;
+      connectAttr -f ($nodeName + ".pathAndPrefix") ($arnoldVolume + ".Path_and_prefix");
+      connectAttr -f ($nodeName + ".type") ($arnoldVolume + ".Type");
+      connectAttr -f ($nodeName + ".fieldType") ($arnoldVolume + ".FieldType");
+      connectAttr -f ($nodeName + ".motionFactor") ($arnoldVolume + ".MotionFactor");
+      connectAttr -f ($nodeName + ".cellSize") ($arnoldVolume + ".Cellsize");
+      connectAttr -f ($nodeName + ".radius") ($arnoldVolume + ".Radius");
+      connectAttr -f ($nodeName + ".radiusPP") ($arnoldVolume + ".Radius PP");
+      connectAttr -f ($nodeName + ".color") ($arnoldVolume + ".Color");
+      connectAttr -f ($nodeName + ".densityScale") ($arnoldVolume + ".Density Scale");
+      connectAttr -f ($nodeName + ".attenColor") ($arnoldVolume + ".ColorAttenuation");
+      connectAttr -f ($nodeName + ".attenuation") ($arnoldVolume + ".Attenuation");
+      connectAttr -f ($nodeName + ".anisotropy") ($arnoldVolume + ".Anisotropy");
+      connectAttr -f ($nodeName + ".frame") ($arnoldVolume + ".Frame");
+      connectAttr -f ($nodeName + ".stepsize") ($cubeShape + ".aiStepSize");
+    }
+
+    // Add lights
+    setAttr ($nodeName + ".mode") 4;
+
+    // Create a new group and parent the cube and the preview object to it.
+    string $grp = `group -name ($cubeName + "Grp") $cubeXform`;
+    $previewNode = `createNode -parent $grp rfrk5PreviewObject`;
+    if(substring($cubeXform, 1, 1) != "|")
+      $cubeXform = "|" + $cubeXform;
+    if(substring($grp, 1, 1) != "|")
+      $grp = "|" + $grp;
+    $cubeXform = $grp + $cubeXform;
+    $cubeShape = $grp + $cubeShape;
+
+    rfrk5DriveCubeWithParticlesBBox($cubeXform, $previewNode);
+
+    // Assign a cloud surface material to the node.
+    $material = `shadingNode -asShader "rfrk_cloud5_mat"`;
+    $sg = `sets -renderable true -noSurfaceShader true -empty -name ($material + "SG")`;
+    defaultNavigation -connectToExisting -source $material -destination $sg;
+
+    select -r $cubeXform;
+    hyperShade -assign $sg;
+
+    // Use the surface shader as the shadow shader too.
+    connectAttr -f ($material + ".outValue") ($sg + ".miShadowShader");
+
+    // Assign the volume node.
+    connectAttr -f ($nodeName + ".outValue") ($sg + ".miVolumeShader");
+
+    if($arnoldVolume != "")
+      defaultNavigation -connectToExisting -source $arnoldVolume -destination ($sg + ".volumeShader");
+
+    // Adjust the mental ray render globals.
+    if(`objExists miDefaultOptions`)
+      setAttr miDefaultOptions.autoVolume 1;
+  }
+
+  connectAttr ($nodeName + ".message") ($previewNode + ".dataSource");
+  connectAttr "time1.outTime" ($previewNode + ".time");
+
+  setTabMarker("transform", $nodeName);
+  select -r $cubeXform;
+
+  // Setup the search path script for renderman.
+  string $cRenderer = `getAttr "defaultRenderGlobals.currentRenderer"`;
+  string $rmanGlobals;
+
+  if( $cRenderer == "renderMan" )
+  {
+      $rmanGlobals = "renderManGlobals";
+  }
+  else if( $cRenderer == "renderManRIS" )
+  {
+      $rmanGlobals = "renderManRISGlobals";
+  }
+
+  if( ( $cRenderer == "renderMan" ) || ( $cRenderer == "renderManRIS" ) )
+  {
+    string $optionsScript = `getAttr ($rmanGlobals + ".rman__torattr___defaultRiOptionsScript")`;
+    if(!`gmatch $optionsScript "*rfrk5RmsInsertSearchPaths*"`)
+    {
+      if($optionsScript != "")
+        $optionsScript += ";";
+      $optionsScript += "rfrk5RmsInsertSearchPaths";
+      setAttr -type "string" ($rmanGlobals + ".rman__torattr___defaultRiOptionsScript") ($optionsScript);
+    }
+  }
+
+  if(`objExists defaultArnoldRenderOptions`)
+  {
+    // Setup the search paths for Arnold.
+    string $paths = `getAttr defaultArnoldRenderOptions.procedural_searchpath`;
+    string $installPath = rfrk5GetArnoldRoot();
+    if( ($installPath != "") && !`gmatch $paths ("*" + $installPath + "*")` )
+    {
+      int $pathsLen = size($paths);
+      if( ($pathsLen > 0) && (substring($paths, $pathsLen, $pathsLen) != ";") )
+        $paths += ";";
+      $paths += $installPath;
+      setAttr -type "string" defaultArnoldRenderOptions.procedural_searchpath $paths;
+    }
+  }
+
+  if(`getAttr defaultRenderGlobals.ren` == "arnold")
+  {
+    // Hide the cube, as the Arnold exporter uses the preview node.
+    if($primitiveType != "rfrk_cloud5")
+      setAttr ($cubeShape + ".visibility") 0;
+  }
+
+  if(`about -api` >= 201600)
+  {
+    // See the comment in rfrk5TimeAttrHack2016() about why this is needed.
+    string $preFrameScript = `getAttr defaultRenderGlobals.preRenderMel`;
+    if(!`gmatch $preFrameScript "*rfrk5TimeAttrHack2016*"`)
+    {
+      if($preFrameScript != "")
+        $preFrameScript += ";";
+      $preFrameScript += "rfrk5TimeAttrHack2016";
+      setAttr -type "string" defaultRenderGlobals.preRenderMel $preFrameScript;
+    }
+  }
+}
+
+global proc rfrk5CreateNode(string $primitiveType, string $filePath, string $unused)
+{
+  // Store the last directory.
+  string $dir = dirname($filePath);
+  optionVar -stringValue "rfrkLastParticleDir" $dir;
+
+  // Create the node and connect the frame input.
+  string $cubeName;
+  switch($primitiveType)
+  {
+    case "openvdb_rk_mesh5":
+      $cubeName = "rfrk5OpenVDBMesh";
+      break;
+    case "openvdb_hybrido_mesh5":
+      $cubeName = "rfrk5OpenVDBHybridoMesh";
+      break;
+    case "rk_mesh5":
+      $cubeName = "rfrk5Mesh";
+      break;
+    case "hybrido_mesh5":
+      $cubeName = "rfrk5HybridoMesh";
+      break;
+    case "rfrk_particler5":
+      $cubeName = "rfrk5Particles";
+      break;
+    case "rfrk_cloud5":
+      $cubeName = "rfrk5Cloud";
+      break;
+    default:
+      error ("rfrk5CreateNode() called with unknown primitive type " + $primitiveType + ".");
+  }
+
+  string $nodeName = `createNode $primitiveType`;
+
+  // Assign the sequence.
+  string $pattern = rfrk5DetectFilePattern($filePath);
+  if($primitiveType == "rfrk_cloud5")
+  {
+    // The cloud shader supports a single sequence.
+    setAttr -type "string" ($nodeName + ".pathAndPrefix") $pattern;
+  }
+  else
+  {
+    // All the other nodes have an array of sequences, so we set the first element.
+    setAttr -type "string" ($nodeName + ".files[0].pathAndPrefix") $pattern;
+  }
+
+  rfrk5SetupNode($nodeName, $cubeName, $primitiveType);
+
+  if($primitiveType == "rfrk_cloud5")
+    evalDeferred ("rfrk5CloudFileChanged \"" + $nodeName + "\"");
+}
+
+global proc rfrk5SelectSeqFile(string $primitiveType)
+{
+  string $dir = `optionVar -q "rfrkLastParticleDir"`;
+  if(!`filetest -d $dir`)
+    $dir = `workspace -q -active`;
+
+  string $supportedTypes[] = rfrk5GetSupportedFileTypes($primitiveType);
+  string $filters[] = rfrk5BuildFilterList($supportedTypes);
+  string $defaultMask = "*." + $supportedTypes[0];
+
+  string $callbackCmd = "rfrk5CreateNode " + $primitiveType;
+  rfrk5FileBrowserDlg($callbackCmd, "Load", "Load", $defaultMask, 0, $filters, $dir);
+}
+
+global proc rfrk5ParticlerInstObjSelected(string $wnd, string $list, string $attrName)
+{
+  setParent $wnd;
+  string $selArray[] = `textScrollList -q -selectItem $list`;
+  if(size($selArray) == 0)
+    return;
+
+  string $sel = $selArray[0];
+  if(substring($sel, size($sel), size($sel)) == ":")
+    return;
+
+  $sel = substring($sel, 3, size($sel));
+  setAttr -type "string" $attrName $sel;
+
+  evalDeferred ("deleteUI \"" + $wnd + "\"");
+}
+
+global proc rfrk5ParticlerSelectInstObj(string $attrName)
+{
+  string $allNodes[] = `ls -type shape -noIntermediate`;
+  string $geom[];
+  string $others[];
+  for($i = 0; $i < size($allNodes); ++$i)
+  {
+    // First check if it's a dummy shape used by the particle or mesh shaders.
+    string $xform[] = `listRelatives -parent $allNodes[$i]`;
+    string $upstreamPlug = `connectionInfo -sourceFromDestination ($xform[0] + ".miGeoShader")`;
+    if($upstreamPlug != "")
+    {
+      string $upstreamType = `nodeType $upstreamPlug`;
+      if( ($upstreamType == "rfrk_geo_particler2") || ($upstreamType == "rfrk_geo_flowmesher2") )
+        continue;
+    }
+
+    // Check if the node can generate geometry.
+    string $typeStr = `nodeType $allNodes[$i]`;
+    if( ($typeStr == "mesh") || ($typeStr == "subdiv") || ($typeStr == "nurbsSurface") )
+      $geom[size($geom)] = $allNodes[$i];
+    else if( ($typeStr != "camera") && !gmatch($typeStr, "*Light") )
+      $others[size($others)] = $allNodes[$i];
+  }
+
+  $geom = sort($geom);
+  $others = sort($others);
+
+  $wnd = `window -widthHeight 380 300 -title "Select Instanced Object"`;
+  string $form = `formLayout`;
+  string $list = `textScrollList`;
+  $cmd = "rfrk5ParticlerInstObjSelected " + $wnd + " " + $list + " " + $attrName;
+  textScrollList -e -doubleClickCommand $cmd $list;
+  string $useBtn = `button -l "Use" -command $cmd`;
+  string $cancelBtn = `button -l "Cancel" -command ("deleteUI " + $wnd)`;
+
+  formLayout -edit
+    -attachForm		$list		"top"		0
+    -attachForm		$list		"left"		0
+    -attachControl	$list		"bottom"	0 $useBtn
+    -attachForm		$list		"right"		0
+
+    -attachNone		$useBtn		"top"
+    -attachForm		$useBtn		"left"		0
+    -attachForm		$useBtn		"bottom"	0
+    -attachPosition	$useBtn		"right"		0 50
+
+    -attachNone		$cancelBtn	"top"
+    -attachPosition	$cancelBtn	"left"		0 50
+    -attachForm		$cancelBtn	"bottom"	0
+    -attachForm		$cancelBtn	"right"		0
+    $form;
+
+  textScrollList -e -append "Geometry:" $list;
+  for($i = 0; $i < size($geom); ++$i)
+    textScrollList -e -append ("  " + $geom[$i]) $list;
+
+  textScrollList -e -append "Other objects:" $list;
+  for($i = 0; $i < size($others); ++$i)
+    textScrollList -e -append ("  " + $others[$i]) $list;
+
+  showWindow $wnd;
+}
+
+proc int rfrk5ConnectSeqAttrs(string $frame, string $children[], int $firstChild, string $attrPrefix, string $nodeType, string $nodeName, int $seqIdx)
+{
+  string $syncCmd = "rfrk5SyncPreviewEmitter \"" + $nodeName + "\"";
+
+  rfrk5UpdateFrameTitle($frame, $attrPrefix + "pathAndPrefix");
+
+  $childIdx = $firstChild;
+
+  connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "offset");
+  intFieldGrp -e -changeCommand $syncCmd $children[$childIdx];
+  ++$childIdx;
+
+  if($nodeType == "rk_mesh5" || $nodeType == "openvdb_rk_mesh5")
+  {
+    // Mesher.
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "radius");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "core");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "splash");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "maxVelocity");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "subtractive");
+    ++$childIdx;
+  }
+  else if($nodeType == "hybrido_mesh5" || $nodeType == "openvdb_hybrido_mesh5")
+  {
+    // Mesher.
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "radius");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "maxVelocity");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "subtractive");
+    ++$childIdx;
+  }
+  else if($nodeType == "rfrk_particler5")
+  {
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "radius");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "radiusPP");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "core");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "splash");
+    ++$childIdx;
+    connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "maxVel");
+    ++$childIdx;
+  }
+
+  connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "wait");
+  ++$childIdx;
+  connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "mute");
+  checkBoxGrp -e -changeCommand $syncCmd $children[$childIdx];
+  ++$childIdx;
+
+  rfrk5ConnectSeqColorControl($nodeName, $seqIdx, $children[$childIdx]);
+  ++$childIdx;
+
+  return $childIdx;
+}
+
+
+proc int rfrk5ConnectFilterAttrs(string $frame, string $children[], int $firstChild, string $attrPrefix, string $nodeType, string $nodeName, int $seqIdx)
+{
+  string $syncCmd = "rfrk5SyncPreviewEmitter \"" + $nodeName + "\"";
+
+  //rfrk5UpdateFrameTitle($frame, $attrPrefix + "pathAndPrefix");
+
+  $childIdx = $firstChild;
+
+  connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "typeFilter");
+  ++$childIdx;
+  connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "offsetFilter");
+  ++$childIdx;
+  connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "iterationsFilter");
+  ++$childIdx;
+  connectControl -preventOverride true -index 2 $children[$childIdx] ($attrPrefix + "muteFilter");
+  ++$childIdx;
+
+  return $childIdx;
+}
+
+global proc rfrk5FilesReplace(string $attrName)
+{
+  string $nodeName = rfrk5GetNodeName($attrName);
+
+  string $nodeType = `nodeType $nodeName`;
+  string $containerColumn = `setParent -q`;
+  string $currentItems[] = `columnLayout -q -childArray $containerColumn`;
+
+  // The first item is the row layout which contains the "add" button. Change the command on the button.
+  if(size($currentItems) > 0)
+  {
+    setParent $currentItems[0];
+    string $rowChildren[] = `rowLayout -query -childArray $currentItems[0]`;
+    if(size($rowChildren) > 1)
+      button -e -command ("rfrk5AddSequence(\"" + $attrName + "\")") $rowChildren[1];
+    setParent ..;
+  }
+
+  // Next are the frame layouts containing the controls.
+  int $numCurrentElements = size($currentItems) - 1;
+  int $numNeededElements = `getAttr -size $attrName`;
+
+  // Connect the existing controls.
+  int $numReconnect;
+  if($numCurrentElements > $numNeededElements)
+    $numReconnect = $numNeededElements;
+  else
+    $numReconnect = $numCurrentElements;
+
+  for($i = 0; $i < $numReconnect; ++$i)
+  {
+    setParent $currentItems[$i + 1];
+      // Get to the column layout which contains the controls. The +1 is because the first child is the "add new" button.
+      $children = `frameLayout -q -childArray $currentItems[$i + 1]`;
+      setParent $children[0];
+        $children = `columnLayout -q -childArray $children[0]`;
+
+        string $attrPrefix = $attrName + "[" + $i + "].";
+        int $childIdx = 0;
+
+        string $browseCmd = "rfrk5BrowseForSeq \"" + $currentItems[$i] + "\"";
+        rfrk5FileCtrlReplace($children[$childIdx], $browseCmd, ($attrPrefix + "pathAndPrefix"));
+        ++$childIdx;
+
+        $childIdx = rfrk5ConnectSeqAttrs($currentItems[$i + 1], $children, $childIdx, $attrPrefix, $nodeType, $nodeName, $i);
+
+        setParent $children[$childIdx];
+          $children = `rowLayout -q -childArray $children[$childIdx]`;
+          symbolButton -e -command ("rfrk5DeleteSequence " + $attrName + " " + $i) $children[2];
+        setParent ..;
+      setParent ..;
+    setParent ..;
+  }
+
+  setUITemplate -pushTemplate attributeEditorTemplate;
+
+  // Add any new elements.
+  for($i = $numCurrentElements; $i < $numNeededElements; ++$i)
+  {
+    string $frame = `frameLayout -collapsable true -label ("Sequence " + $i) -borderVisible true -collapse false`;
+      columnLayout -adjustableColumn true;
+        string $attrPrefix = $attrName + "[" + $i + "].";
+
+        string $browseCmd = "rfrk5BrowseForSeq \"" + $frame + "\"";
+        rfrk5FileCtrlCreate("", "Path", $browseCmd, ($attrPrefix + "pathAndPrefix"));
+
+        $childIdx = 0;
+
+        $children[$childIdx] = `intFieldGrp -numberOfFields 1 -label "Offset"`;
+        ++$childIdx;
+
+        if($nodeType == "rk_mesh5" || $nodeType == "openvdb_rk_mesh5")
+        {
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Radius"`;
+          ++$childIdx;
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Core"`;
+          ++$childIdx;
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Splash"`;
+          ++$childIdx;
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Max Velocity"`;
+          ++$childIdx;
+          $children[$childIdx] = `checkBoxGrp -numberOfCheckBoxes 1 -label1 "Subtractive"`;
+          ++$childIdx;
+        }
+        else if($nodeType == "hybrido_mesh5" || $nodeType == "openvdb_hybrido_mesh5")
+        {
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Radius"`;
+          ++$childIdx;
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Max Velocity"`;
+          ++$childIdx;
+          $children[$childIdx] = `checkBoxGrp -numberOfCheckBoxes 1 -label1 "Subtractive"`;
+          ++$childIdx;
+        }
+        else if($nodeType == "rfrk_particler5")
+        {
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Radius"`;
+          ++$childIdx;
+          $children[$childIdx] = `checkBoxGrp -numberOfCheckBoxes 1 -label1 "Radius PP"`;
+          ++$childIdx;
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Core"`;
+          ++$childIdx;
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Splash"`;
+          ++$childIdx;
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Max Velocity"`;
+          ++$childIdx;
+        }
+
+        $children[$childIdx] = `checkBoxGrp -numberOfCheckBoxes 1 -label1 "Wait"`;
+        ++$childIdx;
+        $children[$childIdx] = `checkBoxGrp -numberOfCheckBoxes 1 -label1 "Mute"`;
+        ++$childIdx;
+        $children[$childIdx] = `colorSliderGrp -label "Viewport Color"`;
+        ++$childIdx;
+
+        rfrk5ConnectSeqAttrs($frame, $children, 0, $attrPrefix, $nodeType, $nodeName, $i);
+
+        rowLayout -nc 3;
+          text -label "";
+          text -label "";
+          symbolButton -image "smallTrash.xpm" -command ("rfrk5DeleteSequence " + $attrName + " " + $i);
+        setParent ..;
+      setParent ..;
+    setParent ..;
+  }
+
+  setUITemplate -popTemplate;
+
+  // Delete unneeded elements.
+  for($i = $numNeededElements; $i < $numCurrentElements; ++$i)
+  {
+    deleteUI $currentItems[$i + 1];
+  }
+}
+
+global proc rfrk5FilesCreate(string $attrName)
+{
+  rowLayout -nc 2;
+    text -label "";
+    button -label "Add Sequence";
+  setParent ..;
+
+  rfrk5FilesReplace($attrName);
+}
+
+global proc rfrk5AddFilter(string $attrName, int $intFilterType )
+{
+  int $numElements = `getAttr -size $attrName`;
+
+  setAttr($attrName + "[" + $numElements + "].typeFilter") $intFilterType;
+  setAttr($attrName + "[" + $numElements + "].offsetFilter") 0.0;
+  setAttr($attrName + "[" + $numElements + "].iterationsFilter") 1;
+}
+
+global proc rfrk5FilterReplace(string $attrName)
+{
+  string $nodeName = rfrk5GetNodeName($attrName);
+
+  string $nodeType = `nodeType $nodeName`;
+  string $containerColumn = `setParent -q`;
+  string $currentItems[] = `columnLayout -q -childArray $containerColumn`;
+
+  int $numCurrentElements0 = size($currentItems) - 1;
+
+  // The first item is the row layout which contains the "add" button. Change the command on the button.
+  if(size($currentItems) > 0)
+  {
+    setParent $currentItems[0];
+    string $rowChildren[] = `rowLayout -query -childArray $currentItems[0]`;
+    if(size($rowChildren) > 1)
+    {
+      iconTextButton -e -command ("rfrk5AddFilter(\"" + $attrName + "\", \"0\")")  $rowChildren[1];
+      iconTextButton -e -command ("rfrk5AddFilter(\"" + $attrName + "\", \"1\")")  $rowChildren[2];
+      iconTextButton -e -command ("rfrk5AddFilter(\"" + $attrName + "\", \"2\")")  $rowChildren[3];
+    }
+    setParent ..;
+  }
+  // Next are the frame layouts containing the controls.
+  int $numCurrentElements = size($currentItems) - 1;
+  int $numNeededElements = `getAttr -size $attrName`;
+
+  // Connect the existing controls.
+  int $numReconnect;
+  if($numCurrentElements > $numNeededElements)
+    $numReconnect = $numNeededElements;
+  else
+    $numReconnect = $numCurrentElements;
+
+  for($i = 0; $i < $numReconnect; ++$i)
+  {
+    string $elem = $attrName + "[" + $i + "].typeFilter";
+    int $intFilterType = `getAttr ($elem)`;
+    string $filterTypeName;
+
+    if($intFilterType == 0)
+    {
+      $filterTypeName = "Dilate";
+    }
+    else if($intFilterType == 1)
+    {
+      $filterTypeName = "Erode";
+    }
+    else
+    {
+      $filterTypeName = "Smoothing";
+    }
+
+    setParent $currentItems[$i + 1];
+      // Get to the column layout which contains the controls. The +1 is because the first child is the "add new" button.
+      $children = `frameLayout -q -childArray $currentItems[$i + 1]`;
+      frameLayout -e  -label ($filterTypeName)  $currentItems[$i + 1];
+      setParent $children[0];
+        $children = `columnLayout -q -childArray $children[0]`;
+
+        string $attrPrefix = $attrName + "[" + $i + "].";
+        int $childIdx = 1;
+
+        if($intFilterType < 2)
+        {
+          floatFieldGrp -e -visible 1 $children[$childIdx];
+          ++$childIdx;
+          intFieldGrp -e  -visible 0 $children[$childIdx];
+          ++$childIdx;
+        }
+        else
+        {
+          floatFieldGrp -e  -visible 0 $children[$childIdx];
+          ++$childIdx;
+          intFieldGrp -e -visible 1 $children[$childIdx];
+          ++$childIdx;
+        }
+
+        $childIdx = rfrk5ConnectFilterAttrs($currentItems[$i + 1], $children, 0, $attrPrefix, $nodeType, $nodeName, $i);
+
+        setParent $children[$childIdx];
+          $children = `rowLayout -q -childArray $children[$childIdx]`;
+          symbolButton -e -command ("rfrk5DeleteFilter " + $attrName + " " + $i) $children[2];
+        setParent ..;
+      setParent ..;
+    setParent ..;
+  }
+
+  setUITemplate -pushTemplate attributeEditorTemplate;
+
+  // Add any new elements.
+  for($i = $numCurrentElements; $i < $numNeededElements; ++$i)
+  {
+    string $elem = $attrName + "[" + $i + "].typeFilter";
+    int $intFilterType = `getAttr ($elem)`;
+    string $filterTypeName;
+
+    if($intFilterType == 0)
+    {
+      $filterTypeName = "Dilate";
+    }
+    else if($intFilterType == 1)
+    {
+      $filterTypeName = "Erode";
+    }
+    else
+    {
+      $filterTypeName = "Smoothing";
+    }
+
+    string $frame = `frameLayout -collapsable true -label ($filterTypeName) -borderVisible true -collapse false`;
+      columnLayout -adjustableColumn true;
+        string $attrPrefix = $attrName + "[" + $i + "].";
+
+        $childIdx = 0;
+        $children[$childIdx] = `intFieldGrp -numberOfFields 1 -label "Type" -visible 0`;
+        ++$childIdx;
+
+        if($intFilterType < 2)
+        {
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Offset" -visible 1`;
+          ++$childIdx;
+          $children[$childIdx] = `intFieldGrp -numberOfFields 1 -label "Iterations" -visible 0`;
+          ++$childIdx;
+        }
+        else
+        {
+          $children[$childIdx] = `floatFieldGrp -numberOfFields 1 -label "Offset" -visible 0`;
+          ++$childIdx;
+          $children[$childIdx] = `intFieldGrp -numberOfFields 1 -label "Iterations" -visible 1`;
+          ++$childIdx;
+        }
+        $children[$childIdx] = `checkBoxGrp -numberOfCheckBoxes 1 -label "Mute"`;
+        ++$childIdx;
+
+        string $attrPrefix1 = $attrName + "[" + $i + "]";
+
+        editorTemplate -dimControl $attrPrefix1 "offsetFilter" 1;
+
+        rfrk5ConnectFilterAttrs($frame, $children, 0, $attrPrefix, $nodeType, $nodeName, $i);
+
+        rowLayout -nc 3;
+          text -label "";
+          text -label "";
+          symbolButton -image "smallTrash.xpm" -command ("rfrk5DeleteFilter " + $attrName + " " + $i);
+        setParent ..;
+      setParent ..;
+    setParent ..;
+  }
+
+  setUITemplate -popTemplate;
+
+  // Delete unneeded elements.
+  for($i = $numNeededElements; $i < $numCurrentElements; ++$i)
+  {
+    deleteUI $currentItems[$i + 1];
+  }
+}
+
+
+global proc rfrk5FilterCreate(string $attrName)
+{
+  rowLayout -nc 4 -cw4 20 120 120 120 -adjustableColumn4 1;
+    text -label "";
+    iconTextButton -style "iconAndTextHorizontal" -image1 "rfrk_openvdb_dilate.png" -label "Add Dilate filter";
+    iconTextButton -style "iconAndTextHorizontal" -image1 "rfrk_openvdb_erode.png" -label "Add Erode filter";
+    iconTextButton -style "iconAndTextHorizontal" -image1 "rfrk_openvdb_smooth.png" -label "Add Smoothing";
+  setParent ..;
+
+  rfrk5FilterReplace($attrName);
+}
+
+global proc rfrk5CheckVpParticles(string $attrName)
+{
+  if(!`columnLayout -q -exists rfrkMrMeshUpdateLayout`)
+    return;
+
+  string $nodeName = rfrk5GetNodeName($attrName);
+  int $showPoints = 0;
+  if(`attributeQuery -node $nodeName -exists "vpPointCloud"`)
+    $showPoints = `getAttr ($nodeName + ".vpPointCloud")`;
+
+  editorTemplate -dimControl $nodeName "vpParticlesLod" (!$showPoints);
+
+  refresh;
+}
+
+global proc rfrk5CheckVpMesh(string $attrName)
+{
+  if(!`columnLayout -q -exists rfrkMrMeshUpdateLayout`)
+    return;
+
+  string $nodeName = rfrk5GetNodeName($attrName);
+
+  int $showMesh = 0;
+  if(`attributeQuery -node $nodeName -exists "vpMesh"`)
+    $showMesh = `getAttr ($nodeName + ".vpMesh")`;
+
+  editorTemplate -dimControl $nodeName "vpMeshAutoUpdateFrame" (!$showMesh);
+  editorTemplate -dimControl $nodeName "vpMeshLod" (!$showMesh);
+
+  string $oldParent = `setParent -q`;
+  setParent "rfrkMrMeshUpdateLayout";
+  button -e -enable $showMesh rfrkMrMeshUpdateBtn;
+  setParent $oldParent;
+
+  refresh;
+}
+
+global proc rfrk5MeshUpdateBtnReplace(string $attrName)
+{
+  string $nodeName = rfrk5GetNodeName($attrName);
+
+  string $oldParent = `setParent -q`;
+  setParent "rfrkMrMeshUpdateLayout";
+  button -e -command ("rfrk5UpdateMesherViewport \"" + $nodeName + "\"") rfrkMrMeshUpdateBtn;
+
+  string $dest[] = `listConnections -source false -destination true -shapes true ($nodeName + ".message")`;
+  for($node in $dest)
+  {
+    if(`nodeType $node` != "rfrk5PreviewObject")
+      continue;
+
+    connectControl "rfrkMrMeshNumTris" ($node + ".meshNumTris");
+    intField -e -editable 0 "rfrkMrMeshNumTris";
+    break;
+  }
+
+  setParent $oldParent;
+}
+
+global proc rfrk5MeshUpdateBtnCreate(string $attrName)
+{
+  columnLayout rfrkMrMeshUpdateLayout;
+    rowLayout -nc 2 ;
+      text -label "";
+      button -label "Update Mesh" rfrkMrMeshUpdateBtn;
+    setParent ..;
+    rowLayout -nc 2 ;
+      text -label "Triangle Count";
+      intField rfrkMrMeshNumTris;
+    setParent ..;
+  setParent ..;
+
+  rfrk5MeshUpdateBtnReplace($attrName);
+}
+
+global proc rfrk5MeshCheckVpChannel(string $attrName)
+{
+  string $nodeName = rfrk5GetNodeName($attrName);
+
+  if(!`attributeQuery -node $nodeName -exists "vpShowChannel"`)
+    return;
+
+  int $disabled = (`getAttr ($nodeName + ".vpShowChannel")` == 0);
+
+  if(`attributeQuery -node $nodeName -exists "vpChannelAutoRange"`)
+    editorTemplate -dimControl $nodeName "vpChannelAutoRange" $disabled;
+
+  if(`attributeQuery -node $nodeName -exists "vpChannelMinColor"`)
+    editorTemplate -dimControl $nodeName "vpChannelMinColor" $disabled;
+
+  if(`attributeQuery -node $nodeName -exists "vpChannelMaxColor"`)
+    editorTemplate -dimControl $nodeName "vpChannelMaxColor" $disabled;
+
+  rfrk5MeshCheckVpAutoChannelRange($attrName);
+  rfrk5SyncPreviewEmitter($nodeName);
+}
+
+global proc rfrk5MeshCheckVpAutoChannelRange(string $attrName)
+{
+  string $nodeName = rfrk5GetNodeName($attrName);
+
+  if(!`attributeQuery -node $nodeName -exists "vpShowChannel"` || !`attributeQuery -node $nodeName -exists "vpChannelAutoRange"`)
+    return;
+
+  int $disabled = (`getAttr ($nodeName + ".vpShowChannel")` == 0) || (`getAttr ($nodeName + ".vpChannelAutoRange")`);
+
+  if(`attributeQuery -node $nodeName -exists "vpChannelMinVal"`)
+    editorTemplate -dimControl $nodeName "vpChannelMinVal" $disabled;
+
+  if(`attributeQuery -node $nodeName -exists "vpChannelMaxVal"`)
+    editorTemplate -dimControl $nodeName "vpChannelMaxVal" $disabled;
+
+  refresh;
+}
+
+global proc rfrk5ChannelRangeReplace(string $attrName)
+{
+  string $nodeName = rfrk5GetNodeName($attrName);
+  string $nodeType = `nodeType $nodeName`;
+
+  string $oldParent = `setParent -q`;
+  setParent ("rfrkChannelRangeLayout" + $nodeType);
+
+  string $dest[] = `listConnections -source false -destination true -shapes true ($nodeName + ".message")`;
+  for($node in $dest)
+  {
+    if(`nodeType $node` != "rfrk5PreviewObject")
+      continue;
+
+    connectControl ("rfrkChannelMinCtrl" + $nodeType) ($node + ".channelMinVal");
+    connectControl ("rfrkChannelMaxCtrl" + $nodeType) ($node + ".channelMaxVal");
+    floatField -e -editable 0 ("rfrkChannelMinCtrl" + $nodeType);
+    floatField -e -editable 0 ("rfrkChannelMaxCtrl" + $nodeType);
+    break;
+  }
+
+  setParent $oldParent;
+}
+
+global proc rfrk5ChannelRangeCreate(string $attrName)
+{
+  string $nodeName = rfrk5GetNodeName($attrName);
+  string $nodeType = `nodeType $nodeName`;
+
+  columnLayout ("rfrkChannelRangeLayout" + $nodeType);
+    rowLayout -nc 2 ;
+      text -label "Current Min";
+      floatField -editable 0 ("rfrkChannelMinCtrl" + $nodeType);
+    setParent ..;
+    rowLayout -nc 2 ;
+      text -label "Current Max";
+      floatField -editable 0 ("rfrkChannelMaxCtrl" + $nodeType);
+    setParent ..;
+  setParent ..;
+
+  rfrk5ChannelRangeReplace($attrName);
+}
+
+global proc rfrk5AddDisplayRollup(string $nodeName)
+{
+  string $nodeType = `nodeType $nodeName`;
+
+  editorTemplate -beginLayout "Display" -collapse true;
+    editorTemplate -beginNoOptimize;
+    editorTemplate -callCustom "rfrk5AddDisplayFlags" "rfrk5AddDisplayFlags" "";
+
+    editorTemplate -label "Show Point Cloud" -addControl "vpPointCloud" "rfrk5CheckVpParticles";
+    editorTemplate -label "Particles LOD" -addControl "vpParticlesLod" "rfrk5AERefreshVP";
+    editorTemplate -addSeparator;
+
+    if( ($nodeType == "rk_mesh5") || ($nodeType == "hybrido_mesh5") ||
+        ($nodeType == "openvdb_rk_mesh5") || ($nodeType == "openvdb_hybrido_mesh5") )
+    {
+      editorTemplate -label "Show Mesh" -addControl "vpMesh" "rfrk5CheckVpMesh";
+      editorTemplate -label "Mesh LOD" -addControl "vpMeshLod" "rfrk5AERefreshVP";
+      editorTemplate -label "Auto Update Frame" -addControl "vpMeshAutoUpdateFrame";
+      editorTemplate -callCustom "rfrk5MeshUpdateBtnCreate" "rfrk5MeshUpdateBtnReplace" "";
+      editorTemplate -addSeparator;
+    }
+    editorTemplate -label "Show Channel" -addControl "vpShowChannel" "rfrk5MeshCheckVpChannel";
+    editorTemplate -label "Automatic Range" -addControl "vpChannelAutoRange" "rfrk5MeshCheckVpAutoChannelRange";
+    editorTemplate -label "Min Value" -addControl "vpChannelMinVal" "rfrk5AERefreshVP";
+    editorTemplate -label "Max Value" -addControl "vpChannelMaxVal" "rfrk5AERefreshVP";
+    editorTemplate -label "Start Color" -addControl "vpChannelMinColor" "rfrk5AERefreshVP";
+    editorTemplate -label "End Color" -addControl "vpChannelMaxColor" "rfrk5AERefreshVP";
+    editorTemplate -callCustom "rfrk5ChannelRangeCreate" "rfrk5ChannelRangeReplace" "";
+    editorTemplate -endNoOptimize;
+  editorTemplate -endLayout;
+}
+
+global proc rfrk5AddClipFile(string $attrName)
+{
+  int $numElems = `getAttr -size $attrName`;
+  rfrk5BrowseForFile("sd", 0, $attrName + "[" + $numElems + "]");
+}
+
+global proc rfrk5DeleteClipFile(string $attrName, int $idx)
+{
+  int $numElems = `getAttr -size $attrName`;
+  int $last = $numElems - 1;
+
+  for($i = $idx; $i < $last; ++$i)
+  {
+    string $destAttr = $attrName + "[" + $i + "]";
+    string $srcAttr = $attrName + "[" + ($i + 1) + "]";
+    setAttr -type "string" $destAttr `getAttr $srcAttr`;
+  }
+
+  string $cmd = "removeMultiInstance -break true " + $attrName + "[" + $last + "]";
+  evalDeferred $cmd;
+}
+
+proc rfrk5ConnectClipFile(string $attrName, int $idx, string $layoutName)
+{
+  string $elemName = $attrName + "[" + $idx + "]";
+  string $children[] = `rowLayout -q -childArray $layoutName`;
+  setParent $layoutName;
+    connectControl -fileName $children[1] $elemName;
+    symbolButton -e -command ("rfrk5BrowseForFile sd 0 " + $elemName) $children[2];
+    symbolButton -e -command ("rfrk5DeleteClipFile " + $attrName + " " + $idx) $children[3];
+  setParent ..;
+}
+
+global proc rfrk5ClipFilesReplace(string $attrName)
+{
+  string $oldParent = `setParent -q`;
+
+  setParent "rfrk5MrClipFilesLayout";
+  string $currentItems[] = `columnLayout -q -childArray "rfrk5MrClipFilesLayout"`;
+
+  // The first item is the row layout which contains the "add" button. Change the command on the button.
+  if(size($currentItems) > 0)
+  {
+    setParent $currentItems[0];
+    string $rowChildren[] = `rowLayout -query -childArray $currentItems[0]`;
+    if(size($rowChildren) > 1)
+      button -e -command ("rfrk5AddClipFile(\"" + $attrName + "\")") $rowChildren[1];
+    setParent ..;
+  }
+
+  // Next are the frame layouts containing the controls.
+  int $numCurrentElements = size($currentItems) - 1;
+  int $numNeededElements = `getAttr -size $attrName`;
+
+  // Connect the existing controls.
+  int $numReconnect;
+  if($numCurrentElements > $numNeededElements)
+    $numReconnect = $numNeededElements;
+  else
+    $numReconnect = $numCurrentElements;
+
+  for($i = 0; $i < $numReconnect; ++$i)
+    rfrk5ConnectClipFile($attrName, $i, $currentItems[$i + 1]);
+
+  // From setDefaultTemplates.mel.
+  global int $kSingleWidgetWidthIndex;
+  global int $kTextColumnWidthIndex;
+  int $kOffsetText = (`about -mac` ? 8 : 5);
+
+  int $iconBtnWidth = 25;
+  int $fieldWidth = 3*$kSingleWidgetWidthIndex - $iconBtnWidth;
+
+  // Add any new elements.
+  for($i = $numCurrentElements; $i < $numNeededElements; ++$i)
+  {
+    string $layoutName = `rowLayout -nc 4 -ct4 both both both both -cl4 right center center center -co4 $kOffsetText 0 0 0 -cw4 $kTextColumnWidthIndex $fieldWidth $iconBtnWidth $iconBtnWidth`;
+      text -l ("Clip File " + $i);
+      textField;
+      symbolButton -image "navButtonBrowse.xpm";
+      symbolButton -image "smallTrash.xpm";
+    setParent ..;
+    rfrk5ConnectClipFile($attrName, $i, $layoutName);
+  }
+
+  // Delete unneeded elements.
+  for($i = $numNeededElements; $i < $numCurrentElements; ++$i)
+  {
+    deleteUI $currentItems[$i + 1];
+  }
+
+  setParent $oldParent;
+}
+
+global proc rfrk5ClipFilesCreate(string $attrName)
+{
+  columnLayout rfrk5MrClipFilesLayout;
+    rowLayout -nc 2 ;
+      text -label "";
+      button -label "Add File";
+    setParent ..;
+  setParent ..;
+
+  rfrk5ClipFilesReplace($attrName);
+}
+
+global proc rfrk5CheckLazyCompute(string $nodeName)
+{
+  int $state = `getAttr ($nodeName + ".lazyComputeAction")`;
+  int $disable = ($state == 0);
+  editorTemplate -dimControl $nodeName "lazyComputeFile" $disable;
+  editorTemplate -dimControl $nodeName "lazyComputeOffset" $disable;
+}
+
+global proc rfrk5CheckBoundsHelper(string $nodeName)
+{
+  if(`getAttr ($nodeName + ".isBounded")` == 0)
+    return;
+
+  string $previewNode = rfrk5GetPreviewNode($nodeName);
+  string $helperBox = rfrk5GetUpstreamNode($previewNode + ".clipBounds");
+  if($helperBox != "")
+    return;
+
+  string $previewTM[] = `listRelatives -parent $previewNode`;
+  string $previewXform = $previewTM[0];
+
+  string $cubeNodes[] = `polyCube -w 1 -h 1 -d 1 -sx 1 -sy 1 -sz 1 -ax 0 1 0 -cuv 4 -ch 0 -name ($nodeName + "ClipBox")`;
+  string $cubeXform = $cubeNodes[0];
+
+  // Make the cube always display as a wireframe box in the viewport so that it doesn't
+  // obscure the preview object.
+  string $shapes[] = `listRelatives -fullPath -noIntermediate -shapes $cubeXform`;
+  string $cubeShape = $shapes[0];
+  setAttr ($cubeShape + ".overrideEnabled") 1;
+  setAttr ($cubeShape + ".overrideShading") 0;
+
+  setAttr ($cubeShape + ".castsShadows") 0;
+  setAttr ($cubeShape + ".receiveShadows") 0;
+  setAttr ($cubeShape + ".motionBlur") 0;
+  setAttr ($cubeShape + ".primaryVisibility") 0;
+  setAttr ($cubeShape + ".smoothShading") 0;
+  setAttr ($cubeShape + ".visibleInReflections") 0;
+  setAttr ($cubeShape + ".visibleInRefractions") 0;
+  setAttr ($cubeShape + ".doubleSided") 0;
+
+  connectAttr -force ($cubeShape + ".message") ($previewNode + ".clipBounds");
+  select -r $cubeShape;
+  bakePartialHistory;
+
+  setAttr ($cubeXform + ".translateX") `getAttr ($previewXform + ".translateX")`;
+  setAttr ($cubeXform + ".translateY") `getAttr ($previewXform + ".translateY")`;
+  setAttr ($cubeXform + ".translateZ") `getAttr ($previewXform + ".translateZ")`;
+
+  parent $cubeXform $previewXform;
+
+  int $attrId;
+  string $expr = "";
+  string $dimNames[3] = { "X", "Y", "Z" };
+  string $shearNames[3] = { "XY", "XZ", "YZ" };
+  string $obbAttrNames[2] = { "obbPosition", "obbScale"};
+  string $transformNames[2] = { "translate", "scale"};
+  for($attrId = 0; $attrId < 2; ++$attrId)
+  {
+    for($dim = 0; $dim < 3; ++$dim)
+    {
+      string $outAttr = $obbAttrNames[$attrId] + $dimNames[$dim];
+      string $inAttr = $transformNames[$attrId] + $dimNames[$dim];
+      $inAttr = $cubeXform + "." + $inAttr;
+      $outAttr = $nodeName + "." + $outAttr;
+
+      rfrk5ClearIncomingConnection($outAttr);
+
+      $expr += $outAttr + " = " + $inAttr + "; ";
+    }
+  }
+
+  for($dim = 0; $dim < 3; ++$dim)
+  {
+    string $outAttr = "obbShear" + $dimNames[$dim];
+    string $inAttr = "shear" + $shearNames[$dim];
+    $inAttr = $cubeXform + "." + $inAttr;
+    $outAttr = $nodeName + "." + $outAttr;
+
+    rfrk5ClearIncomingConnection($outAttr);
+
+    $expr += $outAttr + " = " + $inAttr + "; ";
+
+    $outAttr = "obbRotation" + $dimNames[$dim];
+    $inAttr = "rotate" + $dimNames[$dim];
+    $inAttr = $cubeXform + "." + $inAttr;
+    $outAttr = $nodeName + "." + $outAttr;
+
+    rfrk5ClearIncomingConnection($outAttr);
+
+    $expr += $outAttr + " = rad_to_deg(" + $inAttr + "); ";
+  }
+
+  expression -s $expr -uc "none";
+}
+
+global proc rfrk5AddRMSAttribs(string $attr)
+{
+  string $buf[];
+  tokenize $attr "." $buf;
+  string $nodeName = $buf[0];
+
+  string $nodeType = `nodeType $nodeName`;
+
+  if(!`attributeQuery -node $nodeName -exists "rfrkRmsProceduralType"`)
+    addAttr -h true -ln "rfrkRmsProceduralType"	-at "enum" -enumName "RunProgram:DynamicLoad" -dv 1 $nodeName;
+
+  if( ($nodeType == "rk_mesh5") || ($nodeType == "hybrido_mesh5") ||
+      ($nodeType == "openvdb_rk_mesh5") || ($nodeType == "openvdb_hybrido_mesh5") )
+  {
+    if(!`attributeQuery -node $nodeName -exists "rfrkRmsPrimitiveType"`)
+      addAttr -h true -ln "rfrkRmsPrimitiveType" -at "enum" -enumName "PointsPolygons:SubdivisionMesh" $nodeName;
+
+    if(!`attributeQuery -node $nodeName -exists "rfrkRmsDelayedReadArchive"`)
+      addAttr -h true -ln "rfrkRmsDelayedReadArchive" -at "bool" $nodeName;
+  }
+
+  if($nodeType == "rfrk_particler5")
+  {
+    if(!`attributeQuery -node $nodeName -exists "rfrkRmsRenderType"`)
+      addAttr -h true -ln "rfrkRmsRenderType" -at "enum" -dv 2 -enumName "Points:Sprites:Spheres:Blobby Volume" $nodeName;
+  }
+}
+
+global proc rfrk5RmsCheckParticlerRenderType(string $nodeName)
+{
+  if(!`attributeQuery -node $nodeName -exists "rfrkRmsRenderType"`)
+    return;
+
+  int $isVolume = (`getAttr ($nodeName + ".rfrkRmsRenderType")` == 3);
+
+  string $destinations[] = `connectionInfo -dfs ($nodeName + ".message")`;
+  for($destAttr in $destinations)
+  {
+    string $buffer[];
+    tokenize $destAttr "." $buffer;
+    string $destNode = $buffer[0];
+    if( (`nodeType $destNode` != "transform") || ($buffer[1] != "miGeoShader") )
+      continue;
+
+    string $shapes[] = `listRelatives -fullPath -noIntermediate -shapes $destNode`;
+    for($shape in $shapes)
+    {
+      if(`nodeType $shape` == "rfrk5PreviewObject")
+        continue;
+
+      if(!`attributeQuery -node $shape -exists "rman__torattr___blobbyVolume"`)
+        addAttr -ln "rman__torattr___blobbyVolume" -at "long" $shape;
+
+      setAttr ($shape + ".rman__torattr___blobbyVolume") $isVolume;
+    }
+  }
+}
+
+global proc rfrk5AddRMSRollup(string $nodeName)
+{
+  string $nodeType = `nodeType $nodeName`;
+
+  editorTemplate -beginLayout "RenderMan Attributes" -collapse true;
+    editorTemplate -callCustom "rfrk5AddRMSAttribs" "rfrk5AddRMSAttribs" "";
+    editorTemplate -label "Procedural Type" -addControl "rfrkRmsProceduralType";
+
+    if( ($nodeType == "rk_mesh5") || ($nodeType == "hybrido_mesh5") ||
+        ($nodeType == "openvdb_rk_mesh5") || ($nodeType == "openvdb_hybrido_mesh5") )
+    {
+      editorTemplate -label "Primitive Type" -addControl "rfrkRmsPrimitiveType";
+      editorTemplate -label "Delayed Read" -addControl "rfrkRmsDelayedReadArchive";
+    }
+
+    if($nodeType == "rfrk_particler5")
+    {
+      editorTemplate -label "Render Type" -addControl "rfrkRmsRenderType" "rfrk5RmsCheckParticlerRenderType";
+    }
+
+  editorTemplate -endLayout;
+}
+
+global proc rfrk5AddMesherArnoldAttribs(string $attr)
+{
+  string $buf[];
+  tokenize $attr "." $buf;
+  string $nodeName = $buf[0];
+
+  if(!`attributeQuery -node $nodeName -exists "rfrkArnoldPrimitiveType"`)
+    addAttr -h true -ln "rfrkArnoldPrimitiveType" -at "enum" -enumName "PointsPolygons:SubdivisionMesh" $nodeName;
+
+  string $nodeType = `nodeType $nodeName`;
+  if($nodeType == "hybrido_mesh5")
+  {
+    if(!`attributeQuery -node $nodeName -exists "rfrkArnoldIterations"`)
+      addAttr -h true -ln "rfrkArnoldIterations" -at "long" -dv 1 -min 1 -max 100 -smx 8 $nodeName;
+    if(!`attributeQuery -node $nodeName -exists "rfrkArnoldPixelError"`)
+      addAttr -h true -ln "rfrkArnoldPixelError" -at "float" -dv 0 -min 0 -max 4096 -smx 32 $nodeName;
+    if(!`attributeQuery -node $nodeName -exists "rfrkArnoldDispPadding"`)
+      addAttr -h true -ln "rfrkArnoldDispPadding" -at "float" -dv 0 -min 0 -max 1000 -smx 10 $nodeName;
+  }
+}
+
+global proc rfrk5HybridoArnoldPrimitiveTypeChanged(string $nodeName)
+{
+  if(!`attributeQuery -node $nodeName -exists "rfrkArnoldPrimitiveType"`)
+    return;
+
+  string $nodeType = `nodeType $nodeName`;
+
+  if($nodeType == "hybrido_mesh5")
+  {
+    int $enabled = `getAttr ($nodeName + ".rfrkArnoldPrimitiveType")`;
+
+    if( $enabled == 1 )
+    {
+      editorTemplate -dimControl $nodeName "rfrkArnoldIterations" 0;
+      editorTemplate -dimControl $nodeName "rfrkArnoldPixelError" 0;
+    }
+    else
+    {
+      editorTemplate -dimControl $nodeName "rfrkArnoldIterations" 1;
+      editorTemplate -dimControl $nodeName "rfrkArnoldPixelError" 1;
+    }
+   }
+}
+
+global proc rfrk5AddMesherArnoldRollup(string $nodeName)
+{
+  string $nodeType = `nodeType $nodeName`;
+  editorTemplate -beginLayout "Arnold Attributes" -collapse true;
+    editorTemplate -callCustom "rfrk5AddMesherArnoldAttribs" "rfrk5AddMesherArnoldAttribs" "";
+    editorTemplate -label "Primitive Type" -addControl "rfrkArnoldPrimitiveType" "rfrk5HybridoArnoldPrimitiveTypeChanged";
+    if($nodeType == "hybrido_mesh5")
+    {
+      editorTemplate -label "Iterations" -addControl "rfrkArnoldIterations";
+      editorTemplate -label "Pixel Error" -addControl "rfrkArnoldPixelError";
+      editorTemplate -label "Displace Bounds Padding" -addControl "rfrkArnoldDispPadding";
+    }
+  editorTemplate -endLayout;
+}
+
+proc rfrk5CheckShelf(string $title, string $createProc, string $verProc, string $verVar)
+{
+  // No shelf manipulation in batch mode.
+  if(`about -batch`)
+    return;
+
+  // Check if the create procedure exists. If it doesn't, the corresponding package isn't installed.
+  if(!`exists $createProc`)
+    return;
+
+  // If there's no shelf, make it.
+  if(!`shelfLayout -exists $title`)
+  {
+    string $cmd = "setParent `addNewShelfTab \"" + $title + "\"`; " + $createProc;
+    evalDeferred $cmd;
+    return;
+  }
+
+  $installedVer = `optionVar -q $verVar`;
+  $latestVer = eval($verProc);
+  if($installedVer == $latestVer)
+    return;
+
+  optionVar -iv $verVar $latestVer;
+
+  // The shelf exists, but it's the wrong version. Delete the buttons so we can add the right ones.
+  global string $gShelfTopLevel;
+  setParent ($gShelfTopLevel + "|" + $title);
+  string $oldBtns[] = `shelfLayout  -q -childArray ($gShelfTopLevel + "|" + $title)`;
+  for($i = 0; $i < size($oldBtns); ++$i)
+    deleteUI $oldBtns[$i];
+
+  // Nuke the shelf file from the user directory.
+  string $shelfDirs = `internalVar -userShelfDir`;
+  string $shelfArray[];
+  string $PATH_SEPARATOR = `about -win`? ";" : ":";
+  tokenize($shelfDirs, $PATH_SEPARATOR, $shelfArray);
+  for($i = 0; $i < size($shelfArray); ++$i)
+  {
+    $fileName = $shelfArray[$i] + "shelf_" + $title + ".mel";
+    if(`filetest -r $fileName`)
+      sysFile -delete $fileName;
+  }
+
+  evalDeferred $createProc;
+}
+
+global proc string[] rfrk5GetShaderAndSG(string $shapeNode)
+{
+  string $rel[] = `listRelatives -parent -fullPath $shapeNode`;
+  string $xformNode = $rel[0];
+
+  string $sets[] = `listSets -t 1 -o $shapeNode`;
+  string $shadingGroup = "";
+  for($set in $sets)
+  {
+    if(`nodeType $set` == "shadingEngine")
+    {
+      $shadingGroup = $set;
+      break;
+    }
+  }
+
+  string $shaderNode = rfrk5GetUpstreamNode($xformNode + ".miGeoShader");
+  if( ($shaderNode == "") && ($shadingGroup != "") )
+  {
+    // See if it's the cloud primitive.
+    $shaderNode = rfrk5GetUpstreamNode($shadingGroup + ".miVolumeShader");
+  }
+
+  string $ret[2];
+  $ret[0] = $shaderNode;
+  $ret[1] = $shadingGroup;
+
+  return $ret;
+}
+
+global proc string[] rfrk5GetShaderAndShape(string $previewObj)
+{
+  string $shaderAndShape[2];
+
+  string $rel[] = `listRelatives -parent -fullPath $previewObj`;
+  string $xformNode = $rel[0];
+
+  string $shapes[] = `listRelatives -allDescendents -fullPath $xformNode`;
+  for($shape in $shapes)
+  {
+    if(`nodeType $shape` == "mesh")
+    {
+      $shaderAndSG = rfrk5GetShaderAndSG($shape);
+      $shaderAndShape[0] = $shaderAndSG[0];
+      $shaderAndShape[1] = $shape;
+      break;
+    }
+  }
+
+  return $shaderAndShape;
+}
+
+global proc rfrk5Startup()
+{
+  rfrk5CheckShelf("RFRK2015", "rfrk5AddShelfButtons", "rfrk5GetCurrentShelfVer", "rfrk5ShelfVersion");
+}
+
+
+
+global proc rfrk5HybridoUseOptimizeChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".optimize")`;
+  if( $enabled == 1 )
+  {
+    editorTemplate -dimControl $nodeName "cameraDistance" 0;
+  }
+  else
+  {
+    editorTemplate -dimControl $nodeName "cameraDistance" 1;
+  }
+}
+
+global proc rfrk5HybridoUseObjectClipChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".objectClip")`;
+
+  editorTemplate -dimControl $nodeName "outInside" (!$enabled);
+  editorTemplate -dimControl $nodeName "clipFiles" (!$enabled);
+}
+
+global proc rfrk5HybridoUseUVWMappingChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".UVWMapping")`;
+
+  if( $enabled == 2 )
+  {
+    editorTemplate -dimControl $nodeName "offsetU" 0;
+    editorTemplate -dimControl $nodeName "offsetV" 0;
+  }
+  else
+  {
+    editorTemplate -dimControl $nodeName "offsetU" 1;
+    editorTemplate -dimControl $nodeName "offsetV" 1;
+  }
+}
+
+global proc rfrk5HybridoUncoupledChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".uncoupled")`;
+
+  if(!$enabled)
+  {
+    setAttr ($nodeName + ".instance") 0;
+    editorTemplate -dimControl $nodeName "instance" 1;
+  }
+  else
+    editorTemplate -dimControl $nodeName "instance" 0;
+}
+
+global proc rfrk5HybridoFiltersChanged(string $nodeName)
+{
+  int $enabledGlobalFilters = `getAttr ($nodeName + ".filterMesh")`;
+
+  editorTemplate -dimControl $nodeName  "relax"    (!$enabledGlobalFilters);
+  editorTemplate -dimControl $nodeName  "tension"  (!$enabledGlobalFilters);
+  editorTemplate -dimControl $nodeName  "thinning" (!$enabledGlobalFilters);
+  editorTemplate -dimControl $nodeName  "steps"    (!$enabledGlobalFilters);
+
+  int $enabledSplashThinning = `getAttr ($nodeName + ".splashThinning")`;
+
+  editorTemplate -dimControl $nodeName  "splashThreshold" (!$enabledSplashThinning);
+  editorTemplate -dimControl $nodeName  "thinningSize"    (!$enabledSplashThinning);
+
+  int $enabledCoreSmoothing = `getAttr ($nodeName + ".coreSmoothing")`;
+
+  editorTemplate -dimControl $nodeName  "coreThreshold"   (!$enabledCoreSmoothing);
+  editorTemplate -dimControl $nodeName  "smoothingSteps"  (!$enabledCoreSmoothing);
+}
+
+global proc rfrk5HybridoUseDisplacementChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".useDisplacement")`;
+  if(!$enabled)
+  {
+    editorTemplate -dimControl $nodeName  "autoEdgeLength" 1;
+    editorTemplate -dimControl $nodeName  "edgeLength" 1;
+    editorTemplate -dimControl $nodeName  "displacementFile" 1;
+    editorTemplate -dimControl $nodeName  "displacementFileOffset" 1;
+    editorTemplate -dimControl $nodeName  "verticalScale" 1;
+    editorTemplate -dimControl $nodeName  "chopiness" 1;
+    editorTemplate -dimControl $nodeName  "repeatU" 1;
+    editorTemplate -dimControl $nodeName  "repeatV" 1;
+    editorTemplate -dimControl $nodeName  "splashAttenuation" 1;
+    editorTemplate -dimControl $nodeName  "splashNormalizationFactor" 1;
+    editorTemplate -dimControl $nodeName  "splashAttenuationFactor" 1;
+    editorTemplate -dimControl $nodeName  "vorticityAttenuation" 1;
+    editorTemplate -dimControl $nodeName  "vorticityNormalizationFactor" 1;
+    editorTemplate -dimControl $nodeName  "vorticityAttenuationFactor" 1;
+    editorTemplate -dimControl $nodeName  "speedAttenuation" 1;
+    editorTemplate -dimControl $nodeName  "speedAttenuationMin" 1;
+    editorTemplate -dimControl $nodeName  "speedAttenuationMax" 1;
+    editorTemplate -dimControl $nodeName  "speedAttenuationFactor" 1;
+    editorTemplate -dimControl $nodeName  "heightAttenuation" 1;
+    editorTemplate -dimControl $nodeName  "heightAttenuationMin" 1;
+    editorTemplate -dimControl $nodeName  "heightAttenuationMax" 1;
+    editorTemplate -dimControl $nodeName  "heightAttenuationFactor" 1;
+  }
+  else
+  {
+    editorTemplate -dimControl $nodeName  "autoEdgeLength" 0;
+    editorTemplate -dimControl $nodeName  "edgeLength" 0;
+    editorTemplate -dimControl $nodeName  "displacementFile" 0;
+    editorTemplate -dimControl $nodeName  "displacementFileOffset" 0;
+    editorTemplate -dimControl $nodeName  "verticalScale" 0;
+    editorTemplate -dimControl $nodeName  "chopiness" 0;
+    editorTemplate -dimControl $nodeName  "repeatU" 0;
+    editorTemplate -dimControl $nodeName  "repeatV" 0;
+    editorTemplate -dimControl $nodeName  "splashAttenuation" 0;
+    editorTemplate -dimControl $nodeName  "splashNormalizationFactor" 0;
+    editorTemplate -dimControl $nodeName  "splashAttenuationFactor" 0;
+    editorTemplate -dimControl $nodeName  "vorticityAttenuation" 0;
+    editorTemplate -dimControl $nodeName  "vorticityNormalizationFactor" 0;
+    editorTemplate -dimControl $nodeName  "vorticityAttenuationFactor" 0;
+    editorTemplate -dimControl $nodeName  "speedAttenuation" 0;
+    editorTemplate -dimControl $nodeName  "speedAttenuationMin" 0;
+    editorTemplate -dimControl $nodeName  "speedAttenuationMax" 0;
+    editorTemplate -dimControl $nodeName  "speedAttenuationFactor" 0;
+    editorTemplate -dimControl $nodeName  "heightAttenuation" 0;
+    editorTemplate -dimControl $nodeName  "heightAttenuationMin" 0;
+    editorTemplate -dimControl $nodeName  "heightAttenuationMax" 0;
+    editorTemplate -dimControl $nodeName  "heightAttenuationFactor" 0;
+
+
+    int $enabledAutoEdgeLength = `getAttr ($nodeName + ".autoEdgeLength")`;
+
+    if(!$enabledAutoEdgeLength)
+    {
+      editorTemplate -dimControl $nodeName  "edgeLength" 1;
+    }
+
+    int $enabledSplash = `getAttr ($nodeName + ".splashAttenuation")`;
+    int $enabledVort   = `getAttr ($nodeName + ".vorticityAttenuation")`;
+    int $enabledSpeed  = `getAttr ($nodeName + ".speedAttenuation")`;
+    int $enabledHeight = `getAttr ($nodeName + ".heightAttenuation")`;
+
+
+    if(!$enabledSplash)
+    {
+      editorTemplate -dimControl $nodeName  "splashNormalizationFactor" 1;
+      editorTemplate -dimControl $nodeName  "splashAttenuationFactor" 1;
+    }
+    if(!$enabledVort)
+    {
+      editorTemplate -dimControl $nodeName  "vorticityNormalizationFactor" 1;
+      editorTemplate -dimControl $nodeName  "vorticityAttenuationFactor" 1;
+    }
+    if(!$enabledSpeed)
+    {
+      editorTemplate -dimControl $nodeName  "speedAttenuationMin" 1;
+      editorTemplate -dimControl $nodeName  "speedAttenuationMax" 1;
+      editorTemplate -dimControl $nodeName  "speedAttenuationFactor" 1;
+    }
+    if(!$enabledHeight)
+    {
+      editorTemplate -dimControl $nodeName  "heightAttenuationMin" 1;
+      editorTemplate -dimControl $nodeName  "heightAttenuationMax" 1;
+      editorTemplate -dimControl $nodeName  "heightAttenuationFactor" 1;
+    }
+  }
+}
+
+
+
+global proc rfrk5CheckProjectionPlane(string $nodeName)
+{
+  if(`getAttr($nodeName + ".openBoundaries")` == 0)
+    return;
+
+  string $previewNode = rfrk5GetPreviewNode($nodeName);
+  string $projPlane = rfrk5GetUpstreamNode($previewNode + ".projPlaneHelper");
+  if($projPlane != "")
+    return;
+
+  string $previewTM[] = `listRelatives -parent $previewNode`;
+  string $previewXform = $previewTM[0];
+
+  string $planeNodes[] = `polyPlane -ch on -o on -w 1 -h 1 -sw 1 -sh 1 -cuv 2 -name ($nodeName + "ProjPlane")`;
+  string $planeXform = $planeNodes[0];
+
+  // Make the plane always display as a wireframe box in the viewport so that it doesn't
+  // obscure the preview object.
+  string $shapes[] = `listRelatives -fullPath -noIntermediate -shapes $planeXform`;
+  string $planeShape = $shapes[0];
+  setAttr ($planeShape + ".overrideEnabled") 1;
+  setAttr ($planeShape + ".overrideShading") 0;
+
+  setAttr ($planeShape + ".castsShadows") 0;
+  setAttr ($planeShape + ".receiveShadows") 0;
+  setAttr ($planeShape + ".motionBlur") 0;
+  setAttr ($planeShape + ".primaryVisibility") 0;
+  setAttr ($planeShape + ".smoothShading") 0;
+  setAttr ($planeShape + ".visibleInReflections") 0;
+  setAttr ($planeShape + ".visibleInRefractions") 0;
+  setAttr ($planeShape + ".doubleSided") 0;
+
+  connectAttr -force ($planeShape + ".message") ($previewNode + ".projPlaneHelper");
+  select -r $planeShape;
+  bakePartialHistory;
+
+  setAttr -lock true ($planeXform + ".r");
+  setAttr -lock true ($planeXform + ".sh");
+
+  setAttr ($planeXform + ".translateX") `getAttr ($previewXform + ".translateX")`;
+  setAttr ($planeXform + ".translateY") `getAttr ($previewXform + ".translateY")`;
+  setAttr ($planeXform + ".translateZ") `getAttr ($previewXform + ".translateZ")`;
+
+  parent $planeXform $previewXform;
+
+  int $attrId;
+  string $expr = "";
+  string $dimNames[2] = { "X", "Z" };
+
+  for($dim = 0; $dim < 2; ++$dim)
+  {
+    string $outMinAttr = "projectionBoxMin" + $dimNames[$dim];
+    string $outMaxAttr = "projectionBoxMax" + $dimNames[$dim];
+
+    string $inTransAttr = "translate" + $dimNames[$dim];
+    string $inScaleAttr = "scale" + $dimNames[$dim];
+
+    $inTransAttr = $planeXform + "." + $inTransAttr;
+    $inScaleAttr = $planeXform + "." + $inScaleAttr;
+
+    $outMinAttr = $nodeName + "." + $outMinAttr;
+    $outMaxAttr = $nodeName + "." + $outMaxAttr;
+
+    rfrk5ClearIncomingConnection($outMinAttr);
+    rfrk5ClearIncomingConnection($outMaxAttr);
+
+    $expr += $outMinAttr + " = " + $inTransAttr +  " - " + $inScaleAttr + " * 0.5; ";
+    $expr += $outMaxAttr + " = " + $inTransAttr +  " + " + $inScaleAttr + " * 0.5; ";
+  }
+
+  $expr += $nodeName + ".projectionBoxMinY" + " = " + $planeXform + ".translateY; ";
+  rfrk5ClearIncomingConnection($nodeName + ".projectionBoxMinY");
+
+  expression -s $expr -uc "none";
+}
+
+
+global proc rfrk5HybridoUseOpenBoundariesChanged(string $nodeName)
+{
+
+  rfrk5CheckProjectionPlane($nodeName);
+
+  int $enabledOpenBoundaries = `getAttr ($nodeName + ".openBoundaries")`;
+  int $enabledExtension = `getAttr ($nodeName + ".extension")`;
+
+
+  if(!$enabledOpenBoundaries )
+  {
+    editorTemplate -dimControl $nodeName  "extension" 1;
+    editorTemplate -dimControl $nodeName  "uncoupled" 1;
+    editorTemplate -dimControl $nodeName  "instance" 1;
+    editorTemplate -dimControl $nodeName  "seaLevelAuto" 1;
+    editorTemplate -dimControl $nodeName  "seaLevel" 1;
+    editorTemplate -dimControl $nodeName  "falloff" 1;
+    editorTemplate -dimControl $nodeName  "falloffBandwidth" 1;
+    editorTemplate -dimControl $nodeName  "falloffOffset" 1;
+    editorTemplate -dimControl $nodeName  "repeat_U_neg" 1;
+    editorTemplate -dimControl $nodeName  "repeat_U_pos" 1;
+    editorTemplate -dimControl $nodeName  "repeat_V_neg" 1;
+    editorTemplate -dimControl $nodeName  "repeat_V_pos" 1;
+  }
+  else
+  {
+    editorTemplate -dimControl $nodeName  "extension" 0;
+    editorTemplate -dimControl $nodeName  "uncoupled" 0;
+    editorTemplate -dimControl $nodeName  "instance" 0;
+    editorTemplate -dimControl $nodeName  "seaLevelAuto" 0;
+    editorTemplate -dimControl $nodeName  "seaLevel" 0;
+    editorTemplate -dimControl $nodeName  "falloff" 0;
+    editorTemplate -dimControl $nodeName  "falloffBandwidth" 0;
+    editorTemplate -dimControl $nodeName  "falloffOffset" 0;
+    editorTemplate -dimControl $nodeName  "repeat_U_neg" 0;
+    editorTemplate -dimControl $nodeName  "repeat_U_pos" 0;
+    editorTemplate -dimControl $nodeName  "repeat_V_neg" 0;
+    editorTemplate -dimControl $nodeName  "repeat_V_pos" 0;
+    if( $enabledExtension )
+    {
+
+      int $enabledUncoupled = `getAttr ($nodeName + ".uncoupled")`;
+      int $enabledSeaLevel  = `getAttr ($nodeName + ".seaLevelAuto")`;
+      int $enabledFalloff   = `getAttr ($nodeName + ".falloff")`;
+
+      if( !$enabledUncoupled )
+      {
+        editorTemplate -dimControl $nodeName  "instance" 1;
+      }
+      else
+      {
+        editorTemplate -dimControl $nodeName  "instance" 0;
+      }
+      if( !$enabledSeaLevel )
+      {
+        editorTemplate -dimControl $nodeName  "seaLevel" 0;
+      }
+      else
+      {
+        editorTemplate -dimControl $nodeName  "seaLevel" 1;
+      }
+      if( !$enabledFalloff )
+      {
+        editorTemplate -dimControl $nodeName  "falloffBandwidth" 1;
+        editorTemplate -dimControl $nodeName  "falloffOffset" 1;
+      }
+      else
+      {
+        editorTemplate -dimControl $nodeName  "falloffBandwidth" 0;
+        editorTemplate -dimControl $nodeName  "falloffOffset" 0;
+      }
+      editorTemplate -dimControl $nodeName  "repeat_U_neg" 0;
+      editorTemplate -dimControl $nodeName  "repeat_U_pos" 0;
+      editorTemplate -dimControl $nodeName  "repeat_V_neg" 0;
+      editorTemplate -dimControl $nodeName  "repeat_V_pos" 0;
+    }
+    else
+    {
+      editorTemplate -dimControl $nodeName  "uncoupled" 1;
+      editorTemplate -dimControl $nodeName  "instance" 1;
+      editorTemplate -dimControl $nodeName  "seaLevelAuto" 1;
+      editorTemplate -dimControl $nodeName  "seaLevel" 1;
+      editorTemplate -dimControl $nodeName  "falloff" 1;
+      editorTemplate -dimControl $nodeName  "falloffBandwidth" 1;
+      editorTemplate -dimControl $nodeName  "falloffOffset" 1;
+      editorTemplate -dimControl $nodeName  "repeat_U_neg" 1;
+      editorTemplate -dimControl $nodeName  "repeat_U_pos" 1;
+      editorTemplate -dimControl $nodeName  "repeat_V_neg" 1;
+      editorTemplate -dimControl $nodeName  "repeat_V_pos" 1;
+    }
+  }
+}
+
+
+global proc rfrk5MesherMeshOpenVDBChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".openVDBMeshing")`;
+
+  editorTemplate -dimControl $nodeName "weightNormalization" ($enabled);
+  editorTemplate -dimControl $nodeName "smooth"  ($enabled);
+  editorTemplate -dimControl $nodeName "fieldType" ($enabled);
+  editorTemplate -dimControl $nodeName "fixBoundingBox"  ($enabled);
+  editorTemplate -dimControl $nodeName "openvdbfilters"  (!$enabled);
+}
+
+global proc rfrk5MesherUseOptimizeChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".optimize")`;
+  if( $enabled == 1 )
+  {
+    editorTemplate -dimControl $nodeName "cameraDistance" 0;
+  }
+  else
+  {
+    editorTemplate -dimControl $nodeName "cameraDistance" 1;
+  }
+}
+
+global proc rfrk5MesherUseObjectClipChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".objectClip")`;
+
+  editorTemplate -dimControl $nodeName "outInside" (!$enabled);
+  editorTemplate -dimControl $nodeName "clipFiles" (!$enabled);
+}
+
+global proc rfrk5MesherFiltersChanged(string $nodeName)
+{
+  int $enabledGlobalFilters = `getAttr ($nodeName + ".filterMesh")`;
+
+  editorTemplate -dimControl $nodeName  "relax"    (!$enabledGlobalFilters);
+  editorTemplate -dimControl $nodeName  "tension"  (!$enabledGlobalFilters);
+  editorTemplate -dimControl $nodeName  "thinning" (!$enabledGlobalFilters);
+  editorTemplate -dimControl $nodeName  "steps"    (!$enabledGlobalFilters);
+}
+
+global proc rfrk5MesherRealWaveChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".insertRealwave")`;
+
+  editorTemplate -dimControl $nodeName  "rwFile"        (!$enabled);
+  editorTemplate -dimControl $nodeName  "rwPolygonSize" (!$enabled);
+  editorTemplate -dimControl $nodeName  "rwResolution"  (!$enabled);
+  editorTemplate -dimControl $nodeName  "rwRadius"      (!$enabled);
+}
+
+global proc rfrk5MesherBINMeshChanged(string $nodeName)
+{
+  int $enabled = `getAttr ($nodeName + ".insertBinMesh")`;
+
+  editorTemplate -dimControl $nodeName  "binFile"   (!$enabled);
+  editorTemplate -dimControl $nodeName  "binOffset" (!$enabled);
+  editorTemplate -dimControl $nodeName  "binWait"   (!$enabled);
+}
+

@@ -8,7 +8,7 @@ pv = p.version()
 mv = m.version()
 
 
-sys.argv.append('-t:1')
+#sys.argv.append('-t:1')
 print "="*80
 print sys.argv
 print "="*80

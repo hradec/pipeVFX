@@ -1,0 +1,36 @@
+#! /usr/bin/python2
+import pygtk
+pygtk.require('2.0')
+import gtk
+import os
+import sys, time
+
+arg = "-s"
+if len(sys.argv)>1:
+    arg = ' '.join([ x.strip() for x in sys.argv[1:] ])
+
+
+def xclip(f):
+    os.system( 'cat "%s" | xclip -selection clipboard -target image/png -i' % f )
+
+def copy_image(f):
+    assert os.path.exists(f), "file does not exist"
+    image = gtk.gdk.pixbuf_new_from_file(f)
+
+    clipboard = gtk.clipboard_get()
+    print dir(clipboard)
+    print clipboard.handler_is_connected()
+    print clipboard.set_image(image)
+    print clipboard.store()
+
+print sys.argv, arg
+if '-clip' not in arg:
+	time.sleep(3)
+	print "copy it!"
+	os.system("mkdir -p $HOME/screenshots ; cd $HOME/screenshots/ && /bin/scrot %s -e '%s -clip $f' " % (arg, __file__))
+	print "done!"
+else:
+	arg =  arg.replace('-clip ','')
+	print "clipboard it!"
+	#copy_image( arg )
+        xclip( arg )

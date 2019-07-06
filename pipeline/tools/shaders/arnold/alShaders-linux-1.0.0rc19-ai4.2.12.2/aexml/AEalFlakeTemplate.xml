@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalFlake">
+		<label>alFlake</label>
+		<description>Useful for car paint shaders, granite and other polished minerals. To use, connect it as a tangent-space normal map to alSurface, making sure Gamma is set 1. Then connect a smooth normal (alInputVector set to Ns) to the Diffuse and Specular 1 Normal parameters. This will use the flake normal for Specular 2 only and the original smooth normal for Diffuse and Specular 1.</description>
+		<attribute name="space" type="maya.enum">
+			<label>space</label>
+			<description>Select the space for normal computation. When world is selected you should plug the output of this node directly into the normal override parameter of your desired lobe on alSurface.</description>
+		</attribute>
+		<attribute name="amount" type="maya.float">
+			<label>Amount</label>
+			<description>Proportion of the surface that is covered by flakes</description>
+		</attribute>
+		<attribute name="size" type="maya.float">
+			<label>Size</label>
+			<description>Size of the flakes</description>
+		</attribute>
+		<attribute name="divergence" type="maya.float">
+			<label>Divergence</label>
+			<description>How much the flake normals diverge from the surface normal.</description>
+		</attribute>
+		<attribute name="P" type="maya.float3">
+			<label>P</label>
+			<description>Connect a point here to override the space used for flake calculation.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalFlake">
+			<property name="space"/>
+			<property name="amount"/>
+			<property name="size"/>
+			<property name="divergence"/>
+			<property name="P"/>
+		</view>
+</templates>

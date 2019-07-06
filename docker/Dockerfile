@@ -45,8 +45,11 @@ RUN ln -s /lib64/libbz2.so.1 /lib64/libbz2.so.1.0 ; \
     ln -s libcrypto.so.1.0.2k /usr/lib64/libcrypto.so.10 ; \
     ln -s libcrypto.so.0.9.8e /usr/lib64/libcrypto.so.6 ; \
     ln -s libssl.so.1.0.2k /usr/lib64/libssl.so.10 ; \
-    ln -s libssl.so.0.9.8e /usr/lib64/libssl.so.6
+    ln -s libssl.so.0.9.8e /usr/lib64/libssl.so.6 ; \
+    ln -s /usr/bin/ar /usr/sbin/ar
 
 RUN fc-cache
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
+
+RUN ln -s /usr/bin/ranlib /usr/sbin/ranlib
