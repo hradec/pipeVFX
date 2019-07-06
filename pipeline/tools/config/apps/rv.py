@@ -42,5 +42,8 @@ class rv(baseApp):
     def license(self):
         self['RV_LICENSE_FILE'] = "/tmp/rv_license_%s.txt" % os.environ['USER']
 
-    def userSetup(self, jobuser):
-        os.chdir( jobuser.pwd )
+    # def userSetup(self, jobuser):
+    #     os.chdir( jobuser.pwd )
+
+    def runUserSetup(self, jobuser):
+        return False

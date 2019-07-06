@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -23,13 +23,12 @@ class xnview(baseApp):
     def versions(self):
         pipe.libs.version.set( qt   = 'do not use this pipe lib' )
         pipe.libs.version.set( zlib = 'do not use this pipe lib' )
-        
+
     def bins(self):
-        return [('xnview', 'XnView')]    
-        
+        return [('xnview', 'xnview.sh')]    
+
     def pipe(self):
         return ('/dev/null', '/dev/null')
 
     def bg(self,x,y):
         return True
-

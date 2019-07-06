@@ -25,8 +25,11 @@ class cgru(baseApp):
         import sys
 
         if self.parent() in ['cgru']:
-            pipe.version.set( python = '2.7.6' )
-            pipe.libs.version.set( python = '2.7.6' )
+            pipe.version.set( python = '2.7' )
+            pipe.libs.version.set( python = '2.7' )
+            # it seems the new compiled python 2.7.12 is causing trouble here. so lets use the system python for now!
+            self.ignorePipeLib( "readline" )
+            self.ignorePipeLib( "python" )
 
         # Set CGRU root:
         self['CGRU_LOCATION']=self.path()
@@ -48,28 +51,32 @@ class cgru(baseApp):
         self['CGRU_PYTHON'] = self.path("lib/python")
         self['PYTHONPATH']  = self.path("afanasy/python")
         self['PYTHONPATH']  = self.path("lib/python")
-        
+
         # Get CGRU version:
         self['CGRU_VERSION']=self.version()
-        
+
         # set afanasy username
         self['AF_USERNAME'] = pipe.admin.username()
-        
+
         # nuke plugin setup
         self['NUKE_CGRU_PATH'] = self.path('plugins/nuke')
         nuke.addon(self, nukepath=self.path('plugins/nuke'))
-        
-        # Setup CGRU houdini scripts location:
-        self['HOUDINI_CGRU_PATH']=self.path('plugins/houdini')
-        self['PYTHONPATH']=self.path('plugins/houdini')
 
-        # Define OTL scan path:
-        self['HOUDINI_CGRU_OTLSCAN_PATH']=self.path('plugins/houdini')
-        #$HIH/otls:$HOUDINI_CGRU_PATH:$HH/otls
+        if self.parent() in ['houdini']:
+            # Setup CGRU houdini scripts location:
+            self['HOUDINI_CGRU_PATH']=self.path('plugins/houdini')
+            self['PYTHONPATH']=self.path('plugins/houdini')
 
-        houdini.addon(self, otl=self.path('plugins/houdini'))
+            # Define OTL scan path:
+            self['HOUDINI_CGRU_OTLSCAN_PATH']=self.path('plugins/houdini')
+            #$HIH/otls:$HOUDINI_CGRU_PATH:$HH/otls
 
-        
+            houdini.addon(self, otl=self.path('plugins/houdini'))
+
+
+        natron.addon(self, plugins=self.path('plugins/natron'))
+
+
         #sys.stderr.write('CGRU_VERSION %s : %s\n' %  (self.version(), self.path()))
         #self.update( python() )
 

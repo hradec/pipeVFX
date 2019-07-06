@@ -43,12 +43,12 @@ class qube(baseApp):
         self['PYTHONPATH'] = self.path('qube-core/local/pfx/qube/api/python/')
         self['PYTHONPATH'] = self.path('qubegui/local/pfx/qube/api/python')
         self['PYTHONPATH'] = self.path('qubegui/local/pfx/qube/api/python/qb/gui')
-        
+
         if self.parent() == 'qube':
             self['PYTHONPATH'] = '/usr/lib/python2.7/dist-packages/'
             self['PYTHONPATH'] = '/usr/lib/pymodules/python2.7/'
             self['PYTHONPATH'] = '/usr/lib64/python2.7/site-packages/'
-        
+
         self['QB_ICONS'] = self.path('qubegui/local/pfx/qube/api/python/qb/gui/')
 
     def logFolder(self):
@@ -72,7 +72,7 @@ class qube(baseApp):
     def preRun(self,cmd):
         import platform
         if cmd.split('/')[-1].strip() in ['qube','qbgui']:
-            print self.toolsPaths()
+            print( self.toolsPaths() )
             for each in self.toolsPaths():
                 qube = '%s/qube/qube.py' % each
                 tmp=os.popen("ldconfig -p | grep libfreetype.so.6 | cut -d'>' -f2").readlines()
@@ -83,7 +83,7 @@ class qube(baseApp):
                     if 'arch' in platform.release().lower():
 #                        preload += '; export LD_PRELOAD=/usr/lib/libpng12.so:$LD_PRELOAD ; '
                         preload += 'LD_LIBRARY_PATH=/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/libpng/1.4.0/lib:/usr/lib/:$LD_LIBRARY_PATH '
-                    print preload
+                    print( preload )
                 if os.path.exists(qube):
                     if 'arch' not in platform.release().lower():
                         return preload+''' PYTHONPATH=/usr/lib64/python2.7/:$PYTHONPATH /usr/bin/python -c 'import wxversion;wxversion.select(wxversion.getInstalled());exec "".join(open("%s").readlines())' ''' % qube

@@ -30,11 +30,13 @@ class houdini(baseApp):
             pipe.libs.version.set(  python = pv )
             pipe.version.set(  python = pipe.libs.version.get('python') )
 
-            pipe.libs.version.set(  boost = '1.51.0' )
+            pipe.libs.version.set(  boost = '1.55.0' )
 
     def environ(self):
         self['HFS'] = self.path()
-        self['HOUDINI_PYTHON_VERSION'] = '$PYTHON_VERSION_MAJOR'
+        self['HOUDINI_PYTHON_VERSION'] = '.'.join( pipe.libs.version.get( 'python' ).split('.')[:2] )
+        if self.parent() in ['houdini']:
+            self['PYTHON_VERSION_MAJOR'] = self['HOUDINI_PYTHON_VERSION']
 
         pipe_root = pipe.roots.jobs()
         try:
@@ -45,68 +47,62 @@ class houdini(baseApp):
         except:
             pass
 
-        # for loading houdini shared libraries
-    #    self['LD_PRELOAD'] = self.path('dsolib/libtbb.so.2')
-    #    self['LD_PRELOAD'] = self.path('dsolib/libtbbmalloc.so.2')
-        # self['LD_PRELOAD'] = self.path('dsolib/libjpeg.so.62.0.0')
-        # self['LD_PRELOAD'] = self.path('dsolib/libpng12.so.0.44.0')
-        # self['LD_PRELOAD'] = '/usr/lib/libz.so.1'
-        # self['LD_PRELOAD'] = '/usr/lib/libXcursor.so.1'
-        # self['LD_PRELOAD'] = pipe.libs.tbb().path('lib/libtbb.so.2')
-        # self['LD_PRELOAD'] = pipe.libs.tbb().path('lib/libtbbmalloc.so.2')
-        # self['LD_PRELOAD'] = pipe.libs.tbb().path('lib/libtbbmalloc_proxy.so.2')
-
         # self['LD_PRELOAD'] = pipe.libs.boost().LD_PRELOAD()
         # self['LD_PRELOAD'] = pipe.libs.python().LD_PRELOAD()
 
-        # force our alembic libraries to be used!
-        # self.ignorePipeLib( "alembic" )
+        # set alembic version since gaffer needs it.
+        if self.parent() in ['houdini']:
+            self.ignorePipeLib( "zlib" )
+            self.ignorePipeLib( "alembic" )
+            self['ALEMBIC_VERSION'] = pipe.libs.version.get( 'alembic' )
 
-#        self.ignorePipeLib( "zlib" )
-        if int(self.version().split('.')[0].replace('hfs','')) == 14:
-            self.ignorePipeLib( "qt" )
-            self.ignorePipeLib( "tbb" )
-            self.ignorePipeLib( "hdf5" )
-        elif int(self.version().split('.')[0].replace('hfs','')) >= 15:
-            self.ignorePipeLib( "qt" )
-            self.ignorePipeLib( "tbb" )
-            self.ignorePipeLib( "openssl" )
-            # self['LD_PRELOAD'] = "/usr/lib/libstdc++.so.6"
-            self.ignorePipeLib( "python" )
-            # self['LD_PRELOAD'] = pipe.libs.alembic().LD_PRELOAD()
-            # self['LD_PRELOAD'] = pipe.libs.boost().LD_PRELOAD()
-            # self['LD_PRELOAD'] = pipe.libs.python().LD_PRELOAD()
-            self['LD_PRELOAD'] = self.path('python/lib/libpython2.7.so')
-            self['PYTHONHOME'] = self.path('python')
+            if int(self.version().split('.')[0].replace('hfs','')) == 14:
+                self.ignorePipeLib( "qt" )
+                self.ignorePipeLib( "tbb" )
+                self.ignorePipeLib( "hdf5" )
+            else:
+                self['LD_PRELOAD'] = "/usr/lib/libstdc++.so.6"
+                self.ignorePipeLib( "qt" )
+                self.ignorePipeLib( "openssl" )
+                self.ignorePipeLib( "tbb" )
+                self.ignorePipeLib( "freetype" )
+                self.ignorePipeLib( "python" )
+                self['LD_PRELOAD'] = self.path('python/lib/libpython2.7.so')
+                self['PYTHONHOME'] = self.path('python')
+
+            # add cortex to houdini
+            # self.update( prman() )
+            self.update( cortex() )
+            self.update( gaffer() )
+            self.update( cgru() )
+
+            # we need to force houdini python paths to the top
+            self.insert('PYTHONPATH',0, self.path('houdini/python%slibs' % '.'.join(pipe.libs.version.get('python').split('.')[:2]) ))
+            self.insert('PYTHONPATH',0, self.path('python/lib/python$PYTHON_VERSION_MAJOR/site-packages'))
+            self.insert('PYTHONPATH',0, self.path('python/lib/python$PYTHON_VERSION_MAJOR/'))
+            # self.insert('PYTHONPATH',0, self.path('dsolib'))
+
         else:
-            self.ignorePipeLib( "tbb" )
+            # we need to force houdini python paths to the top
+            self['PYTHONPATH'] = self.path('houdini/python%slibs' % '.'.join(pipe.libs.version.get('python').split('.')[:2]))
+            self['PYTHONPATH'] = self.path('python/lib/python$PYTHON_VERSION_MAJOR/site-packages')
+            self['PYTHONPATH'] = self.path('python/lib/python$PYTHON_VERSION_MAJOR/')
+            # self['PYTHONPATH'] = self.path('dsolib')
 
 
-        # hou python module path!
-        self['PYTHONPATH'] = self.path('houdini/python%slibs' % '.'.join(pipe.libs.version.get('python').split('.')[:2]) )
-#        self.insert('PYTHONPATH',0, self.path('houdini/python%slibs' % '.'.join(pipe.libs.version.get('python').split('.')[:2]) ))
+        # more console output when crashes happen
+        self['HOUDINI_VERBOSE_ERROR'] = '1'
+        self['HOUDINI_DSO_ERROR'] = '1'
 
-        # sets default houdini search paths
-        houdini.addon( self,
-            script = '&',
-            toolbar = '&',
-            otl = '&',
-            dso = '&',
-            icon = '&',
-            # lib=[self.path('dsolib')],
+        # improves shared libraries conflict handling!
+        # self['HOUDINI_DSO_DEEPBIND'] = '1'
+
+        maya.addon(self,
+           module      = '%s/engine/maya/' % self.path(),
+           plugin      = '%s/engine/maya/maya$MAYA_VERSION_MAJOR/plug-ins/' % self.path(),
+           script      = '%s/engine/maya/maya$MAYA_VERSION_MAJOR/scripts/' % self.path(),
         )
 
-        # add cortex to houdini
-        self.update( python() )
-        self.update( cortex() )
-        self.update( gaffer() )
-        #self.update( prman() ) # for some reason adds maya lib path!!!!
-        self.update( cgru() )
-
-        # we need to force houdini python paths to the top
-        self.insert('PYTHONPATH',0, self.path('python/lib/python$PYTHON_VERSION_MAJOR/site-packages'))
-        self.insert('PYTHONPATH',0, self.path('python/lib/python$PYTHON_VERSION_MAJOR/'))
-        self.insert('PYTHONPATH',0, self.path('dsolib'))
 
 
     def bins(self):
@@ -121,6 +117,7 @@ class houdini(baseApp):
             ('hserver'  ,'hserver'),
             ('mantra'   ,'mantra'),
             ('hcustom'  ,'hcustom'),
+            ('mplay'    ,'mplay'),
         ]
 
     def preRun(self, cmd):
@@ -143,6 +140,13 @@ class houdini(baseApp):
             # command do hbatch pra pegar a expresao q define o nome do arquivo
             # a ser rendido!
             # opparm out/mantra__letra vm_picture ( '$HIP/render/$HIPNAME/$OS/$OS.$F4.exr' )
+
+        # make sure character '&' is at the end of all houdini env vars!
+        for each in ['HOUDINI_SCRIPT_PATH','HOUDINI_OTLSCAN_PATH','HOUDINI_DSO_PATH','HOUDINI_TOOLBAR_PATH','HOUDINI_UI_ICON_PATH']:
+            if each in os.environ:
+                os.environ[each] = ':'.join([os.environ[each],'&'])
+            else:
+                os.environ[each] = '&'
 
         return newcmd
 
@@ -173,10 +177,10 @@ class houdini(baseApp):
                 for f in files:
                     # if the file doesn;t exist, erro! this should report error for cache generation!!
                     if os.path.exists(f):
-                        print "HOUDINI CREATED FILE: %s" % f
+                        print( "HOUDINI CREATED FILE: %s" % f )
                     else:
-                        print "HOUDINI FAILED TO CREATED FILE: %s" % f
-                        print '[PARSER ERROR]'
+                        print( "HOUDINI FAILED TO CREATED FILE: %s" % f )
+                        print( '[PARSER ERROR]' )
 
 
             try:
@@ -207,12 +211,12 @@ class houdini(baseApp):
                             pipe.frame.publish(images,self.asset)
                 pipe.frame.publishLog(returnLog,self.asset,self.className)
             except UnboundLocalError as e:
-                print 'Catching exception for images var: %s' % e
+                print( 'Catching exception for images var: %s' % e )
                 error=True
 
             if filter( lambda x: x!='.idisplay', displays.keys() ):
-                print '='*80
-                print 'Checking rendered displays...\n'
+                print( '='*80 )
+                print( 'Checking rendered displays...\n' )
 
                 openexr = pipe.libs.openexr()
                 # we add here a list of commands to execute for each filetype, to check if the file is readable!
@@ -258,7 +262,7 @@ class houdini(baseApp):
                         # print result for each display
                         res = ['ERROR', 'OK']
                         for d in displays[filetype]:
-                            print "% 10s -> %s" % (res[ results[d] ], d)
+                            print( "% 10s -> %s" % (res[ results[d] ], d) )
                             if 'ERROR' in res[ results[d] ]:
                                 error = True
 
@@ -288,33 +292,36 @@ class houdini(baseApp):
                 break
 
         # return an posix error code
-        print '\n','='*80
+        print( '\n','='*80 )
         return int(error)*255
 
 
     def license(self):
         # make sure we have PIPE_HOUDINI_LICENSE_SERVERS env var set
-        if 'PIPE_HOUDINI_LICENSE_SERVERS' not in os.environ.keys():
+        major_version = self.version().replace('hfs','').split('.')[0]
+        if 'PIPE_HOUDINI_LICENSE_SERVERS_%s' % major_version in os.environ:
+            env_var = 'PIPE_HOUDINI_LICENSE_SERVERS_%s' % major_version
+        elif 'PIPE_HOUDINI_LICENSE_SERVERS' in os.environ:
+            env_var = 'PIPE_HOUDINI_LICENSE_SERVERS'
+        else:
             raise Exception('No Houdini server setup! Please set houdini license server IP into PIPE_HOUDINI_LICENSE_SERVERS environment variable!')
 
-        # kill a current running hserver, if different than the current set version!
-        if os.popen('pidof hserver').readlines():
-            serverVersion = os.popen("echo $(%s/bin/hserver -l | grep ^Version) | cut -d' ' -f2 | sed 's/Houdini/hfs/'" % self.path()).readlines()[0].strip()
-            if serverVersion != self.version():
-                os.system( '%s/bin/hserver -q' % self.path() )
+        # kill a running hserver, everytime!
+        os.system( '%s/bin/hserver -q' % self.path() )
 
         # write the file needed by hserver into user home folder, so it can find
         # the license server specified in PIPE_HOUDINI_LICENSE_SERVERS environment variable!
         f=open( "%s/.sesi_licenses.pref" % os.environ['HOME'] , 'w' )
-        f.write("serverhost=%s\n" % os.environ['PIPE_HOUDINI_LICENSE_SERVERS'])
+        f.write("serverhost=%s\n" % os.environ[env_var])
         f.close()
 
     @staticmethod
     def addon( caller, script='', otl='', dso='', toolbar='', icon='', lib='' ):
         caller['HOUDINI_SCRIPT_PATH'] = script
         caller['HOUDINI_OTLSCAN_PATH'] = otl
-#        caller['HOUDINI_OTL_PATH'] = otl
+        # caller['HOUDINI_OTL_PATH'] = otl
         caller['HOUDINI_DSO_PATH'] = dso
+        # caller['HAPI_DSO_PATH'] = dso
         caller['HOUDINI_TOOLBAR_PATH'] = toolbar
         caller['HOUDINI_UI_ICON_PATH'] = icon
         caller['LD_LIBRARY_PATH'] = lib

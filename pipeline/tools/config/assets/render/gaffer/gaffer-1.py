@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -23,8 +23,11 @@ import IECore, pipe
 exec( pipe.include( __file__ ) )
 
 class gaffer( render ) :
-    
+
     def __init__( self ) :
-        render.__init__(self, 'gaffer', 'grf')
+        self._whoCanPublish = ['gaffer']
+        self._whoCanImport = ['maya','nuke','houdini']
+        self._whoCanOpen = ["gaffer"]        
+        render.__init__(self, 'gaffer', 'grf',  'gaffer/')
 
 IECore.registerRunTimeTyped( gaffer )

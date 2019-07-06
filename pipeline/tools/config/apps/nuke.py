@@ -61,22 +61,34 @@ class nuke(baseApp):
 
         # configure cortex
         self.update( prman() )
+
+        # cortex trava
+        #  nukex  /atomo/jobs/0528.davene_filme_2/shots/shot_001/users/rafaelz/nuke/script/shot_001_comp_v088.nk
         self.update( cortex() )
         self.update( gaffer() )
-        self.update( rv() )
-        self.update( genarts_monsters_gt_ofx() )
+
+        # afanasy farm nodes
         self.update( cgru() )
 
+        if 'PIPE_NUKE_CRYPTOMATTE' not in os.environ or os.environ['PIPE_NUKE_CRYPTOMATTE']=='1':
+            self.update( cryptomatte() )
+
+        if 'PIPE_NUKE_GENARTS' not in os.environ or os.environ['PIPE_NUKE_GENARTS']=='1':
+            self.update( genarts_monsters_gt_ofx() )
+
         # rvNuke plugin needs this to find rv wrapper!
+        self.update( rv() )
         self['RV_PATH'] = '%s/scripts/rv' % roots.tools()
 
         # disable CUDA
-        self['FN_NUKE_DISABLE_GPU_ACCELERATION'] = "1"
-        self['NUKE_USE_FAST_ALLOCATOR'] = "1"
+        #self['FN_NUKE_DISABLE_GPU_ACCELERATION'] = "1"
+        #self['NUKE_USE_FAST_ALLOCATOR'] = "1"
 
         # show memory debug information on console
-        self['NUKE_DEBUG_MEMORY'] = '0'
-        self['FOUNDRY_LOG_LEVEL'] = 'verbose'
+        #self['NUKE_DEBUG_MEMORY'] = '0'
+        #self['FOUNDRY_LOG_LEVEL'] = 'verbose'
+
+        # disable nuke crash handling so we can see crash dumps ourselfs.
         self['FN_CRASH_DUMP_PATH'] = '/tmp/'
         self['NUKE_CRASH_HANDLING'] = '0'
 
@@ -84,9 +96,21 @@ class nuke(baseApp):
 
         # add the plugins path to pythonpath so we can find nuke python module
         for each in self.toolsPaths():
-            nuke.addon(self, nukepath = '%s/nuke/gizmo' % each )
-            nuke.addon(self, nukepath = '%s/nuke/script' % each )
-            nuke.addon(self, lib = '%s/nuke/script' % each )
+            if int(self.version().split('.')[0]) < 10:
+               nuke.addon(self, nukepath = '%s/nuke/gizmo' % each )
+               nuke.addon(self, nukepath = '%s/nuke/script' % each )
+               nuke.addon(self, lib = '%s/nuke/script' % each )
+            else:
+               nuke.addon(self, nukepath = '%s/nuke/$NUKE_VERSION/gizmo' % each )
+               nuke.addon(self, nukepath = '%s/nuke/$NUKE_VERSION/script' % each )
+               nuke.addon(self, lib = '%s/nuke/$NUKE_VERSION/script' % each )
+
+        # mari bridge
+        self.update( mari() )
+
+        # if 'CENTOS' in os.environ:
+        #     self.ignorePipeLib( "freetype" )
+        #     self.ignorePipeLib( "fontconfig" )
 
     def dotAppName(self):
         return "Nuke%s.app" % self.version()
@@ -148,20 +172,25 @@ class nuke(baseApp):
         self['NUKE_DISK_CACHE'] = cache_dir
 
         # make nuke_disk_cache rw for everyone
-        sudo = pipe.admin.sudo()
-        sudo.chmod( "a+rwx -R", cache_dir )
-        sudo.run()
+        #sudo = pipe.admin.sudo()
+        #sudo.chmod( "a+rwx -R", cache_dir )
+        #sudo.run()
 
         # run the application
         cmd = app.split(' ')
         nukeBin = glob('%s/Nuke*.*' % self.bin())
         if not nukeBin:
             raise Exception("\n\nCan't find Nuke executable. Are you sure Nuke %s is installed?\n" % self.version())
+
+        if int( self.version().split('.')[0] ) >= 10:
+            cmd += ['--disable-nuke-frameserver']
+
         baseApp.run( self, os.path.basename(nukeBin[0]) + '  ' + ' '.join(cmd[1:]) )
 
 
     def preRun(self, cmd):
         del os.environ['LD_PRELOAD']
+        # os.environ['LD_PRELOAD'] = pipe.libs.ocio().path('lib/python2.7/libOpenColorIO.so.1')
         return cmd
 
     def postRun(self, cmd, returnCode, returnLog=""):
@@ -216,4 +245,5 @@ class nuke(baseApp):
         jobuser.mkdir( 'nuke/render' )
         jobuser.mkdir( 'nuke/script' )
         jobuser.mkdir( 'nuke/precomp' )
+        jobuser.symlink( '/../../../../shots/nukestudio/published/nukescripts/%s/' % pipe.admin.job.shot().shot,  'nuke/nukestudio')
         jobuser.create()

@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -20,12 +20,22 @@
 
 
 import IECore, pipe
-exec( pipe.include( __file__ ) )
 
+import genericAsset
+reload(genericAsset)
 
-class alembic( model ) :
-    
+class alembic( genericAsset.alembic ) :
+    _color = IECore.Color3f( 0.0, 0.35, 0.65 ) 
     def __init__( self ) :
-        model.__init__(self, 'alembic')
+        genericAsset.alembic.__init__(self, 'alembic' ,nameGroup='Mesh', animation=False)
+        self.setSubDivMeshesMask(None)
+        # self.setImportAsGPU(True)
+
+    def doImportMaya(self, filename, nodeName ):
+        if genericAsset.m:
+            # cleanup shading leftovers
+            genericAsset.maya.cleanUnusedShadingNodes()
+
+        return genericAsset.alembic.doImportMaya(self, filename, nodeName )
 
 IECore.registerRunTimeTyped( alembic )

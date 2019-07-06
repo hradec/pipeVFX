@@ -21,17 +21,26 @@
 
 class cortex(baseLib):
     def versions(self):
-        if self.parent() in 'gaffer':
-            if float(pipe.version.get('gaffer')[:3]) < 2.0 and float(pipe.version.get('gaffer')[:3])!=0.30:
-                if float(pipe.libs.version.get('cortex')[:1]) >= 9:
-                    pipe.libs.version.set(  cortex = '8.4.7' )
-                    pipe.libs.version.set(  boost = '1.5.2' )
-                    pipe.libs.version.set(  tbb = '2.2.004' )
+        if float(pipe.libs.version.get('openexr')[:3]) < 2.2:
+            pipe.libs.version.set( openexr='2.2')
+            pipe.libs.version.set( ilmbase='2.2')
+
+    #     if self.parent() in 'gaffer':
+    #         if float(pipe.version.get('gaffer')[:3]) < 2.0  and float(pipe.version.get('gaffer')[:3])!=0.30:
+    #             if float(pipe.libs.version.get('cortex')[:1]) >= 9:
+    #                 pipe.libs.version.set(  cortex = '8.4.7' )
+    #                 pipe.libs.version.set(  boost = '1.5.2' )
+    #                 pipe.libs.version.set(  tbb = '2.2.004' )
 
     def environ(self):
         parent = self.parent()
 
         self['PYTHON_VERSION_MAJOR'] = '.'.join(pipe.libs.version.get('python').split('.')[:2])
+
+        # workaround to prevent a bug in environ class!! TODO: Fix the bug!!
+        if type(self['PYTHONPATH']) == str:
+            self['PYTHONPATH'] = '/1'
+            self['PYTHONPATH'] = '/2'
 
         # we add this env var for easy copy/paste of houdini paths into other apps/cortex!
         if pipe.admin.job.current():
@@ -39,7 +48,7 @@ class cortex(baseLib):
 
 
         # configure maya plugin/scripts/icons
-        if parent == 'maya':
+        if parent in ['maya', 'python']:
             maya.addon ( self,
                 plugin = self.path('maya/$MAYA_VERSION/plugins'),
                 script = self.path('maya/$MAYA_VERSION/mel'),
@@ -50,10 +59,10 @@ class cortex(baseLib):
                 ],
 
             )
-            self['PYTHONPATH'] = self.path('maya/$MAYA_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
+            self['PYTHONPATH'].insert( 0, self.path('maya/$MAYA_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages') )
 
-        #configure delight
-        if parent in ['delight', 'maya', 'gaffer', 'python']:
+        # configure delight - crashes maya if no arnold in the searchpath!!
+        if parent in ['delight', 'maya', 'gaffer', 'python'] and os.path.exists(self.path( 'delight/%s' % pipe.apps.version.get('delight') )):
             delight.addon( self,
                 shader=self.path('delight/$DELIGHT_VERSION/rsl'),
                 rsl=self.path('delight/$DELIGHT_VERSION/rsl'),
@@ -65,11 +74,11 @@ class cortex(baseLib):
                     self.path('delight/$DELIGHT_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
                 ],
             )
-            self['PYTHONPATH'] = self.path('delight/$DELIGHT_VERSION/lib/python$PYTHON_VERSION_MAJOR')
-            self['PYTHONPATH'] = self.path('delight/$DELIGHT_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
+            self['PYTHONPATH'].insert( 0,self.path('delight/$DELIGHT_VERSION/lib/python$PYTHON_VERSION_MAJOR') )
+            self['PYTHONPATH'].insert( 0,self.path('delight/$DELIGHT_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages') )
 
-        #configure prman
-        if parent in ['prman', 'maya', 'gaffer', 'python', 'houdini']:
+        # configure prman
+        if parent in ['prman', 'maya', 'gaffer', 'python', 'houdini'] and os.path.exists(self.path( 'prman/%s' % pipe.apps.version.get('prman') )):
             prman.addon( self,
                 shader=self.path('prman/$PRMAN_VERSION/rsl'),
                 rsl=self.path('prman/$PRMAN_VERSION/rsl'),
@@ -81,23 +90,23 @@ class cortex(baseLib):
                     self.path('prman/$PRMAN_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
                 ],
             )
-            self['PYTHONPATH'] = self.path('prman/$PRMAN_VERSION/lib/python$PYTHON_VERSION_MAJOR')
-            self['PYTHONPATH'] = self.path('prman/$PRMAN_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
+            self['PYTHONPATH'].insert( 0,self.path('prman/$PRMAN_VERSION/lib/python$PYTHON_VERSION_MAJOR') )
+            self['PYTHONPATH'].insert( 0,self.path('prman/$PRMAN_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages') )
 
-        #configure arnold
-        if parent in ['arnold', 'maya']:
-            arnold.addon( self,
-                procedurals=self.path('arnold/$ARNOLD_VERSION/procedurals'),
-                display=self.path('arnold/$ARNOLD_VERSION/displays'),
-                extensions=self.path('arnold/$ARNOLD_VERSION/mtoaExtensions/$MAYA_VERSION/'),
-                lib = [
-                    self.path('arnold/$ARNOLD_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
-                    self.path('arnold/$ARNOLD_VERSION/lib'),
-                ],
-            )
-            self['PYTHONPATH'] = self.path('arnold/$ARNOLD_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
+        #configure arnold - crashes maya if no arnold in the searchpath!!
+        # if parent in ['arnold', 'maya']  and os.path.exists(self.path( 'arnold/%s' % pipe.apps.version.get('arnold') )):
+        #     arnold.addon( self,
+        #         procedurals=self.path('arnold/$ARNOLD_VERSION/procedurals'),
+        #         display=self.path('arnold/$ARNOLD_VERSION/displays'),
+        #         extensions=self.path('arnold/$ARNOLD_VERSION/mtoaExtensions/$MAYA_VERSION/'),
+        #         lib = [
+        #             self.path('arnold/$ARNOLD_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
+        #             self.path('arnold/$ARNOLD_VERSION/lib'),
+        #         ],
+        #     )
+        #     self['PYTHONPATH'] = self.path('arnold/$ARNOLD_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
 
-        #configure nuke
+        # configure nuke
         if parent == 'nuke':
             nuke.addon( self,
                 nukepath = self.path('nuke/$NUKE_VERSION/plugins'),
@@ -106,20 +115,23 @@ class cortex(baseLib):
                     self.path('nuke/$NUKE_VERSION/lib'),
                 ],
             )
-            self['PYTHONPATH'] = self.path('nuke/$NUKE_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
+            self['PYTHONPATH'].insert( 0,self.path('nuke/$NUKE_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages') )
 
         #configure houdini
         if parent in ['houdini', 'python']:
-#            if parent == 'python':
-#                self.update( houdini() )
             houdini.addon(self,
                 otl=self.path('houdini/$HOUDINI_VERSION/otls'),
-                dso=self.path('houdini/$HOUDINI_VERSION/dso'),
                 toolbar=self.path('houdini/$HOUDINI_VERSION/toolbar'),
                 icon=self.path('houdini/$HOUDINI_VERSION/icons'),
                 lib = [
-                    self.path('houdini/$HOUDINI_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
+                    self.path('houdini/$HOUDINI_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages/IECoreHoudini'),
+                    self.path('houdini/$HOUDINI_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages/IECoreMantra'),
                     self.path('houdini/$HOUDINI_VERSION/lib'),
+                    self.path('alembic/$ALEMBIC_VERSION/lib'),
+                ],
+                dso=[
+                    self.path('houdini/$HOUDINI_VERSION/dso'),
+                    # self.path('houdini/$HOUDINI_VERSION/dso/mantra'),
                 ],
             )
             self['PYTHONPATH'] = self.path('houdini/$HOUDINI_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
@@ -127,20 +139,26 @@ class cortex(baseLib):
         #configure python
         self['PYTHONPATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages')
         self['PYTHONPATH'] = self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages')
+        self['PYTHONPATH'] = self.path('alembic/$ALEMBIC_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
+
 
         #add cortex paths
         cortex.addon(self,
-#            scripts = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages'),
+            # scripts = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages'),
             procedurals = self.path('procedurals'),
             ops = self.path('ops'),
             glsl = self.path('glsl'),
-            glslInclude = self.path('glsl'),
+            glslInclude = [
+                self.path('glsl'),
+                self.path('glsl/IECoreGL'),
+            ],
             lib = [
                 self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR'),
                 self.path('lib/boost$BOOST_VERSION'),
                 self.path('lib/python$PYTHON_VERSION_MAJOR'),
                 self.path('lib'),
                 self.path('alembic/$ALEMBIC_VERSION/lib'),
+                self.path('alembic/$ALEMBIC_VERSION'),
             ]
         )
 

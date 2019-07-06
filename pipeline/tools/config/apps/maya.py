@@ -19,7 +19,6 @@
 # =================================================================================
 
 
-
 class maya(baseApp):
     def environ(self, allPlugs=True):
         ''' this is the main method in a class to setup environment variables for an app.
@@ -30,14 +29,16 @@ class maya(baseApp):
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/plug-ins/translators/'
         # maya needs csh, libXp6 and libtiff3 installed to run!
-
-        if float(self.version().split('.')[0]) <= 2016:
+        mv = float(self.version().split('.')[0])
+        if mv <= 2016:
             # we set this to avoid maya csh script to deal with LD_LIBRARY_PATH
             # since its' too big for it to handle
             #(fix "word too long" error on some systems, like debian!!)
             self['LD_LIBRARYN32_PATH'] = self.path("lib")
             self['libn32'] = '1'
 
+
+        # self['MAYA_SHELF_PATH'] =
 
 #        if pipe.OSX:
 #            self.replace( MAYA_LOCATION = self.path() )
@@ -47,32 +48,38 @@ class maya(baseApp):
 
         # set the proper python version for the current maya version!
         if self.parent() in ['maya','arnold']:
-            if int(self.version().split('.')[0]) >= 2014:
-                pipe.version.set( python = '2.7.6' )
-                pipe.libs.version.set( python = '2.7.6' )
+            if mv >= 2014:
+                pipe.version.set( python = '2.7' )
+                pipe.libs.version.set( python = '2.7' )
             else:
-                pipe.version.set( python = '2.6.8' )
-                pipe.libs.version.set( python = '2.6.8' )
+                pipe.version.set( python = '2.6' )
+                pipe.libs.version.set( python = '2.6' )
 
-        # we need this to force maya to read its own python distribution files
-        # or else we see a error on os module were it can't find urandom!!
-        pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
-        self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
-        self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
-        self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
-        if self.parent() in ['maya','arnold']:
-            self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
-
+        # log.debug( "@@@@@ %s, %s %s" % ( 'MAYA_USE_VRAY' in os.environ, mv > 2016, allPlugs ) )
         # plugins
         if allPlugs:
-            self.update( delight() )
-            self.update( arnold() )
             self.update( prman() )
             self.update( cortex() )
-            self.update( shave() )
-            self.update( slum() )
-            self.update( yeti() )
+            self.update( gaffer() )
             self.update( golaem() )
+            self.update( shave() )
+            self.update( houdini() )
+            if 'PIPE_MAYA_ZYNC' in os.environ and os.environ['PIPE_MAYA_ZYNC']=='1':
+                self.update( zync() )
+            if mv <= 2015:
+                self.update( arnold() )
+            if mv <= 2014:
+                self.update( delight() )
+                self.update( yeti() )
+            if mv <= 2017:
+                if 'PIPE_MAYA_FABRICENGINE' in os.environ and os.environ['PIPE_MAYA_FABRICENGINE']=='1':
+                    self.update( fabricEngine() )
+            if mv >= 2016:
+                if 'PIPE_MAYA_ARNOLD' in os.environ and os.environ['PIPE_MAYA_ARNOLD']=='1':
+                    self.update( arnold() )
+                if 'PIPE_MAYA_VRAY' in os.environ and os.environ['PIPE_MAYA_VRAY']=='1':
+                    self.update( vray() )
+
 
         # add tools paths
         for each in self.toolsPaths():
@@ -80,25 +87,44 @@ class maya(baseApp):
                 plugin = '%s/maya/$MAYA_VERSION/plugins' % each ,
                 script = '%s/maya/$MAYA_VERSION/scripts' % each ,
                 icon   = '%s/maya/$MAYA_VERSION/icons' % each ,
-                module   = '%s/maya/$MAYA_VERSION/modules' % each
+                module = '%s/maya/$MAYA_VERSION/modules' % each,
+                shelves= '%s/maya/$MAYA_VERSION/shelves' % each,
             )
             maya.addon( self,
                 plugin = '%s/maya/plugins' % each ,
                 script = '%s/maya/scripts' % each ,
                 icon   = '%s/maya/icons' % each ,
-                module = '%s/maya/modules' % each
+                module = '%s/maya/modules' % each,
+                shelves= '%s/maya/shelves' % each,
             )
             self['PYTHONPATH'] = '%s/maya/plugins' % each
             self['PYTHONPATH'] = '%s/maya/scripts' % each
 
-        # pipeline alembic plugins!
         try:
+            # pipeline alembic plugins!
             alembic = pipe.libs.alembic()
             maya.addon( self,
-                plugin = alembic.path('maya/$MAYA_VERSION/plugins'),
+                plugin = alembic.path('maya/$MAYA_VERSION/plugins/'),
+                lib = alembic.path('lib/python%s/' % pipe.version.get('python')),
             )
+
+            # pipeline openvdb plugins!
+            if float(pipe.version.get('prman')) < 21.0:
+                # pipe.libs.version.set( openvdb = '3.2.0' )
+                openvdb = pipe.libs.openvdb()
+                maya.addon( self,
+                    plugin = openvdb.path('maya/$MAYA_VERSION/plugins'),
+                    script = openvdb.path('maya/$MAYA_VERSION/scripts'),
+                    icon   = openvdb.path('maya/$MAYA_VERSION/icons'),
+                    lib = [
+                        openvdb.path('maya/lib'),
+                    ],
+                )
+            else:
+                self.ignorePipeLib( "openvdb" )
         except:
             pass
+
 
         # add this only to the global one (last)
         if float(self.version()) == 2016:
@@ -106,6 +132,7 @@ class maya(baseApp):
 
         self['PYTHONPATH'] = self.path('scripts')
         self['PYTHONPATH'] = self.path('plugins')
+        # self['PYTHONPATH'] = pipe.libs.python().path('lib/python$PYTHON_VERSION_MAJOR/site-packages')
 
         # force the load of the support libraries that come with maya
         # this fixes problems in python with hashlib/md5!!
@@ -117,13 +144,83 @@ class maya(baseApp):
 
         # our custom zlib give some error messages at startup of
         # maya 2014!
-        if int(self.version().split('.')[0]) >= 2014:
+        if mv >= 2014:
             self.ignorePipeLib( "zlib" )
+            self.ignorePipeLib( "tbb" )
+            self.ignorePipeLib( "openssl" )
+            if mv<=2017:
+                self.ignorePipeLib( "qt" )
+            if mv==2014:
+                self.ignorePipeLib( "hdf5" )
+            if mv>2014:
+                self.ignorePipeLib( "freetype" )
+                if 'centos' not in pipe.distro:
+                    self.ignorePipeLib( "libpng" )
+
+        # set the proper sip/pyqt so gaffer works
+        if mv > 2015:
+            pipe.libs.version.set( sip  = '4.16.7.maya%s' % self.version() )
+            pipe.libs.version.set( pyqt = '4.11.4.maya%s' % self.version() )
 
         # xgen libraries
+        self['XGEN_GLOBAL'] = self.path('plug-ins/xgen/')
         maya.addon( self, lib=self.path('plug-ins/xgen/lib/') )
+        maya.addon( self, script=self.path('plug-ins/xgen/scripts/') )
+        maya.addon( self, icon=self.path('plug-ins/xgen/icons/') )
 
+        # it seems these are no set by default when running in mayapy
+        for p in glob.glob( self.path('plug-ins/*') ):
+            self['PATH'] = "%s/bin" % p
+            self['PYTHONPATH'] = "%s/scripts" % p
+
+        ## Maya Camera Modifier Key
+        os.system('gsettings set org.gnome.desktop.wm.preferences mouse-button-modifier "<Super>"')
+
+        self['LC_ALL'] = 'C'
+        self['MAYA_IP_TYPE'] = 'ipv4'
+        self['MAYA_OPENCL_ALLOW_SSH_OPENCL'] = '1'
+
+        # fix slow shutdown by disabling internet report uploads
         self['MAYA_DISABLE_CIP']='1'
+        self['MAYA_DISABLE_CER']='1'
+        self['MAYA_FORCE_SHOW_ACTIVATE'] = '1'
+        self['MAYA_DEBUG_ENABLE_CRASH_REPORTING'] = '1'
+        self['MAYA_ENABLE_LEGACY_RENDER_LAYERS'] = '1'
+        # self['MAYA_USE_MALLOC'] = '1'
+        # self['MAYA_DISABLE_CASCADING'] = '1'
+        self['MAYA_LOCATION'] = self.path()
+        if mv > 2014:
+            self['MAYA_ALLOW_RENDER_LAYER_SWITCHING'] = '1'
+            # this bellow prevents the privacy window to show up when starting maya or the firt time!
+            # this windown actually can create some problems of getting maya stuck at startup forever in some cases!
+            if not os.path.exists( "%s/Adlm" % os.environ["HOME"] ):
+                os.mkdir( "%s/Adlm" % os.environ["HOME"] )
+            Adlm = open( "%s/Adlm/AdlmUserSettings.xml" % os.environ["HOME"], "w" )
+            Adlm.write('''<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<AdlmSettings>
+    <Section Name="PrivacyPolicyConsent">
+        <Data Key="%d.0.0.F">1</Data>
+    </Section>
+</AdlmSettings>\n''' % mv )
+            Adlm.close()
+
+        if self.parent() in ['maya','arnold']:
+            # or else we see a error on os module were it can't find urandom!!
+            # we need this to force maya to read its own python distribution files
+            pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
+
+            self.insert('PYTHONPATH',0, self.path('support/python/2.7.11/'))
+            self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
+            self.insert('PYTHONPATH',0, self.path('lib/python%s/site-packages/' % pythonVer))
+            self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
+            self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
+            self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
+
+            if mv > 2017:
+                self['PYTHONHOME'] = self.path()
+
+
+        self['EDITOR'] = 'atom'
 
     def version(self, v=None):
         if v:
@@ -142,28 +239,58 @@ class maya(baseApp):
             ('Render', 'Render'),
             ('fcheck', 'fcheck'),
         ]
-        if float(self.version()) >= 2016.5:
-            ret[0] = ('maya', 'maya%s' % self.version())
         return ret
 
 
-    def license(self):
-        if float(self.version()) >= 2016.5:
-            if 'LM_LICENSE_FILE' in self:
-                del self['LM_LICENSE_FILE']
-            self['MAYA_LICENSE']='unlimited'
-            self['MAYA_LICENSE_METHOD']='standalone'
-#        else:
-#            self['LM_LICENSE_FILE'] = "%s/licenses/%s/%s" % (roots.tools(), self.className.lower(), self.appFromDB.version() )
+    def run(self, app):
+        import os, sys, glob
 
-    def bg(self,cmd,bin):
-        ''' return True if a cmd or binary should run in background '''
-        if 'maya' in bin[0]:
-            return True
-        return False
+        # m = self.path("bin/maya%s" % self.version())
+        m = self.path('bin/maya.bin')
+
+        if '--debug' in sys.argv:
+            self['MAYA_DEBUG_NO_SIGNAL_HANDLERS'] = '1'
+
+        cmd = app.split(' ')
+
+        if 'Render' not in app and 'mayapy' not in app and os.path.exists(m):
+            baseApp.run( self, os.path.basename(m) + '  ' + ' '.join(cmd[1:]) )
+        # elif 'mayapy' in app:
+        #     # it seems these are no set by default when running in mayapy
+        #     for p in glob.glob( self.path('plug-ins/*') ):
+        #         maya.addon(self
+        #             plugin = "%s/plug-ins" % p,
+        #             script = "%s/scripts" % p,
+        #             lib = "%s/lib" % p,
+        #             preset = "%s/presets" % p,
+        #             icon = "%s/icons" % p,
+        #         )
+        #         self['PATH'] = "%s/bin" % p
+        #         self['PYTHONPATH'] = "%s/scripts" % p
+        #     baseApp.run( self, app )
+        else:
+            baseApp.run( self, app )
+
+
+    def license(self):
+        # if float(self.version()) >= 2016.5:
+        #     self['MAYA_LICENSE_METHOD']='standalone'
+        self['MAYA_LICENSE']='unlimited'
+        if 'LM_LICENSE_FILE' in self:
+            del self['LM_LICENSE_FILE']
+        self['MAYA_ALT_EN'] = '/var/flexlm/maya.lic'
+
+        # else:
+        #     self['LM_LICENSE_FILE'] = "%s/licenses/%s/%s" % (roots.tools(), self.className.lower(), self.appFromDB.version() )
+
+    # def bg(self,cmd,bin):
+    #     ''' return True if a cmd or binary should run in background '''
+    #     if 'maya' in bin[0]:
+    #         return True
+    #     return False
 
     @staticmethod
-    def addon(caller, plugin="", script="", icon="", renderDesc='', lib='', preset='',module=''):
+    def addon(caller, plugin="", script="", icon="", renderDesc='', lib='', preset='',module='', shelves=''):
         ''' the addon method MUST be implemented for all classes so other apps can set up
         searchpaths for this app. For example, another app which has plugins for this one!'''
         if not pipe.osx:
@@ -178,20 +305,39 @@ class maya(baseApp):
         caller['LD_LIBRARY_PATH']       = lib
         caller['MAYA_PRESET_PATH']      = preset
         caller['MAYA_MODULE_PATH']      = module
+        caller['MAYA_SHELF_PATH']       = shelves
+
+
+    def preRun(self, cmd):
+        if self.parent() in ['maya','arnold']:
+            mv = float(self.version().split('.')[0])
+            if mv >= 2018:
+                # or else we see a error on os module were it can't find urandom!!
+                # we need this to force maya to read its own python distribution files
+                pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
+                os.environ['PYTHONPATH'] = self.path('lib/python%s.zip:' % pythonVer.replace('.','')) + os.environ['PYTHONPATH']
+
+        return cmd
 
 
     def postRun(self, cmd, returnCode, returnLog=""):
         ''' this is called after a binary of this class has exited.
         it's the perfect method to do post render frame checks, for example!'''
         error = returnCode!=0
+        extensions = [
+            '.exr',
+            '.tif',
+            '.jpg',
+            '.dpx',
+        ]
         images=[]
 
         # publish output log
-        pipe.frame.publishLog(returnLog, self.asset, self.className)
+        if hasattr(self, 'asset'):
+            pipe.frame.publishLog(returnLog, self.asset, self.className)
 
         # if Render in cmd
         if 'Render' in cmd:
-
 
             # and 'Finished Rendering' in the log, do a frame check!
             if 'Finished Rendering' in returnLog:
@@ -214,31 +360,47 @@ class maya(baseApp):
                 images = map(lambda z: z.split('writing file')[-1].replace('`','').replace("'",'').strip(),
                                filter(lambda x: 'writing file' in x,returnLog.split('\n')) )
 
+            # or V-RAY Render in the log, do a frame check!
+            if 'Successfully written image file' in returnLog and 'V-Ray' in returnLog:
+
+                # collect image files from output log
+                images = map(lambda z: z.split('Successfully written image file')[-1].replace('`','').replace("'",'').replace('"','').strip(),
+                               filter(lambda x: 'Successfully written image file' in x,returnLog.split('\n')) )
+
+
+
             # or prman Render in the log, do a frame check!
             if '(mode = ' in returnLog and 'Pixar PhotoRealistic RenderMan' in returnLog:
 
                 # collect image files from output log
-                unfiltered = map(lambda z: z.split('"')[1].strip(),
-                               filter(lambda x: '(mode = ' in x,returnLog.split('\n')) )
+                unfiltered = []
+                for line in [ x for x in returnLog.replace('\r',"").replace('\n\n',"\n").replace('\n\n',"\n").replace('R90000 PROGRESS: 100%\n',"").split('\n') if '(mode = ' in x ]:
+                    sline = line.split('"')
+                    print( line )
+
+                    # line is ok, so just grab index 1 of the split, which is the path!
+                    if len(sline) > 2 :
+                        if os.path.splitext(sline[1])[-1].lower() in extensions:
+                            unfiltered += [sline[1].strip()]
+
+                    # line is broken by a late 100% message from prman (line doesn't have 2 " )
+                    # try to find the initial part of the path
+                    else:
+                        endPath = sline[0].strip()
+                        startPath = [ x for x in returnLog.split('"') if endPath in x and 'R90000' in x]
+                        if startPath:
+                            path = startPath[0].split('R90000')[0].strip() + endPath
+                            if os.path.splitext(path)[-1].lower() in extensions:
+                                unfiltered += [path]
+
+                # unfiltered = map(lambda z: z.split('"')[1].strip(),
+                #                filter(lambda x: '(mode = ' in x,returnLog.split('\n')) )
 
                 # if using denoise, return the filtered images, not the rendered ones.
                 filtered = []
                 if 'Filtering to produce ' in returnLog:
                     filtered = map(lambda z: z.split('Filtering to produce ')[1].strip(),
                                    filter(lambda x: 'Filtering to produce ' in x,returnLog.split('\n')) )
-
-#                images = {}
-#                for each in unfiltered:
-#                    if '_variance' not in each:
-#                        name = each.split('.')[-3]
-#                        name = ''.join(name[:-(len(name)-2)])
-#                        image = filter( lambda x: name in x, filtered )
-#                        if image:
-#                            for i in image:
-#                                images[i] = 1
-#                        else:
-#                            images[each] = 1
-#                images = images.keys()
 
                 images = filtered + unfiltered
 
@@ -275,12 +437,18 @@ class maya(baseApp):
                 "Can't create file",
                 '(core dumped)',
                 'dbus.exceptions.DBusException',
+                'because of an override to a missing node within a referenced scene',
+                'A08022 Broken pipe',
+                'ERROR | [driver_exr]',
+                'H5FD_sec2_open',
+                'OpenEXR exception',
             ]
             for s in errors:
                 if s in str(returnLog):
-                    print filter(lambda x: s in x, str(returnLog).split('\n'))
-                    error = True
-                    break
+                    line = '\n'.join(filter(lambda x: s in x, str(returnLog).split('\n')))
+                    if 'was not found on MAYA_PLUG_IN_PATH' not in line:
+                        error = True
+                        break
 
         # fatal errors - must fail even if images were generated!!
         fatalErrors = [
@@ -288,14 +456,20 @@ class maya(baseApp):
                 'cannot be opened by RiReadArchive',
                 "Cannot load scene",
                 'Error: T03007 Bad texture data in ',
-                'Error: X00002 Plugin error: ',
+                # 'Error: X00002 Plugin error: ',
                 "Error: T02001 Can't open texture ",
                 "Error: R50005 License error",
+                "Error reading EXR 'renderman",
+                'ERROR | [driver_exr]',
+                'H5FD_sec2_open',
+                'OpenEXR exception',
+                '* CRASHED',
+                'render terminating early:  received abort signal',
         ]
         for s in fatalErrors:
             if s in str(returnLog):
                 error = True
-                print filter(lambda x: s in x, str(returnLog).split('\n'))
+                print( filter(lambda x: s in x, str(returnLog).split('\n')) )
                 break
 
 

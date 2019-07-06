@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -20,10 +20,10 @@
 
 
 
-    
+
 class arnold(baseApp):
     def environ(self):
-        
+
         self['PATH'] = self.path('mtoadeploy/$MAYA_VERSION/bin')
         self['LD_LIBRARY_PATH'] = self.path('mtoadeploy/$MAYA_VERSION/bin')
         arnold.addon( self,
@@ -31,8 +31,12 @@ class arnold(baseApp):
             extensions  = self.path('mtoadeploy/$MAYA_VERSION/extensions'),
             shader      = self.path('mtoadeploy/$MAYA_VERSION/shaders'),
         )
-        
-        self['PYTHONPATH'] = self.path('python')
+
+
+        if self.parent() not in ['gaffer']:
+            # disable arnold for gaffer!
+            self['PYTHONPATH'] = self.path('python')
+
         if os.path.exists(self.path('mtoadeploy/%s/oldpipe' % maya().version())):
             self['MAYA_MODULE_PATH']=self.path('mtoadeploy/$MAYA_VERSION/oldpipe')
         else:
@@ -44,9 +48,24 @@ class arnold(baseApp):
                     self.path('mtoadeploy/$MAYA_VERSION/icons'),
                 ]
             )
-        
+
+        #add tools paths
+        for each in self.toolsPaths():
+
+            self['MAYA_CUSTOM_TEMPLATE_PATH']   = '%s/shaders/arnold/%s/aexml' % (each, self.version())
+            maya.addon(self,
+                script = '%s/shaders/arnold/$ARNOLD_VERSION/ae' % each
+            )
+            arnold.addon( self,
+                script      = '%s/shaders/arnold/%s/ae' % (each, self.version()),
+                extensions  = '%s/shaders/arnold/%s/ae' % (each, self.version()),
+                shader      = '%s/shaders/arnold/%s/bin' % (each, self.version()),
+                lib         = '%s/shaders/arnold/%s/bin' % (each, self.version()),
+            )
+
         self.update( top=maya() )
         self.update( cortex() )
+
 
     def bins(self):
         return [
@@ -57,6 +76,7 @@ class arnold(baseApp):
     @staticmethod
     def addon( caller, script='', extensions='', procedurals='', shader='', display='', lib='' ):
         caller['MTOA_EXTENSIONS_PATH'] = extensions
+        caller['MTOA_TEMPLATES_PATH'] = extensions
         caller['LD_LIBRARY_PATH'] = procedurals
         caller['LD_LIBRARY_PATH'] = lib
         caller['ARNOLD_PLUGIN_PATH'] = display
@@ -65,5 +85,5 @@ class arnold(baseApp):
         caller['PYTHONPATH'] = script
 
     def license(self):
-        self['solidangle_LICENSE'] = self.path('mtoadeploy/$MAYA_VERSION/license')
-
+        #self['solidangle_LICENSE'] = self.path('mtoadeploy/$MAYA_VERSION/license')
+        self['solidangle_LICENSE'] = os.environ['PIPE_FABRIC_ENGINE_LICENSE']
