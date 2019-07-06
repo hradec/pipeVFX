@@ -1,0 +1,232 @@
+/*
+*	Called when the user clicks "Export" in the export BIN sequence dialog.
+*/
+global proc int realflowPerformBINExport(int $fileType)
+{
+	string $settingsNode = ($fileType == 0) ? "realflowBINExportOptions" : "realflowBINMeshExportOptions";
+	
+	$persist = `checkBoxGrp -q -value1 rfBINPersistentOpts`;
+	if($persist)
+		optionVar -remove "rfNoPersistentExportOptions";
+	else
+		optionVar -iv "rfNoPersistentExportOptions" 1;
+		
+	string $path = `getAttr ($settingsNode + ".path")`;
+	if($path == "")
+	{
+		confirmDialog -title "No path"
+			-message "Please specify the path where the sequence(s) will be written."
+			-button "OK" -defaultButton "OK" -cancelButton "OK";
+		return 0;
+	}
+	
+	int $numItems = `textScrollList -q -numberOfItems rfBINNodeList`;
+	if($numItems < 1)
+	{
+		confirmDialog -title "No nodes"
+			-message "You need to pick some nodes to export.\nSelect the nodes in the viewport and press \"Add selected\"."
+			-button "OK" -defaultButton "OK" -cancelButton "OK";
+		return 0;
+	}
+	
+	// Save the list of nodes.
+	string $nodes[] = `textScrollList -q -allItems rfBINNodeList`;
+	for($i = 0; $i < $numItems; ++$i)
+		setAttr -type "string" ($settingsNode + ".nodes[" + $i + "]") $nodes[$i];
+	setAttr -type "string" ($settingsNode + ".nodes[" + $numItems + "]") "";
+
+	if($fileType == 0)
+		realflow -exportBIN -useSettingsNode;
+	else
+		realflow -exportBINMesh -useSettingsNode;
+		
+	return 1;
+}
+
+/*
+*	Maintains the sate of the "start frame" and "end frame" controls based on the "use playback range" setting.
+*/
+global proc realflowCheckBINPlaybackRange(string $settingsNode)
+{
+	int $useRange = `getAttr ($settingsNode + ".usePlaybackRange")`;
+	control -e -enable (!$useRange) rfBINStartFrame;
+	control -e -enable (!$useRange) rfBINEndFrame;
+}
+
+/*
+*	Looks for particle or mesh shapes in the current selection and adds them to the list of exported shapes.
+*/
+global proc realflowBINLoadSelectedNodes(int $fileType)
+{
+	string $selected[] = `ls -selection`;
+	string $currentItems[] = `textScrollList -q -allItems rfBINNodeList`;
+	int $numCurrent = size($currentItems);
+	
+	for($i = 0; $i < size($selected); ++$i)
+	{
+		$name = $selected[$i];
+		string $type = `nodeType $name`;
+		
+		if($type == "transform")
+		{
+			// It's a transform, look at what's below.
+			string $children[] = `listRelatives -shapes $name`;
+			if(size($children) > 0)
+				$name = $children[0];
+		}
+		
+		if( ($fileType == 0) && (`objExists ($name + ".output[0]")`) )
+		{
+			// It may be an emitter, see what it's connected to it.
+			string $dest[] = `connectionInfo -destinationFromSource ($name + ".output[0]")`;
+			if(size($dest) > 0)
+			{
+				string $buffer[];
+				tokenize $dest[0] "." $buffer;
+				$name = $buffer[0];
+			}
+		}
+		
+		if($fileType == 0)
+		{
+			// Particles.
+			if( (`nodeType $name` != "particle") && (`nodeType $name` != "nParticle") )
+				continue;
+		}
+		else
+		{
+			// Meshes.
+			if(`nodeType $name` != "mesh")
+				continue;
+		}
+			
+		// Get the shape's transform node.
+		string $parents[] = `listRelatives -parent -type "transform" $name`;
+		if(size($parents) > 0)
+			$name = $parents[0];
+		
+		// Make sure we don't add it twice.
+		for($j = 0; $j < $numCurrent; ++$j)
+		{
+			if($currentItems[$j] == $name)
+				break;
+		}
+		
+		if($j < $numCurrent)
+			continue;
+			
+		$currentItems[$numCurrent] = $name;
+		++$numCurrent;
+		textScrollList -e -append $name rfBINNodeList;
+	}
+}
+
+/*
+*	Called when the user wants to remove an item from the export list.
+*/
+global proc realflowBINRemoveSelectedNodes()
+{
+	for(;;)
+	{
+		int $selIdx[] = `textScrollList -q -selectIndexedItem rfBINNodeList`;
+		if( (size($selIdx) == 0) || ($selIdx[0] < 1) )
+			break;
+		textScrollList -e -removeIndexedItem $selIdx[0] rfBINNodeList;
+	}
+}
+
+/*
+*	Brings up a settings dialog for exporting a sequence of BIN mesh or particle files. fileType is 0 for
+* particles, 1 for meshes.
+*/
+global proc realflowBINExportDialog(int $fileType)
+{
+	string $settingsNode = ($fileType == 0) ? "realflowBINExportOptions" : "realflowBINMeshExportOptions";
+	int $firstOpen = realflowMakeExportOptionsNode("realflowBINExportOptions", $settingsNode);
+
+	$wnd = `window -visible false -title "Export RealFlow BIN sequence" -iconName "Export BIN"`;
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	$form = `formLayout`;
+		$frame = `frameLayout -l "BIN Export Options" -collapsable false`;
+			columnLayout -adjustableColumn true;
+				realflowMakeDirControl("Path", ($settingsNode + ".path"), "rfBINPath");
+				attrControlGrp -label "Prefix" -attribute ($settingsNode +".prefix");
+				attrControlGrp -label "Name Format" -attribute ($settingsNode +".nameFormat");
+				attrControlGrp -label "Padding" -attribute ($settingsNode +".padding");
+				if($fileType == 0)
+					attrControlGrp -label "Particle Type" -attribute ($settingsNode +".particleType");
+				attrControlGrp -label "Use Playback Range" -attribute ($settingsNode +".usePlaybackRange") -changeCommand ("realflowCheckBINPlaybackRange " + $settingsNode);
+				attrControlGrp -label "Start Frame" -attribute ($settingsNode +".startFrame") rfBINStartFrame;
+				attrControlGrp -label "End Frame" -attribute ($settingsNode +".endFrame") rfBINEndFrame;
+				attrControlGrp -label "Frame Offset" -attribute ($settingsNode +".frameOffset");
+				
+				rowLayout -numberOfColumns 2;
+					text -l "Nodes";
+					textScrollList -height 75 -deleteKeyCommand "realflowBINRemoveSelectedNodes" -allowMultiSelection true rfBINNodeList;
+				setParent ..;
+
+				rowLayout -numberOfColumns 2;
+					text -l "";
+					rowColumnLayout -numberOfColumns 2;
+						button -l "Add selected" -command ("realflowBINLoadSelectedNodes " + $fileType);
+						button -l "Remove" -command "realflowBINRemoveSelectedNodes";
+					setParent ..;
+				setParent ..;
+
+				$persist = !`optionVar -q "rfNoPersistentExportOptions"`;
+				checkBoxGrp -numberOfCheckBoxes 1 -label1 "Persistent Options" -value1 $persist rfBINPersistentOpts;
+			setParent ..;
+		setParent ..;
+		$exportBtn = `button -label "Export" -command ("if(realflowPerformBINExport(" + $fileType + ")) deleteUI " + $wnd)`;
+		$cancelBtn = `button -label "Cancel" -command ("deleteUI " + $wnd)`;
+	setParent ..;
+
+	formLayout -e
+		-numberOfDivisions 100
+
+		-attachForm		$exportBtn	"left" 5
+		-attachPosition	$exportBtn	"right" 5 50
+		-attachForm		$exportBtn	"bottom" 5
+
+		-attachForm		$cancelBtn	"right" 5
+		-attachPosition	$cancelBtn	"left" 5 50
+		-attachForm		$cancelBtn	"bottom" 5
+
+		-attachForm		$frame		"top" 0
+		-attachForm		$frame		"left" 0
+		-attachForm		$frame		"right" 0
+		-attachControl	$frame		"bottom" 5 $exportBtn
+	$form;
+
+	setUITemplate -popTemplate;
+	realflowCheckBINPlaybackRange($settingsNode);
+	
+	if(!$firstOpen)
+	{
+		int $numNodes = `getAttr -size ($settingsNode + ".nodes")`;
+		int $numAppended = 0;
+		for($i = 0; $i < $numNodes; ++$i)
+		{
+			string $attr = $settingsNode + ".nodes[" + $i + "]";
+			string $name = `getAttr $attr`;
+			if($name == "")
+				break;
+			textScrollList -e -append $name rfBINNodeList;
+			++$numAppended;
+		}
+		
+		if($numAppended == 0)
+			$firstOpen = 1;		
+	}
+	
+	if($firstOpen)
+		realflowBINLoadSelectedNodes($fileType);
+	
+	window -e -sizeable false $wnd;
+	int $height = 410;
+	if(`about -mac`)
+		$height += 50;
+	window -e -width 465 -height $height $wnd;
+	showWindow $wnd;
+}

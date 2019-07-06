@@ -1,0 +1,206 @@
+{
+    "alumna_oxide_LM_alumna_oxide_LM": {
+        "asType": "asShader", 
+        "attr": {
+            "backColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "backColorB": 0.5, 
+            "backColorG": 0.5, 
+            "backColorR": 0.5, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "bumpNormalX": 0.0, 
+            "bumpNormalY": 0.0, 
+            "bumpNormalZ": 0.0, 
+            "caching": false, 
+            "color": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "colorB": 0.5, 
+            "colorG": 0.5, 
+            "colorR": 0.5, 
+            "frontColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "frontColorB": 0.5, 
+            "frontColorG": 0.5, 
+            "frontColorR": 0.5, 
+            "frozen": false, 
+            "incandescence": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "incandescenceB": 0.0, 
+            "incandescenceG": 0.0, 
+            "incandescenceR": 0.0, 
+            "inputAOV": 0, 
+            "isHistoricallyInteresting": 2, 
+            "nodeState": 0, 
+            "notes": "LollipopShaders RIS100 LM Preset Name:\nalumna_oxide_LM", 
+            "outColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "outColorB": 0.5, 
+            "outColorG": 0.5, 
+            "outColorR": 0.5, 
+            "presence": 1.0, 
+            "roughness": 0.0, 
+            "sheen": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "sheenB": 0.0, 
+            "sheenG": 0.0, 
+            "sheenR": 0.0, 
+            "shininess": 100.0, 
+            "translucence": 0.0
+        }, 
+        "connection": {
+            "lmlayer": "alumna_oxide_LM_layer_alumna_oxide_LM.result"
+        }, 
+        "type": "PxrLMDiffuse"
+    }, 
+    "alumna_oxide_LM_layer_alumna_oxide_LM": {
+        "asType": "asTexture", 
+        "attr": {
+            "caching": false, 
+            "clearcoatAnisotropy": 0.0, 
+            "clearcoatBehavior": true, 
+            "clearcoatColor": [
+                0.8500000238418579, 
+                0.8500000238418579, 
+                0.8500000238418579
+            ], 
+            "clearcoatColorB": 0.8500000238418579, 
+            "clearcoatColorG": 0.8500000238418579, 
+            "clearcoatColorR": 0.8500000238418579, 
+            "clearcoatEta": 1.2000000476837158, 
+            "clearcoatNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatNnX": 0.0, 
+            "clearcoatNnY": 0.0, 
+            "clearcoatNnZ": 0.0, 
+            "clearcoatRoughness": 0.4000000059604645, 
+            "clearcoatThickness": 0.0, 
+            "clearcoatTn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatTnX": 0.0, 
+            "clearcoatTnY": 0.0, 
+            "clearcoatTnZ": 0.0, 
+            "clearcoatTransmission": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "clearcoatTransmissionB": 1.0, 
+            "clearcoatTransmissionG": 1.0, 
+            "clearcoatTransmissionR": 1.0, 
+            "diffuseBehavior": true, 
+            "diffuseColor": [
+                0.6000000238418579, 
+                0.5784270167350769, 
+                0.5400000214576721
+            ], 
+            "diffuseColorB": 0.5400000214576721, 
+            "diffuseColorG": 0.5784270167350769, 
+            "diffuseColorR": 0.6000000238418579, 
+            "diffuseNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "diffuseNnX": 0.0, 
+            "diffuseNnY": 0.0, 
+            "diffuseNnZ": 0.0, 
+            "diffuseRoughness": 0.5, 
+            "frozen": false, 
+            "incandescence": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "incandescenceB": 0.0, 
+            "incandescenceG": 0.0, 
+            "incandescenceR": 0.0, 
+            "isHistoricallyInteresting": 2, 
+            "layerMask": 1.0, 
+            "lmlayer": "", 
+            "nodeState": 0, 
+            "notes": "LollipopShaders RIS100 LM Preset Name:\nalumna_oxide_LM_layer", 
+            "result": "", 
+            "sheen": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "sheenB": 0.0, 
+            "sheenG": 0.0, 
+            "sheenR": 0.0, 
+            "specularAnisotropy": 0.0, 
+            "specularBehavior": true, 
+            "specularColor": [
+                0.16853590309619904, 
+                0.16853590309619904, 
+                0.16853590309619904
+            ], 
+            "specularColorB": 0.16853590309619904, 
+            "specularColorG": 0.16853590309619904, 
+            "specularColorR": 0.16853590309619904, 
+            "specularEta": [
+                1.100000023841858, 
+                1.100000023841858, 
+                1.100000023841858
+            ], 
+            "specularEtaB": 1.100000023841858, 
+            "specularEtaG": 1.100000023841858, 
+            "specularEtaR": 1.100000023841858, 
+            "specularKappa": [
+                1.8410810232162476, 
+                1.5839999914169312, 
+                2.0
+            ], 
+            "specularKappaB": 2.0, 
+            "specularKappaG": 1.5839999914169312, 
+            "specularKappaR": 1.8410810232162476, 
+            "specularNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularNnX": 0.0, 
+            "specularNnY": 0.0, 
+            "specularNnZ": 0.0, 
+            "specularRoughness": 0.10000000149011612, 
+            "specularTn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularTnX": 0.0, 
+            "specularTnY": 0.0, 
+            "specularTnZ": 0.0
+        }, 
+        "connection": {}, 
+        "type": "PxrLMLayer"
+    }
+}

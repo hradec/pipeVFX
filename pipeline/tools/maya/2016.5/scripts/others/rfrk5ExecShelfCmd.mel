@@ -1,0 +1,91 @@
+global proc rfrk5CreateOpenVDBMesher()
+{
+	rfrk5SelectSeqFile("openvdb_rk_mesh5");
+}
+
+global proc rfrk5CreateOpenVDBHybridoMesher()
+{
+	rfrk5SelectSeqFile("openvdb_hybrido_mesh5");
+}
+
+global proc rfrk5CreateMesher()
+{
+	rfrk5SelectSeqFile("rk_mesh5");
+}
+
+global proc rfrk5CreateHybridoMesher()
+{
+	rfrk5SelectSeqFile("hybrido_mesh5");
+}
+
+global proc rfrk5MrCreateParticler()
+{
+	rfrk5SelectSeqFile("rfrk_particler5");
+}
+
+global proc rfrk5MrCreateCloud()
+{
+	rfrk5SelectSeqFile("rfrk_cloud5");
+}
+
+global proc rfrk5ImportXmlScene()
+{
+	string $dir = `optionVar -q "rfrkLastParticleDir"`;
+	if(!`filetest -d $dir`)
+		$dir = `workspace -q -active`;
+		
+	string $supportedTypes[] = { "xml" };
+	string $filters[] = { "*.xml" };
+	string $defaultMask = "*." + $supportedTypes[0];
+
+	string $callbackCmd = "rfrenderkit -importRfXml ";
+	rfrk5FileBrowserDlg($callbackCmd, "Load", "Load", $defaultMask, 0, $filters, $dir);
+}
+
+global proc rfrk5UpdateVpMesh()
+{
+	string $sel[] = `ls -selection`;
+	for($obj in $sel)
+	{
+		$nodeType = `nodeType $obj`;
+		string $xform;
+		if($nodeType != "transform")
+		{
+			string $relatives[] = `listRelatives -fullPath -noIntermediate -parent $obj`;
+			if( (size($relatives) > 0) && (`nodeType $relatives[0]` == "transform") )
+				$xform = $relatives[0];
+			else
+				continue;
+		}
+		else
+			$xform = $obj;
+
+		string $upstreamPlug = `connectionInfo -sourceFromDestination ($xform + ".miGeoShader")`;
+		string $buffer[];
+		tokenize $upstreamPlug "." $buffer;
+		string $nodeName = $buffer[0];
+
+		if($nodeName == "")
+			continue;
+			
+		$nodeType = `nodeType $nodeName`;
+		if( ($nodeType != "rk_mesh5") && ($nodeType != "hybrido_mesh5") &&
+			($nodeType != "openvdb_rk_mesh5") && ($nodeType != "openvdb_hybrido_mesh5") )
+			continue;
+			
+		rfrk5AddDisplayFlags($nodeName + ".");
+		setAttr ($nodeName + ".vpMesh") 1;
+		rfrk5UpdateMesherViewport($nodeName);
+	}
+}
+
+global proc rfrk5ExecShelfCmd(string $cmd)
+{
+	if(!`pluginInfo -q -loaded "rfrk5"`)
+		error "The RFRK 2015 plug-in is not loaded.";
+		
+	if(!`pluginInfo -q -loaded "Mayatomr"`)
+		loadPlugin Mayatomr;
+
+	evalDeferred $cmd;
+}

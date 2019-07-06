@@ -1,0 +1,12 @@
+global proc AErfrk_displacement5Template(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "RFRK Displacement" -collapse false;
+		editorTemplate -addControl "mute";
+		editorTemplate -callCustom "rfrk5DispSeqCreate" "rfrk5DispSeqReplace" "displaceSeq";
+	editorTemplate -endLayout;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

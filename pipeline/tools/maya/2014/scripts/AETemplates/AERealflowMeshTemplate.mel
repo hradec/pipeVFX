@@ -1,0 +1,132 @@
+/*
+*	Create the file control for the BIN path attribute.
+*/
+global proc realflowMeshBinPathNew(string $attrName)
+{
+	realflowMakeFileControl("File", $attrName, "rfMeshBinPath", "", "*.bin", 0);
+}
+
+/*
+*	Connect an existing file control to the given BIN path attribute.
+*/
+global proc realflowMeshBinPathReplace(string $attrName)
+{
+	realflowConnectStringField($attrName, "rfMeshBinPath", "", "*.bin");
+}
+
+/*
+*	Creates the controls for the clip/cull cube list.
+*/
+global proc realflowClipCubeControlsNew(string $type, string $attrName)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	rowLayout -numberOfColumns 2;
+		text -l ($type + " Cubes");
+		columnLayout -adjustableColumn true;
+			textScrollList -numberOfRows 5 -allowMultiSelection true ("rfCubeList" + $type);
+			rowColumnLayout -numberOfColumns 2 -columnSpacing 2 5;
+				button -l "Add Selected" ("rfCubeAdd" + $type);
+				button -l "Remove" ("rfCubeRemove" + $type);
+			setParent ..;
+		setParent ..;
+	setParent ..;
+	setUITemplate -popTemplate;
+
+	realflowClipCubeControlsReplace($type, $attrName);
+}
+
+global proc realflowRefreshCubeList(string $type, string $attrName)
+{
+	string $cubes[] = `listConnections $attrName`;
+	string $listName = "rfCubeList" + $type;
+	textScrollList -e -removeAll $listName;
+	for($i = 0; $i < size($cubes); ++$i)
+		textScrollList -e -append $cubes[$i] $listName;
+}
+
+/*
+*	Callback for the "Add Selected" button.
+*/
+global proc realflowAddSelectedCubes(string $type, string $attrName)
+{
+	string $selXforms[] = `ls -selection -type transform`;
+	string $cubes[] = `listConnections $attrName`;
+	for($i = 0; $i < size($selXforms); ++$i)
+	{
+		// Don't connect it if it's already connected.
+		int $already = 0;
+		for($j = 0; $j < size($cubes); ++$j)
+		{
+			if($selXforms[$i] == $cubes[$j])
+			{
+				$already = 1;
+				break;
+			}
+		}
+		if($already)
+			continue;
+			
+		connectAttr -nextAvailable ($selXforms[$i] + ".message") $attrName;
+	}
+	
+	realflowRefreshCubeList($type, $attrName);
+}
+
+/*
+*	Callback for the "Remove" button.
+*/
+global proc realflowRemoveSelectedCubes(string $type, string $attrName)
+{
+	string $listName = "rfCubeList" + $type;
+	string $sel[] = `textScrollList -q -selectItem $listName`;
+	for($i = 0; $i < size($sel); ++$i)
+		disconnectAttr -nextAvailable ($sel[$i] + ".message") $attrName;
+
+	realflowRefreshCubeList($type, $attrName);
+}
+
+/*
+*	Connects and existing clip/cull cube list to the given attribute.
+*/
+global proc realflowClipCubeControlsReplace(string $type, string $attrName)
+{
+	realflowRefreshCubeList($type, $attrName);
+	button -e -command ("realflowAddSelectedCubes " + $type + " " + $attrName) ("rfCubeAdd" + $type);
+	button -e -command ("realflowRemoveSelectedCubes " + $type + " " + $attrName) ("rfCubeRemove" + $type);
+}
+
+/*
+*	Creates the AE user interface for the RealFlow Mesh node which loads BIN mesh files.
+*/
+global proc AERealflowMeshTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+	
+	editorTemplate -beginLayout "RealFlow Mesh" -collapse false;
+		editorTemplate -callCustom "realflowMeshBinPathNew" "realflowMeshBinPathReplace" "Path";
+		editorTemplate -label "File Name Format" -addControl "nameFormat";
+		editorTemplate -label "Frame Padding" -addControl "framePadding";
+		editorTemplate -label "Sequence Offset" -addControl "Offset";
+		editorTemplate -label "Time" -addControl "time";
+		editorTemplate -label "Motion Blur Multiplier" -addControl "MotionBlurStrength";
+		editorTemplate -label "Motion Blur Speed Clamp" -addControl "MotionBlurClamp";
+		editorTemplate -label "Level Of Detail" -addControl "LevelOfDetailView";
+		editorTemplate -label "Min Triangle Area" -addControl "FilterArea";
+		editorTemplate -callCustom "realflowClipCubeControlsNew Clip" "realflowClipCubeControlsReplace Clip" "clipCubes";
+		editorTemplate -callCustom "realflowClipCubeControlsNew Cull" "realflowClipCubeControlsReplace Cull" "cullCubes";
+		editorTemplate -beginNoOptimize;
+		editorTemplate -label "Fluid Weights As Blind Data" -addControl "weightsAsBlindData";
+		editorTemplate -label "Export Fluid Weights For mental ray" -addControl "weightsForMR";
+		editorTemplate -label "Velocities As Blind Data" -addControl "velocitiesAsBlindData";
+		editorTemplate -label "Export Velocities For mental ray" -addControl "velocitiesForMR";
+		editorTemplate -endNoOptimize;
+	editorTemplate -endLayout;
+
+	AEabstractBaseCreateTemplate $nodeName;
+	
+	editorTemplate -suppress "LevelOfDetailRender";
+	editorTemplate -suppress "outputMesh";
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

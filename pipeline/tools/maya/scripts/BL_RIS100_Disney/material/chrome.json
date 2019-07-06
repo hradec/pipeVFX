@@ -1,0 +1,65 @@
+{
+    "chrome_chrome": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.30000001192092896, 
+                0.30000001192092896, 
+                0.30000001192092896
+            ], 
+            "baseColorB": 0.30000001192092896, 
+            "baseColorG": 0.30000001192092896, 
+            "baseColorR": 0.30000001192092896, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoat": 1.0, 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.30000001192092896, 
+                0.30000001192092896, 
+                0.30000001192092896
+            ], 
+            "colorB": 0.30000001192092896, 
+            "colorG": 0.30000001192092896, 
+            "colorR": 0.30000001192092896, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "metallic": 1.0, 
+            "outColor": [
+                0.30000001192092896, 
+                0.30000001192092896, 
+                0.30000001192092896
+            ], 
+            "outColorB": 0.30000001192092896, 
+            "outColorG": 0.30000001192092896, 
+            "outColorR": 0.30000001192092896, 
+            "presence": 1.0, 
+            "roughness": 0.125, 
+            "sheenTint": 1.0, 
+            "shininess": 100.0, 
+            "specular": 0.8999999761581421, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

@@ -1,0 +1,213 @@
+
+/*
+
+DVY_Move;
+
+*/
+
+
+///////////////////////////////////////////////////////////////////////////////
+/*			
+				
+	Copyright © 2006 DVY_Move All rights reserved davvey@ntlworld.com
+					
+
+					- DVY_Move -
+						  
+	This script will build Vehicle rig for automatic wheel rotation, which
+	is linked to vehicle movemnet in X and Z axis
+	This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script current has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite ot scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging oif individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, fill in required fields and press
+	"Rig Vehicle" button. This script is called from within DVY_Vehicle Rigger.mel
+	and will set up all four wheels with rotation linked to movemnt and rotation
+	in both X and Z axis. The wheels will maintain correct rotation based on
+	direction of vehicle movement also each wheel can be switched off and will
+	also work with the auto spin setup to allow blending of both options with
+	independant and reversible spin on each wheel.
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |	
+		  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+		This will tilt the Chassis group as reguired. Also each indiviual
+		Wheel can be moved up and down by moving each wheel Group Ground 
+		Locator to simulate ground variations. If these are Geometry constained
+		to a "grtound" object or plane to movement will be automatic.
+	
+
+
+*/
+//////////////////////////////////////////////////////////////////////////
+//					DVY_WheelSpin Procedure
+//////////////////////////////////////////////////////////////////////////
+
+//============================================================================
+//	GLOBAL VARIABLES
+//============================================================================
+	global int $DVYDebug;
+
+// Integer Flag that allows print statements to be output to
+// message field for tracking purposes.
+	
+//============================================================================
+	
+global proc DVY_Move()
+ {
+	global string $GroupV_A[]; global string $RigControlsA[]; global string $SpinAddA[];
+	
+	string $Move_MultSqN[],	$Move_AddN[], $Move_SqRtN[], $Wheel_RotDirN[];
+	string $ZMoveCondN[], $XMoveCondN[], $XZMoveCondN[], $XZMoveCond_AddN[], $MoveClampN[];
+	
+	string $Wheel_CircumN[], $WheelRadiusN[], $WheelDivN[];
+	
+	string $DVYPrefM[] = {"LfFr_", "RtFr_", "LfRr_", "RtRr_"};
+	int $i, $j, $k;
+	
+	$Move_MultSqN[0] = `shadingNode -asUtility multiplyDivide -name Move_MultSqN_1`;
+		setAttr ($Move_MultSqN[0] + ".operation") 1;
+		connectAttr -f ($RigControlsA[0] + ".translate") ($Move_MultSqN[0] + ".input1");
+		connectAttr -f ($RigControlsA[0] + ".translate") ($Move_MultSqN[0] + ".input2");
+		connectAttr -f ($Move_MultSqN[0] + ".outputX")	($RigControlsA[0] + ".Move_MultSqNX_Out");	
+		connectAttr -f ($Move_MultSqN[0] + ".outputZ")	($RigControlsA[0] + ".Move_MultSqNZ_Out");	
+
+	$Move_AddN[0] = `shadingNode -asUtility addDoubleLinear -name MoveRig_AddN_1`;
+		connectAttr -f ($Move_MultSqN[0] + ".outputX") ($Move_AddN[0] + ".input1");
+		connectAttr -f ($Move_MultSqN[0] + ".outputZ") ($Move_AddN[0] + ".input2");
+		connectAttr -f ($Move_AddN[0] + ".output") ($RigControlsA[0] + ".MoveRig_AddN_Out");
+
+	$Move_SqRtN[0] = `shadingNode -asUtility multiplyDivide -name MoveRig_SqRtN_1`;
+		setAttr ($Move_SqRtN[0] + ".operation") 3;
+		setAttr ($Move_SqRtN[0] + ".input2X") 0.5;
+		connectAttr -f ($Move_AddN[0] + ".output") ($Move_SqRtN[0] + ".input1X");
+		connectAttr -f ($Move_SqRtN[0] + ".outputX") ($RigControlsA[0] + ".MoveRig_SqRtN_Out");
+		
+	$XMoveCondN[0] = `createNode condition -name XMove_CondN_1`;
+		setAttr ($XMoveCondN[0] + ".op") 2;
+		setAttr ($XMoveCondN[0] + ".ft") 0;
+		setAttr ($XMoveCondN[0] + ".cfr") 1;
+		setAttr ($XMoveCondN[0] + ".ctr") -1;
+		connectAttr -f ($RigControlsA[0] + ".translateX")  ($XMoveCondN[0] + ".st");
+		connectAttr -f ($XMoveCondN[0] + ".ocr")  ($RigControlsA[0] + ".XMoveCondN_Out");
+		
+	$ZMoveCondN[0] = `createNode condition -name ZMove_CondN_1`;
+		setAttr ($ZMoveCondN[0] + ".op") 2;
+		setAttr ($ZMoveCondN[0] + ".ft") 0;
+		setAttr ($ZMoveCondN[0] + ".cfr") 1;
+		setAttr ($ZMoveCondN[0] + ".ctr") -1;
+		connectAttr -f ($RigControlsA[0] + ".translateZ")  ($ZMoveCondN[0] + ".st");
+		connectAttr -f ($ZMoveCondN[0] + ".ocr")  ($RigControlsA[0] + ".ZMoveCondN_Out");		
+
+	$XZMoveCond_AddN[0] = `shadingNode -asUtility addDoubleLinear -name XZMoveCond_AddN_1`;
+		connectAttr -f ($XMoveCondN[0] + ".ocr") ($XZMoveCond_AddN[0] + ".input1");
+		connectAttr -f ($ZMoveCondN[0] + ".ocr") ($XZMoveCond_AddN[0] + ".input2");
+		connectAttr -f ($XZMoveCond_AddN[0] + ".output") ($RigControlsA[0] + ".XZMoveCond_AddN_Out");
+		
+	$XZMoveCondN[0] = `createNode condition -name XZMove_CondN_1`;
+		setAttr ($XZMoveCondN[0] + ".op") 2;
+		setAttr ($XZMoveCondN[0] + ".cfr") 1;
+		setAttr ($XZMoveCondN[0] + ".ctr") -1;
+		connectAttr -f ($XMoveCondN[0] + ".ocr") ($XZMoveCondN[0] + ".ft");
+		connectAttr -f ($ZMoveCondN[0] + ".ocr") ($XZMoveCondN[0] + ".st");
+		connectAttr -f ($XZMoveCondN[0] + ".ocr") ($RigControlsA[0] + ".XZMoveCondN_Out");
+
+	string $XZSumNosw[];
+	
+	$XZSumN[0] = `createNode plusMinusAverage -name XZSumN_1`;
+		setAttr ($XZSumN[0] + ".op") 3;
+		connectAttr -f ($XMoveCondN[0] + ".ocr") ($XZSumN[0] + ".input1D[1]");
+		connectAttr -f ($ZMoveCondN[0] + ".ocr") ($XZSumN[0] + ".input1D[2]");
+		connectAttr -f ($XZMoveCondN[0] + ".ocr") ($XZSumN[0] + ".input1D[3]");
+		
+	string $XZSumCondN[];
+		
+	$XZSumCondN[0] = `createNode condition -name XZSumCondN_1`;
+		setAttr ($XZSumCondN[0] + ".op") 4;
+		setAttr ($XZSumCondN[0] + ".ft") 0;
+		setAttr ($XZSumCondN[0] + ".cfr") -1;
+		setAttr ($XZSumCondN[0] + ".ctr") 1;
+		connectAttr -f ($XZSumN[0] + ".output1D") ($XZSumCondN[0] + ".st");
+		connectAttr -f ($XZSumCondN[0] + ".ocr") ($RigControlsA[0] + ".XZSumN_Out");
+		
+		
+	for($i=0; $i<4; $i++)
+	  {
+		$Wheel_CircumN[$i] = `shadingNode -asUtility multDoubleLinear -name ($DVYPrefM[$i] + "Wheel_CircumN_1")`;
+			setAttr ($Wheel_CircumN[$i] + ".input2") (3.142/360);		// Value for Pi to calculate rotation.
+			
+		$WheelRadiusN[$i] = `shadingNode -asUtility distanceBetween -name ($DVYPrefM[$i] + "Wheel_RadiusN_1")`;
+			connectAttr -f ($DVYPrefM[($i)] + "Wheel_LocD_1" + ".center") ($WheelRadiusN[$i] + ".point1");
+			connectAttr -f ($DVYPrefM[($i)] + "Susp_LocGrd_1" + ".center") ($WheelRadiusN[$i] + ".point2");
+			connectAttr -f ($WheelRadiusN[$i] + ".distance") ($Wheel_CircumN[$i] + ".input1") ;
+		
+		$WheelDivN[$i] = `shadingNode -asUtility multiplyDivide -name ($DVYPrefM[$i] + "Wheel_DivN_1")`;
+			setAttr ($WheelDivN[$i] + ".operation") 2;
+			connectAttr -f ($Move_SqRtN[0] + ".outputX") ($WheelDivN[$i] + ".input1X");
+			connectAttr -f ($Wheel_CircumN[$i] + ".output") ($WheelDivN[$i] + ".input2X"); // Wheel Circumference output.			
+	
+		$Wheel_RotDirN[$i] = `shadingNode -asUtility multDoubleLinear -name ($DVYPrefM[$i] + "Wheel_RotDirN_1")`;
+			connectAttr -f ($XZSumCondN[0] + ".ocr") ($Wheel_RotDirN[$i] + ".input1");
+			connectAttr -f ($WheelDivN[$i] + ".outputX") ($Wheel_RotDirN[$i] + ".input2");
+			connectAttr -f ($Wheel_RotDirN[$i] + ".output")	($DVYPrefM[$i] + "WheelRotatorN_1.input[1]");
+		
+	  }
+		
+		print "\n DVY_Move has set up Nodes for rotating wheels when vehicle is moved and rotated in X and Z axis. Davvey © 2006..\n";
+
+ }	//	End of DVY_Move procedure

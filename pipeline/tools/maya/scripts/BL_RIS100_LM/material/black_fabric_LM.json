@@ -1,0 +1,206 @@
+{
+    "black_fabric_LM_black_fabric_LM": {
+        "asType": "asShader", 
+        "attr": {
+            "backColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "backColorB": 0.5, 
+            "backColorG": 0.5, 
+            "backColorR": 0.5, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "bumpNormalX": 0.0, 
+            "bumpNormalY": 0.0, 
+            "bumpNormalZ": 0.0, 
+            "caching": false, 
+            "color": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "colorB": 0.5, 
+            "colorG": 0.5, 
+            "colorR": 0.5, 
+            "frontColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "frontColorB": 0.5, 
+            "frontColorG": 0.5, 
+            "frontColorR": 0.5, 
+            "frozen": false, 
+            "incandescence": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "incandescenceB": 0.0, 
+            "incandescenceG": 0.0, 
+            "incandescenceR": 0.0, 
+            "inputAOV": 0, 
+            "isHistoricallyInteresting": 2, 
+            "nodeState": 0, 
+            "notes": "LollipopShaders RIS100 LM Preset Name:\nblack_fabric_LM", 
+            "outColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "outColorB": 0.5, 
+            "outColorG": 0.5, 
+            "outColorR": 0.5, 
+            "presence": 1.0, 
+            "roughness": 0.0, 
+            "sheen": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "sheenB": 0.0, 
+            "sheenG": 0.0, 
+            "sheenR": 0.0, 
+            "shininess": 100.0, 
+            "translucence": 0.0
+        }, 
+        "connection": {
+            "lmlayer": "black_fabric_LM_layer_black_fabric_LM.result"
+        }, 
+        "type": "PxrLMDiffuse"
+    }, 
+    "black_fabric_LM_layer_black_fabric_LM": {
+        "asType": "asTexture", 
+        "attr": {
+            "caching": false, 
+            "clearcoatAnisotropy": 0.0, 
+            "clearcoatBehavior": false, 
+            "clearcoatColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "clearcoatColorB": 1.0, 
+            "clearcoatColorG": 1.0, 
+            "clearcoatColorR": 1.0, 
+            "clearcoatEta": 1.2999999523162842, 
+            "clearcoatNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatNnX": 0.0, 
+            "clearcoatNnY": 0.0, 
+            "clearcoatNnZ": 0.0, 
+            "clearcoatRoughness": 0.009999999776482582, 
+            "clearcoatThickness": 0.0, 
+            "clearcoatTn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatTnX": 0.0, 
+            "clearcoatTnY": 0.0, 
+            "clearcoatTnZ": 0.0, 
+            "clearcoatTransmission": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "clearcoatTransmissionB": 1.0, 
+            "clearcoatTransmissionG": 1.0, 
+            "clearcoatTransmissionR": 1.0, 
+            "diffuseBehavior": true, 
+            "diffuseColor": [
+                0.17000000178813934, 
+                0.14330999553203583, 
+                0.14330999553203583
+            ], 
+            "diffuseColorB": 0.14330999553203583, 
+            "diffuseColorG": 0.14330999553203583, 
+            "diffuseColorR": 0.17000000178813934, 
+            "diffuseNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "diffuseNnX": 0.0, 
+            "diffuseNnY": 0.0, 
+            "diffuseNnZ": 0.0, 
+            "diffuseRoughness": 0.8999999761581421, 
+            "frozen": false, 
+            "incandescence": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "incandescenceB": 0.0, 
+            "incandescenceG": 0.0, 
+            "incandescenceR": 0.0, 
+            "isHistoricallyInteresting": 2, 
+            "layerMask": 1.0, 
+            "lmlayer": "", 
+            "nodeState": 0, 
+            "notes": "LollipopShaders RIS100 LM Preset Name:\nblack_fabric_LM_layer", 
+            "result": "", 
+            "sheen": [
+                0.550000011920929, 
+                0.46365001797676086, 
+                0.46365001797676086
+            ], 
+            "sheenB": 0.46365001797676086, 
+            "sheenG": 0.46365001797676086, 
+            "sheenR": 0.550000011920929, 
+            "specularAnisotropy": 0.0, 
+            "specularBehavior": false, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "specularEta": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularEtaB": 1.0, 
+            "specularEtaG": 1.0, 
+            "specularEtaR": 1.0, 
+            "specularKappa": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularKappaB": 0.0, 
+            "specularKappaG": 0.0, 
+            "specularKappaR": 0.0, 
+            "specularNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularNnX": 0.0, 
+            "specularNnY": 0.0, 
+            "specularNnZ": 0.0, 
+            "specularRoughness": 1.0, 
+            "specularTn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularTnX": 0.0, 
+            "specularTnY": 0.0, 
+            "specularTnZ": 0.0
+        }, 
+        "connection": {}, 
+        "type": "PxrLMLayer"
+    }
+}

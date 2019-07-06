@@ -1,0 +1,350 @@
+
+
+global proc glmLaunchTuto(string $tutoURL)
+{
+	launch -web $tutoURL;
+}
+
+
+global proc glmCrowdSampleUpdateButtons()
+{
+	string $currentRenderer = `getAttr script1.currentRenderer`;
+	if ($currentRenderer!="")
+	{
+		if ($currentRenderer=="mentalRay") {button -e -bgc 0 0.8 0 "mrButton";} else { button -e -en false "mrButton";}
+		if ($currentRenderer=="vray") {button -e -bgc 0 0.8 0 "vrButton";} else { button -e -en false "vrButton";}
+		if ($currentRenderer=="arnold") {button -e -bgc 0 0.8 0 "arButton";} else { button -e -en false "arButton";}
+		if ($currentRenderer=="_3delight") {button -e -bgc 0 0.8 0 "dlButton";} else { button -e -en false "dlButton";}
+		if ($currentRenderer=="renderMan") {button -e -bgc 0 0.8 0 "rmButton";} else { button -e -en false "rmButton";}
+		if ($currentRenderer=="renderManRIS") {button -e -bgc 0 0.8 0 "rmRisButton";} else { button -e -en false "rmRisButton";}
+	}
+	
+	glmCrowdSampleUpdateRadioButtons();
+}
+
+global proc glmCrowdSampleUpdateRadioButtons()
+{
+	int $light = `attributeQuery -node "script1" -ex "isLightProps"`;
+	if ($light)
+	{
+		string $isLightProps = `getAttr script1.isLightProps`;
+		if ($isLightProps==1)
+		{
+			radioButton -edit -enable false glmCompleteButton;
+		}
+		else if ($isLightProps==0)
+		{
+			radioCollection -edit -select glmCompleteButton glmPropsRC;
+		}
+	}
+}
+
+global proc string glmCrowdDirmapPath(string $path)
+{
+	string $packdir = `dirmap -cd "/atomo/pipeline/tools/golaem/characterPack/5.2/"`;
+	return $packdir + $path;
+}
+
+global proc glmCrowdSamplePrepareRenderFor(string $renderer)
+{
+	// Note: if $shadersStartPath ends by .ma it means there is no renderer specific shader file, and the shadersPath variable value will not be used in the end
+	string $shadersPathSuffix = "";
+	string $shadersStartPath = "";
+	if (`attributeQuery -node "script1" -ex "shadersStartPath"`)
+	{
+		$shadersStartPath = `getAttr script1.shadersStartPath`;
+	}
+	
+	$pluginLoaded = false;
+	switch ($renderer) 
+	{
+		case "mentalRay":
+			$shadersPathSuffix = "_MR.ma";
+			$pluginLoaded = `pluginInfo -q -loaded Mayatomr`;
+		break;
+		
+		case "vray":
+			$shadersPathSuffix = "_VR.ma";
+			$pluginLoaded = `pluginInfo -q -loaded vrayformaya`;
+		break;
+		
+		case "arnold":
+			$shadersPathSuffix = "_AR.ma";
+			$pluginLoaded = `pluginInfo -q -loaded mtoa`;
+		break;
+		
+		case "_3delight":
+			$shadersPathSuffix = "_DL.ma";
+			string $mayaVersion = glmGetMayaVersion();
+            string $delightPlugin = ("3delight_for_maya"+$mayaVersion);
+			$pluginLoaded = `pluginInfo -q -loaded $delightPlugin`;
+		break;
+		
+		case "renderMan":
+			$shadersPathSuffix = "_RMS.ma";
+			$pluginLoaded = `pluginInfo -q -loaded RenderMan_for_Maya`;
+		break;
+		
+		case "renderManRIS":
+			$shadersPathSuffix = "_RIS.ma";
+			$pluginLoaded = `pluginInfo -q -loaded RenderMan_for_Maya`;
+		break;
+	};
+	
+	int $enableConfirmDialog = `attributeQuery -node "script1" -ex "enableConfirmDialog"`;
+	if ($enableConfirmDialog)
+	{
+		if (`getAttr script1.enableConfirmDialog`==0)
+		{
+			$enableConfirmDialog=0;
+		}
+	}
+	
+	if ($pluginLoaded)
+	{
+	    string $shaderPathArray[] = stringToStringArray($shadersStartPath, ";");
+		
+		for($shadersPath in $shaderPathArray)
+		{
+			$shadersPath = glmCrowdDirmapPath($shadersPath);
+			if (!(endsWith($shadersPath, ".ma")))
+			{
+				$shadersPath += $shadersPathSuffix ;
+			}
+			
+			$fileExists = `filetest -e $shadersPath`;
+			if ($fileExists)
+			{
+				if (catch(`file -import -mergeNamespacesOnClash true -prompt false $shadersPath`))
+				{
+					print ("errors while importing"+$shadersPath);
+				}
+			}
+			else
+			{
+				$msgString = "Trying to load " + $shadersPath + "\nSorry there are no shaders provided for " + $renderer +" in this sample";
+				if($enableConfirmDialog)
+				{
+					confirmDialog -title "Warning" -message $msgString;
+				}
+				else
+				{
+					print($msgString + "\n");
+				}
+			}
+		}
+		
+		$entitySurfaceShapes = `ls -l -et CrowdEntityTypeNode`;
+		for ( $entitySurfaceShape in $entitySurfaceShapes ) 
+		{
+			$attrName = $entitySurfaceShape + ".skinnedMeshNeedRefresh";
+			setAttr $attrName 1;
+		}
+		
+		setCurrentRenderer $renderer;
+		rendererChanged;
+		
+		string $additionalMessage = "";
+		
+		if ($renderer == "_3delight")
+		{
+			// check if the renderPass has been initialized yet
+			$delightPass="";
+			string $delightRenderGlobals[] = `ls -type "delightRenderGlobals"`;
+			if (size($delightRenderGlobals) > 0)
+			{
+				$delightPass = glmGetMapNode($delightRenderGlobals[0]+".renderPass");
+			}
+			
+			if ($delightPass == "")
+			{
+				DRG_createAndConnectRenderPassNode;
+			}
+			
+			$additionalMessage = "- created a default render pass";
+		}
+		else if ($renderer == "arnold")
+		{
+			// create a light
+			directionalLight -rotation -15.723 94.090 16.646 -position 41.145 23.838 0;
+			
+			$additionalMessage = "- created a light";
+		}
+		else if ($renderer == "renderMan")
+		{
+			rmanChangeRendererUpdate;
+			$particleSystems = `ls -l -et particle`;
+			for ( $particleSystem in $particleSystems ) 
+			{
+			    rmanAddAttr $particleSystem `rmanGetAttrName "rman__riattr__visibility_camera"` false;
+				rmanAddAttr $particleSystem `rmanGetAttrName "rman__riattr__visibility_transmission"` false;
+			}
+			
+			$additionalMessage = "- created a Renderman light\n- decreased max samples to 8\n- set Renderman Attribute Camera Visibility to false on Particle Systems";
+		}
+		else if ($renderer == "renderManRIS")
+		{
+			rmanChangeRendererUpdate;
+			rmanLoadPlugin; rmanCreateNode -asLight "" RMSEnvLight;
+			setAttr "renderManRISGlobals.rman__riopt__Hider_maxsamples" 8;
+			
+			$particleSystems = `ls -l -et particle`;
+			for ( $particleSystem in $particleSystems ) 
+			{
+				rmanAddAttr $particleSystem `rmanGetAttrName "rman__riattr__visibility_camera"` false;
+				rmanAddAttr $particleSystem `rmanGetAttrName "rman__riattr__visibility_transmission"` false;
+			}
+			
+			$additionalMessage = "- created a Renderman light\n- decreased max samples to 8\n- set Renderman Attribute Camera Visibility to false on Particle Systems";
+		}
+		
+		setAttr -type "string" script1.currentRenderer $renderer;
+
+		int $lightButtonExists = `radioButton -query -exists glmLightButton`;
+		if ($lightButtonExists)
+		{
+			int $light = `radioButton -query -select glmLightButton`;
+			if ($light)
+			{
+				setAttr -type "string" script1.isLightProps "1";
+			}
+			else
+			{
+				setAttr -type "string" script1.isLightProps "0";
+			}
+		}
+		currentTime -e `currentTime -q`;
+		glmCrowdSampleUpdateButtons();
+		
+		
+		$msgString = "The sample scene has been configured for " + $renderer +".\n";
+		$msgString = $msgString + "- imported shaders ( and deleted namespace)\n";
+		$msgString = $msgString + "- set " + $renderer + " as current renderer\n- created a rendering proxy.\n"+$additionalMessage+"\n\nDo not forget to export your simulation before rendering (in order to create cache and fill the rendering proxy parameters)";
+		if($enableConfirmDialog)
+		{
+			confirmDialog -title "Sample Scene Configured" -message $msgString;
+		}
+		else
+		{
+			print($msgString + "\n");
+		}
+	}
+	else
+	{
+		$msgString = $renderer + " plugin is not loaded. Please load it and try again.";
+		if($enableConfirmDialog)
+		{
+			confirmDialog -title "Renderer plugin not loaded!" -message $msgString;
+		}
+		else
+		{
+			print($msgString + "\n");
+		}
+	}
+}
+
+global proc glmDeleteSampleConfigWindow()
+{
+	if (`window -exists "glmCrowdSampleConfigWindow"`)
+	{
+		deleteUI "glmCrowdSampleConfigWindow";
+	}
+}
+
+global proc string glmCreateSampleConfigWindow()
+{
+	glmDeleteSampleConfigWindow();
+	window -title "Golaem Crowd Sample Config" -wh 163 360 "glmCrowdSampleConfigWindow";
+	return `scrollLayout`;
+}
+
+global proc glmRenderListTemplate(string $layout)
+{
+	text -label "Prepare Sample Scene for\n" -parent $layout "rendererLabel" ;
+	button -label "Mental Ray" -w 150 -h 30 -c ("glmCrowdSamplePrepareRenderFor(\"mentalRay\")") mrButton;
+	button -label "V-Ray" -w 150 -h 30 -c ("glmCrowdSamplePrepareRenderFor(\"vray\")") -parent $layout vrButton ;
+	button -label "Arnold" -w 150 -h 30 -c ("glmCrowdSamplePrepareRenderFor(\"arnold\")") -parent $layout arButton ;
+	button -label "3Delight" -w 150 -h 30 -c ("glmCrowdSamplePrepareRenderFor(\"_3delight\")") -parent $layout dlButton ;
+	button -label "Renderman REYES" -w 150 -h 30 -c ("glmCrowdSamplePrepareRenderFor(\"renderMan\")") -parent $layout rmButton ;
+	button -label "Renderman RIS" -w 150 -h 30 -c ("glmCrowdSamplePrepareRenderFor(\"renderManRIS\")") -parent $layout rmRisButton ;
+}
+
+global proc glmTutoButtonTemplate(string $layout, string $tutoURL)
+{
+	if ($tutoURL!="")
+	{
+		separator -w 150 -h 20 -style  "none" -parent $layout;
+		text -label "Related tutorial\n" -parent $layout "tutoLabel" ;
+		button -label "Open in browser" -w 150 -h 30 -c ("glmLaunchTuto(\""+$tutoURL+"\")") -parent $layout "tutoButton" ;
+	}
+}
+
+global proc glmSetCrowdManPropsDiversity(int $light)
+{
+	string $crowdManGCHAPath = "golaem/characters/crowdMan_light.gcha";
+	string $shadersStartPath = "golaem/shaders/CMO-man_golaem-light";
+	
+	if (!$light)
+	{
+		$crowdManGCHAPath = "golaem/characters/crowdMan.gcha";
+		$shadersStartPath = "golaem/shaders/CMO-man_golaem";
+	}
+	setAttr -type "string" script1.shadersStartPath $shadersStartPath;
+	
+	$crowdManGCHAPath = glmCrowdDirmapPath($crowdManGCHAPath);
+	$entityTypes = `ls -type "CrowdEntityTypeNode"` ;
+	for( $entityType in $entityTypes )
+	{
+		setAttr -type "string" ($entityType+".characterFile") $crowdManGCHAPath;
+	}
+	
+	setAttr -type "string" crowdManagerNodeShape.characterFiles $crowdManGCHAPath;
+	
+	button -e -c ("glmCrowdSamplePrepareRenderFor(\"mentalRay\")") mrButton;
+	button -e -c ("glmCrowdSamplePrepareRenderFor(\"vray\")")  vrButton ;
+	button -e -c ("glmCrowdSamplePrepareRenderFor(\"arnold\")")  arButton ;
+	button -e -c ("glmCrowdSamplePrepareRenderFor(\"_3delight\")")  dlButton ;
+	button -e -c ("glmCrowdSamplePrepareRenderFor(\"renderMan\")")  rmButton ;
+	button -e -c ("glmCrowdSamplePrepareRenderFor(\"renderManRIS\")")  rmRisButton ;
+}
+
+
+global proc glmCrowdManPropsDiversityTemplate(string $layout, int $lightIsDefault)
+{
+	text -label "Set Props diversity to" ;
+	rowLayout -numberOfColumns 2;
+	string $propsRC = `radioCollection glmPropsRC`;
+	string $propsLightRB = `radioButton -label "Light" -onCommand "glmSetCrowdManPropsDiversity(true)" glmLightButton`;
+	string $propsCompleteRB = `radioButton -label "Complete" -onCommand "glmSetCrowdManPropsDiversity(false)" glmCompleteButton`;
+	setParent ..;
+	
+	separator -w 150 -h 20 -style  "none" -parent $layout;
+}
+
+global proc glmCrowdSampleConfig(string $tutoURL)
+{
+	string $layout = glmCreateSampleConfigWindow();
+	
+	glmRenderListTemplate($layout);
+	glmTutoButtonTemplate($layout, $tutoURL);
+	
+	glmCrowdSampleUpdateButtons();
+	
+	showWindow "glmCrowdSampleConfigWindow";
+}
+
+global proc glmCrowdSampleConfigCrowdMan(string $tutoURL, int $lightIsDefault)
+{
+	string $layout = glmCreateSampleConfigWindow();
+		
+	glmCrowdManPropsDiversityTemplate($layout,$lightIsDefault);
+	glmRenderListTemplate($layout); // note shaders start path is init by radiobutton command at init time
+	glmTutoButtonTemplate($layout, $tutoURL);
+	
+	radioCollection -edit -select glmLightButton glmPropsRC;
+	
+	glmCrowdSampleUpdateButtons();
+	glmCrowdSampleUpdateRadioButtons();
+	
+	showWindow "glmCrowdSampleConfigWindow";
+}

@@ -1,0 +1,232 @@
+
+///////////////////////////////////////////////////////////////////////////////
+/*			
+				
+	Copyright © 2006 DVY_Vehicle Rigger. All rights reserved davvey@ntlworld.com
+					
+
+				 - DVY_VehicleRigger -
+				
+	This script will build Vehicle rigg for wheel rotation, suspension
+	and steering. This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script current has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite ot scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging oif individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, use default values is you have named them 
+	as shown or selct each item in turn and load required field. Also you can type names
+	in the field as required. Script will error out if not all items are found.
+	Once all fields correct press "Rig Vehicle" button. 
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |	
+		  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+		This will tilt the Chassis group as reguired. Also each indiviual
+		Wheel can be moved up and down by moving each wheel Group Ground 
+		Locator to simulate ground variations. If these are Geometry constained
+		to a "grtound" object or plane to movement will be automatic.
+	
+
+
+*/
+
+	
+//////////////////////////////////////////////////////////////////////////
+//					DVY_VehicleRigger Procedure
+//////////////////////////////////////////////////////////////////////////
+
+
+//============================================================================
+//	GLOBAL VARIABLES
+//============================================================================
+	global int $DVYDebug;
+
+// Integer Flag that allows print statements to be output to
+// message field for tracking purposes.
+		
+//============================================================================
+
+	
+global proc DVY_VehicleRigger()
+{
+	global int $DVYDebug; global string $GroupV_A[]; global string $DVY_VehName;
+	string $DVYSel[];
+
+	string $SpringSetup;		// Spring Tab Name
+	string $VehicleOptions;		// Vehicle location Tab Nmae.
+	string $TempSel;	int $DVYName = 0; 	string $Named[];	string $Name;
+	global string $DVYSide ="NA";	global string $DVYPos ="NA"; 	global string $DVYLocn ="NA";
+
+	global string $DVYList = "VehicleGroupTextScrollList";
+	
+	//	Check for any "Window History" and delete if it exists.
+	 	if (`windowPref -exists DVY_VehiclRigWindow`) windowPref -r DVY_VehiclRigWindow;
+			windowPref -edit -topLeftCorner 250 750 -widthHeight 315 600 DVY_VehicleRigWindow;
+	
+	//Check for multiple similar windows.
+		if (`window -q -ex DVY_VehicleRigWindow`) deleteUI DVY_VehicleRigWindow;
+	//Build window.
+		window -w 315 -h 600 -title "Davvey's Vehicle Rigger v1.0" DVY_VehicleRigWindow;
+	
+	//Build 'Edit' menu.
+	
+	string $menuBarLayout = `menuBarLayout`;
+		menu -label "Edit"; 
+ 			menuItem -label "Close" -command "deleteUI DVY_VehicleRigWindow";		
+		
+	// Create Vehicle Tab
+		columnLayout -cat "both" 2 -cal "center" -adjustableColumn true "Vehicle Parts:";
+
+	// Title and Info Section for the "Initial Setup" tab. 
+		
+		text -height 5 -label " " ;	//Spacer
+		separator -height 5 -style "double" ;
+		text -bgc .5 .5 1 -height 20 -align "center" -font "boldLabelFont" -label "Setup Vehicle Group Options Setup.";
+		separator -height 5 -style "double";
+		text -height 5 -label " " ;	//Spacer
+		
+	rowColumnLayout  -nc 2 -cw 1 150 -cat 1 "both" 1 -cal 1 "center"
+						   -cw 2 150 -cat 2 "both" 1 -cal 2 "center" ;
+	
+		textField -text "Davveys_Car" -ann "Enter Vehicle Name and Press button" VehicleGrpNTextField;
+		textField -text " " -editable false VehicleGrpNameTextField;
+			
+	setParent..;	
+	
+		button -bgc 0.7 1 0.7 -label "Enter Vehicle Name  >>"
+			-command "$TempSel[0] = `textField -q -tx VehicleGrpNTextField`;\ $GroupV_A[0] = $TempSel[0];\ textField -edit -text $TempSel[0] VehicleGrpNameTextField;";
+		text -height 5 -label " ";	
+		separator -h 5 -style "double";
+		text -height 5 -label " ";
+		text -height 45 -bgc 1 1 0.85 -align "left" 
+			-label " Select the Top node and press button, then the Group node\n for the BodyShell and also the Body geometry of the Vehicle\n then each of respective Wheel Groups:";
+		separator -h 5 -style "double";
+				
+	//Create Vehicle Tab
+	
+	rowColumnLayout -numberOfColumns 1 -columnWidth 1 300
+		-cat 1 "both" 1 -cal 1 "center" "VehicleList";	
+
+		text -height 5 " ";	
+		textField -height 25 -text "DavveyCar" "VehicleTopNodeTxField";
+		text -height 2 " ";
+		button -bgc 0.7 1 0.7 -label  "Vehicle Top Node  >>" -height 20
+			-command "$TempSel = `ls - sl`;\$GroupV_A[1] = $TempSel[0];\ textField -edit -text $TempSel VehicleTopNodeTxField;";	
+		text -height 2 " ";
+		
+		textField -height 25 -text "BodyShell_GrpN_1" "VehicleBodyShellGrpTxField";
+		text -height 2 " ";
+		button -bgc 0.7 1 0.7 -label  "BodyShell Group  >>" -height 20
+			-command "$TempSel = `ls - sl`; \$GroupV_A[2] = $TempSel[0];\ textField -edit -text $TempSel VehicleBodyShellGrpTxField;";	
+		text -height 2 " ";
+		
+		textField -height 25 -text "BodyWork_GrpN_1" "VehicleBodyShellTxField";
+		text -height 2 " ";
+		button -bgc 0.7 1 0.7 -label  "BodyShell   >>" -height 20
+			-command "$TempSel = `ls - sl`; \$GroupV_A[3] = $TempSel[0];\ textField -edit -text $TempSel VehicleBodyShellTxField;";	
+		text -height 2 " ";
+
+		textField -height 25 -text "LfFr_Wheel_Grp_1" "LfFr_WheelTxField";
+		text -height 2 " ";
+		button -bgc 0.7 1 0.7 -label "Left Front Wheel Group >>" -height 20
+			-command "$TempSel = `ls - sl`; \ $GroupV_A[4] = $TempSel[0];\ textField -edit -text $TempSel LfFr_WheelTxField;";	
+		text -height 2 " ";
+		
+		textField -height 25 -text "RtFr_Wheel_Grp_1" "RtFr_WheelTxField";
+		text -height 2 " ";
+		button -bgc 0.7 1 0.7 -label "Right Front Wheel Group >>" -height 20
+			-command "$TempSel = `ls - sl`;\ $GroupV_A[5] = $TempSel[0];\ textField -edit -text $TempSel RtFr_WheelTxField;";	
+		text -height 2 " ";
+		
+		textField -height 25 -text "LfRr_Wheel_Grp_1" "LfRr_WheelTxField";
+		text -height 2 " ";
+		button -bgc 0.7 1 0.7 -label "Left Rear Wheel Group >>" -height 20
+			-command "$TempSel = `ls - sl`;\ $GroupV_A[6] = $TempSel[0];\ textField -edit -text $TempSel LfRr_WheelTxField;";	
+		text -height 2 " ";
+	
+		textField -height 25 -text "RtRr_Wheel_Grp_1" "RtRr_WheelTxField";
+		text -height 2 " ";
+		button -bgc 0.7 1 0.7 -label "Right Rear Wheel Group >>" -height 20
+			-command "$TempSel = `ls - sl`;\ $GroupV_A[7] = $TempSel[0];\ textField -edit -text $TempSel RtRr_WheelTxField;";	
+		text -height 2 " ";
+
+		$GroupV_A[1] = "";
+		$GroupV_A[1] = "DavveyCar";
+		$GroupV_A[2] = "BodyShell_GrpN_1";
+		$GroupV_A[3] = "BodyWork_GrpN_1";
+		$GroupV_A[4] = "LfFr_Wheel_Grp_1";
+		$GroupV_A[5] = "RtFr_Wheel_Grp_1";
+		$GroupV_A[6] = "LfRr_Wheel_Grp_1";
+		$GroupV_A[7] = "RtRr_Wheel_Grp_1";
+		print ("$GroupV_A is:- \n");
+		print $GroupV_A;
+		print (" © Davvey..\n");
+		
+		
+	// Build Vehicle Rig	
+		separator -h 10 -style "double";
+		text -height 5 " ";
+		button -height 25 -bgc 0.7 0.7 1 -label "Rig Vehicle" -command "DVY_RigVehicle($GroupV_A);"
+				Vehicle_Builder;	
+		text -height 5 " ";
+
+	setParent..;		
+	
+	//Show the Vehicle Rigger window.
+	
+	showWindow DVY_VehicleRigWindow;
+}

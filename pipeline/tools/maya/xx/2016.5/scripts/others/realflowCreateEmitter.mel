@@ -1,0 +1,195 @@
+proc string[] realflowCreateOldEmitter(int $nameFormat, int $padding, string $path, string $prefix, int $type, float $lod, int $offset, int $useRange, int $rangeStart, int $rangeEnd, int $rangeClip)
+{
+	string $emitterName = `createNode RealflowEmitter`;
+	setAttr ($emitterName + ".LoadSeqs[0]") 1;
+	setAttr ($emitterName + ".NameFormats[0]") $nameFormat;
+	setAttr ($emitterName + ".Paddings[0]") $padding;
+	setAttr ($emitterName + ".types[0]") $type;
+	setAttr -type "string" ($emitterName + ".Paths[0]") $path;
+	setAttr -type "string" ($emitterName + ".Prefixes[0]") $prefix;
+	setAttr ($emitterName + ".LOD") $lod;
+	setAttr ($emitterName + ".Offsets[0]") $offset;
+	setAttr ($emitterName + ".UseRanges[0]") $useRange;
+	setAttr ($emitterName + ".MinRanges[0]") $rangeStart;
+	setAttr ($emitterName + ".MaxRanges[0]") $rangeEnd;
+	setAttr ($emitterName + ".ClipRanges[0]") $rangeClip;
+	
+	// Create the particle shape.
+	$particleName = `particle`;
+	connectDynamic -emitters $emitterName $particleName[0];
+	
+	// Set the particle lifespan mode to "lifespanPP" so that we can kill particles from inside the emitter.
+	setAttr ($particleName[1] + ".lifespanMode") 3;
+	// We'll emit in object space.
+	setAttr ($particleName[1] + ".emissionInWorld") 0;
+	// Set conserve to 0.
+	setAttr ($particleName[1] + ".conserve") 0;
+	
+	// Add our custom output channels.
+	string $customAttrs[] = 
+	{
+		// Short name		Long name				Type
+		"rflfc",			"rfForce",				"vectorArray",
+		"rfvor",			"rfVorticity",			"vectorArray",
+		"rflnv",			"rfNormalVector",		"vectorArray",
+		"rftex",			"rfTexture",			"vectorArray",
+		"rfage",			"rfAge",				"doubleArray",
+		"rfvis",			"rfViscosity",			"doubleArray",
+		"rfden",			"rfDensity",			"doubleArray",
+		"rfpre",			"rfPressure",			"doubleArray",
+		"rfmas",			"rfMass",				"doubleArray",
+		"rftem",			"rfTemperature",		"doubleArray",
+		"rfrad",			"rfRadius",				"doubleArray",
+		"rfeID",			"rfEmitterId",			"doubleArray"
+	};
+	
+	for($i = 0; $i < size($customAttrs); $i += 3)
+	{
+		addAttr -shortName $customAttrs[$i] -longName $customAttrs[$i+1] -dataType $customAttrs[$i+2] -storable true $particleName[1];
+	}
+	
+	string $ret[2];
+	$ret[0] = $emitterName;
+	$ret[1] = $particleName[1];
+	return $ret;
+}
+
+proc string realflowPadFrameNr(int $frame, int $padding)
+{
+	string $frameStr = $frame;
+	int $numZeroes = $padding - size($frameStr);
+	for($i = 0; $i < $numZeroes; ++$i)
+		$frameStr = "0" + $frameStr;
+    return $frameStr;
+}
+
+proc string[] reaflowCreateNPartEmitter(int $nameFormat, int $padding, string $path, string $prefix, int $type, float $lod, int $offset, int $useRange, int $rangeStart, int $rangeEnd, int $rangeClip)
+{
+    // Create the nParticle system.
+	string $emitterNodes[] = `emitter -pos 0 0 0 -type omni -r 100 -sro 0 -nuv 0 -cye none -cyi 1 -spd 1 -srn 0 -nsp 1 -tsp 0 -mxd 0 -mnd 0 -dx 1 -dy 0 -dz 0 -sp 0`;
+    string $emitter = $emitterNodes[0];
+	string $particleNodes[] = `nParticle`;
+    string $particle = $particleNodes[1];
+	connectDynamic -em $emitter $particle;
+    
+    string $extension;
+    switch($type)
+    {
+        case 1:     $extension = ".pxy"; break;
+        case 2:     $extension = ".rpc"; break;
+        default:    $extension = ".bin"; break;
+    }
+
+    // Build the token string which will be resolved by the C++ code at runtime to obtain padding and extension.
+    string $fileName = $prefix, $searchPrefix, $searchSuffix;
+    switch($nameFormat)
+    {
+        case 0:
+        default:
+            $fileName += "$D$F" + $padding + "$T" + $type;
+            $searchPrefix = $path + "/" + $prefix + ".";
+            $searchSuffix = $extension;
+            break;
+
+        case 1:
+            $fileName += "$F" + $padding + "$T" + $type;
+            $searchPrefix = $path + "/" + $prefix;
+            $searchSuffix = $extension;
+            break;
+
+        case 2:
+            $fileName += "$T" + $type + "$D$F" + $padding;
+            $searchPrefix = $path + "/" + $prefix + $extension + ".";
+            $searchSuffix = "";
+            break;
+
+        case 3:
+            $fileName += "_$F" + $padding + "$T" + $type;
+            $searchPrefix = $path + "/" + $prefix + "_";
+            $searchSuffix = $extension;
+            break;
+    }
+
+    int $startFrame, $endFrame;
+    if(!$useRange)
+    {
+        // Find the range of the sequence.
+        int $maxFrame = pow(10, $padding);
+        for($startFrame = 0; $startFrame < $maxFrame; ++$startFrame)
+        {
+            string $fname = $searchPrefix + realflowPadFrameNr($startFrame, $padding) + $searchSuffix;
+            if(`file -q -exists $fname`)
+                break;
+        }
+
+        for($endFrame = $startFrame + 1; $endFrame < $maxFrame; ++$endFrame)
+        {
+            string $fname = $searchPrefix + realflowPadFrameNr($endFrame, $padding) + $searchSuffix;
+            if(!`file -q -exists $fname`)
+                break;
+        }
+        $endFrame = $endFrame - 1;
+    }
+    else
+    {
+        // Use the range specified by the user.
+        $startFrame = $rangeStart;
+        $endFrame = $rangeEnd;
+    }
+
+    // Create the cache.
+	string $cacheFile = `cacheFile -attachFile -fileName $fileName -directory $path -cacheFormat "Realflow" -cnm "positions" -ia ($particle + ".positions")`;
+
+    // Connect the cache to the particle shape.
+	connectAttr -f ($cacheFile + ".inRange") ($particle + ".playFromCache");
+	connectAttr -f ($cacheFile + ".outCacheArrayData") ($particle + ".cacheArrayData");
+
+    // Set range on everything.	
+	setAttr ($cacheFile + ".sourceStart") $startFrame;
+    setAttr ($cacheFile + ".sourceEnd") $endFrame;
+    setAttr ($cacheFile + ".originalStart") $startFrame;
+    setAttr ($cacheFile + ".originalEnd") $endFrame;
+    setAttr ($cacheFile + ".hold") 1000000;
+
+    // If "use range" is on, "clip range" means we want to use the specified range starting with frame 1. Otherwise, we start
+    // emission on the first frame of the sequence.
+    if( (!$useRange || !$rangeClip) && ($startFrame != 1) )
+    {
+        // Assign this system to its own Nucleus solver, so we can manipulate the start frame.
+        select -r $particle;
+        assignNSolver "";
+
+        // Find the newly created solver.
+        string $dest[] = `connectionInfo -destinationFromSource ($particle + ".currentState")`;
+	    string $buffer[];
+	    tokenize $dest[0] "." $buffer;
+	    string $solver = $buffer[0];
+
+        // Finally set the start frame.
+	    setAttr ($cacheFile + ".startFrame") $startFrame;
+	    setAttr ($solver + ".startFrame") $startFrame;
+    }
+
+    // Set the render style to points.
+    setAttr ($particle + ".particleRenderType") 3;
+    setAttr ($particle + ".colorInput") 0;
+    setAttr ($particle + ".color[0].color_Color") -type double3 1 1 1;
+    setAttr ($particle + ".color[1].color_Color") -type double3 1 1 1;
+
+    string $ret[2];
+	$ret[0] = $emitter;
+	$ret[1] = $particle;
+	return $ret;
+}
+
+/*
+*	Utility function used to create emitters. This is used when the import dialog is confirmed.
+* Returns an array with two strings: the emitter name and the particle shape name.
+*/
+global proc string[] realflowCreateEmitter(int $nameFormat, int $padding, string $path, string $prefix, int $type, float $lod, int $offset, int $useRange, int $rangeStart, int $rangeEnd, int $rangeClip)
+{
+	if(realflowGetMayaMajorVer() >= 2014)
+		return reaflowCreateNPartEmitter($nameFormat, $padding, $path, $prefix, $type, $lod, $offset, $useRange, $rangeStart, $rangeEnd, $rangeClip);
+	else
+		return realflowCreateOldEmitter($nameFormat, $padding, $path, $prefix, $type, $lod, $offset, $useRange, $rangeStart, $rangeEnd, $rangeClip);		
+}

@@ -1,0 +1,64 @@
+{
+    "alumna_oxide_alumna_oxide": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.6499999761581421, 
+                0.6266292333602905, 
+                0.5849999785423279
+            ], 
+            "baseColorB": 0.5849999785423279, 
+            "baseColorG": 0.6266292333602905, 
+            "baseColorR": 0.6499999761581421, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.6499999761581421, 
+                0.6266292333602905, 
+                0.5849999785423279
+            ], 
+            "colorB": 0.5849999785423279, 
+            "colorG": 0.6266292333602905, 
+            "colorR": 0.6499999761581421, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "metallic": 0.05000000074505806, 
+            "outColor": [
+                0.6499999761581421, 
+                0.6266292333602905, 
+                0.5849999785423279
+            ], 
+            "outColorB": 0.5849999785423279, 
+            "outColorG": 0.6266292333602905, 
+            "outColorR": 0.6499999761581421, 
+            "presence": 1.0, 
+            "roughness": 0.125, 
+            "sheenTint": 0.5, 
+            "shininess": 100.0, 
+            "specular": 0.0010000000474974513, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

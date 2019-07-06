@@ -1,0 +1,158 @@
+
+global proc rfrk5ParticlerMultiPointChanged(string $nodeName)
+{
+	int $enabled = `getAttr ($nodeName + ".isMultiPoint")`;
+
+  editorTemplate -dimControl $nodeName  "mpDensity"     (!$enabled);
+  editorTemplate -dimControl $nodeName  "mpDispersion"  (!$enabled);
+  editorTemplate -dimControl $nodeName  "mpDeformation" (!$enabled);
+  editorTemplate -dimControl $nodeName  "mpSeed"        (!$enabled);
+}
+
+global proc rfrk5ParticlerScaledChannelChanged(string $nodeName)
+{
+	int $enabled = `getAttr ($nodeName + ".scaledByChannel")`;
+
+  editorTemplate -dimControl $nodeName  "channel"         (!$enabled);
+  editorTemplate -dimControl $nodeName  "mpDispersion"    (!$enabled);
+  editorTemplate -dimControl $nodeName  "channelCurve"    (!$enabled);
+  editorTemplate -dimControl $nodeName  "channelMinValue" (!$enabled);
+  editorTemplate -dimControl $nodeName  "channelMaxValue" (!$enabled);
+}
+
+global proc rfrk5ParticlerScaledCameraChanged(string $nodeName)
+{
+	int $enabled = `getAttr ($nodeName + ".scaledByCameraDistance")`;
+
+  editorTemplate -dimControl $nodeName  "camCurve"    (!$enabled);
+  editorTemplate -dimControl $nodeName  "camMinValue" (!$enabled);
+  editorTemplate -dimControl $nodeName  "camMaxValue" (!$enabled);
+}
+
+global proc rfrk5ParticlerCheckRenderType(int $meshIdx, string $nodeName)
+{
+	if(!`control -q -exists rfrkMrParticlerObjCtrl`)
+		return;
+
+	int $type = `getAttr ($nodeName + ".renderType")`;
+	int $enable = ($type == $meshIdx);
+	layout -e -enable $enable rfrkMrParticlerObjCtrl;
+}
+
+global proc rfrk5ParticlerObjReplace(int $meshIdx, string $attrName)
+{
+	string $oldParent = `setParent -q`;
+	setParent "rfrkMrParticlerObjCtrl";
+		connectControl "field" $attrName;
+		string $btnCmd = "rfrk5ParticlerSelectInstObj " + $attrName;
+		symbolButton -e -command $btnCmd "button";
+	setParent $oldParent;
+
+	rfrk5ParticlerCheckRenderType($meshIdx, rfrk5GetNodeName($attrName));
+}
+
+global proc rfrk5ParticlerObjCreate(int $meshIdx, string $attrName)
+{
+	rowLayout -numberOfColumns 3 "rfrkMrParticlerObjCtrl";
+		text -l "Instance Object";
+		textField "field";
+		symbolButton -image "navButtonUnconnected.xpm" "button";
+	setParent ..;
+	rfrk5ParticlerObjReplace($meshIdx, $attrName);
+}
+
+global proc rfrk5AddParticlerArnoldAttribs(string $attr)
+{
+	string $buf[];
+	tokenize $attr "." $buf;
+	string $nodeName = $buf[0];
+
+	if(!`attributeQuery -node $nodeName -exists "rfrkArnoldRenderType"`)
+		addAttr -h true -ln "rfrkArnoldRenderType" -at "enum" -dv 2 -enumName "Points:Sprites:Spheres" $nodeName;
+
+	if(!`attributeQuery -node $nodeName -exists "rfrkArnoldNumBuckets"`)
+		addAttr -ln "rfrkArnoldNumBuckets" -at "long" $nodeName;
+}
+
+global proc AErfrk_particler5Template(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+
+	rfrk5AddDisplayRollup($nodeName);
+
+	editorTemplate -beginLayout "Particle Files" -collapse false;
+		editorTemplate -callCustom "rfrk5FilesCreate" "rfrk5FilesReplace" "files";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Particles Size" -collapse false;
+		editorTemplate -addControl "randomVariation";
+
+		editorTemplate -addSeparator;
+		editorTemplate -addControl "scaledByChannel" "rfrk5ParticlerScaledChannelChanged";
+		editorTemplate -addControl "channel";
+		AEaddRampControl ($nodeName + ".channelCurve");
+		editorTemplate -addControl "channelMinValue";
+		editorTemplate -addControl "channelMaxValue";
+
+		editorTemplate -addSeparator;
+		editorTemplate -addControl "scaledByCameraDistance" "rfrk5ParticlerScaledCameraChanged";
+		AEaddRampControl ($nodeName + ".camCurve");
+		editorTemplate -addControl "camMinValue";
+		editorTemplate -addControl "camMaxValue";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Other Parameters" -collapse false;
+		editorTemplate -addControl "axis";
+		editorTemplate -addControl "getPercentTotalParticles";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Clipping" -collapse true;
+		editorTemplate -addControl "cameraClip";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "MultiPoint" -collapse true;
+		editorTemplate -addControl "isMultiPoint" "rfrk5ParticlerMultiPointChanged";
+		editorTemplate -label "Density" -addControl "mpDensity";
+		editorTemplate -label "Dispersion" -addControl "mpDispersion";
+		editorTemplate -label "Deformation" -addControl "mpDeformation";
+		editorTemplate -label "Seed" -addControl "mpSeed";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Channels" -collapse true;
+		editorTemplate -addControl "velocity";
+		editorTemplate -addControl "normal";
+		editorTemplate -addControl "force";
+		editorTemplate -addControl "texture";
+		editorTemplate -addControl "neighbors";
+		editorTemplate -addControl "age";
+		editorTemplate -addControl "isolation";
+		editorTemplate -addControl "viscosity";
+		editorTemplate -addControl "density";
+		editorTemplate -addControl "pressure";
+		editorTemplate -addControl "mass";
+		editorTemplate -addControl "temperature";
+		editorTemplate -addControl "vorticity";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Time" -collapse true;
+		editorTemplate -addControl "frame";
+		editorTemplate -addControl "fps";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "mental ray Attributes" -collapse true;
+		editorTemplate -addControl "renderType" "rfrk5ParticlerCheckRenderType 3";
+		editorTemplate -callCustom "rfrk5ParticlerObjCreate 3" "rfrk5ParticlerObjReplace 3" "instobj";
+	editorTemplate -endLayout;
+
+	rfrk5AddRMSRollup($nodeName);
+
+	editorTemplate -beginLayout "Arnold Attributes" -collapse true;
+		editorTemplate -callCustom "rfrk5AddParticlerArnoldAttribs" "rfrk5AddParticlerArnoldAttribs" "";
+		editorTemplate -label "Render Type" -addControl "rfrkArnoldRenderType";
+		editorTemplate -label "Num Buckets" -addControl "rfrkArnoldNumBuckets";
+	editorTemplate -endLayout;
+
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mainMenu>
+  <menuBar>
+    <subMenu id="h.sam">
+    	<label>SAM</label>
+    	<subMenu id="h.sam.publish">
+		<label>Publish</label>
+    	<scriptItem id="h.sam.publish.render">
+    	<label>render asset</label>
+    	<scriptPath>$HSITE/scripts/publish.py</scriptPath>
+	    </scriptItem>
+		</subMenu>
+    </subMenu>
+  </menuBar>
+</mainMenu>

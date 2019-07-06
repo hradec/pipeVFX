@@ -1,0 +1,200 @@
+global proc shelf_LollipopShaders () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "RIS100 Disney" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "RIS100_Disney" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "ris100-disney.png" 
+        -image1 "ris100-disney.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "# Richard\nimport BL_RIS100_Disney\nlibWindow = BL_RIS100_Disney.buildUI()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "RIS100 LM" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "RIS100_LM" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "ris100-lm.png" 
+        -image1 "ris100-lm.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "# Richard\nimport BL_RIS100_LM\nlibWindow = BL_RIS100_LM.buildUI()" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Convert RM20 lights to RM21 lights" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "RM21Lights" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "RM21conversion-lights.png" 
+        -image1 "RM21conversion-lights.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "# RM21_lights_v11.py\n#\n# Feb 26 2016\n# Created by Christos Obretenov - www.lollipopshaders.com\n#\n# v11 (dec 12 2016):\n# - fixed error on line80 because light was \"spot\" but wasn't looking for that: added typeOK bool functionality\n#    \n# v10 (aug 04 2016):\n# - PxrStdAreaLight: check for \"normalize\" under advanced\n# - RMSGeoLightBlocker: hide\n#\n# v09 (aug 04 2016):\n# - PxrStdAreaLight: fixed newLightName based on type of light\n#\n# v08:\n# - fixed PxrStdAreaLight: check for light names in main loop and hide\n# - PxrStdAreaLight: added Distant Light Support\n#\n# v07:\n# - PxrStdAreaLight updated for cleaner code to loop through lists\n#\n# v06:\n# - RMSGeoAreaLight support\n#\n# v05:\n# - RMSMeshLight: use rmanCreateMeshLight instead\n#\n# v04:\n# - (b3) RMSMeshLight from RM20 RIS20 scene\n#\n# v03:\n# - DayLight \"hybrid\" approach, more automated\n#\n# v02:\n# - PxrDomeLight: -90 on rotate, hide old, tint\n# \n\nimport os\nimport maya.cmds as mc            \n\n\n# Look for RMSGeoLightBlocker:\nlights = mc.ls(exactType = 'RMSGeoLightBlocker')\nprint lights\nfor light in lights:\n    print light\n    thisLightName = light\n    thisLightNameNoShape = thisLightName.replace('Shape', '')\n    # hide old light:\n    mc.select(thisLightNameNoShape)\n    mc.HideSelectedObjects()\n  \n\n# Look for RMSGeoAreaLight:\nlights = mc.ls(exactType = 'RMSGeoAreaLight')\nprint lights\nfor light in lights:\n    print light\n    # find out shape (rect/disk/sphere/...) and have to create unique RM21 light based off of that:\n    type = mc.getAttr(light + '.shape')\n    # define up here instead (v11):\n    newLightNameNoShape=''\n    thisLightNameNoShape=''\n    print \"TYPE: \" + type\n    typeOK = False\n    if type == 'rect':\n        thisLightName = light\n        thisLightNameNoShape = thisLightName.replace('Shape', '')\n        print \"thisLightNameNoShape: \" + thisLightNameNoShape\n        newLightName = 'PxrRectLight_%s' % light\n        newLightNameNoShape = newLightName.replace('Shape', '')\n        print \"newLightName: \" + thisLightName\n        print \"newLightNameNoShape: \" + thisLightNameNoShape\n        mc.createNode('PxrRectLight', name=newLightName)\n        typeOK = True\n    if type == 'disk':\n        mc.createNode('PxrDiskLight', name='PxrDiskLight_%s' % light)\n        typeOK = True\n    if type == 'sphere':\n        mc.createNode('PxrSphereLight', name='PxrSphereLight_%s' % light)\n        typeOK = True\n\n\n#    print \"typeOK: \"\n#    print typeOK\n\n    if typeOK == True:\n        # Float Attrs\n        # Create attributes list of ones we want to map that are float, and the name MATCHES old and new:\n        # DONT RUN THIS IF NOTHING MATCHES ABOVE?\n        ourAttribListFloat = ['translateX', 'translateY', 'translateZ', 'rotateX', 'rotateY', 'rotateZ', 'scaleX', 'scaleY', 'scaleZ']\n        for thisAttrFloat in ourAttribListFloat:\n    #        print(thisAttr)\n            # check if same name exists in new light\n            print(thisAttrFloat)\n            newLightAndAttr = \"{0}.{1}\".format(newLightNameNoShape, thisAttrFloat)\n            oldLightAndAttr = \"{0}.{1}\".format(thisLightNameNoShape, thisAttrFloat)\n            mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr))\n\n        # Float attrs that DONT MATCH in name:\n        mc.setAttr(\"%s.exposure\" % newLightName, mc.getAttr('%s.intensity' % thisLightName))\n\n        # RM Attrs:\n        ourAttribListRMAttr = ['rman__riattr__visibility_camera']\n        for thisAttrRM in ourAttribListRMAttr:\n            print(thisAttrRM)\n            newLightAndAttr = \"{0}.{1}\".format(newLightNameNoShape, thisAttrRM)\n            oldLightAndAttr = \"{0}.{1}\".format(thisLightName, \"rman__LightPrimaryVisibility\") # for RM attrs use shape node instead here and note different name!\n            mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr))\n\n        # Color Attrs:\n        ourAttribListClr = ['lightcolor']\n        for thisAttrClr in ourAttribListClr:\n            print(thisAttrClr)\n            newLightAndAttr = \"{0}.{1}\".format(newLightName, \"lightColor\") # doesn't match!\n            oldLightAndAttr = \"{0}.{1}\".format(thisLightName, thisAttrClr) # for color attrs use shape node instead here!\n            # funky indexing for color attrs:\n            mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr)[0][0], mc.getAttr(oldLightAndAttr)[0][1], mc.getAttr(oldLightAndAttr)[0][2], type=\"double3\")\n\n        # hide old light:\n        mc.select(thisLightNameNoShape)\n        mc.HideSelectedObjects()\n  \n\n# Look for RM20 RIS Arealight:\nlights = mc.ls(exactType = 'PxrStdAreaLight')\nfor light in lights:\n    print light\n    thisLightName = light\n    thisLightNameNoShape = thisLightName.replace('Shape', '')\n    print \"thisLightNameNoShape: \" + thisLightNameNoShape\n    type = mc.getAttr(light + '.rman__Shape')\n    print \"type: \" + type\n    # hide old light:\n    mc.select(thisLightNameNoShape)\n    mc.HideSelectedObjects()\n    typeOK = False\n    # find out shape (rect/disk/sphere/...) and have to create unique RM21 light based off of that:\n    if type == 'rect':\n        newLightName = 'PxrRectLight_%s' % light\n        mc.createNode('PxrRectLight', name=newLightName)\n        typeOK = True\n    if type == 'disk':\n        newLightName = 'PxrDiskLight_%s' % light\n        mc.createNode('PxrDiskLight', name=newLightName)\n        typeOK = True\n    if type == 'sphere':\n        newLightName = 'PxrSphereLight_%s' % light\n        mc.createNode('PxrSphereLight', name=newLightName)\n        typeOK = True\n    if type == 'distant':\n        newLightName = 'PxrDistantLight_%s' % light\n        mc.createNode('PxrDistantLight', name=newLightName)\n        typeOK = True\n\n    if typeOK == True:\n    #    newLightName = 'PxrRectLight_%s' % light\n    #    newLightName = 'PxrRectLight_%s' % light\n        newLightNameNoShape = newLightName.replace('Shape', '')\n        print \"newLightName: \" + thisLightName\n        print \"newLightNameNoShape: \" + thisLightNameNoShape\n\n\n        # !!! need else for other types (distant ...) otherwise error\n        # or do typeOK bool\n\n        # Float Attrs\n        # Create attributes list of ones we want to map that are float, and the name MATCHES old and new:\n        ourAttribListFloat = ['enableTemperature', 'temperature', 'areaNormalize', 'translateX', 'translateY', 'translateZ', 'rotateX', 'rotateY', 'rotateZ', 'scaleX', 'scaleY', 'scaleZ', 'exposure']\n        for thisAttrFloat in ourAttribListFloat:\n    #        print(thisAttr)\n            # check if same name exists in new light\n            print(thisAttrFloat)\n            newLightAndAttr = \"{0}.{1}\".format(newLightNameNoShape, thisAttrFloat)\n            oldLightAndAttr = \"{0}.{1}\".format(thisLightNameNoShape, thisAttrFloat)\n            mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr))\n\n        # Float attrs that DONT MATCH in name:\n    #    mc.setAttr(\"%s.exposure\" % newLightName, mc.getAttr('%s.intensity' % thisLightName))\n\n        # RM Attrs:\n        ourAttribListRMAttr = ['rman__riattr__visibility_camera']\n        for thisAttrRM in ourAttribListRMAttr:\n            print(thisAttrRM)\n            newLightAndAttr = \"{0}.{1}\".format(newLightNameNoShape, thisAttrRM)\n            oldLightAndAttr = \"{0}.{1}\".format(thisLightName, \"rman__LightPrimaryVisibility\") # for RM attrs use shape node instead here and note different name!\n            mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr))\n\n        # Color Attrs:\n        ourAttribListClr = ['lightColor']\n        for thisAttrClr in ourAttribListClr:\n            print(thisAttrClr)\n            newLightAndAttr = \"{0}.{1}\".format(newLightName, thisAttrClr) # for color attrs use shape node instead here!\n            oldLightAndAttr = \"{0}.{1}\".format(thisLightName, thisAttrClr) # for color attrs use shape node instead here!\n            # funky indexing for color attrs:\n            mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr)[0][0], mc.getAttr(oldLightAndAttr)[0][1], mc.getAttr(oldLightAndAttr)[0][2], type=\"double3\")\n\n        # hide old light:\n        mc.select(thisLightNameNoShape)\n        mc.HideSelectedObjects()\n  \n# look for RM20 RIS Env Light:\n# (20) PxrStdEnvMapLight --> (21) PxrDomeLight\nlights = mc.ls(exactType = 'PxrStdEnvMapLight')\nfor light in lights:\n    print light\n    thisLightName = light\n    thisLightNameNoShape = thisLightName.replace('Shape', '')\n    # hide this light:\n    mc.select(thisLightNameNoShape)\n    mc.HideSelectedObjects()\n#    newLightName = '%sRM21' % light\n    newLightName = 'PxrDomeLight_%s' % light\n#    newLightName = '%sRM21' % \"PxrDomeLight\"\n    newLightNameNoShape = newLightName.replace('Shape', '')\n    mc.createNode('PxrDomeLight', name=newLightName)\n    mc.setAttr(\"%s.translateX\" % newLightNameNoShape, mc.getAttr('%s.translateX' % thisLightNameNoShape))\n    mc.setAttr(\"%s.translateY\" % newLightNameNoShape, mc.getAttr('%s.translateY' % thisLightNameNoShape))\n    mc.setAttr(\"%s.translateZ\" % newLightNameNoShape, mc.getAttr('%s.translateZ' % thisLightNameNoShape))\n    mc.setAttr(\"%s.rotateX\" % newLightNameNoShape, mc.getAttr('%s.rotateX' % thisLightNameNoShape))\n    mc.setAttr(\"%s.rotateY\" % newLightNameNoShape, mc.getAttr('%s.rotateY' % thisLightNameNoShape)-90)\n    mc.setAttr(\"%s.rotateZ\" % newLightNameNoShape, mc.getAttr('%s.rotateZ' % thisLightNameNoShape))\n    mc.setAttr(\"%s.scaleX\" % newLightNameNoShape, mc.getAttr('%s.scaleX' % thisLightNameNoShape))\n    mc.setAttr(\"%s.scaleY\" % newLightNameNoShape, mc.getAttr('%s.scaleY' % thisLightNameNoShape))\n    mc.setAttr(\"%s.scaleZ\" % newLightNameNoShape, mc.getAttr('%s.scaleZ' % thisLightNameNoShape))\n    mc.setAttr(\"%s.exposure\" % newLightName, mc.getAttr('%s.exposure' % thisLightName))\n    mc.setAttr(\"%s.lightColor\" % newLightName, mc.getAttr('%s.envTint' % thisLightName)[0][0], mc.getAttr('%s.envTint' % thisLightName)[0][1], mc.getAttr('%s.envTint' % thisLightName)[0][2], type=\"double3\")\n    mc.setAttr(\"%s.lightColorMap\" % newLightName, mc.getAttr('%s.rman__EnvMap' % thisLightName), type=\"string\")\n    mc.setAttr(\"%s.rman__riattr__visibility_camera\" % newLightNameNoShape, mc.getAttr('%s.rman__LightPrimaryVisibility' % thisLightName))\n\n# *** DayLight ***\n# Auto mapping of specific params in list:\nlights = mc.ls(exactType = 'PxrStdEnvDayLight')\nfor light in lights:\n    print \"This light:\"\n    print light\n    thisLightName = light\n    thisLightNameNoShape = thisLightName.replace('Shape', '')\n#    newLightName = '%sRM21' % light\n#    newLightName = '%sRM21' % \"PxrDomeLight\"\n#    newLightName = \"{0}\".format(\"PxrEnvDayLight_\", light)\n    newLightName = \"PxrEnvDayLight_%s\" % light\n    newLightNameNoShape = newLightName.replace('Shape', '')\n    mc.createNode('PxrEnvDayLight', name=newLightName)\n    # Create attributes list of ones we want to map that are float, and the name matches old and new:\n    ourAttribListFloat = ['translateX', 'translateY', 'translateZ', 'rotateX', 'rotateY', 'rotateZ', 'scaleX', 'scaleY', 'scaleZ', 'month', 'day', 'year', 'zone', 'latitude', 'longitude']\n    for thisAttrFloat in ourAttribListFloat:\n#        print(thisAttr)\n        # check if same name exists in new light\n        print(thisAttrFloat)\n        newLightAndAttr = \"{0}.{1}\".format(newLightNameNoShape, thisAttrFloat)\n        oldLightAndAttr = \"{0}.{1}\".format(thisLightNameNoShape, thisAttrFloat)\n        mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr))\n\n    # RM Attrs:\n    ourAttribListRMAttr = ['rman__riattr__visibility_camera']\n    for thisAttrRM in ourAttribListRMAttr:\n        print(thisAttrRM)\n        newLightAndAttr = \"{0}.{1}\".format(newLightNameNoShape, thisAttrRM)\n        oldLightAndAttr = \"{0}.{1}\".format(thisLightName, \"rman__LightPrimaryVisibility\") # for RM attrs use shape node instead here and note different name!\n        mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr))\n\n    # Color Attrs:\n    ourAttribListClr = ['sunTint', 'skyTint']\n    for thisAttrClr in ourAttribListClr:\n        print(thisAttrClr)\n        newLightAndAttr = \"{0}.{1}\".format(newLightName, thisAttrClr) # for color attrs use shape node instead here!\n        oldLightAndAttr = \"{0}.{1}\".format(thisLightName, thisAttrClr) # for color attrs use shape node instead here!\n        # funky indexing for color attrs:\n        mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr)[0][0], mc.getAttr(oldLightAndAttr)[0][1], mc.getAttr(oldLightAndAttr)[0][2], type=\"double3\")\n        \n    # hide old light:\n    mc.select(thisLightNameNoShape)\n    mc.HideSelectedObjects()\n\n# --- end DayLight ---\n\n\n# --- start RM20 Reyes Env Light ---\n# --- end   RM20 Reyes Env Light ---\n\n\n#\n# *** MeshLight ***\n#\nlights = mc.ls(exactType = 'RMSMeshLight')\nfor light in lights:\n    print \"This light:\"\n    print light\n    thisLightName = light\n    thisLightNameNoShape = thisLightName.replace('Shape', '')\n    newLightName = \"PxrMeshLight_%s\" % light\n    newLightNameNoShape = newLightName.replace('Shape', '')\n    #mc.createNode('PxrMeshLight', name=newLightName)\n\n    # hide old light:\n    mc.select(thisLightNameNoShape)\n    mc.HideSelectedObjects()\n    \n    mel.eval('rmanCreateMeshLight')\n    # assign new RM21 PxrBlack to existing PxrLightEmission assignment:\n    # find what this lights message is connected to: thats the PxrLightEmission:\n    meshLightShader = mc.listConnections(light, type='PxrLightEmission')\n    print meshLightShader[0]\n    # find out what PxrLightEmission is assigned to:\n    pxrLightEmissionSG = mc.listConnections(meshLightShader[0], type='shadingEngine')\n    print pxrLightEmissionSG\n    pxrLightEmissionObject = mc.hyperShade(objects=\"PxrLightEmission1SG\") # this will select the object too\n    print pxrLightEmissionObject\n    object_name = cmds.ls(selection=True)\n    print object_name[0]\n\n    # assign PxrBlack to object:\n    mc.select(object_name[0], replace=True)\n    mc.hyperShade(assign=\"PxrBlack1\")\n    \n\n    # Create attributes list of ones we want to map that are float, and the name matches old and new:\n    ourAttribListFloat = ['temperature']\n    for thisAttrFloat in ourAttribListFloat:\n#        print(thisAttr)\n        # check if same name exists in new light\n        print(thisAttrFloat)\n        newLightAndAttr = \"{0}.{1}\".format(newLightNameNoShape, thisAttrFloat)\n        oldLightAndAttr = \"{0}.{1}\".format(thisLightNameNoShape, thisAttrFloat)\n        mc.setAttr(newLightAndAttr, mc.getAttr(oldLightAndAttr))\n\n    # Float attrs: non-mapping\n    mc.setAttr(\"%s.exposure\" % newLightName, mc.getAttr('%s.intensity' % thisLightName))\n\n\n\n\n# --- end MeshLight ---\n\nprint \"RM21 Light Conversion DONE!\"\n\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "RM21Disp" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "RM21Disp" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "RM21conversion-disp.png" 
+        -image1 "RM21conversion-disp.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "# RM21 DISPLACEMENT CONVERSION\n#\n# Feb 26 2016\n# Created by Christos Obretenov - www.lollipopshaders.com\n#\n# v02:\n# - fix locked nodes error line 79\n#\n# v01:\n# - \n\nimport os\nimport maya.cmds as mc            \n\ndispShaders = mc.ls(exactType = 'RMSDisplacement')\nfor dispShader in dispShaders:\n    print \"This shader:\"\n    print dispShader    \n    thisShaderName = dispShader\n    thisShaderNameNoShape = thisShaderName.replace('Shape', '')\n    newShaderName = \"PxrDisplace_%s\" % dispShader\n    newShaderNameNoShape = newShaderName.replace('Shape', '')\n    print newShaderName\n    print newShaderNameNoShape\n    # Drop in new node\n    mc.createNode('PxrDisplace', name=newShaderName)\n    # Connect to existing Shading Group\n    # Find out what old Disp shader was connected to (ShadingGroup)\n    dispShaderSG = mc.listConnections(dispShader, type='shadingEngine')\n    print dispShaderSG\n    # connect new disp shader to existing ShadingGroup\n    mc.connectAttr('%s.outColor' % newShaderName, '%s.displacementShader' % dispShaderSG[0], force=True)\n    # what's connected upstream?\n    connection_list = mc.listConnections(dispShader, plugs=True, destination=False, source=True)\n    print connection_list\n    hasUpstream = False\n    if connection_list:\n        # loop through all attributes that have upstream connections:\n        for upstreamOut in connection_list:\n            hasUpstream = True\n            print upstreamOut\n            connection_in_out = []\n            dispIn = mc.connectionInfo(upstreamOut, destinationFromSource=True)[0]\n            print dispIn\n    #        print dispIn.split('.')[1]\n            # just get this param, strip before \".\":\n            thisParam = dispIn.split('.')[1]\n            print thisParam\n            if thisParam == \"displacementScalar\":\n                mc.connectAttr(upstreamOut, '%s.dispScalar' % newShaderName, force=True)\n            if thisParam == \"displacementVector\":\n                # drop in and hookup PxrDispVectorLayer:\n                newDispTransName = \"PxrDispTransform_%s\" % dispShader\n                mc.createNode('PxrDispTransform', name=newDispTransName)\n                mc.connectAttr(upstreamOut, '%s.dispVector' % newDispTransName, force=True)\n                mc.connectAttr(\"%s.resultXYZ\" % newDispTransName, '%s.dispVector' % newShaderName, force=True)\n                dispShader_dispType = mc.getAttr('%s.dispMode' % dispShader)\n                # Do the weird mappings:\n                if (dispShader_dispType == 1):         \n                    # Scalar           \n                    mc.setAttr(\"%s.dispType\" % newDispTransName, 1)\n                if (dispShader_dispType == 2):    \n                    # Mudbox Vector (Tan)                \n                    mc.setAttr(\"%s.dispType\" % newDispTransName, 3)\n                    mc.setAttr(\"%s.vectorSpace\" % newDispTransName, 3)\n                if (dispShader_dispType == 3):                    \n                    # Mudbox Vector (Obj)\n                    mc.setAttr(\"%s.dispType\" % newDispTransName, 3)\n                    mc.setAttr(\"%s.vectorSpace\" % newDispTransName, 2)\n                if (dispShader_dispType == 4):                    \n                    # Mudbox Vector (World)\n                    mc.setAttr(\"%s.dispType\" % newDispTransName, 3)\n                    mc.setAttr(\"%s.vectorSpace\" % newDispTransName, 1)\n                if (dispShader_dispType == 5):                    \n                    # Zbrush Vector (Tan)\n                    mc.setAttr(\"%s.dispType\" % newDispTransName, 4)\n                    mc.setAttr(\"%s.vectorSpace\" % newDispTransName, 3)\n                if (dispShader_dispType == 6):\n                    # Zbrush Vector (Obj)\n                    mc.setAttr(\"%s.dispType\" % newDispTransName, 4)\n                    mc.setAttr(\"%s.vectorSpace\" % newDispTransName, 2)\n                if (dispShader_dispType == 7):\n                    # Zbrush Vector (World)\n                    mc.setAttr(\"%s.dispType\" % newDispTransName, 4)\n                    mc.setAttr(\"%s.vectorSpace\" % newDispTransName, 1)\n                if (dispShader_dispType == 8):\n                    # Generic Vector (World)\n                    mc.setAttr(\"%s.dispType\" % newDispTransName, 2)\n                    mc.setAttr(\"%s.vectorSpace\" % newDispTransName, 1)                             \n\n    # do non-connected values:     \n    if (hasUpstream == False):\n        mc.setAttr(\"%s.dispAmount\" % newShaderName, mc.getAttr('%s.displacementAmount' % dispShader))\n        mc.setAttr(\"%s.dispScalar\" % newShaderName, mc.getAttr('%s.displacementScalar' % dispShader))\n\n\n    # TO-DO: convert \"Displacement Map Center to height & Depth in PxrDispTransform\n" 
+        -sourceType "python" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Help - click for website" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "Help" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "lollipopshaders.png" 
+        -image1 "lollipopshaders.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "showHelp -a \"http://www.lollipopshaders.com\"" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "About" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label "About" 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "lollipopshaders-about.png" 
+        -image1 "lollipopshaders-about.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "confirmDialog -title \"About LollipopShaders\" -message \"v1.0\" -button \"OK\" -defaultButton \"OK\";\n" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+} 

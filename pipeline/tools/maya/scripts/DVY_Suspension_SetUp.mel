@@ -1,0 +1,410 @@
+
+/*
+
+DVY_Suspension_SetUp;
+
+*/
+
+///////////////////////////////////////////////////////////////////////////////
+/*			
+				
+	Copyright © 2006 DVY_Suspension_Setup. All rights reserved davvey@ntlworld.com
+					
+
+					- DVY_Suspension_SetUp -
+						  
+	This script will build Vehicle rig for automatic wheel rotation,
+	This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script current has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite ot scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging oif individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, fill in required fields and press
+	"Rig Vehicle" button. This script is called from within DVY_Vehicle Rigger.mel
+	and will set up all four wheels with independant suspension travel. Also it will allow each
+	corner to independantly move and tilt vehicle based on ground variations.
+	
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |	
+		  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+		This will tilt the Chassis group as reguired. Also each indiviual
+		Wheel can be moved up and down by moving each wheel Group Ground 
+		Locator to simulate ground variations. If these are Geometry constained
+		to a "grtound" object or plane to movement will be automatic.
+	
+
+
+*/
+//////////////////////////////////////////////////////////////////////////
+//					DVY_Suspension_SetUp
+//////////////////////////////////////////////////////////////////////////
+
+//============================================================================
+//	GLOBAL VARIABLES
+//============================================================================
+	global int $DVYDebug;
+
+// Integer Flag that allows print statements to be output to
+// message field for tracking purposes.
+	
+//============================================================================
+
+global proc DVY_Suspension_SetUp()
+	
+ {	// DVY_Suspension_SetUp proc.	
+	 
+	global int $DVYDebug;
+ 	global string $hier[];	global string $JThier[];	global string $LChier[];
+
+	global string $GroupV_A[];
+	global string $DVY_VehicleName;	global float $DVYLoc[];
+	global string $Rig_Controls[];
+	global string $RigControlsA[];
+	
+	string $ObjArr[]; string $SSObjArr[]; string $Grd[]; clear $Grd;
+	string $Joints[]; clear $Joints; string $DVYWheel[]; clear $DVYWheel;
+	string $DVYSusp[]; clear $DVYSusp; string $ControlAtr[]; clear $ControlAtr;	
+	string $DVY_SuspGrp[]; clear $DVY_SuspGrp;
+	string $PrefixArr[] = {"LfFr", "RtFr", "LfRr", "RtRr"};
+	
+	
+	$Grd = {"BodyShell_JnT_1", "Loc_GrdRefN_1", "Loc_GrdN_1", "BodyShell_GrpN_1"};
+
+	string $Sel[];	string $Rig_Control;
+	
+	$Joints = {"LfFr_Susp_JnTA_1", "LfFr_Susp_JnTB_1", "LfFr_Susp_JnTC_1"};
+	$DVYWheel = {"LfFr_Wheel", "RtFr_Wheel", "LfRr_Wheel", "RtRr_Wheel"};
+	$DVYSusp = {"LfFr_Susp", "RtFr_Susp", "LfRr_Susp", "RtRr_Susp"};
+	$DVY_SuspGrp = {"Loc_LfFr_Susp_GrpN_1", "Loc_RtFr_Susp_GrpN_1",
+					"Loc_LfRr_Susp_GrpN_1", "Loc_RtRr_Susp_GrpN_1",
+					"Loc_Fr_Susp_GrpN_1", "Loc_Rr_Susp_GrpN_1", 
+					"Loc_Suspen_GrpN_1"};	
+	
+	$Sel = `ls - sl`;
+	$DVY_VehicleName =$GroupV_A[1];
+	
+	select -r $DVY_VehicleName; string $Sel[] = `ls -sl`; print $Sel;
+	$ObjArr[0] = $Sel[0];
+		
+	$Rig_Control = "Rig_ControllerN_1";		
+	print $Rig_Control; print ($ObjArr[0] + " Ln 39..\n"); print ($Rig_Control + " Ln 39..\n");
+	select -clear;
+	
+	select -r  Loc_GrdN_1;	$Sel = `ls -sl`;
+	string $Loc_GrdN_1 = $Sel[0];
+	string $Rig_Controls[]; string $GrdCone[0];
+
+	$GrdCone[0] = "GrdConeRef_1";
+	
+	if (`objExists $GrdCone[0]`)
+		{
+			select -r $GrdCone[0];
+			scale 0.25 0.25 0.25;
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			
+		  for ($i=0; $i<4; $i++)
+			 {
+				select -r $GrdCone[0];
+				$Sel =  `duplicate -rr -name ($PrefixArr[$i] + "_" + $GrdCone[0])`;
+				$GrdCone[($i + 1)] = $Sel[0];
+				delete `parentConstraint -weight 1 ($DVYWheel[$i] + "_LocGrd_1") $GrdCone[($i + 1)] `;
+				select - r $GrdCone[($i + 1)];
+				makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+				$RigControlsA[$i+8] = $GrdCone[($i + 1)];
+			}
+		}	
+
+	// Setup two locators for each wheel Group
+	
+	int $i = 0; int $j = 0; int $s = `size ($DVYSusp)`;
+	string $DVYLocS[]; string $TmpL[];
+
+		for ($j=0; $j < $s; $j++)
+		{
+		 if (!`objExists $DVY_SuspGrp[6]`)
+			{ $DVY_SuspGrp[6] = `group -em -name $DVY_SuspGrp[6]`; parent $DVY_SuspGrp[6] $DVY_VehicleName;
+		 		pointConstraint -weight 1 $Rig_Control $DVY_SuspGrp[6];}
+		if (!`objExists $DVY_SuspGrp[4]`)
+			{ $DVY_SuspGrp[4] = `group -em -name $DVY_SuspGrp[4]`;
+				parent $DVY_SuspGrp[4] $DVY_SuspGrp[6];}
+		if (!`objExists $DVY_SuspGrp[5]`)
+			{ $DVY_SuspGrp[5] = `group -em -name $DVY_SuspGrp[5]`; parent $DVY_SuspGrp[5] $DVY_SuspGrp[6];}
+		if (!`objExists $DVY_SuspGrp[$j]`) 
+			{ $DVY_SuspGrp[$j] = `group -em -name $DVY_SuspGrp[$j]`;}
+			
+		if(!`objExists ($DVYSusp[$j] + "_LocB_1")`)
+			{ $TmpL = `spaceLocator -p 0 0 0 -name ($DVYSusp[$j] + "_LocB_1")`;
+				$DVYLocS[$i] = $TmpL[0];
+			}
+
+			$DVYLocS[$i] = ($DVYSusp[$j] + "_LocB_1");
+			CenterPivot `select -r $DVYLocS[$i]`;
+			delete `parentConstraint -weight 1 ($DVYSusp[$j] + "_LocB_1") $DVY_SuspGrp[$j]` ;
+			
+		if ($j < 1)
+			{ delete `parentConstraint -skipTranslate x -weight 1 ($DVYSusp[$j] + "_LocB_1") $DVY_SuspGrp[4] `;
+			 select $DVY_SuspGrp[4] ; makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			}
+
+		if ($j > 1)
+			{ delete `parentConstraint -skipTranslate x -weight 1 ($DVYSusp[$j] + "_LocB_1") $DVY_SuspGrp[5]`;
+			 select $DVY_SuspGrp[5] ; makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			}
+
+			select - r $DVY_SuspGrp[$j];
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			parentConstraint -weight 1 ($DVYSusp[$j] + "_JnTB_1") $DVYLocS[$i];
+			$i++;	
+			
+			
+		if(!`objExists ($DVYSusp[$j] + "_LocC_1")`)
+			{
+				$TmpL = `spaceLocator -p 0 0 0 -name ($DVYSusp[$j] + "_LocC_1")`;
+				$DVYLocS[$i] = $TmpL[0];
+			}
+		
+			$DVYLocS[$i] = ($DVYSusp[$j] + "_LocC_1");
+			CenterPivot `select -r $DVYLocS[$i]`;
+			parentConstraint -weight 1 ($DVYSusp[$j] + "_JnTC_1") $DVYLocS[$i];
+			$i++;
+		}	
+		
+
+	float $JtDistA[];		// 1 float value per corner
+	float $GrdDistA[];		// 1 float value per corner
+	string $JtDistN[];		// 1 per corner
+	string $GrdDistN[];		// 1 per corner
+	string $GrdLocAddN[];	// 1 per corner
+	string $JtMultDivN[];	// 2 per corner
+	string $JtAddN[];		// 2 per corner
+	string $GrdMultDivN[];	// 1 per corner
+	string $GrdClampN[];	// 1 per corner
+
+	// Set up Distance Node for Left Front wheel Damper size.	
+		
+	string $JtDN_1 = `shadingNode -asUtility distanceBetween -name JtDN_1`;
+			connectAttr -f ($DVYSusp[0] + "_LocB_1" + ".center") ($JtDN_1 + ".point1");
+			connectAttr -f ($DVYSusp[0] + "_LocC_1" + ".center")  ($JtDN_1 + ".point2");
+			connectAttr ($JtDN_1 + ".distance") ($Rig_Control + ".GrdDist");
+
+	// Set default Piston Length.
+		float $JtDist = `getAttr ($JtDN_1 + ".distance")`;
+			print $JtDist;	print "..\n";
+	
+	// Set up Distance Node for BodyShell Joint to Ground.				
+		string $Grd_DN_1 = `shadingNode -asUtility distanceBetween -name Grd_DN_1`;
+			connectAttr -f ($Grd[0] + ".translate") ($Grd_DN_1 + ".point2");
+			connectAttr -f ($Grd[1] + ".translate") ($Grd_DN_1 + ".point1");
+			connectAttr ($Grd_DN_1 + ".distance") ($Rig_Control + ".JtDist");
+
+	// Set default Height of BodyShell Joint.
+		float $GrdDist = `getAttr ($Grd_DN_1 + ".distance")`;
+			print $GrdDist;	print "..\n";
+
+	// Set up Add Node to convert and move Locator Group Node.
+			
+		string $GrdLoc_AddNA_1 = `createNode addDoubleLinear -name GrdLoc_JtAddNA_1`;
+			connectAttr -f ($Grd_DN_1 + ".distance") ($GrdLoc_AddNA_1 + ".i1");	
+			connectAttr -f ("BodyShell_JnT_1.translateY" )($GrdLoc_AddNA_1 + ".i2");
+			setAttr ($GrdCone[0] + ".translateY") (-1 * $GrdDist);
+
+		string $MultDvNA_l = `createNode multiplyDivide -name MultDvNA_1`;
+			connectAttr -f ($Rig_Control + ".PistonRange") ($MultDvNA_l + ".i1x");
+			setAttr ($MultDvNA_l + ".i2x") -0.01;
+			connectAttr -f ($Rig_Control + ".PistonRange") ($MultDvNA_l + ".i1y");
+			setAttr ($MultDvNA_l + ".i2y") 0.01;
+
+		string $MultDvNB_l = `createNode multiplyDivide -name MultDvNB_1`;
+			connectAttr -f ($MultDvNA_l + ".ox") ($MultDvNB_l + ".i1x");
+			setAttr ($MultDvNB_l + ".i2x") $JtDist;
+			connectAttr -f ($MultDvNA_l + ".oy") ($MultDvNB_l + ".i1y");
+			setAttr ($MultDvNB_l + ".i2y") $JtDist;
+			connectAttr -f ($MultDvNB_l + ".ox")($Rig_Control + ".MinTr");
+			connectAttr -f ($MultDvNB_l + ".oy")($Rig_Control + ".MaxTr");
+
+		string $JtAddNA_1 = `createNode addDoubleLinear -name JtAddNA_1`;
+			setAttr ($JtAddNA_1 + ".i1") (-1 * $GrdDist);	
+			connectAttr -f ($MultDvNB_l + ".ox")($JtAddNA_1 + ".i2");
+	
+		string $JtAddNB_1 = `createNode addDoubleLinear -name JtAddNB_1`;
+			setAttr ($JtAddNB_1 + ".i1") (-1 * $GrdDist);
+			connectAttr -f ($MultDvNB_l + ".oy")($JtAddNB_1 + ".i2");
+			
+		string $Grd_MultDvNA_l = `createNode multiplyDivide -name Grd_MultDvNA_l`;
+			connectAttr -f ($JtAddNA_1 + ".o") ($Grd_MultDvNA_l + ".i1x");
+			setAttr ($Grd_MultDvNA_l + ".i2x") -1;
+			connectAttr -f ($JtAddNB_1 + ".o")  ($Grd_MultDvNA_l + ".i1y");
+			setAttr ($Grd_MultDvNA_l + ".i2y") -1;
+			connectAttr -f ($Grd_MultDvNA_l + ".ox")($Rig_Control + ".SuspMin");
+			connectAttr -f ($Grd_MultDvNA_l + ".oy")($Rig_Control + ".SuspMax");
+			connectAttr -f 	("BodyShell_JnT_1.translateY" )($Grd_MultDvNA_l + ".i1z");
+			setAttr ($Grd_MultDvNA_l + ".i2z") -1;		
+				
+		string $Grd_ClampNA_l = `shadingNode -asUtility clamp -name Grd_ClampNA_l`;
+			connectAttr -f 	($Grd_MultDvNA_l + ".oz") ($Grd_ClampNA_l + ".inputR");
+			connectAttr -f ($JtAddNA_1 + ".o") ($Grd_ClampNA_l + ".minR");
+			connectAttr -f ($JtAddNB_1 + ".o") ($Grd_ClampNA_l + ".maxR");
+			connectAttr -f  ($Grd_ClampNA_l + ".outputR") ($GrdCone[0] + ".translateY");
+			
+		
+	for ($i=0; $i<4; $i++)
+		{
+	// Set up Distance Node for each wheel Damper size.	
+
+		 $JtDistN[$i] = `shadingNode -asUtility distanceBetween -name ($PrefixArr[$i] + "_JtDN_1")`;
+			connectAttr -f ($DVYSusp[$i] + "_LocB_1" + ".center") ($JtDistN[$i] + ".point1");
+			connectAttr -f ($DVYSusp[$i] + "_LocC_1" + ".center")  ($JtDistN[$i] + ".point2");
+			connectAttr ($JtDistN[$i] + ".distance") ($RigControlsA[0] + "." + $PrefixArr[$i] + "GrdDist");
+			
+	// Set default Piston length each damper.
+		 $JtDistA[$i] = `getAttr ($JtDistN[$i] + ".distance")`;
+			print $JtDistA[$i];	print ("Count is  " + $i + "..\n");
+
+	// Set up Distance Node for Height for each Top Suspension pivot to Ground.
+			
+		 $GrDistN[$i] = `shadingNode -asUtility distanceBetween -name ($PrefixArr[$i] + "_Grd_DN_1")`;
+			connectAttr -f ($DVYSusp[$i] + "_LocA_1" + ".translate") ($GrDistN[$i] + ".point2");
+			connectAttr -f ($DVYWheel[$i] + "_LocGrd_1" + ".translate") ($GrDistN[$i]+ ".point1");
+			connectAttr ($GrDistN[$i]+ ".distance") ($RigControlsA[0] + "." + $PrefixArr[$i] + "JtDist");
+				
+	// Set default Height of each Top Suspension Pivot.
+			$GrdDistA[$i] = `getAttr ($GrDistN[$i] + ".distance")`;
+			print $GrdDistA[$i];	print "..\n";
+		
+			
+	// Set up Add Node to convert and move Locator Group Node.
+			
+		$GrdLocAddN[$i] = `createNode addDoubleLinear -name ($PrefixArr[$i] + "_JtAddNA_1")`;
+			connectAttr -f ($GrDistN[$i] + ".distance") ($GrdLocAddN[$i] + ".i1");	
+			connectAttr -f ($DVYSusp[$i] + "_LocA_1" + ".translateY") ($GrdLocAddN[$i]+ ".i2");
+			setAttr ($GrdCone[($i+1)] + ".translateY") (-1 * $GrdDistA[$i]);
+			
+
+		$JtMultDivN[$j] = `createNode multiplyDivide -name ($PrefixArr[$i] + "_MultDvNA_1")`;
+			connectAttr -f ($Rig_Control + "." + $PrefixArr[$i] + "PistonRange") ($JtMultDivN[$j] + ".i1x");
+			setAttr ($JtMultDivN[$j] + ".i2x") -0.01;
+			connectAttr -f ($Rig_Control + "." + $PrefixArr[$i] + "PistonRange") ($JtMultDivN[$j] + ".i1y");
+			setAttr ($JtMultDivN[$j] + ".i2y") 0.01;
+
+		$JtMultDivN[$j+1] = `createNode multiplyDivide -name ($PrefixArr[$i] + "_MultDvNB_1")`;
+			connectAttr -f ($JtMultDivN[$j] + ".ox") ($JtMultDivN[$j+1] + ".i1x");
+			setAttr ($JtMultDivN[$j+1] + ".i2x") $JtDistA[$i];
+			connectAttr -f ($JtMultDivN[$j] + ".oy") ($JtMultDivN[$j+1] + ".i1y");
+			setAttr ($JtMultDivN[$j+1] + ".i2y") $JtDistA[$i];
+			connectAttr -f ($JtMultDivN[$j+1] + ".ox")($Rig_Control + "." + $PrefixArr[$i] + "MinTr");
+			connectAttr -f ($JtMultDivN[$j+1] + ".oy")($Rig_Control + "." + $PrefixArr[$i] + "MaxTr");
+
+		$JtAddN[$j] = `createNode addDoubleLinear -name ($PrefixArr[$i] + "_JtAddNA_1")`;
+			setAttr ($JtAddN[$j] + ".i1") (-1 * $GrdDistA[$i]);	
+			connectAttr -f ($JtMultDivN[$j+1] + ".ox")($JtAddN[$j] + ".i2");
+	
+		$JtAddN[$j+2] = `createNode addDoubleLinear -name ($PrefixArr[$i] + "_JtAddNB_1")`;
+			setAttr ($JtAddN[$j+2] + ".i1") (-1 * $GrdDistA[$i]);
+			connectAttr -f ($JtMultDivN[$j+1] + ".oy")($JtAddN[$j+2] + ".i2");
+		
+		$GrdMultDivN[$i] = `createNode multiplyDivide -name ($PrefixArr[$i] + "Grd_MultDvNA_l")`;
+			connectAttr -f ($JtAddN[$j] + ".o") ($GrdMultDivN[$i] + ".i1x");
+			setAttr ($GrdMultDivN[$i] + ".i2x") -1;
+			connectAttr -f ($JtAddN[$j+2] + ".o")  ($GrdMultDivN[$i] + ".i1y");
+			setAttr ($GrdMultDivN[$i] + ".i2y") -1;
+			connectAttr -f ($GrdMultDivN[$i] + ".ox")($Rig_Control + "." + $PrefixArr[$i] + "SuspMin");
+			connectAttr -f ($GrdMultDivN[$i] + ".oy")($Rig_Control + "." + $PrefixArr[$i] + "SuspMax");
+			connectAttr -f 	($DVYSusp[$i] + "_LocA_1" + ".translateY") ($GrdMultDivN[$i] + ".i1z");
+			setAttr ($GrdMultDivN[$i] + ".i2z") -1;		
+				
+		$GrdClampN[$i] = `shadingNode -asUtility clamp -name ($PrefixArr[$i] + "Grd_ClampNA_l")`;
+			connectAttr -f 	($GrdMultDivN[$i] + ".oz") ($GrdClampN[$i] + ".inputR");
+			connectAttr -f ($JtAddN[$j] + ".o") ($GrdClampN[$i] + ".minR");
+			connectAttr -f ($JtAddN[$j+2] + ".o") ($GrdClampN[$i] + ".maxR");
+			connectAttr -f  ($GrdClampN[$i] + ".outputR") ($GrdCone[($i + 1)] + ".translateY");
+			
+		$j++; $j++;
+		
+		}
+		
+	select -r Loc_GrdRefN_1; $Sel = `ls - sl`; string $Loc_GrdRefN_1 = $Sel[0];
+	
+	// Parent Constrain Ground Locator group to main Body
+		parentConstraint -mo -weight 1 $Grd[3] Loc_GrdN_1;
+		parentConstraint -mo -weight 1 $GrdCone[0] $Loc_GrdRefN_1;
+		
+	for ($i=0; $i<4; $i++)
+	  {
+		pointConstraint -mo -weight 1 ($DVYSusp[$i] + "_LocC_1") ($DVYWheel[$i] + "_LocB_1");
+		pointConstraint -mo -weight 1 ($DVYSusp[$i] + "_LocGrd_1") ($DVYSusp[$i] + "_JnTC_1");	
+		pointConstraint -mo -weight 1 ($DVYWheel[$i] + "_LocB_1") ($DVYWheel[$i] + "_JnTB_1");	
+		parentConstraint -mo -skipRotate x -skipRotate y -skipRotate z
+			-skipTranslate x -skipTranslate z -weight 1 $RigControlsA[3] ($DVYSusp[$i] + "_JnTB_1"); 
+	  }
+	  
+	// Clean group locators to clean up display.
+		$i = 0;
+			for ($j=0; $j < $s; $j++)
+			{ 
+				parent $DVYLocS[$i] $DVYLocS[($i+1)] $DVY_SuspGrp[($j)];
+				$i++; $i++;
+			}
+		
+		parent $DVY_SuspGrp[0]  $DVY_SuspGrp[1]  $DVY_SuspGrp[4];
+		parent $DVY_SuspGrp[2]  $DVY_SuspGrp[3]  $DVY_SuspGrp[5];
+
+	
+		print "\n DVY_Suspension_SetUp has set up Nodes for suspension movement and ground variations. See help file for more details. Davvey © 2006..\n";
+
+
+ }	// DVY_End of Suspension_SetUp proc.	

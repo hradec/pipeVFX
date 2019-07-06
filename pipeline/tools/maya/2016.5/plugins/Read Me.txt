@@ -1,0 +1,7 @@
+1. Put the plugin into C:\Program Files\Autodesk\Maya2017\bin\plug-ins
+
+2. Put the .lic file into C:\Users\***YOU***\Documents\maya\2017\scripts
+
+3. Set up a User Env Var:
+		
+	CHARCOAL_EDITOR_LICENSE=C:\Users\***YOU***\Documents\maya\2017\scripts\charcoaleditor.lic

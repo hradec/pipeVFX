@@ -1,0 +1,131 @@
+global proc AEhybrido_mesh5Template(string $nodeName)
+{
+  editorTemplate -beginScrollLayout;
+
+  rfrk5AddDisplayRollup($nodeName);
+
+  editorTemplate -beginLayout "Particle Files" -collapse false;
+    editorTemplate -callCustom "rfrk5FilesCreate" "rfrk5FilesReplace" "files";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Mesh" -collapse false;
+    editorTemplate -addControl "polygonSize";
+    editorTemplate -addControl "weightNormalization";
+    editorTemplate -addControl "axis";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Filtering" -collapse true;
+    editorTemplate -addControl "splashThinning"  "rfrk5HybridoFiltersChanged";
+    editorTemplate -addControl "splashThreshold";
+    editorTemplate -addControl "thinningSize";
+    editorTemplate -addControl "coreSmoothing" "rfrk5HybridoFiltersChanged";
+    editorTemplate -addControl "coreThreshold";
+    editorTemplate -addControl "smoothingSteps";
+    editorTemplate -addControl "filterMesh"  "rfrk5HybridoFiltersChanged";
+    editorTemplate -addControl "relax";
+    editorTemplate -addControl "tension";
+    editorTemplate -addControl "thinning";
+    editorTemplate -addControl "steps";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Boundaries" -collapse true;
+    editorTemplate -annotation "When Open boundaries is on, the mesh polygons in the outer areas of the projection plane will be cut away" -addControl "openBoundaries" "rfrk5HybridoUseOpenBoundariesChanged";
+    editorTemplate -annotation "Projection Plane min values. See Open boundaries tip" -addControl "projectionBoxMin";
+    editorTemplate -annotation "Projection Plane max values. See Open boundaries tip" -addControl "projectionBoxMax";
+    editorTemplate -annotation "" -addControl "extension" "rfrk5HybridoUseOpenBoundariesChanged";
+    editorTemplate -annotation "" -addControl "uncoupled" "rfrk5HybridoUseOpenBoundariesChanged";
+    editorTemplate -annotation "" -addControl "instance";
+    editorTemplate -annotation "" -addControl "seaLevelAuto" "rfrk5HybridoUseOpenBoundariesChanged";
+    editorTemplate -annotation "" -addControl "seaLevel";
+    editorTemplate -annotation "" -addControl "falloff"     "rfrk5HybridoUseOpenBoundariesChanged";
+    editorTemplate -annotation "" -addControl "falloffBandwidth";
+    editorTemplate -annotation "" -addControl "falloffOffset";
+    editorTemplate -annotation "" -addControl "repeat_U_neg";
+    editorTemplate -annotation "" -addControl "repeat_U_pos";
+    editorTemplate -annotation "" -addControl "repeat_V_neg";
+    editorTemplate -annotation "" -addControl "repeat_V_pos";
+  editorTemplate -endLayout;
+
+
+  editorTemplate -beginLayout "Displacement" -collapse true;
+    editorTemplate -addControl "useDisplacement" "rfrk5HybridoUseDisplacementChanged";
+    editorTemplate -addControl "autoEdgeLength" "rfrk5HybridoUseDisplacementChanged";
+    editorTemplate -addControl "edgeLength";
+    editorTemplate -callCustom "rfrk5BrowseCtrlCreate rfrkMrDisplCtrl Displacement \"rfrk5BrowseForFile\" \"tif;exr\" 0" "rfrk5BrowseCtrlReplace rfrkMrDisplCtrl \"rfrk5BrowseForFile\" \"tif;exr\" 0" "displacementFile";
+    editorTemplate -addControl "displacementFileOffset";
+    editorTemplate -addControl "verticalScale";
+    editorTemplate -addControl "chopiness";
+    editorTemplate -addControl "repeatU";
+    editorTemplate -addControl "repeatV";
+    editorTemplate -addControl "splashAttenuation" "rfrk5HybridoUseDisplacementChanged";
+    editorTemplate -addControl "splashNormalizationFactor";
+    editorTemplate -addControl "splashAttenuationFactor";
+    editorTemplate -addControl "vorticityAttenuation" "rfrk5HybridoUseDisplacementChanged";
+    editorTemplate -addControl "vorticityNormalizationFactor";
+    editorTemplate -addControl "vorticityAttenuationFactor";
+    editorTemplate -addControl "speedAttenuation" "rfrk5HybridoUseDisplacementChanged";
+    editorTemplate -addControl "speedAttenuationMin";
+    editorTemplate -addControl "speedAttenuationMax";
+    editorTemplate -addControl "speedAttenuationFactor";
+    editorTemplate -addControl "heightAttenuation" "rfrk5HybridoUseDisplacementChanged";
+    editorTemplate -addControl "heightAttenuationMin";
+    editorTemplate -addControl "heightAttenuationMax";
+    editorTemplate -addControl "heightAttenuationFactor";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Texture" -collapse true;
+    editorTemplate -annotation "How the UV are going to be projected into the mesh" -addControl "UVWMapping" "rfrk5HybridoUseUVWMappingChanged";
+    editorTemplate -addControl "offsetU";
+    editorTemplate -addControl "offsetV";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Clipping" -collapse true;
+    editorTemplate -addControl "objectClip" "rfrk5HybridoUseObjectClipChanged";
+    editorTemplate -annotation "cuts away everything that is outside the currently adjusted field of view" -addControl "cameraClip";
+    editorTemplate -annotation "You can decide which side of the clipping object should be used" -label "Inside" -addControl "outInside";
+    editorTemplate -annotation "Only particles inside the gizmo box will be meshed" -label "Bounded" -addControl "isBounded" "rfrk5CheckBoundsHelper";
+    editorTemplate -callCustom "rfrk5ClipFilesCreate" "rfrk5ClipFilesReplace" "clipFiles";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Optimize" -collapse true;
+    editorTemplate -addControl "optimize" "rfrk5HybridoUseOptimizeChanged";
+    editorTemplate -label "Distance" -addControl "cameraDistance";
+  editorTemplate -endLayout;
+
+  editorTemplate  -beginLayout "Export and Lazy Compute" -collapse true;
+    editorTemplate -annotation "Exporting and Loading RFRK mesh in Alembic format, speeding up shading tests, i.e. /tmp/mymesh$F5.abc" -label "Action" -addControl "lazyComputeAction" "rfrk5CheckLazyCompute";
+    editorTemplate -callCustom "rfrk5FileCtrlCreate rfrkMrLazyFileCtrl \"Alembic File\" \"rfrk5BrowseForFile abc 0\"" "rfrk5FileCtrlReplace rfrkMrLazyFileCtrl \"rfrk5BrowseForFile abc 0\"" "lazyComputeFile";
+    editorTemplate -label "Offset" -addControl "lazyComputeOffset";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Channels" -collapse true;
+    editorTemplate -annotation "Interpolate magnitudes in precise mode. Highly recomended if using weights" -addControl "precise";
+    editorTemplate -addSeparator;
+    editorTemplate -annotation "Export velocity from particles to vertice positions" -addControl "velocity";
+    editorTemplate -annotation "Export texture from particles to vertice positions" -addControl "texture";
+    editorTemplate -annotation "Export vorticity from particles to vertice positions" -addControl "vorticity";
+    editorTemplate -annotation "Export viscosity from particles to vertice positions" -addControl "viscosity";
+    editorTemplate -addSeparator;
+    editorTemplate -annotation "Compute splashity of the mesh in vertice positions" -addControl "splashity";
+    editorTemplate -annotation "Compute curvature of the mesh in vertice positions" -addControl "curvature";
+    editorTemplate -annotation "Compute fluids weights for mixing fluids" -addControl "weights";
+  editorTemplate -endLayout;
+
+  editorTemplate -beginLayout "Time" -collapse true;
+    editorTemplate -addControl "frame";
+    editorTemplate -addControl "fps";
+  editorTemplate -endLayout;
+
+  editorTemplate -suppress "obbPosition";
+  editorTemplate -suppress "obbRotation";
+  editorTemplate -suppress "obbScale";
+  editorTemplate -suppress "obbShear";
+  editorTemplate -suppress "obbPivot";
+  editorTemplate -suppress "displacementFileType";
+
+  rfrk5AddRMSRollup($nodeName);
+  rfrk5AddMesherArnoldRollup($nodeName);
+
+  editorTemplate -addExtraControls;
+  editorTemplate -endScrollLayout;
+}

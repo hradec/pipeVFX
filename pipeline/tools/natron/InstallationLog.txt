@@ -1,0 +1,178 @@
+************************************* Invoked: Fri Dec 16 16:08:34 2016
+Operations start: 145699
+Operations end: 16
+Resource count: 1
+Data block size: 476902
+Magic marker: 302133811
+Magic cookie: 14007050384008702200
+Index size: 48
+End of data: 20420790
+Number of operations: 0
+Unable to open translated license file. Using untranslated fallback.
+Unable to open translated license file. Using untranslated fallback.
+components list is empty in bool QInstaller::PackageManagerCorePrivate::appendComponentsToUninstall(const QList<QInstaller::Component*>&)
+Tmp is on a different volume than the install folder. Tmp volume mount point: "/tmp" Free space available: "15.66 GiB" Install volume mount point: "/atomo" Free space available: "53.30 GiB"
+Installation space required: "979.87 KiB" Temporary space required: "0.00 bytes" Local repository size: "0.00 bytes"
+backup  operation: Mkdir
+	- arguments: /atomo/pipeline/tools/ofx
+Done
+perform  operation: Mkdir
+	- arguments: /atomo/pipeline/tools/ofx
+Done
+Install size: 24 components
+backup natron.community.plugins.core operation: License
+	- arguments: 
+Done
+perform natron.community.plugins.core operation: License
+	- arguments: 
+Done
+backup natron.community.plugins.lp_SimpleKeyer operation: Extract
+	- arguments: installer://natron.community.plugins.lp_SimpleKeyer/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_SimpleKeyer operation: Extract
+	- arguments: installer://natron.community.plugins.lp_SimpleKeyer/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.lp_Despot operation: Extract
+	- arguments: installer://natron.community.plugins.lp_Despot/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_Despot operation: Extract
+	- arguments: installer://natron.community.plugins.lp_Despot/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.Z2Normal operation: Extract
+	- arguments: installer://natron.community.plugins.Z2Normal/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.Z2Normal operation: Extract
+	- arguments: installer://natron.community.plugins.Z2Normal/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.ReFlect operation: Extract
+	- arguments: installer://natron.community.plugins.ReFlect/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.ReFlect operation: Extract
+	- arguments: installer://natron.community.plugins.ReFlect/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.ChromaticAberrationPP operation: Extract
+	- arguments: installer://natron.community.plugins.ChromaticAberrationPP/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.ChromaticAberrationPP operation: Extract
+	- arguments: installer://natron.community.plugins.ChromaticAberrationPP/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.EdgeBlur operation: Extract
+	- arguments: installer://natron.community.plugins.EdgeBlur/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.EdgeBlur operation: Extract
+	- arguments: installer://natron.community.plugins.EdgeBlur/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.Shaker operation: Extract
+	- arguments: installer://natron.community.plugins.Shaker/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.Shaker operation: Extract
+	- arguments: installer://natron.community.plugins.Shaker/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.LightWrap_Simple operation: Extract
+	- arguments: installer://natron.community.plugins.LightWrap_Simple/3.1content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.LightWrap_Simple operation: Extract
+	- arguments: installer://natron.community.plugins.LightWrap_Simple/3.1content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.lp_Tweaky operation: Extract
+	- arguments: installer://natron.community.plugins.lp_Tweaky/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_Tweaky operation: Extract
+	- arguments: installer://natron.community.plugins.lp_Tweaky/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.Defocus operation: Extract
+	- arguments: installer://natron.community.plugins.Defocus/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.Defocus operation: Extract
+	- arguments: installer://natron.community.plugins.Defocus/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.lp_CleanScreen operation: Extract
+	- arguments: installer://natron.community.plugins.lp_CleanScreen/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_CleanScreen operation: Extract
+	- arguments: installer://natron.community.plugins.lp_CleanScreen/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.lp_ColourSmear operation: Extract
+	- arguments: installer://natron.community.plugins.lp_ColourSmear/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_ColourSmear operation: Extract
+	- arguments: installer://natron.community.plugins.lp_ColourSmear/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.lp_NoiseDistort operation: Extract
+	- arguments: installer://natron.community.plugins.lp_NoiseDistort/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_NoiseDistort operation: Extract
+	- arguments: installer://natron.community.plugins.lp_NoiseDistort/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.ReShade operation: Extract
+	- arguments: installer://natron.community.plugins.ReShade/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.ReShade operation: Extract
+	- arguments: installer://natron.community.plugins.ReShade/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.lp_Despill operation: Extract
+	- arguments: installer://natron.community.plugins.lp_Despill/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_Despill operation: Extract
+	- arguments: installer://natron.community.plugins.lp_Despill/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.Vignette operation: Extract
+	- arguments: installer://natron.community.plugins.Vignette/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.Vignette operation: Extract
+	- arguments: installer://natron.community.plugins.Vignette/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.ZCombine operation: Extract
+	- arguments: installer://natron.community.plugins.ZCombine/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.ZCombine operation: Extract
+	- arguments: installer://natron.community.plugins.ZCombine/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.FrameStamp operation: Extract
+	- arguments: installer://natron.community.plugins.FrameStamp/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.FrameStamp operation: Extract
+	- arguments: installer://natron.community.plugins.FrameStamp/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.lp_fakeDefocus operation: Extract
+	- arguments: installer://natron.community.plugins.lp_fakeDefocus/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_fakeDefocus operation: Extract
+	- arguments: installer://natron.community.plugins.lp_fakeDefocus/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.lp_HairKey operation: Extract
+	- arguments: installer://natron.community.plugins.lp_HairKey/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.lp_HairKey operation: Extract
+	- arguments: installer://natron.community.plugins.lp_HairKey/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.PM_VectorBlur operation: Extract
+	- arguments: installer://natron.community.plugins.PM_VectorBlur/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.PM_VectorBlur operation: Extract
+	- arguments: installer://natron.community.plugins.PM_VectorBlur/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.Chromatic_Aberration operation: Extract
+	- arguments: installer://natron.community.plugins.Chromatic_Aberration/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.Chromatic_Aberration operation: Extract
+	- arguments: installer://natron.community.plugins.Chromatic_Aberration/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+backup natron.community.plugins.Orton operation: Extract
+	- arguments: installer://natron.community.plugins.Orton/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+perform natron.community.plugins.Orton operation: Extract
+	- arguments: installer://natron.community.plugins.Orton/1.0content.7z, /atomo/pipeline/tools/ofx
+Done
+create Error-Exception: "Found a binary data file, but we are the installer and we should read the binary resource from our very own binary!"
+Operations start: 145699
+Operations end: 16
+Resource count: 1
+Data block size: 476902
+Magic marker: 302133811
+Magic cookie: 14007050384008702200
+Index size: 48
+End of data: 20420790
+Writing uninstaller: "/atomo/pipeline/tools/ofx/NCP-Setup.new"
+Maintenance tool restart: false.
+SHOW FINISHED PAGE

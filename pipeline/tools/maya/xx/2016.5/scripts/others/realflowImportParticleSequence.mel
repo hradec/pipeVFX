@@ -1,0 +1,140 @@
+/*
+*	Maintains the state of the range control based on the value of the "Use Range"
+* checkbox.
+*/
+global proc realflowCheckImportUseRange(string $optWindow)
+{
+	setParent $optWindow;
+	int $useRange = `checkBoxGrp -q -value1 useRangeCtrl`;
+	
+	control -e -enable $useRange rangeStartCtrl;
+	control -e -enable $useRange rangeEndCtrl;
+	control -e -enable $useRange rangeClipCtrl;
+}
+
+/*
+*	Callback for the "Create" button in the sequence options dialog.
+*/
+global proc realflowCreateEmitterFromSeq(string $optWindow)
+{
+	int $ok = realflowUpdateSeqPrefix($optWindow);
+	if(!$ok)
+	{
+		confirmDialog -title "Bad file name"
+			-message "The name format and/or padding don't match the selected file name.\nPlease check your settings."
+			-button "OK" -defaultButton "OK" -cancelButton "OK";
+		return;
+	}
+	
+	setParent $optWindow;
+	int $nameFormat = `optionMenuGrp -q -select nameFormatCtrl` - 1;
+	int $padding = `intFieldGrp -q -value1 paddingCtrl`;
+	int $type = `optionMenuGrp -q -select particleTypeCtrl` - 1;
+	string $path = `textFieldGrp -q -text pathCtrl`;
+	string $prefix = `textFieldGrp -q -text prefixCtrl`;
+
+    float $lod;
+    int $offset;
+    if(realflowGetMayaMajorVer() < 2014)
+    {
+	    $lod = `floatSliderGrp -q -value lodCtrl`;
+	    $offset = `intFieldGrp -q -value1 offsetCtrl`;
+    }
+    else
+    {
+        $lod = 100;
+        $offset = 0;
+    }
+
+	int $useRange = `checkBoxGrp -q -value1 useRangeCtrl`;
+	int $rangeStart = `intFieldGrp -q -value1 rangeStartCtrl`;
+	int $rangeEnd = `intFieldGrp -q -value1 rangeEndCtrl`;
+	int $rangeClip = `checkBoxGrp -q -value1 rangeClipCtrl`;
+	
+	string $ret[] = realflowCreateEmitter($nameFormat, $padding, $path, $prefix, $type, $lod, $offset, $useRange, $rangeStart, $rangeEnd, $rangeClip);
+	string $emitterName = $ret[0];
+
+	deleteUI $optWindow;
+	select -r $emitterName;
+}
+
+/*
+*	Displays the import sequence options dialog. This is a callback for a file browser
+* dialog which opens when the user presses the "Create emitter" toolbar button.
+*/
+global proc realflowImportParticleSequence(string $filePath, string $fileType)
+{
+	string $dir = dirname($filePath);
+	string $fileName = basename($filePath, "");
+	optionVar -stringValue "rfLastSeqDir" $dir;
+	
+	int $formatAndPad[] = realflowFindFormatPadAndType($fileName);
+	
+	$wnd = `window -visible false -title "Create RealFlow Emitter" -iconName "Create Emitter"`;
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	
+	$form = `formLayout`;
+		$frame = `frameLayout -l "Sequence Import Options" -collapsable false`;
+			columnLayout -adjustableColumn true;
+				textFieldGrp -l "Sequence File" -editable false -text $filePath seqFileCtrl;
+				optionMenuGrp -l "Name Format" -changeCommand ("realflowUpdateSeqPrefix " + $wnd) nameFormatCtrl;
+					menuItem -l "name.#.ext";
+					menuItem -l "name#.ext";
+					menuItem -l "name.ext.#";
+					menuItem -l "name_#.ext";
+				optionMenuGrp -e -select ($formatAndPad[0]+1) nameFormatCtrl;
+				intFieldGrp -l "Padding" -changeCommand ("realflowUpdateSeqPrefix " + $wnd) -value1 $formatAndPad[1] paddingCtrl;
+				textFieldGrp -l "Path" -editable false -text $dir pathCtrl;
+				textFieldGrp -l "Prefix" -editable false prefixCtrl;
+				optionMenuGrp -l "Type" -changeCommand ("realflowUpdateSeqPrefix " + $wnd) particleTypeCtrl;
+					menuItem -l "BIN";
+					menuItem -l "PXY";
+					menuItem -l "RPC";
+				optionMenuGrp -e -select ($formatAndPad[2]+1) particleTypeCtrl;
+				separator -horizontal true -style "none";
+        	    if(realflowGetMayaMajorVer() < 2014)
+                {
+				    floatSliderGrp -l "LOD" -value 1 -min 0 -max 1 lodCtrl;
+				    intFieldGrp -l "Frame Offset" -value1 0 offsetCtrl;
+                }
+				checkBoxGrp -l "Use Range" -numberOfCheckBoxes 1 -value1 false -changeCommand ("realflowCheckImportUseRange " + $wnd) useRangeCtrl;
+				intFieldGrp -l "Range Start" -value1 0 rangeStartCtrl;
+				intFieldGrp -l "Range End" -value1 100 rangeEndCtrl;
+				checkBoxGrp -l "Clip To Range" -numberOfCheckBoxes 1 -value1 true rangeClipCtrl;
+			setParent ..;
+		setParent ..;
+		
+		$createBtn = `button -label "Create" -command ("realflowCreateEmitterFromSeq " + $wnd)`;
+		$cancelBtn = `button -label "Cancel" -command ("deleteUI " + $wnd)`;
+	setParent ..;
+
+	formLayout -e
+		-numberOfDivisions 100
+
+		-attachForm		$createBtn	"left" 5
+		-attachPosition	$createBtn	"right" 5 50
+		-attachForm		$createBtn	"bottom" 5
+
+		-attachForm		$cancelBtn	"right" 5
+		-attachPosition	$cancelBtn	"left" 5 50
+		-attachForm		$cancelBtn	"bottom" 5
+
+		-attachForm		$frame		"top" 0
+		-attachForm		$frame		"left" 0
+		-attachForm		$frame		"right" 0
+		-attachControl	$frame		"bottom" 5 $createBtn
+	$form;
+
+	setUITemplate -popTemplate;
+	
+	realflowUpdateSeqPrefix($wnd);
+	realflowCheckImportUseRange($wnd);
+	
+	window -e -sizeable false $wnd;
+	int $height = 320;
+	if(`about -mac`)
+		$height += 60;
+
+	window -e -width 465 -height $height $wnd;
+	showWindow $wnd;
+}
