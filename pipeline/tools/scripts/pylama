@@ -1,0 +1,1 @@
+PYTHONPATH=$(ppython -c 'import os;print os.environ["PYTHONPATH"]') pylama "$@"

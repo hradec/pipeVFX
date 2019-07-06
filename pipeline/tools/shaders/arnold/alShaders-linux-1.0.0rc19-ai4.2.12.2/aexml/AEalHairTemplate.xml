@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalHair">
+		<label>alHair</label>
+		<description>Create believable hair shading with a plausible direct lighting model and approximate multiple scattering. The scattering from a hair fibre is a complex interaction of multiple lobes, often referred to in the literature as R, TT and TRT. Those related to the Specular 1, Transmission and Specular 2 lobes, respectively. The Diffuse lobe represents multiple scattering between hair fibres.</description>
+		<attribute name="melanin" type="maya.float">
+			<label>Melanin</label>
+			<description>The melanin content of the hair fibre. Use this to generated natural colors for mammalian hair. 0 will give white hair, 0.2-04 blonde, 0.4-0.6 red, 0.6-0.8 brown and 0.</description>
+		</attribute>
+		<attribute name="dyeColor" type="maya.float3">
+			<label>Dye color</label>
+			<description>Color tint to apply to the hair. You can also plug a MayaRamp in here to define the color along the lenght of the hair.</description>
+		</attribute>
+		<attribute name="specularWidth" type="maya.float">
+			<label>Highlight width</label>
+			<description>The width of the hair highlights, essentially how shiny the hair appears. Values in the range 1-7 are sensible for human hair.</description>
+		</attribute>
+		<attribute name="specularShift" type="maya.float">
+			<label>Highlight shift</label>
+			<description>How much the highlights are shifted along the hair by the cuticles on the hair fibre. Generally this wants to be 1 to 1.5 times the value of the Width parameter.</description>
+		</attribute>
+		<attribute name="opacity" type="maya.float3">
+			<label>Opacity</label>
+			<description>Opacity of the hair fibre. Setting this to anything other than white can make the shader very slow. If you want to get a softer look and resolve fine hair better, it is often a better idea to raise your AA samples instead.</description>
+		</attribute>
+		<attribute name="randomTangent" type="maya.float">
+			<label>Tangent</label>
+			<description>Adds a random offset to the hair tangent which can be useful for breaking up uniform-looking grooms. Note that this value is dependent on your scene scale.</description>
+		</attribute>
+		<attribute name="randomMelanin" type="maya.float">
+			<label>Melanin</label>
+			<description>Adds a random offset to the melanin content of the hair. Values from 0.05 to 0.2 give a very natural color variation.</description>
+		</attribute>
+		<attribute name="randomHue" type="maya.float">
+			<label>Dye hue</label>
+			<description>Add a random offest to the hue of the Dye color.</description>
+		</attribute>
+		<attribute name="randomSaturation" type="maya.float">
+			<label>Dye saturation</label>
+			<description>Add a random offest to the saturation of the Dye color.</description>
+		</attribute>
+		<attribute name="glintRolloff" type="maya.float">
+			<label>Glint rolloff</label>
+			<description>Controls the rolloff of the caustic glints in the hair. Lower values make the glints more pingy, higher values make them softer and less apparent.</description>
+		</attribute>
+		<attribute name="transmissionRolloff" type="maya.float">
+			<label>Transmission rolloff</label>
+			<description>Controls the rolloff of the transmission highlight. Essentially, if you want the transmission highlight to only appear when the light is directly behind the hair, set this value to 10 or lower.</description>
+		</attribute>
+		<attribute name="diffuseStrength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the strength of the diffuse illumination.</description>
+		</attribute>
+		<attribute name="diffuseColor" type="maya.float3">
+			<label>Tint</label>
+			<description>Tint on the diffuse illumination. This is multiplied on top of the Fibre color specified above.</description>
+		</attribute>
+		<attribute name="diffuseScatteringMode" type="maya.enum">
+			<label>Scattering mode</label>
+			<description>The algorithm to use for diffuse calculation. dual-scattering is a realistic approximation of multiple scattering in hair and is more appropriate for long, realistic hair.</description>
+		</attribute>
+		<attribute name="diffuseForward" type="maya.float">
+			<label>Forward scattering</label>
+			<description>Controls the amount of light bleeding through the hair in dual-scattering mode.</description>
+		</attribute>
+		<attribute name="diffuseBack" type="maya.float">
+			<label>Back scattering</label>
+			<description>Controls the amount of light kicked back from the hair in dual-scattering mode.</description>
+		</attribute>
+		<attribute name="specular1Strength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the strength of this lobe</description>
+		</attribute>
+		<attribute name="specular1Color" type="maya.float3">
+			<label>Tint</label>
+			<description>Color tint on the color automatically generated for this lobe by the Fibre color settings.</description>
+		</attribute>
+		<attribute name="specular1WidthScale" type="maya.float">
+			<label>Width scale</label>
+			<description>Multiplier on the width of this lobe's highlight.</description>
+		</attribute>
+		<attribute name="specular1Shift" type="maya.float">
+			<label>Shift offset</label>
+			<description>Offset on the shift of this lobe's highlight.</description>
+		</attribute>
+		<attribute name="specular2Strength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the strength of this lobe</description>
+		</attribute>
+		<attribute name="specular2Color" type="maya.float3">
+			<label>Tint</label>
+			<description>Color tint on the color automatically generated for this lobe by the Fibre color settings.</description>
+		</attribute>
+		<attribute name="specular2WidthScale" type="maya.float">
+			<label>Width scale</label>
+			<description>Multiplier on the width of this lobe's highlight.</description>
+		</attribute>
+		<attribute name="specular2Shift" type="maya.float">
+			<label>Shift offset</label>
+			<description>Offset on the shift of this lobe's highlight.</description>
+		</attribute>
+		<attribute name="glintStrength" type="maya.float">
+			<label>Glint strength</label>
+			<description>Strength of the caustic glints. Sensible values are in the range 1-5.</description>
+		</attribute>
+		<attribute name="transmissionStrength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the strength of this lobe</description>
+		</attribute>
+		<attribute name="transmissionColor" type="maya.float3">
+			<label>Tint</label>
+			<description>Color tint on the color automatically generated for this lobe by the Fibre color settings.</description>
+		</attribute>
+		<attribute name="transmissionWidthScale" type="maya.float">
+			<label>Width scale</label>
+			<description>Multiplier on the width of this lobe's highlight.</description>
+		</attribute>
+		<attribute name="transmissionShift" type="maya.float">
+			<label>Shift offset</label>
+			<description>Offset on the shift of this lobe's highlight.</description>
+		</attribute>
+		<attribute name="id1" type="maya.float3">
+			<label>id1</label>
+			<description>Color to be output in id_1 AOV.</description>
+		</attribute>
+		<attribute name="id2" type="maya.float3">
+			<label>id2</label>
+			<description>Color to be output in id_2 AOV.</description>
+		</attribute>
+		<attribute name="id3" type="maya.float3">
+			<label>id3</label>
+			<description>Color to be output in id_3 AOV.</description>
+		</attribute>
+		<attribute name="id4" type="maya.float3">
+			<label>id4</label>
+			<description>Color to be output in id_4 AOV.</description>
+		</attribute>
+		<attribute name="id5" type="maya.float3">
+			<label>id5</label>
+			<description>Color to be output in id_5 AOV.</description>
+		</attribute>
+		<attribute name="id6" type="maya.float3">
+			<label>id6</label>
+			<description>Color to be output in id_6 AOV.</description>
+		</attribute>
+		<attribute name="id7" type="maya.float3">
+			<label>id7</label>
+			<description>Color to be output in id_7 AOV.</description>
+		</attribute>
+		<attribute name="id8" type="maya.float3">
+			<label>id8</label>
+			<description>Color to be output in id_8 AOV.</description>
+		</attribute>
+		<attribute name="crypto_asset_override" type="maya.string">
+			<label>Crypto asset override</label>
+			<description>Overide the cryptomatte asset string for this shader</description>
+		</attribute>
+		<attribute name="crypto_object_override" type="maya.string">
+			<label>Crypto object override</label>
+			<description>Overide the cryptomatte object string for this shader</description>
+		</attribute>
+		<attribute name="crypto_material_override" type="maya.string">
+			<label>Crypto material override</label>
+			<description>Overide the cryptomatte material string for this shader</description>
+		</attribute>
+		<attribute name="aov_diffuse_color" type="maya.float3">
+			<label>Diffuse color</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_diffuse" type="maya.float3">
+			<label>Direct diffuse</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_diffuse" type="maya.float3">
+			<label>Indirect diffuse</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_local" type="maya.float3">
+			<label>Direct local</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_local" type="maya.float3">
+			<label>Indirect local</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_global" type="maya.float3">
+			<label>Direct global</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_global" type="maya.float3">
+			<label>Indirect global</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_specular" type="maya.float3">
+			<label>Direct specular</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_specular" type="maya.float3">
+			<label>Indirect specular</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_1" type="maya.float3">
+			<label>Light group [1]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_2" type="maya.float3">
+			<label>Light group [2]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_3" type="maya.float3">
+			<label>Light group [3]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_4" type="maya.float3">
+			<label>Light group [4]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_5" type="maya.float3">
+			<label>Light group [5]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_6" type="maya.float3">
+			<label>Light group [6]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_7" type="maya.float3">
+			<label>Light group [7]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_8" type="maya.float3">
+			<label>Light group [8]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_1" type="maya.float3">
+			<label>ID [1]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_2" type="maya.float3">
+			<label>ID [2]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_3" type="maya.float3">
+			<label>ID [3]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_4" type="maya.float3">
+			<label>ID [4]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_5" type="maya.float3">
+			<label>ID [5]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_6" type="maya.float3">
+			<label>ID [6]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_7" type="maya.float3">
+			<label>ID [7]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_8" type="maya.float3">
+			<label>ID [8]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_asset" type="maya.float3">
+			<label>Crypto Asset</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_object" type="maya.float3">
+			<label>Crypto Object</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_material" type="maya.float3">
+			<label>Crypto Material</label>
+			<description></description>
+		</attribute>
+		<attribute name="dualDepth" type="maya.int">
+			<label>Brute force bounces</label>
+			<description>Number of brute-force, inter-hair bounces to calculate before falling back to dual scattering. THIS PARAMETER IS DEPRECATED AND WILL BE REMOVED IN A FUTURE RELEASE.</description>
+		</attribute>
+		<attribute name="diffuseIndirectStrength" type="maya.float">
+			<label>Diffuse indirect strength</label>
+			<description>Multiplier on the intensity of the indirect diffuse illumination. The default value of 0 disables indirect illumination on the hair since in most cases you don't need it and it can be quite expensive.</description>
+		</attribute>
+		<attribute name="extraSamplesDiffuse" type="maya.int">
+			<label>Diffuse extra samples</label>
+			<description>Number of extra samples to take when calculating indirect diffuse illumination.</description>
+		</attribute>
+		<attribute name="glossyIndirectStrength" type="maya.float">
+			<label>Glossy indirect strength</label>
+			<description>Multiplier on the intensity of the indirect glossy illumination. The default value of 0 disables indirect illumination on the hair since in most cases you don't need it and it can be quite expensive.</description>
+		</attribute>
+		<attribute name="extraSamplesGlossy" type="maya.int">
+			<label>Glossy extra samples</label>
+			<description>Number of extra samples to take when calculating indirect glossy illumination.</description>
+		</attribute>
+		<attribute name="uparam" type="maya.string">
+			<label>U param</label>
+			<description>Name of the user data that contains the U coordinate of the surface for texturing.</description>
+		</attribute>
+		<attribute name="vparam" type="maya.string">
+			<label>V param</label>
+			<description>Name of the user data that contains the V coordinate of the surface for texturing.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalHair">
+			<group name="Fibreproperties">
+				<label>Fibre properties</label>
+				<property name="melanin"/>
+				<property name="dyeColor"/>
+				<property name="specularWidth"/>
+				<property name="specularShift"/>
+				<property name="opacity"/>
+				<group name="Randomize">
+					<label>Randomize</label>
+					<property name="randomTangent"/>
+					<property name="randomMelanin"/>
+					<property name="randomHue"/>
+					<property name="randomSaturation"/>
+				</group>
+				<group name="Advanced">
+					<label>Advanced</label>
+					<property name="glintRolloff"/>
+					<property name="transmissionRolloff"/>
+				</group>
+			</group>
+			<group name="Diffuse">
+				<label>Diffuse</label>
+				<property name="diffuseStrength"/>
+				<property name="diffuseColor"/>
+				<property name="diffuseScatteringMode"/>
+				<property name="diffuseForward"/>
+				<property name="diffuseBack"/>
+			</group>
+			<group name="Specular1">
+				<label>Specular 1</label>
+				<property name="specular1Strength"/>
+				<property name="specular1Color"/>
+				<property name="specular1WidthScale"/>
+				<property name="specular1Shift"/>
+			</group>
+			<group name="Specular2">
+				<label>Specular 2</label>
+				<property name="specular2Strength"/>
+				<property name="specular2Color"/>
+				<property name="specular2WidthScale"/>
+				<property name="specular2Shift"/>
+				<property name="glintStrength"/>
+			</group>
+			<group name="Transmission">
+				<label>Transmission</label>
+				<property name="transmissionStrength"/>
+				<property name="transmissionColor"/>
+				<property name="transmissionWidthScale"/>
+				<property name="transmissionShift"/>
+			</group>
+			<group name="IDs">
+				<label>IDs</label>
+				<property name="id1"/>
+				<property name="id2"/>
+				<property name="id3"/>
+				<property name="id4"/>
+				<property name="id5"/>
+				<property name="id6"/>
+				<property name="id7"/>
+				<property name="id8"/>
+			</group>
+			<group name="AOVs">
+				<label>AOVs</label>
+				<property name="crypto_asset_override"/>
+				<property name="crypto_object_override"/>
+				<property name="crypto_material_override"/>
+				<property name="aov_diffuse_color"/>
+				<property name="aov_direct_diffuse"/>
+				<property name="aov_indirect_diffuse"/>
+				<property name="aov_direct_local"/>
+				<property name="aov_indirect_local"/>
+				<property name="aov_direct_global"/>
+				<property name="aov_indirect_global"/>
+				<property name="aov_direct_specular"/>
+				<property name="aov_indirect_specular"/>
+				<property name="aov_light_group_1"/>
+				<property name="aov_light_group_2"/>
+				<property name="aov_light_group_3"/>
+				<property name="aov_light_group_4"/>
+				<property name="aov_light_group_5"/>
+				<property name="aov_light_group_6"/>
+				<property name="aov_light_group_7"/>
+				<property name="aov_light_group_8"/>
+				<property name="aov_id_1"/>
+				<property name="aov_id_2"/>
+				<property name="aov_id_3"/>
+				<property name="aov_id_4"/>
+				<property name="aov_id_5"/>
+				<property name="aov_id_6"/>
+				<property name="aov_id_7"/>
+				<property name="aov_id_8"/>
+				<property name="aov_crypto_asset"/>
+				<property name="aov_crypto_object"/>
+				<property name="aov_crypto_material"/>
+			</group>
+			<group name="Advanced">
+				<label>Advanced</label>
+				<property name="dualDepth"/>
+				<property name="diffuseIndirectStrength"/>
+				<property name="extraSamplesDiffuse"/>
+				<property name="glossyIndirectStrength"/>
+				<property name="extraSamplesGlossy"/>
+				<property name="uparam"/>
+				<property name="vparam"/>
+			</group>
+		</view>
+</templates>

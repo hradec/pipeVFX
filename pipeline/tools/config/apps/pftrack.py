@@ -32,17 +32,22 @@ class pftrack(baseApp):
         self['PIXELFARM_SYS_DIR'] = self.path()
         self['PIXELFARM_KEEP_PYTHONPATH'] = '1'
         self['PIXELFARM_SPLASH_DURATION'] = '0'        
-#        self['PF_DATA_HOME'] = self.path()
         
     def license(self):
         # install license for the current machine
-        self['PIXELFARM_LICENSE_FILE'] = "/tmp/pftrack_license_%s.txt" % os.environ['USER']
+        self['PIXELFARM_LICENSE_FILE'] = '%s/licenses/pftrack/%s/license.%s' % (pipe.roots().tools(), self.version(),''.join(os.popen('hostname').readlines()).strip())
 
-        hostid = os.popen("%s/license/pflic -h | grep host" % self.path()).readlines()[0].strip().split()[-1]
-        os.popen( "cd /tmp && echo -e 'user\ncompany\n%s\n' | %s/license/keygen" % (hostid,self.path()) ).readlines()
-        cache.copy( "/tmp/license.txt", self['PIXELFARM_LICENSE_FILE'] )
-        cache.rmtree( "/tmp/license.txt" )
 
-        
+#        self['PIXELFARM_LICENSE_FILE'] = "/tmp/pftrack_license_%s.txt" % os.environ['USER']
+#        hostid = os.popen("%s/license/pflic -h | grep host" % self.path()).readlines()[0].strip().split()[-1]
+#        os.popen( "cd /tmp && echo -e 'user\ncompany\n%s\n' | %s/license/keygen" % (hostid,self.path()) ).readlines()
+#        cache.copy( "/tmp/license.txt", self['PIXELFARM_LICENSE_FILE'] )
+#        cache.rmtree( "/tmp/license.txt" )
 
-        
+    def userSetup(self, jobuser):
+        ''' this method is implemented when we want to do especial folder structure creation and setup
+        for a user in a shot'''
+        self['PF_DATA_HOME'] = jobuser.path('pftrack')
+        os.chdir( jobuser.path('pftrack') )
+
+

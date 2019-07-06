@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalLayerFloat">
+		<label>alLayerFloat</label>
+		<description>This can be handy for stacking multiple image or procedural channels together and blending between them in different areas, for example for a displacement shader.</description>
+		<attribute name="layer1name" type="maya.string">
+			<label>Name</label>
+			<description>A descriptive name for this layer</description>
+		</attribute>
+		<attribute name="layer1enabled" type="maya.bool">
+			<label>Enabled</label>
+			<description>Toggle this layer on or off</description>
+		</attribute>
+		<attribute name="layer1" type="maya.float">
+			<label>Input</label>
+			<description>The value of the background layer</description>
+		</attribute>
+		<attribute name="layer1a" type="maya.float">
+			<label>Alpha</label>
+			<description>The alpha of the background layer</description>
+		</attribute>
+		<attribute name="layer2name" type="maya.string">
+			<label>Name</label>
+			<description>A descriptive name for this layer</description>
+		</attribute>
+		<attribute name="layer2enabled" type="maya.bool">
+			<label>Enabled</label>
+			<description>Toggle this layer on or off</description>
+		</attribute>
+		<attribute name="layer2" type="maya.float">
+			<label>Input</label>
+			<description>The value to be layered</description>
+		</attribute>
+		<attribute name="layer2a" type="maya.float">
+			<label>Alpha</label>
+			<description>The alpha used to blend this layer over the layers below.</description>
+		</attribute>
+		<attribute name="layer3name" type="maya.string">
+			<label>Name</label>
+			<description>A descriptive name for this layer</description>
+		</attribute>
+		<attribute name="layer3enabled" type="maya.bool">
+			<label>Enabled</label>
+			<description>Toggle this layer on or off</description>
+		</attribute>
+		<attribute name="layer3" type="maya.float">
+			<label>Input</label>
+			<description>The value to be layered</description>
+		</attribute>
+		<attribute name="layer3a" type="maya.float">
+			<label>Alpha</label>
+			<description>The alpha used to blend this layer over the layers below.</description>
+		</attribute>
+		<attribute name="layer4name" type="maya.string">
+			<label>Name</label>
+			<description>A descriptive name for this layer</description>
+		</attribute>
+		<attribute name="layer4enabled" type="maya.bool">
+			<label>Enabled</label>
+			<description>Toggle this layer on or off</description>
+		</attribute>
+		<attribute name="layer4" type="maya.float">
+			<label>Input</label>
+			<description>The value to be layered</description>
+		</attribute>
+		<attribute name="layer4a" type="maya.float">
+			<label>Alpha</label>
+			<description>The alpha used to blend this layer over the layers below.</description>
+		</attribute>
+		<attribute name="layer5name" type="maya.string">
+			<label>Name</label>
+			<description>A descriptive name for this layer</description>
+		</attribute>
+		<attribute name="layer5enabled" type="maya.bool">
+			<label>Enabled</label>
+			<description>Toggle this layer on or off</description>
+		</attribute>
+		<attribute name="layer5" type="maya.float">
+			<label>Input</label>
+			<description>The value to be layered</description>
+		</attribute>
+		<attribute name="layer5a" type="maya.float">
+			<label>Alpha</label>
+			<description>The alpha used to blend this layer over the layers below.</description>
+		</attribute>
+		<attribute name="layer6name" type="maya.string">
+			<label>Name</label>
+			<description>A descriptive name for this layer</description>
+		</attribute>
+		<attribute name="layer6enabled" type="maya.bool">
+			<label>Enabled</label>
+			<description>Toggle this layer on or off</description>
+		</attribute>
+		<attribute name="layer6" type="maya.float">
+			<label>Input</label>
+			<description>The value to be layered</description>
+		</attribute>
+		<attribute name="layer6a" type="maya.float">
+			<label>Alpha</label>
+			<description>The alpha used to blend this layer over the layers below.</description>
+		</attribute>
+		<attribute name="layer7name" type="maya.string">
+			<label>Name</label>
+			<description>A descriptive name for this layer</description>
+		</attribute>
+		<attribute name="layer7enabled" type="maya.bool">
+			<label>Enabled</label>
+			<description>Toggle this layer on or off</description>
+		</attribute>
+		<attribute name="layer7" type="maya.float">
+			<label>Input</label>
+			<description>The value to be layered</description>
+		</attribute>
+		<attribute name="layer7a" type="maya.float">
+			<label>Alpha</label>
+			<description>The alpha used to blend this layer over the layers below.</description>
+		</attribute>
+		<attribute name="layer8name" type="maya.string">
+			<label>Name</label>
+			<description>A descriptive name for this layer</description>
+		</attribute>
+		<attribute name="layer8enabled" type="maya.bool">
+			<label>Enabled</label>
+			<description>Toggle this layer on or off</description>
+		</attribute>
+		<attribute name="layer8" type="maya.float">
+			<label>Input</label>
+			<description>The value to be layered</description>
+		</attribute>
+		<attribute name="layer8a" type="maya.float">
+			<label>Alpha</label>
+			<description>The alpha used to blend this layer over the layers below.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalLayerFloat">
+			<group name="Background">
+				<label>Background</label>
+				<property name="layer1name"/>
+				<property name="layer1enabled"/>
+				<property name="layer1"/>
+				<property name="layer1a"/>
+			</group>
+			<group name="Layer2">
+				<label>Layer 2</label>
+				<property name="layer2name"/>
+				<property name="layer2enabled"/>
+				<property name="layer2"/>
+				<property name="layer2a"/>
+			</group>
+			<group name="Layer3">
+				<label>Layer 3</label>
+				<property name="layer3name"/>
+				<property name="layer3enabled"/>
+				<property name="layer3"/>
+				<property name="layer3a"/>
+			</group>
+			<group name="Layer4">
+				<label>Layer 4</label>
+				<property name="layer4name"/>
+				<property name="layer4enabled"/>
+				<property name="layer4"/>
+				<property name="layer4a"/>
+			</group>
+			<group name="Layer5">
+				<label>Layer 5</label>
+				<property name="layer5name"/>
+				<property name="layer5enabled"/>
+				<property name="layer5"/>
+				<property name="layer5a"/>
+			</group>
+			<group name="Layer6">
+				<label>Layer 6</label>
+				<property name="layer6name"/>
+				<property name="layer6enabled"/>
+				<property name="layer6"/>
+				<property name="layer6a"/>
+			</group>
+			<group name="Layer7">
+				<label>Layer 7</label>
+				<property name="layer7name"/>
+				<property name="layer7enabled"/>
+				<property name="layer7"/>
+				<property name="layer7a"/>
+			</group>
+			<group name="Layer8">
+				<label>Layer 8</label>
+				<property name="layer8name"/>
+				<property name="layer8enabled"/>
+				<property name="layer8"/>
+				<property name="layer8a"/>
+			</group>
+		</view>
+</templates>

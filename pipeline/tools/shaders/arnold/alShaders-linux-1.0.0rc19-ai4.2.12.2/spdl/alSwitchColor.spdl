@@ -1,0 +1,186 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{e080f8d7-ebc4-49b3-bd21-5532e5497ec6}";
+PropertySet "alSwitchColor_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{e2737299-3cd8-4fa3-be52-9ac30381f935}";
+		Type = color;
+	}
+	Parameter "inputA" input
+	{
+		GUID = "{f0b49f7f-201a-4ae2-b428-290ef2409c1e}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "inputB" input
+	{
+		GUID = "{6daa4155-3671-4fd8-96bb-3979e3e67420}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "inputC" input
+	{
+		GUID = "{06ed31ca-0873-47f5-a1d7-029cc45d50ed}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 0.000000 0.000000;
+	}
+	Parameter "inputD" input
+	{
+		GUID = "{68d59ca3-057f-416c-b013-ed31980011a2}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 1.000000 0.000000;
+	}
+	Parameter "inputE" input
+	{
+		GUID = "{a09e0485-4a14-4899-ac00-d22775029a1e}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 1.000000;
+	}
+	Parameter "inputF" input
+	{
+		GUID = "{aebd1a1c-79ae-40d6-a4a5-d65d202d0956}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 0.000000;
+	}
+	Parameter "inputG" input
+	{
+		GUID = "{204e6e47-05a6-48da-a140-b20c2b1c19ec}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 0.000000 1.000000;
+	}
+	Parameter "inputH" input
+	{
+		GUID = "{9bee6c5d-478a-4035-897d-a7b7b49d8362}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 1.000000 1.000000;
+	}
+	Parameter "mix" input
+	{
+		GUID = "{e2207275-5b51-4352-aa91-4cfe930a7ea0}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "threshold" input
+	{
+		GUID = "{18df52e1-0924-4460-8985-f794faff60a7}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+}
+MetaShader "alSwitchColor_meta"
+{
+	Name = "ALS_SwitchColor";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_SwitchColor";
+		Filename = "alSwitchColor";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	inputA
+	{
+		Name = "Input 0";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputB
+	{
+		Name = "Input 1";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputC
+	{
+		Name = "Input 2";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputD
+	{
+		Name = "Input 3";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputE
+	{
+		Name = "Input 4";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputF
+	{
+		Name = "Input 5";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputG
+	{
+		Name = "Input 6";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputH
+	{
+		Name = "Input 7";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	mix
+	{
+		Name = "mix";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	threshold
+	{
+		Name = "threshold";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	inputA;
+	inputB;
+	inputC;
+	inputD;
+	inputE;
+	inputF;
+	inputG;
+	inputH;
+	mix;
+	threshold;
+}
+Layout "RenderTree"
+{
+	inputA;
+	inputB;
+	inputC;
+	inputD;
+	inputE;
+	inputF;
+	inputG;
+	inputH;
+	mix;
+	threshold;
+}
+Plugin = Shader
+{
+	Filename = "alSwitchColor";
+}

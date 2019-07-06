@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalInputVector">
+		<attribute name="outValue" type="maya.float3">
+		<label>Out Value</label>
+</attribute>
+	</template>
+		<view name="NEDefault" template="NEalInputVector">
+		<property name="outValue" />
+		</view>
+</templates>

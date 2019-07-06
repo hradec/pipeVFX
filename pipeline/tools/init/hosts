@@ -1,13 +1,9 @@
 00:0C:29:E2:58:42             vmware-testing.local
 50:E5:49:9E:6F:D1             rhradec.local                     
 1C:6F:65:3E:4F:94             andre.local               
-00:25:00:F3:1E:A5             nuke03.local
-00:25:00:F3:34:14             nuke03.local
 00:50:56:94:E1:A0             vfxws-001.local
 F4:6D:04:92:6E:46             vfxws-002.local           
 00:50:56:94:A9:22             vfxws-003.local
-00:25:00:F3:C0:AE             vfxws-004.local           
-70:CD:60:AA:0B:EA             vfxws-005.local
 BC:AE:C5:50:61:86             vfxws-007.local
 00:1D:09:EF:55:C0             vfxws-008.local           
 00:23:18:A0:73:91             vfxws-009.local  
@@ -18,7 +14,6 @@ B8:AC:6F:1A:F4:6F             vfxws-013.local
 00:0C:29:A6:86:83             vfxws-014.local
 60:FB:42:EF:A8:24             vfxws-015.local
 00:1C:C0:7B:34:22             vfxws-016.local
-40:6C:8F:54:45:AE             vfxws-017.local
 00:30:48:32:61:16             vfxws-018.local
 00:30:48:32:61:17             vfxws-019.local
 00:0C:29:15:2B:92             vfxws-020.local
@@ -54,6 +49,20 @@ F0:7D:68:CD:F8:78             quemSouEu.local
 C8:BC:C8:94:0D:D6             quemSouEu2_A_Revanche.local
 00:50:00:00:00:00             vmare-testing2.local
 00:1F:E2:55:9D:B4             hradecPCzinho.local
-00:25:00:F3:DA:7E	      vfxws-004.local             
-D4:85:64:F1:F7:63             
-34:17:EB:DF:8F:7E             
+D4:85:64:F1:F7:63             quemSouEu5.local
+34:17:EB:DF:8F:7E             vfxws-030.local   
+34:17:EB:DF:8F:BB             vfxws-030.local
+00:50:56:22:74:46             
+DE:AD:BE:EF:ED:18             
+DE:AD:BE:EF:24:1B             
+DE:AD:BE:EF:25:DB             
+00:25:00:F3:1E:A5             nuke03.local
+00:25:00:F3:34:14             nuke03.local
+00:25:00:F3:DA:7E	      smoke-001.local             
+00:25:00:F3:C0:AE             smoke-001.local
+68:5B:35:7E:71:7C             smoke-004.local
+70:CD:60:AA:0B:EA             smoke-002.local
+40:6C:8F:54:45:AE             iMacs.local
+
+00:3E:E1:BF:18:EF             smoke-005.local
+68:5B:35:9A:C6:1D             smoke-005.local

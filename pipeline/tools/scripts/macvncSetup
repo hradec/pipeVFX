@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+#
+# vncpasswd.pl
+#
+# Encode a password to enable access using with Apple Remote
+# Desktop's VNC service.
+#
+# License: I'm placing this script into the Public Domain. Use as
+# you wish, however you wish. You can even claim it to be your
+# own if you need.
+#
+# Usage: perl vncpasswd.pl [password]
+#
+
+# ----------------------------------------------------------------------------------
+# [Macoy] original script taken from:
+# [Macoy]http://www.macgeekery.com/user/unixgeek
+# [Macoy] this script revised by macoy [http://macoy.wordpress.com]
+# [Macoy] for easier usage & execution, follow these steps :
+# [Macoy]$ perl vncpass_macoy.pl [vnc_password] > startvnc.sh
+# [Macoy]$ sh startvnc.sh
+#----------------------------------------------------------------------------------  
+
+# set plain text password to the first argument on the command
+# line. Note: VNC on Mac OS X only uses the first 8 characters. 
+
+$plainTextPassword = $ARGV[0] ||
+  die "You must specify the password on the command line!";
+$plainTextPassword =~ s/^(.{8}).*/$1/;  
+
+# convert the password to an array
+@passwordArray = unpack "C*", $plainTextPassword;  
+
+# XOR key
+@vncXorKey = unpack "C*", pack "H*", "1734516E8BA8C5E2FF1C39567390ADCA";  
+
+# print the kickstart command...
+# [Macoy] commented line is the original command from unixgeek but it
+# [Macoy] didn't work w/ my current xserve. thus the script modification.
+# print "sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -configure -clientopts -setvnclegacy-vnclegacy yes -setvncpw -vncpw ";  
+
+# [Macoy] this is the actual working command in my case:
+print "sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -configure -activate -access -on -clientopts-setvnclegacy -vnclegacy yes 
+-setvncpw -restart -agent -vncpw ";  
+
+# print the password
+foreach $byteValue (@vncXorKey) {
+  printf("%02X",$byteValue ^ (shift @ passwordArray || 0));
+}

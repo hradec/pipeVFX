@@ -1,0 +1,119 @@
+/*
+*	Callback for the "Create" button in the mesh sequence options dialog.
+*/
+global proc realflowCreateMeshFromSeq(string $optWindow)
+{
+	int $ok = realflowUpdateSeqPrefix($optWindow);
+	if(!$ok)
+	{
+		confirmDialog -title "Bad file name"
+			-message "The name format and/or padding don't match the selected file name.\nPlease check your settings."
+			-button "OK" -defaultButton "OK" -cancelButton "OK";
+		return;
+	}
+
+	// Get the attributes.
+	setParent $optWindow;
+	string $file = `textFieldGrp -q -text seqFileCtrl`;
+	int $nameFormat = `optionMenuGrp -q -select nameFormatCtrl` - 1;
+	int $padding = `intFieldGrp -q -value1 paddingCtrl`;
+	int $offset = `intFieldGrp -q -value1 offsetCtrl`;
+	
+	// Create the shape and the RF mesh node.
+	string $shape = `createNode mesh`;
+	string $rfMesh = `createNode RealflowMesh`;
+	
+	// Setup the RF mesh attributes.
+	setAttr -type "string" ($rfMesh + ".Path") $file;
+	setAttr ($rfMesh + ".nameFormat") $nameFormat;
+	setAttr ($rfMesh + ".framePadding") $padding;
+	setAttr ($rfMesh + ".Offset") $offset;
+	
+	// Add the shape node to the shading group so that it gets rendered.
+	sets -add initialShadingGroup $shape;
+
+	// Connect the time source.
+	connectAttr -f "time1.outTime" ($rfMesh + ".time");
+	
+	// Connect the RF mesh output to the shape input.
+	connectAttr ($rfMesh + ".outputMesh") ($shape + ".inMesh");
+	
+	// Find the transform node and rename it.
+	string $parents[] = `listRelatives -parent -fullPath $shape`;
+	string $xform = $parents[0];
+	string $newXformName = `rename $xform "realflowMesh1"`;
+	
+	// Rename the RF mesh node too.
+	string $nrSuffix = `match "[0-9]+$" $newXformName`;
+	string $newRfNodeName = "realflowMeshSource" + $nrSuffix;
+	$newRfNodeName = `rename $rfMesh $newRfNodeName`;
+
+	deleteUI $optWindow;
+	select -r $newXformName;
+}
+
+/*
+*	Displays the import mesh sequence options dialog. This is a callback for a file browser
+* dialog which opens when the user presses the "Import BIN Mesh" toolbar button.
+*/
+global proc realflowImportMeshSequence(string $filePath, string $fileType)
+{
+	string $dir = dirname($filePath);
+	string $fileName = basename($filePath, "");
+	optionVar -stringValue "rfLastMeshSeqDir" $dir;
+	
+	int $formatAndPad[] = realflowFindFormatPadAndType($fileName);
+	
+	$wnd = `window -visible false -title "Import BIN Mesh Sequence" -iconName "Import Mesh"`;
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	
+	$form = `formLayout`;
+		$frame = `frameLayout -l "Sequence Import Options" -collapsable false`;
+			columnLayout -adjustableColumn true;
+				textFieldGrp -l "Sequence File" -editable false -text $filePath seqFileCtrl;
+				optionMenuGrp -l "Name Format" -changeCommand ("realflowUpdateSeqPrefix " + $wnd) nameFormatCtrl;
+					menuItem -l "name.#.ext";
+					menuItem -l "name#.ext";
+					menuItem -l "name.ext.#";
+					menuItem -l "name_#.ext";
+				optionMenuGrp -e -select ($formatAndPad[0]+1) nameFormatCtrl;
+				intFieldGrp -l "Padding" -changeCommand ("realflowUpdateSeqPrefix " + $wnd) -value1 $formatAndPad[1] paddingCtrl;
+				textFieldGrp -l "Path" -editable false -text $dir pathCtrl;
+				textFieldGrp -l "Prefix" -editable false prefixCtrl;
+				separator -horizontal true -style "none";
+				intFieldGrp -l "Sequence Offset" -value1 0 offsetCtrl;
+			setParent ..;
+		setParent ..;
+		
+		$createBtn = `button -label "Create" -command ("realflowCreateMeshFromSeq " + $wnd)`;
+		$cancelBtn = `button -label "Cancel" -command ("deleteUI " + $wnd)`;
+	setParent ..;
+
+	formLayout -e
+		-numberOfDivisions 100
+
+		-attachForm		$createBtn	"left" 5
+		-attachPosition	$createBtn	"right" 5 50
+		-attachForm		$createBtn	"bottom" 5
+
+		-attachForm		$cancelBtn	"right" 5
+		-attachPosition	$cancelBtn	"left" 5 50
+		-attachForm		$cancelBtn	"bottom" 5
+
+		-attachForm		$frame		"top" 0
+		-attachForm		$frame		"left" 0
+		-attachForm		$frame		"right" 0
+		-attachControl	$frame		"bottom" 5 $createBtn
+	$form;
+
+	setUITemplate -popTemplate;
+	
+	realflowUpdateSeqPrefix($wnd);
+	
+	window -e -sizeable false $wnd;
+	int $height = 235;
+	if(`about -mac`)
+		$height += 20;
+	window -e -width 465 -height $height $wnd;
+	showWindow $wnd;
+}

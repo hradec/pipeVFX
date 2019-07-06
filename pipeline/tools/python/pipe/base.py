@@ -26,13 +26,15 @@ def runProcess(exe):
     the same time it displays it in the shell log.
     returns a tupple with exit code and log!'''
 
-    import subprocess
+    import subprocess, time, datetime
     log = ''
     ret = None
     p = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, close_fds=True,bufsize = 1)
     prefix = 'pipeLog: '
-    if os.environ.has_key('PIPE_FARM_USER'):
+    if 'PIPE_FARM_USER' in os.environ:
         prefix = '\tpipeLog: '
+
+    _start = time.time()
     while(True):
       std, err = (None,None)
       for std in iter(p.stdout.readline,''):
@@ -45,7 +47,8 @@ def runProcess(exe):
                         #std = ' '.join(std[:-1]+['PROGRESS: ']+[std[-1]])+"\n"
                         std = map(lambda x: "PROGRESS: "+x if '%' in x else x, std)
                         std = ' '.join(std)+"\n"
-              sys.stdout.write( prefix + std )
+              secs = '%s | ' % str(datetime.timedelta( seconds = int(time.time()-_start) ))
+              sys.stdout.write( secs + prefix + std )
               log += std
               sys.stdout.flush()
           if err:
@@ -86,8 +89,8 @@ if '--arch' in sys.argv:
 WIN='mingw'
 OSX='darwin'
 LIN='linux'
-taskset = ''.join(os.popen('which taskset').readlines()).strip()
-vglrun  = ''.join(os.popen('which vglrun').readlines()).strip()
+taskset = ''.join(os.popen('which taskset 2>/dev/null').readlines()).strip()
+vglrun  = ''.join(os.popen('which vglrun 2>/dev/null').readlines()).strip()
 
 osx=False
 lin=False
@@ -121,7 +124,7 @@ def findSharedLibrary(libname):
 
 def depotRoot(forceScan=False):
     root = os.path.dirname(__file__)
-    if not os.environ.has_key('ROOT') or forceScan:
+    if not 'ROOT' in os.environ or forceScan:
         while(root.split('/')[1]):
             if os.path.exists( '%s/.root' % root ):
                 break
@@ -233,7 +236,16 @@ def getDistro(check=True):
 
 distro = getDistro()
 
+# set the distro Name
+distroName = "Unknown"
+if platform == OSX:
+    distroName = "OSX"
+elif platform == LIN:
+    if os.path.exists('/etc/os-release'):
+        distroName = ''.join([ x.split('ID=')[-1].lower().strip() for x in open('/etc/os-release').readlines() if 'ID=' in x ])
 
+if distroName == '':
+    distroName = "Error"
 
 
 

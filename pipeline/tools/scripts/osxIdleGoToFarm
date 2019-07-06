@@ -1,0 +1,32 @@
+#!/bin/bash
+
+export PATH=/bin:/usr/bin:/usr/sbin:/sbin
+
+
+export delayNight=30
+export delayDay=90
+
+
+
+export delay="$(python -c 'import time,os;tod=int(time.ctime().split(" ")[-2].split(":")[0]);delay=os.environ["delayDay"] if (tod>=10 and tod<=22) else os.environ["delayNight"];print delay')"
+# t="$(python -c 'import time,os;print time.ctime(time.time()+60*(int(os.environ["delay"])+15)).split(" ")[-2]')"
+t="$(python -c 'import time,os;print time.ctime(time.time()+60*15).split(" ")[-2]')"
+
+
+idle=$(echo $(date)   -   $(top -l 1 | grep 'CPU usage')    -    $((`ioreg -c IOHIDSystem | sed -e '/HIDIdleTime/!{ d' -e 't' -e '}' -e 's/.* = //g' -e 'q'` / 1000000000 / 60)) minutos idle)
+
+echo $idle
+echo $t
+echo $(pmset repeat wakeorpoweron MTWRFSU $t ; pmset -g sched )
+
+
+if [ $(echo $idle | cut -d'-' -f3 | cut -d'm' -f1) -gt $delay ] ; then
+    /atomo/pipeline/tools/scripts/netbootOSX
+    reboot
+    echo reboot
+fi
+
+#pmset repeat cancel
+#pmset repeat wakeorpoweron MTWRFSU 7:00:00
+#pmset -g sched
+#http://www.macos.utah.edu/documentation/administration/pmset.html#nine

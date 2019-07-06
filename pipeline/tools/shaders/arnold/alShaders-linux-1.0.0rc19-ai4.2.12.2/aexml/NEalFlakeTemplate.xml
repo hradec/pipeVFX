@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalFlake">
+		<attribute name="outValue" type="maya.float3">
+		<label>Out Value</label>
+</attribute>
+		<attribute name="P" type="maya.float3">
+			<label>P</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalFlake">
+		<property name="outValue" />
+		<property name="P" />
+		</view>
+</templates>

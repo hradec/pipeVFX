@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@ import os, glob
 import traceback
 
 
-# avoid getting duplicated files. 
+# avoid getting duplicated files.
 appz = {}
 def sourceApps( jconfig ):
     if os.path.exists( jconfig ):
@@ -51,17 +51,17 @@ for each in appz.keys():
     try:
         exec(''.join(open(appz[each]).readlines()),globals(),locals())
     except:
-        print bcolors.FAIL+'='*80
-        print each+" ERROR:\n"
-        print "\n\t".join(traceback.format_exc().split('\n'))
-        print '='*80,bcolors.END
+        print( bcolors.FAIL+'='*80 )
+        print( each+" ERROR:\n" )
+        print( "\n\t".join(traceback.format_exc().split('\n')) )
+        print( '='*80,bcolors.END )
 
 
 
-        
+
 class buildStuff(baseApp):
     pass
-        
+
 
 class wxpython(baseApp):
     def pythonPath(self):
@@ -69,7 +69,7 @@ class wxpython(baseApp):
         for each in p:
             p[each] = filter( lambda x: 'wxpython' in x.lower(), glob.glob(p[each]+'/*') )[0]
         return p
-        
+
 
 
 
@@ -81,4 +81,3 @@ for each in appsDB():
     if each.strip() not in  dir():
 #        if os.path.exists( '%s/%s/bin' % (roots.apps(), each) ):
             exec( '\n'.join(genericRegistry) % each )
-

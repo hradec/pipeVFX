@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalBlackbody">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="temperature" type="maya.float">
+			<label>Temperature</label>
+		</attribute>
+		<attribute name="strength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalBlackbody">
+		<property name="outColor" />
+		<property name="temperature" />
+		<property name="strength" />
+		</view>
+</templates>

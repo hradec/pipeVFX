@@ -1,0 +1,10 @@
+<args format="1.0">
+<param name="input" label="input" widget="color"/>
+<param name="sourceSpace" label="Source space" widget="popup">
+	<hintlist name="options">
+		<string value="sRGB"/>
+		<string value="Cineon"/>
+		<string value="LogC"/>
+	</hintlist>
+</param>
+</args>

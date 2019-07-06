@@ -1,0 +1,25 @@
+#! C:/Program Files/Nuke7.0v2/Nuke7.0.exe -nx
+version 7.0 v2
+Gizmo {
+ addUserKnob {20 User l OS}
+ addUserKnob {22 But1 l "  Win >> Linux  " T "from __future__ import with_statement\nmyRoot = nuke.toNode( 'root' )\nwith myRoot:\n\tcounterW = 0\n\tcounterT =0\n\tfor n in nuke.allNodes():\n\t\tif n.Class() in ('Read', 'Write'):\n\t\t\tb = n.knob('file').value()\n\t\t\tif b.find(\"W:/\") != -1:\n\t\t\t\tn.knob('file').setValue(b.replace(\"W:/\", \"/mnt/Projetos/\"))\n\t\t\t\tn.knob('label').setValue(\"/mnt/Projetos/\")\n\t\t\t\tcounterW += 1\n\t\t\tif b.find(\"T:/\") != -1:\n\t\t\t\tn.knob('file').setValue(b.replace(\"T:/\", \"/mnt/Render/\"))\n\t\t\t\tn.knob('label').setValue(\"/mnt/Render/\")\n\t\t\t\tcounterT += 1\n\tnuke.message(\"Foram Trocados \" + str(counterW) + \" nodes em /mnt/Projetos/ e \" + str(counterT) + \" em /mnt/Render/\")\n" +STARTLINE}
+ addUserKnob {22 But2 l "  Linux >> Win  " -STARTLINE T "from __future__ import with_statement\nmyRoot = nuke.toNode( 'root' )\nwith myRoot:\n\tcounterW = 0\n\tcounterT =0\n\tfor n in nuke.allNodes():\n\t\tif n.Class() in ('Read', 'Write'):\n\t\t\tb = n.knob('file').value()\n\t\t\tif b.find(\"/mnt/Projetos/\") != -1:\n\t\t\t\tn.knob('file').setValue(b.replace(\"/mnt/Projetos/\", \"W:/\"))\n\t\t\t\tn.knob('label').setValue(\"W:/\")\n\t\t\t\tcounterW += 1\n\t\t\tif b.find(\"/mnt/Render/\") != -1:\n\t\t\t\tn.knob('file').setValue(b.replace(\"/mnt/Render/\", \"T:/\"))\n\t\t\t\tn.knob('label').setValue(\"T:/\")\n\t\t\t\tcounterT += 1\n\tnuke.message(\"Foram Trocados \" + str(counterW) + \" nodes em W:/ e \" + str(counterT) + \" em T:/\")"}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 489
+  ypos -174
+ }
+ NoOp {
+  name NoOp1
+  selected true
+  xpos 489
+  ypos -104
+ }
+ Output {
+  name Output1
+  xpos 489
+  ypos -34
+ }
+end_group

@@ -1,0 +1,211 @@
+
+/*
+
+DVY_VehicleTilt;
+	
+*/
+
+///////////////////////////////////////////////////////////////////////////////
+/*			
+				
+	Copyright © 2006 DVY_VehicleTilt. All rights reserved davvey@ntlworld.com
+					
+
+					- DVY_VehicleTilt -
+						  
+	This script will build Vehicle rig for automatic wheel rotation,
+	This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script current has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite ot scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging oif individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, fill in required fields and press
+	"Rig Vehicle" button. This script is called from within DVY_Vehicle Rigger.mel
+	and will set up the Vehicle body work to be tilted in the X and Z axis.
+	this is in addition to the tilt produced by the suspension travel set up.
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |			  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+		This will tilt the Chassis group as reguired. Also each indiviual
+		Wheel can be moved up and down by moving each wheel Group Ground 
+		Locator to simulate ground variations. If these are Geometry constained
+		to a "grtound" object or plane to movement will be automatic.
+	
+
+
+*/
+//////////////////////////////////////////////////////////////////////////
+//					DVY_WheelSpin Procedure
+//////////////////////////////////////////////////////////////////////////
+
+//============================================================================
+//	GLOBAL VARIABLES
+//============================================================================
+	global int $DVYDebug;
+
+// Integer Flag that allows print statements to be output to
+// message field for tracking purposes.
+	
+//============================================================================
+
+global proc DVY_VehicleTilt()
+ {
+	global string $RigControlsA[]; global string $GroupV_A[];
+
+	string $VehAngleN[]; string $ConvertN[]; string $CondN[];
+	string $AverageN[]; string $SuspMultiDblN[]; string $AddTiltN[0];
+	string $PrefixA[] = {"Fr", "Rr", "Lf", "Rt"};
+	
+	int $i; int $j; int $k;
+		
+	for ($i=0; $i<2; $i++)
+		{
+			$VehAngleN[$i] = `createNode angleBetween -name ($PrefixA[$i] + "_AngleNA_1")`;
+				setAttr ($VehAngleN[$i] + ".v1") 1 1 1;
+				setAttr ($VehAngleN[$i] + ".v2") 1 1 1;
+				connectAttr -f  ($PrefixA[2] +  $PrefixA[$i] + "_Susp_LocGrd_1.translateY ") ($VehAngleN[$i] + ".v1y");
+				connectAttr -f  ($PrefixA[3] +  $PrefixA[$i] + "_Susp_LocGrd_1.translateY ") ($VehAngleN[$i] + ".v2y");	
+			$ConvertN[$i] = `createNode unitConversion -name ($PrefixA[$i] + "_ConvertN_1")`;
+				setAttr ($ConvertN[$i] + ".conversionFactor") -57.221;
+				connectAttr -f ($VehAngleN[$i] +".eulerY") ($ConvertN[$i] + ".input");
+			$CondN[$i] = `createNode condition -name ($PrefixA[$i] + "_CondN_1")`;
+				setAttr ($CondN[$i] + ".op") 3;
+				connectAttr -f  ($PrefixA[2] +  $PrefixA[$i] + "_Susp_LocGrd_1.translateY ") ($CondN[$i] + ".ft");
+				connectAttr -f  ($PrefixA[3] +  $PrefixA[$i] + "_Susp_LocGrd_1.translateY ") ($CondN[$i] + ".st");
+				setAttr ($CondN[$i] + ".cfr") 1;
+				setAttr ($CondN[$i] + ".ctr") -1;
+			$SuspMultiDblN[$i] = `createNode multDoubleLinear -name ($PrefixA[$i] + "_Susp_MultDblNA_l")`;
+				connectAttr -f ($CondN[$i] + ".ocr") ($SuspMultiDblN[$i] + ".input1");
+				connectAttr -f ($ConvertN[$i] + ".output")($SuspMultiDblN[$i] + ".input2");
+		}
+	$j = 2;
+	for ($i=2; $i<4; $i++)
+		{
+			$VehAngleN[$i] = `createNode angleBetween -name ($PrefixA[$i] + "_AngleNA_1")`;
+				setAttr ($VehAngleN[$i] + ".v1") 1 1 1;
+				setAttr ($VehAngleN[$i] + ".v2") 1 1 1;
+				connectAttr -f  ($PrefixA[$i] +  $PrefixA[0] + "_Susp_LocGrd_1.translateY ") ($VehAngleN[$i] + ".v1y");
+				connectAttr -f  ($PrefixA[$i] +  $PrefixA[1] + "_Susp_LocGrd_1.translateY ") ($VehAngleN[$i] + ".v2y");	
+				
+			$ConvertN[$i] = `createNode unitConversion -name ($PrefixA[$i] + "_ConvertN_1")`;
+				setAttr ($ConvertN[$i] + ".conversionFactor") -57.221;
+				connectAttr -f ($VehAngleN[$i] +".eulerY") ($ConvertN[$i] + ".input");
+					
+			$CondN[$i] = `createNode condition -name ($PrefixA[$i] + "_CondN_1")`;
+				setAttr ($CondN[$i] + ".op") 3;
+				connectAttr -f  ($PrefixA[$i] + $PrefixA[0] + "_Susp_LocGrd_1.translateY ") ($CondN[$i] + ".ft");
+				connectAttr -f  ($PrefixA[$i] + $PrefixA[1] + "_Susp_LocGrd_1.translateY ") ($CondN[$i] + ".st");
+				setAttr ($CondN[$i] + ".cfr") -1;
+				setAttr ($CondN[$i] + ".ctr") 1;
+				
+			$SuspMultiDblN[$i] = `createNode multDoubleLinear -name ($PrefixA[$i] + "_Susp_MultDblNA_l")`;
+				connectAttr -f ($CondN[$i] + ".ocr") ($SuspMultiDblN[$i] + ".input1");
+				connectAttr -f ($ConvertN[$i] + ".output")($SuspMultiDblN[$i] + ".input2");
+		}
+	
+		$AverageN[0] = `createNode plusMinusAverage -name LfRt_AngAvgN_1`;
+			setAttr ($AverageN[0] + ".op") 3;
+			connectAttr -f ($SuspMultiDblN[0] + ".output") ($AverageN[0] + ".i1[1]");
+			connectAttr -f ($SuspMultiDblN[1] + ".output") ($AverageN[0] + ".i1[2]");	
+			
+		$AddTiltN[0] = `createNode plusMinusAverage -name AddZ_TiltN_1`;
+			setAttr ($AddTiltN[0] + ".op") 1;
+			connectAttr -f ($RigControlsA[3] + ".rotateZ") ($AddTiltN[0] + ".i1[1]");
+			connectAttr -f ($AverageN[0] + ".o1") ($AddTiltN[0] + ".i1[2]");
+			connectAttr -f ($AddTiltN[0] + ".o1") ($GroupV_A[(3)] + ".rotateZ");
+			
+		$AverageN[1] = `createNode plusMinusAverage -name FrRr_AngAvgN_1`;
+			setAttr ($AverageN[1] + ".op") 3;
+			connectAttr -f ($SuspMultiDblN[2] + ".output") ($AverageN[1] + ".i1[1]");
+			connectAttr -f ($SuspMultiDblN[3] + ".output") ($AverageN[1] + ".i1[2]");
+			
+		$AddTiltN[1] = `createNode plusMinusAverage -name AddX_TiltN_1`;
+			setAttr ($AddTiltN[1] + ".op") 1;
+			connectAttr -f ($RigControlsA[3] + ".rotateX") ($AddTiltN[1] + ".i1[1]");
+			connectAttr -f ($AverageN[1] + ".o1") ($AddTiltN[1] + ".i1[2]");
+			connectAttr -f ($AddTiltN[1] + ".o1") ($GroupV_A[(3)] + ".rotateX");
+		
+		print "\n Vehicle Tilt Angle Nodes are..\n";
+		print $VehAngleN;
+		print "\n Davvey © 2006..\n";
+		
+		print "\n Vehicle Tilt Conversion Nodes are..\n";
+		print $ConvertN;
+		print "\n Davvey © 2006..\n";
+		
+		print "\n Vehicle Tilt Condition Nodes are..\n";
+		print $CondN;
+		print "\n Davvey © 2006..\n";
+		
+		print "\n Vehicle Tilt Suspension Nodes are..\n";
+		print $SuspMultiDblN;
+		print "\n Davvey © 2006..\n";
+		
+		print "\n Vehicle Tilt Average Nodes are..\n";
+		print $SuspMultiDblN;
+		print "\n Davvey © 2006..\n";
+
+		print "\n Vehicle Tilt AddTilt Nodes are..\n";
+		print $SuspMultiDblN;
+		print "\n Davvey © 2006..\n";
+
+		print "\n DVY_VehicleTilt has set up Nodes for addition Vehicle tilt in bot X and Z Planes. See help file for more details. Davvey © 2006..\n";
+	
+
+ }	//	End of he DVY_VehicleTilt procedure.
+			
+			

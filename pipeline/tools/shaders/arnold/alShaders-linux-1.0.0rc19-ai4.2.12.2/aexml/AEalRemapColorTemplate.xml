@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalRemapColor">
+		<label>alRemapColor</label>
+		<description>Use controls such as gamma, saturation and contrast to tweak the color values in your network. Operations are applied in the order they appear in the shader.</description>
+		<attribute name="input" type="maya.float3">
+			<label>Input</label>
+			<description>Input color to remap.</description>
+		</attribute>
+		<attribute name="gamma" type="maya.float">
+			<label>Gamma</label>
+			<description>Gamma value to apply to input.</description>
+		</attribute>
+		<attribute name="saturation" type="maya.float">
+			<label>Saturation</label>
+			<description>Saturation to apply to the input.</description>
+		</attribute>
+		<attribute name="hueOffset" type="maya.float">
+			<label>Hue offset</label>
+			<description>Hue offset to apply to the input.</description>
+		</attribute>
+		<attribute name="contrast" type="maya.float">
+			<label>Contrast</label>
+			<description>Contrast value to apply.</description>
+		</attribute>
+		<attribute name="contrastPivot" type="maya.float">
+			<label>Pivot</label>
+			<description>Value around which to pivot the contrast adjustment.</description>
+		</attribute>
+		<attribute name="gain" type="maya.float">
+			<label>Gain</label>
+			<description>Gain multiplier to apply to the input.</description>
+		</attribute>
+		<attribute name="exposure" type="maya.float">
+			<label>Exposure</label>
+			<description>Exposure adjustment to apply to the input, i.e. input * 2^exposure.</description>
+		</attribute>
+		<attribute name="mask" type="maya.float">
+			<label>Mask</label>
+			<description>Use this to mask off the adjustment. This can be useful for only adjusting a certain region of a texture for instance.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalRemapColor">
+			<property name="input"/>
+			<property name="gamma"/>
+			<property name="saturation"/>
+			<property name="hueOffset"/>
+			<group name="Contrast">
+				<label>Contrast</label>
+				<property name="contrast"/>
+				<property name="contrastPivot"/>
+			</group>
+			<property name="gain"/>
+			<property name="exposure"/>
+			<property name="mask"/>
+		</view>
+</templates>

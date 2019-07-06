@@ -20,9 +20,9 @@
 
 
 
-import os, pipe
-#pipe.baseApp().configFiles()
-if os.environ.has_key('PIPE_FARM_ENGINE'):
+import sys, os, engines
+
+if 'PIPE_FARM_ENGINE' in os.environ:
     if 'afanasy' in os.environ['PIPE_FARM_ENGINE'].lower().strip():
         from engines.afanasy import job as engine
     else:

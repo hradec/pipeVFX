@@ -1,0 +1,11 @@
+<args format="1.0">
+<param name="passthrough" label="Passthrough" widget="color"/>
+<page name="AOVs">
+	<param name="crypto_asset_override" label="Crypto asset override"/>
+	<param name="crypto_object_override" label="Crypto object override"/>
+	<param name="crypto_material_override" label="Crypto material override"/>
+	<param name="aov_crypto_asset" label="Asset AOV name"/>
+	<param name="aov_crypto_object" label="Object AOV name"/>
+	<param name="aov_crypto_material" label="Material AOV name"/>
+</page>
+</args>

@@ -1,0 +1,19 @@
+#!/bin/bash 
+
+if [ "$( df | grep '/RAID$')" != "" ] && [ "$( df | grep '/ZRAID$')" != "" ] ; then 
+
+	/usr/bin/python -c 'print "="*200' >> /ZRAID//zraid_raid_sync.log
+	date >> /ZRAID//zraid_raid_sync.log
+	/usr/bin/time /usr/bin/rsync -avpP --delete  --delete-excluded  --exclude renderman /ZRAID/atomo/jobs/ /RAID/atomo/jobs/ >> /ZRAID//zraid_raid_sync.log 2>&1
+
+
+	/usr/bin/python -c 'print "="*200' >> /ZRAID//zraid_raid_sync_pipeline.log
+	date >> /ZRAID//zraid_raid_sync_pipeline.log
+	/usr/bin/time /usr/bin/rsync -avpP --delete  /ZRAID/atomo/pipeline/ /RAID/atomo/pipeline/ >> /ZRAID/zraid_raid_sync_pipeline.log 2>&1
+
+
+	/usr/bin/python -c 'print "="*200' >> /ZRAID//zraid_raid_sync_apps.log
+	date >> /ZRAID//zraid_raid_sync_apps.log
+	/usr/bin/time /usr/bin/rsync -avpP --delete  /ZRAID/atomo/apps/ /RAID/atomo/apps/ >> /ZRAID/zraid_raid_sync_apps.log 2>&1
+fi
+

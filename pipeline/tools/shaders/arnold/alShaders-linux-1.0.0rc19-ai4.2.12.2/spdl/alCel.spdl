@@ -1,0 +1,167 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{c2338571-16dd-48b0-ad75-26f4a8968bb8}";
+PropertySet "alCel_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{d7daea24-a30a-4a99-b49d-3a6aea155b65}";
+		Type = color;
+	}
+	Parameter "surfaceShader" input
+	{
+		GUID = "{1bae2740-d468-439a-afbd-1a87266e82a5}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "diffuseDirectStrength" input
+	{
+		GUID = "{b8318f21-497f-4b88-ada3-b1c3320b186e}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.750000;
+	}
+	Parameter "diffuseRamp" input
+	{
+		GUID = "{59ce2226-a406-4d30-bf21-908132dbbcc0}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "diffuseIndirectStrength" input
+	{
+		GUID = "{fd2cca1f-017b-4973-897d-5caf817c138d}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "diffuseIndirectSaturation" input
+	{
+		GUID = "{0ca9fc53-fbe3-47e8-9a87-4125615bc3d4}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "diffuseIndirectTint" input
+	{
+		GUID = "{75eb2751-e86b-41e9-acc5-1762051dedad}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "aov_direct_diffuse_cel" input
+	{
+		GUID = "{89a38238-731c-490b-a4af-8d09ea5326f9}";
+		Type = string;
+		Value = "Arnold_Direct_Diffuse_Cel";
+	}
+	Parameter "aov_direct_diffuse_raw_cel" input
+	{
+		GUID = "{2de62f91-2442-4a43-9195-61439c9e6ce8}";
+		Type = string;
+		Value = "Arnold_Direct_Diffuse_Raw_Cel";
+	}
+	Parameter "aov_indirect_diffuse_cel" input
+	{
+		GUID = "{6a0e988f-c475-4b20-b1ca-afa6b6478ead}";
+		Type = string;
+		Value = "Arnold_Indirect_Diffuse_Cel";
+	}
+}
+MetaShader "alCel_meta"
+{
+	Name = "ALS_Cel";
+	Type = material;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Cel";
+		Filename = "alCel";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	surfaceShader
+	{
+		Name = "Surface shader";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseDirectStrength
+	{
+		Name = "Diffuse strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseRamp
+	{
+		Name = "Diffuse ramp";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseIndirectStrength
+	{
+		Name = "Indirect diffuse strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseIndirectSaturation
+	{
+		Name = "Indirect diffuse saturation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseIndirectTint
+	{
+		Name = "Indirect diffuse tint";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_direct_diffuse_cel
+	{
+		Name = "aov_direct_diffuse_cel";
+	}
+	aov_direct_diffuse_raw_cel
+	{
+		Name = "aov_direct_diffuse_raw_cel";
+	}
+	aov_indirect_diffuse_cel
+	{
+		Name = "aov_indirect_diffuse_cel";
+	}
+}
+Layout "Default"
+{
+	Tab "Shading"
+	{
+		surfaceShader;
+		diffuseDirectStrength;
+		diffuseRamp;
+		diffuseIndirectStrength;
+		diffuseIndirectSaturation;
+		diffuseIndirectTint;
+	}
+	Tab "AOVs"
+	{
+		aov_direct_diffuse_cel;
+		aov_direct_diffuse_raw_cel;
+		aov_indirect_diffuse_cel;
+	}
+}
+Layout "RenderTree"
+{
+	Group "Shading"
+	{
+		surfaceShader;
+		diffuseDirectStrength;
+		diffuseRamp;
+		diffuseIndirectStrength;
+		diffuseIndirectSaturation;
+		diffuseIndirectTint;
+	}
+}
+Plugin = Shader
+{
+	Filename = "alCel";
+}

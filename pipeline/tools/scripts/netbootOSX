@@ -1,0 +1,5 @@
+#!/bin/sh
+
+sudo bless --netboot --server bsdp://192.168.0.12
+
+#sudo reboot

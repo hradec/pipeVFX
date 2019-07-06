@@ -1,0 +1,252 @@
+/*
+*	Removes the given element from the material array by shifting all the elements
+* which follow it and deleting the last element.
+*/
+global proc realflowDeleteFluidMaterial(string $attrName, int $idx)
+{
+	int $numElems = `getAttr -size $attrName`;
+	int $last = $numElems - 1;
+	
+	// Shift the array down one element.
+	for($i = $idx; $i < $last; ++$i)
+	{
+		string $srcAttr = $attrName + "[" + ($i + 1) + "]";
+		string $destAttr = $attrName + "[" + $i + "]";
+
+		string $upstreamPlug = `connectionInfo -sourceFromDestination $destAttr`;
+		if(size($upstreamPlug) > 0)
+			disconnectAttr $upstreamPlug $destAttr;
+		
+		$upstreamPlug = `connectionInfo -sourceFromDestination $srcAttr`;
+		if(size($upstreamPlug) > 0)
+		{
+			disconnectAttr $upstreamPlug $srcAttr;
+			connectAttr $upstreamPlug $destAttr;
+		}
+	}
+	
+	// Remove the last element.
+	string $cmd = "removeMultiInstance -break true " + $attrName + "[" + $last + "]";
+	evalDeferred $cmd;
+}
+
+/*
+*	Adds a new element to the fluid materials array.
+*/
+global proc realflowMeltMrAddNewMaterial(string $attrName)
+{
+	int $numElements = `getAttr -size $attrName`;
+	// Normal attributes can be set to some value to create them automatically, but this is not possible with
+	// message attributes (since they don't store any data). Instead we must connect something to them.
+	// We'll use the time node, which is always there, and disconnect if immediately after.
+	string $elem = $attrName + "[" + $numElements + "]";
+	connectAttr time1.message $elem;
+	disconnectAttr time1.message $elem;
+}
+
+/*
+*	Creates the UI for the fluid materials array.
+*/
+global proc realflowMeltMrMaterialsNew(string $attrName)
+{
+	// Create a frame layout which will hold the "add new" button and the per-element controls.
+	// No per-element controls are added now, the replace function takes care of them.
+	frameLayout -l "Fluid Materials" -collapse false rfMeltMrMaterialsLayout;
+		string $col = `columnLayout -adj true -vis false`;
+			rowLayout -nc 2;
+				text -label "";
+				button -label "Add New Material" -command ("realflowMeltMrAddNewMaterial(\"" + $attrName + "\")");
+			setParent ..;
+		setParent ..;
+		columnLayout -e -visible true $col;
+	setParent ..;
+	
+	realflowMeltMrMaterialsReplace($attrName);
+}
+
+/*
+*	We need connections from shading group nodes, not material nodes, but the attrNavigationControlGrp control will try to give
+* us material nodes. The users will also find it more comfortable to connect material nodes (with the connection editor or via
+* drag-and-drop). When a material node is connected, this procedure is called and it redirects the connection to that node's shading
+* group.
+*/
+global proc realflowFluidMatChanged(string $attrElem)
+{
+	string $upstreamPlug = `connectionInfo -sourceFromDestination $attrElem`;
+	if(size($upstreamPlug) == 0)
+		return;
+	
+	string $type = `nodeType $upstreamPlug`;
+	if($type == "shadingEngine")
+		return;
+		
+	string $buf[];
+	tokenize $upstreamPlug "." $buf;
+	
+	string $downstreamNodes[] = `listConnections -destination true -source false $buf[0]`;
+	for($i = 0; $i < size($downstreamNodes); ++$i)
+	{
+		$type = `nodeType $downstreamNodes[$i]`;
+		if($type == "shadingEngine")
+		{
+			string $cmd = "connectAttr -force " + $downstreamNodes[$i] + ".message " + $attrElem;
+			evalDeferred $cmd;
+			return;
+		}
+	}
+}
+
+/*
+*	This function is a hack. It's called each time the AE for a melt shader is displayed to make sure that the shader is connected to the
+* photon shader input of its shading group. This is needed to get pretty photon tracing effects like caustics. We can't catch all cases,
+* but we get most of them. The users will have to make the connection manually in the rest of the cases (or open the AE for that node once).
+*/
+proc realflowEnsurePhotonShaderConnection(string $attrName)
+{
+	string $buf[];
+	tokenize $attrName "." $buf;
+	string $srcNode = $buf[0];
+	
+	string $msgAttr = $srcNode + ".message";
+	string $outAttr = $srcNode + ".outValue";
+
+	string $downstreamNodes[] = `listConnections -destination true -source false $srcNode`;
+	string $connectCmd = "";
+	
+	for($i = 0; $i < size($downstreamNodes); ++$i)
+	{
+		string $destNode = $downstreamNodes[$i];
+		if(`nodeType $destNode` != "shadingEngine")
+			continue;
+			
+		string $matAttr = $destNode + ".miMaterialShader";
+		
+		// Are we connected as a material shader on this shading group?
+		if( !(`isConnected $msgAttr $matAttr` || `isConnected $outAttr $matAttr`) )
+			continue;
+			
+		// We're the material shader, check if the photon shader plug is connected.
+		string $photonAttr = $destNode + ".miPhotonShader";
+		string $upstreamPlug = `connectionInfo -sourceFromDestination $photonAttr`;
+		if($upstreamPlug == "")
+		{
+			// No photon shader, connect our node there.
+			$connectCmd += "connectAttr -force " + $msgAttr + " " + $photonAttr + "; ";
+		}
+	}
+
+	if($connectCmd != "")
+		evalDeferred $connectCmd;
+}
+
+/*
+*	Connects an existing UI to the fluid materials array of the given node.
+*/
+global proc realflowMeltMrMaterialsReplace(string $attrName)
+{
+	// Get to the column layout which contains the controls.
+	string $children[] = `frameLayout -q -childArray rfMeltMrMaterialsLayout`;
+	string $columnName = $children[0];
+	setParent $columnName;
+	
+	// Hide the column while we're modifying the controls inside it.
+	columnLayout -e -visible false $columnName;	
+	
+	string $currentItems[] = `columnLayout -q -childArray $columnName`;
+	
+	// The first item is the row layout which contains the "add new" button. Change the command on the button.
+	if(size($currentItems) > 0)
+	{
+		setParent $currentItems[0];
+		string $rowChildren[] = `rowLayout -query -childArray $currentItems[0]`;
+		if(size($rowChildren) > 1)
+			button -e -command ("realflowMeltMrAddNewMaterial(\"" + $attrName + "\")") $rowChildren[1];
+		setParent ..;
+	}
+
+	// Next are the frame layouts containing the controls.
+	int $numCurrentElements = size($currentItems) - 1;
+	int $numNeededElements = `getAttr -size $attrName`;
+	
+	// Connect the existing controls.
+	int $numReconnect;
+	if($numCurrentElements > $numNeededElements)
+		$numReconnect = $numNeededElements;
+	else
+		$numReconnect = $numCurrentElements;
+		
+	for($i = 0; $i < $numReconnect; ++$i)
+	{
+		setParent $currentItems[$i + 1];
+			// Get to the column layout which contains the controls. The +1 is because the first child is the "add new" button.
+			$children = `frameLayout -q -childArray $currentItems[$i + 1]`;
+			setParent $children[0];
+				// The column layout contains the material field and the delete button.
+				$children = `columnLayout -q -childArray $children[0]`;
+				
+				string $attrElem = $attrName + "[" + $i + "]";
+				attrNavigationControlGrp -e -attribute $attrElem $children[0];
+				scriptJob -parent $children[0] -replacePrevious -connectionChange $attrElem ("realflowFluidMatChanged " + $attrElem);
+				
+				// The delete button is the third child inside a row layout.
+				setParent $children[1];
+					$children = `rowLayout -q -childArray $children[1]`;
+					symbolButton -e -command ("realflowDeleteFluidMaterial " + $attrName + " " + $i) $children[2];
+				setParent ..;
+			setParent ..;
+		setParent ..;
+	}
+	
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	
+	// Add any new elements.
+	for($i = $numCurrentElements; $i < $numNeededElements; ++$i)
+	{
+		frameLayout -collapsable true -label ("Fluid " + $i) -borderVisible true -collapse false;
+			columnLayout -adjustableColumn true;
+				string $attrElem = $attrName + "[" + $i + "]";
+				string $ctrl = `attrNavigationControlGrp -label "Material" -attribute $attrElem`;
+				scriptJob -parent $ctrl -replacePrevious -connectionChange $attrElem ("realflowFluidMatChanged " + $attrElem);
+				
+				rowLayout -nc 3;
+					text -label "";
+					text -label "";
+					symbolButton -image "smallTrash.xpm" -command ("realflowDeleteFluidMaterial " + $attrName + " " + $i);
+				setParent ..;
+			setParent ..;
+		setParent ..;
+	}
+	
+	setUITemplate -popTemplate;
+	
+	// Delete unneeded elements.
+	for($i = $numNeededElements; $i < $numCurrentElements; ++$i)
+	{
+		deleteUI $currentItems[$i + 1];
+	}
+	
+	// Show the column layout.
+	columnLayout -e -vis true $columnName;
+	
+	realflowEnsurePhotonShaderConnection($attrName);
+}
+
+/*
+*	Builds the AE user interface for the RealFlow Melt shader for mental ray.
+*/
+global proc AErealflowMeltShaderMrTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Realflow Melt Shader" -collapse false;
+		editorTemplate -label "Melt Index" -addControl "meltIndex";
+		editorTemplate -callCustom "realflowMeltMrMaterialsNew" "realflowMeltMrMaterialsReplace" "materials";
+	editorTemplate -endLayout;
+	
+	editorTemplate -suppress "materials";
+	
+	AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

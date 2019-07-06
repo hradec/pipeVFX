@@ -1,7 +1,13 @@
 #!/bin/bash 
 
-distro=debian_7_wheezy_aug_1_2014
-kernel=3.12.17
+#distro=debian_7_wheezy_aug_1_2014
+#kernel=3.12.17
+distro=current_dev
+#kernel=3.9.8
+#ksuffix=AtomoLinuxFSCACHE
+kernel=4.1.10
+ksuffix=AtomoLinuxFSCACHE
+
 
 folder=$(readlink -f $(dirname $BASH_SOURCE))
 
@@ -29,6 +35,23 @@ cat > initramfs/etc/fstab <<EOF
 EOF
 
 
+# ====================================
+# build nvidia
+# ====================================
+KERNEL=$kernel.$ksuffix && \
+cd ../src/nvidia-340.93/ && \
+make clean 
+make  KERNEL_UNAME=$KERNEL SYSSRC=/lib/modules/$KERNEL/source/ module -j 32 
+cd uvm
+make clean
+make  KERNEL_UNAME=$KERNEL SYSSRC=/lib/modules/$KERNEL/source/  -j 32 
+cd $folder/work
+cp ../src/nvidia-340.93/*.ko initramfs/
+cp ../src/nvidia-340.93/uvm/*.ko initramfs/
+
+
+
+# ====================================
 libs="
     libc.so.6
     ld-linux-x86-64.so.2
@@ -72,16 +95,19 @@ EOF
 
 chmod a+x initramfs/bin/hotplug 
 
-# farm ethernet board driver
-mkdir -p initramfs/lib/modules/$kernel.AtomoLinux/kernel/drivers/net/ethernet/realtek
-cp -rf ../src/r8168.ko.$kernel initramfs/lib/modules/$kernel.AtomoLinux/kernel/drivers/net/ethernet/realtek
-cp -rf /atomo/netboot/distros/$distro/lib/modules/$kernel.AtomoLinux/kernel/drivers/net/ethernet/realtek/* initramfs/lib/modules/$kernel.AtomoLinux/kernel/drivers/net/ethernet/realtek
+# build and add farm ethernet board driver to initramfs
+make clean -C ../src/r8168-8.040.00/src/
+make BASEDIR=/lib/modules/$kernel.$ksuffix/ modules -j 32 -C ../src/r8168-8.040.00/src/
+mkdir -p initramfs/lib/modules/$kernel.$ksuffix/kernel/drivers/net/ethernet/realtek
+#cp -rf ../src/r8168.ko.$kernel initramfs/lib/modules/$kernel.$ksuffix/kernel/drivers/net/ethernet/realtek
+cp -rf ../src/r8168-8.040.00/src/r8168.ko initramfs/lib/modules/$kernel.$ksuffix/kernel/drivers/net/ethernet/realtek
+cp -rf /atomo/netboot/distros/$distro/lib/modules/$kernel.$ksuffix/kernel/drivers/net/ethernet/realtek/* initramfs/lib/modules/$kernel.$ksuffix/kernel/drivers/net/ethernet/realtek
 
 
 
 distro="/atomo/netboot/distros/$distro/"
 kernels="
-    $kernel.AtomoLinux
+    $kernel.$ksuffix
 "
 for k in $kernels
 do
@@ -153,7 +179,7 @@ export LD_LIBRARY_PATH=/lib
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t tmpfs tmpfs /var
-#mount -t tmpfs mdev /dev
+mount -t devtmpfs none /dev
 #mkdir /dev/pts
 #mount -t devpts devpts /dev/pts
 
@@ -204,26 +230,37 @@ if [ "\$ether" == "" ] ; then
     sh
 fi
 
-echo waiting network to show up
 ip=\$(getarg pipe | cut -d':' -f1)
 count=0
+echo waiting network to show up - $ip
+
+if [ "\$(ping  -c 1 \$ip 2>&1 | grep ' 0% packet loss')" == "" ] ; then
 while [ "\$(ping  -c 1 \$ip 2>&1 | grep ' 0% packet loss')" == "" ]
 do 
     for each in \$ether
     do
-        echo trying to get IP from \$each
+        echo trying to get IP from \$each - $ip
         ifconfig \$each 0.0.0.0
         echo -n '       '
+cat /proc/cmdline
         udhcpc -i \$each -p /tmp/udhcpc.\$each.pid -T 5 -A 1 -q -n -t 1
+        while [ "\$(ps | grep udhcp | grep -v grep)" != "" ] ; do
+           echo "\$(ps | grep udhcp | grep -v grep)"
+	   sleep 1
+        done 
         count=\$(expr \$count + 1)
-        if [ "\$count" == "20" ] ; then 
-            echo "Cant find DHCP Server... going to a shell!!"
+        if [ "\$count" == "5" ] ; then 
+            echo "Cant find DHCP Server $ip... going to a shell!!"
+	    ifconfig eth0
             busybox sh
+	    count=0
+		break
         fi
     done
     sleep 1
     clear
 done
+fi
 echo
 
 # Mount the the pipe device and grab the liveInit script
@@ -235,7 +272,7 @@ killall udevd
 
 liveInit=\$(getarg liveInit)
 if [ -f /pipe/\$liveInit ] ; then 
-    cp /pipe/\$liveInit /var
+    cp /pipe/\$liveInit /var/liveInit
     umount /pipe
 
     # run the liveInit script to mount the rootfs and switch to it!
@@ -275,7 +312,7 @@ sudo cp $folder/pxelinux.cfg/default   /atomo/netboot/tftp/pxelinux.cfg/default
 sudo cp $folder/pxelinux.cfg/menu.png  /atomo/netboot/tftp/networkBootWorkstation/menu.png 
 
 
-sudo cp $distro/boot/vmlinuz-$kernel.AtomoLinux \
+sudo cp $distro/boot/vmlinuz-$kernel.$ksuffix \
         /atomo/netboot/tftp/networkBootWorkstation/vmlinuz_dev
 
 

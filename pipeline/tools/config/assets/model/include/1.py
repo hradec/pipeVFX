@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ except:
     m = None
 
 class model( IECore.Op ) :
-    
+
     def __init__( self, prefix='') :
         IECore.Op.__init__( self, "Publish model assets.",
             IECore.Parameter(
@@ -48,46 +48,53 @@ class model( IECore.Op ) :
 
         self.prefix = prefix
         currentUser = pipe.admin.job.shot.user()
-        scene = currentUser.path()
-        
-        # if running in maya
-        selected = ""
-        if m:
-            selected = ','.join(m.ls(sl=1,l=1,tr=1));
-            scene = m.file(q=1,sn=1)
-            if not scene:
-                raise Exception("ERROR: A Cena precisa ser salva antes de ser publicada!")
-                
+
         source = IECore.FileNameParameter(
             name="%sMesh" % prefix,
             description = "type the path for the models",
-            defaultValue = selected,
+            defaultValue = "",
             allowEmptyString=False,
-            userData = { 'dataName' : IECore.StringData('meshPrimitives') }
+            userData = {
+                'dataName' : IECore.StringData('meshPrimitives'),
+                'updateFromApp':IECore.BoolData( True ),
+            }
         )
 
         self.parameters().addParameters(
             [
-                source, 
+                source,
                 IECore.FileNameParameter(
                     name="%sDependency" % prefix,
                     description = "Dependency file that created this model.",
                     allowEmptyString=False,
-                    defaultValue = scene ,
-                    userData = { 
+                    defaultValue = currentUser.path(),
+                    userData = {
                         "UI": {
                             "defaultPath": IECore.StringData( "/atomo/jobs/" ),
                             "obeyDefaultPath" : IECore.BoolData(True),
                         },
                         # this UD flags this parameter to publish use to construct the asset filename
-                        'assetPath':IECore.BoolData( True ), 
+                        'assetPath':IECore.BoolData( True ),
+                        'updateFromApp':IECore.BoolData( True ),
                         'dataName' : IECore.StringData('assetDependencyPath'),
                     }
                 ),
-                IECore.StringParameter("assetType","",prefix,userData={"UI":{ "visible" : IECore.BoolData(False) }}),                
+                IECore.StringParameter("assetType","",prefix,userData={"UI":{ "visible" : IECore.BoolData(False) }}),
             ])
-    
+
+        self.__updateFromMaya()
+
+    def __updateFromMaya(self):
+        # if running in maya
+        if m:
+            selected = ','.join(m.ls(sl=1,l=1,tr=1));
+            scene = m.file(q=1,sn=1)
+            if not scene:
+                self.canPublish = False
+
+            self.parameters()["%sMesh"       % self.prefix].setValue(  IECore.StringData(selected) )
+            self.parameters()["%sDependency" % self.prefix].setValue(  IECore.StringData(scene) )
+
     def doOperation( self, operands ) :
         result = 'done'
         return IECore.StringData( result )
-

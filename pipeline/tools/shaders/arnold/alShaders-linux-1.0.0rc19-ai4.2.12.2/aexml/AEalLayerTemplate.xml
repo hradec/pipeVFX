@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalLayer">
+		<label>alLayer</label>
+		<description>Simply blends two surface shaders, including all their AOVs while preserving light group information.</description>
+		<attribute name="layer1" type="maya.float3">
+			<label>Layer 1</label>
+			<description>The bottom layer to blend.</description>
+		</attribute>
+		<attribute name="layer2" type="maya.float3">
+			<label>Layer 2</label>
+			<description>The top layer to blend.</description>
+		</attribute>
+		<attribute name="mix" type="maya.float">
+			<label>Mix</label>
+			<description>The amount to blend from the bottom layer to the top.</description>
+		</attribute>
+		<attribute name="debug" type="maya.enum">
+			<label>Debug</label>
+			<description>Allows you to quickly preview each layer and the mix value.</description>
+		</attribute>
+		<attribute name="standardCompatibleAOVs" type="maya.bool">
+			<label>Write standard AOVs only</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_diffuse_color" type="maya.float3">
+			<label>Diffuse color</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_diffuse" type="maya.float3">
+			<label>Direct diffuse</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_diffuse_raw" type="maya.float3">
+			<label>Direct diffuse (raw)</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_diffuse" type="maya.float3">
+			<label>Indirect diffuse</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_diffuse_raw" type="maya.float3">
+			<label>Indirect diffuse (raw)</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_backlight" type="maya.float3">
+			<label>Direct backlight</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_backlight" type="maya.float3">
+			<label>Indirect backlight</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_specular" type="maya.float3">
+			<label>Direct specular</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_specular" type="maya.float3">
+			<label>Indirect specular</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_specular_2" type="maya.float3">
+			<label>Direct specular 2</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_specular_2" type="maya.float3">
+			<label>Indirect specular 2</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_single_scatter" type="maya.float3">
+			<label>Single scatter</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_sss" type="maya.float3">
+			<label>SSS</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_refraction" type="maya.float3">
+			<label>Refraction</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_emission" type="maya.float3">
+			<label>Emission</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_uv" type="maya.float3">
+			<label>UV</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_depth" type="maya.float3">
+			<label>Depth</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_1" type="maya.float3">
+			<label>Light group [1]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_2" type="maya.float3">
+			<label>Light group [2]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_3" type="maya.float3">
+			<label>Light group [3]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_4" type="maya.float3">
+			<label>Light group [4]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_5" type="maya.float3">
+			<label>Light group [5]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_6" type="maya.float3">
+			<label>Light group [6]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_7" type="maya.float3">
+			<label>Light group [7]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_8" type="maya.float3">
+			<label>Light group [8]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_1" type="maya.float3">
+			<label>ID [1]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_2" type="maya.float3">
+			<label>ID [2]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_3" type="maya.float3">
+			<label>ID [3]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_4" type="maya.float3">
+			<label>ID [4]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_5" type="maya.float3">
+			<label>ID [5]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_6" type="maya.float3">
+			<label>ID [6]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_7" type="maya.float3">
+			<label>ID [7]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_8" type="maya.float3">
+			<label>ID [8]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_asset" type="maya.float3">
+			<label>Crypto Asset</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_object" type="maya.float3">
+			<label>Crypto Object</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_material" type="maya.float3">
+			<label>Crypto Material</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_1" type="maya.rgba">
+			<label>Shadow group [1]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_2" type="maya.rgba">
+			<label>Shadow group [2]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_3" type="maya.rgba">
+			<label>Shadow group [3]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_4" type="maya.rgba">
+			<label>Shadow group [4]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_5" type="maya.rgba">
+			<label>Shadow group [5]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_6" type="maya.rgba">
+			<label>Shadow group [6]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_7" type="maya.rgba">
+			<label>Shadow group [7]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_8" type="maya.rgba">
+			<label>Shadow group [8]</label>
+			<description></description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalLayer">
+			<property name="layer1"/>
+			<property name="layer2"/>
+			<property name="mix"/>
+			<property name="debug"/>
+			<group name="AOVs">
+				<label>AOVs</label>
+				<property name="standardCompatibleAOVs"/>
+				<property name="aov_diffuse_color"/>
+				<property name="aov_direct_diffuse"/>
+				<property name="aov_direct_diffuse_raw"/>
+				<property name="aov_indirect_diffuse"/>
+				<property name="aov_indirect_diffuse_raw"/>
+				<property name="aov_direct_backlight"/>
+				<property name="aov_indirect_backlight"/>
+				<property name="aov_direct_specular"/>
+				<property name="aov_indirect_specular"/>
+				<property name="aov_direct_specular_2"/>
+				<property name="aov_indirect_specular_2"/>
+				<property name="aov_single_scatter"/>
+				<property name="aov_sss"/>
+				<property name="aov_refraction"/>
+				<property name="aov_emission"/>
+				<property name="aov_uv"/>
+				<property name="aov_depth"/>
+				<property name="aov_light_group_1"/>
+				<property name="aov_light_group_2"/>
+				<property name="aov_light_group_3"/>
+				<property name="aov_light_group_4"/>
+				<property name="aov_light_group_5"/>
+				<property name="aov_light_group_6"/>
+				<property name="aov_light_group_7"/>
+				<property name="aov_light_group_8"/>
+				<property name="aov_id_1"/>
+				<property name="aov_id_2"/>
+				<property name="aov_id_3"/>
+				<property name="aov_id_4"/>
+				<property name="aov_id_5"/>
+				<property name="aov_id_6"/>
+				<property name="aov_id_7"/>
+				<property name="aov_id_8"/>
+				<property name="aov_crypto_asset"/>
+				<property name="aov_crypto_object"/>
+				<property name="aov_crypto_material"/>
+				<property name="aov_shadow_group_1"/>
+				<property name="aov_shadow_group_2"/>
+				<property name="aov_shadow_group_3"/>
+				<property name="aov_shadow_group_4"/>
+				<property name="aov_shadow_group_5"/>
+				<property name="aov_shadow_group_6"/>
+				<property name="aov_shadow_group_7"/>
+				<property name="aov_shadow_group_8"/>
+			</group>
+		</view>
+</templates>

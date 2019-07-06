@@ -1,0 +1,282 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{dc1cf86c-60bc-4308-8854-3163e8964c23}";
+PropertySet "alCurvature_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{2b194340-22f0-4cbe-aa35-ad4347a50353}";
+		Type = color;
+	}
+	Parameter "mode" input
+	{
+		GUID = "{c4deff98-3db4-4ae5-91db-acafbeefe4da}";
+		Type = string;
+		Texturable = off;
+		Value = "positive";
+	}
+	Parameter "samples" input
+	{
+		GUID = "{eb9331bb-62ce-4897-a067-382741d50532}";
+		Type = integer;
+		Texturable = off;
+		Value = 3;
+	}
+	Parameter "sampleRadius" input
+	{
+		GUID = "{4e542ae7-3ce6-4d34-a648-ffba663e86e0}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "traceSet" input
+	{
+		GUID = "{b01ccb69-329a-4ebb-b2d0-42607574c6b5}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "RMPinputMin" input
+	{
+		GUID = "{fc98d4b2-f634-4e87-9d66-250e1e12c01c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPinputMax" input
+	{
+		GUID = "{8b8f586a-0f70-4767-ac91-19a596307a56}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPcontrast" input
+	{
+		GUID = "{b8e96d43-25e7-4561-bcdc-56adc03efa1e}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPcontrastPivot" input
+	{
+		GUID = "{6d775697-f0fe-421c-9cee-d1d0da87d2b3}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.180000;
+	}
+	Parameter "RMPbias" input
+	{
+		GUID = "{3738c8b7-1a00-4757-ad0d-104b124b528b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "RMPgain" input
+	{
+		GUID = "{9e6dd8ec-82c6-4c7e-bbf1-f85b0b6bef8a}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "RMPoutputMin" input
+	{
+		GUID = "{e16cb338-e69a-451d-bb65-c99894a95f79}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPoutputMax" input
+	{
+		GUID = "{fe380052-7f1e-4aa6-9a15-75306b4875c5}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPclampEnable" input
+	{
+		GUID = "{e3819802-6b4c-4442-8af7-e32da0b5e905}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPthreshold" input
+	{
+		GUID = "{6e1e394a-6f38-4c96-9cb5-fb3ab75dd393}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPclampMin" input
+	{
+		GUID = "{130c1ae4-1fec-42ba-a30a-9b78d3c5e06b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPclampMax" input
+	{
+		GUID = "{2b74121f-bc30-4d2c-8f62-39c94b579f3d}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+}
+MetaShader "alCurvature_meta"
+{
+	Name = "ALS_Curvature";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Curvature";
+		Filename = "alCurvature";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	mode
+	{
+		Name = "Mode";
+		UIType = "Combo";
+		Items
+		{
+			"positive" = "positive";
+			"negative" = "negative";
+		}
+	}
+	samples
+	{
+		Name = "Samples";
+	}
+	sampleRadius
+	{
+		Name = "Radius";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	traceSet
+	{
+		Name = "Trace set";
+	}
+	RMPinputMin
+	{
+		Name = "Input min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPinputMax
+	{
+		Name = "Input max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPcontrast
+	{
+		Name = "Contrast";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPcontrastPivot
+	{
+		Name = "Pivot";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPbias
+	{
+		Name = "Bias";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPgain
+	{
+		Name = "Gain";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPoutputMin
+	{
+		Name = "Output min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPoutputMax
+	{
+		Name = "Output max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPclampEnable
+	{
+		Name = "Enable";
+	}
+	RMPthreshold
+	{
+		Name = "Expand";
+	}
+	RMPclampMin
+	{
+		Name = "Min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPclampMax
+	{
+		Name = "Max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	mode;
+	samples;
+	sampleRadius;
+	traceSet;
+	Tab "Remap"
+	{
+		RMPinputMin;
+		RMPinputMax;
+		Group "Contrast"
+		{
+			RMPcontrast;
+			RMPcontrastPivot;
+		}
+		Group "Bias and gain"
+		{
+			RMPbias;
+			RMPgain;
+		}
+		RMPoutputMin;
+		RMPoutputMax;
+		Group "Clamp"
+		{
+			RMPclampEnable;
+			RMPthreshold;
+			RMPclampMin;
+			RMPclampMax;
+		}
+	}
+}
+Layout "RenderTree"
+{
+	sampleRadius;
+	Group "Remap"
+	{
+		RMPinputMin;
+		RMPinputMax;
+		Group "Contrast"
+		{
+			RMPcontrast;
+			RMPcontrastPivot;
+		}
+		Group "Bias and gain"
+		{
+			RMPbias;
+			RMPgain;
+		}
+		RMPoutputMin;
+		RMPoutputMax;
+		Group "Clamp"
+		{
+			RMPclampMin;
+			RMPclampMax;
+		}
+	}
+}
+Plugin = Shader
+{
+	Filename = "alCurvature";
+}

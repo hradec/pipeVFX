@@ -75,6 +75,7 @@ class mari(baseApp):
         self['MARI_DEFAULT_SHELF_PATH']     = "%s/mari/shelf" % os.environ['HOME']
         self['MARI_DEFAULT_RENDER_PATH']    = "%s/mari/render" % os.environ['HOME']
         
+        nuke.addon(self, nukepath = self.path('/Media/Scripts/Nuke') )
         
     def __mkdirs(self):
         ''' central method to create mari folders used by environ and userSetup methods '''

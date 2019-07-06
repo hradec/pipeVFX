@@ -1,0 +1,63 @@
+{
+    "black_soft_plastic_black_soft_plastic": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.10000000149011612, 
+                0.10000000149011612, 
+                0.10000000149011612
+            ], 
+            "baseColorB": 0.10000000149011612, 
+            "baseColorG": 0.10000000149011612, 
+            "baseColorR": 0.10000000149011612, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.10000000149011612, 
+                0.10000000149011612, 
+                0.10000000149011612
+            ], 
+            "colorB": 0.10000000149011612, 
+            "colorG": 0.10000000149011612, 
+            "colorR": 0.10000000149011612, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "outColor": [
+                0.10000000149011612, 
+                0.10000000149011612, 
+                0.10000000149011612
+            ], 
+            "outColorB": 0.10000000149011612, 
+            "outColorG": 0.10000000149011612, 
+            "outColorR": 0.10000000149011612, 
+            "presence": 1.0, 
+            "roughness": 0.6000000238418579, 
+            "sheenTint": 0.5, 
+            "shininess": 100.0, 
+            "specular": 0.10000000149011612, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

@@ -7,8 +7,13 @@ m = pipe.apps.maya()
 pv = p.version()
 mv = m.version()
 
+os.environ['PYTHONHOME'] = pipe.apps.python().path()
 
-p.run("RenderManStudio-%s-maya%s/rmantree/bin/it" %  (pv,mv))
+if float(pv)<21:
+	p.run("RenderManStudio-%s-maya%s/bin/it" %  (pv,mv))
+else:
+	p.run("RenderManProServer-%s/bin/it" %  (pv))
+
 
 '''
 import prman, sys, os

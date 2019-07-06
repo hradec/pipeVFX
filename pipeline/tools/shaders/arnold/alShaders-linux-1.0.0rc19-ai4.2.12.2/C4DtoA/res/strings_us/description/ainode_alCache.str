@@ -1,0 +1,9 @@
+STRINGTABLE ainode_alCache
+{
+	ainode_alCache   "Arnold alCache node";
+
+	C4DAI_ALCACHE_MAIN_GRP   "Main";
+
+	C4DAIP_ALCACHE_INPUT   "input";
+}
+

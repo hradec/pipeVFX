@@ -1,0 +1,92 @@
+
+////////////////////////////////////////////////////////////////////////////////
+
+  This is a collection of some scripts using utility nodes only to set a 4  wheeled vehicle. Copy  files to your script directory and the scene files to wherever you store your Maya scene files. The TestRig_Vehicle file is a low poly count vehicle to show heirarchy stucture required. Also included is a rigged version.
+
+    If you  run script using default values in the GUI it will rig the vehicle correctly. To use   your own naming convention select each Group node as required and load useing corresponding button
+
+    These scripts are a first Beta set with liitle error checking but I will follow up with more  scripts over time. Please let me know and also any suggestions for additional ideas etc. The scripts are planned to include all the various rigging options for any vehicle type and their various requirements.
+
+    I have include a draft copy of the GUI ( DVY_VehicleRig.mel) I am building for comments and feedback. 
+    
+    Thanks and  enjoy the scripts and please let me know any good and more importantly bad points to help with the  development of these scripts.
+
+  
+////////////////////////////////////////////////////////////////////////////////
+
+ Copyright ©   2006 DVY_Vehicle Rigger. All rights reserved davvey@ntlworld.com
+					
+
+				 - DVY_VehicleRigger -
+				
+	This script will build Vehicle rigg for wheel rotation, suspension
+	and steering. This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script currently has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite of scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging of individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, use default values is you have named them  as shown or selct each item in turn and load required field. Also you can type names	in the field as required. Script will error out if not all items are found.	Once all fields correct press "Rig Vehicle" button. 
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |	
+		  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+		This will tilt the Chassis group as reguired. Also each indiviual
+		Wheel can be moved up and down by moving each wheel Group Ground 
+		Locator to simulate ground variations. If these are Geometry constained
+		to a "grtound" object or plane to movement will be automatic.
+	
+

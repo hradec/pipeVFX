@@ -1,0 +1,60 @@
+#! /Applications/Nuke5.1v3/Nuke5.1v3.app/Contents/MacOS/Nuke5.1v3 -nx
+version 5.1300
+define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
+<layout version="1.0">
+    <window x="0" y="22" w="1440" h="874" screen="0">
+        <splitter orientation="1">
+            <split size="910"></split>
+            <splitter orientation="1">
+                <split size="40"></split>
+                <dock id="" hideTitles="1" activePageId="Toolbar.1">
+                    <page id="Toolbar.1"></page>
+                </dock>
+                <split size="866"></split>
+                <splitter orientation="2">
+                    <split size="424"></split>
+                    <dock id="" activePageId="Viewer.1">
+                        <page id="Viewer.1"></page>
+                    </dock>
+                    <split size="424"></split>
+                    <dock id="" activePageId="DAG.1">
+                        <page id="DAG.1"></page>
+                        <page id="Curve Editor.1"></page>
+                    </dock>
+                </splitter>
+            </splitter>
+            <split size="526"></split>
+            <dock id="" activePageId="Properties.1">
+                <page id="Properties.1"></page>
+            </dock>
+        </splitter>
+    </window>
+</layout>
+}
+Root {
+ inputs 0
+ name /Users/apple/Desktop/idMattePro.nk
+ last_frame 312
+ lock_range true
+ format "640 480 0 0 640 480 1 PC_Video"
+ proxy_type scale
+ proxy_format "640 480 0 0 640 480 1 PC_Video"
+}
+iDMattePro {
+ inputs 0
+ name iDMattePro1
+ note_font "Verdana Bold Bold Bold"
+ selected true
+ xpos 209
+ ypos -58
+ which 0
+ whitepoint 2.1
+ size 15
+ Red 0
+ range {0 1 1 1}
+ output rgba.alpha
+ Green 0
+ output_1 rgba.alpha
+ Blue 0
+ output_2 rgba.alpha
+}

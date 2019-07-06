@@ -19,7 +19,6 @@
 # =================================================================================
 
 
-
 class genarts_monsters_gt_ofx(baseApp):
     def environ(self):
         ''' set all environment variables is here '''
@@ -34,7 +33,7 @@ class genarts_monsters_gt_ofx(baseApp):
             nukepath = self.path('usr/OFX/Plugins/'),
             lib      = self.path('usr/genarts/monsters-ofx64/lib64'),
         )
-        
+
         self['OFX_PLUGINS_PATH'] = self.path('usr/OFX/Plugins/Monsters.ofx.bundle')
         
         

@@ -38,13 +38,43 @@ except:
     m = None
 
 
-def types():
-    from glob import glob
-    ret = {}
-    root = "%s/config/assets" % pipe.roots.tools()
-    def recursiveTree(path, d={}):
+GafferUI = None
+if 'DISPLAY' in os.environ and os.environ['DISPLAY'].strip():
+    try:
+        import GafferUI
+    except:
+        GafferUI = None
+
+def toolsPaths():
+    ''' return all the tools paths in the hierarqui, sorted correctly! '''
+    #add tools paths
+    toolsPaths = [pipe.roots.tools()]
+    if pipe.admin.job.current():
+        toolsPaths.append( pipe.admin.job().path('tools') )
+        if pipe.admin.job.shot():
+            toolsPaths.append( pipe.admin.job.shot().path('tools') )
+            toolsPaths.append( pipe.admin.job.shot.user().path('tools') )
+
+    toolsPaths.reverse()
+    return toolsPaths
+
+
+def types(refresh=False):
+    global __asset_types__
+    if '__asset_types__' not in globals().keys() or refresh:
+        __asset_types__ = {}
+        root = "%s/config/assets" % pipe.roots.tools()
+        for each in toolsPaths():
+            r = "%s/config/assets" % each
+            if os.path.exists(r):
+                root = r
+                break
+
+        def recursiveTree(path, d={}):
             for each in glob( "%s/*" % path ):
                 id = each.replace(root,"")[1:]
+                if os.path.basename(each) in ['renderer','include']:
+                    continue
                 if os.path.isdir(each):
                     recursiveTree(each, d)
                 elif os.path.isfile(each):
@@ -54,12 +84,14 @@ def types():
                         d[os.path.dirname(id)] = True
             return d
 
-    ret = recursiveTree(root, ret)
-    return ret.keys()
-
+        __asset_types__ = recursiveTree(root, __asset_types__)
+    ret = __asset_types__.keys()
+    ret.sort()
+    return ret
 
 class AssetParameter( CompoundParameter ):
     def __init__(self, path=None, publish=True):
+
         if IECore:
             CompoundParameter.__init__(self, 'Asset',"", userData = { "UI": {"collapsed" : BoolData(False),}},)
 
@@ -69,6 +101,7 @@ class AssetParameter( CompoundParameter ):
 
         if IECore:
             self.classLoader = ClassLoader.defaultLoader( "IECORE_ASSET_OP_PATHS" )
+            self.classLoader.refresh()
 
         self.job = j = pipe.admin.job.current()
 #        if not self.job:
@@ -78,8 +111,14 @@ class AssetParameter( CompoundParameter ):
 
         if self.path:
             # be smart and figure if the path represents an valid asset by looking for a data.txt file
+            if not os.path.exists(self.path):
+                self.path = self.job.path('sam/')+self.path
+
             p = self.path
             while( len(p)>2 ):
+                if os.path.exists('%s/current' % p):
+                    self.path = ''.join(open('%s/current' % p).readlines()).strip()
+                    break
                 if os.path.exists('%s/data.txt' % p):
                     self.path = p
                     break
@@ -95,7 +134,7 @@ class AssetParameter( CompoundParameter ):
             # store the path relative to the project
             if 'sam' in self.path:
                 self.path = self.path.split('sam/')[-1]
-        
+
         __path = "/tmp/"
         try:
             self.jobData = self.job.getData()
@@ -103,35 +142,38 @@ class AssetParameter( CompoundParameter ):
             self.user = self.job.shot.user()
             __path = self.job.path('sam/*')
         except: pass
+        # print self.path
 
         current = {}
         def recursiveGatherAllAssets(path=__path):
             ret = {}
-            if self.job:
-                for each in glob('%s/*' % path):
-                    assetName = os.path.basename(each)
-                    if assetName[0].isdigit():
-                        id = each.replace(self.job.path('sam/'),'')
-                        # check if version is current!
-                        cur = os.path.dirname(each)
-                        if os.path.exists('%s/current' % cur):
-                            if not current.has_key(cur):
-                                current[cur] = open('%s/current' % cur,'r').readlines()[0].strip()
-                            # and add a '(current)' suffix to show to the user!
-                            if each == current[cur][:-1]:
-                                id += ' (current)'
-                        ret[id]=each
-                    else:
-                        ret.update(recursiveGatherAllAssets(each))
+            # this makes SAM panel REAAAALLY slow!!
+
+            # if self.job:
+            #     for each in glob('%s/*' % path):
+            #         assetName = os.path.basename(each)
+            #         if assetName[0].isdigit():
+            #             id = each.replace(self.job.path('sam/'),'')
+            #             # check if version is current!
+            #             cur = os.path.dirname(each)
+            #             if os.path.exists('%s/current' % cur):
+            #                 if not current.has_key(cur):
+            #                     current[cur] = open('%s/current' % cur,'r').readlines()[0].strip()
+            #                 # and add a '(current)' suffix to show to the user!
+            #                 if each == current[cur][:-1]:
+            #                     id += ' (current)'
+            #             ret[id]=each
+            #         else:
+            #             ret.update(recursiveGatherAllAssets(each))
             return ret
-            
+
 
         allAssets = []
         #if publish:
         allAssets = recursiveGatherAllAssets().keys()
         allAssets.sort()
         AssetsPublicados = map( lambda x: (x,x), allAssets )
-        self.published = allAssets 
+        self.published = allAssets
 
         assetName = ""
         assetVersion = "1.-1.0"
@@ -146,25 +188,26 @@ class AssetParameter( CompoundParameter ):
                 assetVersion = m.getAttr( "defaultRenderGlobals.pipe_asset_version" )
             if m.objExists( "defaultRenderGlobals.pipe_asset_description" ):
                 desc = m.getAttr( "defaultRenderGlobals.pipe_asset_description" )
-                if assetVersion != "1.-1.0":
-                    assetDesc = "\n(desc versao: %s) - %s " % (assetVersion,desc)
+                # if assetVersion != "1.-1.0":
+                #     assetDesc = "\n(desc versao: %s) - %s " % (assetVersion,desc)
 
         # set version and description to be the last one published
         if assetName:
             f = filter(lambda x: str(assetName) in x, self.published)
             if f:
                 f.sort()
+                # print f
                 assetVersion = f[-1].split('/')[-1].replace(' (current)','').strip()
                 data = self.getAssetData(f[-1])
-                if data:
-                    assetDesc  = "\n(desc versao: %s) - %s " % (assetVersion,data["assetDescription"]) 
+                # if data:
+                #     assetDesc  = "\n(desc versao: %s) - %s " % (assetVersion,data["assetDescription"])
             else:
                 assetName = ""
                 assetVersion = "1.-1.0"
                 assetDesc  = ""
-                
 
-            
+
+
         if IECore:
             assetVersion = map( lambda x: int(x), assetVersion.split('.') )
             assetVersion = V3i(assetVersion[0], assetVersion[1]+1, assetVersion[2])
@@ -177,7 +220,7 @@ class AssetParameter( CompoundParameter ):
                     userData = { "UI": {
                         "collapsed" : BoolData(False),
                         "classNameFilter" : StringData(opfilter),
-                    }},
+                    } },
                 )
                 self.addParameter(type)
                 par = [
@@ -269,13 +312,21 @@ class AssetParameter( CompoundParameter ):
     def getData(self):
         if self.path:
             p = self.getFilePath()
-            f = open("%s/data.txt" % p)
-            l = f.readlines()
-            print l
-            d = eval(''.join(l).strip('\n').replace("\n","\\n"))
-            f.close()
-            return d
+            # print p
+            if os.path.exists("%s/data.txt" % p):
+                f = open("%s/data.txt" % p)
+                l = f.readlines()
+                # print l
+                d = eval(''.join(l).strip('\n').replace("\n","\\n"))
+                f.close()
+                return d
         return {}
+
+    def getCurrent(self):
+        if self.path:
+            p = self.getFilePath()
+            return  ''.join(open("%s/../current" % p).readlines()).strip()
+        return None
 
     def getFilePath(self):
         if self.job and self.path:
@@ -287,7 +338,7 @@ class AssetParameter( CompoundParameter ):
         if IECore:
             if self.publish:
                 if self['type'].keys():
-                    tmp = self['type']['assetType'].getValue()
+                    tmp = self['type'].getClass().path
                     return self.classLoader.classNames( "*" + str(tmp) )
         return ""
 
@@ -323,7 +374,7 @@ class AssetParameter( CompoundParameter ):
     def getAssetData(self, relativeAssetPath):
         ''' loads the asset data file for a given asset path and returns the data as a dict '''
         fullpath = self.job.path( 'sam/%s/data.txt' % relativeAssetPath.split('/sam/')[-1].replace(' (current)','').strip() )
-        
+
         ret = None
         if os.path.exists( fullpath ):
             ret =  eval(''.join(open(fullpath,'r').readlines()).strip().replace('\n','\\n'))
@@ -340,56 +391,78 @@ class AssetParameter( CompoundParameter ):
                 assetData = self.getAssetData(assetName)
         return assetData
 
-    def parameterChanged(self, parameter):
-        forceVersionCheck = False
-#        print parameter.name,'=',parameter.getValue()
+    def parameterChanged(self, parameter=None):
+            # TODO: checar se alguem digita / ou \ no nome e nao deixar!!!
 
-        #if self.publish:
-        if IECore:
-            if parameter.name == 'name' or forceVersionCheck:
-                assetName = str(self['info']['name'].getValue())
-                if '/' in assetName:
-                    assetName = assetName.split()[0].strip()
-                    # we used the pop up menu to select an existing asset
-                    assetData = self.getAssetData(assetName)
-                    assetOldVersion = os.path.basename(assetName)
-                    assetName = os.path.dirname(assetName) # remove version
-                    assetType = os.path.dirname(assetName)
-                    assetName = os.path.basename(assetName)
-                    self['info']['name'].smartSetValue( assetName )
-                    if 'type' in self.keys():
-                        self['type'].setClass( assetType, 1 )
+            forceVersionCheck = False
+            # print parameter.name,'=',parameter.getValue()
 
-                    # get assetData from data.txt and fill up ui!
-                    if assetData:
-                        if hasattr( assetData, 'has_key' ):
-                            if not self.publish:
-                                if 'type' in self.keys():
-                                    for par in self['type'].keys():
-                                        dataName = self.getDataName(self['type'][par])
-                                        if assetData.has_key(dataName):
-                                            data = assetData[dataName]
-                                            if type(data)==type([]):
-                                                data = ','.join(data)
-                                            self['type'][par].smartSetValue( data )
+            #if self.publish:
+            if IECore:
+                # print "bummm", parameter.getValue()['info']['name']
+                # if parameter.name == 'name' or forceVersionCheck:
+                    assetName = str(self['info']['name'].getValue())
 
-                            if assetData.has_key('assetInfo'):
-                                for each in assetData['assetInfo'].keys():
-                                    if each in self['info'].keys():
-                                        self['info'][each].smartSetValue( assetData['assetInfo'][each] )
+                    # make sure an asset in a shot is being published
+                    # with the template shotname.assetname
+                    assetName = assetName.split('.')[-1]
+                    print  self.shot.path()
+                    if self.shot.path().split('/')[-2] == 'shots':
+                        assetName = assetName.strip().replace(self.shot.shot,'').strip('_')
+                        if not assetName:
+                            if GafferUI:
+                                with GafferUI.ErrorDialogue.ExceptionHandler( ) :
+                                    raise Exception("The name can't be empty, and you must use a name that is not the same as the shot name.")
+                            else:
+                                raise Exception("The name can't be empty, and you must use a name that is not the same as the shot name.")
+                            assetName = ''
+                        else:
+                            assetName = '%s.%s' % (self.shot.shot, assetName)
 
-                                if assetData['assetInfo'].has_key('description'):
-                                    if 'description' in self['info'].keys():
-                                        self['info']['description'].smartSetValue( "\n%s (desc versao: %s)" % (assetData['assetInfo']['description'], assetOldVersion) )
+                    self['info']['name'].setValue( IECore.StringData(assetName) )
 
-                # validate asset name and check for existing versions
-                assetType = self.getAssetType()
-                if assetType:
-                    published = self.gatherAssets( assetType[0] )
-                    if published.has_key(assetName):
-                        versions = published[assetName]
-                        versions.sort()
-                        version = map(lambda x: int(x), os.path.basename(versions[-1]).split('.'))
-                        self['info']['version'].smartSetValue(V3i(version[0],version[1]+1,version[2]))
-                    else:
-                        self['info']['version'].smartSetValue(V3i(1,0,0))
+                    if '/' in assetName:
+                        assetName = assetName.split()[0].strip()
+                        # we used the pop up menu to select an existing asset
+                        assetData = self.getAssetData(assetName)
+                        assetOldVersion = os.path.basename(assetName)
+                        assetName = os.path.dirname(assetName) # remove version
+                        assetType = os.path.dirname(assetName)
+                        assetName = os.path.basename(assetName)
+                        self['info']['name'].smartSetValue( assetName )
+                        if 'type' in self.keys():
+                            self['type'].setClass( assetType, 1 )
+
+                        # get assetData from data.txt and fill up ui!
+                        if assetData:
+                            if hasattr( assetData, 'has_key' ):
+                                if not self.publish:
+                                    if 'type' in self.keys():
+                                        for par in self['type'].keys():
+                                            dataName = self.getDataName(self['type'][par])
+                                            if assetData.has_key(dataName):
+                                                data = assetData[dataName]
+                                                if type(data)==type([]):
+                                                    data = ','.join(data)
+                                                self['type'][par].smartSetValue( data )
+
+                                if assetData.has_key('assetInfo'):
+                                    for each in assetData['assetInfo'].keys():
+                                        if each in self['info'].keys():
+                                            self['info'][each].smartSetValue( assetData['assetInfo'][each] )
+
+                                    if assetData['assetInfo'].has_key('description'):
+                                        if 'description' in self['info'].keys():
+                                            self['info']['description'].smartSetValue( "\n%s (desc versao: %s)" % (assetData['assetInfo']['description'], assetOldVersion) )
+
+                    # validate asset name and check for existing versions
+                    assetType = self.getAssetType()
+                    if assetType:
+                        published = self.gatherAssets( assetType[0] )
+                        if published.has_key(assetName):
+                            versions = published[assetName]
+                            versions.sort()
+                            version = map(lambda x: int(x), os.path.basename(versions[-1]).split('.'))
+                            self['info']['version'].smartSetValue(V3i(version[0],version[1]+1,version[2]))
+                        else:
+                            self['info']['version'].smartSetValue(V3i(1,0,0))

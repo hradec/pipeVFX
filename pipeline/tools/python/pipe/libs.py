@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -40,7 +40,7 @@ class allLibs(baseLib):
     ''' this class loops over all installed libs and sets the proper
     env vars for then.
     As all our libs are installed in a padronized way, we don't need
-    specific classes for each lib. 
+    specific classes for each lib.
     In the case a library needs some special setup, we can allways create a
     new class for it, in the same molds of our apps classes!
     '''
@@ -48,13 +48,13 @@ class allLibs(baseLib):
         for each in libsDB():
             if each != 'gcc':
                 self.update( eval("%s()" % each.replace('-','_')) )
-        
 
 
 
 
 
-# avoid getting duplicated files. 
+
+# avoid getting duplicated files.
 libz = {}
 def sourceLibs( jconfig ):
     if os.path.exists( jconfig ):
@@ -77,8 +77,7 @@ for each in libz.keys():
     try:
         exec(''.join(open(libz[each]).readlines()),globals(),locals())
     except:
-        print bcolors.FAIL+'='*80
-        print each+" ERROR:\n"
-        print "\n\t".join(traceback.format_exc().split('\n'))
-        print '='*80,bcolors.END
-
+        print( bcolors.FAIL+'='*80 )
+        print( each+" ERROR:\n" )
+        print( "\n\t".join(traceback.format_exc().split('\n')) )
+        print( '='*80,bcolors.END )

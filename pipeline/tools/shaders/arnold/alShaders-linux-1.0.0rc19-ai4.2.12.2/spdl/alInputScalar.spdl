@@ -1,0 +1,260 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{84052240-1872-4408-9082-9ec2f1c84bb8}";
+PropertySet "alInputScalar_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{09666953-e83e-4946-826d-0ba1c2b2069d}";
+		Type = scalar;
+	}
+	Parameter "input" input
+	{
+		GUID = "{525317c4-947f-4566-8fac-8191d805dcf5}";
+		Type = string;
+		Texturable = off;
+		Value = "P";
+	}
+	Parameter "userName" input
+	{
+		GUID = "{9515918a-d9b6-4053-8e58-61182836274b}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "RMPinputMin" input
+	{
+		GUID = "{ce913ab2-d880-4c76-945f-411cbddac73b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPinputMax" input
+	{
+		GUID = "{c07ce0a9-520e-46f5-a56b-67e81a598c54}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPcontrast" input
+	{
+		GUID = "{22e25dde-9202-48ff-b4b5-6118746f1f92}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPcontrastPivot" input
+	{
+		GUID = "{183c99a0-0b96-44f4-8f75-4c7ba406af64}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.180000;
+	}
+	Parameter "RMPbias" input
+	{
+		GUID = "{33df3133-1661-44e9-9537-32e5a3ed0825}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "RMPgain" input
+	{
+		GUID = "{59f60c2a-c3f4-480c-902f-f60304a3b8be}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "RMPoutputMin" input
+	{
+		GUID = "{e4cb29df-1e0f-41e4-8f4b-935cc38170ed}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPoutputMax" input
+	{
+		GUID = "{e5d999da-c0e6-4417-95a4-c43181b14a9b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPclampEnable" input
+	{
+		GUID = "{90b968c3-9562-4769-9416-4fa81a2862e3}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPthreshold" input
+	{
+		GUID = "{8fe7d755-faee-4cfc-bd77-9b24151c933e}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPclampMin" input
+	{
+		GUID = "{573503a0-dbc1-48e4-af42-ebb60e8b7e49}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPclampMax" input
+	{
+		GUID = "{74ec6850-7e72-4f70-8da3-7c0a5e5ea737}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+}
+MetaShader "alInputScalar_meta"
+{
+	Name = "ALS_InputScalar";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_InputScalar";
+		Filename = "alInputScalar";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	input
+	{
+		Name = "Input";
+		UIType = "Combo";
+		Items
+		{
+			"facing-ratio" = "facing-ratio";
+			"area" = "area";
+			"face-index" = "face-index";
+			"ray-length" = "ray-length";
+			"ray-depth" = "ray-depth";
+			"User" = "User";
+		}
+	}
+	userName
+	{
+		Name = "User name";
+	}
+	RMPinputMin
+	{
+		Name = "Input min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPinputMax
+	{
+		Name = "Input max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPcontrast
+	{
+		Name = "Contrast";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPcontrastPivot
+	{
+		Name = "Pivot";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPbias
+	{
+		Name = "Bias";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPgain
+	{
+		Name = "Gain";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPoutputMin
+	{
+		Name = "Output min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPoutputMax
+	{
+		Name = "Output max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPclampEnable
+	{
+		Name = "Enable";
+	}
+	RMPthreshold
+	{
+		Name = "Expand";
+	}
+	RMPclampMin
+	{
+		Name = "Min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPclampMax
+	{
+		Name = "Max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	input;
+	userName;
+	Tab "Remap"
+	{
+		RMPinputMin;
+		RMPinputMax;
+		Group "Contrast"
+		{
+			RMPcontrast;
+			RMPcontrastPivot;
+		}
+		Group "Bias and gain"
+		{
+			RMPbias;
+			RMPgain;
+		}
+		RMPoutputMin;
+		RMPoutputMax;
+		Group "Clamp"
+		{
+			RMPclampEnable;
+			RMPthreshold;
+			RMPclampMin;
+			RMPclampMax;
+		}
+	}
+}
+Layout "RenderTree"
+{
+	Group "Remap"
+	{
+		RMPinputMin;
+		RMPinputMax;
+		Group "Contrast"
+		{
+			RMPcontrast;
+			RMPcontrastPivot;
+		}
+		Group "Bias and gain"
+		{
+			RMPbias;
+			RMPgain;
+		}
+		RMPoutputMin;
+		RMPoutputMax;
+		Group "Clamp"
+		{
+			RMPclampMin;
+			RMPclampMax;
+		}
+	}
+}
+Plugin = Shader
+{
+	Filename = "alInputScalar";
+}

@@ -1,0 +1,13 @@
+ssh newfarm-001.local sudo pkill -fc -9 afrender &
+ssh newfarm-003.local sudo pkill -fc -9 afrender &
+ssh newfarm-006.local sudo pkill -fc -9 afrender &
+ssh newfarm-007.local sudo pkill -fc -9 afrender &
+ssh newfarm-008.local sudo pkill -fc -9 afrender &
+ssh newfarm-009.local sudo pkill -fc -9 afrender &
+ssh newfarm-010.local sudo pkill -fc -9 afrender &
+ssh vfxws-021.local sudo pkill -fc -9 afrender &
+ssh vfxws-026.local sudo pkill -fc -9 afrender &
+ssh vfxws-025.local sudo pkill -fc -9 afrender &
+ssh vfxws-013.local sudo pkill -fc -9 afrender &
+ssh vfxws-023.local sudo pkill -fc -9 afrender &
+#ssh vfxws-030.local sudo pkill -fc -9 afrender &

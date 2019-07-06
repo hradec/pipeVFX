@@ -1,0 +1,8 @@
+#!/usr/bin/python2
+
+import sys, pipe
+
+
+
+pipe.apps.maya().run('mayapy')
+

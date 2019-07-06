@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -57,12 +57,12 @@ from IECore import BoolParameter, CompoundParameter, registerRunTimeTyped, IntDa
 from IECore import CompoundObject, IntParameter, DateTimeParameter, StringVectorParameter
 from glob import glob
 import os, datetime, sys
-import pipe, clients
+import pipe , clients
 
 
 
 class mkjob( Op ) :
-    
+
     def getLastIndex(self):
         ''' go over the filesystem jobs and gather the last project
         index available'''
@@ -81,8 +81,8 @@ class mkjob( Op ) :
         jobList.sort()
         if jobList:
             lastProjectOld = int(jobList[-1].split('_')[0].split('.')[0])
-            
-                
+
+
         lastProject = 0
         jobList = glob( "%s/*" % pipe.roots.jobs() )
         jobList = map( lambda x: os.path.basename(x), jobList )
@@ -90,12 +90,12 @@ class mkjob( Op ) :
         jobList.sort()
         if jobList:
             lastProject = int(jobList[-1].split('_')[0].split('.')[0])
-        
-        if lastProjectOld > lastProject:
-            lastProject = lastProjectOld 
 
-        return lastProject 
-    
+        if lastProjectOld > lastProject:
+            lastProject = lastProjectOld
+
+        return lastProject
+
     def __init__( self ) :
         Op.__init__( self, "Create new projects.",
             Parameter(
@@ -109,7 +109,7 @@ class mkjob( Op ) :
                     },
             )
         )
-        
+
         output = pipe.output()
         self.parameters().addParameters(
             [
@@ -129,7 +129,7 @@ class mkjob( Op ) :
                 StringParameter(
                     name="client",
                     description = "O nome do job a ser criado/editado",
-                    defaultValue = "",
+                    defaultValue = "no client",
                     presets = clients.asPreset(),
                     presetsOnly = True,
                 ),
@@ -160,10 +160,10 @@ class mkjob( Op ) :
             ])
 
     def doOperation( self, operands ) :
-        
+
         job = pipe.admin.job( operands["jobIndex"].value, operands["jobName"].value )
         job.mkroot()
-        
+
         for each in  operands["shots"]:
             if each:
                 job.mkshot( "shots/%s" % each )
@@ -176,10 +176,10 @@ class mkjob( Op ) :
         job.data( {
             'output' : operands["defaultOutput"].value,
         } )
-        
+
         result = job.create()
         print result
-        
+
         return StringData( result )
 
 registerRunTimeTyped( mkjob )

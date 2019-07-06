@@ -1,0 +1,192 @@
+#! C:/Program Files/Nuke6.3v4/Nuke6.3.exe -nx
+version 6.3 v4
+Gizmo {
+ inputs 4
+ note_font Verdana
+ mapsize {0.15 0.15}
+ addUserKnob {20 edger l "The Edger"}
+ addUserKnob {41 saturation l Saturation T Saturation1.saturation}
+ addUserKnob {41 darks l "Dark Tones" T Darks.multiply}
+ addUserKnob {41 lights l "Light Tones" T Lights.multiply}
+ addUserKnob {26 ""}
+ addUserKnob {41 maskChannelMask l "" -STARTLINE T Merge3.maskChannelMask}
+ addUserKnob {41 invert_mask l invert -STARTLINE T Merge3.invert_mask}
+ addUserKnob {41 mix T Merge3.mix}
+ addUserKnob {26 ""}
+ addUserKnob {6 clamp l "Clamp RGB Output" +STARTLINE}
+}
+ Input {
+  inputs 0
+  name mask
+  xpos -751
+  ypos -640
+  number 3
+ }
+ Expression {
+  channel0 {-rgba.red -rgba.green -rgba.blue}
+  expr0 0
+  channel1 {-rgba.red -rgba.green -rgba.blue}
+  expr1 0
+  channel2 {-rgba.red -rgba.green -rgba.blue}
+  expr2 0
+  channel3 {rgba.alpha none none rgba.alpha}
+  expr3 a==0?0:a
+  name AlphaFix1
+  label "To avoid error without\nsomething plugged in mask."
+  xpos -751
+  ypos -308
+ }
+set N200b0b30 [stack 0]
+push $N200b0b30
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name CopyMask
+  xpos -751
+  ypos -191
+ }
+ Input {
+  inputs 0
+  name BG
+  xpos -123
+  ypos -636
+ }
+ Dot {
+  name Dot9
+  xpos -89
+  ypos -434
+ }
+set N22290c40 [stack 0]
+ Colorspace {
+  colorspace_out HSL
+  name Colorspace1
+  xpos -199
+  ypos -437
+ }
+ Shuffle {
+  red blue
+  green blue
+  alpha blue
+  name Shuffle1
+  xpos -315
+  ypos -437
+ }
+set N22291900 [stack 0]
+ Input {
+  inputs 0
+  name FG
+  xpos -324
+  ypos -640
+  number 2
+ }
+ Input {
+  inputs 0
+  name CP
+  xpos -502
+  ypos -640
+  number 1
+ }
+ Merge2 {
+  inputs 2
+  operation minus
+  name Merge1
+  xpos -502
+  ypos -570
+ }
+ Saturation {
+  saturation 0.09
+  name Saturation1
+  xpos -502
+  ypos -528
+ }
+set N222925c0 [stack 0]
+ Clamp {
+  channels rgb
+  maximum 1000
+  name Clamp1
+  xpos -570
+  ypos -488
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  bbox B
+  name Merge2
+  xpos -570
+  ypos -423
+ }
+ Grade {
+  multiply 1.78
+  black_clamp false
+  name Lights
+  xpos -570
+  ypos -319
+ }
+push $N22291900
+push $N222925c0
+ Clamp {
+  channels rgb
+  minimum -1000
+  maximum 0
+  name Clamp2
+  xpos -432
+  ypos -487
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  bbox B
+  name Merge6
+  xpos -432
+  ypos -420
+ }
+ Grade {
+  multiply 1.86
+  black_clamp false
+  name Darks
+  xpos -432
+  ypos -322
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge7
+  xpos -484
+  ypos -255
+ }
+push $N22290c40
+ Dot {
+  name Dot1
+  xpos -89
+  ypos -182
+ }
+ Merge2 {
+  inputs 2+1
+  operation plus
+  invert_mask true
+  name Merge3
+  xpos -484
+  ypos -185
+ }
+set N22294270 [stack 0]
+ Clamp {
+  channels rgb
+  name Clamp3
+  xpos -484
+  ypos -48
+  disable {{!parent.clamp i}}
+ }
+ Output {
+  name Output1
+  xpos -484
+  ypos 64
+ }
+push $N22294270
+ Viewer {
+  input_process false
+  name Viewer1
+  xpos -704
+  ypos -12
+ }
+end_group

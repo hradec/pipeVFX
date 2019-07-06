@@ -2,7 +2,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -30,22 +30,22 @@ try:
 except:
     admin=None
 
-    
+
 def current(job=None):
     import os
     if not job:
-        if os.environ.has_key('PIPE_JOB'):
+        if 'PIPE_JOB' in os.environ:
             job = os.environ['PIPE_JOB']
     if not job:
         return ''
     return "%s/%s" % (roots.jobs(), job)
-    
+
 
 def currentShot(job=None, values=None):
     import os
     if not values:
         values='shot@'
-        if os.environ.has_key('PIPE_SHOT'):
+        if 'PIPE_SHOT' in os.environ:
             values = os.environ['PIPE_SHOT']
     values = values.split('@')
     return '%s/%ss/%s' % ( current(job), values[0], values[1] )
@@ -56,11 +56,10 @@ class user():
     def create(app):
         ignore = [ 'python' ]
         if current() and app not in ignore:
-            if os.environ.has_key('PIPE_JOB'):
-                if os.environ.has_key('PIPE_SHOT'):
+            if 'PIPE_JOB' in os.environ:
+                if 'PIPE_SHOT' in os.environ:
                     v = os.environ['PIPE_SHOT'].split('@')
                     j = pipe.admin.job()
                     j.mkuser('%ss/%s' % (v[0].lower(), v[1]), username(), app)
                     j.create()
                     os.chdir( j.shot.user().path(app) )
-                    

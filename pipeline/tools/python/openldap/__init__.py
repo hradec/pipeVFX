@@ -2,7 +2,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -48,9 +48,9 @@ class server(object):
         import ldap as __ldap
         # The next lines will also need to be changed to support your search requirements and directory
         searchScope = __ldap.SCOPE_SUBTREE
-        
+
         ## retrieve all attributes - again adjust to your needs - see documentation for more options
-        retrieveAttributes = None 
+        retrieveAttributes = None
 
         result_set = []
         try:
@@ -62,29 +62,47 @@ class server(object):
                 else:
                     ## here you don't have to append to a list
                     ## you could do whatever you want with the individual entry
-                    ## The appending to list is just for illustration. 
+                    ## The appending to list is just for illustration.
                     if result_type == __ldap.RES_SEARCH_ENTRY:
                         result_set.append(result_data)
         except __ldap.LDAPError, e:
             result_set.append(e)
-        
+
         return result_set
-    
+
+    def dumpPasswd(self):
+        '''
+{'cn': ['Roberto Hradec'], 'objectClass': ['top', 'account', 'posixAccount', 'shadowAccount', 'extensibleObject'], 'loginShell': ['/bin/bash'], 'shadowWarning': ['0'],
+'uidNumber': ['600'], 'shadowMax': ['-1'], 'gidNumber': ['700'],
+'gecos': ['Roberto Hradec'], 'homeDirectory': ['/atomo/home/rhradec'], 'mail': ['hradec@hradec.com'], 'shadowLastChange': ['17087'],
+'uid': ['rhradec']}
+        '''
+        for u in self.__search( 'uid=*'):
+            print ':'.join([
+                u[0][1]['uid'][0],
+                'x',
+                u[0][1]['uidNumber'][0],
+                u[0][1]['gidNumber'][0],
+                '',
+                u[0][1]['homeDirectory'][0],
+                u[0][1]['loginShell'][0],
+            ])
+
     def uid(self, uid):
         return self.__search( 'uid=%s' % uid)
 
     def gid(self, gid):
         return self.__search( 'cn=%s' % gid)
-        
+
     def username( self, uid ):
         return self.uid(uid)[0][0][1]['cn'][0]
-        
+
 
     def bind(self, user, password):
         import ldap.modlist as modlist
         userLDAP = "uid=%s,ou=Users,%s" % (user, self.baseDN)
         self.__l.simple_bind_s( userLDAP, password )
-        
+
         # Some place-holders for old and new values
         old = {}
         new = {'pipeAdmin':'True'}
@@ -92,9 +110,8 @@ class server(object):
         # Convert place-holders for modify-operation using modlist-module
         ldif = modlist.modifyModlist(old,new)
 
-        # Do the actual modification 
+        # Do the actual modification
         self.__l.modify_s(userLDAP,ldif)
 
         # Its nice to the server to disconnect and free resources when done
         self.__l.unbind_s()
-        

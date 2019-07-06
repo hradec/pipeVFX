@@ -1,0 +1,206 @@
+{
+    "aluminum_LM_aluminum_LM": {
+        "asType": "asShader", 
+        "attr": {
+            "backColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "backColorB": 0.5, 
+            "backColorG": 0.5, 
+            "backColorR": 0.5, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "bumpNormalX": 0.0, 
+            "bumpNormalY": 0.0, 
+            "bumpNormalZ": 0.0, 
+            "caching": false, 
+            "color": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "colorB": 0.5, 
+            "colorG": 0.5, 
+            "colorR": 0.5, 
+            "frontColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "frontColorB": 0.5, 
+            "frontColorG": 0.5, 
+            "frontColorR": 0.5, 
+            "frozen": false, 
+            "incandescence": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "incandescenceB": 0.0, 
+            "incandescenceG": 0.0, 
+            "incandescenceR": 0.0, 
+            "inputAOV": 0, 
+            "isHistoricallyInteresting": 2, 
+            "nodeState": 0, 
+            "notes": "LollipopShaders RIS100 LM Preset Name:\naluminum_LM", 
+            "outColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "outColorB": 0.5, 
+            "outColorG": 0.5, 
+            "outColorR": 0.5, 
+            "presence": 1.0, 
+            "roughness": 0.0, 
+            "sheen": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "sheenB": 0.0, 
+            "sheenG": 0.0, 
+            "sheenR": 0.0, 
+            "shininess": 100.0, 
+            "translucence": 0.0
+        }, 
+        "connection": {
+            "lmlayer": "aluminum_LM_layer_aluminum_LM.result"
+        }, 
+        "type": "PxrLMDiffuse"
+    }, 
+    "aluminum_LM_layer_aluminum_LM": {
+        "asType": "asTexture", 
+        "attr": {
+            "caching": false, 
+            "clearcoatAnisotropy": 0.0, 
+            "clearcoatBehavior": true, 
+            "clearcoatColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "clearcoatColorB": 0.5, 
+            "clearcoatColorG": 0.5, 
+            "clearcoatColorR": 0.5, 
+            "clearcoatEta": 1.2999999523162842, 
+            "clearcoatNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatNnX": 0.0, 
+            "clearcoatNnY": 0.0, 
+            "clearcoatNnZ": 0.0, 
+            "clearcoatRoughness": 0.4000000059604645, 
+            "clearcoatThickness": 0.0, 
+            "clearcoatTn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatTnX": 0.0, 
+            "clearcoatTnY": 0.0, 
+            "clearcoatTnZ": 0.0, 
+            "clearcoatTransmission": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "clearcoatTransmissionB": 1.0, 
+            "clearcoatTransmissionG": 1.0, 
+            "clearcoatTransmissionR": 1.0, 
+            "diffuseBehavior": true, 
+            "diffuseColor": [
+                0.11235217750072479, 
+                0.11235217750072479, 
+                0.11235217750072479
+            ], 
+            "diffuseColorB": 0.11235217750072479, 
+            "diffuseColorG": 0.11235217750072479, 
+            "diffuseColorR": 0.11235217750072479, 
+            "diffuseNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "diffuseNnX": 0.0, 
+            "diffuseNnY": 0.0, 
+            "diffuseNnZ": 0.0, 
+            "diffuseRoughness": 0.0, 
+            "frozen": false, 
+            "incandescence": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "incandescenceB": 0.0, 
+            "incandescenceG": 0.0, 
+            "incandescenceR": 0.0, 
+            "isHistoricallyInteresting": 2, 
+            "layerMask": 1.0, 
+            "lmlayer": "", 
+            "nodeState": 0, 
+            "notes": "LollipopShaders RIS100 LM Preset Name:\naluminum_LM_layer", 
+            "result": "", 
+            "sheen": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "sheenB": 0.0, 
+            "sheenG": 0.0, 
+            "sheenR": 0.0, 
+            "specularAnisotropy": 0.0, 
+            "specularBehavior": true, 
+            "specularColor": [
+                0.3499999940395355, 
+                0.3499999940395355, 
+                0.3499999940395355
+            ], 
+            "specularColorB": 0.3499999940395355, 
+            "specularColorG": 0.3499999940395355, 
+            "specularColorR": 0.3499999940395355, 
+            "specularEta": [
+                0.25999996066093445, 
+                0.9143852591514587, 
+                1.2999999523162842
+            ], 
+            "specularEtaB": 1.2999999523162842, 
+            "specularEtaG": 0.9143852591514587, 
+            "specularEtaR": 0.25999996066093445, 
+            "specularKappa": [
+                1.5, 
+                2.9943835735321045, 
+                5.0
+            ], 
+            "specularKappaB": 5.0, 
+            "specularKappaG": 2.9943835735321045, 
+            "specularKappaR": 1.5, 
+            "specularNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularNnX": 0.0, 
+            "specularNnY": 0.0, 
+            "specularNnZ": 0.0, 
+            "specularRoughness": 0.125, 
+            "specularTn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularTnX": 0.0, 
+            "specularTnY": 0.0, 
+            "specularTnZ": 0.0
+        }, 
+        "connection": {}, 
+        "type": "PxrLMLayer"
+    }
+}

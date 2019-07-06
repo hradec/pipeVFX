@@ -1,0 +1,155 @@
+global proc rfrk5MrLightModeChanged(string $attr, string $parent)
+{
+	string $items[] = `optionMenuGrp -query -itemListLong rfrkMrLightModeCtrl`;
+	int $selected = `optionMenuGrp -query -select rfrkMrLightModeCtrl`;
+	string $item = $items[$selected - 1];
+	int $val = `menuItem -query -data $item`;
+	if($attr != "")
+		evalEcho("setAttr " + $attr + " " + $val);
+
+	$oldParent = `setParent -query`;
+	setParent $parent;
+	setParent ..;
+	string $frame = `setParent -query`;
+	string $children[] = `layout -q -childArray $frame`;
+	string $linkFrame = $children[1];
+	
+	if(`layout -exists $linkFrame`)
+		layout -edit -manage ($val != 4) $linkFrame;
+
+	setParent $oldParent;
+}
+
+global proc rfrk5MrLightModeReplace(string $attr)
+{
+	int $mode = `getAttr $attr`;
+	
+	int $selIdx = 1;
+	string $items[] = `optionMenuGrp -query -itemListLong rfrkMrLightModeCtrl`;
+	for($i = 0; $i < size($items); ++$i)
+	{
+		int $data = `menuItem -query -data $items[$i]`;
+		if($mode == $data)
+		{
+			$selIdx = $i + 1;
+			break;
+		}
+	}
+
+	string $parent = `setParent -q`;
+	optionMenuGrp -edit -changeCommand ("rfrk5MrLightModeChanged " + $attr + " " + $parent) rfrkMrLightModeCtrl;
+	optionMenuGrp -edit -select $selIdx rfrkMrLightModeCtrl;
+
+	rfrk5MrLightModeChanged "" $parent;
+}
+
+global proc rfrk5MrLightModeCreate(string $attr)
+{
+	optionMenuGrp -label "Mode" rfrkMrLightModeCtrl;
+		menuItem -data 4 -label "Maya Linking";
+		menuItem -data 0 -label "Custom Linking";
+		menuItem -data 1 -label "Inclusive Linking";
+		menuItem -data 2 -label "Exclusive Linking";
+	
+	rfrk5MrLightModeReplace($attr);
+}
+
+global proc rfrk5CloudFileCreate(string $attrName)
+{
+	string $nodeName = rfrk5GetNodeName($attrName);
+
+	columnLayout -adjustableColumn true rfrk5CloudFileLayout;
+	string $browseCmd = "rfrk5BrowseForSeq \"none\"";
+	rfrk5FileCtrlCreate("", "Path", $browseCmd, ($nodeName + ".pathAndPrefix"));
+	setParent ..;
+
+	rfrk5CloudFileReplace($attrName);
+}
+
+global proc rfrk5CloudFileReplace(string $attrName)
+{
+	string $nodeName = rfrk5GetNodeName($attrName);
+
+	string $children[] = `columnLayout -q -childArray rfrk5CloudFileLayout`;
+
+	string $oldParent = `setParent -q`;
+	setParent "rfrk5CloudFileLayout";
+
+	$childIdx = 0;
+	string $browseCmd = "rfrk5BrowseForSeq \"none\"";
+	rfrk5FileCtrlReplace($children[$childIdx], $browseCmd, ($nodeName + ".pathAndPrefix"));
+	++$childIdx;
+
+	setParent $oldParent;
+}
+
+global proc rfrk5CloudColorChanged(string $attrName)
+{
+	rfrk5SyncPreviewEmitter(rfrk5GetNodeName($attrName));
+}
+
+proc int rfrk5CloudIsVDB(string $nodeName)
+{
+	string $fileName = `getAttr ($nodeName + ".pathAndPrefix")`;
+	string $buf[];
+	tokenize $fileName "." $buf;
+	if(size($buf) < 2)
+		return 0;
+
+	string $ext = tolower($buf[size($buf) - 1]);
+	return ($ext == "vdb");
+}
+
+global proc rfrk5CloudFieldTypeChanged(string $nodeName)
+{
+	int $fileType = `getAttr ($nodeName + ".type")`;
+	int $fieldType = `getAttr ($nodeName + ".fieldType")`;
+	int $disable = rfrk5CloudIsVDB($nodeName) || ($fieldType != 0);
+	editorTemplate -dimControl $nodeName "motionFactor" $disable;
+}
+
+global proc rfrk5CloudFileChanged(string $nodeName)
+{
+	$disable = rfrk5CloudIsVDB($nodeName);
+
+	editorTemplate -dimControl $nodeName "fieldType" $disable;
+	editorTemplate -dimControl $nodeName "cellSize" $disable;
+	editorTemplate -dimControl $nodeName "radius" $disable;
+	editorTemplate -dimControl $nodeName "radiusPP" $disable;
+
+	rfrk5CloudFieldTypeChanged($nodeName);
+}
+
+global proc AErfrk_cloud5Template(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Cloud" -collapse false;
+		editorTemplate -callCustom "rfrk5CloudFileCreate" "rfrk5CloudFileReplace" "pathAndPrefix";
+		editorTemplate -addControl "fieldType" "rfrk5CloudFieldTypeChanged";
+		editorTemplate -addControl "motionFactor";
+		editorTemplate -addControl "cellSize";
+		editorTemplate -addControl "radius";
+		editorTemplate -addControl "radiusPP";
+		editorTemplate -addControl "color" "rfrk5CloudColorChanged";
+		editorTemplate -addControl "densityScale";
+		editorTemplate -addControl "attenColor";
+		editorTemplate -addControl "attenuation";
+		editorTemplate -addControl "anisotropy";
+		editorTemplate -addControl "stepsize";
+		editorTemplate -addControl "frame";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Light Linking" -collapse 1;
+		editorTemplate -callCustom "rfrk5MrLightModeCreate" "rfrk5MrLightModeReplace" "mode";
+		editorTemplate -addControl "lights";
+	editorTemplate -endLayout;
+
+	editorTemplate -suppress "type";
+	
+	rfrk5AddRMSRollup($nodeName);	
+	rfrk5AddDisplayRollup($nodeName);
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

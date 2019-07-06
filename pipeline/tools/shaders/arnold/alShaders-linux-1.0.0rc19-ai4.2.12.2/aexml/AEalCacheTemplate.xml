@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalCache">
+		<label>alCache</label>
+		<description>Useful for optimizing complex networks where you know that multiple evaluations of a particular subnet are slowing your render down.</description>
+		<attribute name="input" type="maya.float3">
+			<label>input</label>
+			<description>The network you plug in here will be evaluated once and then have its result cached if it is reused in multiple outputs.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalCache">
+			<property name="input"/>
+		</view>
+</templates>

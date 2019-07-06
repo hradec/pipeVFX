@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -23,46 +23,86 @@ class chrome(baseApp):
         if os.popen('cat /proc/version | egrep "Debian|Ubuntu|ARCH"').readlines():
             pipe.version.set( chrome = 'beta' )
             self.debian = True
-   
+
     def bins(self):
-        return [('chrome', 'chrome')]    
-        
+        return [
+            ('chrome', 'chrome'),
+            ('tor', 'tor'),
+        ]
+
     def run(self, app):
-        ba = baseApp(self.className)
-        
-        pipe.libs.version.set(freetype = "don't use pipe freetype!")
-        
-        # fix if we have a dead singletonLock
-        import os
-        singletonLock = "%s/.config/google-chrome/SingletonLock" % os.environ["HOME"] 
-        if os.path.exists(singletonLock):
-            singletonLock_host = ''.join( os.popen("echo $(readlink %s | sed 's/.local/@/' | cut -d'@' -f1).local" % singletonLock).readlines()).strip()
-            if singletonLock_host:
-                hostname = ''.join( os.popen("hostname").readlines()).strip()
-                if singletonLock_host != hostname:
-    #                dead = os.popen(" ping -c 1 $(readlink %s | sed 's/.local/@/' | cut -d'@' -f1).local 2>&1 | grep unknown").readlines()
-    #                if dead:
-                        os.remove( singletonLock )
-            
-        # grab extra options for chrome from env var
-        extraOptions = " --extra-plugin-dir=%s/../.plugins/ " % self.path()
-        if os.environ.has_key('PIPE_PROXY_SERVER'):
-            extraOptions += '--proxy-server=%s  --proxy-bypass-list="*.local;127.0.0.1;localhost"' % os.environ['PIPE_PROXY_SERVER'] 
-            
-        
-        if self.osx:
-            ba.run( '"../Google Chrome.app/Contents/MacOS/Google Chrome" --enable-plugins --ui-enable-threaded-compositing --ui-disable-partial-swap --use-gl --canvas-msaa-sample-count=0 --disable-gpu-vsync --disable-gpu-watchdog --enable-gpu-rasterization --enable-prune-gpu-command-buffers  --enable-threaded-compositing --enable-nacl  --enable-map-image %s' % extraOptions)
-        else:
-            # to run without sandbox, we need the chrome-sandbox
-            # in /opt/google/chrome/chrome-sandbox, and it must be 
-            # owned by root, with chmod 4755
-            if os.path.exists('/opt/google/chrome/chrome-sandbox'):
-                if not hasattr( self, 'debian'):
-                    ba.run( 'chrome --enable-plugins --ui-enable-threaded-compositing --ui-disable-partial-swap --use-gl --canvas-msaa-sample-count=0 --disable-gpu-vsync --disable-gpu-watchdog --enable-gpu-rasterization --enable-prune-gpu-command-buffers  --enable-threaded-compositing --enable-nacl  --enable-map-image %s' % extraOptions)
-                else:
-                    ba.run( 'chrome --enable-plugins  %s' % extraOptions)                    
+        if 'chrome' in app:
+            ba = baseApp(self.className)
+
+            pipe.libs.version.set(freetype = "don't use pipe freetype!")
+
+            # fix if we have a dead singletonLock
+            import os
+            singletonLock = "%s/.config/google-chrome/SingletonLock" % os.environ["HOME"]
+            if os.path.exists(singletonLock):
+                singletonLock_host = ''.join( os.popen("echo $(readlink %s | sed 's/.local/@/' | cut -d'@' -f1).local" % singletonLock).readlines()).strip()
+                if singletonLock_host:
+                    hostname = ''.join( os.popen("hostname").readlines()).strip()
+                    if singletonLock_host != hostname:
+        #                dead = os.popen(" ping -c 1 $(readlink %s | sed 's/.local/@/' | cut -d'@' -f1).local 2>&1 | grep unknown").readlines()
+        #                if dead:
+                            os.remove( singletonLock )
+
+            # grab extra options for chrome from env var
+            extraOptions = " --extra-plugin-dir=%s/../.plugins/  --disk-cache-dir=/tmp/ --disk-cache-size=104857600" % self.path()
+            if os.environ.has_key('PIPE_PROXY_SERVER'):
+                extraOptions += ' --proxy-server=%s  --proxy-bypass-list="*.local;127.0.0.1;localhost"' % os.environ['PIPE_PROXY_SERVER']
+
+
+            if self.osx:
+                ba.run( '"../Google Chrome.app/Contents/MacOS/Google Chrome" --enable-plugins --ui-enable-threaded-compositing --ui-disable-partial-swap --use-gl --canvas-msaa-sample-count=0 --disable-gpu-vsync --disable-gpu-watchdog --enable-gpu-rasterization --enable-prune-gpu-command-buffers  --enable-threaded-compositing --enable-nacl  --enable-map-image %s' % extraOptions)
             else:
-                ba.run( 'chrome --no-sandbox  --enable-plugins %s'  % extraOptions )
-                                      
+                # to run without sandbox, we need the chrome-sandbox
+                # in /opt/google/chrome/chrome-sandbox, and it must be
+                # owned by root, with chmod 4755
+                if os.path.exists('/opt/google/chrome/chrome-sandbox'):
+                    if not hasattr( self, 'debian'):
+                        ba.run( 'chrome --enable-plugins --ui-enable-threaded-compositing --ui-disable-partial-swap --use-gl --canvas-msaa-sample-count=0 --disable-gpu-vsync --disable-gpu-watchdog --enable-gpu-rasterization --enable-prune-gpu-command-buffers  --enable-threaded-compositing --enable-nacl  --enable-map-image %s' % extraOptions)
+                    else:
+                        ba.run( 'chrome --enable-plugins  %s' % extraOptions)
+                else:
+                    ba.run( 'chrome --no-sandbox  --enable-plugins %s'  % extraOptions )
+
+        elif 'tor' in app:
+            import os
+            os.environ["HOME"] = os.environ["HOME"]+'/tor/'
+            if not os.path.exists(os.environ["HOME"]):
+                os.makedirs(os.environ["HOME"])
+            ba = baseApp(self.className)
+
+            pipe.libs.version.set(freetype = "don't use pipe freetype!")
+
+            # fix if we have a dead singletonLock
+            singletonLock = "%s/.config/google-chrome/SingletonLock" % os.environ["HOME"]
+            if os.path.exists(singletonLock):
+                singletonLock_host = ''.join( os.popen("echo $(readlink %s | sed 's/.local/@/' | cut -d'@' -f1).local" % singletonLock).readlines()).strip()
+                if singletonLock_host:
+                    hostname = ''.join( os.popen("hostname").readlines()).strip()
+                    if singletonLock_host != hostname:
+        #                dead = os.popen(" ping -c 1 $(readlink %s | sed 's/.local/@/' | cut -d'@' -f1).local 2>&1 | grep unknown").readlines()
+        #                if dead:
+                            os.remove( singletonLock )
+
+            # grab extra options for chrome from env var
+            extraOptions = " --extra-plugin-dir=%s/../.plugins/  --disk-cache-dir=/tmp/ --disk-cache-size=104857600" % self.path()
+            extraOptions += ' --proxy-server=%s  --proxy-bypass-list="*.local;127.0.0.1;localhost"' % '192.168.0.16:8888' #os.environ['PIPE_PROXY_SERVER']
 
 
+            if self.osx:
+                ba.run( '"../Google Chrome.app/Contents/MacOS/Google Chrome" --enable-plugins --ui-enable-threaded-compositing --ui-disable-partial-swap --use-gl --canvas-msaa-sample-count=0 --disable-gpu-vsync --disable-gpu-watchdog --enable-gpu-rasterization --enable-prune-gpu-command-buffers  --enable-threaded-compositing --enable-nacl  --enable-map-image %s' % extraOptions)
+            else:
+                # to run without sandbox, we need the chrome-sandbox
+                # in /opt/google/chrome/chrome-sandbox, and it must be
+                # owned by root, with chmod 4755
+                if os.path.exists('/opt/google/chrome/chrome-sandbox'):
+                    if not hasattr( self, 'debian'):
+                        ba.run( 'chrome --enable-plugins --ui-enable-threaded-compositing --ui-disable-partial-swap --use-gl --canvas-msaa-sample-count=0 --disable-gpu-vsync --disable-gpu-watchdog --enable-gpu-rasterization --enable-prune-gpu-command-buffers  --enable-threaded-compositing --enable-nacl  --enable-map-image %s' % extraOptions)
+                    else:
+                        ba.run( 'chrome --enable-plugins  %s' % extraOptions)
+                else:
+                    ba.run( 'chrome --no-sandbox  --enable-plugins %s'  % extraOptions )

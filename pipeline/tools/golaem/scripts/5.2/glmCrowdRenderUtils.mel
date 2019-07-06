@@ -1,0 +1,1673 @@
+/***************************************************************************
+*                                                                          *
+*  Copyright (C) Golaem S.A. - All Rights Reserved.                        *
+*                                                                          *
+***************************************************************************/
+
+//**************************************************************************
+/*! \file Crowd Render Utils
+	\brief Crowd Render Utils related functions
+*/ //***********************************************************************
+
+//************************************************************
+/*! @name Callbacks
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Pre render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmRenderCallback(string $renderStep)
+{
+	//print ("glmRenderCallback(\""+ $renderStep +"\");\n");
+
+	// parse all Render Proxy nodes
+	string $renderProxies[] = getObjectsOfType("CrowdRenderProxy");
+	for ($proxy in $renderProxies)
+	{
+		if (getAttr($proxy+".enable") == 0 || isNodeVisible($proxy) == 0) continue;
+
+		string $currentRenderer = `getAttr "defaultRenderGlobals.currentRenderer"`;
+		string $callBack = getRenderCallbackFunction($renderStep, $currentRenderer);
+		if ($callBack == "" || `exists $callBack` == 0) continue;
+
+		eval ($callBack + "(\"" + $proxy + "\")");
+	}
+}
+
+//------------------------------------------------------------
+//! Return the name of the render callback function of a given renderer ("" if it is not supported)
+/*! \param
+*/ //---------------------------------------------------------
+global proc string getRenderCallbackFunction(string $renderStep, string $renderer)
+{
+    string $proxyFunction="";
+    if ($renderer == "mentalRay") $proxyFunction = ("glm"+ $renderStep +"CallbackMentalRay");
+    else if ($renderer == "_3delight") $proxyFunction = ("glm"+ $renderStep +"Callback3Delight");
+    else if ($renderer == "arnold") $proxyFunction = ("glm"+ $renderStep +"CallbackArnold");
+    else if ($renderer == "vray") $proxyFunction = ("glm"+ $renderStep +"CallbackVRay");
+    else if ($renderer == "renderMan" || $renderer == "renderManRIS") $proxyFunction = ("glm"+ $renderStep +"CallbackRenderman");
+    return $proxyFunction;
+}
+//@}
+
+//************************************************************
+/*! @name Arnold Callbacks
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Arnold pre render frame callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPreRenderFrameCallbackArnold(string $proxyName)
+{
+	print "glmPreRenderFrameCallbackArnold();\n";
+
+    // set the procedural search path
+    string $glmDsoPath = "[ARNOLD_PROCEDURAL_PATH]";
+    string $dsoSearchPath = getAttr("defaultArnoldRenderOptions.procedural_searchpath");
+    if (searchInString($glmDsoPath, $dsoSearchPath) == 0)
+    {
+        setAttr -type "string" defaultArnoldRenderOptions.procedural_searchpath ($dsoSearchPath + ":" + $glmDsoPath);
+    }
+
+    string $assContent = createAssFromProxy($proxyName);
+
+    // Create Standin and push in User Options
+    string $selection[] = getSelectedObjects();
+    python("from mtoa.core import createStandIn");
+    python("node=createStandIn()");
+    string $standinNode = python("node.name()");
+    string $trStandinNode = getTransform($standinNode);
+    parent -relative $trStandinNode `getTransform($proxyName)`; 
+    setAttr ($standinNode+".deferStandinLoad") 0;  
+	setAttr -type "string" ($standinNode+".aiUserOptions") $assContent;
+    setSelectedObjects($selection);
+
+    // Connect Render Stats
+    glmMapNode($proxyName, "castsShadows", ($standinNode+".castsShadows"));
+    glmMapNode($proxyName, "receiveShadows", ($standinNode+".receiveShadows"));
+    glmMapNode($proxyName, "primaryVisibility", ($standinNode+".primaryVisibility"));
+    glmMapNode($proxyName, "visibleInReflections", ($standinNode+".visibleInReflections"));
+    glmMapNode($proxyName, "visibleInRefractions", ($standinNode+".visibleInRefractions"));
+    glmMapNode($proxyName, "selfShadows", ($standinNode+".aiSelfShadows"));
+    glmMapNode($proxyName, "opaque", ($standinNode+".aiOpaque"));
+    glmMapNode($proxyName, "visibleInDiffuse", ($standinNode+".aiVisibleInDiffuse"));
+    glmMapNode($proxyName, "visibleInGlossy", ($standinNode+".aiVisibleInGlossy"));
+    glmMapNode($proxyName, "matte", ($standinNode+".aiMatte"));
+    setAttr ($standinNode+".overrideCastsShadows") 1;
+    setAttr ($standinNode+".overrideReceiveShadows") 1;
+    setAttr ($standinNode+".overridePrimaryVisibility") 1;
+    setAttr ($standinNode+".overrideVisibleInReflections") 1;
+    setAttr ($standinNode+".overrideVisibleInRefractions") 1;
+    setAttr ($standinNode+".overrideSelfShadows") 1;
+    setAttr ($standinNode+".overrideOpaque") 1;
+    setAttr ($standinNode+".overrideVisibleInDiffuse") 1;
+    setAttr ($standinNode+".overrideVisibleInGlossy") 1;
+    setAttr ($standinNode+".overrideMatte") 1;
+
+    rename $trStandinNode ($proxyName + "ArnoldStandin");
+
+    // Hide crowd particles
+    string $crowdFields[] = getObjectsOfType("CrowdField");
+    for ($crowdField in $crowdFields)
+    {
+        string $particles[] = glmGetMapNodes($crowdField+".inputPPData");
+        for ($particle in $particles)
+        {
+            if (attributeExists("aiRadiusMultiplier", $particle))
+                setAttr ($particle + ".aiRadiusMultiplier") 0;
+        }
+    }
+}
+
+//------------------------------------------------------------
+//! Arnold post render frame callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPostRenderFrameCallbackArnold(string $proxyName)
+{    
+    print "glmPostRenderFrameCallbackArnold();\n";
+
+    string $archiveNodes[] = getShapesOfType(getTransform($proxyName), "aiStandIn" );
+    for ($node in $archiveNodes) { delete `getTransform($node)`; }
+
+    // remove procedural search path
+    string $glmDsoPath = "[ARNOLD_PROCEDURAL_PATH]";
+    string $dsoSearchPath = getAttr("defaultArnoldRenderOptions.procedural_searchpath");
+    $dsoSearchPath = substituteAllString($dsoSearchPath, (":" + $glmDsoPath), "");
+    setAttr -type "string" defaultArnoldRenderOptions.procedural_searchpath ($dsoSearchPath);
+}
+//@}
+
+//************************************************************
+/*! @name VRay Callbacks
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! VRay pre render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPreRenderCallbackVRay(string $proxyName)
+{
+    print "glmPreRenderLayerCallbackVRay();\n";
+
+    string $cacheName = getAttr ($proxyName+".cacheName");
+    string $tempDir = getenv(string(getAttr($proxyName+".tempFileDir")));
+    string $vrSceneContent = createVRSceneFromProxy($proxyName, 0);
+
+    // write vrscene file
+    string $filePath = (glmGetExportedFilePrefix($tempDir, $cacheName, $proxyName) + "vrscene");
+    $fileId = `fopen $filePath "w"`;
+    fprint $fileId ($vrSceneContent);
+    fclose $fileId ;
+
+    string $pythonCallback = "from vray.utils import *\n";
+    if ($cacheName != "" && $filePath != "")
+    {
+        $pythonCallback += "appendSceneContent('"+ $filePath +"')\n";
+    }
+    
+    // fill the node field and the post-translate python
+    vrayCreateVRaySettingsNode();
+    string $prePythonStr = getAttr("vraySettings.postTranslatePython");
+    setAttr -type "string" vraySettings.postTranslatePython ($prePythonStr + "\n" + $pythonCallback);
+}
+
+//------------------------------------------------------------
+//! VRay post render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPostRenderCallbackVRay(string $proxyName)
+{
+    print "glmPostRenderLayerCallbackVRay();\n";
+
+    setAttr -type "string" vraySettings.postTranslatePython "";
+}
+//@}
+
+//************************************************************
+/*! @name Mental Ray Callbacks
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Mental Ray pre render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPreRenderCallbackMentalRay(string $proxyName)
+{
+    print "glmPreRenderCallbackMentalRay();\n";
+
+    // Connect Geo Shader to proxy transform
+    string $trProxyName = getTransform($proxyName);
+    string $geoShader = `createNode -skipSelect -n crowdProxyMR CrowdProcMentalRay`; 
+    setAttr ($trProxyName+".miExportGeoShader") 1;
+    glmMapNode($geoShader, "message", ($trProxyName+".miGeoShader"));
+
+    // Connect all proxy attributes to the GeoShader
+    glmMapNode($proxyName, "frame", ($geoShader+".frame"));
+    glmMapNode($proxyName, "crowdFields", ($geoShader+".crowdFields"));
+    glmMapNode($proxyName, "cacheName", ($geoShader+".cacheName"));
+    glmMapNode($proxyName, "cacheFileDir", ($geoShader+".cacheFileDir"));
+    glmMapNode($proxyName, "characterFiles", ($geoShader+".characterFiles"));
+
+    glmMapNode($proxyName, "motionBlur", ($geoShader+".mBlurEnable"));
+    glmMapNode($proxyName, "motionBlurStart", ($geoShader+".mBlurStart"));
+    glmMapNode($proxyName, "motionBlurWindowSize", ($geoShader+".mBlurWindowSize"));
+    glmMapNode($proxyName, "motionBlurSamples", ($geoShader+".mBlurSamples"));
+
+    glmMapNode($proxyName, "primaryVisibility", ($geoShader+".primaryVisibility"));
+    glmMapNode($proxyName, "castsShadows", ($geoShader+".castsShadows"));
+    glmMapNode($proxyName, "receiveShadows", ($geoShader+".receiveShadows"));
+    glmMapNode($proxyName, "visibleInReflections", ($geoShader+".visibleInReflections"));
+    glmMapNode($proxyName, "visibleInRefractions", ($geoShader+".visibleInRefractions"));
+
+    glmMapNode($proxyName, "enableFrustumCulling", ($geoShader+".enableFrustumCulling"));
+    glmMapNode($proxyName, "frustumMargin", ($geoShader+".frustumMargin"));
+    glmMapNode($proxyName, "cameraMargin", ($geoShader+".cameraMargin"));
+
+    glmMapNode($proxyName, "objectIDBase", ($geoShader+".objectIDBase"));
+    glmMapNode($proxyName, "objectIDMode", ($geoShader+".objectIDMode"));
+    glmMapNode($proxyName, "renderEntityPercent", ($geoShader+".renderPercent"));
+	glmMapNode($proxyName, "instancingEnabled", ($geoShader+".instancingEnabled"));
+    glmMapNode($proxyName, "dirmap", ($geoShader+".dirmap"));
+    glmMapNode($proxyName, "logLevel", ($geoShader+".logLevel"));
+}
+
+//------------------------------------------------------------
+//! Mental Ray post render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPostRenderCallbackMentalRay(string $proxyName)
+{
+    print "glmPostRenderCallbackMentalRay();\n";
+
+     // Delete Geo Shader
+    string $trProxyName = getTransform($proxyName);
+    string $geoShader = glmGetMapNode($trProxyName+".miGeoShader");
+    delete $geoShader;
+    setAttr ($trProxyName+".miExportGeoShader") 0;
+}
+//@}
+
+//************************************************************
+/*! @name Renderman Callbacks
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Renderman pre render frame callback
+/*! \param
+*/ //---------------------------------------------------------
+global float $glmRenderProxyFrameExport_frame=-999999;
+global proc glmPreRenderFrameCallbackRenderman(string $proxyName)
+{
+    print "glmPreRenderFrameCallbackRenderman();!!!\n";
+
+    // add the riOptions function to the riOption attr (to include procedurals, shaders, textures dir)
+    /*
+    string $rendermanGlobals = rmanGetGlobals();
+    string $riOptionsAttr = `rmanGetAttrName "defaultRiOptionsScript"`;
+    string $riOptionsVal = getAttr($rendermanGlobals+"."+$riOptionsAttr);
+    if (searchInString("crowdRenderProxyRiOptions;", $riOptionsVal) == 0)
+        setAttr -type "string" ($rendermanGlobals+"."+$riOptionsAttr) ($riOptionsVal + "crowdRenderProxyRiOptions; ");
+    */
+
+    // create rib
+    global float $glmRenderProxyFrameExport_frame;
+    float $frame = getAttr ($proxyName+".frame");
+//    string $cacheName = getAttr ($proxyName+".cacheName");
+//    string $tempDir = getenv(string(getAttr($proxyName+".tempFileDir")));
+//    string $ribContent = createRibFromProxy($proxyName, "glmCrowdRMSPlugin");
+
+//    // write rib file
+//    string $filePath = (glmGetExportedFilePrefix($tempDir, $cacheName, $proxyName) + $frame + ".rib");
+//    $fileId = `fopen $filePath "w"`;
+//    fprint $fileId ($ribContent);
+//    fclose $fileId ;
+
+//    // set archive path
+//    string $preShapeAttr = rmanGetAttrName("preShapeScript");
+//    if (!`attributeExists $preShapeAttr $proxyName`)
+//        rmanAddAttr $proxyName $preShapeAttr "";
+//    setAttr -type "string" ($proxyName + "." + $preShapeAttr) ("RiReadArchive \"" + $filePath + "\";");
+    
+    $glmRenderProxyFrameExport_frame=$frame;
+}
+global proc glmPreRenderCallbackRenderman(string $proxyName)
+{
+    print "glmPreRenderCallbackRenderman();!!!\n";
+    
+    glmPreRenderFrameCallbackRenderman($proxyName);
+    string $preShapeAttr = rmanGetAttrName("preShapeScript");
+    //$value=`getAttr ($proxyName + "." + $preShapeAttr)`;
+    if (!`attributeExists $preShapeAttr $proxyName`)
+        rmanAddAttr $proxyName $preShapeAttr "";
+    setAttr -type "string" ($proxyName + "." + $preShapeAttr) ("glmRenderProxyFrameExport \"" + $proxyName + "\";");
+}
+global proc glmRenderProxyFrameExport(string $proxyName)
+{
+    global float $glmRenderProxyFrameExport_frame;
+    print ("glmRenderProxyFrameExport("+$glmRenderProxyFrameExport_frame +");!!!\n");
+    // create rib
+//    float $frame = getAttr ($proxyName+".frame");
+    float $frame = $glmRenderProxyFrameExport_frame;
+    string $cacheName = getAttr ($proxyName+".cacheName");
+    string $tempDir = getenv(string(getAttr($proxyName+".tempFileDir")));
+    string $ribContent = createRibFromProxy($proxyName, "glmCrowdRMSPlugin");
+
+    // write rib file
+    string $filePath = (glmGetExportedFilePrefix($tempDir, $cacheName, $proxyName) + $frame + ".rib");
+    $fileId = `fopen $filePath "w"`;
+    fprint $fileId ($ribContent);
+    fclose $fileId ;
+
+    RiReadArchive $filePath ;
+}
+
+
+//------------------------------------------------------------
+//! Renderman post render frame callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPostRenderFrameCallbackRenderman(string $proxyName)
+{
+    print "glmPostRenderFrameCallbackRenderman();\n";
+
+    // clear riOptions
+    /*
+    string $rendermanGlobals = rmanGetGlobals();
+    string $riOptionsAttr = `rmanGetAttrName "defaultRiOptionsScript"`;
+    string $riOptionsVal = getAttr($rendermanGlobals+"."+$riOptionsAttr);
+    $riOptionsVal = substituteAllString($riOptionsVal, "crowdRenderProxyRiOptions;", "");
+    setAttr -type "string" ($rendermanGlobals+"."+$riOptionsAttr) $riOptionsVal; 
+    */
+
+    // clear archive path
+    string $preShapeAttr = rmanGetAttrName("preShapeScript");
+    setAttr -type "string" ($proxyName + "." + $preShapeAttr) "";
+}
+//@}
+
+//************************************************************
+/*! @name 3Delight Callbacks
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Renderman pre render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPreRenderCallback3Delight(string $proxyName)
+{
+    print "glmPreRenderCallback3Delight();\n";
+
+    // Create Rib Archive node and push in the Rib attr
+    string $archiveNode = `createNode -skipSelect -name ($proxyName + "RibArchive#") delightRibArchive`;
+    DRA_init($archiveNode);
+    parent -relative `getTransform($archiveNode)` `getTransform($proxyName)`; 
+    setAttr ($archiveNode+".archiveReadMode") 1;
+
+    // Connect Render Stats
+    glmMapNode($proxyName, "castsShadows", ($archiveNode+".castsShadows"));
+    glmMapNode($proxyName, "receiveShadows", ($archiveNode+".receiveShadows"));
+    glmMapNode($proxyName, "primaryVisibility", ($archiveNode+".primaryVisibility"));
+    glmMapNode($proxyName, "visibleInReflections", ($archiveNode+".visibleInReflections"));
+    glmMapNode($proxyName, "visibleInRefractions", ($archiveNode+".visibleInRefractions"));
+
+    // fill the 3delight preRender pass
+    string $delightPass;
+    string $delightRenderGlobals[] = `ls -type "delightRenderGlobals"`;
+    if (size($delightRenderGlobals) > 0) { $delightPass = glmGetMapNode($delightRenderGlobals[0]+".renderPass"); }
+    string $preRenderFrameStr = `getAttr ($delightPass+".preFrameMEL")`;
+    if (searchInString("glmRenderCallback(\"PreRenderFrame\");", $preRenderFrameStr) == 0)
+        setAttr -type "string" ($delightPass+".preFrameMEL") ($preRenderFrameStr + "glmRenderCallback(\"PreRenderFrame\");");
+}
+
+//------------------------------------------------------------
+//! Renderman pre render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPostRenderCallback3Delight(string $proxyName)
+{
+    print "glmPostRenderCallback3Delight();\n";
+
+    // remove 3Delight callback
+    string $delightPass;
+    string $delightRenderGlobals[] = `ls -type "delightRenderGlobals"`;
+    if (size($delightRenderGlobals) > 0) { $delightPass = glmGetMapNode($delightRenderGlobals[0]+".renderPass"); }
+    string $preRenderFrameStr = `getAttr ($delightPass+".preFrameMEL")`;
+    $preRenderFrameStr = substituteAllString($preRenderFrameStr, "glmRenderCallback(\"PreRenderFrame\");", "");
+    setAttr -type "string" ($delightPass+".preFrameMEL") ($preRenderFrameStr);
+
+    // delete archive
+    string $archiveNodes[] = getShapesOfType(getTransform($proxyName), "delightRibArchive" );
+    for ($node in $archiveNodes) { delete `getTransform($node)`; }
+}
+
+//------------------------------------------------------------
+//! Renderman pre render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPreRenderFrameCallback3Delight(string $proxyName)
+{
+    print "glmPreRenderFrameCallback3Delight();\n";
+
+    // create rib
+    float $frame = `delightRenderState -qf`;
+    print ("Frame is " + $frame);
+    string $cacheName = getAttr ($proxyName+".cacheName");
+    string $tempDir = getenv(string(getAttr($proxyName+".tempFileDir")));
+    string $ribContent = createRibFromProxy($proxyName, "glmCrowd3DelightPlugin");
+
+    // write rib file
+    string $filePath = (glmGetExportedFilePrefix($tempDir, $cacheName, $proxyName) + $frame + ".rib");
+    $fileId = `fopen $filePath "w"`;
+    fprint $fileId ($ribContent);
+    fclose $fileId;
+
+    // set file to proxy node
+    string $archiveNodes[] = getShapesOfType(getTransform($proxyName), "delightRibArchive" );
+    if (size($archiveNodes)) { setAttr -type "string" ($archiveNodes[0]+".ribFilename") $filePath; }  
+}
+
+//------------------------------------------------------------
+//! Renderman pre render callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmPostRenderFrameCallback3Delight(string $proxyName)
+{}
+//@}
+
+//************************************************************
+/*! @name Arnold
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! createAssFromProxy
+/*!
+*/ //---------------------------------------------------------
+global proc string createAssFromProxy(string $nodeName)
+{
+	// Dso name
+	string $dsoName = "glmCrowdArnoldPlugin.so";
+	if( `about -win` && !`glmAutoTestCommand -d` ) $dsoName = "glmCrowdArnoldPlugin.dll";
+	else if ( `about -win` && `glmAutoTestCommand -d`) $dsoName = "glmCrowdArnoldPlugin_d.dll";
+
+	// Fetch attributes
+    string $renderMesh = glmGetMapNode($nodeName+".inRenderMesh");
+    float $frame = `getAttr ($nodeName + ".frame") `;
+	string $crowdFields = `getAttr ($nodeName + ".crowdFields") `;
+	string $cacheName = `getAttr ($nodeName + ".cacheName") `;
+    string $cacheFileDir = glmGetFilePath($nodeName + ".cacheFileDir");
+    string $characterFiles = glmGetFilePath($nodeName + ".characterFiles");
+
+	int $blurEnabled = `getAttr ($nodeName + ".motionBlur") `;
+    float $blurStart = `getAttr ($nodeName + ".motionBlurStart") `;
+    float $blurBy = `getAttr ($nodeName + ".motionBlurWindowSize") `;
+    int $blurSamples = `getAttr ($nodeName + ".motionBlurSamples") `;
+
+    int $objectIDBase =  glmGetAttr($nodeName, "objectIDBase", 0);
+    int $objectIDMode =  glmGetAttr($nodeName, "objectIDMode", 0);
+    float $renderPercent = glmGetAttr($nodeName, "renderEntityPercent", 100.);
+	float $instancingEnabled = glmGetAttr($nodeName, "instancingEnabled", 1);
+
+    int $enableFr = `getAttr ($nodeName + ".enableFrustumCulling") `;
+    float $frMargin = `getAttr ($nodeName + ".frustumMargin") `;
+    float  $camMargin = `getAttr ($nodeName + ".cameraMargin") `;
+    int $logLevel = glmGetAttr($nodeName, "logLevel", 2);
+    string $dirmap = glmGetAttrStr($nodeName, "dirmap", ""); 
+    global string $gCrowdDefaultMaterialName;
+    string $defaultMaterial = $gCrowdDefaultMaterialName;
+    if ($renderMesh != "") { $defaultMaterial = getSurfaceShader($renderMesh); }
+
+	int $type = `getAttr ($nodeName + ".subdivType") `;
+    int $adapt = `getAttr ($nodeName + ".subdivAdaptiveMetric") `;
+    int $uvSmooth = `getAttr ($nodeName + ".subdivUVSmoothing") `;
+    int $iteration = `getAttr ($nodeName + ".subdivIterations") `;
+    float $pixerror = `getAttr ($nodeName + ".subdivPixelError") `;
+    string $subdivParams = $type + " " + $adapt + " " + $uvSmooth + " " + $iteration + " " + $pixerror;
+
+	// Build ass
+    string $assContent = "";
+	$assContent += "dso \"" + $dsoName + "\" ";
+
+	// time
+	$assContent += "declare frame constant FLOAT \n";
+    $assContent += "frame " + $frame + "\n";
+
+	// sim
+	$assContent += "declare crowdFields constant STRING \n";
+    $assContent += "crowdFields \"" + $crowdFields + "\" \n";
+    $assContent += "declare cacheName constant STRING \n";
+    $assContent += "cacheName \"" + $cacheName + "\" \n";
+    $assContent += "declare cacheFileDir constant STRING \n";
+    $assContent += "cacheFileDir \"" + $cacheFileDir + "\" \n";
+    $assContent += "declare characterFiles constant STRING \n";
+    $assContent += "characterFiles \"" + $characterFiles + "\" \n";
+
+	// blur
+    $assContent += "declare mBlurEnable constant INT \n";
+    $assContent += "mBlurEnable "+ $blurEnabled +" \n";
+    $assContent += "declare mBlurStart constant FLOAT \n";
+    $assContent += "mBlurStart "+$blurStart+" \n";
+    $assContent += "declare mBlurWindowSize constant FLOAT \n";
+    $assContent += "mBlurWindowSize "+$blurBy+" \n";
+    $assContent += "declare mBlurSamples constant INT \n";
+    $assContent += "mBlurSamples "+$blurSamples+" \n";
+
+	// subdiv params
+    $assContent += "declare subdivParams constant STRING \n";
+    $assContent += "subdivParams \""+$subdivParams+"\" \n";
+
+	// id
+	$assContent += "declare objectIDBase constant INT \n";
+    $assContent += "objectIDBase "+ $objectIDBase +" \n";
+	$assContent += "declare objectIDMode constant INT \n";
+    $assContent += "objectIDMode "+ $objectIDMode +" \n";
+
+    // percent
+    $assContent += "declare renderPercent constant FLOAT \n";
+    $assContent += "renderPercent "+ $renderPercent +" \n";
+	
+    // instancing enabled
+    $assContent += "declare instancingEnabled constant INT \n";
+    $assContent += "instancingEnabled "+ $instancingEnabled +" \n";	
+
+	// Frustum culling
+    $assContent += "declare enableFrustumCulling constant INT \n";
+    $assContent += "enableFrustumCulling " + $enableFr + " \n";
+	$assContent += "declare frustumMargin constant FLOAT \n";
+    $assContent += "frustumMargin " +$frMargin + " \n";
+    $assContent += "declare cameraMargin constant FLOAT \n";
+    $assContent += "cameraMargin " + $camMargin + " \n";
+
+	// Misc
+    $assContent += "declare logLevel constant INT \n";
+    $assContent += "logLevel " + $logLevel + " \n";
+	$assContent += "declare defaultMaterial constant STRING \n";
+    $assContent += "defaultMaterial \"" + $defaultMaterial + "\" \n";
+    $assContent += "declare dirmap constant STRING \n";
+    $assContent += "dirmap \"" + $dirmap + "\" \n";
+
+    return $assContent;
+}
+//@}
+
+//************************************************************
+/*! @name V-Ray
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! createVRSceneFromProxy
+/*!
+*/ //---------------------------------------------------------
+global proc string createVRSceneFromProxy(string $nodeName, int $dccPackage)
+{
+	// get parameters
+	string $nodeTransfrom = getTransform($nodeName);
+	float $trMatrix[] = `xform -q -matrix $nodeTransfrom`;
+
+	int $frame = getAttr ($nodeName+".frame");
+	int $frameOffset = $frame - `currentTime -q`;
+	string $cacheName = getAttr ($nodeName+".cacheName");
+	string $vrayNodeName = glmConvertToValidName($cacheName + "_" + $nodeName);
+	string $crowdFields[] = stringToStringArray(getAttr ($nodeName+".crowdFields"), ";");
+	string $cacheFileDirs[] = stringToStringArray(glmGetFilePath($nodeName+".cacheFileDir"), ";");
+	string $characterFiles = glmGetFilePath($nodeName+".characterFiles");
+
+	// moblur
+	int $mBlurEnable = getAttr ($nodeName+".motionBlur");
+
+	// subdiv
+	int $subdivEnable = getAttr ($nodeName+".subdivEnable");
+	int $subdivUVs = getAttr ($nodeName+".subdivUVs");
+	int $classicCatClark = getAttr ($nodeName+".classicCatClark");
+	int $preserveMapBorders = getAttr ($nodeName+".preserveMapBorders");
+	int $staticSubdiv = getAttr ($nodeName+".staticSubdiv");
+	int $overrideGlobalSubQual = getAttr ($nodeName+".overrideGlobalSubQual");
+	int $viewDep = getAttr ($nodeName+".viewDep");
+	float $edgeLength = getAttr ($nodeName+".edgeLength");
+	int $maxSubdivs = getAttr ($nodeName+".maxSubdivs");
+
+	// render stats
+	int $castsShadows = getAttr ($nodeName+".castsShadows");
+	int $primaryVisibility = getAttr ($nodeName+".primaryVisibility");
+	int $visibleInReflections = getAttr ($nodeName+".visibleInReflections");
+	int $visibleInRefractions = getAttr ($nodeName+".visibleInRefractions");
+
+	// frustum
+	int $enableFrustumCulling = getAttr ($nodeName+".enableFrustumCulling");
+	float $frustumMargin = getAttr ($nodeName+".frustumMargin");
+	float $cameraMargin = getAttr ($nodeName+".cameraMargin");
+
+	//	misc
+	global string $gCrowdDefaultMaterialName;
+	string $renderMesh = glmGetMapNode($nodeName+".inRenderMesh");
+	string $defaultMaterial = $gCrowdDefaultMaterialName;
+	if ($renderMesh != "") { $defaultMaterial = getSurfaceShader($renderMesh); }
+	int $objectIDBase = getAttr ($nodeName+".objectIDBase");
+	int $objectIDMode = getAttr ($nodeName+".objectIDMode");
+	float $renderPercent = getAttr ($nodeName+".renderEntityPercent");
+	int $instancingEnabled = getAttr ($nodeName+".instancingEnabled");
+	string $dirmap = getAttr ($nodeName+".dirmap");
+	int $logLevel = getAttr ($nodeName+".logLevel");
+
+	// vray specific
+	string $inLights[] = glmGetMapNodes($nodeName+".inLights");
+	string $inLightShapes[];
+	for ($inLight in $inLights)
+	{
+		string $lightShapes[] = getShapes($inLight);
+		$inLightShapes[size($inLightShapes)] = $lightShapes[0];
+	}
+
+
+	string $vrSceneContent = "";
+	string $cfNames = "";
+	for ($iCf=0; $iCf<size($crowdFields); $iCf++)
+	{
+		// get output dir and field name
+		string $crowdField = $crowdFields[$iCf];
+		if($iCf > 0)
+		{
+			$cfNames += ";";
+		}
+		$cfNames += $crowdField;
+	}
+
+	string $cacheFileDir = $cacheFileDirs[0];
+	if (size($crowdFields) == size($cacheFileDirs))
+	{
+		for ($iCf=1; $iCf<size($crowdFields); $iCf++)
+		{
+			$cacheFileDir += ";" + $cacheFileDirs[$iCf];
+		}
+	}
+
+	// build the vrscene file
+	$vrSceneContent += "\n";
+	$vrSceneContent += "Node " + $vrayNodeName + "@node\n{\n"; // vray node
+	$vrSceneContent += "\ttransform=Transform(Matrix(Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)), Vector(0, 0, 0));\n";
+	$vrSceneContent += "\tgeometry=" + $vrayNodeName + "@mesh1;\n";
+	$vrSceneContent += "\tvisible=1;\n}\n";
+	$vrSceneContent += "\n";
+
+	$vrSceneContent += "GolaemCrowd " + $vrayNodeName + "@mesh1\n{\n"; // procedural geo shader
+	$vrSceneContent += "\tglmTransform=Transform(Matrix(Vector("+$trMatrix[0]+", "+$trMatrix[1]+", "+$trMatrix[2]+"), Vector("+$trMatrix[4]+", "+$trMatrix[5]+", "+$trMatrix[6]+"), Vector("+$trMatrix[8]+", "+$trMatrix[9]+", "+$trMatrix[10]+")), Vector("+$trMatrix[12]+", "+$trMatrix[13]+", "+$trMatrix[14]+"));\n";
+	$vrSceneContent += "\tglmFrameOffset="+ $frameOffset +";\n";
+	$vrSceneContent += "\tglmCrowdField=\""+ $cfNames +"\";\n";
+	$vrSceneContent += "\tglmCacheName=\""+ $cacheName +"\";\n";
+	$vrSceneContent += "\tglmCacheFileDir=\""+ $cacheFileDir +"\";\n";
+	$vrSceneContent += "\tglmCharacterFiles=\""+ $characterFiles +"\";\n";
+
+	// mblur
+	$vrSceneContent += "\tglmMBlurEnabled="+ $mBlurEnable +";\n";
+
+	// subdiv
+	$vrSceneContent += "\tglmSubdivEnable="+ $subdivEnable +";\n";
+	$vrSceneContent += "\tglmSubdivUVs="+ $subdivUVs +";\n";
+	$vrSceneContent += "\tglmClassicCatClark="+ $classicCatClark +";\n";
+	$vrSceneContent += "\tglmPreserveMapBorders="+ $preserveMapBorders +";\n";
+	$vrSceneContent += "\tglmStaticSubdiv="+ $staticSubdiv +";\n";
+	$vrSceneContent += "\tglmOverrideGlobalSubQual="+ $overrideGlobalSubQual +";\n";
+	$vrSceneContent += "\tglmViewDep="+ $viewDep +";\n";
+	$vrSceneContent += "\tglmEdgeLength="+ $edgeLength +";\n";
+	$vrSceneContent += "\tglmMaxSubdivs="+ $maxSubdivs +";\n";
+
+	// renderstats
+	$vrSceneContent += "\tglmCameraVisibility="+ $primaryVisibility +";\n";
+	$vrSceneContent += "\tglmReflectionsVisibility="+ $visibleInReflections +";\n";
+	$vrSceneContent += "\tglmRefractionsVisibility="+ $visibleInRefractions +";\n";
+	$vrSceneContent += "\tglmGIVisibility=1;\n";
+	$vrSceneContent += "\tglmShadowsVisibility="+ $castsShadows+";\n";
+
+	// frustum
+	$vrSceneContent += "\tglmEnableFrustumCulling="+ $enableFrustumCulling +";\n";
+	$vrSceneContent += "\tglmFrustumMargin="+ $frustumMargin +";\n";
+	$vrSceneContent += "\tglmCameraMargin="+ $cameraMargin +";\n";
+
+	// extra
+	$vrSceneContent += "\tglmDefaultMaterial=\""+ $defaultMaterial +"\";\n";
+	$vrSceneContent += "\tglmObjectIDBase="+ $objectIDBase +";\n";
+	$vrSceneContent += "\tglmObjectIDMode="+ $objectIDMode +";\n";
+	$vrSceneContent += "\tglmRenderPercent="+ $renderPercent +";\n";
+	$vrSceneContent += "\glmInstancingEnabled="+ $instancingEnabled +";\n";
+	$vrSceneContent += "\tglmLights=ListString(\n";
+	if (size ($inLightShapes)) $vrSceneContent += "\t\t\""+ stringArrayToString($inLightShapes, ",") +"\"\n";
+	$vrSceneContent += "\t);\n";
+	$vrSceneContent += "\tglmDirmap=\""+ $dirmap +"\";\n";
+	$vrSceneContent += "\tglmLogLevel="+ $logLevel +";\n";
+	$vrSceneContent += "\tglmDccPackage="+ $dccPackage +";\n";
+
+	$vrSceneContent += "}\n\n";
+
+	return $vrSceneContent;
+}
+
+//------------------------------------------------------------
+//! createShadersVRScene
+/*!
+*/ //---------------------------------------------------------
+global proc string createShadersVRScene(string $tempFilesExportDir, string $tempFilesExportName, int $deleteTempFiles)
+{
+	// get the vraySettings node
+	vrayCreateVRaySettingsNode();
+
+	////////////////////////////////////
+	// save the current node values
+	////////////////////////////////////
+	int $renderOn = getAttr("vraySettings.vrscene_render_on");
+	int $vrSceneOn = getAttr("vraySettings.vrscene_on");
+	string $vrSceneFile = getAttr("vraySettings.vrscene_filename");
+	int $vrSceneFiles[];
+	$vrSceneFiles[0] = getAttr("vraySettings.misc_separateFiles");
+	$vrSceneFiles[1] = getAttr("vraySettings.misc_exportLights");
+	$vrSceneFiles[2] = getAttr("vraySettings.misc_exportNodes");
+	$vrSceneFiles[3] = getAttr("vraySettings.misc_exportGeometry");
+	$vrSceneFiles[4] = getAttr("vraySettings.misc_exportMaterials");
+	$vrSceneFiles[5] = getAttr("vraySettings.misc_exportTextures");
+	$vrSceneFiles[6] = getAttr("vraySettings.misc_exportBitmaps");
+	int $eachFrame = getAttr("vraySettings.misc_eachFrameInFile");
+	string $prefix = getAttr("vraySettings.misc_pluginsPrefix");
+	int $vbfOn = getAttr("vraySettings.vfbOn");
+	int $hideRV = getAttr("vraySettings.hideRVOn");
+
+
+	////////////////////////////////////
+	// do it
+	////////////////////////////////////
+	setAttr "vraySettings.vrscene_render_on" 0;
+	setAttr "vraySettings.vrscene_on" 1;
+	setAttr -type "string" "vraySettings.vrscene_filename" ($tempFilesExportDir + "/" + $tempFilesExportName + ".vrscene");
+	setAttr "vraySettings.misc_separateFiles" 1;
+	setAttr "vraySettings.misc_exportLights" 0;
+	setAttr "vraySettings.misc_exportNodes" 0;
+	setAttr "vraySettings.misc_exportGeometry" 1;
+	setAttr "vraySettings.misc_exportMaterials" 1;
+	setAttr "vraySettings.misc_exportTextures" 1;
+	setAttr "vraySettings.misc_exportBitmaps" 1;
+	setAttr "vraySettings.misc_eachFrameInFile" 0;
+	setAttr -type "string" "vraySettings.misc_pluginsPrefix" "";
+	setAttr "vraySettings.vfbOn" 1;
+	setAttr "vraySettings.hideRVOn" 1;
+
+	// launch render
+	string $renderLayers[] = getObjectsOfType("renderLayer");
+	if (size($renderLayers) > 0) vrend -w 20 -h 20 -cam "persp" -layer $renderLayers[0];
+	else glmError("Oups, something went really wrong, no render layer found!");
+
+	// check files
+	string $gblFile = ($tempFilesExportDir + "/" + $tempFilesExportName + ".vrscene");
+	string $geoFile = ($tempFilesExportDir + "/" + $tempFilesExportName + "_geometry.vrscene");
+	string $matFile = ($tempFilesExportDir + "/" + $tempFilesExportName + "_materials.vrscene");
+	string $texFile = ($tempFilesExportDir + "/" + $tempFilesExportName + "_textures.vrscene");
+	string $bmpFile = ($tempFilesExportDir + "/" + $tempFilesExportName + "_bitmaps.vrscene");
+	int $gblFileValid = `filetest -r $gblFile`;
+	int $geoFileValid = `filetest -r $geoFile`;
+	int $matFileValid = `filetest -r $matFile`;
+	int $texFileValid = `filetest -r $texFile`;
+	int $bmpFileValid = `filetest -r $bmpFile`;
+
+	string $vrSceneContent;
+	if ($gblFileValid && $geoFileValid && $matFileValid && $texFileValid && $bmpFileValid)
+	{
+		// read them all
+		$matFileId = `fopen $matFile "r"`;
+		string $nextLine = `fgetline $matFileId`;
+		while(size($nextLine)>0) { $vrSceneContent += $nextLine; $nextLine = `fgetline $matFileId`; }
+		fclose $matFileId;
+
+		$texFileId = `fopen $texFile "r"`;
+		$nextLine = `fgetline $texFileId`;
+		while(size($nextLine)>0) { $vrSceneContent += $nextLine; $nextLine = `fgetline $texFileId`; }
+		fclose $texFileId;
+
+		$bmpFileId = `fopen $bmpFile "r"`;
+		$nextLine = `fgetline $bmpFileId`;
+		while(size($nextLine)>0) { $vrSceneContent += $nextLine; $nextLine = `fgetline $bmpFileId`; }
+		fclose $bmpFileId;
+
+		// clean
+		if ($deleteTempFiles)
+		{
+			sysFile -delete $gblFile;
+			sysFile -delete $geoFile;
+			sysFile -delete $matFile;
+			sysFile -delete $texFile;
+			sysFile -delete $bmpFile;
+		}
+	}
+	else
+	{
+		glmWarning("Error when exporting scene elements as VRScene. Shader VRScene was not exported");
+	}
+
+	////////////////////////////////////
+	// restore original values
+	////////////////////////////////////
+	setAttr "vraySettings.vrscene_render_on" $renderOn;
+	setAttr "vraySettings.vrscene_on" $vrSceneOn;
+	setAttr -type "string" "vraySettings.vrscene_filename" $vrSceneFile;
+	setAttr "vraySettings.misc_separateFiles" $vrSceneFiles[0];
+	setAttr "vraySettings.misc_exportLights" $vrSceneFiles[1];
+	setAttr "vraySettings.misc_exportNodes" $vrSceneFiles[2];
+	setAttr "vraySettings.misc_exportGeometry" $vrSceneFiles[3];
+	setAttr "vraySettings.misc_exportMaterials" $vrSceneFiles[4];
+	setAttr "vraySettings.misc_exportTextures" $vrSceneFiles[5];
+	setAttr "vraySettings.misc_exportBitmaps" $vrSceneFiles[6];
+	setAttr "vraySettings.misc_eachFrameInFile" $eachFrame;
+	setAttr -type "string" "vraySettings.misc_pluginsPrefix" $prefix;
+	setAttr "vraySettings.vfbOn" $vbfOn;
+	setAttr "vraySettings.hideRVOn" $hideRV;
+
+	// close render window
+	evalDeferred("vrayRemoveVFBPanel");
+
+	return $vrSceneContent;
+}
+
+//************************************************************
+/*! @name Renderman Utils
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! createRibFromProxy
+/*!
+*/ //---------------------------------------------------------
+global proc string createRibFromProxy(string $nodeName, string $dsoName)
+{
+	float $frame = getAttr ($nodeName+".frame");
+	if ($dsoName == "glmCrowd3DelightPlugin") { $frame = `delightRenderState -qf`; } // need to use this command to get the correct current frame during moblur
+
+	string $crowdFields = getAttr ($nodeName+".crowdFields");
+	string $cacheName = getAttr ($nodeName+".cacheName");
+	string $cacheFileDir = glmGetFilePath($nodeName+".cacheFileDir");
+	string $characterFiles = glmGetFilePath($nodeName+".characterFiles");
+
+	int $subdivScheme = getAttr ($nodeName+".subdivisionScheme");
+	int $subdivFaceVarying = getAttr ($nodeName+".subdivFacevaryingInterp");
+	int $subdivInterp = getAttr ($nodeName+".subdivInterp");
+
+	int $mBlurEnabled = getAttr ($nodeName+".motionBlur");
+	float $mBlurStart = getAttr ($nodeName+".motionBlurStart");
+	float $mBlurWindowSize = getAttr ($nodeName+".motionBlurWindowSize");
+	int $mBlurSamples = getAttr ($nodeName+".motionBlurSamples");
+
+	int $objectIdBase = getAttr ($nodeName+".objectIDBase");
+	int $objectIdMode = getAttr ($nodeName+".objectIDMode");
+	float $renderPercent = getAttr ($nodeName+".renderEntityPercent");
+	int $instancingEnabled = getAttr ($nodeName+".instancingEnabled");
+
+	string $dirmap = getAttr ($nodeName+".dirmap");
+
+	float $bboxMin = getAttr ($nodeName+".crowdBBoxMin");
+	float $bboxMax = getAttr ($nodeName+".crowdBBoxMax");
+
+	if( `glmAutoTestCommand -d` ) { $dsoName += "_d"; }
+
+	// build the rib file
+	string $ribContent="";
+	$ribContent += "AttributeBegin\n";
+	$ribContent += "Attribute \"procedural\" \"int reentrant\" [0]\n";
+	$ribContent += "Attribute \"identifier\" \"string name\" [\""+ $cacheName + $nodeName + $frame +"\"]\n";
+	$ribContent += "Orientation \"rh\"\n";
+	$ribContent += "Sides 2\n";
+	$ribContent += "Procedural \"DynamicLoad\" [\""+ $dsoName +"\"";
+
+	$ribContent += " \"";
+	$ribContent += "--frame " + $frame + " ";
+	$ribContent += "--crowdFields '" + $crowdFields + "' ";
+	$ribContent += "--cacheName '" + $cacheName + "' ";
+	$ribContent += "--cacheDir '" + $cacheFileDir + "' ";
+	$ribContent += "--characterFiles '" + $characterFiles + "' ";
+
+	$ribContent += "--subdivScheme " + $subdivScheme + " ";
+	$ribContent += "--subdivFaceVarying " + $subdivFaceVarying + " ";
+	$ribContent += "--subdivInterp " + $subdivInterp + " ";
+
+	$ribContent += "--mBlurEnabled " + $mBlurEnabled + " ";
+	$ribContent += "--mBlurStartFrame " + $mBlurStart + " ";
+	$ribContent += "--mBlurWindowSize " + $mBlurWindowSize + " ";
+	$ribContent += "--mBlurSamples " + $mBlurSamples + " ";
+
+	$ribContent += "--objectIdBase " + $objectIdBase + " ";
+	$ribContent += "--objectIdMode " + $objectIdMode + " ";
+	$ribContent += "--renderPercent " + $renderPercent + " ";
+	$ribContent += "--instancingEnabled " + $instancingEnabled + " ";
+	$ribContent += "--dirmap '" + $dirmap + "' ";
+	$ribContent += "\"] ";
+
+	$ribContent += "["+ $bboxMin + " " + $bboxMax + " " + $bboxMin + " " + $bboxMax + " " + $bboxMin + " " + $bboxMax + "]\n";
+	$ribContent += "AttributeEnd\n";
+
+	return $ribContent;
+}
+
+//------------------------------------------------------------
+//! createShadersRib
+/*!
+*/ //---------------------------------------------------------
+global proc string createShadersRib(string $tempFilesExportDir, int $deleteTempFiles)
+{
+	// save the current workspace values
+	string $rfmRibs = `rman workspace GetDir "rfmRIBs"`;
+
+	rman workspace SetDir "rfmRIBs" ("{"+ $tempFilesExportDir +"}");
+	// generate rlf file
+	rman genrib -updateArchiveRLFs 1;
+	// restore workspace values
+	rman workspace SetDir "rfmRIBs" ("{"+$rfmRibs+"}");
+
+	// look for rlf files
+	string $rlfFiles[] = glmGetFilesOfExtension($tempFilesExportDir, "rlf");
+
+	// flush rlf file
+	string $ribContent ="";
+	if (size($rlfFiles) != 0)
+	{
+		$rlfFileId = `fopen $rlfFiles[0] "r"`;
+		string $nextLine = `fgetline $rlfFileId`;
+		while(size($nextLine)>0) { $ribContent += $nextLine; $nextLine = `fgetline $rlfFileId`; }
+		fclose $rlfFileId;
+
+		if (size($rlfFiles) != 1)
+		{
+			glmWarning(size($rlfFiles) + " rlf files have been found in "+ $tempFilesExportDir +". Only the first one has been exported.");
+		}
+	}
+	else
+	{
+		glmWarning("Error when exporting scene elements as Rib. Shader Rlf file was not exported");
+	}
+
+	// delete temp files
+	if ($deleteTempFiles)
+	{
+		glmDeleteFolder($tempFilesExportDir);
+	}
+
+	return $ribContent;
+}
+
+//------------------------------------------------------------
+//! Return the RMS search path workspace of a type (texture, shader, palette, procedural...)
+/*! These values come from the RMSWorkspace.ini file
+*/ //---------------------------------------------------------
+global proc string getRMSSearchPathsOfType(string $type, int $substituteVars)
+{
+	// get search paths
+	string $dvals[] = `rman workspace GetSearchPaths $type $substituteVars`;
+	string $val = stringArrayToString($dvals, ":");
+
+	return $val;
+}
+
+//------------------------------------------------------------
+//! crowdRenderProxyRiOptions (set RiOptions before frame render)
+/*!
+*/ //---------------------------------------------------------
+global proc crowdRenderProxyRiOptions()
+{
+    // get RMS proxy nodes
+    string $procedurals[] = `ls -type "CrowdRenderProxy"`;
+    if (size($procedurals) > 0)
+    {
+        string $nodeName = $procedurals[0];
+        // set the RiOptions
+        RiOption "searchpath" "string shader" (`glmGetFilePath($nodeName+".sceneShadersDir")` + ":" + getRMSSearchPathsOfType("shader", 1));        // scene shaders
+        RiOption "searchpath" "string texture" (`glmGetFilePath($nodeName+".sceneTexturesDir")` + ":" + getRMSSearchPathsOfType("texture", 1));     // scene textures
+    }
+}
+//@}
+
+//************************************************************
+/*! @name 3Delight Utils
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! set3DelightGetUserDataVectorCode
+/*!
+*/ //---------------------------------------------------------
+global proc set3DelightGetUserDataVectorCode( string $nodeName )
+{
+	string $shadingParam = `getAttr ($nodeName+".shadingParameters")`;
+	if ($shadingParam == "")
+	{
+		// set 3Delight params & code
+		setAttr -type "string" ($nodeName+".shadingParameters") "output color outValue;\ninput string paramName;\ninput color default;";
+		setAttr -type "string" ($nodeName+".shadingCode") "uniform color attrValue = default;\nuniform string attrName = concat(\"user:\", paramName);\nattribute(attrName, attrValue);\noutValue = attrValue;";
+
+		RC_init($nodeName);
+		RC_add_param_attributes($nodeName);
+	}
+}
+
+//------------------------------------------------------------
+//! set3DelightGetUserDataFloatCode
+/*!
+*/ //---------------------------------------------------------
+global proc set3DelightGetUserDataFloatCode( string $nodeName )
+{
+	string $shadingParam = `getAttr ($nodeName+".shadingParameters")`;
+	if ($shadingParam == "")
+	{
+		// set 3Delight params & code
+		setAttr -type "string" ($nodeName+".shadingParameters") "output float outValue;\ninput string paramName;\ninput float default;";
+		setAttr -type "string" ($nodeName+".shadingCode") "uniform float attrValue = default;\nuniform string attrName = concat(\"user:\", paramName);\nattribute(attrName, attrValue);\noutValue = attrValue;";
+
+		RC_init($nodeName);
+		RC_add_param_attributes($nodeName);
+	}
+}
+
+//------------------------------------------------------------
+//! set3DelightSwitchShaderCode
+/*!
+*/ //---------------------------------------------------------
+global proc set3DelightSwitchShaderCode( string $nodeName )
+{
+	string $shadingParam = `getAttr ($nodeName+".shadingParameters")`;
+	if ($shadingParam == "")
+	{
+		// set 3Delight params & code
+		setAttr -type "string" ($nodeName+".shadingParameters") "output color outValue;\ninput float selector;\ninput float startOffset;\ninput color default;\ninput color shader0;\ninput color shader1;\ninput color shader2;\ninput color shader3;\ninput color shader4;\ninput color shader5;\ninput color shader6;\ninput color shader7;\ninput color shader8;\ninput color shader9;";
+		setAttr -type "string" ($nodeName+".shadingCode") "if ((selector < startOffset) || (selector >= 10+startOffset))\n{\noutValue = default;\n}\nelse\n{\nif (selector == (0. + startOffset))\noutValue = shader0;\nelse if (selector == (1. + startOffset))\noutValue = shader1;\nelse if (selector == (2. + startOffset))\noutValue = shader2;\nelse if (selector == (3. + startOffset))\noutValue = shader3;\nelse if (selector == (4. + startOffset))\noutValue = shader4;\nelse if (selector == (5. + startOffset))\noutValue = shader5;\nelse if (selector == (6. + startOffset))\noutValue = shader6;\nelse if (selector == (7. + startOffset))\noutValue = shader7;\nelse if (selector == (8. + startOffset))\noutValue = shader8;\nelse if (selector == (9. + startOffset))\noutValue = shader9;\n}";
+
+		RC_init($nodeName);
+		RC_add_param_attributes($nodeName);
+	}
+}
+
+//------------------------------------------------------------
+//! set3DelightHSLShaderCode
+/*!
+*/ //---------------------------------------------------------
+global proc set3DelightHSLShaderCode( string $nodeName )
+{
+	string $shadingParam = `getAttr ($nodeName+".shadingParameters")`;
+	if ($shadingParam == "")
+	{
+		// set 3Delight params & code
+		setAttr -type "string" ($nodeName+".shadingParameters") "output color outValue;\ninput color inValue;\ninput float h;\ninput float s;\ninput float l;";
+		setAttr -type "string" ($nodeName+".shadingCode") "color asHsl=ctransform(\"rgb\",\"hsl\",inValue);\nfloat hVal=clamp(-1., h, 1.);\nfloat sVal=clamp(-1., s, 1.);\nfloat lVal=clamp(-1., l, 1.);\nasHsl[0]=mod(asHsl[0]+hVal/2, 1.);\nif (asHsl[0]<0) asHsl[0]+=1.;\nasHsl[1]=(sVal>0)?(asHsl[1]+(1-asHsl[1])*sVal):(asHsl[1]+(asHsl[1])*sVal);\nasHsl[2]=(lVal>0)?(asHsl[2]+(1-asHsl[2])*lVal):(asHsl[2]+(asHsl[2])*lVal);\noutValue=ctransform(\"hsl\",\"rgb\",asHsl);";
+		RC_init($nodeName);
+		RC_add_param_attributes($nodeName);
+	}
+}
+//@}
+
+//************************************************************
+/*! @name Export Utils
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Export the current frame in the simulation cache
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmExportCurrentSimulationCache()
+{
+	// don't do it if in batch mode
+	if (`about -batch` != 0) return;
+
+	string $managerNode = addTheCrowdManagerNode();
+	int $dynExport = getAttr($managerNode + ".expSimulationCacheDynamically");
+
+	if ($dynExport == 1)
+	{
+		// make command
+		string $command = "glmCrowdSimulationExporter";
+		string $crowdFields[] = stringToStringArray(getAttr($managerNode + ".expCrowdFields"), ";");
+		if (size($crowdFields) != 0)
+		{
+			string $simCacheName = getAttr($managerNode + ".expSCName");
+			string $simCacheDir = glmGetFilePath($managerNode + ".expSCOutDir");
+			int $frame = `currentTime -q`;
+
+			$command += " -startFrame " + $frame + " -endFrame " + $frame + " -scExpName \"" + $simCacheName + "\" -scExpOutDir \"" + $simCacheDir + "\"" ;
+			for ($crowdField in $crowdFields)
+			{
+				$command += " -crowdFieldNode " + $crowdField;
+			}
+		}
+		print $command;
+		eval($command);
+	}
+}
+
+//------------------------------------------------------------
+//! Return the file path prefix of an exported file (same as getExportedFilePath but without the frame and the extension)
+/*! \note: ends with a "."
+*/ //---------------------------------------------------------
+global proc string glmGetExportedFilePrefix(string $directory, string $cacheName, string $crowdField)
+{
+	string $filePrefix;
+	$filePrefix = ($directory + "/" + $cacheName + "." + glmConvertToValidName($crowdField) + ".");
+	return  $filePrefix;
+}
+
+//------------------------------------------------------------
+//! Return the simulation cache file path
+//------------------------------------------------------------
+global proc string glmGetSimulationCachePath(string $cachePrefix, int $frame)
+{
+	string $filePath;
+	$filePath = ($cachePrefix + $frame + ".gscf");
+	return $filePath;
+}
+//@}
+
+//************************************************************
+/*! @name Shader Checker & Importer
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Return the name of the shaders missing in the scene
+/*! \param
+*/ //---------------------------------------------------------
+global proc string glmShadersCheck()
+{
+	string $missingShaders[];
+	string $crowdManager[] = getObjectsOfType("CrowdManagerNode");
+	if ($crowdManager[0] != "")
+	{
+		string $characterFiles[] = stringToStringArray(glmGetFilePath($crowdManager[0]+".characterFiles"), ";");
+
+		for ($characterFile in $characterFiles)
+		{
+			string $missingShaderGroupsCharacter[] = `glmCharacterFileTool -gch ($characterFile) -getAttr "missingShaderGroups"`;
+			string $missingShadersCharacter[] = `glmCharacterFileTool -gch ($characterFile) -getAttr "missingShaders"`;
+			$missingShaders = stringArrayCatenate($missingShaders, $missingShaderGroupsCharacter);
+			$missingShaders = stringArrayCatenate($missingShaders, $missingShadersCharacter);
+		}
+	}
+
+	string $displayString = "";
+	if (size($missingShaders))
+	{
+		$missingShaders = stringArrayRemoveDuplicates($missingShaders);
+		string $missingShadersStr = stringArrayToString($missingShaders, ", ");
+		$missingShadersStr = cutOversizeStringWithEllipsis($missingShadersStr, 400);
+		$displayString += "<p>The following shaders are missing:</p>";
+		$displayString += "<p><i>" + $missingShadersStr + "</i></p>";
+		$displayString += "<p>Would you like to import them in the scene now?</p>";
+	}
+	else
+	{
+		$displayString += "<p>No shaders are currently missing!</p>";
+		$displayString += "<p>Would you like to import other shaders in the scene anyway?</p>";
+	}
+	return $displayString ;
+}
+
+//------------------------------------------------------------
+//! Import the shaders
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmShadersImport()
+{
+	global string $gCrowdFileTypes[] ;
+	string $cmd = "glmShadersImportCallback ";
+	string $open = "Import the Maya Scene containing the Shaders";
+
+	glmFileBrowser($cmd, $open, ("Maya Scenes (*.ma *.mb)"), "Characters", 1);
+}
+
+//------------------------------------------------------------
+//! Shader import callback
+/*! \param
+*/ //---------------------------------------------------------
+global proc glmShadersImportCallback(string $value)
+{
+	file -import -renameAll false -options "v=0" -pr -loadReferenceDepth "all" $value;
+}
+//@}
+
+//************************************************************
+/*! @name Version Utils
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Return the version number of the current renderer
+/*! \param
+*/ //---------------------------------------------------------
+global proc string getRendererVersion(string $renderer)
+{
+	string $rendererVersion="";
+	if ($renderer == "_3delight") $rendererVersion = `pluginInfo -q -version ("3delight_for_maya"+glmGetMayaVersion())`;
+	else if ($renderer == "arnold")  $rendererVersion = `pluginInfo -q -version mtoa`;
+	else if ($renderer == "vray") $rendererVersion = `pluginInfo -q -version vrayformaya`;
+	else if ($renderer == "renderMan" || $renderer == "renderManRIS") $rendererVersion = `pluginInfo -q -version RenderMan_for_Maya`;
+	else if ($renderer == "mentalRay") $rendererVersion = `pluginInfo -q -version Mayatomr`;
+	return $rendererVersion;
+}
+
+//------------------------------------------------------------
+//! Return an array of the supported renderer version
+/*! \param returnDefault if 1, return the versions supported by the default installed plugin
+	\param returnOptionnal if 1, return the versions supported by the manually installed plugin
+*/ //---------------------------------------------------------
+global proc string[] getSupportedRendererVersion(string $renderer, int $returnDefault, int $returnOptionnal)
+{
+	// SUPPORTED VERSIONS //
+	string $arnDefVersions[] = { "1.2" };
+	string $arnOptVersions[] = {};
+	string $delDefVersions[] = { "7.0.18" };
+	string $delOptVersions[] = {};
+	string $vraDefVersions[] = { "3.35", "3.30", "3.15", "3.05.04", "3.00.01", "3.10.01" };
+	string $vraOptVersions[] = { "2.4" };
+	string $mraDefVersions[] = { "*" };
+	string $mraOptVersions[] = {};
+	string $rmnDefVersions[] = { "20." };
+	string $rmnOptVersions[] = { "5.5" };
+	// SUPPORTED VERSIONS //
+
+	string $supportedVersions[];
+	if ($returnDefault)
+	{
+		if ($renderer == "arnold") $supportedVersions = stringArrayCatenate($supportedVersions, $arnDefVersions);
+		else if ($renderer == "vray") $supportedVersions = stringArrayCatenate($supportedVersions, $vraDefVersions);
+		else if ($renderer == "_3delight") $supportedVersions = stringArrayCatenate($supportedVersions, $delDefVersions);
+		else if ($renderer == "renderMan" || $renderer == "renderManRIS") $supportedVersions = stringArrayCatenate($supportedVersions, $rmnDefVersions);
+		else if ($renderer == "mentalRay") $supportedVersions = stringArrayCatenate($supportedVersions, $mraDefVersions);
+	}
+	if ($returnOptionnal)
+	{
+		if ($renderer == "arnold") $supportedVersions = stringArrayCatenate($supportedVersions, $arnOptVersions);
+		else if ($renderer == "vray") $supportedVersions = stringArrayCatenate($supportedVersions, $vraOptVersions);
+		else if ($renderer == "_3delight") $supportedVersions = stringArrayCatenate($supportedVersions, $delOptVersions);
+		else if ($renderer == "renderMan" || $renderer == "renderManRIS") $supportedVersions = stringArrayCatenate($supportedVersions, $rmnOptVersions);
+		else if ($renderer == "mentalRay") $supportedVersions = stringArrayCatenate($supportedVersions, $mraOptVersions);
+	}
+
+	return $supportedVersions;
+}
+
+//------------------------------------------------------------
+//! Return true if the current renderer version is supported
+/*! \param inDefault if 1, returns the versions supported by the default installed plugin
+	\param inOptionnal if 1, returns the versions supported by the manually installed plugin
+*/ //---------------------------------------------------------
+global proc int isRendererVersionSupported(string $renderer, string $version, int $inDefault, int $inOptionnal)
+{
+	string $supportedVersions[] = getSupportedRendererVersion($renderer, $inDefault, $inOptionnal);
+	for ($supportedVersion in $supportedVersions)
+	{
+		if ((substring( $version, 1, size($supportedVersion)) == $supportedVersion) || $supportedVersion == "*")
+			return 1;
+	}
+	return 0;
+}
+//@}
+
+//************************************************************
+/*! @name Create Utils
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Create and connect a Simulation Cache Proxy
+/*! \return the name of the created SimulationCacheProxy
+*/ //---------------------------------------------------------
+global proc string addCrowdSimulationCacheProxy()
+{
+    // Check exported terrain
+    if (isMayaInteractive())
+    {
+        string $message = getExportedTerrainCheck();
+        if ($message != "")
+        {
+            string $return = `confirmDialog -title "Golaem Terrain Exporter" -message $message -button "Yes Please!" -button "No Thanks!" -defaultButton "No" -cancelButton "No" -dismissString "No" -icon "information"`;
+            if ($return == "Yes Please!") exportTerrainsFromScene();
+        }
+
+        // Check if another SimulationCacheProxy with the same attributes already exists in the scene
+        string $message = getSimilarSimulationCacheProxyCheck();
+        if ($message != "")
+        {
+            string $return = `confirmDialog -title "Golaem Simulation Cache Proxy Tool" -message $message -button "Yes Please!" -button "No Thanks!" -defaultButton "No" -cancelButton "No" -dismissString "No" -icon "information"`;
+            if ($return != "Yes Please!") return "";
+        }
+    }
+
+    // create node
+    string $managerNode = addTheCrowdManagerNode();
+    string $outputNode = addEmptyCrowdSimulationCacheProxy();
+
+    glmMapNode($managerNode, "expCrowdFields",   ($outputNode+".crowdFields"));
+    glmMapNode($managerNode, "expSCName",       ($outputNode+".inputCacheName"));
+    glmMapNode($managerNode, "expSCOutDir",     ($outputNode+".inputCacheDir"));
+    glmMapNode($managerNode, "characterFiles",  ($outputNode+".characterFiles"));
+    glmMapNode($managerNode, "expStartFrame",   ($outputNode+".inputStartFrame"));
+    glmMapNode($managerNode, "expEndFrame",     ($outputNode+".inputEndFrame"));
+    glmMapNode($managerNode, "expStartFrame",   ($outputNode+".outputStartFrame"));
+    glmMapNode($managerNode, "expEndFrame",     ($outputNode+".outputEndFrame"));
+    glmMapNode($managerNode, "dirmap",          ($outputNode+".dirmap"));
+
+    select $outputNode;
+    return $outputNode;
+}
+
+//------------------------------------------------------------
+//! Create and connect an empty Simulation Cache Proxy
+/*! \return the name of the created SimulationCacheProxy
+*/ //---------------------------------------------------------
+global proc string addEmptyCrowdSimulationCacheProxy()
+{
+    // create proxy node
+    string $managerNode = addTheCrowdManagerNode();
+    string $outputNode = createSimulationCacheProxy();
+
+    // add a crowd render proxy node and connect it properly
+    string $renderProxy = addCrowdRenderProxy();
+    glmMapNode($outputNode, "message", ($renderProxy + ".inDriverNode"));
+    setCrowdRenderProxyDriverNode($renderProxy, $outputNode);
+
+    // update to Cache Replay Mode if not set yet
+    if (getCrowdSimulationMode() == 0)
+        toggleCrowdSimulationMode;
+
+    // update shelf icon
+    updateCrowdSimulationModeIcon();
+    updateCheckRenderSettingsIcon();
+
+    // find the most common display mode in the simulation to apply to the proxy display
+    int $displayType = 0;
+    string $simEntityTypes[] = glmGetMapNodes($managerNode+".inEntityTypes");
+    for ($simEntityType in $simEntityTypes)
+        $displayType += getAttr($simEntityType + ".renderFilter");
+    if (size($simEntityTypes)) $displayType /= size($simEntityTypes);
+    setAttr ($outputNode + ".renderFilter") $displayType;
+
+    select $outputNode;
+    return $outputNode;
+}
+
+//------------------------------------------------------------
+//! Create and connect a Simulation Render Proxy
+/*! \return the name of the created SimulationRenderProxy
+*/ //---------------------------------------------------------
+global proc string addCrowdRenderProxy()
+{
+    string $managerNode = addTheCrowdManagerNode();
+    string $node = createCrowdRenderProxy();
+    string $trNode = getTransform($node);
+
+    // map the current frame to the time
+    glmMapNode("time1", "unwarpedTime", $node+".frame");
+
+    // set refl / refr parameters
+    setAttr ($node+".visibleInReflections") 1;
+    setAttr ($node+".visibleInRefractions") 1;
+    setAttr ($node+".motionBlur") 0;
+
+    // connect the proxy to the different manager node component
+    glmMapNode($managerNode, "enableFrustumCulling", ($node+".enableFrustumCulling"));
+    glmMapNode($managerNode, "frustumMargin", ($node+".frustumMargin"));
+    glmMapNode($managerNode, "cameraMargin", ($node+".cameraMargin"));
+
+    // set the temp out dir
+    string $tempDir = glmGetTempDir();
+    setAttr -type "string" ($node+".tempFileDir") $tempDir;
+
+    // add a mesh holder
+    string $trMeshNodes[] = `polyCreateFacet -tx 1 -p -0. 0. 0. -p -0. 0. 0. -p -0. 0. 0. -ch false`;
+    //string $meshName = substituteAllString($trNode, "renderProxy", "renderSurface");
+    $trMeshNodes[0] = `rename $trMeshNodes[0] ($trNode+"Mesh#")`;
+    string $meshNodes[] = getShapes($trMeshNodes[0]);
+    string $meshNode = $meshNodes[0];
+    //string $meshNode = `createNode -name "renderSurfaceShape#" "mesh"`;
+    parent -shape -relative $meshNode $trNode;
+    delete $trMeshNodes[0];
+    glmMapNode($meshNode, "message", $node+".inRenderMesh");
+
+    // make it non-selectionnable
+    setAttr ($meshNode+".overrideEnabled") 1;
+    setAttr ($meshNode+".overrideDisplayType") 2;
+
+    // assign default material to the mesh holder
+    string $defaultMaterial = addTheCrowdProxyDefaultMaterial();
+    assignMaterial($meshNode, $defaultMaterial);
+
+    // connect the proxy to the mesh holder render stats
+    glmMapNode($node, "castsShadows", ($meshNode+".castsShadows"));
+    glmMapNode($node, "receiveShadows", ($meshNode+".receiveShadows"));
+    glmMapNode($node, "primaryVisibility", ($meshNode+".primaryVisibility"));
+    glmMapNode($node, "visibleInReflections", ($meshNode+".visibleInReflections"));
+    glmMapNode($node, "visibleInRefractions", ($meshNode+".visibleInRefractions"));
+
+    //  add the preRender / postRender callbacks
+    string $preRenderMelStr = getAttr ("defaultRenderGlobals.preMel");
+    string $postRenderMelStr = getAttr ("defaultRenderGlobals.postMel");
+    //string $preRenderLayerMelStr = getAttr ("defaultRenderGlobals.preRenderLayerMel");
+    //string $postRenderLayerMelStr = getAttr ("defaultRenderGlobals.postRenderLayerMel");
+    string $preRenderFrameMelStr = getAttr ("defaultRenderGlobals.preRenderMel");
+    string $postRenderFrameMelStr = getAttr ("defaultRenderGlobals.postRenderMel");
+    if (searchInString("glmRenderCallback(\"PreRender\");", $preRenderMelStr) == 0) setAttr -type "string" defaultRenderGlobals.preMel ($preRenderMelStr + "glmRenderCallback(\"PreRender\");");
+    if (searchInString("glmRenderCallback(\"PostRender\");", $postRenderMelStr) == 0) setAttr -type "string" defaultRenderGlobals.postMel ($postRenderMelStr + "glmRenderCallback(\"PostRender\");");
+    //if (searchInString("glmRenderCallback(\"PreRenderLayer\");", $preRenderLayerMelStr) == 0) setAttr -type "string" defaultRenderGlobals.preRenderLayerMel ($preRenderLayerMelStr + "glmRenderCallback(\"PreRenderLayer\");");
+    //if (searchInString("glmRenderCallback(\"PostRenderLayer\");", $postRenderLayerMelStr) == 0) setAttr -type "string" defaultRenderGlobals.postRenderLayerMel ($postRenderLayerMelStr + "glmRenderCallback(\"PostRenderLayer\");");
+    if (searchInString("glmRenderCallback(\"PreRenderFrame\");", $preRenderFrameMelStr) == 0) setAttr -type "string" defaultRenderGlobals.preRenderMel ($preRenderFrameMelStr + "glmRenderCallback(\"PreRenderFrame\");");
+    if (searchInString("glmRenderCallback(\"PostRenderFrame\");", $postRenderFrameMelStr) == 0) setAttr -type "string" defaultRenderGlobals.postRenderMel ($postRenderFrameMelStr + "glmRenderCallback(\"PostRenderFrame\");");
+
+    select $node;
+
+    return $node;
+}
+
+//------------------------------------------------------------
+//! Export terrains for each exported crowdField node in the scene
+/*! \return nothing
+*/ //---------------------------------------------------------
+global proc exportTerrainsFromScene()
+{
+    string $managerNode = addTheCrowdManagerNode();
+    string $crowdFields[] = stringToStringArray(getAttr($managerNode+".expCrowdFields"), ";");
+    string $cacheName = getAttr($managerNode+".expSCName");
+    for ($iCf=0; $iCf < size($crowdFields); $iCf++)
+    {
+        string $cacheDir = getOutputDir(getAttr($managerNode+".expSCOutDir"), $iCf);
+        // create cache dir
+        sysFile -makeDir $cacheDir;
+        string $exportCmd = "glmExportTerrain -cf \""+ $crowdFields[$iCf] +"\" -cn \""+ $cacheName +"\" -cd \""+ $cacheDir +"\" ";
+        evalEcho ($exportCmd);
+    }
+
+    // update Cache Proxy Terrains
+    string $cacheProxies[] = getObjectsOfType("SimulationCacheProxy");
+    for ($cacheProxy in $cacheProxies)
+    {
+        setAttr ($cacheProxy + ".terrainNeedRefresh") 1;
+    }
+}
+
+//------------------------------------------------------------
+//! Driver node update
+//------------------------------------------------------------
+global proc setCrowdRenderProxyDriverNode(string $renderProxy, string $driverNode)
+{
+    string $prevDriverNode = glmGetMapNode($renderProxy + ".crowdFields");
+
+    if ($driverNode != $prevDriverNode)
+    {
+        string $renderMesh = glmGetMapNode($renderProxy+".inRenderMesh");
+
+        // unmap previous
+        if ($prevDriverNode != "")
+        {
+            glmUnmapNode($prevDriverNode, "enable", $renderProxy + ".enable");
+            glmUnmapNode($prevDriverNode, "crowdFields", $renderProxy + ".crowdFields");
+            glmUnmapNode($prevDriverNode, "inputCacheName", $renderProxy + ".cacheName");
+            glmUnmapNode($prevDriverNode, "inputCacheDir", $renderProxy + ".cacheFileDir");
+            glmUnmapNode($prevDriverNode, "characterFiles", $renderProxy + ".characterFiles");
+            glmUnmapNode($prevDriverNode, "drawEntityPercent", $renderProxy+".renderEntityPercent");
+            glmUnmapNode($prevDriverNode, "dirmap", $renderProxy+".dirmap");
+        }
+
+        // map to new driver node
+        if ($driverNode != "")
+        {
+            if (`objectType -isAType "SimulationCacheProxy" $driverNode`)
+            {
+                glmMapNode($driverNode, "enable", $renderProxy+".enable");
+                glmMapNode($driverNode, "crowdFields", $renderProxy+".crowdFields");
+                glmMapNode($driverNode, "inputCacheName", $renderProxy+".cacheName");
+                glmMapNode($driverNode, "inputCacheDir", $renderProxy+".cacheFileDir");
+                glmMapNode($driverNode, "characterFiles", $renderProxy+".characterFiles");
+                glmMapNode($driverNode, "drawEntityPercent", $renderProxy+".renderEntityPercent");
+                glmMapNode($driverNode, "dirmap", $renderProxy+".dirmap");
+            }
+            else if (`objectType -isAType "CrowdField" $driverNode`)
+            {
+                // todo
+            }
+
+            // move under the driver node transform
+            string $trNode = getTransform($renderProxy);
+            string $trDriverNode = getTransform($driverNode);
+            parent -shape -relative $renderMesh $trDriverNode;
+            parent -shape -relative $renderProxy $trDriverNode;
+            if ($prevDriverNode == "") delete $trNode;
+        }
+        else
+        {
+            // move under its own transform
+            string $newTransform = `createNode -name "renderProxy#" "transform"`;
+            parent -shape -relative $renderMesh $newTransform;
+            parent -shape -relative $renderProxy $newTransform;
+        }
+    }
+}
+
+//------------------------------------------------------------
+//! Toggle the Simulation Mode (either Simulation or Cache Display
+/*! \return nothing
+*/ //---------------------------------------------------------
+global proc int getCrowdSimulationMode()
+{
+    string $managerNode = addTheCrowdManagerNode();
+    return getAttr($managerNode+".simulationMode");
+}
+
+//------------------------------------------------------------
+//! Toggle the Simulation Mode (either Simulation or Cache Display
+/*! \return nothing
+*/ //---------------------------------------------------------
+global proc string toggleCrowdSimulationMode()
+{
+    string $managerNode = addTheCrowdManagerNode();
+    setAttr ($managerNode+".simulationMode") (!getAttr($managerNode+".simulationMode"));
+    updateCrowdSimulationMode($managerNode);
+
+    return $managerNode;
+}
+
+//------------------------------------------------------------
+//! Open the Simulation Cache Layout
+/*! \return nothing
+*/ //---------------------------------------------------------
+global proc openSimulationCacheLayout()
+{
+    string $existing[];
+    if (getCrowdSimulationMode() == 0)
+    {
+        $existing = getObjectsOfType("CrowdManagerNode");
+    }
+    else
+    {
+        $existing = getObjectsOfType("SimulationCacheProxy");
+    }
+
+    if (size($existing) > 0)
+    {
+        glmSimulationCacheLayout -node $existing[0];
+    }
+    else
+    {
+        glmSimulationCacheLayout;
+    }
+}
+
+//------------------------------------------------------------
+//! Open the Character Palette
+/*! \return nothing
+*/ //---------------------------------------------------------
+global proc openCharacterPalette()
+{
+    string $existing[];
+    if (getCrowdSimulationMode() == 0)
+    {
+        $existing = getObjectsOfType("CrowdManagerNode");
+    }
+    else
+    {
+        $existing = getObjectsOfType("SimulationCacheProxy");
+    }
+
+    if (size($existing) > 0)
+    {
+        glmCharacterPalette -node $existing[0];
+    }
+    else
+    {
+        glmCharacterPalette;
+    }
+}
+
+//------------------------------------------------------------
+//! Open the Character Palette
+/*! \return nothing
+*/ //---------------------------------------------------------
+global proc openSimulationCacheLibrary()
+{
+    python("import glmSimulationCacheLibrary as scl");
+    python("scl.main()");
+}
+//@}
+
+//************************************************************
+/*! @name Misc Utils
+*/ //*********************************************************
+//@{
+//------------------------------------------------------------
+//! Create a currentFrameExpr linked to a param
+/*!
+*/ //---------------------------------------------------------
+global proc glmMapCurrentFrame(string $object, string $param)
+{
+	// create the expression node to update the current frame
+	expression -s ($object + "." + $param + " = `currentTime -q`;") -o $object -ae 1 -uc all;
+}
+
+//------------------------------------------------------------
+//! Get the local temp directory
+/*!
+*/ //---------------------------------------------------------
+global proc string glmGetTempDir()
+{
+	if (size(getenv("TEMP")) != 0) return "TEMP";
+	else if (size(getenv("TMP")) != 0) return "TMP";
+	else if (size(getenv("TEMPDIR")) != 0) return "TEMPDIR";
+	else if (size(getenv("TMPDIR")) != 0) return "TMPDIR";
+
+	return "TEMP";
+}
+
+//------------------------------------------------------------
+//! Create the crowd default material (if shader is not found in scene) or returns it if it already exists
+/*!
+*/ //---------------------------------------------------------
+global string $gCrowdDefaultMaterialName = "crowdProxyDefaultShader";
+global proc string addTheCrowdProxyDefaultMaterial()
+{
+	global string $gCrowdDefaultMaterialName;
+	if( `objExists $gCrowdDefaultMaterialName` )
+	{
+		return $gCrowdDefaultMaterialName;
+	}
+	else
+	{
+		// create lambert material shader
+		string $materialShader = `createNode -n $gCrowdDefaultMaterialName lambert`;
+		setAttr ($materialShader+ ".color") -type double3 1 0.47 0 ;
+		// create a shading group
+		string $materialShaderSG = `sets -renderable true -noSurfaceShader true -empty -name ($gCrowdDefaultMaterialName + "SG")`;
+		// assign the material to the shading group surface shader
+		string $materialShaderOutColor = $materialShader+".outColor";
+		string $materialShaderSGSurfaceShader = $materialShaderSG+".surfaceShader";
+		connectAttr -force $materialShaderOutColor $materialShaderSGSurfaceShader;
+
+		return $materialShader;
+	}
+}
+
+//------------------------------------------------------------
+//! Update Check Render Settings Icon
+//------------------------------------------------------------
+global proc updateCheckRenderSettingsIcon()
+{
+    if (isMayaInteractive())
+    {
+        string $shelfContent[] = `shelfLayout -query -childArray "Golaem"`;
+        string $proxyButton = glmFindButtonInShelf($shelfContent, uiRes("glmCrowd.checkRenderSettings.name"));
+
+        string $managerNodes[] = getObjectsOfType("CrowdManagerNode");
+        string $cacheProxies[] = getObjectsOfType("SimulationCacheProxy");
+        if (size($managerNodes) > 0 && size($cacheProxies) > 0)
+        {
+            int $value = getAttr($managerNodes[0] + ".simulationMode");
+            if ($value == 1) 
+            {
+                string $checkRenderStr = getRenderSettingsCheck(0);
+                if (`match "NO</font>" $checkRenderStr` == "NO</font>") { shelfButton -e -enable true -image "CheckRenderSettingsNo.png" $proxyButton; }
+                else { shelfButton -e -enable true -image "CheckRenderSettingsYes.png" $proxyButton; }
+            }
+            else 
+            { 
+                shelfButton -e -enable false -image "CheckRenderSettings.png" $proxyButton;
+            }
+        }
+        else
+        {
+            shelfButton -e -enable false -image "CheckRenderSettings.png" $proxyButton;
+        }
+    }
+}
+//@}

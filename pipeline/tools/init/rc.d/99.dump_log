@@ -1,0 +1,16 @@
+#!/bin/bash
+#---------------------------------------------------------------------------------------------------------
+# LOG SETUP
+#---------------------------------------------------------------------------------------------------------
+# sets the log folder at the pipe netboot/log folder
+root=atomo
+if [ "$(uname)" = "Linux" ] ; then 
+	logPath="/$root/netboot/log/$(hostname)"
+	dmesg > $logPath/dmesg_boot_dump
+	[ -f /var/log/messages ] && cat /var/log/messages > $logPath/message_boot_dump
+	mkdir -p /var/run/nscd
+	systemctl restart systemd-journald
+fi
+
+
+

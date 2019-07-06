@@ -1,0 +1,17 @@
+
+global proc string pad (int $pad, int $frame)
+{
+string $fstr = $frame;
+string $fout = "";
+
+string $pa = "";
+
+for ($i = size($fstr); $i < $pad; $i++)
+{
+$pa += "0";
+}
+
+$fout = $pa + $fstr;
+
+return $fout;
+}

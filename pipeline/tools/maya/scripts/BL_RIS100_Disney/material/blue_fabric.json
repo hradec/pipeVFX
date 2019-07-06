@@ -1,0 +1,64 @@
+{
+    "blue_fabric_blue_fabric": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.15625, 
+                0.171875, 
+                0.25
+            ], 
+            "baseColorB": 0.25, 
+            "baseColorG": 0.171875, 
+            "baseColorR": 0.15625, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.15625, 
+                0.171875, 
+                0.25
+            ], 
+            "colorB": 0.25, 
+            "colorG": 0.171875, 
+            "colorR": 0.15625, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "outColor": [
+                0.15625, 
+                0.171875, 
+                0.25
+            ], 
+            "outColorB": 0.25, 
+            "outColorG": 0.171875, 
+            "outColorR": 0.15625, 
+            "presence": 1.0, 
+            "roughness": 1.0, 
+            "sheen": 0.75, 
+            "sheenTint": 0.75, 
+            "shininess": 100.0, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "specularTint": 0.5, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

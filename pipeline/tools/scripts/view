@@ -1,0 +1,4 @@
+#!/bin/sh
+
+
+vncviewer ViewOnly=1 FullScreen=0 $1

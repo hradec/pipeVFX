@@ -1,0 +1,105 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{9c762470-021c-4de0-88c9-5912fd4202d0}";
+PropertySet "alCombineColor_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{a49b73e7-856e-4a1a-a4af-690026565693}";
+		Type = color;
+	}
+	Parameter "input1" input
+	{
+		GUID = "{eb8ba399-41f7-4259-96d6-cb3aaed1fce8}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "input2" input
+	{
+		GUID = "{a2bd70ba-59fd-4d37-a4fa-1f8013b4c8ac}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "input3" input
+	{
+		GUID = "{7d8affc9-6b1b-4777-9a1b-8a370034e1f6}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "combineOp" input
+	{
+		GUID = "{7b815bba-37c0-4bd5-8c6e-e27d86b01708}";
+		Type = string;
+		Texturable = off;
+		Value = "multiply 1*2";
+	}
+}
+MetaShader "alCombineColor_meta"
+{
+	Name = "ALS_CombineColor";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_CombineColor";
+		Filename = "alCombineColor";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	input1
+	{
+		Name = "Input 1";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	input2
+	{
+		Name = "Input 2";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	input3
+	{
+		Name = "Input 3";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	combineOp
+	{
+		Name = "Combine Op";
+		UIType = "Combo";
+		Items
+		{
+			"multiply 1*2" = "multiply 1*2";
+			"add 1+2" = "add 1+2";
+			"divide 1/2" = "divide 1/2";
+			"subtract 1-2" = "subtract 1-2";
+			"lerp(1, 2, 3)dot(1, 2)" = "lerp(1, 2, 3)dot(1, 2)";
+			"distance(1 -> 2)" = "distance(1 -> 2)";
+			"cross(1, 2)" = "cross(1, 2)";
+		}
+	}
+}
+Layout "Default"
+{
+	input1;
+	input2;
+	input3;
+	combineOp;
+}
+Layout "RenderTree"
+{
+	input1;
+	input2;
+	input3;
+}
+Plugin = Shader
+{
+	Filename = "alCombineColor";
+}

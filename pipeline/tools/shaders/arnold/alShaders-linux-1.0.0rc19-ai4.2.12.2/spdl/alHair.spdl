@@ -1,0 +1,1066 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{ffbd6bc4-fd9c-4f38-b0b0-436f545e47b3}";
+PropertySet "alHair_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{9d6332e7-1ab6-405e-afce-b5e7b3c09e11}";
+		Type = color;
+	}
+	Parameter "melanin" input
+	{
+		GUID = "{fdfc3aad-ca55-4787-b3d0-e03737e61527}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.150000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "dyeColor" input
+	{
+		GUID = "{b62f3f04-f776-4d6b-b20b-bd4ff0b92830}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "specularWidth" input
+	{
+		GUID = "{91dd57e6-30d7-49a9-8089-79893d732191}";
+		Type = scalar;
+		Texturable = off;
+		Value = 3.000000;
+	}
+	Parameter "specularShift" input
+	{
+		GUID = "{78b92313-e400-4e33-a207-d664137380a6}";
+		Type = scalar;
+		Texturable = off;
+		Value = 4.000000;
+	}
+	Parameter "opacity" input
+	{
+		GUID = "{07fc3204-4e7a-43ac-a046-96b79e00a07e}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "randomTangent" input
+	{
+		GUID = "{2ba5dc8f-8d4e-412e-a20c-763864437dc2}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "randomMelanin" input
+	{
+		GUID = "{f43a68a4-2d55-4a8c-8ae3-1c071ab10de8}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.150000;
+	}
+	Parameter "randomHue" input
+	{
+		GUID = "{c4d4c1a8-1374-4752-83f3-5ba63e4f13b0}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "randomSaturation" input
+	{
+		GUID = "{6422c5f9-f40b-4f4c-b449-51beca18136b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "glintRolloff" input
+	{
+		GUID = "{e8269bae-2da6-47d3-b89f-23e426451f17}";
+		Type = scalar;
+		Texturable = off;
+		Value = 5.000000;
+	}
+	Parameter "transmissionRolloff" input
+	{
+		GUID = "{fb7a722b-a2b3-47db-8b11-203c010a75a7}";
+		Type = scalar;
+		Texturable = off;
+		Value = 10.000000;
+	}
+	Parameter "diffuseStrength" input
+	{
+		GUID = "{3464102d-eed4-4838-89e5-6494112a7eea}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "diffuseColor" input
+	{
+		GUID = "{bf8497be-4173-4fc3-8149-de96e9c466b7}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "diffuseScatteringMode" input
+	{
+		GUID = "{6acd0f86-6b28-4ff0-a57e-7b30ad6bd034}";
+		Type = string;
+		Texturable = off;
+		Value = "dual-scattering";
+	}
+	Parameter "diffuseForward" input
+	{
+		GUID = "{2d65cb3d-7995-4ce4-bdc7-9ac3e146c5ee}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.700000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "diffuseBack" input
+	{
+		GUID = "{162b09d5-327d-47a6-aba8-b53dfe3fe88d}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.700000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular1Strength" input
+	{
+		GUID = "{202ab6c2-3c6c-4a7c-931e-5e75cb90ff07}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular1Color" input
+	{
+		GUID = "{2894944c-0a1b-4d0c-9434-a6dd726d14e7}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "specular1WidthScale" input
+	{
+		GUID = "{bf8d5d68-d4fc-4610-ab23-a2976a49f56f}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "specular1Shift" input
+	{
+		GUID = "{7e9281fa-834c-4296-bb6d-197b24011441}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "specular2Strength" input
+	{
+		GUID = "{3c15210c-1e3d-4f07-adad-11f26f05724c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular2Color" input
+	{
+		GUID = "{588838ff-0d95-4db1-b2fe-834528302d68}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "specular2WidthScale" input
+	{
+		GUID = "{f8369135-5636-4ec7-9cf8-6e0b082563f6}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "specular2Shift" input
+	{
+		GUID = "{5c32f07c-82fb-40f8-85cf-c02028314aeb}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "glintStrength" input
+	{
+		GUID = "{0bc765b7-9091-491a-aba8-f8ff0b8e7adb}";
+		Type = scalar;
+		Texturable = on;
+		Value = 2.000000;
+	}
+	Parameter "transmissionStrength" input
+	{
+		GUID = "{4f6193fa-f45a-4a0b-93f6-7cc5c92cd157}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "transmissionColor" input
+	{
+		GUID = "{74070892-d6c3-4bd7-a73d-d40f42a9b5a9}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "transmissionWidthScale" input
+	{
+		GUID = "{f297c2a4-d2cc-44a2-bb4a-74e903068d47}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "transmissionShift" input
+	{
+		GUID = "{5b08a906-8a69-4bbc-8a9b-843a09cd5ea1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "id1" input
+	{
+		GUID = "{5da317dd-e6b7-46bb-9aa6-002d43da187f}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id2" input
+	{
+		GUID = "{d6749c75-de56-45a6-bf57-802719537782}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id3" input
+	{
+		GUID = "{c7484320-62c5-4eb9-b81b-d5a6ac219817}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id4" input
+	{
+		GUID = "{95f89104-a3e8-4ac8-a0aa-88ab7dcb97ae}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id5" input
+	{
+		GUID = "{fa8bd422-18ea-4314-9778-cf1d12f3b148}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id6" input
+	{
+		GUID = "{80ffcc0a-bba9-4305-9e9d-f42d34d7283c}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id7" input
+	{
+		GUID = "{aaed40b1-8575-49ad-81ad-fe24812d5e1a}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id8" input
+	{
+		GUID = "{8aa814d0-ec07-492f-864d-31697a9f5b74}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "crypto_asset_override" input
+	{
+		GUID = "{eca7b887-7e47-4836-b427-4b810c441bda}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "crypto_object_override" input
+	{
+		GUID = "{90f680a6-8d61-4683-8754-697d4788a969}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "crypto_material_override" input
+	{
+		GUID = "{575f24e3-c47a-4c10-b20d-4b1015f85ecf}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "dualDepth" input
+	{
+		GUID = "{f07d87f5-e6c0-41ac-8a00-c5bdca75e7a7}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "diffuseIndirectStrength" input
+	{
+		GUID = "{65b2084a-0a6f-45fb-a5bd-218570d46ba1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "extraSamplesDiffuse" input
+	{
+		GUID = "{56652548-466b-4ac4-8e59-4815a5e54c22}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "glossyIndirectStrength" input
+	{
+		GUID = "{2a1ad1a9-12cc-437d-ba84-a8f7d06bdf57}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "extraSamplesGlossy" input
+	{
+		GUID = "{c02f3bc5-9af9-4138-aabf-8117b04d50c4}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "uparam" input
+	{
+		GUID = "{472074ed-c65e-4cd1-8a1d-836fbbc210fe}";
+		Type = string;
+		Texturable = off;
+		Value = "uparamcoord";
+	}
+	Parameter "vparam" input
+	{
+		GUID = "{c8860dee-ae10-4aca-91f0-88af3d824aef}";
+		Type = string;
+		Texturable = off;
+		Value = "vparamcoord";
+	}
+	Parameter "aov_diffuse_color" input
+	{
+		GUID = "{0011564a-0ef9-417e-a146-db2ea3936f68}";
+		Type = string;
+		Value = "Arnold_Diffuse_Color";
+	}
+	Parameter "aov_direct_diffuse" input
+	{
+		GUID = "{ef16f67c-5e2a-419e-ac9e-a1e5ff035783}";
+		Type = string;
+		Value = "Arnold_Direct_Diffuse";
+	}
+	Parameter "aov_indirect_diffuse" input
+	{
+		GUID = "{c6d02d4c-2240-4a10-b925-025d7a6a7519}";
+		Type = string;
+		Value = "Arnold_Indirect_Diffuse";
+	}
+	Parameter "aov_direct_local" input
+	{
+		GUID = "{6ffb3952-3b69-4c90-863c-53c134759938}";
+		Type = string;
+		Value = "Arnold_Direct_Local";
+	}
+	Parameter "aov_indirect_local" input
+	{
+		GUID = "{957f3efd-8c5a-47f4-9263-48aa3f5e6edc}";
+		Type = string;
+		Value = "Arnold_Indirect_Local";
+	}
+	Parameter "aov_direct_global" input
+	{
+		GUID = "{a3daa2c2-df71-439f-8802-3b36ec6c7390}";
+		Type = string;
+		Value = "Arnold_Direct_Global";
+	}
+	Parameter "aov_indirect_global" input
+	{
+		GUID = "{35d4b247-55d4-4523-8219-84349205e051}";
+		Type = string;
+		Value = "Arnold_Indirect_Global";
+	}
+	Parameter "aov_direct_specular" input
+	{
+		GUID = "{c374c118-6e60-43a8-aa41-d1dc205f450a}";
+		Type = string;
+		Value = "Arnold_Direct_Specular";
+	}
+	Parameter "aov_indirect_specular" input
+	{
+		GUID = "{0ebdf19b-ed68-4a7d-86ea-85edc86deb64}";
+		Type = string;
+		Value = "Arnold_Indirect_Specular";
+	}
+	Parameter "aov_light_group_1" input
+	{
+		GUID = "{d748e5c3-9b20-4bc2-95dd-09b262fcda6d}";
+		Type = string;
+		Value = "Arnold_Light_Group_1";
+	}
+	Parameter "aov_light_group_2" input
+	{
+		GUID = "{3e0c924f-7d9c-40b7-a2d2-070415d7ad7d}";
+		Type = string;
+		Value = "Arnold_Light_Group_2";
+	}
+	Parameter "aov_light_group_3" input
+	{
+		GUID = "{68d195fd-e4bb-4538-91b1-62b59a1879f4}";
+		Type = string;
+		Value = "Arnold_Light_Group_3";
+	}
+	Parameter "aov_light_group_4" input
+	{
+		GUID = "{1f0065a6-959e-452a-a0be-9fedce0c8b0f}";
+		Type = string;
+		Value = "Arnold_Light_Group_4";
+	}
+	Parameter "aov_light_group_5" input
+	{
+		GUID = "{c9c76e8c-ebef-4579-a605-5ec9dbdab308}";
+		Type = string;
+		Value = "Arnold_Light_Group_5";
+	}
+	Parameter "aov_light_group_6" input
+	{
+		GUID = "{1951cf96-20e6-4f1d-8f57-9ee030f09050}";
+		Type = string;
+		Value = "Arnold_Light_Group_6";
+	}
+	Parameter "aov_light_group_7" input
+	{
+		GUID = "{2aa10dff-a5cb-47bc-9e3d-8d579648ca8b}";
+		Type = string;
+		Value = "Arnold_Light_Group_7";
+	}
+	Parameter "aov_light_group_8" input
+	{
+		GUID = "{c274502b-8ae1-4d61-af8a-d6a1e0dc0c13}";
+		Type = string;
+		Value = "Arnold_Light_Group_8";
+	}
+	Parameter "aov_id_1" input
+	{
+		GUID = "{729f758c-4561-4849-a058-04bae548896c}";
+		Type = string;
+		Value = "Arnold_Id_1";
+	}
+	Parameter "aov_id_2" input
+	{
+		GUID = "{137e5884-ac97-4402-a71e-3fec0f8dfb71}";
+		Type = string;
+		Value = "Arnold_Id_2";
+	}
+	Parameter "aov_id_3" input
+	{
+		GUID = "{22c056d0-3389-4d8a-aea5-4a04c9154de8}";
+		Type = string;
+		Value = "Arnold_Id_3";
+	}
+	Parameter "aov_id_4" input
+	{
+		GUID = "{c547fb0e-3e12-4855-b90d-66058d0cadfc}";
+		Type = string;
+		Value = "Arnold_Id_4";
+	}
+	Parameter "aov_id_5" input
+	{
+		GUID = "{4f3fa70f-d96d-45fd-88bb-30b0979d1322}";
+		Type = string;
+		Value = "Arnold_Id_5";
+	}
+	Parameter "aov_id_6" input
+	{
+		GUID = "{c890cb81-e01a-4359-861a-c1f04e8038d2}";
+		Type = string;
+		Value = "Arnold_Id_6";
+	}
+	Parameter "aov_id_7" input
+	{
+		GUID = "{d3840602-0534-403e-99e1-0f6df163edef}";
+		Type = string;
+		Value = "Arnold_Id_7";
+	}
+	Parameter "aov_id_8" input
+	{
+		GUID = "{340dab23-8d09-4517-8acb-080d1de5f116}";
+		Type = string;
+		Value = "Arnold_Id_8";
+	}
+	Parameter "aov_crypto_asset" input
+	{
+		GUID = "{f78c12aa-1552-479e-9709-0aecbeb2f173}";
+		Type = string;
+		Value = "Arnold_Crypto_Asset";
+	}
+	Parameter "aov_crypto_object" input
+	{
+		GUID = "{0f12c5bc-193a-4a2e-9518-01ff9f06c3b3}";
+		Type = string;
+		Value = "Arnold_Crypto_Object";
+	}
+	Parameter "aov_crypto_material" input
+	{
+		GUID = "{a40f5e01-998c-49c3-b3f5-e2ccfdbc1d81}";
+		Type = string;
+		Value = "Arnold_Crypto_Material";
+	}
+}
+MetaShader "alHair_meta"
+{
+	Name = "ALS_Hair";
+	Type = material;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Hair";
+		Filename = "alHair";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	melanin
+	{
+		Name = "Melanin";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	dyeColor
+	{
+		Name = "Dye color";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specularWidth
+	{
+		Name = "Highlight width";
+	}
+	specularShift
+	{
+		Name = "Highlight shift";
+	}
+	opacity
+	{
+		Name = "Opacity";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	randomTangent
+	{
+		Name = "Tangent";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	randomMelanin
+	{
+		Name = "Melanin";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	randomHue
+	{
+		Name = "Dye hue";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	randomSaturation
+	{
+		Name = "Dye saturation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	glintRolloff
+	{
+		Name = "Glint rolloff";
+	}
+	transmissionRolloff
+	{
+		Name = "Transmission rolloff";
+	}
+	diffuseStrength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseColor
+	{
+		Name = "Tint";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseScatteringMode
+	{
+		Name = "Scattering mode";
+		UIType = "Combo";
+		Items
+		{
+			"kajiya-kay" = "kajiya-kay";
+			"dual-scattering" = "dual-scattering";
+		}
+	}
+	diffuseForward
+	{
+		Name = "Forward scattering";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseBack
+	{
+		Name = "Back scattering";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1Strength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1Color
+	{
+		Name = "Tint";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1WidthScale
+	{
+		Name = "Width scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1Shift
+	{
+		Name = "Shift offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2Strength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2Color
+	{
+		Name = "Tint";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2WidthScale
+	{
+		Name = "Width scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2Shift
+	{
+		Name = "Shift offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	glintStrength
+	{
+		Name = "Glint strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionStrength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionColor
+	{
+		Name = "Tint";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionWidthScale
+	{
+		Name = "Width scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionShift
+	{
+		Name = "Shift offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id1
+	{
+		Name = "id1";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id2
+	{
+		Name = "id2";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id3
+	{
+		Name = "id3";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id4
+	{
+		Name = "id4";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id5
+	{
+		Name = "id5";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id6
+	{
+		Name = "id6";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id7
+	{
+		Name = "id7";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id8
+	{
+		Name = "id8";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	crypto_asset_override
+	{
+		Name = "Crypto asset override";
+	}
+	crypto_object_override
+	{
+		Name = "Crypto object override";
+	}
+	crypto_material_override
+	{
+		Name = "Crypto material override";
+	}
+	dualDepth
+	{
+		Name = "Brute force bounces";
+	}
+	diffuseIndirectStrength
+	{
+		Name = "Diffuse indirect strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	extraSamplesDiffuse
+	{
+		Name = "Diffuse extra samples";
+	}
+	glossyIndirectStrength
+	{
+		Name = "Glossy indirect strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	extraSamplesGlossy
+	{
+		Name = "Glossy extra samples";
+	}
+	uparam
+	{
+		Name = "U param";
+	}
+	vparam
+	{
+		Name = "V param";
+	}
+	aov_diffuse_color
+	{
+		Name = "aov_diffuse_color";
+	}
+	aov_direct_diffuse
+	{
+		Name = "aov_direct_diffuse";
+	}
+	aov_indirect_diffuse
+	{
+		Name = "aov_indirect_diffuse";
+	}
+	aov_direct_local
+	{
+		Name = "aov_direct_local";
+	}
+	aov_indirect_local
+	{
+		Name = "aov_indirect_local";
+	}
+	aov_direct_global
+	{
+		Name = "aov_direct_global";
+	}
+	aov_indirect_global
+	{
+		Name = "aov_indirect_global";
+	}
+	aov_direct_specular
+	{
+		Name = "aov_direct_specular";
+	}
+	aov_indirect_specular
+	{
+		Name = "aov_indirect_specular";
+	}
+	aov_light_group_1
+	{
+		Name = "aov_light_group_1";
+	}
+	aov_light_group_2
+	{
+		Name = "aov_light_group_2";
+	}
+	aov_light_group_3
+	{
+		Name = "aov_light_group_3";
+	}
+	aov_light_group_4
+	{
+		Name = "aov_light_group_4";
+	}
+	aov_light_group_5
+	{
+		Name = "aov_light_group_5";
+	}
+	aov_light_group_6
+	{
+		Name = "aov_light_group_6";
+	}
+	aov_light_group_7
+	{
+		Name = "aov_light_group_7";
+	}
+	aov_light_group_8
+	{
+		Name = "aov_light_group_8";
+	}
+	aov_id_1
+	{
+		Name = "aov_id_1";
+	}
+	aov_id_2
+	{
+		Name = "aov_id_2";
+	}
+	aov_id_3
+	{
+		Name = "aov_id_3";
+	}
+	aov_id_4
+	{
+		Name = "aov_id_4";
+	}
+	aov_id_5
+	{
+		Name = "aov_id_5";
+	}
+	aov_id_6
+	{
+		Name = "aov_id_6";
+	}
+	aov_id_7
+	{
+		Name = "aov_id_7";
+	}
+	aov_id_8
+	{
+		Name = "aov_id_8";
+	}
+	aov_crypto_asset
+	{
+		Name = "aov_crypto_asset";
+	}
+	aov_crypto_object
+	{
+		Name = "aov_crypto_object";
+	}
+	aov_crypto_material
+	{
+		Name = "aov_crypto_material";
+	}
+}
+Layout "Default"
+{
+	Tab "Fibre properties"
+	{
+		melanin;
+		dyeColor;
+		specularWidth;
+		specularShift;
+		opacity;
+		Group "Randomize"
+		{
+			randomTangent;
+			randomMelanin;
+			randomHue;
+			randomSaturation;
+		}
+		Group "Advanced"
+		{
+			glintRolloff;
+			transmissionRolloff;
+		}
+	}
+	Tab "Diffuse"
+	{
+		diffuseStrength;
+		diffuseColor;
+		diffuseScatteringMode;
+		diffuseForward;
+		diffuseBack;
+	}
+	Tab "Specular 1"
+	{
+		specular1Strength;
+		specular1Color;
+		specular1WidthScale;
+		specular1Shift;
+	}
+	Tab "Specular 2"
+	{
+		specular2Strength;
+		specular2Color;
+		specular2WidthScale;
+		specular2Shift;
+		glintStrength;
+	}
+	Tab "Transmission"
+	{
+		transmissionStrength;
+		transmissionColor;
+		transmissionWidthScale;
+		transmissionShift;
+	}
+	Tab "IDs"
+	{
+		id1;
+		id2;
+		id3;
+		id4;
+		id5;
+		id6;
+		id7;
+		id8;
+	}
+	Tab "AOVs"
+	{
+		crypto_asset_override;
+		crypto_object_override;
+		crypto_material_override;
+		aov_diffuse_color;
+		aov_direct_diffuse;
+		aov_indirect_diffuse;
+		aov_direct_local;
+		aov_indirect_local;
+		aov_direct_global;
+		aov_indirect_global;
+		aov_direct_specular;
+		aov_indirect_specular;
+		aov_light_group_1;
+		aov_light_group_2;
+		aov_light_group_3;
+		aov_light_group_4;
+		aov_light_group_5;
+		aov_light_group_6;
+		aov_light_group_7;
+		aov_light_group_8;
+		aov_id_1;
+		aov_id_2;
+		aov_id_3;
+		aov_id_4;
+		aov_id_5;
+		aov_id_6;
+		aov_id_7;
+		aov_id_8;
+		aov_crypto_asset;
+		aov_crypto_object;
+		aov_crypto_material;
+	}
+	Tab "Advanced"
+	{
+		dualDepth;
+		diffuseIndirectStrength;
+		extraSamplesDiffuse;
+		glossyIndirectStrength;
+		extraSamplesGlossy;
+		uparam;
+		vparam;
+	}
+}
+Layout "RenderTree"
+{
+	Group "Fibre properties"
+	{
+		melanin;
+		dyeColor;
+		opacity;
+		Group "Randomize"
+		{
+			randomTangent;
+			randomMelanin;
+			randomHue;
+			randomSaturation;
+		}
+	}
+	Group "Diffuse"
+	{
+		diffuseStrength;
+		diffuseColor;
+		diffuseForward;
+		diffuseBack;
+	}
+	Group "Specular 1"
+	{
+		specular1Strength;
+		specular1Color;
+		specular1WidthScale;
+		specular1Shift;
+	}
+	Group "Specular 2"
+	{
+		specular2Strength;
+		specular2Color;
+		specular2WidthScale;
+		specular2Shift;
+		glintStrength;
+	}
+	Group "Transmission"
+	{
+		transmissionStrength;
+		transmissionColor;
+		transmissionWidthScale;
+		transmissionShift;
+	}
+	Group "IDs"
+	{
+		id1;
+		id2;
+		id3;
+		id4;
+		id5;
+		id6;
+		id7;
+		id8;
+	}
+	Group "Advanced"
+	{
+		diffuseIndirectStrength;
+		glossyIndirectStrength;
+	}
+}
+Plugin = Shader
+{
+	Filename = "alHair";
+}

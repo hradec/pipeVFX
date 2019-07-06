@@ -1,0 +1,93 @@
+/*
+*	Called when the state of the "use playback range" control changes to update the other range controls.
+*/
+global proc realflowCheckSDPlaybackRangeEO()
+{
+	int $useRange = `getAttr "realflowSDExportOptions.sdUsePlaybackRange"`;
+	control -e -enable (!$useRange) rfSDStartFrameEO;
+	control -e -enable (!$useRange) rfSDEndFrameEO;
+}
+
+/*
+*	Called when the state of the "use active camera" control changes to update the camera list dropdown.
+*/
+global proc realflowCheckSDActiveCamEO()
+{
+	int $useActive = `getAttr "realflowSDExportOptions.sdUseActiveCamera"`;
+	control -e -enable (!$useActive) rfSDCameraEO;
+}
+
+/*
+*	Called when the user selects a camera from the drop-down menu. Updates the settings node.
+*/
+global proc realflowCameraChangedEO()
+{
+	string $cam = `optionMenuGrp -q -value rfSDCameraEO`;
+	setAttr -type "string" realflowSDExportOptions.sdCamera $cam;
+}
+
+/*
+*	Creates the controls for the export settings.
+*/
+proc buildControls(string $parent)
+{
+	realflowMakeExportOptionsNode("realflowSDExportOptions", "realflowSDExportOptions");
+	
+	setParent $parent;
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	
+	columnLayout -adjustableColumn true;
+		attrControlGrp -label "Use Playback Range" -attribute "realflowSDExportOptions.sdUsePlaybackRange" -changeCommand "realflowCheckSDPlaybackRangeEO";
+		attrControlGrp -label "Start Frame" -attribute "realflowSDExportOptions.sdStartFrame" rfSDStartFrameEO;
+		attrControlGrp -label "End Frame" -attribute "realflowSDExportOptions.sdEndFrame" rfSDEndFrameEO;
+		attrControlGrp -label "Export Deformation" -attribute "realflowSDExportOptions.sdExportDeformation";
+		attrControlGrp -label "Use Active Camera" -attribute "realflowSDExportOptions.sdUseActiveCamera" -changeCommand "realflowCheckSDActiveCamEO";
+
+		optionMenuGrp -label "Camera" -changeCommand "realflowCameraChangedEO" rfSDCameraEO;
+		string $cameras[] = `ls -type camera`;
+		int $selIdx = 0;
+		int $numPerspCams = 0;
+		string $selCam = `getAttr realflowSDExportOptions.sdCamera`;
+		for($i = 0; $i < size($cameras); ++$i)
+		{
+			if(`getAttr ($cameras[$i] + ".orthographic")`)
+				continue;
+			string $xform[] = `listRelatives -parent $cameras[$i]`;
+			menuItem -l $xform[0];
+			++$numPerspCams;
+			if($xform[0] == $selCam)
+				$selIdx = $numPerspCams;
+		}
+		if($selIdx > 0)
+			optionMenuGrp -e -select $selIdx rfSDCameraEO;
+		else
+			realflowCameraChangedEO();
+			
+	setParent ..;
+	
+	setUITemplate -popTemplate;
+	
+	realflowCheckSDPlaybackRangeEO();
+	realflowCheckSDActiveCamEO();
+}
+
+/*
+*	Builds the UI displayed when the user selects the export option box from the file menu.
+*/
+global proc int realflowSDExportOptions(string $parent, string $action, string $initialSettings, string $resultCallback)
+{
+	if($action == "post")
+	{
+		buildControls($parent);
+		return 1;
+	}
+
+	if($action == "query")
+	{
+		eval($resultCallback + "\"\"");
+		return 1;
+	}
+	
+	return 0;
+}
+

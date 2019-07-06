@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -23,15 +23,15 @@ import sys
 logd = False
 if '--logd' in sys.argv:
     logd = True
-    
+
 
 def __log(msg):
-    print msg
+    print(msg)
     pass
 
 def info(msg):
     __log(msg)
-    
+
 def warning(msg):
     __log(msg)
 
@@ -41,4 +41,3 @@ def error(msg):
 def debug(msg):
     if logd:
         __log(msg)
-    

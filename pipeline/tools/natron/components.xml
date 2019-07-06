@@ -1,0 +1,268 @@
+<Packages>
+    <ApplicationName>Natron Community Plugins</ApplicationName>
+    <ApplicationVersion>1.0</ApplicationVersion>
+    <Package>
+        <Name>natron.community.plugins.core</Name>
+        <Pixmap></Pixmap>
+        <Title>Core</Title>
+        <Description>Meta package</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>0</Size>
+        <Dependencies></Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_SimpleKeyer</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_SimpleKeyer</Title>
+        <Description>A very simple Keyer for a wide variety of operations.Inspired by Nukes Keyer-Node.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>50903</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_Despot</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_Despot</Title>
+        <Description>Despots for black or white pixels.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>37839</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.Z2Normal</Name>
+        <Pixmap></Pixmap>
+        <Title>Z2Normal</Title>
+        <Description>Generate a Normal Pass from a Z pass</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>36135</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.ReFlect</Name>
+        <Pixmap></Pixmap>
+        <Title>ReFlect</Title>
+        <Description>Take a Normal pass and an image and map it to reflection, similar to matcap in 3D render</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>43233</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.ChromaticAberrationPP</Name>
+        <Pixmap></Pixmap>
+        <Title>ChormaticAberrationPP</Title>
+        <Description>This PyPlug mimics the optical effect called \"chromatic aberration\".\n\nIt occurs because lenses have different refractive indices for different wave lengths of light (also known as: dispersion) resulting in different convergence points for each wave length.\nNormally this is an unwanted effect which the producers of lens systems try to minimize as much as possible. But if used subtly, it can help cg elements to look a bit more naturally and of course it can be used as a nice effect for motion graphics.\n\nActually there are two types of chromatic aberration:\n1. Axial Chromatic Aberration\nThe axial chromatic abberation occurs because parallel incoming light of different wavelengths is focused on different planes. (As long as the lenses are not corrected) So the green image may be sharp, because it\'s focus is perfectly aligned with the photosensor, but the blue and the red image might be a bit blurred, because their focus can be slightly off.\nThis kind of chromatic aberration is present all over the image. It\'s noticable especially at the high contrast areas.\n\n2. Lateral Chromatic Aberration\nThe lateral chromatic aberration will only occure at the periphery of the image. If light falls in from an angle the dispersion causes the light of different wave lengths to focus at different points on the sensor/film. This results in slightly shifted color channels at the periphery, if the lens is not corrected.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>41658</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.EdgeBlur</Name>
+        <Pixmap></Pixmap>
+        <Title>EdgeBlur</Title>
+        <Description>Blur the image according to the edges of the Alpha provided.\n\nUseful to better integrate an image over another in a compositing.\nThis can help also to fix artifacts caused by a DOF filter....</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>22634</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.Shaker</Name>
+        <Pixmap></Pixmap>
+        <Title>Shaker</Title>
+        <Description>This PyPlug adds a shaking effect to the input image. \nIt\'s based on an expression similar to the \'wiggle\' expression known from After Effects.\n\nIt also supports two methods to extend the image and get rid of the black areas which normally occure while shaking.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>76351</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.LightWrap_Simple</Name>
+        <Pixmap></Pixmap>
+        <Title>LightWrap_Simple</Title>
+        <Description>An alternative to built-in LightWrap plugin, simpler to use, also it as an option to dilate wrap to get a bigger effect</Description>
+        <Version>3.1</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>28725</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_Tweaky</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_Tweaky</Title>
+        <Description>Provides a variety of little tweaking-options, like Vibrance, WB-Slider, Tint, etc.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>27926</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.Defocus</Name>
+        <Pixmap></Pixmap>
+        <Title>Defocus</Title>
+        <Description>Add a bokeh blur to the image. You can use an image to guide blur size. \nIt\'s not suited to act as a ZBlur plugin ( to fake DOF using a Zpass ) . But in some cases it can work.\nTypicall use case can be to blur the bakground image in a composite to match the blur of the foreground.\n\nCredits : \nOrginal Shader by David Hoskins\nLicense Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.\nhttps://www.shadertoy.com/view/4d2Xzw</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>19161</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_CleanScreen</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_CleanScreen</Title>
+        <Description>Evens out your Chroma-Screen with the help of a Cleanplate.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>55402</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_ColourSmear</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_ColourSmear</Title>
+        <Description>Smears the colors around a given Alpha.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>66237</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_NoiseDistort</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_NoiseDistort</Title>
+        <Description>Distorts an image based on two different noise-layer for a more dynamic feel.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>59517</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.ReShade</Name>
+        <Pixmap></Pixmap>
+        <Title>ReShade</Title>
+        <Description>GPU Relighting of 3D renders using a normal pass.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>37949</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_Despill</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_Despill</Title>
+        <Description>An alternative to buit-in Despill node that is quick and easy to setup.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>85732</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.Vignette</Name>
+        <Pixmap></Pixmap>
+        <Title>Vignette</Title>
+        <Description>This effect adds a vignette to the image. \nA vignette is a reduction of the images brightness at the peripherie compared to the image center.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>51150</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.ZCombine</Name>
+        <Pixmap></Pixmap>
+        <Title>ZCombine</Title>
+        <Description>Mix two images according to their Zbuffer.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>14906</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.FrameStamp</Name>
+        <Pixmap></Pixmap>
+        <Title>FrameStamp</Title>
+        <Description>A very simple stamp that show the current frame in the corner of the image.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>8406</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_fakeDefocus</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_fakeDefocus</Title>
+        <Description>A very faky Defocus. Very faky. Not very good. Might work for tiny things.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>6877</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.lp_HairKey</Name>
+        <Pixmap></Pixmap>
+        <Title>lp_HairKey</Title>
+        <Description>A keyless Keyer for fine detail like hair which is hard to come by with a matte.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>70001</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.PM_VectorBlur</Name>
+        <Pixmap></Pixmap>
+        <Title>PM_VectorBlur</Title>
+        <Description>Poor Man\'s Vector Blur.\nBlur an image according to a Vector/Motion Pass.\n\nIt works but it\'s very basic so things like good occlusions or way to prevent bleeding is not supported.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>16439</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.Chromatic_Aberration</Name>
+        <Pixmap></Pixmap>
+        <Title>Chromatic Aberration</Title>
+        <Description>Create a Chromatic Aberration effect, similar to the one found in Blender.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>48908</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+    <Package>
+        <Name>natron.community.plugins.Orton</Name>
+        <Pixmap></Pixmap>
+        <Title>Orton</Title>
+        <Description>Orton Effect.</Description>
+        <Version>1.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2016-12-16</InstallDate>
+        <Size>6081</Size>
+        <Dependencies>natron.community.plugins.core</Dependencies>
+    </Package>
+</Packages>

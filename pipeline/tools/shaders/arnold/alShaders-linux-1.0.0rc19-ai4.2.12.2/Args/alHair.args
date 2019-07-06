@@ -1,0 +1,102 @@
+<args format="1.0">
+<page name="Fibre properties">
+	<param name="melanin" label="Melanin"/>
+	<param name="dyeColor" label="Dye color" widget="color"/>
+	<param name="specularWidth" label="Highlight width"/>
+	<param name="specularShift" label="Highlight shift"/>
+	<param name="opacity" label="Opacity" widget="color"/>
+	<page name="Randomize">
+		<param name="randomTangent" label="Tangent"/>
+		<param name="randomMelanin" label="Melanin"/>
+		<param name="randomHue" label="Dye hue"/>
+		<param name="randomSaturation" label="Dye saturation"/>
+	</page>
+	<page name="Advanced">
+		<param name="glintRolloff" label="Glint rolloff"/>
+		<param name="transmissionRolloff" label="Transmission rolloff"/>
+	</page>
+</page>
+<page name="Diffuse">
+	<param name="diffuseStrength" label="Strength"/>
+	<param name="diffuseColor" label="Tint" widget="color"/>
+	<param name="diffuseScatteringMode" label="Scattering mode" widget="popup">
+		<hintlist name="options">
+			<string value="kajiya-kay"/>
+			<string value="dual-scattering"/>
+		</hintlist>
+	</param>
+	<param name="diffuseForward" label="Forward scattering"/>
+	<param name="diffuseBack" label="Back scattering"/>
+</page>
+<page name="Specular 1">
+	<param name="specular1Strength" label="Strength"/>
+	<param name="specular1Color" label="Tint" widget="color"/>
+	<param name="specular1WidthScale" label="Width scale"/>
+	<param name="specular1Shift" label="Shift offset"/>
+</page>
+<page name="Specular 2">
+	<param name="specular2Strength" label="Strength"/>
+	<param name="specular2Color" label="Tint" widget="color"/>
+	<param name="specular2WidthScale" label="Width scale"/>
+	<param name="specular2Shift" label="Shift offset"/>
+	<param name="glintStrength" label="Glint strength"/>
+</page>
+<page name="Transmission">
+	<param name="transmissionStrength" label="Strength"/>
+	<param name="transmissionColor" label="Tint" widget="color"/>
+	<param name="transmissionWidthScale" label="Width scale"/>
+	<param name="transmissionShift" label="Shift offset"/>
+</page>
+<page name="IDs">
+	<param name="id1" label="id1" widget="color"/>
+	<param name="id2" label="id2" widget="color"/>
+	<param name="id3" label="id3" widget="color"/>
+	<param name="id4" label="id4" widget="color"/>
+	<param name="id5" label="id5" widget="color"/>
+	<param name="id6" label="id6" widget="color"/>
+	<param name="id7" label="id7" widget="color"/>
+	<param name="id8" label="id8" widget="color"/>
+</page>
+<page name="AOVs">
+	<param name="crypto_asset_override" label="Crypto asset override"/>
+	<param name="crypto_object_override" label="Crypto object override"/>
+	<param name="crypto_material_override" label="Crypto material override"/>
+	<param name="aov_diffuse_color" label="Diffuse color"/>
+	<param name="aov_direct_diffuse" label="Direct diffuse"/>
+	<param name="aov_indirect_diffuse" label="Indirect diffuse"/>
+	<param name="aov_direct_local" label="Direct local"/>
+	<param name="aov_indirect_local" label="Indirect local"/>
+	<param name="aov_direct_global" label="Direct global"/>
+	<param name="aov_indirect_global" label="Indirect global"/>
+	<param name="aov_direct_specular" label="Direct specular"/>
+	<param name="aov_indirect_specular" label="Indirect specular"/>
+	<param name="aov_light_group_1" label="Light group [1]"/>
+	<param name="aov_light_group_2" label="Light group [2]"/>
+	<param name="aov_light_group_3" label="Light group [3]"/>
+	<param name="aov_light_group_4" label="Light group [4]"/>
+	<param name="aov_light_group_5" label="Light group [5]"/>
+	<param name="aov_light_group_6" label="Light group [6]"/>
+	<param name="aov_light_group_7" label="Light group [7]"/>
+	<param name="aov_light_group_8" label="Light group [8]"/>
+	<param name="aov_id_1" label="ID [1]"/>
+	<param name="aov_id_2" label="ID [2]"/>
+	<param name="aov_id_3" label="ID [3]"/>
+	<param name="aov_id_4" label="ID [4]"/>
+	<param name="aov_id_5" label="ID [5]"/>
+	<param name="aov_id_6" label="ID [6]"/>
+	<param name="aov_id_7" label="ID [7]"/>
+	<param name="aov_id_8" label="ID [8]"/>
+	<param name="aov_crypto_asset" label="Crypto Asset"/>
+	<param name="aov_crypto_object" label="Crypto Object"/>
+	<param name="aov_crypto_material" label="Crypto Material"/>
+</page>
+<page name="Advanced">
+	<param name="dualDepth" label="Brute force bounces" int="True"/>
+	<param name="diffuseIndirectStrength" label="Diffuse indirect strength"/>
+	<param name="extraSamplesDiffuse" label="Diffuse extra samples" int="True"/>
+	<param name="glossyIndirectStrength" label="Glossy indirect strength"/>
+	<param name="extraSamplesGlossy" label="Glossy extra samples" int="True"/>
+	<param name="uparam" label="U param"/>
+	<param name="vparam" label="V param"/>
+</page>
+</args>

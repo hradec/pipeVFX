@@ -1,0 +1,178 @@
+
+/*
+
+DVY_VehicleRotate
+
+*/
+
+
+///////////////////////////////////////////////////////////////////////////////
+/*			
+				
+	Copyright © 2006 DVY_VehicleRotate. All rights reserved davvey@ntlworld.com
+					
+
+					- DVY_VehicleRotate -
+						  
+	This script will build Vehicle rig for automatic correction ofwheel rotation
+	based on rotation of the vehicle in the Y axis.
+	This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script current has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite ot scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging oif individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, fill in required fields and press
+	"Rig Vehicle" button. This script is called from within DVY_Vehicle Rigger.mel
+	and will set up all four wheels with vehicle rotation correction for each wheel.
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |	
+		  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+		This will tilt the Chassis group as reguired. Also each indiviual
+		Wheel can be moved up and down by moving each wheel Group Ground 
+		Locator to simulate ground variations. If these are Geometry constained
+		to a "grtound" object or plane to movement will be automatic.
+	
+
+
+*/
+//////////////////////////////////////////////////////////////////////////
+//					DVY_WheelSpin Procedure
+//////////////////////////////////////////////////////////////////////////
+
+//============================================================================
+//	GLOBAL VARIABLES
+//============================================================================
+	global int $DVYDebug;
+
+// Integer Flag that allows print statements to be output to
+// message field for tracking purposes.
+	
+//============================================================================
+
+global proc DVY_VehicleRotate()
+ {
+	global string $RigControlsA[]; global string $GroupV_A[];
+	global string $DLocs[]; global string $DJntsA[];
+
+	string $VehRotateN[]; string $SwitchN[]; string $CondN[]; string $RotateN[];
+	string $AverageN[]; string $SuspMultiDblN[]; string $AddTiltN[0];
+	string $PrefixR[] = {"Fr", "Rr", "Lf", "Rt"};
+	string $Prefix[] = {"LfFr_", "RtFr_", "LfRr_", "RtRr_"};
+	string $Temp[]; 
+	
+	int $i; int $j; int $k;
+	
+	 $Temp = `spaceLocator -p 0 0 0 -name Cn_Rotate_LocA_1`;
+		$DLocs[1] = $Temp[0];
+		pointConstraint -mo -weight 1 $RigControlsA[2] $DLocs[1];
+		
+	 $Temp = `spaceLocator -p 0 0 0 -name ($PrefixR[0] + "Cn_Rotate_LocA_1")`;
+		$DLocs[8] = $Temp[0];
+		delete `pointConstraint -offset 0 0 0 -skip x -skip y  -weight 1 $GroupV_A[4] $DLocs[8]`;
+		parentConstraint -mo -weight 1 CnFr_Wheel_JnT_1 $DLocs[8];			 
+	
+	 $Temp = `spaceLocator -p 0 0 0 -name ($PrefixR[1] + "Cn_Rotate_LocA_1")`;
+		$DLocs[9] = $Temp[0];
+		delete `pointConstraint -offset 0 0 0 -skip x -skip y  -weight 1 $GroupV_A[5] $DLocs[9]`;
+		parentConstraint -mo -weight 1 CnRr_Wheel_JnT_1 $DLocs[9];
+		connectAttr -f ($DLocs[8] + ".rotateY") ($RigControlsA[0] + ".RotateAngle");
+
+	$CondN[0] = `createNode condition -name PlusRotate_CondN_1`;
+		setAttr ($CondN[0] + ".op") 2;
+		setAttr ($CondN[0] + ".ft") 90;
+		setAttr ($CondN[0] + ".cfr") 1;
+		setAttr ($CondN[0] + ".ctr") -1;			
+		connectAttr -f ($RigControlsA[0] + ".RotateAngle")  ($CondN[0] + ".st");
+	
+	$CondN[1] = `createNode condition -name NegRotate_CondN_1`;
+		setAttr ($CondN[1] + ".op") 4;
+		setAttr ($CondN[1] + ".ft") -90;
+		setAttr ($CondN[1] + ".cfr") -1;
+		setAttr ($CondN[1] + ".ctr") 1;			
+		connectAttr -f ($RigControlsA[0] + ".RotateAngle")  ($CondN[1] + ".st");
+	
+	$SwitchN[0] = `shadingNode -asUtility multDoubleLinear -name PlusRotateSwitchN_1`;
+		setAttr ($SwitchN[0] + ".input1") -1;
+		connectAttr -f ($CondN[0] + ".ocr") ($SwitchN[0] + ".input2");
+		connectAttr -f ($SwitchN[0] + ".output") ($RigControlsA[0] + ".PlusAngle");
+
+	$SwitchN[1] = `shadingNode -asUtility multDoubleLinear -name NegRotateSwitchN_1`;
+		setAttr ($SwitchN[1] + ".input1") 1;
+		connectAttr -f ($CondN[1] + ".ocr") ($SwitchN[1] + ".input2");
+		connectAttr -f ($SwitchN[1] + ".output") ($RigControlsA[0] + ".NegAngle");
+		
+	$VehicleRotateN[0] = `shadingNode -asUtility multDoubleLinear -name VehicleRotateN_1`;
+		connectAttr -f ($SwitchN[0] + ".output") ($VehicleRotateN[0] + ".input1");
+		connectAttr -f ($SwitchN[1] + ".output") ($VehicleRotateN[0] + ".input2");
+
+	for ($i=0; $i<4; $i++)
+	 {
+		$RotateN[$i] = `shadingNode -asUtility multDoubleLinear -name ($Prefix[$i] + "WheelRotateN_1")`;
+			connectAttr -f ($VehicleRotateN[0] + ".output") ($RotateN[$i] + ".input1");
+			connectAttr -f ($Prefix[$i]  + "Wheel_RotDirN_1.output") ($RotateN[$i] + ".input2");
+			connectAttr -f ($RotateN[$i] + ".output") ($Prefix[$i] + "WheelRotatorN_1.input[1]");
+	 }
+		
+	 parent $DLocs[1] $DLocs[8] $DLocs[9] VehicleRotate_LocGrpN_1;
+	 
+	print "\n DVY_VehicleRotate has set up Nodes for wheel rotation correction based on Y axis rotation. See help file for more details. Davvey © 2006..\n";
+
+
+ }	//	End of DVY_VehicleRotate.
+
+ 

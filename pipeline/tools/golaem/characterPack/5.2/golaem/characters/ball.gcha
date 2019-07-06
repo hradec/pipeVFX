@@ -1,0 +1,135 @@
+<XMLSerialization Version="4">
+	<golaemObject pointerID="1" typeName="glm::GolaemCharacter">
+		<assetManager pointerID="2">
+			<name value="Ball"/>
+			<assetGroups>
+				<element index="0" pointerID="3">
+					<name value="Ball"/>
+					<assets>
+						<element index="0" pointerID="4">
+							<assetManager pointerID="2"/>
+							<name value="pSphere1"/>
+							<meshNames>
+								<element index="0" value="pSphere1"/>
+							</meshNames>
+							<excludedMeshAssets/>
+						</element>
+					</assets>
+				</element>
+			</assetGroups>
+			<geometryGroup pointerID="5">
+				<name value="Geometry Group"/>
+				<assets>
+					<element index="0" pointerID="6">
+						<assetManager pointerID="2"/>
+						<name value="ball"/>
+						<filename value="/atomo/pipeline/tools/golaem/characterPack/5.2/golaem/characters/ball.fbx"/>
+						<halfExtents x="1.0499999523162842" y="1.0499999523162842" z="1.0499999523162842"/>
+					</element>
+				</assets>
+			</geometryGroup>
+			<meshesShaders>
+				<element>
+					<element index="0" value="pSphere1"/>
+					<element index="1">
+						<element index="0" pointerID="7">
+							<name value="initialShadingGroup"/>
+							<shaderAssets>
+								<element index="0" pointerID="8">
+									<name value="lambert1"/>
+									<category value="drawdb/shader/surface/lambert:shader/surface"/>
+								</element>
+							</shaderAssets>
+							<shaderAttributes/>
+						</element>
+					</element>
+				</element>
+			</meshesShaders>
+			<renderingTypes>
+				<element index="0" pointerID="9">
+					<name value="Ball"/>
+					<assetWeights>
+						<element index="0">
+							<element index="0" value="Ball"/>
+							<element index="1">
+								<element index="0" value="100"/>
+							</element>
+						</element>
+					</assetWeights>
+					<assetManager pointerID="2"/>
+					<parent pointerID="0"/>
+					<children/>
+				</element>
+			</renderingTypes>
+		</assetManager>
+		<converterMapping pointerID="10">
+			<skeletonDescription pointerID="11">
+				<name value="Maya Skeleton: sphereRoot"/>
+				<rootBone pointerID="12">
+					<name value="sphereRoot"/>
+					<relativePos x="0" y="0" z="0"/>
+					<localOri x="0" y="0" z="0" w="0.99999994039535522"/>
+					<father pointerID="0"/>
+					<children/>
+					<specificBoneIndex value="0"/>
+				</rootBone>
+				<bones>
+					<element index="0" pointerID="12"/>
+				</bones>
+			</skeletonDescription>
+			<pelvisBoneIndex value="0"/>
+			<spineBones/>
+			<limbBones/>
+			<effectorBones/>
+			<spineBoneNames/>
+			<limbBoneNames/>
+			<effectorBoneNames/>
+			<ikExcludedBones/>
+			<upAxis x="0" y="0.99999994039535522" z="0"/>
+			<frontAxis x="0" y="0" z="0.99999994039535522"/>
+			<boneConfigurations>
+				<element index="0" pointerID="13">
+					<color value="8421504"/>
+					<inUse value="1"/>
+					<automaticDimensions value="0"/>
+					<halfExtents x="1" y="0" z="0"/>
+					<useMassInsteadOfBodyDensity value="0"/>
+					<bodyDensity value="985"/>
+					<bodyShape value="3"/>
+					<localOrientationOffset x="-0.49999994039535522" y="-0.49999994039535522" z="-0.49999991059303284" w="-0.49999991059303284"/>
+					<localPositionOffset x="0" y="0" z="0"/>
+					<restitution value="0.10000000149011612"/>
+					<friction value="0.80000001192092896"/>
+					<linearDamping value="0.5"/>
+					<angularDamping value="0.85000002384185791"/>
+					<deactivationTime value="0.05000000074505806"/>
+					<linearSleepingThreshold value="1.6000000238418579"/>
+					<angularSleepingThreshold value="2.5"/>
+					<_jointAngularLowerLimit x="0" y="0" z="0"/>
+					<_jointAngularUpperLimit x="0" y="0" z="0"/>
+					<_linearConstraintForceMixing value="0.20000000298023224"/>
+					<_angularConstraintForceMixing value="0.20000000298023224"/>
+					<_linearErrorReductionParameter value="0.40000000596046448"/>
+					<_angularErrorReductionParameter value="0.20000000298023224"/>
+				</element>
+			</boneConfigurations>
+			<channelMirrorSources/>
+			<effectorMirrorSources/>
+			<groundHeightArray/>
+			<blendShapeGroups/>
+			<squashStretchWeightsArray>
+				<element index="0" value="1"/>
+			</squashStretchWeightsArray>
+			<cacheAllowed/>
+			<bonesSnsScaleModes>
+				<element index="0" value="0"/>
+			</bonesSnsScaleModes>
+		</converterMapping>
+		<characterUserData pointerID="14">
+			<nodesPositions>
+				<element index="0" x="0" y="0"/>
+			</nodesPositions>
+		</characterUserData>
+	</golaemObject>
+</XMLSerialization>
+

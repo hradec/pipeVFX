@@ -1,0 +1,4 @@
+global proc int rfrk5GetCurrentShelfVer()
+{
+	return 2015052502;
+}

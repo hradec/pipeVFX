@@ -1,0 +1,64 @@
+{
+    "brass_brass": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.375, 
+                0.3268750011920929, 
+                0.24374999105930328
+            ], 
+            "baseColorB": 0.24374999105930328, 
+            "baseColorG": 0.3268750011920929, 
+            "baseColorR": 0.375, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.375, 
+                0.3268750011920929, 
+                0.24374999105930328
+            ], 
+            "colorB": 0.24374999105930328, 
+            "colorG": 0.3268750011920929, 
+            "colorR": 0.375, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "metallic": 0.75, 
+            "outColor": [
+                0.375, 
+                0.3268750011920929, 
+                0.24374999105930328
+            ], 
+            "outColorB": 0.24374999105930328, 
+            "outColorG": 0.3268750011920929, 
+            "outColorR": 0.375, 
+            "presence": 1.0, 
+            "roughness": 0.15000000596046448, 
+            "shininess": 100.0, 
+            "specular": 0.009999999776482582, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "specularTint": 4.0, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

@@ -1,0 +1,47 @@
+<args format="1.0">
+<param name="mode" label="Mode" widget="popup">
+	<hintlist name="options">
+		<string value="scalar"/>
+		<string value="vector"/>
+	</hintlist>
+</param>
+<param name="space" label="Space" widget="popup">
+	<hintlist name="options">
+		<string value="world"/>
+		<string value="object"/>
+		<string value="Pref"/>
+		<string value="UV"/>
+	</hintlist>
+</param>
+<param name="scale" label="Vector"/>
+<param name="frequency" label="Frequency"/>
+<param name="time" label="Time"/>
+<param name="octaves" label="Octaves" int="True"/>
+<param name="distortion" label="Distortion"/>
+<param name="lacunarity" label="Lacunarity"/>
+<param name="gain" label="Gain"/>
+<param name="turbulent" label="Turbulent" widget="checkBox"/>
+<page name="Remap">
+	<param name="RMPinputMin" label="Input min"/>
+	<param name="RMPinputMax" label="Input max"/>
+	<page name="Contrast">
+		<param name="RMPcontrast" label="Contrast"/>
+		<param name="RMPcontrastPivot" label="Pivot"/>
+	</page>
+	<page name="Bias and gain">
+		<param name="RMPbias" label="Bias"/>
+		<param name="RMPgain" label="Gain"/>
+	</page>
+	<param name="RMPoutputMin" label="Output min"/>
+	<param name="RMPoutputMax" label="Output max"/>
+	<page name="Clamp">
+		<param name="RMPclampEnable" label="Enable" widget="checkBox"/>
+		<param name="RMPthreshold" label="Expand" widget="checkBox"/>
+		<param name="RMPclampMin" label="Min"/>
+		<param name="RMPclampMax" label="Max"/>
+	</page>
+</page>
+<param name="color1" label="Color 1" widget="color"/>
+<param name="color2" label="Color 2" widget="color"/>
+<param name="P" label="P"/>
+</args>

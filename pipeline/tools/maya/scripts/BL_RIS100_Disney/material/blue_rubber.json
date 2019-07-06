@@ -1,0 +1,64 @@
+{
+    "blue_rubber_blue_rubber": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.20000000298023224, 
+                0.28333336114883423, 
+                0.4000000059604645
+            ], 
+            "baseColorB": 0.4000000059604645, 
+            "baseColorG": 0.28333336114883423, 
+            "baseColorR": 0.20000000298023224, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.20000000298023224, 
+                0.28333336114883423, 
+                0.4000000059604645
+            ], 
+            "colorB": 0.4000000059604645, 
+            "colorG": 0.28333336114883423, 
+            "colorR": 0.20000000298023224, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "outColor": [
+                0.20000000298023224, 
+                0.28333336114883423, 
+                0.4000000059604645
+            ], 
+            "outColorB": 0.4000000059604645, 
+            "outColorG": 0.28333336114883423, 
+            "outColorR": 0.20000000298023224, 
+            "presence": 1.0, 
+            "roughness": 0.550000011920929, 
+            "sheen": 1.0, 
+            "shininess": 100.0, 
+            "specular": 0.05000000074505806, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "specularTint": 0.5, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

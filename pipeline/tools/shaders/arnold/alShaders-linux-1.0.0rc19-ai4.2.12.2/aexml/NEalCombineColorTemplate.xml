@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalCombineColor">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="input1" type="maya.float3">
+			<label>Input 1</label>
+		</attribute>
+		<attribute name="input2" type="maya.float3">
+			<label>Input 2</label>
+		</attribute>
+		<attribute name="input3" type="maya.float">
+			<label>Input 3</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalCombineColor">
+		<property name="outColor" />
+		<property name="input1" />
+		<property name="input2" />
+		<property name="input3" />
+		</view>
+</templates>

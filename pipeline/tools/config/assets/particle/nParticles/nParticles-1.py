@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ except:
     m = None
 
 class nParticles( IECore.Op ) :
-    
+
     def __init__( self, prefix='nParticle' ) :
         IECore.Op.__init__( self, "Publish nParticles assets.",
             IECore.Parameter(
@@ -45,11 +45,16 @@ class nParticles( IECore.Op ) :
                 }},
             )
         )
-        
+
+        self._whoCanPublish = ['maya']
+        self._whoCanImport = ['maya']
+        self._whoCanOpen = ['maya']
+
+
         self.prefix = prefix
         currentUser = pipe.admin.job.shot.user()
         scene = currentUser.path()
-        
+
         # get framerange!
         disabled={"UI":{ "invertEnabled" : IECore.BoolData(True) }}
         start = 0
@@ -60,51 +65,52 @@ class nParticles( IECore.Op ) :
             override = 1
             start = m.getAttr('defaultRenderGlobals.startFrame')
             end = m.getAttr('defaultRenderGlobals.endFrame')
-            byFrameStep = m.getAttr('defaultRenderGlobals.byFrameStep')        
-            
+            byFrameStep = m.getAttr('defaultRenderGlobals.byFrameStep')
+
         # if running in maya
         selected = ""
+        scene=""
         if m:
             selected = ','.join(m.ls(sl=1,l=1,dag=1,type=prefix));
             scene = m.file(q=1,sn=1)
-            if not scene:
-                raise Exception("ERROR: A Cena precisa ser salva antes de ser publicada!")
-                
+            # if not scene:
+            #     raise Exception("ERROR: A Cena precisa ser salva antes de ser publicada!")
+
         source = IECore.FileNameParameter(
             name="%sNodes" % prefix,
             description = "type the path for the %sNodes node to cache"  % prefix,
             defaultValue = selected,
-            allowEmptyString=False,
+            allowEmptyString=True,
         )
 
         self.parameters().addParameters(
             [
-                source, 
+                source,
                 IECore.FileNameParameter(
                     name="%sDependency" % prefix,
                     description = "Dependency file that created this model.",
-                    allowEmptyString=False,
+                    allowEmptyString=True,
                     defaultValue = scene ,
-                    userData = { 
+                    userData = {
                         "UI": {
                             "defaultPath": IECore.StringData( "/atomo/jobs/" ),
                             "obeyDefaultPath" : IECore.BoolData(True),
                         },
                         # this UD flags this parameter to publish use to construct the asset filename
-                        'assetPath':IECore.BoolData( True ), 
+                        'assetPath':IECore.BoolData( True ),
                     }
                 ),
-                IECore.StringParameter("assetType","",self.__class__.__name__,userData={"UI":{ "visible" : IECore.BoolData(True) }}),                
+                IECore.StringParameter("assetType","",self.__class__.__name__,userData={"UI":{ "visible" : IECore.BoolData(False) }}),
             ])
-        
 
-        
+
+
         self.parameters().addParameters([
-            IECore.CompoundParameter("FrameRange","",[   
+            IECore.CompoundParameter("FrameRange","",[
                 IECore.V3fParameter("range","Inicio, fim e 'step' da sequencia a ser rendida.",IECore.V3f(start, end, byFrameStep), userData=disabled),
             ],userData = { "UI": {"collapsed" : IECore.BoolData(False)}}),
         ])
-        
+
 #        default = IECore.PointsPrimitive()
 #        # if we're in maya, and theres a particle node selected, use it as default!
 #        if m:
@@ -112,7 +118,7 @@ class nParticles( IECore.Op ) :
 #            if s:
 #                if 'particle' in str(m.nodeType(s[0])).lower():
 #                    default=s[0]
-                
+
 #        source = IECore.PointsPrimitiveParameter(
 #            name="%sParticles" % prefix,
 #            description = "connect a particle node here (ex: in maya, particleShape or nParticleShape nodes)",
@@ -129,8 +135,8 @@ class nParticles( IECore.Op ) :
         file = "%s/%s.%%04d.mc" % (path, name)
         files = map(lambda x: file % x, range(frameRange[0],frameRange[1],frameRange[2]))
         return file
-    
-    
+
+
     def doOperation( self, operands ) :
         result = 'done'
         frameRange   = operands['FrameRange']['range'].value
@@ -140,21 +146,21 @@ class nParticles( IECore.Op ) :
         self.data['multipleFiles'] = range(frameRange[0],frameRange[1]+1)
         self.data['nodes'] = meshPrimitives
 
-        
+
         if m:
-            m.cycleCheck(e=0)      
+            m.cycleCheck(e=0)
             m.cacheFile(
                 dtf                 =1,
                 format              ="OneFilePerFrame",
                 fileName            =os.path.basename(tmpFileName),
                 directory           =os.path.dirname(tmpFileName),
-                cacheableNode       =' '.join(meshPrimitives),                
+                cacheableNode       =' '.join(meshPrimitives),
                 st                  =frameRange[0],
                 et                  =frameRange[1],
             )
-            
+
             # check if simulation finished susccefuly by looking for all the cached files!
-            frames = self.data['multipleFiles'] 
+            frames = self.data['multipleFiles']
             if len(filter(lambda x: os.path.exists(self.data['assetPath']%x), frames)) != len(frames):
                 raise Exception("Simulation was cancelled by user interaction or some other unknown issue. Asset not published!!")
 
@@ -165,12 +171,12 @@ class nParticles( IECore.Op ) :
 
 
     def postPublish(self, operands, finishedSuscessfuly=False):
-        # cleanup 
+        # cleanup
         sudo = pipe.admin.sudo()
         for f in self.data['multipleFiles']:
             sudo.rm( self.data['assetPath'] % f )
         sudo.run()
-        
+
         if finishedSuscessfuly:
             if m:
                 for each in self.data['nodes']:

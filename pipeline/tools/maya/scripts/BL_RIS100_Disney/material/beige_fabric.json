@@ -1,0 +1,63 @@
+{
+    "beige_fabric_beige_fabric": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.550000011920929, 
+                0.47575002908706665, 
+                0.45100000500679016
+            ], 
+            "baseColorB": 0.45100000500679016, 
+            "baseColorG": 0.47575002908706665, 
+            "baseColorR": 0.550000011920929, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.550000011920929, 
+                0.47575002908706665, 
+                0.45100000500679016
+            ], 
+            "colorB": 0.45100000500679016, 
+            "colorG": 0.47575002908706665, 
+            "colorR": 0.550000011920929, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "outColor": [
+                0.550000011920929, 
+                0.47575002908706665, 
+                0.45100000500679016
+            ], 
+            "outColorB": 0.45100000500679016, 
+            "outColorG": 0.47575002908706665, 
+            "outColorR": 0.550000011920929, 
+            "presence": 1.0, 
+            "roughness": 1.0, 
+            "sheen": 1.350000023841858, 
+            "sheenTint": 1.0, 
+            "shininess": 100.0, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

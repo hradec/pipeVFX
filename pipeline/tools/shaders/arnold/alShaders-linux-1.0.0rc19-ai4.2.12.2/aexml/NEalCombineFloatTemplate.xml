@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalCombineFloat">
+		<attribute name="outValue" type="maya.float">
+		<label>Out Value</label>
+</attribute>
+		<attribute name="input1" type="maya.float">
+			<label>input1</label>
+		</attribute>
+		<attribute name="input2" type="maya.float">
+			<label>input2</label>
+		</attribute>
+		<attribute name="input3" type="maya.float">
+			<label>input3</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalCombineFloat">
+		<property name="outValue" />
+		<property name="input1" />
+		<property name="input2" />
+		<property name="input3" />
+		</view>
+</templates>

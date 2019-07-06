@@ -1,0 +1,37 @@
+/*
+*	Creates the file path/browse button control for the SD file attribute.
+*/
+global proc realflowSDFileNew(string $attr)
+{
+	realflowMakeFileControl("SD File", $attr, "rfSDFileCtrl", "", "*.sd", 0);
+}
+
+/*
+*	Connects an existing file path control to a SD file attribute.
+*/
+global proc realflowSDFileReplace(string $attr)
+{
+	realflowConnectStringField($attr, "rfSDFileCtrl", "", "*.sd");
+}
+
+/*
+*	Creates the AE user interface for the SD mesh modifier (soft body) object.
+*/
+global proc AESDMeshModifierTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout "SD Soft Body Object" -collapse false;
+		editorTemplate -callCustom "realflowSDFileNew" "realflowSDFileReplace" "path";
+		editorTemplate -label "SD Object Name" -addControl "SDObjName";
+		editorTemplate -label "Frame Offset" -addControl "offset";
+		editorTemplate -label "Time" -addControl "time";
+	editorTemplate -endLayout;
+	
+	AEabstractBaseCreateTemplate $nodeName;
+	
+	editorTemplate -suppress "framePosCache";
+	editorTemplate -suppress "outputMesh";
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

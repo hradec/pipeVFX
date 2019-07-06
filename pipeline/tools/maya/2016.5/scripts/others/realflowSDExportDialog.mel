@@ -1,0 +1,142 @@
+/*
+*	If the user clicks "Export" without specifying a file in the export settings dialog, we prompt him again. This is called
+* when the user selects a file from that dialog.
+*/
+global proc realflowLastChanceSDFile(string $filePath, string $fileType)
+{
+	setAttr -type "string" "realflowSDExportOptions.sdFile" $filePath;
+	realflow -exportSD -useSettingsNode;
+}
+
+/*
+*	Called when the user clicks "Export" in the export SD dialog.
+*/
+global proc realflowPerformSDExport()
+{
+	$persist = `checkBoxGrp -q -value1 rfSDPersistentOpts`;
+	if($persist)
+		optionVar -remove "rfNoPersistentExportOptions";
+	else
+		optionVar -iv "rfNoPersistentExportOptions" 1;
+	
+	string $file = `getAttr realflowSDExportOptions.sdFile`;
+	if($file == "")
+	{
+		string $dir = `workspace -q -active`;
+		string $filters[];
+		$filters[0] = "*.sd,*.sd";
+		realflowFileBrowserDlg("realflowLastChanceSDFile", "Export", "Export", "*.sd", 1, $filters, $dir);
+		return;
+	}
+	
+	realflow -exportSD -useSettingsNode;
+}
+
+/*
+*	Maintains the sate of the "start frame" and "end frame" controls based on the "use playback range" setting.
+*/
+global proc realflowCheckSDPlaybackRangeShelf()
+{
+	int $useRange = `getAttr "realflowSDExportOptions.sdUsePlaybackRange"`;
+	control -e -enable (!$useRange) rfSDStartFrameShelf;
+	control -e -enable (!$useRange) rfSDEndFrameShelf;
+}
+
+/*
+*	Maintains the sate of the camera list control based on the "use active camera" setting.
+*/
+global proc realflowCheckSDActiveCamShelf()
+{
+	int $useActive = `getAttr "realflowSDExportOptions.sdUseActiveCamera"`;
+	control -e -enable (!$useActive) rfSDCameraShelf;
+}
+
+/*
+*	Called when the user selects a camera from the drop-down menu. Updates the settings node.
+*/
+global proc realflowCameraChangedShelf()
+{
+	string $cam = `optionMenuGrp -q -value rfSDCameraShelf`;
+	setAttr -type "string" realflowSDExportOptions.sdCamera $cam;
+}
+
+/*
+*	Brings up a settings dialog for exporting a SD file.
+*/
+global proc realflowSDExportDialog()
+{
+	realflowMakeExportOptionsNode("realflowSDExportOptions", "realflowSDExportOptions");
+	
+	$wnd = `window -visible false -title "Export RealFlow SD" -iconName "Export SD"`;
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	
+	$form = `formLayout`;
+		$frame = `frameLayout -l "SD Export Options" -collapsable false`;
+			columnLayout -adjustableColumn true;
+				realflowMakeFileControl("File", "realflowSDExportOptions.sdFile", "", "", "*.sd", 1);
+				attrControlGrp -label "Use Playback Range" -attribute "realflowSDExportOptions.sdUsePlaybackRange" -changeCommand "realflowCheckSDPlaybackRangeShelf";
+				attrControlGrp -label "Start Frame" -attribute "realflowSDExportOptions.sdStartFrame" rfSDStartFrameShelf;
+				attrControlGrp -label "End Frame" -attribute "realflowSDExportOptions.sdEndFrame" rfSDEndFrameShelf;
+				attrControlGrp -label "Export Selected" -attribute "realflowSDExportOptions.sdExportSelected";
+				attrControlGrp -label "Export Deformation" -attribute "realflowSDExportOptions.sdExportDeformation";
+				attrControlGrp -label "Use Active Camera" -attribute "realflowSDExportOptions.sdUseActiveCamera" -changeCommand "realflowCheckSDActiveCamShelf";
+
+				optionMenuGrp -label "Camera" -changeCommand "realflowCameraChangedShelf" rfSDCameraShelf;
+				string $cameras[] = `ls -type camera`;
+				int $selIdx = 0;
+				int $numPerspCams = 0;
+				string $selCam = `getAttr realflowSDExportOptions.sdCamera`;
+				for($i = 0; $i < size($cameras); ++$i)
+				{
+					if(`getAttr ($cameras[$i] + ".orthographic")`)
+						continue;
+					string $xform[] = `listRelatives -parent $cameras[$i]`;
+					menuItem -l $xform[0];
+					++$numPerspCams;
+					if($xform[0] == $selCam)
+						$selIdx = $numPerspCams;
+				}
+				if($selIdx > 0)
+					optionMenuGrp -e -select $selIdx rfSDCameraShelf;
+				else
+					realflowCameraChangedShelf();
+					
+				$persist = !`optionVar -q "rfNoPersistentExportOptions"`;
+				checkBoxGrp -numberOfCheckBoxes 1 -label1 "Persistent Options" -value1 $persist rfSDPersistentOpts;
+			setParent ..;
+		setParent ..;
+		
+		$exportBtn = `button -label "Export" -command ("realflowPerformSDExport; deleteUI " + $wnd)`;
+		$cancelBtn = `button -label "Cancel" -command ("deleteUI " + $wnd)`;
+	setParent ..;
+
+	formLayout -e
+		-numberOfDivisions 100
+
+		-attachForm		$exportBtn	"left" 5
+		-attachPosition	$exportBtn	"right" 5 50
+		-attachForm		$exportBtn	"bottom" 5
+
+		-attachForm		$cancelBtn	"right" 5
+		-attachPosition	$cancelBtn	"left" 5 50
+		-attachForm		$cancelBtn	"bottom" 5
+
+		-attachForm		$frame		"top" 0
+		-attachForm		$frame		"left" 0
+		-attachForm		$frame		"right" 0
+		-attachControl	$frame		"bottom" 5 $exportBtn
+	$form;
+
+	setUITemplate -popTemplate;
+	
+	realflowCheckSDPlaybackRangeShelf();
+	realflowCheckSDActiveCamShelf();
+	
+	window -e -sizeable false $wnd;
+	int $height = 260;
+	if(`about -mac`)
+		$height += 60;
+	window -e -width 465 -height $height $wnd;
+	showWindow $wnd;
+}
+

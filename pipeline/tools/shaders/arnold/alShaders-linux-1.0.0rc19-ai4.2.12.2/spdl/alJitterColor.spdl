@@ -1,0 +1,163 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{8ef18067-9a82-4302-8a8b-76621c57f322}";
+PropertySet "alJitterColor_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{d3c0d47d-aa61-404d-8906-3efbfa7685d9}";
+		Type = color;
+	}
+	Parameter "input" input
+	{
+		GUID = "{9857441a-6e10-43de-802b-462875be8e84}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "minSaturation" input
+	{
+		GUID = "{72ae7538-6e51-4e9f-a276-2c56c0c4f960}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "maxSaturation" input
+	{
+		GUID = "{a5c8abfd-d0b9-4db7-af10-bbf307158fd8}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "minGain" input
+	{
+		GUID = "{d946b257-8875-4857-ad8b-ec733d026bec}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "maxGain" input
+	{
+		GUID = "{53bf3b21-f761-4a37-9000-b7c9be14082e}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "minHueOffset" input
+	{
+		GUID = "{c3ebf996-0214-4e14-acd4-cc7a5322ec50}";
+		Type = scalar;
+		Texturable = on;
+		Value = -0.100000;
+	}
+	Parameter "maxHueOffset" input
+	{
+		GUID = "{f13552de-675a-44b6-9aed-79fd7c354dad}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.100000;
+	}
+	Parameter "clamp" input
+	{
+		GUID = "{951577d2-6945-49d5-98ad-737a74084c1c}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "signal" input
+	{
+		GUID = "{4c5cbdb5-cdea-4c6c-ac8a-2c3c4fb70bde}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+}
+MetaShader "alJitterColor_meta"
+{
+	Name = "ALS_JitterColor";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_JitterColor";
+		Filename = "alJitterColor";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	input
+	{
+		Name = "Input";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	minSaturation
+	{
+		Name = "Min Saturation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	maxSaturation
+	{
+		Name = "Max Saturation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	minGain
+	{
+		Name = "Min Gain";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	maxGain
+	{
+		Name = "Max Gain";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	minHueOffset
+	{
+		Name = "Min Hue Offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	maxHueOffset
+	{
+		Name = "Max Hue Offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	clamp
+	{
+		Name = "Clamp";
+	}
+	signal
+	{
+		Name = "Signal";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	input;
+	minSaturation;
+	maxSaturation;
+	minGain;
+	maxGain;
+	minHueOffset;
+	maxHueOffset;
+	clamp;
+	signal;
+}
+Layout "RenderTree"
+{
+	input;
+	minSaturation;
+	maxSaturation;
+	minGain;
+	maxGain;
+	minHueOffset;
+	maxHueOffset;
+	signal;
+}
+Plugin = Shader
+{
+	Filename = "alJitterColor";
+}

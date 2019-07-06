@@ -1,0 +1,35 @@
+#!/usr/bin/python2
+
+import sys,os
+sys.path.append( os.path.dirname( os.path.dirname( os.path.dirname(__file__) ) ) )
+import pipe, sys, os
+
+p = pipe.apps.prman()
+m = pipe.apps.maya()
+
+pv = float(pipe.version.get('prman'))
+
+# we need this to run cortex inside prman
+os.environ['PYTHONHOME'] = pipe.apps.python().path()
+
+# set mayas environment to run prman!
+m.fullEnvironment()
+m.expand()
+
+os.environ['RMANTREE'] = os.environ['RMANTREE'].split(':')[-1]
+
+# we need this so gaffer/cortex works
+config_ocio = pipe.roots.tools()+'/ocio/config.ocio'
+if os.path.exists(config_ocio):
+    os.environ['OCIO'] = config_ocio
+
+# create the command line to run prman
+if pv > 21.0:
+    # cmd = "nice -n 19 gdb -ex run --args "+p.path( "RenderManProServer-%s/bin/prman  %s" %  ( pipe.version.get('prman'), ' '.join(sys.argv[1:]) ) )
+    cmd = "nice -n 19 "+p.path( "RenderManProServer-%s/bin/prman  %s" %  ( pipe.version.get('prman'), ' '.join(sys.argv[1:]) ) )
+else:
+    cmd = "nice -n 19 "+p.path( "RenderManStudio-%s-maya%s/rmantree/bin/prman  %s ; exit" %  ( pipe.version.get('prman'), pipe.version.get('maya'), ' '.join(sys.argv[1:]) ) )
+
+print cmd
+sys.stdout.flush()
+sys.exit( os.system( cmd ) )

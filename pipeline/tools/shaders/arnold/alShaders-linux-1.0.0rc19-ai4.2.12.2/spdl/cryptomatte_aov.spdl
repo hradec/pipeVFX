@@ -1,0 +1,125 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{297b3f7b-cfa8-4692-b2f4-73e593a47a3b}";
+PropertySet "cryptomatte_aov_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{08c2918d-f9ff-4e38-9a4e-c44c2403ff84}";
+		Type = color;
+	}
+	Parameter "passthrough" input
+	{
+		GUID = "{ea8f8ea8-e7b9-4cdd-93e8-1ef0e8d9196e}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "crypto_asset_override" input
+	{
+		GUID = "{62ff9c1c-828b-4254-8074-b9a1034b5256}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "crypto_object_override" input
+	{
+		GUID = "{01f29b4d-236d-4d44-a1c5-ffd29ffca8d2}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "crypto_material_override" input
+	{
+		GUID = "{39bb94c0-27b8-4685-95a2-2eee92009854}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "aov_crypto_asset" input
+	{
+		GUID = "{c96b6471-899d-4002-8215-b9424d3cd90a}";
+		Type = string;
+		Value = "Arnold_Crypto_Asset";
+	}
+	Parameter "aov_crypto_object" input
+	{
+		GUID = "{f950a5c7-7a50-4af3-9f8f-17ec56aa0612}";
+		Type = string;
+		Value = "Arnold_Crypto_Object";
+	}
+	Parameter "aov_crypto_material" input
+	{
+		GUID = "{778bf4ca-0fcc-4226-bcb7-ba6588a86101}";
+		Type = string;
+		Value = "Arnold_Crypto_Material";
+	}
+}
+MetaShader "cryptomatte_aov_meta"
+{
+	Name = "CryptomatteAOV";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "CryptomatteAOV";
+		Filename = "cryptomatte_aov";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	passthrough
+	{
+		Name = "Passthrough";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	crypto_asset_override
+	{
+		Name = "Crypto asset override";
+	}
+	crypto_object_override
+	{
+		Name = "Crypto object override";
+	}
+	crypto_material_override
+	{
+		Name = "Crypto material override";
+	}
+	aov_crypto_asset
+	{
+		Name = "aov_crypto_asset";
+	}
+	aov_crypto_object
+	{
+		Name = "aov_crypto_object";
+	}
+	aov_crypto_material
+	{
+		Name = "aov_crypto_material";
+	}
+}
+Layout "Default"
+{
+	passthrough;
+	Tab "AOVs"
+	{
+		crypto_asset_override;
+		crypto_object_override;
+		crypto_material_override;
+		aov_crypto_asset;
+		aov_crypto_object;
+		aov_crypto_material;
+	}
+}
+Layout "RenderTree"
+{
+	passthrough;
+}
+Plugin = Shader
+{
+	Filename = "cryptomatte_aov";
+}

@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -66,42 +66,42 @@ class jobPreview( GafferUI.DeferredPathPreview ) :
     def __init__( self, path ) :
         self.__column = GafferUI.ListContainer( borderWidth = 8 )
         GafferUI.DeferredPathPreview.__init__( self, self.__column, path )
-        self._updateFromPath()   
+        self._updateFromPath()
         self.__classLoader = IECore.ClassLoader.defaultOpLoader()
         self.__node = Gaffer.ParameterisedHolderNode()
         self.__op = self.__classLoader.load( 'admin/jobs/mkjob'  )()
         self.__node.setParameterised( self.__op )
         self.jobs = populateJobs()
-            
+
     def isValid( self ) :
         path = self.getPath()
         if not path:
                 return False
-            
+
         if not os.path.exists(  "%s/%s" % (pipe.roots.jobs(), str(path).split('/')[-1] ) ):
                 return False
-        
+
         return os.path.exists(  "%s/%s" % (pipe.roots.jobs(), path ) ) and path!='/' or \
             os.path.exists(  "%s/%s/shots/%s" % (pipe.roots.jobs(), os.path.dirname(str(path)), os.path.basename(str(path))) )
-                
+
     def _load( self ) :
         return self.getPath()
-    
+
     def _deferredUpdate( self, op ) :
         del self.__column[:]
-        
+
         self.jobs = populateJobs()
-        
+
         if str(op)=='/':
             return
 
         job = str(op).split('/')[-1]
         jobIndex = job[:4]
         jobName = job[5:]
-        
+
         self.__node["parameters"]["jobIndex"].setValue( int(jobIndex) )
         self.__node["parameters"]["jobName"].setValue( jobName )
-        
+
         self.__node["parameters"]["assets"].setValue( IECore.StringVectorData( [] ) )
         if self.jobs[job].has_key('assets'):
             assets = self.jobs[job]['assets'].keys()
@@ -126,17 +126,17 @@ class jobPreview( GafferUI.DeferredPathPreview ) :
         if jobData.has_key('output'):
             self.__node["parameters"]["defaultOutput"].setValue( jobData['output'] )
 
-                
+
         with self.__column :
             GafferUI.Image( "%s/opa.png" % pipe.name() )
             GafferUI.NodeUI.create( self.__node )
-            
+
             button = GafferUI.Button( "Execute" )
             self.__executeClickedConnection = button.clickedSignal().connect( self.__executeClicked )
 
     def __executeClicked( self, button ) :
 #        with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
-        
+
         self.__node.getParameterised()[0](
                 jobIndex      = self.__node["parameters"]["jobIndex"].getValue(),
                 jobName       = self.__node["parameters"]["jobName"].getValue(),
@@ -152,40 +152,40 @@ class jobPreview( GafferUI.DeferredPathPreview ) :
 #        dialog._setWidget( column )
 #        dialog._addButton("OK")
 #        dialog.waitForButton()
-            
+
 
 class JobMode(  GafferUI.BrowserEditor.Mode ) :
 
     def __init__( self, browser ) :
         GafferUI.BrowserEditor.Mode.__init__( self, browser )
         self.__classLoader = IECore.ClassLoader.defaultOpLoader()
-                 
+
     def connect( self ) :
         GafferUI.BrowserEditor.Mode.connect( self )
         self.__contextMenuConnection = None
-        self.__pathSelectedConnection = self.browser().pathChooser().pathListingWidget().pathSelectedSignal().connect( 
+        self.__pathSelectedConnection = self.browser().pathChooser().pathListingWidget().pathSelectedSignal().connect(
             Gaffer.WeakMethod( self.__pathSelected )
         )
-        self.__contextMenuConnection  = self.browser().pathChooser().pathListingWidget().contextMenuSignal().connect( 
+        self.__contextMenuConnection  = self.browser().pathChooser().pathListingWidget().contextMenuSignal().connect(
             Gaffer.WeakMethod( self.__menu )
         )
-        
+
     def disconnect( self ) :
         GafferUI.BrowserEditor.Mode.disconnect( self )
         self.__pathSelectedConnection = None
         self.__contextMenuConnection = None
-    
+
     def _initialDisplayMode( self ) :
         return GafferUI.PathListingWidget.DisplayMode.Tree
-    
+
     def _initialColumns( self ) :
         return [ GafferUI.PathListingWidget.defaultNameColumn ]
-            
+
     def __pathSelected( self, pathListing ) :
         selectedPaths = pathListing.getSelectedPaths()
         if not len( selectedPaths ) :
             return
-            
+
         print selectedPaths[0]
 #        op = selectedPaths[0].classLoader().load( str( selectedPaths[0] )[1:] )()
 #        opaDialogue = opaClasses.OpaDialogue( op )
@@ -198,7 +198,7 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
-        
+
 #        if self.__opMatcher is not None :
         selectedPaths = pathListing.getSelectedPaths()
         if len( selectedPaths ) == 1 :
@@ -210,21 +210,24 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
 #        else :
 #            menuDefinition.append( "/Loading actions...", { "active" : False } )
 
-                
+
         self.__menu = GafferUI.Menu( menuDefinition )
         if len( menuDefinition.items() ) :
             self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )
         return True
-            
 
-    
+
+
     def _initialPath( self ) :
         return Gaffer.DictPath( populateJobs(), "" )
-        
+
 #    def _initialColumns( self ) :
 #        return ['Job Name']
+    def __createOpMatcher( self ) :
 
-       
+        self.__opMatcher = None
+
+
 GafferUI.PathPreviewWidget.registerType( "Job Editing", jobPreview )
 GafferUI.BrowserEditor.registerMode( "Job Management", JobMode )
 GafferUI.BrowserEditor.JobMode = JobMode

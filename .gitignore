@@ -5,5 +5,8 @@ __pycache__/
 
 .scons*
 .build
+pipeline/libs
 pipeline/build/linux
 pipeline/build/build
+.idea
+.svn

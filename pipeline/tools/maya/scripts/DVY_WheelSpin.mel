@@ -1,0 +1,176 @@
+
+/*
+
+DVY_WheelSpin;
+	
+*/
+
+///////////////////////////////////////////////////////////////////////////////
+/*			
+				
+	Copyright © 2006 DVY_WheelSpin. All rights reserved davvey@ntlworld.com
+					
+
+					- DVY_WheelSpin -
+						  
+	This script will build Vehicle rig for automatic wheel rotation,
+	This script is called by the GUI DVY_Vehicle Rigger.mel
+
+	This script current has no error checking if you find it useful please
+	let me know and I will rewrite it with full error checking.
+	
+	This script was written to demonstrate the use of Utility nodes to replace
+	expressions foor vehicle control etc.
+	
+	I am currently working on building a full suite ot scripts to allow rigging
+	of all the various parts of any wheeled vehicle. The intention is to build a
+	set of "modular" scripts to allow rigging oif individual parts and or a fullly
+	rigged vehicle.
+	
+	Directions:
+	
+	Source and run DVY_Vehicle Rigger.mel, fill in required fields and press
+	"Rig Vehicle" button. This script is called from within DVY_Vehicle Rigger.mel
+	and will set up all four wheels with independant and reversible spin.
+	
+	Structure of intial Vehicle is as follows :-
+	
+	Vehicle Top Node
+	 |___
+		|
+		|___BodyShell Group
+		  |
+		  |_____BodyWork_Group
+		  |	  |
+		  |	  |__Chassis(contains all geometry except Wheels.
+		  |	
+		  |__Wheels Group 
+		  		|___
+					Left Front Wheel Group
+					Right Front Wheel Group
+					Left Rear Wheel Group
+					Right Rear Wheel Group
+	
+	Basic Procedure:
+		Main procedure uses a $GroupV_A to store main groups from GUI and 
+		build a rig of joints with locators as reuired.
+		Joints are constrained to individual locators.
+		Also some locators are constrained to individual joints.
+		
+		There are 3 "Rig Contollers"
+		
+		Rig_ControllerN_1 :-
+		
+			Controls movement and rotation of main vehicle.
+			Also houses attributes for setting range of suspension travel
+			using attribute Piston Range. Also there are also individual
+			range settings for each wheel(not active yet).
+		
+		Steering_ControllerN_1 
+		
+			Controls steering for Front and Rear Wheels. The front steering
+			is active by default, to activate Rear steering set "Rr Steer"
+			to On. Setting the "Fr Steer Ratio" and "Rr Steer Ratios" to a 
+			negative value will reverse direction of rotation.
+			Set "Fr Steer to Off will set vehicle to have rerar steering.
+			The ratiop can be set anywhere between -1 and 1, this will
+			reduce effect of rotation to simulat the Rear wheel steer you
+			now see on some high performance cars.
+		
+		
+		Tilt_ControllerN_1
+		
+		This will tilt the Chassis group as reguired. Also each indiviual
+		Wheel can be moved up and down by moving each wheel Group Ground 
+		Locator to simulate ground variations. If these are Geometry constained
+		to a "grtound" object or plane to movement will be automatic.
+	
+
+
+*/
+//////////////////////////////////////////////////////////////////////////
+//					DVY_WheelSpin Procedure
+//////////////////////////////////////////////////////////////////////////
+
+//============================================================================
+//	GLOBAL VARIABLES
+//============================================================================
+	global int $DVYDebug;
+
+// Integer Flag that allows print statements to be output to
+// message field for tracking purposes.
+	
+//============================================================================
+	
+global proc DVY_WheelSpin()
+
+ {
+	global string $GroupV_A[]; global string $RigControlsA[]; string $SpinAddA[]; 
+	
+	string $SpinA[]; string $WheelRotA[]; string $SpinWheelA[]; string $DTimeAtt[];
+	
+	string $DRotAtt[] = {"LfFr_Wheel_GrpR_1", "RtFr_Wheel_GrpR_1", "LfRr_Wheel_GrpR_1", "RtRr_Wheel_GrpR_1", "Dummy_GrpN_1"};	
+	string $DRotA[] = {"LfFr", "RtFr", "LfRr", "RtRr"};	
+
+	float $DTime[]; float $DRotate[];
+
+	setAttr -lock false -keyable true "Dummy_GrpN_1.rotateX";
+	
+	int $i, $o, $t, $r;
+	
+	 for ($o=4; $o<5; $o++)
+		{
+		  for ($i=0; $i<9; $i++)
+			{
+			  $r = ($i * 45);
+			  select -r $DRotAtt[$o];
+			  setAttr ($DRotAtt[$o] + ".rotateX") $r;
+			  setKeyframe -attribute "rotateX" -t ($i*5) $DRotAtt[$o];
+			  print ( "Rotation is " + `getAttr ($DRotAtt[$o] + ".rotateX")` + "..\n");
+			}
+			setAttr ($DRotAtt[$o] + "_rotateX. preInfinity") 3;
+			setAttr ($DRotAtt[$o] + "_rotateX.postInfinity") 3;
+			currentTime -edit 0;
+			setAttr ($DRotAtt[$o] + ".rotateX") 0;
+		}
+ 
+	$SpinA[0] = `shadingNode -asUtility multDoubleLinear -name WheelControlSpinN_1`;
+		connectAttr -f ($DRotAtt[4] + ".rotateX") ($SpinA[0] + ".input1");
+		connectAttr -f ($RigControlsA[0] + ".AutoSpin") ($SpinA[0] + ".input2");
+		connectAttr -f  ($SpinA[0] + ".output") ($RigControlsA[0] + ".WheelSpinCalc");
+		
+	$SpinA[1] = `shadingNode -asUtility multDoubleLinear -name WheelSpinMultiplyN_1`;
+		connectAttr -f ($SpinA[0] + ".output") ($SpinA[1] + ".input1");
+		setAttr ($RigControlsA[0] + ".WheelSpin") 1;
+		connectAttr -f ($RigControlsA[0] + ".WheelSpin") ($SpinA[1] + ".input2");
+		connectAttr -f  ($SpinA[1] + ".output") ($RigControlsA[0] + ".WheelSpinMultiply");
+
+			
+	$i = 0; $j = 0;	
+	
+ 	for ($i=0; $i<4; $i++)
+	 {	
+		$SpinWheelA[$i] = `shadingNode -asUtility multDoubleLinear -name ($DRotA[$i] + "_WheelSpinInN_1")`;
+			
+			connectAttr -f ($SpinA[1] + ".output") ($SpinWheelA[$i] + ".input1");
+			connectAttr -f ($RigControlsA[0] + ".AutoSpin") ($SpinWheelA[$i] + ".input2");
+			connectAttr -f ($SpinWheelA[$i] + ".output") ($RigControlsA[0] + ".SpinWheelInValue");
+			
+		$SpinWheelOn[$i] = `shadingNode -asUtility multDoubleLinear -name ($DRotA[$i] + "_WheelSpinOnN_1")`;
+			connectAttr -f ($SpinWheelA[$i] + ".output") ($SpinWheelOn[$i] + ".input1");
+			connectAttr -f ($RigControlsA[0] + "." + $DRotA[$i] + "WheelSpin") ($SpinWheelOn[$i] + ".input2");
+			
+		$SpinAddA[$i] = `createNode addDoubleLinear -name ($DRotA[$i] + "_Wheel_SpinAddN_1")`;	
+			setAttr  ($SpinAddA[$i] + ".input1") 1;
+			connectAttr -f ($SpinWheelOn[$i] + ".output") ($SpinAddA[$i] + ".input2");
+	
+		$WheelRotA[$i] = `createNode blendTwoAttr -name ($DRotA[$i] + "_WheelRotatorN_1")`;
+			setAttr ($WheelRotA[$i] + ".attributesBlender") 0.5;
+			connectAttr -f ($SpinAddA[$i] + ".output") ($WheelRotA[$i] + ".input[0]");		
+			connectAttr -f ($WheelRotA[$i] + ".output") ($DRotA[$i] + "_Wheel_JnTA_1.rotateX");
+		 }
+
+	print "\n DVY_WheelSpin has set up Nodes for auto spin and extra spin for each wheel. See help file for more details Davvey © 2006..\n";
+
+ }	//	End of DVY_WheelSpin procedur.
+	

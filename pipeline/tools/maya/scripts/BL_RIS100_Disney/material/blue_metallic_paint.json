@@ -1,0 +1,64 @@
+{
+    "blue_metallic_paint_blue_metallic_paint": {
+        "asType": "asShader", 
+        "attr": {
+            "baseColor": [
+                0.2556000351905823, 
+                0.24800001084804535, 
+                0.4000000059604645
+            ], 
+            "baseColorB": 0.4000000059604645, 
+            "baseColorG": 0.24800001084804535, 
+            "baseColorR": 0.2556000351905823, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatGloss": 1.0, 
+            "color": [
+                0.2556000351905823, 
+                0.24800001084804535, 
+                0.4000000059604645
+            ], 
+            "colorB": 0.4000000059604645, 
+            "colorG": 0.24800001084804535, 
+            "colorR": 0.2556000351905823, 
+            "emitColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "isHistoricallyInteresting": 2, 
+            "metallic": 1.0, 
+            "outColor": [
+                0.2556000351905823, 
+                0.24800001084804535, 
+                0.4000000059604645
+            ], 
+            "outColorB": 0.4000000059604645, 
+            "outColorG": 0.24800001084804535, 
+            "outColorR": 0.2556000351905823, 
+            "presence": 1.0, 
+            "roughness": 0.550000011920929, 
+            "shininess": 100.0, 
+            "specular": 0.20000000298023224, 
+            "specularColor": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "specularColorColorB": 1.0, 
+            "specularColorG": 1.0, 
+            "specularColorR": 1.0, 
+            "specularTint": 0.75, 
+            "subsurfaceColor": [
+                0.0, 
+                0.0, 
+                0.0
+            ]
+        }, 
+        "connection": {}, 
+        "type": "PxrDisney"
+    }
+}

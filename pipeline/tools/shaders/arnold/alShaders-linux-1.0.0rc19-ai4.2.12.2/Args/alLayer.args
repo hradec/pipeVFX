@@ -1,0 +1,60 @@
+<args format="1.0">
+<param name="layer1" label="Layer 1" widget="color"/>
+<param name="layer2" label="Layer 2" widget="color"/>
+<param name="mix" label="Mix"/>
+<param name="debug" label="Debug" widget="popup">
+	<hintlist name="options">
+		<string value="off"/>
+		<string value="layer1"/>
+		<string value="layer2"/>
+		<string value="mixer"/>
+	</hintlist>
+</param>
+<page name="AOVs">
+	<param name="standardCompatibleAOVs" label="Write standard AOVs only" widget="checkBox"/>
+	<param name="aov_diffuse_color" label="Diffuse color"/>
+	<param name="aov_direct_diffuse" label="Direct diffuse"/>
+	<param name="aov_direct_diffuse_raw" label="Direct diffuse (raw)"/>
+	<param name="aov_indirect_diffuse" label="Indirect diffuse"/>
+	<param name="aov_indirect_diffuse_raw" label="Indirect diffuse (raw)"/>
+	<param name="aov_direct_backlight" label="Direct backlight"/>
+	<param name="aov_indirect_backlight" label="Indirect backlight"/>
+	<param name="aov_direct_specular" label="Direct specular"/>
+	<param name="aov_indirect_specular" label="Indirect specular"/>
+	<param name="aov_direct_specular_2" label="Direct specular 2"/>
+	<param name="aov_indirect_specular_2" label="Indirect specular 2"/>
+	<param name="aov_single_scatter" label="Single scatter"/>
+	<param name="aov_sss" label="SSS"/>
+	<param name="aov_refraction" label="Refraction"/>
+	<param name="aov_emission" label="Emission"/>
+	<param name="aov_uv" label="UV"/>
+	<param name="aov_depth" label="Depth"/>
+	<param name="aov_light_group_1" label="Light group [1]"/>
+	<param name="aov_light_group_2" label="Light group [2]"/>
+	<param name="aov_light_group_3" label="Light group [3]"/>
+	<param name="aov_light_group_4" label="Light group [4]"/>
+	<param name="aov_light_group_5" label="Light group [5]"/>
+	<param name="aov_light_group_6" label="Light group [6]"/>
+	<param name="aov_light_group_7" label="Light group [7]"/>
+	<param name="aov_light_group_8" label="Light group [8]"/>
+	<param name="aov_id_1" label="ID [1]"/>
+	<param name="aov_id_2" label="ID [2]"/>
+	<param name="aov_id_3" label="ID [3]"/>
+	<param name="aov_id_4" label="ID [4]"/>
+	<param name="aov_id_5" label="ID [5]"/>
+	<param name="aov_id_6" label="ID [6]"/>
+	<param name="aov_id_7" label="ID [7]"/>
+	<param name="aov_id_8" label="ID [8]"/>
+	<param name="aov_crypto_asset" label="Crypto Asset"/>
+	<param name="aov_crypto_object" label="Crypto Object"/>
+	<param name="aov_crypto_material" label="Crypto Material"/>
+	<param name="aov_shadow_group_1" label="Shadow group [1]"/>
+	<param name="aov_shadow_group_2" label="Shadow group [2]"/>
+	<param name="aov_shadow_group_3" label="Shadow group [3]"/>
+	<param name="aov_shadow_group_4" label="Shadow group [4]"/>
+	<param name="aov_shadow_group_5" label="Shadow group [5]"/>
+	<param name="aov_shadow_group_6" label="Shadow group [6]"/>
+	<param name="aov_shadow_group_7" label="Shadow group [7]"/>
+	<param name="aov_shadow_group_8" label="Shadow group [8]"/>
+</page>
+</args>

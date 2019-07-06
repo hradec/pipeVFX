@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo $(date)   -   $(top -l 1 | grep 'CPU usage')    -    $((`ioreg -c IOHIDSystem | sed -e '/HIDIdleTime/!{ d' -e 't' -e '}' -e 's/.* = //g' -e 'q'` / 1000000000 / 60)) minutos idle                             
+echo $(date)   -   $(top -l 1 | grep 'CPU usage')    -    $((`ioreg -c IOHIDSystem | sed -e '/HIDIdleTime/!{ d' -e 't' -e '}' -e 's/.* = //g' -e 'q'` / 1000000000 / 60)) minutos idle > /atomo/netboot/log/osx_$(hostname).log
+

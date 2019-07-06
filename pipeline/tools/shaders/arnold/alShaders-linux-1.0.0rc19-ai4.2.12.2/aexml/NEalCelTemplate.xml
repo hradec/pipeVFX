@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalCel">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="surfaceShader" type="maya.float3">
+			<label>Surface shader</label>
+		</attribute>
+		<attribute name="diffuseDirectStrength" type="maya.float">
+			<label>Diffuse strength</label>
+		</attribute>
+		<attribute name="diffuseRamp" type="maya.float3">
+			<label>Diffuse ramp</label>
+		</attribute>
+		<attribute name="diffuseIndirectStrength" type="maya.float">
+			<label>Indirect diffuse strength</label>
+		</attribute>
+		<attribute name="diffuseIndirectSaturation" type="maya.float">
+			<label>Indirect diffuse saturation</label>
+		</attribute>
+		<attribute name="diffuseIndirectTint" type="maya.float3">
+			<label>Indirect diffuse tint</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalCel">
+		<property name="outColor" />
+		<property name="surfaceShader" />
+		<property name="diffuseDirectStrength" />
+		<property name="diffuseRamp" />
+		<property name="diffuseIndirectStrength" />
+		<property name="diffuseIndirectSaturation" />
+		<property name="diffuseIndirectTint" />
+		</view>
+</templates>

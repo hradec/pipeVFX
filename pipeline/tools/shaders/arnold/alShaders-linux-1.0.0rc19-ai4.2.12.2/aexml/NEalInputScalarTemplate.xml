@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalInputScalar">
+		<attribute name="outValue" type="maya.float">
+		<label>Out Value</label>
+</attribute>
+	</template>
+		<view name="NEDefault" template="NEalInputScalar">
+		<property name="outValue" />
+		</view>
+</templates>

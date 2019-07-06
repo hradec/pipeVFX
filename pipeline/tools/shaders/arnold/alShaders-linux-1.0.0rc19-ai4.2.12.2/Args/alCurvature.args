@@ -1,0 +1,31 @@
+<args format="1.0">
+<param name="mode" label="Mode" widget="popup">
+	<hintlist name="options">
+		<string value="positive"/>
+		<string value="negative"/>
+	</hintlist>
+</param>
+<param name="samples" label="Samples" int="True"/>
+<param name="sampleRadius" label="Radius"/>
+<param name="traceSet" label="Trace set"/>
+<page name="Remap">
+	<param name="RMPinputMin" label="Input min"/>
+	<param name="RMPinputMax" label="Input max"/>
+	<page name="Contrast">
+		<param name="RMPcontrast" label="Contrast"/>
+		<param name="RMPcontrastPivot" label="Pivot"/>
+	</page>
+	<page name="Bias and gain">
+		<param name="RMPbias" label="Bias"/>
+		<param name="RMPgain" label="Gain"/>
+	</page>
+	<param name="RMPoutputMin" label="Output min"/>
+	<param name="RMPoutputMax" label="Output max"/>
+	<page name="Clamp">
+		<param name="RMPclampEnable" label="Enable" widget="checkBox"/>
+		<param name="RMPthreshold" label="Expand" widget="checkBox"/>
+		<param name="RMPclampMin" label="Min"/>
+		<param name="RMPclampMax" label="Max"/>
+	</page>
+</page>
+</args>

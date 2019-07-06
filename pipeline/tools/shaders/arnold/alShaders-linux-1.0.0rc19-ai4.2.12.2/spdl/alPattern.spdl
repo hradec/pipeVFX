@@ -1,0 +1,354 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{f3d2d8fa-263b-4f44-87e6-81a8303fd229}";
+PropertySet "alPattern_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{077d1720-4a04-48ad-b73d-dbd6eb8e1ebb}";
+		Type = color;
+	}
+	Parameter "space" input
+	{
+		GUID = "{0c51abd0-62be-44f9-bbb5-6d21d67da412}";
+		Type = string;
+		Texturable = off;
+		Value = "world";
+	}
+	Parameter "axis" input
+	{
+		GUID = "{e6a3c4ef-7b7a-4c75-8572-6dd0f643f506}";
+		Type = string;
+		Texturable = off;
+		Value = "X";
+	}
+	Parameter "shape" input
+	{
+		GUID = "{7a70ce8d-e5b5-4f2a-aab5-c36e2a6efeda}";
+		Type = string;
+		Texturable = off;
+		Value = "sine";
+	}
+	Parameter "frequency" input
+	{
+		GUID = "{e14790bc-7c2f-4788-a3f3-46fd1ff8425e}";
+		Type = scalar;
+		Texturable = off;
+		Value = 5.000000;
+	}
+	Parameter "offset" input
+	{
+		GUID = "{1c526d5d-48fd-46e7-b32e-51b106d44f56}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPinputMin" input
+	{
+		GUID = "{8e782e08-27d3-4258-a538-d4c0134ca8ae}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPinputMax" input
+	{
+		GUID = "{5ea9088f-91a3-4ae6-8a9d-88408823e32b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPcontrast" input
+	{
+		GUID = "{1d2d6ea1-8430-41ab-8f1b-41690e397cee}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPcontrastPivot" input
+	{
+		GUID = "{8bb40959-6a2a-483a-90d1-c8307e74617c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.180000;
+	}
+	Parameter "RMPbias" input
+	{
+		GUID = "{88597a2f-6425-41ef-a71f-ea12978dfbec}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "RMPgain" input
+	{
+		GUID = "{b692b260-91f6-47d0-af78-db5255a5b102}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "RMPoutputMin" input
+	{
+		GUID = "{c7678238-d1fc-459a-9516-d56b97f112f6}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPoutputMax" input
+	{
+		GUID = "{950ca974-cb54-4408-a2e0-9711d5edacff}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPclampEnable" input
+	{
+		GUID = "{ef8c6b60-ca92-4141-9a84-38a040aa1b74}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPthreshold" input
+	{
+		GUID = "{8342f218-60a8-4c15-adef-4e982806dafc}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPclampMin" input
+	{
+		GUID = "{c01f20e6-7cd1-4bf6-9909-ecccafa5a938}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPclampMax" input
+	{
+		GUID = "{7c3a3e8a-2a5b-4751-8bf9-6d3cf20a9d54}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "color1" input
+	{
+		GUID = "{70dbef97-e34b-4f65-8b86-22436b3867d5}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "color2" input
+	{
+		GUID = "{65adb07e-c0a2-4e44-9804-a6d0084c089a}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "P" input
+	{
+		GUID = "{ffa8b294-bcbf-4319-b6a1-94be5bcfb819}";
+		Type = vector;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+}
+MetaShader "alPattern_meta"
+{
+	Name = "ALS_Pattern";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Pattern";
+		Filename = "alPattern";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	space
+	{
+		Name = "Space";
+		UIType = "Combo";
+		Items
+		{
+			"world" = "world";
+			"object" = "object";
+			"Pref" = "Pref";
+			"UV" = "UV";
+		}
+	}
+	axis
+	{
+		Name = "Axis";
+		UIType = "Combo";
+		Items
+		{
+			"X" = "X";
+			"Y" = "Y";
+			"Z" = "Z";
+		}
+	}
+	shape
+	{
+		Name = "Shape";
+		UIType = "Combo";
+		Items
+		{
+			"sine" = "sine";
+			"square" = "square";
+			"saw" = "saw";
+		}
+	}
+	frequency
+	{
+		Name = "Frequency";
+	}
+	offset
+	{
+		Name = "Offset";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPinputMin
+	{
+		Name = "Input min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPinputMax
+	{
+		Name = "Input max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPcontrast
+	{
+		Name = "Contrast";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPcontrastPivot
+	{
+		Name = "Pivot";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPbias
+	{
+		Name = "Bias";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPgain
+	{
+		Name = "Gain";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPoutputMin
+	{
+		Name = "Output min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPoutputMax
+	{
+		Name = "Output max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPclampEnable
+	{
+		Name = "Enable";
+	}
+	RMPthreshold
+	{
+		Name = "Expand";
+	}
+	RMPclampMin
+	{
+		Name = "Min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPclampMax
+	{
+		Name = "Max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	color1
+	{
+		Name = "Color 1";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	color2
+	{
+		Name = "Color 2";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	P
+	{
+		Name = "P";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	space;
+	axis;
+	shape;
+	frequency;
+	offset;
+	Tab "Remap"
+	{
+		RMPinputMin;
+		RMPinputMax;
+		Group "Contrast"
+		{
+			RMPcontrast;
+			RMPcontrastPivot;
+		}
+		Group "Bias and gain"
+		{
+			RMPbias;
+			RMPgain;
+		}
+		RMPoutputMin;
+		RMPoutputMax;
+		Group "Clamp"
+		{
+			RMPclampEnable;
+			RMPthreshold;
+			RMPclampMin;
+			RMPclampMax;
+		}
+	}
+	color1;
+	color2;
+	P;
+}
+Layout "RenderTree"
+{
+	offset;
+	Group "Remap"
+	{
+		RMPinputMin;
+		RMPinputMax;
+		Group "Contrast"
+		{
+			RMPcontrast;
+			RMPcontrastPivot;
+		}
+		Group "Bias and gain"
+		{
+			RMPbias;
+			RMPgain;
+		}
+		RMPoutputMin;
+		RMPoutputMax;
+		Group "Clamp"
+		{
+			RMPclampMin;
+			RMPclampMax;
+		}
+	}
+	color1;
+	color2;
+	P;
+}
+Plugin = Shader
+{
+	Filename = "alPattern";
+}

@@ -23,7 +23,7 @@ import os, pipe
 
 class baseFarmJobClass(object):
     ''' Base farm class which is used by all farm jobs and engines classes '''
-    def __init__(self, cmdLine, name='', CPUS=0, extra={}, priority = 9999, range = range(1,11,1), group = 'pipe', pad=4, asset='', retry=5):
+    def __init__(self, cmdLine='', name='', CPUS=0, extra={}, priority = 9999, range = range(1,11,1), group = 'pipe', pad=4, asset='', retry=5, description='', maxRunTime=60*60*3):
         self.job        = "NO_JOB"
         self.shot       = "NO_SHOT"
         if os.environ.has_key('PIPE_JOB'):
@@ -39,10 +39,12 @@ class baseFarmJobClass(object):
         self.extra      = extra
         self.pad        = pad
         self.__range    = range
-        self._range    = range
+        self._range     = range
         self.licenses   = {}
         self.retry      = retry
         self.user       = pipe.admin.username()
+        self.description= description
+        self.maxRunTime = maxRunTime
 
         # call the method that configures the job
         self.cook()
@@ -56,6 +58,9 @@ class baseFarmJobClass(object):
         # setup frame range
         self.name = self.name.replace('  ',' ').replace(' :',':')
         self.name = ' %s_%s_%s | ' % (self.job, self.shot[0], self.shot[1]) + self.name
+
+        if hasattr(self, '_init'):
+            self._init()
 
     def range(self):
         ''' this method returns the frame range in the right order

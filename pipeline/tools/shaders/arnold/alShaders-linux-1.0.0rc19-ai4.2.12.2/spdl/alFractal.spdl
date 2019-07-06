@@ -1,0 +1,416 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{b46f0ccd-cbed-47a5-8233-621143c97719}";
+PropertySet "alFractal_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{bec3909e-bec0-4f3a-abb2-9e585cfce375}";
+		Type = color;
+	}
+	Parameter "mode" input
+	{
+		GUID = "{7b9883d5-e37b-4b1c-92d1-aa951edf1c0b}";
+		Type = string;
+		Texturable = off;
+		Value = "scalar";
+	}
+	Parameter "space" input
+	{
+		GUID = "{c7a09016-8246-4e79-a577-a687111e39f3}";
+		Type = string;
+		Texturable = off;
+		Value = "world";
+	}
+	Parameter "scale" input
+	{
+		GUID = "{4a3e6304-d095-4db4-9ac3-a6ff6fe63a5c}";
+		Type = vector;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "frequency" input
+	{
+		GUID = "{4cecf78a-2c2e-478f-bfca-05833aad93f0}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "time" input
+	{
+		GUID = "{4d03e8ed-acf9-4195-ad08-79957f6afb69}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "octaves" input
+	{
+		GUID = "{1bf733df-1192-4894-8ea7-f3351805548b}";
+		Type = integer;
+		Texturable = off;
+		Value = 8;
+	}
+	Parameter "distortion" input
+	{
+		GUID = "{4355a259-f6b2-4fdb-ae6b-574ec2f06409}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "lacunarity" input
+	{
+		GUID = "{87c94137-5f1b-4cc2-b495-50a5d8ff7ecc}";
+		Type = scalar;
+		Texturable = on;
+		Value = 2.121000;
+	}
+	Parameter "gain" input
+	{
+		GUID = "{142c24c4-22ae-4815-91ff-f29a6dc31496}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "turbulent" input
+	{
+		GUID = "{cdafda25-3250-4f85-9544-9fdb0ae357fe}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPinputMin" input
+	{
+		GUID = "{db338e92-331f-4121-abc9-a5d372a019e6}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPinputMax" input
+	{
+		GUID = "{6f588cf8-4f4b-4438-b2db-08669ab0ef87}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPcontrast" input
+	{
+		GUID = "{f2e66035-ba02-453f-b440-59c9f525b1a4}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPcontrastPivot" input
+	{
+		GUID = "{1b4a0bf6-11e6-4ae6-8ee8-7ee433fbad22}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.180000;
+	}
+	Parameter "RMPbias" input
+	{
+		GUID = "{ca25be67-05d4-4e65-a194-4b67ef86ca0d}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "RMPgain" input
+	{
+		GUID = "{6e656b7e-2e17-4ddc-99d6-f83cf6854ca0}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+	Parameter "RMPoutputMin" input
+	{
+		GUID = "{c4e03cac-b08e-485d-9e67-7dd3e95a585b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPoutputMax" input
+	{
+		GUID = "{3e0c4410-802e-4287-9941-243903418e7c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "RMPclampEnable" input
+	{
+		GUID = "{d12bb85f-efbe-4c36-bee5-d7bd6495d690}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPthreshold" input
+	{
+		GUID = "{92d6c27f-d23a-4585-a8a8-faf37f02f2e0}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "RMPclampMin" input
+	{
+		GUID = "{d633c62a-587b-41ac-a550-7b9c47c41479}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "RMPclampMax" input
+	{
+		GUID = "{c21e4fe5-9e41-4296-afc6-0263104fe2ac}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "color1" input
+	{
+		GUID = "{2f0692e6-8c49-48b2-86f2-7dc0a9ba9c76}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "color2" input
+	{
+		GUID = "{06935859-f5b0-4299-8143-8dd6b42db10b}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "P" input
+	{
+		GUID = "{11dd76f9-097a-43a4-acc2-377b890379f7}";
+		Type = vector;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+}
+MetaShader "alFractal_meta"
+{
+	Name = "ALS_Fractal";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Fractal";
+		Filename = "alFractal";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	mode
+	{
+		Name = "Mode";
+		UIType = "Combo";
+		Items
+		{
+			"scalar" = "scalar";
+			"vector" = "vector";
+		}
+	}
+	space
+	{
+		Name = "Space";
+		UIType = "Combo";
+		Items
+		{
+			"world" = "world";
+			"object" = "object";
+			"Pref" = "Pref";
+			"UV" = "UV";
+		}
+	}
+	scale
+	{
+		Name = "Vector";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	frequency
+	{
+		Name = "Frequency";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	time
+	{
+		Name = "Time";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	octaves
+	{
+		Name = "Octaves";
+	}
+	distortion
+	{
+		Name = "Distortion";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	lacunarity
+	{
+		Name = "Lacunarity";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	gain
+	{
+		Name = "Gain";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	turbulent
+	{
+		Name = "Turbulent";
+	}
+	RMPinputMin
+	{
+		Name = "Input min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPinputMax
+	{
+		Name = "Input max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPcontrast
+	{
+		Name = "Contrast";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPcontrastPivot
+	{
+		Name = "Pivot";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPbias
+	{
+		Name = "Bias";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPgain
+	{
+		Name = "Gain";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPoutputMin
+	{
+		Name = "Output min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPoutputMax
+	{
+		Name = "Output max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPclampEnable
+	{
+		Name = "Enable";
+	}
+	RMPthreshold
+	{
+		Name = "Expand";
+	}
+	RMPclampMin
+	{
+		Name = "Min";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	RMPclampMax
+	{
+		Name = "Max";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	color1
+	{
+		Name = "Color 1";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	color2
+	{
+		Name = "Color 2";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	P
+	{
+		Name = "P";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	mode;
+	space;
+	scale;
+	frequency;
+	time;
+	octaves;
+	distortion;
+	lacunarity;
+	gain;
+	turbulent;
+	Tab "Remap"
+	{
+		RMPinputMin;
+		RMPinputMax;
+		Group "Contrast"
+		{
+			RMPcontrast;
+			RMPcontrastPivot;
+		}
+		Group "Bias and gain"
+		{
+			RMPbias;
+			RMPgain;
+		}
+		RMPoutputMin;
+		RMPoutputMax;
+		Group "Clamp"
+		{
+			RMPclampEnable;
+			RMPthreshold;
+			RMPclampMin;
+			RMPclampMax;
+		}
+	}
+	color1;
+	color2;
+	P;
+}
+Layout "RenderTree"
+{
+	scale;
+	frequency;
+	time;
+	distortion;
+	lacunarity;
+	gain;
+	Group "Remap"
+	{
+		RMPinputMin;
+		RMPinputMax;
+		Group "Contrast"
+		{
+			RMPcontrast;
+			RMPcontrastPivot;
+		}
+		Group "Bias and gain"
+		{
+			RMPbias;
+			RMPgain;
+		}
+		RMPoutputMin;
+		RMPoutputMax;
+		Group "Clamp"
+		{
+			RMPclampMin;
+			RMPclampMax;
+		}
+	}
+	color1;
+	color2;
+	P;
+}
+Plugin = Shader
+{
+	Filename = "alFractal";
+}

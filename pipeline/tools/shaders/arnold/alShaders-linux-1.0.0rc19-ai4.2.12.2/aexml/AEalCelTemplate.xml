@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalCel">
+		<label>alCel</label>
+		<description>Connect an alSurface to the Surface shader parameter to remap its direct lighting and create a toon-shaded appearance.</description>
+		<attribute name="surfaceShader" type="maya.float3">
+			<label>Surface shader</label>
+			<description>Connect an alSurface shader here to have its diffuse component run through the ramp for cel shading.</description>
+		</attribute>
+		<attribute name="diffuseDirectStrength" type="maya.float">
+			<label>Diffuse strength</label>
+			<description>A multiplier on the diffuse component before being passed through the ramp. This is useful to bring your diffuse illumination into the 0-1 range required by the ramp.</description>
+		</attribute>
+		<attribute name="diffuseRamp" type="maya.float3">
+			<label>Diffuse ramp</label>
+			<description>Plug a MayaRamp node here to control the cel shading colors.</description>
+		</attribute>
+		<attribute name="diffuseIndirectStrength" type="maya.float">
+			<label>Indirect diffuse strength</label>
+			<description>Multipler on the strength of the indirect diffuse illumination.</description>
+		</attribute>
+		<attribute name="diffuseIndirectSaturation" type="maya.float">
+			<label>Indirect diffuse saturation</label>
+			<description>Controls the saturation of the indirect diffuse illumination. It can be useful to increase this for more stylized effects.</description>
+		</attribute>
+		<attribute name="diffuseIndirectTint" type="maya.float3">
+			<label>Indirect diffuse tint</label>
+			<description>Color tint on the indirect diffuse illumination.</description>
+		</attribute>
+		<attribute name="aov_direct_diffuse_cel" type="maya.float3">
+			<label>Cel Diffuse</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_diffuse_raw_cel" type="maya.float3">
+			<label>Cel Raw Diffuse</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_diffuse_cel" type="maya.float3">
+			<label>Cel Indirect Diffuse</label>
+			<description></description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalCel">
+			<group name="Shading">
+				<label>Shading</label>
+				<property name="surfaceShader"/>
+				<property name="diffuseDirectStrength"/>
+				<property name="diffuseRamp"/>
+				<property name="diffuseIndirectStrength"/>
+				<property name="diffuseIndirectSaturation"/>
+				<property name="diffuseIndirectTint"/>
+			</group>
+			<group name="AOVs">
+				<label>AOVs</label>
+				<property name="aov_direct_diffuse_cel"/>
+				<property name="aov_direct_diffuse_raw_cel"/>
+				<property name="aov_indirect_diffuse_cel"/>
+			</group>
+		</view>
+</templates>

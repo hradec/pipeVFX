@@ -1,0 +1,206 @@
+{
+    "alum_bronze_LM_alum_bronze_LM": {
+        "asType": "asShader", 
+        "attr": {
+            "backColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "backColorB": 0.5, 
+            "backColorG": 0.5, 
+            "backColorR": 0.5, 
+            "bumpNormal": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "bumpNormalX": 0.0, 
+            "bumpNormalY": 0.0, 
+            "bumpNormalZ": 0.0, 
+            "caching": false, 
+            "color": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "colorB": 0.5, 
+            "colorG": 0.5, 
+            "colorR": 0.5, 
+            "frontColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "frontColorB": 0.5, 
+            "frontColorG": 0.5, 
+            "frontColorR": 0.5, 
+            "frozen": false, 
+            "incandescence": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "incandescenceB": 0.0, 
+            "incandescenceG": 0.0, 
+            "incandescenceR": 0.0, 
+            "inputAOV": 0, 
+            "isHistoricallyInteresting": 2, 
+            "nodeState": 0, 
+            "notes": "LollipopShaders RIS100 LM Preset Name:\nalum_bronze_LM", 
+            "outColor": [
+                0.5, 
+                0.5, 
+                0.5
+            ], 
+            "outColorB": 0.5, 
+            "outColorG": 0.5, 
+            "outColorR": 0.5, 
+            "presence": 1.0, 
+            "roughness": 0.0, 
+            "sheen": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "sheenB": 0.0, 
+            "sheenG": 0.0, 
+            "sheenR": 0.0, 
+            "shininess": 100.0, 
+            "translucence": 0.0
+        }, 
+        "connection": {
+            "lmlayer": "alum_bronze_LM_layer_alum_bronze_LM.result"
+        }, 
+        "type": "PxrLMDiffuse"
+    }, 
+    "alum_bronze_LM_layer_alum_bronze_LM": {
+        "asType": "asTexture", 
+        "attr": {
+            "caching": false, 
+            "clearcoatAnisotropy": 0.0, 
+            "clearcoatBehavior": true, 
+            "clearcoatColor": [
+                0.5393301248550415, 
+                0.5393301248550415, 
+                0.5393301248550415
+            ], 
+            "clearcoatColorB": 0.5393301248550415, 
+            "clearcoatColorG": 0.5393301248550415, 
+            "clearcoatColorR": 0.5393301248550415, 
+            "clearcoatEta": 1.2999999523162842, 
+            "clearcoatNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatNnX": 0.0, 
+            "clearcoatNnY": 0.0, 
+            "clearcoatNnZ": 0.0, 
+            "clearcoatRoughness": 0.4000000059604645, 
+            "clearcoatThickness": 0.0, 
+            "clearcoatTn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "clearcoatTnX": 0.0, 
+            "clearcoatTnY": 0.0, 
+            "clearcoatTnZ": 0.0, 
+            "clearcoatTransmission": [
+                1.0, 
+                1.0, 
+                1.0
+            ], 
+            "clearcoatTransmissionB": 1.0, 
+            "clearcoatTransmissionG": 1.0, 
+            "clearcoatTransmissionR": 1.0, 
+            "diffuseBehavior": true, 
+            "diffuseColor": [
+                0.25, 
+                0.2222057431936264, 
+                0.18250000476837158
+            ], 
+            "diffuseColorB": 0.18250000476837158, 
+            "diffuseColorG": 0.2222057431936264, 
+            "diffuseColorR": 0.25, 
+            "diffuseNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "diffuseNnX": 0.0, 
+            "diffuseNnY": 0.0, 
+            "diffuseNnZ": 0.0, 
+            "diffuseRoughness": 0.4000000059604645, 
+            "frozen": false, 
+            "incandescence": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "incandescenceB": 0.0, 
+            "incandescenceG": 0.0, 
+            "incandescenceR": 0.0, 
+            "isHistoricallyInteresting": 2, 
+            "layerMask": 1.0, 
+            "lmlayer": "", 
+            "nodeState": 0, 
+            "notes": "LollipopShaders RIS100 LM Preset Name:\nalum_bronze_LM_layer", 
+            "result": "", 
+            "sheen": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "sheenB": 0.0, 
+            "sheenG": 0.0, 
+            "sheenR": 0.0, 
+            "specularAnisotropy": 0.0, 
+            "specularBehavior": true, 
+            "specularColor": [
+                0.4000000059604645, 
+                0.4000000059604645, 
+                0.4000000059604645
+            ], 
+            "specularColorB": 0.4000000059604645, 
+            "specularColorG": 0.4000000059604645, 
+            "specularColorR": 0.4000000059604645, 
+            "specularEta": [
+                0.9635999798774719, 
+                1.0090667009353638, 
+                1.100000023841858
+            ], 
+            "specularEtaB": 1.100000023841858, 
+            "specularEtaG": 1.0090667009353638, 
+            "specularEtaR": 0.9635999798774719, 
+            "specularKappa": [
+                2.0, 
+                1.4600000381469727, 
+                1.100000023841858
+            ], 
+            "specularKappaB": 1.100000023841858, 
+            "specularKappaG": 1.4600000381469727, 
+            "specularKappaR": 2.0, 
+            "specularNn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularNnX": 0.0, 
+            "specularNnY": 0.0, 
+            "specularNnZ": 0.0, 
+            "specularRoughness": 0.17499999701976776, 
+            "specularTn": [
+                0.0, 
+                0.0, 
+                0.0
+            ], 
+            "specularTnX": 0.0, 
+            "specularTnY": 0.0, 
+            "specularTnZ": 0.0
+        }, 
+        "connection": {}, 
+        "type": "PxrLMLayer"
+    }
+}

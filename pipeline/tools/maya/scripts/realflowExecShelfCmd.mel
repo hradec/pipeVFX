@@ -1,0 +1,13 @@
+/*
+*	Make sure the plug-in is loaded before running the command associated with a shelf button.
+* The shelf buttons can call this function before the plug-in is loaded (e.g. when the plug-in
+* is not set to auto-load). In that case realflowMain.mel hasn't been sourced yet, so this function
+* must be in a file with the same name for Maya to find it.
+*/
+global proc realflowExecShelfCmd(string $cmd)
+{
+	if(!`pluginInfo -q -loaded "realflow"`)
+		loadPlugin realflow;
+	evalDeferred $cmd;
+}
+
