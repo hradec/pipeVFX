@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalTriplanar">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="input" type="maya.float3">
+			<label>Background</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalTriplanar">
+		<property name="outColor" />
+		<property name="input" />
+		</view>
+</templates>

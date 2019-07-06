@@ -1,0 +1,10 @@
+STRINGTABLE ainode_alColorSpace
+{
+	ainode_alColorSpace   "Arnold alColorSpace node";
+
+	C4DAI_ALCOLORSPACE_MAIN_GRP   "Main";
+
+	C4DAIP_ALCOLORSPACE_INPUT   "input";
+	C4DAIP_ALCOLORSPACE_SOURCESPACE   "Source space";
+}
+

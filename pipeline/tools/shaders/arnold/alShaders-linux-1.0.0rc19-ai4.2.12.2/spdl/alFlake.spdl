@@ -1,0 +1,116 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{cb67579d-bcf4-4692-a3d1-091c39a77f02}";
+PropertySet "alFlake_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{be5bb6ae-0376-411d-8e72-f05324eb7522}";
+		Type = vector;
+	}
+	Parameter "space" input
+	{
+		GUID = "{7444090c-2b1d-4fa5-8fe4-ac792ace2a1c}";
+		Type = string;
+		Texturable = off;
+		Value = "tangent";
+	}
+	Parameter "amount" input
+	{
+		GUID = "{5ed21a78-9c6d-4b27-9e1b-a29a4ade2bda}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.700000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "size" input
+	{
+		GUID = "{31aa7226-e9a1-45c6-a2e5-08d3eb8cf7bd}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.010000;
+	}
+	Parameter "divergence" input
+	{
+		GUID = "{5ffa6b0e-9665-4ee0-9963-2ced0ff56d43}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "P" input
+	{
+		GUID = "{e77920ee-8025-418d-ab25-d2ba8223e733}";
+		Type = vector;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+}
+MetaShader "alFlake_meta"
+{
+	Name = "ALS_Flake";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Flake";
+		Filename = "alFlake";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	space
+	{
+		Name = "space";
+		UIType = "Combo";
+		Items
+		{
+			"tangent" = "tangent";
+			"world" = "world";
+		}
+	}
+	amount
+	{
+		Name = "Amount";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	size
+	{
+		Name = "Size";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	divergence
+	{
+		Name = "Divergence";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	P
+	{
+		Name = "P";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	space;
+	amount;
+	size;
+	divergence;
+	P;
+}
+Layout "RenderTree"
+{
+	amount;
+	size;
+	divergence;
+	P;
+}
+Plugin = Shader
+{
+	Filename = "alFlake";
+}

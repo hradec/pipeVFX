@@ -1,0 +1,502 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{a39a8557-dbb0-474d-a08f-30b9aab4c22e}";
+PropertySet "alLayerFloat_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{af6b80d0-ad84-4b4c-a1fe-f8afaa9455cf}";
+		Type = scalar;
+	}
+	Parameter "layer1name" input
+	{
+		GUID = "{ba88184c-d431-4071-a775-a0b0b662f0db}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "layer1enabled" input
+	{
+		GUID = "{ced89911-d954-4f48-85f4-4d5b57bcad96}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "layer1" input
+	{
+		GUID = "{8334f068-8db7-496b-bacf-4884e10cbee1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer1a" input
+	{
+		GUID = "{8fb349ee-9e79-41fd-acad-760c8d3175fb}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer2name" input
+	{
+		GUID = "{0edb6da6-785a-4391-a5d5-d7cbd252151e}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "layer2enabled" input
+	{
+		GUID = "{9b122662-86a7-4683-9343-cd8379687309}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "layer2" input
+	{
+		GUID = "{5f0137da-f667-412c-b4bb-aa19f276ed6e}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer2a" input
+	{
+		GUID = "{e492734a-677c-4d7e-ac71-9d8210ffb45f}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer3name" input
+	{
+		GUID = "{e77be50f-ed78-4134-939a-2b96fbcc817f}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "layer3enabled" input
+	{
+		GUID = "{0fa6fcad-888c-4db3-890b-7c38d56b8ffe}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "layer3" input
+	{
+		GUID = "{f923c5b9-7528-452f-a5be-d4e898bde90e}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer3a" input
+	{
+		GUID = "{93d9fbd0-13a2-4be8-8289-452e037a8849}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer4name" input
+	{
+		GUID = "{7b321912-fd06-4b47-bf9a-fe500a074e5e}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "layer4enabled" input
+	{
+		GUID = "{fb23402b-99ae-475d-893a-e8a6994a67a8}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "layer4" input
+	{
+		GUID = "{8e0e65c4-1dae-4222-96b2-1b7361a886e8}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer4a" input
+	{
+		GUID = "{84ea4e81-3513-40cd-a1b4-62ca8363aa18}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer5name" input
+	{
+		GUID = "{35dbd6c3-c8b7-41c3-8d23-72d2686bdcca}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "layer5enabled" input
+	{
+		GUID = "{6578ee36-e787-41a5-8e65-6074ec06260f}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "layer5" input
+	{
+		GUID = "{a60b1df6-9bf9-409e-9330-141d91de7d3d}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer5a" input
+	{
+		GUID = "{5e4a10f9-da8c-4284-ad89-0520b2a59121}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer6name" input
+	{
+		GUID = "{cd08d051-7b9a-418a-beb1-2476ecdba2d2}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "layer6enabled" input
+	{
+		GUID = "{47e87226-a15c-450b-845d-9c6386702a7b}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "layer6" input
+	{
+		GUID = "{c2df6626-fa0b-4d9b-9323-3f7f832d9b58}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer6a" input
+	{
+		GUID = "{32cc4153-3990-40a9-942f-3b881a18b690}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer7name" input
+	{
+		GUID = "{c1979955-d925-460d-a249-3454b73d43d9}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "layer7enabled" input
+	{
+		GUID = "{fe954891-c879-42e0-aa5c-ceddd071cab8}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "layer7" input
+	{
+		GUID = "{a7708c32-7b01-4f11-83cd-0c290bc24f3f}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer7a" input
+	{
+		GUID = "{4ee55aaf-7738-4ec0-8033-06d999d54aa5}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer8name" input
+	{
+		GUID = "{3f40025c-5df2-4c16-8fb2-8333181364b9}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "layer8enabled" input
+	{
+		GUID = "{81f3d1b2-df03-4e08-ac68-42565b8209db}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "layer8" input
+	{
+		GUID = "{688b9088-ab0f-46b1-a655-686726ce0645}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "layer8a" input
+	{
+		GUID = "{6ea190b9-9ee2-4287-a43b-4af902f7a6c3}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+}
+MetaShader "alLayerFloat_meta"
+{
+	Name = "ALS_LayerFloat";
+	Type = material;
+	Renderer "mental ray"
+	{
+		Name = "ALS_LayerFloat";
+		Filename = "alLayerFloat";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	layer1name
+	{
+		Name = "Name";
+	}
+	layer1enabled
+	{
+		Name = "Enabled";
+	}
+	layer1
+	{
+		Name = "Input";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer1a
+	{
+		Name = "Alpha";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer2name
+	{
+		Name = "Name";
+	}
+	layer2enabled
+	{
+		Name = "Enabled";
+	}
+	layer2
+	{
+		Name = "Input";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer2a
+	{
+		Name = "Alpha";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer3name
+	{
+		Name = "Name";
+	}
+	layer3enabled
+	{
+		Name = "Enabled";
+	}
+	layer3
+	{
+		Name = "Input";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer3a
+	{
+		Name = "Alpha";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer4name
+	{
+		Name = "Name";
+	}
+	layer4enabled
+	{
+		Name = "Enabled";
+	}
+	layer4
+	{
+		Name = "Input";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer4a
+	{
+		Name = "Alpha";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer5name
+	{
+		Name = "Name";
+	}
+	layer5enabled
+	{
+		Name = "Enabled";
+	}
+	layer5
+	{
+		Name = "Input";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer5a
+	{
+		Name = "Alpha";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer6name
+	{
+		Name = "Name";
+	}
+	layer6enabled
+	{
+		Name = "Enabled";
+	}
+	layer6
+	{
+		Name = "Input";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer6a
+	{
+		Name = "Alpha";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer7name
+	{
+		Name = "Name";
+	}
+	layer7enabled
+	{
+		Name = "Enabled";
+	}
+	layer7
+	{
+		Name = "Input";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer7a
+	{
+		Name = "Alpha";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer8name
+	{
+		Name = "Name";
+	}
+	layer8enabled
+	{
+		Name = "Enabled";
+	}
+	layer8
+	{
+		Name = "Input";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	layer8a
+	{
+		Name = "Alpha";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	Tab "Background"
+	{
+		layer1name;
+		layer1enabled;
+		layer1;
+		layer1a;
+	}
+	Tab "Layer 2"
+	{
+		layer2name;
+		layer2enabled;
+		layer2;
+		layer2a;
+	}
+	Tab "Layer 3"
+	{
+		layer3name;
+		layer3enabled;
+		layer3;
+		layer3a;
+	}
+	Tab "Layer 4"
+	{
+		layer4name;
+		layer4enabled;
+		layer4;
+		layer4a;
+	}
+	Tab "Layer 5"
+	{
+		layer5name;
+		layer5enabled;
+		layer5;
+		layer5a;
+	}
+	Tab "Layer 6"
+	{
+		layer6name;
+		layer6enabled;
+		layer6;
+		layer6a;
+	}
+	Tab "Layer 7"
+	{
+		layer7name;
+		layer7enabled;
+		layer7;
+		layer7a;
+	}
+	Tab "Layer 8"
+	{
+		layer8name;
+		layer8enabled;
+		layer8;
+		layer8a;
+	}
+}
+Layout "RenderTree"
+{
+	Group "Background"
+	{
+		layer1;
+		layer1a;
+	}
+	Group "Layer 2"
+	{
+		layer2;
+		layer2a;
+	}
+	Group "Layer 3"
+	{
+		layer3;
+		layer3a;
+	}
+	Group "Layer 4"
+	{
+		layer4;
+		layer4a;
+	}
+	Group "Layer 5"
+	{
+		layer5;
+		layer5a;
+	}
+	Group "Layer 6"
+	{
+		layer6;
+		layer6a;
+	}
+	Group "Layer 7"
+	{
+		layer7;
+		layer7a;
+	}
+	Group "Layer 8"
+	{
+		layer8;
+		layer8a;
+	}
+}
+Plugin = Shader
+{
+	Filename = "alLayerFloat";
+}

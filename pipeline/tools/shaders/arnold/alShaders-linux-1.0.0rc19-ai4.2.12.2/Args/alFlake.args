@@ -1,0 +1,12 @@
+<args format="1.0">
+<param name="space" label="space" widget="popup">
+	<hintlist name="options">
+		<string value="tangent"/>
+		<string value="world"/>
+	</hintlist>
+</param>
+<param name="amount" label="Amount"/>
+<param name="size" label="Size"/>
+<param name="divergence" label="Divergence"/>
+<param name="P" label="P"/>
+</args>

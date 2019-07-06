@@ -1,0 +1,12 @@
+STRINGTABLE ainode_alCombineFloat
+{
+	ainode_alCombineFloat   "Arnold alCombineFloat node";
+
+	C4DAI_ALCOMBINEFLOAT_MAIN_GRP   "Main";
+
+	C4DAIP_ALCOMBINEFLOAT_INPUT1   "input1";
+	C4DAIP_ALCOMBINEFLOAT_INPUT2   "input2";
+	C4DAIP_ALCOMBINEFLOAT_INPUT3   "input3";
+	C4DAIP_ALCOMBINEFLOAT_COMBINEOP   "Combine Op";
+}
+

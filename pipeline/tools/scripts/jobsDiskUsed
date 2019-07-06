@@ -1,0 +1,23 @@
+#!/bin/python2
+
+import os,sys,sgmail
+
+emails=[
+	'pauta@atomovfx.com.br',
+	'me@dlpi.ca',
+	'eernandee@hotmail.com',
+]
+
+#find /atomo/jobs/  -maxdepth 1 -mindepth 1 -type d -name "0*" | sort | grep -v 0000.DAILIES | while read p ; do echo "$(sudo du -sh $p)" ; done | sort -h
+
+du=[ x.strip() for x in os.popen('df -h /ZRAID ; echo ; sudo du -shc $(find /atomo/jobs/  -maxdepth 1 -mindepth 1 -type d -name "0*" | sort | grep -v 0000.DAILIES) | sort -h').readlines() ]
+
+for l in du:
+	print(l)
+
+for email in emails:
+	sgmail.send_email( email, "ATOMO SYSTEM REPORT: /atomo/jobs disk usage report" , '\n'.join(du) )
+
+
+
+

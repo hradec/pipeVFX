@@ -1,0 +1,13 @@
+STRINGTABLE ainode_alFlake
+{
+	ainode_alFlake   "Arnold alFlake node";
+
+	C4DAI_ALFLAKE_MAIN_GRP   "Main";
+
+	C4DAIP_ALFLAKE_SPACE   "space";
+	C4DAIP_ALFLAKE_AMOUNT   "Amount";
+	C4DAIP_ALFLAKE_SIZE   "Size";
+	C4DAIP_ALFLAKE_DIVERGENCE   "Divergence";
+	C4DAIP_ALFLAKE_P   "P";
+}
+

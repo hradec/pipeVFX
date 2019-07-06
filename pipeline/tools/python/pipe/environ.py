@@ -61,7 +61,7 @@ class environ(dict):
             all keys are lists.
             if a key already exists, the passed value is append to the list.
         '''
-        if not self.has_key(key):
+        if not key in self:
             dict.__setitem__(self,key,[])
         if not type(v)==list:
             v = [v]
@@ -72,13 +72,14 @@ class environ(dict):
                 dict.__getitem__(self,key).append(each)
 
     def insert(self, key, index, v):
-        if not self.has_key(key):
+        if not key in self:
             dict.__setitem__(self,key,[])
         if not type(v)==list:
             v = [v]
         for each in v:
             if each in dict.__getitem__(self,key):
                 dict.__getitem__(self,key).remove(each)
+            # print key, index, type(dict.__getitem__(self,key)) ;sys.stdout.flush()
             dict.__getitem__(self,key).insert(index, each)
 
 
@@ -105,7 +106,7 @@ class environ(dict):
         '''
         e.update(environClass)
         for each in e:
-            if self.has_key(each):
+            if each in self:
                 del self[each]
             self[each] = e[each]
 
@@ -116,7 +117,7 @@ class environ(dict):
         '''
         global initialized
         # if we're running inside another app, don't reset os.environ
-        if not initialized.has_key('__DB_LATEST'):
+        if not '__DB_LATEST' in initialized:
             os.environ.update( initialized )
         paths = {}
 
@@ -143,11 +144,11 @@ class environ(dict):
 #                l.reverse()
                 for value in filter(lambda x: x, l):
 
-                    if not os.environ.has_key(each):
+                    if not each in os.environ:
                         os.environ[each]=''
 
                     p = value
-                    if p[0] in ['/']:
+                    if p[0] in ['/'] and each not in ['HOME']:
                         p = expandvars(p)
                         if os.path.abspath(p) not in os.environ[each].split(os.pathsep):
                             os.environ[each] = os.pathsep.join([ os.environ[each], os.path.abspath( p ) ])
@@ -180,10 +181,11 @@ class environ(dict):
         # cleanup LD_LIBRARY_PATH from inexistent paths
         for VAR in [LD_LIBRARY_PATH, 'PYTHONPATH']:
             tmp = []
-            for each in os.environ[VAR].split(os.pathsep):
-                if os.path.exists(each):
-                    tmp.append(each)
-            os.environ[VAR] = os.pathsep.join(tmp)
+            if VAR in os.environ:
+                for each in os.environ[VAR].split(os.pathsep):
+                    if os.path.exists(each):
+                        tmp.append(each)
+                os.environ[VAR] = os.pathsep.join(tmp)
 
 
         log.debug( bcolors.WARNING+"="*200+bcolors.END )

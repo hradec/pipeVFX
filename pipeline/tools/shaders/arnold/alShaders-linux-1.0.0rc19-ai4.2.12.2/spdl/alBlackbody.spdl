@@ -1,0 +1,102 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{2855deea-028d-4842-a154-d6cf14660a2a}";
+PropertySet "alBlackbody_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{7db2d3c7-1576-4ae2-bffc-e311972e4fc5}";
+		Type = color;
+	}
+	Parameter "temperature" input
+	{
+		GUID = "{b5f6ac31-1df7-4fd6-b6a0-05758123ce60}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1000.000000;
+		Value Minimum = 273.000000;
+		Value Maximum = 16000.000000;
+	}
+	Parameter "strength" input
+	{
+		GUID = "{2192b9d9-b5cd-4b68-b253-de4ceed13f79}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "physicalIntensity" input
+	{
+		GUID = "{16bf7708-dfa4-4d68-86c4-7c8ebec1c5ab}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "physicalExposure" input
+	{
+		GUID = "{fbde30dc-c893-45b2-9557-8c7d8dc2caa0}";
+		Type = scalar;
+		Texturable = on;
+		Value = -20.000000;
+	}
+}
+MetaShader "alBlackbody_meta"
+{
+	Name = "ALS_Blackbody";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Blackbody";
+		Filename = "alBlackbody";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	temperature
+	{
+		Name = "Temperature";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	strength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	physicalIntensity
+	{
+		Name = "Physical intensity";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	physicalExposure
+	{
+		Name = "Physical exposure";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	temperature;
+	strength;
+	Tab "Advanced"
+	{
+		physicalIntensity;
+		physicalExposure;
+	}
+}
+Layout "RenderTree"
+{
+	temperature;
+	strength;
+	Group "Advanced"
+	{
+		physicalIntensity;
+		physicalExposure;
+	}
+}
+Plugin = Shader
+{
+	Filename = "alBlackbody";
+}

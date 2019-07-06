@@ -1,0 +1,68 @@
+BINARY DISTRIBUTION
+-------------------
+Simply copy the files from the subdirectories to the relevant subdirectories of your MtoA installation (or somewhere in
+the appropriate paths):
+
+For MtoA (in-place install)
+- Libraries and MTD files found in the 'bin' directory go somewhere in your ARNOLD_PLUGIN_PATH or in 'shaders' under your MtoA installation directory
+- *.py interface templates found in the 'ae' directory go somwhere in your MTOA_TEMPLATES_PATH or in 'scripts/mtoa/ui/ae' under your MtoA installation directory
+
+For MtoA (custom install - necessary for Maya 2016 and above)
+- Extract the package to an alShaders folder somewhere on your filesystem.
+- Set the ARNOLD_PLUGIN_PATH variable to include {ALSHADERS_INSTALL}/bin
+- Set the MTOA_TEMPLATES_PATH variable to include {ALSHADERS_INSTALL}/ae
+- Set the MAYA_CUSTOM_TEMPLATE_PATH variable to include {ALSHADERS_INSTALL}/aexml
+
+For C4DtoA
+- Libraries and MTD files found in the 'bin' directory go somewhere in your ARNOLD_PLUGIN_PATH or in 'shaders' under your C4DtoA installation directory
+- Copy content of C4DtoA directory to your C4DtoA installation directory
+
+For SitoA
+- Copy the content of the bin folder to  ...\Addons\SItoA\Application\Plugins\bin\nt-x86-64 in windows or ...\Addons\SItoA\Application\Plugins\bin\linux in linux
+- That should be enough to at least get the shaders on the Arnold > DLL Shaders menu.
+- Copy the SPDLs to ...\Addons\SItoA\Application\spdl
+- In Softimage, before you try to use the shaders, generate presets (in the Plug-in Tree, right-click the spdl and click Regenerate Presets)
+- In the render tree, you may need to refresh the preset manager to see the shaders.
+- If you've already created some instances of the shader and they didn't have the PPGLayout, delete the spdl xsiindex in your $XSI_USERHOME\Application folder and start Softimage again.
+
+For Katana
+- Libraries and MTD files found in the 'bin' directory go somewhere in your ARNOLD_PLUGIN_PATH
+- Copy the Args directory to the same place as you copy the binaries
+
+For HtoA
+- Copy the libraries and .mtd files in the 'bin' directory to HtoA/arnold/plugins or anywhere else in your ARNOLD_PLUGIN_PATH
+
+For Nuke 
+- Copy the contents of the nuke directory your your ~/.nuke directory.
+- NB: If you already have a ~/.nuke/init.py or menu.py then copy-paste the contents of the included init.py and menu.py into your own rather than replacing it
+
+SOURCE DISTRIBUTION
+-------------------
+This project uses CMake >= 2.8 to build. It has been tested on Mac OS X >=10.7, Windows 7 with MSVC++2010 and Centos6.5 with gcc4.2.1
+
+In order to set it up to build in your environment you need to tell CMake where Arnold is installed. You can either rely on the FindArnold package working automatically, or specify ARNOLD_ROOT in one of the following ways:
+1) Set ARNOLD_ROOT in your environment before running CMake
+2) Pass ARNOLD_ROOT to cmake directly as in:
+> cmake -DARNOLD_ROOT=<path> ..
+3) Create a local.cmake file and set it in there
+
+By default, the shaders will be installed to build/dist. From there you can copy the files to the appropriate paths on your system. If you would like to install directly to a specific path you can set INSTALL_DIR as described for ARNOLD_ROOT above to install to ${INSTALL_DIR}/bin etc. Alternatively setting INSTALL_ROOT instead will install to ${INSTALL_ROOT}/${ALS_VERSION}/ai${ARNOLD_VERSION}
+
+Once those variables are set, cd to the top-level alShaders directory (assuming that's where you cloned it to), then:
+> mkdir build
+> cd build
+> cmake ..
+> make
+> make install
+
+On Windows use CMakeGUI. Set the source directory to where you unpacked the source files, and set the build directory to be the same
+but with "\build" on the end. Click "Configure" and select "Yes" when it asks if you want to create the build directory. Then click
+"Generate". This will create a Visual Studio project file in the build directory which you can use to build the library
+
+
+TEST SUITE
+----------
+In order to run the test suite you must first have built and installed the shader library. 
+Then download the test suite files from here: https://bitbucket.org/anderslanglands/alshaders/downloads/test.tar.gz
+Next unpack it to the your top-level alShaders directory and run "python test.py"
+The whole thing takes about 40 minutes to run on my ageing MacBook Pro. If you want it to go faster you can edit test_header.ass and reduce the AA_samples to 1.

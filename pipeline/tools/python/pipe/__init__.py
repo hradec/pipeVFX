@@ -56,7 +56,8 @@ if osx:
         os.system('launchctl load /usr/local/Cellar/d-bus/org.freedesktop.dbus-session.plist')
 
 import log
-from baseApp import version, versionLib, appsDB, app, libsDB, lib, baseApp, baseLib, disable, roots
+from baseApp import version, versionLib, appsDB, app, libsDB, lib, baseLib, disable, roots
+from baseApp import baseApp as _baseApp
 try:
     import admin
 except:
@@ -64,6 +65,7 @@ except:
 import apps
 import bcolors
 from base import distro as gcc
+from base import distroName as distro
 del os, glob
 import farm
 import frame
@@ -197,15 +199,8 @@ def init():
             paths.sort()
             pythonpath += ':%s/lib/python2.6/site-packages/' % paths[-1]
 
+    # add central bin/scripts folders
     path += '%s/bin:%s/scripts' % (root,root)
-    if os.environ.has_key('HOME'):
-        path = '%s/tools/scripts:%s' % (os.environ['HOME'],path)
-#    if os.environ.has_key('PATH'):
-#        tmp = os.environ['PATH']
-#        tmp = tmp.replace(path,'').replace('::',':')
-#        path += ':%s' % tmp
-#    print path
-
 
     envs = '''
         alias go="source %s/scripts/go"
@@ -213,9 +208,10 @@ def init():
         export ROOT=%s
         export STUDIO=$(basename $ROOT)
         %s
-        export PATH=%s:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        export __PATH_HOME=%s
+        export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$__PATH_HOME
         export PYTHONPATH=%s
-        export __PATH=$PATH
+        export __PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         export __PYTHONPATH=$PYTHONPATH
         export EDITOR=nano
     ''' % (root, depotRoot(), alias(), path, pythonpath)
@@ -338,7 +334,7 @@ def go():
                     result = filter(lambda x: args[1] in x[1], argsHist)
                     if result:
                         newArgs = result[-1]
-                except: 
+                except:
                     pass
 
     # if we have new arguments from the history, use then
@@ -378,7 +374,7 @@ def __go(args):
             '''PROMPT_COMMAND='echo -ne "\033]0;No Job/Shot set!!\007"' ''',
         ])
 
-    reserved = ['asset', 'shot', 'shot']
+    reserved = ['asset', 'assets', 'shot', 'shots']
 
     job = None
 #    if os.environ.has_key('PIPE_JOB'):
@@ -420,17 +416,18 @@ def __go(args):
         for each in reserved:
             if each in args:
                 value = ""
+                shotPrefix = each.rstrip('s')
                 try:
                     value = args[args.index(each)+1]
-                    if not os.path.exists('%s/%s/%ss/%s' % (roots.jobs(), job, each, value) ):
+                    if not os.path.exists('%s/%s/%ss/%s' % (roots.jobs(), job, shotPrefix, value) ):
                         raise
-                    shot = "%s@%s" %  (each, value)
+                    shot = "%s@%s" %  (shotPrefix, value)
                     env.append( 'export PIPE_SHOT="%s"' %  shot )
 
                 except:
                     ret = ["echo 'ERROR: %s %s doesnt exist!\n\nOptions are:'" % (each, value)]
 
-                    for l in glob( '%s/%s/%ss/*' % (roots.jobs(), job, each) ):
+                    for l in glob( '%s/%s/%ss/*' % (roots.jobs(), job, shotPrefix) ):
                         ret.append( "echo '\t%s %s'" % (each, os.path.basename(l)) )
                     ret.append( "echo ' '")
                     return "\n".join(ret)
@@ -446,7 +443,7 @@ def __go(args):
     env.append( 'cd "%s"' % currentJob(job) )
     # add job tools/python to pythonpath
     path = '%s/tools/scripts' % currentJob(job)
-    env.append( 'export PATH=%s:$__PATH' % path )
+    env.append( 'export PATH=$__PATH:%s:$__PATH_HOME' % path )
     pythonpath = '%s/tools/python' % currentJob(job)
     env.append( 'export PYTHONPATH=%s:$__PYTHONPATH' % pythonpath )
 
@@ -467,7 +464,7 @@ def __go(args):
         pythonpath += ':%s/users/%s/tools/python' % (currentShot(job, shot), admin.username())
 
 
-    env.append( 'export PATH=%s:$__PATH' % path )
+    env.append( 'export PATH=$__PATH:%s:$__PATH_HOME' % path )
     env.append( 'export PYTHONPATH=%s:$__PYTHONPATH' % pythonpath )
 
     env.append( 'echo "Job: %s\n%s: %s\nPath: $(pwd)"' % (job, values[0], values[1] ) )
@@ -484,8 +481,10 @@ def __go(args):
         env.append( 'export PIPE_FARM_USER=%s' % user )
         env.append( 'export PIPE_FARM_JOBID=%s' % os.environ['QBJOBID'] )
 
-        
-       
+
+
     return '%s \n %s' % (init(), '\n'.join(env))
+
+_baseApp.configFiles()
 
 sys.path.remove(moduleRootPath)

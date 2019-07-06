@@ -1,0 +1,55 @@
+#!/bin/bash
+
+if [ "$1" == "" ] ; then 
+	ip=192.168.0.254
+	arg=$1
+	extra=$2
+elif [ "$(echo $1 | grep '-')" != "" ]  ; then
+	ip=192.168.0.254
+	arg=$1	
+	extra=$2
+else
+	ip=$1
+	arg=$2
+	extra=$3
+fi
+
+if [ "$arg" == "-h"  ] || [ "$arg" == "--help" ] || [ "$arg" == "" ] || [ "$(echo $arg | grep '-')" == "" ] ; then 
+	echo "
+$(basename $0) - a simpler ipmitool wrapper 1.0
+
+	$(basename $0) <ipmi ip> <option> ["ipmi commands"]
+	
+	--reset 	press the reset button virtually
+	--onoff 	turn the machine off and back on again
+	--serial (-s)	connect to the serial port over LAN
+	-c 		send the following string as commands to ipmitool (just -c will show ipmitool help)
+
+about --serial:
+
+	Once in the serial console, one can type:
+
+	~.  		terminate connection
+	~?		help
+	~^Z		suspend ipmitool
+	~^X		suspend ipmitool, but don't restore tty on restart
+	~B		send break
+	~~		send the escape character by typing it twice
+
+
+"
+
+elif [ "$arg" == "--reset"  ] ; then 
+	ipmitool -I lanplus -H $ip -U root -P t  chassis  power reset
+
+elif [ "$arg" == "--offon"  ] ; then 
+	ipmitool -I lanplus -H $ip -U root -P t  chassis  power cycle
+
+elif [ "$arg" == "-c"  ] ; then 
+	ipmitool -I lanplus -H $ip -U root -P t  $extra
+
+elif [ "$arg" == "--serial"  ] || [ "$arg" == "-s" ] ; then 
+	reset
+	ipmitool -I lanplus -H $ip -U root -P t  sol deactivate
+	ipmitool -I lanplus -H $ip -U root -P t  sol activate
+fi

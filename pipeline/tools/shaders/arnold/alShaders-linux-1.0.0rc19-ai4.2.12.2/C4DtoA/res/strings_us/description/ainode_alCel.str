@@ -1,0 +1,19 @@
+STRINGTABLE ainode_alCel
+{
+	ainode_alCel   "Arnold alCel node";
+
+	C4DAI_ALCEL_MAIN_GRP   "Main";
+	C4DAI_ALCEL_SHADING_GRP   "Shading";
+	C4DAI_ALCEL_AOVS_GRP   "AOVs";
+
+	C4DAIP_ALCEL_SURFACESHADER   "Surface shader";
+	C4DAIP_ALCEL_DIFFUSEDIRECTSTRENGTH   "Diffuse strength";
+	C4DAIP_ALCEL_DIFFUSERAMP   "Diffuse ramp";
+	C4DAIP_ALCEL_DIFFUSEINDIRECTSTRENGTH   "Indirect diffuse strength";
+	C4DAIP_ALCEL_DIFFUSEINDIRECTSATURATION   "Indirect diffuse saturation";
+	C4DAIP_ALCEL_DIFFUSEINDIRECTTINT   "Indirect diffuse tint";
+	C4DAIP_ALCEL_AOV_DIRECT_DIFFUSE_CEL   "Cel Diffuse";
+	C4DAIP_ALCEL_AOV_DIRECT_DIFFUSE_RAW_CEL   "Cel Raw Diffuse";
+	C4DAIP_ALCEL_AOV_INDIRECT_DIFFUSE_CEL   "Cel Indirect Diffuse";
+}
+

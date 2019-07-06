@@ -1,0 +1,12 @@
+<args format="1.0">
+<param name="inputA" label="InputA"/>
+<param name="inputB" label="InputB"/>
+<param name="inputC" label="InputC"/>
+<param name="inputD" label="InputD"/>
+<param name="inputE" label="InputE"/>
+<param name="inputF" label="InputF"/>
+<param name="inputG" label="InputG"/>
+<param name="inputH" label="InputH"/>
+<param name="mix" label="mix"/>
+<param name="threshold" label="threshold"/>
+</args>

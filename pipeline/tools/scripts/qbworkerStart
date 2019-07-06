@@ -1,1 +1,53 @@
-env PYTHONPATH=/atomo/pipeline/tools/python /bin/python -c "import pipe;pipe.apps.qube().run('qube-worker/local/pfx/qube/sbin/worker')"
+#!/bin/sh
+
+#env PYTHONPATH=/atomo/pipeline/tools/python /bin/python -c "import pipe;pipe.apps.qube().run('qube-worker/local/pfx/qube/sbin/worker')"
+
+bootCheck(){
+if [ "$(hostname | grep google)" != "" ] ; then
+  if [ ! -e /dev/shm/boot_ok ] ; then
+	if [ "$(cat /var/log/rc_local.log | grep 'Running Pipe inits...')" == "" ] ; then
+
+		[ "$(cat /var/log/rc_local.log | egrep 'Stale')" != "" ] && echo 1 > /proc/sys/kernel/sysrq  && echo b > /proc/sysrq-trigger
+		[ "$(cat /var/log/rc_local.log | egrep 'stale')" != "" ] && echo 1 > /proc/sys/kernel/sysrq  && echo b > /proc/sysrq-trigger
+		[ "$(cat /var/log/rc_local.log | egrep 'config.json. No such file or directory')" != "" ] && echo 1 > /proc/sys/kernel/sysrq  && echo b > /proc/sysrq-trigger
+
+	else
+		touch /dev/shm/boot_ok
+	fi
+  fi
+fi
+}
+bootCheck || echo "BootCheckFail!!"
+
+# kill prman if it get stuck!
+ps -AHfc | grep '/bin/prman' | grep -v dspy | grep -v grep | while read each ; do [ ! -e $(echo "$each" | awk '{print $(NF-3)}') ] && echo $each >> /dev/shm/$(echo $each | awk '{print $(2)}').count; done
+for each in $(ls /dev/shm/*.count 2>/dev/null) ; do
+	[ $(cat $each | wc -l) -gt 3 ] && sudo kill -9 $(head -n 1 $each | awk '{print $(2)}') > /tmp/$(basename $each).log
+	#[ $(cat $each | wc -l) -gt 3 ] && echo sudo kill -9 $(head -n 1 $each | awk '{print $(3)}') >> /tmp/$(basename $each).log
+	echo $? >> /tmp/$(basename $each).log
+	[ "$(tail -n 1 /tmp/$(basename $each).log)" == "0" ] && rm $each #> /tmp/$(basename $each).log
+done
+
+
+# cleanup counters which PID is dead
+#for each in $(ls /dev/shm/*.count) ; do
+#	[  "$(ps -AHfc | grep $(cat $each | awk '{print $2}') | grep -v grep)" == "" ] && rm $each
+#done
+
+
+
+
+if [ "$(hostname | grep google)" != "" ] ; then
+    [ "$(cat /tmp/dbusPipe* 2>/dev/null | grep 'Resource temporarily unavailable')" != "" ] && sync && reboot
+    [ "$(dmesg | grep 'Call Trace\:')" != "" ] && sync && reboot
+fi
+
+
+
+# restart restartd if it's outputting process ids!
+if [ "$(journalctl -mr -n 100 | grep 'is NOT running' | grep afrender | grep ' [0-9][0-9][0-9][0-9][0-9] ')" != "" ] ; then 
+	pkill -fc -9 restartd
+	journalctl --vacuum-size=1M
+	systemctl restart systemd-journald
+fi
+

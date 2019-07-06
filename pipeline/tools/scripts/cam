@@ -1,0 +1,4 @@
+#!/bin/sh
+
+
+/bin/mplayer -cache 128 -tv device=/dev/video0  tv://

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalGaborNoise">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="color1" type="maya.float3">
+			<label>Color 1</label>
+		</attribute>
+		<attribute name="color2" type="maya.float3">
+			<label>Color 2</label>
+		</attribute>
+		<attribute name="P" type="maya.float3">
+			<label>P</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalGaborNoise">
+		<property name="outColor" />
+		<property name="color1" />
+		<property name="color2" />
+		<property name="P" />
+		</view>
+</templates>

@@ -1,0 +1,2430 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{87cc1335-03ea-48b0-a9b7-cede6ec3d597}";
+PropertySet "alSurface_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{4da1a3d9-998a-44fb-a449-0a9e98178b8b}";
+		Type = color;
+	}
+	Parameter "diffuseStrength" input
+	{
+		GUID = "{36c32527-5427-45f8-b431-c8be30793e7d}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "diffuseColor" input
+	{
+		GUID = "{e6994387-fcc6-4aea-913b-5918fdb6a3f7}";
+		Type = color;
+		Texturable = on;
+		Value = 0.500000 0.500000 0.500000;
+	}
+	Parameter "diffuseRoughness" input
+	{
+		GUID = "{a1e6ad7f-d10a-431b-a767-819b97c9992c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "backlightStrength" input
+	{
+		GUID = "{7e2fb1d1-27ae-4b73-88a8-f8291fbcad8f}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "backlightColor" input
+	{
+		GUID = "{fd34c5cb-7f56-4526-b9e4-ab3a1a03d4ae}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "backlightIndirectStrength" input
+	{
+		GUID = "{25bbd4aa-1229-4c8a-91bf-fedc13952f99}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "sssMix" input
+	{
+		GUID = "{e9be8086-ecbb-423f-97b5-8f3078f2bb3c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "sssMode" input
+	{
+		GUID = "{60b8a30f-6860-4231-85fe-127d0f3bbcbe}";
+		Type = string;
+		Texturable = off;
+		Value = "cubic";
+	}
+	Parameter "sssDensityScale" input
+	{
+		GUID = "{5b049621-183d-4043-a2bc-87e3b844d0f3}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "sssRadius" input
+	{
+		GUID = "{b89065cf-c9b2-4920-a9d7-9b5d37d053e3}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.500000;
+	}
+	Parameter "sssWeight1" input
+	{
+		GUID = "{3a0d3a8e-36c7-4780-b93c-b8cf175c9dbd}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "sssRadiusColor" input
+	{
+		GUID = "{37779ca0-9161-4356-bd23-29dc832ee515}";
+		Type = color;
+		Texturable = on;
+		Value = 0.439000 0.156000 0.078000;
+	}
+	Parameter "sssRadius2" input
+	{
+		GUID = "{f4994bc7-d555-4010-a178-2280a48fae22}";
+		Type = scalar;
+		Texturable = on;
+		Value = 4.000000;
+	}
+	Parameter "sssWeight2" input
+	{
+		GUID = "{31d93696-9bb4-4e33-8d43-abd0083792d5}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "sssRadiusColor2" input
+	{
+		GUID = "{ec09ba79-fc57-44dd-b3b0-2db0c4665efe}";
+		Type = color;
+		Texturable = on;
+		Value = 0.439000 0.080000 0.018000;
+	}
+	Parameter "sssRadius3" input
+	{
+		GUID = "{4309232d-998f-4835-a2dd-4d40f390a641}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "sssWeight3" input
+	{
+		GUID = "{422da347-d0d5-4f67-8f88-22f64ff26c97}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "sssRadiusColor3" input
+	{
+		GUID = "{4afe980a-baa8-4e18-aca1-1b94f213af70}";
+		Type = color;
+		Texturable = on;
+		Value = 0.523000 0.637000 0.667000;
+	}
+	Parameter "sssTraceSet" input
+	{
+		GUID = "{e9330ade-8924-47f0-85af-fc026bd97122}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "diffuseExtraSamples" input
+	{
+		GUID = "{0a0e7aab-3fc4-4a8e-8a48-232b415a723f}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "sssExtraSamples" input
+	{
+		GUID = "{4e219b8b-76ca-4e4b-a72d-b4a3ca7dd6e3}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "diffuseIndirectStrength" input
+	{
+		GUID = "{84884d96-5890-4199-bba5-34a1f5b727cb}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "diffuseIndirectClamp" input
+	{
+		GUID = "{5a32cd3e-1891-428f-99d9-ac62ed20fbf4}";
+		Type = scalar;
+		Texturable = off;
+		Value = 0.000000;
+	}
+	Parameter "diffuseNormal" input
+	{
+		GUID = "{112631d2-f61e-4b2a-8b15-41dc4e1afe18}";
+		Type = vector;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "traceSetDiffuse" input
+	{
+		GUID = "{11c79419-90c7-40bf-8e6e-62d9bfe23fff}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "traceSetBacklight" input
+	{
+		GUID = "{55af8c0d-c56f-4145-8634-496d9b80b898}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "specular1Strength" input
+	{
+		GUID = "{a0953efc-7f3f-47e0-b89b-d464af72a7e5}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular1Color" input
+	{
+		GUID = "{e2c3ea3b-a8b7-43e9-a574-c3a7ce5fb369}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "specular1Roughness" input
+	{
+		GUID = "{ea4329ec-de1a-487c-b332-b7aca79ed3a1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.300000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular1Anisotropy" input
+	{
+		GUID = "{bfa0e1bf-217f-4030-9468-8d68d1f772b1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular1Rotation" input
+	{
+		GUID = "{ca4b1db3-9149-434f-b973-24d72b4a9ce5}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular1FresnelMode" input
+	{
+		GUID = "{d88a3522-3d44-4173-8948-0c47f9eb17da}";
+		Type = string;
+		Texturable = off;
+		Value = "dielectric";
+	}
+	Parameter "specular1Ior" input
+	{
+		GUID = "{8f13ca82-3c16-4da8-a0e5-119d744dab9e}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.400000;
+	}
+	Parameter "specular1Reflectivity" input
+	{
+		GUID = "{30a0168e-e3d8-4160-b1a3-5ff275c735bf}";
+		Type = color;
+		Texturable = on;
+		Value = 0.548000 0.549000 0.570000;
+	}
+	Parameter "specular1EdgeTint" input
+	{
+		GUID = "{ae1f5bea-14a2-448f-a13e-25ef2e712f07}";
+		Type = color;
+		Texturable = on;
+		Value = 0.579000 0.598000 0.620000;
+	}
+	Parameter "specular1RoughnessDepthScale" input
+	{
+		GUID = "{0ff5fc0a-6b99-4691-93d6-ce9827acb6fd}";
+		Type = scalar;
+		Texturable = off;
+		Value = 1.000000;
+	}
+	Parameter "specular1ExtraSamples" input
+	{
+		GUID = "{1ed90fb2-8f81-41b7-ab53-eda5dcb4e84d}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "specular1Normal" input
+	{
+		GUID = "{a1bd6e83-e767-4d02-8d7d-9997e9291213}";
+		Type = vector;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "specular1IndirectStrength" input
+	{
+		GUID = "{3612b834-4631-4bde-ab28-547e7cd14f63}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular1IndirectClamp" input
+	{
+		GUID = "{debbaa05-8c62-4de0-b550-ac94e328486d}";
+		Type = scalar;
+		Texturable = off;
+		Value = 0.000000;
+	}
+	Parameter "traceSetSpecular1" input
+	{
+		GUID = "{00ed4b21-ed66-4d57-bbe7-bd200caf346d}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "specular1CausticPaths" input
+	{
+		GUID = "{bc30c08a-5d9e-4d03-827a-9a37979fe14e}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "specular1InternalDirect" input
+	{
+		GUID = "{74602a25-b8b1-4d73-af49-bbad139a29b8}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "specular1Distribution" input
+	{
+		GUID = "{19c71a8f-450e-45f3-9ad3-eb7c906afa1e}";
+		Type = string;
+		Texturable = off;
+		Value = "beckmann";
+	}
+	Parameter "specular2Strength" input
+	{
+		GUID = "{3bd249bd-0b82-4a9e-b88e-a657e7c704f8}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular2Color" input
+	{
+		GUID = "{5b8da1e6-b677-411e-a4f7-611aec46386b}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "specular2Roughness" input
+	{
+		GUID = "{6748a118-de85-41b9-a122-05e200ecbda9}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular2Anisotropy" input
+	{
+		GUID = "{177aafeb-cd15-45be-bd4b-54690a3bf2e2}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular2Rotation" input
+	{
+		GUID = "{609ea03b-0fcd-4d54-8968-813a78c68d40}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular2FresnelMode" input
+	{
+		GUID = "{6f223c2c-e792-4991-9b00-86002f9e62a9}";
+		Type = string;
+		Texturable = off;
+		Value = "dielectric";
+	}
+	Parameter "specular2Ior" input
+	{
+		GUID = "{71dcb6ae-e239-4527-960e-8a340161f31c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.400000;
+	}
+	Parameter "specular2Reflectivity" input
+	{
+		GUID = "{b3500453-6e4b-4431-a5cd-c9978a666108}";
+		Type = color;
+		Texturable = on;
+		Value = 0.548000 0.549000 0.570000;
+	}
+	Parameter "specular2EdgeTint" input
+	{
+		GUID = "{a8082774-bdf5-4c55-a206-eb12cc32bc0c}";
+		Type = color;
+		Texturable = on;
+		Value = 0.579000 0.598000 0.620000;
+	}
+	Parameter "specular2RoughnessDepthScale" input
+	{
+		GUID = "{fc697035-e40e-4465-83a9-c54bf6f86e7f}";
+		Type = scalar;
+		Texturable = off;
+		Value = 1.000000;
+	}
+	Parameter "specular2ExtraSamples" input
+	{
+		GUID = "{b143721f-04d5-4b3e-a61f-3e6aabfdf5b2}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "specular2Normal" input
+	{
+		GUID = "{08615a0e-a157-4fb9-80c4-da6656c3a90f}";
+		Type = vector;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "specular2IndirectStrength" input
+	{
+		GUID = "{0ea67e5a-8289-4332-9377-633e7b11adb1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "specular2IndirectClamp" input
+	{
+		GUID = "{5d659321-2332-4dd2-a7fe-d33abc186d23}";
+		Type = scalar;
+		Texturable = off;
+		Value = 0.000000;
+	}
+	Parameter "traceSetSpecular2" input
+	{
+		GUID = "{f5e4cb7e-f4f7-4de3-9499-e872b3e240ab}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "specular2CausticPaths" input
+	{
+		GUID = "{3b4cc5a2-eca5-4aa2-8601-c63e9ff5feee}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "specular2InternalDirect" input
+	{
+		GUID = "{4ea5fd5b-e31c-4304-8be6-62f937e3a02c}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "specular2Distribution" input
+	{
+		GUID = "{4b75cef2-27d5-4631-a8cb-866420973087}";
+		Type = string;
+		Texturable = off;
+		Value = "beckmann";
+	}
+	Parameter "transmissionStrength" input
+	{
+		GUID = "{dbec5fc0-5c4a-4367-a474-3ff0f28eb1c3}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "transmissionColor" input
+	{
+		GUID = "{a5f4fda8-61cc-4053-9787-4f0745dbd0c4}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "transmissionLinkToSpecular1" input
+	{
+		GUID = "{3b838d1f-ada1-4020-af33-9fe99d01fd80}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "transmissionRoughness" input
+	{
+		GUID = "{97102310-8968-4fd6-a278-336320fe2b90}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = 0.000000;
+		Value Maximum = 1.000000;
+	}
+	Parameter "transmissionIor" input
+	{
+		GUID = "{ca4bbcdb-11b0-41be-b7da-36cd930e2877}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.400000;
+	}
+	Parameter "ssAttenuationColor" input
+	{
+		GUID = "{ad1242ca-9464-478a-820d-38fa681a44bd}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "ssInScatteringStrength" input
+	{
+		GUID = "{80dc3203-c97c-4d13-bed7-43afc784fa65}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "ssDensityScale" input
+	{
+		GUID = "{76c2075e-1342-4ea0-99d5-c9c1183f5dd8}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "ssDirection" input
+	{
+		GUID = "{36860fcd-b6de-4f90-80c0-858a3869a311}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+		Value Minimum = -0.990000;
+		Value Maximum = 0.990000;
+	}
+	Parameter "transmissionRoughnessDepthScale" input
+	{
+		GUID = "{4b0a6113-2552-4f5f-8c01-9d4d67aa5d89}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "transmissionExtraSamples" input
+	{
+		GUID = "{6079849b-a153-4046-bebf-506c4dc3e30b}";
+		Type = integer;
+		Texturable = off;
+		Value = 0;
+	}
+	Parameter "transmissionEnableCaustics" input
+	{
+		GUID = "{3034aa94-662d-4550-a71d-fd3e4e27586e}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "rrTransmissionDepth" input
+	{
+		GUID = "{23c810e6-a343-4b17-9863-773b1ce5941b}";
+		Type = integer;
+		Texturable = off;
+		Value = 1;
+	}
+	Parameter "transmissionClamp" input
+	{
+		GUID = "{97e63eea-3fcb-40ba-8698-4ee751ec8dfb}";
+		Type = scalar;
+		Texturable = off;
+		Value = 0.000000;
+	}
+	Parameter "ssSpecifyCoefficients" input
+	{
+		GUID = "{06cb30b7-cfa3-4f0f-aaab-88a2c29f67a9}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "ssScattering" input
+	{
+		GUID = "{d5f40270-30ee-4a86-813b-ae9a2ecb5a94}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "ssAbsorption" input
+	{
+		GUID = "{b522a9e6-8a55-46ad-aa57-6cdcc69602de}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "traceSetTransmission" input
+	{
+		GUID = "{b01dcf3b-bc5f-4a8f-ae42-93ad5f9987fe}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "transmissionDoDirect" input
+	{
+		GUID = "{38ec761c-1255-4b66-9da4-35b4f11bb8a6}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "transmissionNormal" input
+	{
+		GUID = "{9c29f502-fd4b-450a-8781-1a5e8f60a59f}";
+		Type = vector;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "transmissionCausticPaths" input
+	{
+		GUID = "{5e45529d-c8f1-482d-bc95-280a9d0f0de8}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "emissionStrength" input
+	{
+		GUID = "{05d9e845-c7cc-4d6c-a92d-c20133e2fba6}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "emissionColor" input
+	{
+		GUID = "{9b683073-4c98-4258-9237-b08d1d975a31}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "opacity" input
+	{
+		GUID = "{767f6bf1-a36d-47f2-9dcb-2771d3a4d9c6}";
+		Type = color;
+		Texturable = on;
+		Value = 1.000000 1.000000 1.000000;
+	}
+	Parameter "id1" input
+	{
+		GUID = "{e629135a-2808-4d53-82d2-85196431b21c}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id2" input
+	{
+		GUID = "{664df1cf-e6bc-44bc-a9b0-a28a72a57738}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id3" input
+	{
+		GUID = "{6d61000a-26bc-4bc5-810a-e7c26b414d0a}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id4" input
+	{
+		GUID = "{8b935e37-2b91-4394-a339-c645e38d9447}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id5" input
+	{
+		GUID = "{0ee2d77e-fcd7-4322-83f4-f94cd8e3a2af}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id6" input
+	{
+		GUID = "{adbd9a5f-18f6-4272-9b8b-4149ad23af49}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id7" input
+	{
+		GUID = "{c65dc211-260a-46b3-a7b2-5603d44add11}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "id8" input
+	{
+		GUID = "{624b31e3-61db-4e66-88a9-2b07327cd5b3}";
+		Type = color;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "crypto_asset_override" input
+	{
+		GUID = "{9dfca91a-b873-4b51-b5ee-71a7fe69de8e}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "crypto_object_override" input
+	{
+		GUID = "{4a7a51cf-14f3-4508-9004-0e0e313a7742}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "crypto_material_override" input
+	{
+		GUID = "{864dcf46-1862-4f7c-8ea0-f6a1e66490fe}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "standardCompatibleAOVs" input
+	{
+		GUID = "{7f27b017-561b-4418-8ab0-fa479d86182b}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "transmitAovs" input
+	{
+		GUID = "{38c1c7fd-c663-4c9e-a7da-d949c2b2fd6d}";
+		Type = boolean;
+		Texturable = off;
+		Value = false;
+	}
+	Parameter "aov_diffuse_color_clamp" input
+	{
+		GUID = "{76c6ad0c-3f0d-4b80-871a-3e93c43bab72}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_direct_diffuse_clamp" input
+	{
+		GUID = "{e6fa0fb2-237d-4e06-ad41-61fcc48d2e09}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_direct_diffuse_raw_clamp" input
+	{
+		GUID = "{d82689cc-af6e-4f87-b345-253655dde1ea}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_indirect_diffuse_clamp" input
+	{
+		GUID = "{293aa30a-98c4-44d2-b213-9ec226a1f775}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_indirect_diffuse_raw_clamp" input
+	{
+		GUID = "{6782e10e-9bde-48fa-9b33-491f4843083f}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_direct_backlight_clamp" input
+	{
+		GUID = "{af707fad-5226-48ef-8628-42cc404ae35b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_indirect_backlight_clamp" input
+	{
+		GUID = "{e9c4dd41-4b35-46c6-8421-abf1c48c211f}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_direct_specular_clamp" input
+	{
+		GUID = "{2fd41d58-6136-4668-85ad-dec8c1e0149b}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_indirect_specular_clamp" input
+	{
+		GUID = "{e2b12ca9-68cc-407d-9f24-cd1b85c2e0c1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_direct_specular_2_clamp" input
+	{
+		GUID = "{18be5104-134a-4955-8e9f-93367ab6ab1d}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_indirect_specular_2_clamp" input
+	{
+		GUID = "{2b66b61f-f389-41b4-b49d-1b30efe28a3c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_single_scatter_clamp" input
+	{
+		GUID = "{bdd202af-0dbf-4e1a-ad88-a351a7e9960f}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_sss_clamp" input
+	{
+		GUID = "{bcc97d7a-e34d-4bf2-8ccb-9d46ba156b34}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_refraction_clamp" input
+	{
+		GUID = "{16999ef2-667f-4ddf-8b76-3679441dccf1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_emission_clamp" input
+	{
+		GUID = "{1a08c737-9e2d-40cb-b2ff-687bbaa9d21f}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_light_group_1_clamp" input
+	{
+		GUID = "{e1f1bcf6-1aae-4ea6-a6f3-69b80b455970}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_light_group_2_clamp" input
+	{
+		GUID = "{67379b3a-dace-4e2d-92c5-81ff6a12fd3e}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_light_group_3_clamp" input
+	{
+		GUID = "{b3cc13ab-953d-454a-945e-70fdaa312982}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_light_group_4_clamp" input
+	{
+		GUID = "{3ada3407-a8fc-4429-9c47-49bd718174df}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_light_group_5_clamp" input
+	{
+		GUID = "{45898356-aa2a-4f6e-bada-d4bd412b9b05}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_light_group_6_clamp" input
+	{
+		GUID = "{09419f03-49fe-49d9-8b77-12a9f771e999}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_light_group_7_clamp" input
+	{
+		GUID = "{943fd706-861d-4ce1-b358-ee5bfc6d8d04}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "aov_light_group_8_clamp" input
+	{
+		GUID = "{861fee7e-97dd-46d2-a7ed-10e26dda4cba}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "rr" input
+	{
+		GUID = "{12f015a7-6185-45f6-9c3d-c78093c7c817}";
+		Type = boolean;
+		Texturable = off;
+		Value = true;
+	}
+	Parameter "traceSetAll" input
+	{
+		GUID = "{155f26dc-1c49-429d-b53f-4210c54ac686}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "traceSetShadows" input
+	{
+		GUID = "{4853f12d-0c07-4554-90c2-d7def2b9090e}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "debug" input
+	{
+		GUID = "{2bf64b22-5f5b-44c6-813d-3d230a68b51b}";
+		Type = string;
+		Texturable = off;
+		Value = "off";
+	}
+	Parameter "aov_diffuse_color" input
+	{
+		GUID = "{1e12e901-ea9e-41e4-9391-16e4beddd97e}";
+		Type = string;
+		Value = "Arnold_Diffuse_Color";
+	}
+	Parameter "aov_direct_diffuse" input
+	{
+		GUID = "{7ec86f05-068a-4f7c-a9f8-5cf3a51271cc}";
+		Type = string;
+		Value = "Arnold_Direct_Diffuse";
+	}
+	Parameter "aov_direct_diffuse_raw" input
+	{
+		GUID = "{fc4a23b1-759c-4ec8-b3b1-d428a6f629f8}";
+		Type = string;
+		Value = "Arnold_Direct_Diffuse_Raw";
+	}
+	Parameter "aov_indirect_diffuse" input
+	{
+		GUID = "{a79910d1-3529-41cc-8ea9-98065347fcc0}";
+		Type = string;
+		Value = "Arnold_Indirect_Diffuse";
+	}
+	Parameter "aov_indirect_diffuse_raw" input
+	{
+		GUID = "{4e25f32d-fc5d-4a4b-8e40-8c4911259b4a}";
+		Type = string;
+		Value = "Arnold_Indirect_Diffuse_Raw";
+	}
+	Parameter "aov_direct_backlight" input
+	{
+		GUID = "{2f56bc5e-5cc9-470f-ac95-a4402ed5a5a3}";
+		Type = string;
+		Value = "Arnold_Direct_Backlight";
+	}
+	Parameter "aov_indirect_backlight" input
+	{
+		GUID = "{032e7cbb-473a-4f1a-8c3c-deefc4521208}";
+		Type = string;
+		Value = "Arnold_Indirect_Backlight";
+	}
+	Parameter "aov_direct_specular" input
+	{
+		GUID = "{72f2d92b-5995-407e-a247-74a28bdbc7e4}";
+		Type = string;
+		Value = "Arnold_Direct_Specular";
+	}
+	Parameter "aov_indirect_specular" input
+	{
+		GUID = "{221226ab-7317-40da-a52b-796394f5dbbb}";
+		Type = string;
+		Value = "Arnold_Indirect_Specular";
+	}
+	Parameter "aov_direct_specular_2" input
+	{
+		GUID = "{67ed51ed-1ece-4a84-a683-95c0bdb3e8c0}";
+		Type = string;
+		Value = "Arnold_Direct_Specular_2";
+	}
+	Parameter "aov_indirect_specular_2" input
+	{
+		GUID = "{a7d47299-9777-46c0-891c-8f2894e7f05d}";
+		Type = string;
+		Value = "Arnold_Indirect_Specular_2";
+	}
+	Parameter "aov_single_scatter" input
+	{
+		GUID = "{3d365baa-a6cf-4139-bfcc-7d2a917cb744}";
+		Type = string;
+		Value = "Arnold_Single_Scatter";
+	}
+	Parameter "aov_sss" input
+	{
+		GUID = "{9a4f91ae-980b-4aa7-8be9-0ed2e004c5ba}";
+		Type = string;
+		Value = "Arnold_Sss";
+	}
+	Parameter "aov_refraction" input
+	{
+		GUID = "{878c540c-6107-49b2-9440-7e280d222b6c}";
+		Type = string;
+		Value = "Arnold_Refraction";
+	}
+	Parameter "aov_emission" input
+	{
+		GUID = "{14285bba-cac4-4eeb-bf93-b43e00bb0f35}";
+		Type = string;
+		Value = "Arnold_Emission";
+	}
+	Parameter "aov_uv" input
+	{
+		GUID = "{0158b736-42c3-4d75-9d60-b6e69e0f5dbe}";
+		Type = string;
+		Value = "Arnold_Uv";
+	}
+	Parameter "aov_depth" input
+	{
+		GUID = "{d1a43f2f-c304-4e08-816d-0c7b09b14c4d}";
+		Type = string;
+		Value = "Arnold_Depth";
+	}
+	Parameter "aov_light_group_1" input
+	{
+		GUID = "{408fe8fe-e7a8-4461-afb3-401d09c57a22}";
+		Type = string;
+		Value = "Arnold_Light_Group_1";
+	}
+	Parameter "aov_light_group_2" input
+	{
+		GUID = "{fd2272f9-5f20-4680-bb08-98370652ed0c}";
+		Type = string;
+		Value = "Arnold_Light_Group_2";
+	}
+	Parameter "aov_light_group_3" input
+	{
+		GUID = "{cfc6354d-e804-40aa-b1eb-ee70f43f1ae4}";
+		Type = string;
+		Value = "Arnold_Light_Group_3";
+	}
+	Parameter "aov_light_group_4" input
+	{
+		GUID = "{c2ccc1d1-4f7e-4dde-ba1f-8a54592761c7}";
+		Type = string;
+		Value = "Arnold_Light_Group_4";
+	}
+	Parameter "aov_light_group_5" input
+	{
+		GUID = "{0b6f9021-eaf6-4f70-95fd-151d01b263b5}";
+		Type = string;
+		Value = "Arnold_Light_Group_5";
+	}
+	Parameter "aov_light_group_6" input
+	{
+		GUID = "{82ec122c-255e-4a85-a51a-ea515d1a3f92}";
+		Type = string;
+		Value = "Arnold_Light_Group_6";
+	}
+	Parameter "aov_light_group_7" input
+	{
+		GUID = "{9e75ef6d-2404-411c-8b85-eff1848f76e1}";
+		Type = string;
+		Value = "Arnold_Light_Group_7";
+	}
+	Parameter "aov_light_group_8" input
+	{
+		GUID = "{af9025ff-89c3-437a-8d16-73482c982e11}";
+		Type = string;
+		Value = "Arnold_Light_Group_8";
+	}
+	Parameter "aov_id_1" input
+	{
+		GUID = "{5e68595f-6305-4ee6-9717-d0018b058356}";
+		Type = string;
+		Value = "Arnold_Id_1";
+	}
+	Parameter "aov_id_2" input
+	{
+		GUID = "{e96b1d07-48e7-422a-9be8-c1385658b69e}";
+		Type = string;
+		Value = "Arnold_Id_2";
+	}
+	Parameter "aov_id_3" input
+	{
+		GUID = "{838e046e-aecb-47b9-b7c8-352e0fa04208}";
+		Type = string;
+		Value = "Arnold_Id_3";
+	}
+	Parameter "aov_id_4" input
+	{
+		GUID = "{cde2e581-04f6-4f17-a21d-226b39025fd1}";
+		Type = string;
+		Value = "Arnold_Id_4";
+	}
+	Parameter "aov_id_5" input
+	{
+		GUID = "{36528eab-6ccc-4a84-be63-b851092660bb}";
+		Type = string;
+		Value = "Arnold_Id_5";
+	}
+	Parameter "aov_id_6" input
+	{
+		GUID = "{611eaa06-6986-48cb-bc72-30e2e079417b}";
+		Type = string;
+		Value = "Arnold_Id_6";
+	}
+	Parameter "aov_id_7" input
+	{
+		GUID = "{ce666135-febf-452c-a395-1da730029b6e}";
+		Type = string;
+		Value = "Arnold_Id_7";
+	}
+	Parameter "aov_id_8" input
+	{
+		GUID = "{846c338f-2896-4f75-b482-d760505de99a}";
+		Type = string;
+		Value = "Arnold_Id_8";
+	}
+	Parameter "aov_crypto_asset" input
+	{
+		GUID = "{0fbdc7ae-c938-4f98-8bbe-be340c382e43}";
+		Type = string;
+		Value = "Arnold_Crypto_Asset";
+	}
+	Parameter "aov_crypto_object" input
+	{
+		GUID = "{8f697116-02d6-45fb-a355-8e2fff74aa5a}";
+		Type = string;
+		Value = "Arnold_Crypto_Object";
+	}
+	Parameter "aov_crypto_material" input
+	{
+		GUID = "{d88c1cd2-5407-4f45-a076-3ed252b3f159}";
+		Type = string;
+		Value = "Arnold_Crypto_Material";
+	}
+	Parameter "aov_shadow_group_1" input
+	{
+		GUID = "{8f1d3c4a-02f2-43da-b7b4-a121d7122ffa}";
+		Type = string;
+		Value = "Arnold_Shadow_Group_1";
+	}
+	Parameter "aov_shadow_group_2" input
+	{
+		GUID = "{d3ee3bc4-a549-41c4-b6d7-7cbb18d9dd86}";
+		Type = string;
+		Value = "Arnold_Shadow_Group_2";
+	}
+	Parameter "aov_shadow_group_3" input
+	{
+		GUID = "{c6507e46-538e-4cea-86d0-118a4bf4419e}";
+		Type = string;
+		Value = "Arnold_Shadow_Group_3";
+	}
+	Parameter "aov_shadow_group_4" input
+	{
+		GUID = "{7fedb259-1587-4b91-ad59-02ed1bad536b}";
+		Type = string;
+		Value = "Arnold_Shadow_Group_4";
+	}
+	Parameter "aov_shadow_group_5" input
+	{
+		GUID = "{79a8bd27-d573-4c8c-876c-174283464933}";
+		Type = string;
+		Value = "Arnold_Shadow_Group_5";
+	}
+	Parameter "aov_shadow_group_6" input
+	{
+		GUID = "{c3df8313-b73e-493e-96aa-d096efc09cec}";
+		Type = string;
+		Value = "Arnold_Shadow_Group_6";
+	}
+	Parameter "aov_shadow_group_7" input
+	{
+		GUID = "{45e1dbd3-b880-44f5-a2e6-4028c50397c1}";
+		Type = string;
+		Value = "Arnold_Shadow_Group_7";
+	}
+	Parameter "aov_shadow_group_8" input
+	{
+		GUID = "{d1921fb6-2f2c-4c6a-836b-b20dbac191a0}";
+		Type = string;
+		Value = "Arnold_Shadow_Group_8";
+	}
+}
+MetaShader "alSurface_meta"
+{
+	Name = "ALS_Surface";
+	Type = material;
+	Renderer "mental ray"
+	{
+		Name = "ALS_Surface";
+		Filename = "alSurface";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	diffuseStrength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseColor
+	{
+		Name = "Color";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseRoughness
+	{
+		Name = "Roughness";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	backlightStrength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	backlightColor
+	{
+		Name = "Color";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	backlightIndirectStrength
+	{
+		Name = "Indirect strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssMix
+	{
+		Name = "Mix";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssMode
+	{
+		Name = "Mode";
+		UIType = "Combo";
+		Items
+		{
+			"cubic" = "cubic";
+			"diffusion" = "diffusion";
+			"directional" = "directional";
+			"empirical" = "empirical";
+		}
+	}
+	sssDensityScale
+	{
+		Name = "Density scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssRadius
+	{
+		Name = "Distance 1";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssWeight1
+	{
+		Name = "Weight 1";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssRadiusColor
+	{
+		Name = "Color 1";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssRadius2
+	{
+		Name = "Distance 2";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssWeight2
+	{
+		Name = "Weight 2";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssRadiusColor2
+	{
+		Name = "Color 2";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssRadius3
+	{
+		Name = "Distance 3";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssWeight3
+	{
+		Name = "Weight 3";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssRadiusColor3
+	{
+		Name = "Color 3";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	sssTraceSet
+	{
+		Name = "Trace set";
+	}
+	diffuseExtraSamples
+	{
+		Name = "Diffuse extra samples";
+	}
+	sssExtraSamples
+	{
+		Name = "SSS extra samples";
+	}
+	diffuseIndirectStrength
+	{
+		Name = "Indirect strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	diffuseIndirectClamp
+	{
+		Name = "Indirect clamp";
+	}
+	diffuseNormal
+	{
+		Name = "Normal";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	traceSetDiffuse
+	{
+		Name = "Diffuse trace set";
+	}
+	traceSetBacklight
+	{
+		Name = "Backlight trace set";
+	}
+	specular1Strength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1Color
+	{
+		Name = "Color";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1Roughness
+	{
+		Name = "Roughness";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1Anisotropy
+	{
+		Name = "Anisotropy";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1Rotation
+	{
+		Name = "Rotation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1FresnelMode
+	{
+		Name = "Mode";
+		UIType = "Combo";
+		Items
+		{
+			"dielectric" = "dielectric";
+			"metallic" = "metallic";
+		}
+	}
+	specular1Ior
+	{
+		Name = "IOR";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1Reflectivity
+	{
+		Name = "Reflectivity";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1EdgeTint
+	{
+		Name = "Edge tint";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1RoughnessDepthScale
+	{
+		Name = "Roughness depth scale";
+	}
+	specular1ExtraSamples
+	{
+		Name = "Extra samples";
+	}
+	specular1Normal
+	{
+		Name = "Normal";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1IndirectStrength
+	{
+		Name = "Indirect strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular1IndirectClamp
+	{
+		Name = "Indirect clamp";
+	}
+	traceSetSpecular1
+	{
+		Name = "Trace set";
+	}
+	specular1CausticPaths
+	{
+		Name = "Caustics";
+	}
+	specular1InternalDirect
+	{
+		Name = "Internal direct reflections";
+	}
+	specular1Distribution
+	{
+		Name = "Distribution";
+		UIType = "Combo";
+		Items
+		{
+			"beckmann" = "beckmann";
+			"ggx" = "ggx";
+		}
+	}
+	specular2Strength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2Color
+	{
+		Name = "Color";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2Roughness
+	{
+		Name = "Roughness";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2Anisotropy
+	{
+		Name = "Anisotropy";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2Rotation
+	{
+		Name = "Rotation";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2FresnelMode
+	{
+		Name = "Mode";
+		UIType = "Combo";
+		Items
+		{
+			"dielectric" = "dielectric";
+			"metallic" = "metallic";
+		}
+	}
+	specular2Ior
+	{
+		Name = "IOR";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2Reflectivity
+	{
+		Name = "Reflectivity";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2EdgeTint
+	{
+		Name = "Edge tint";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2RoughnessDepthScale
+	{
+		Name = "Roughness depth scale";
+	}
+	specular2ExtraSamples
+	{
+		Name = "Extra samples";
+	}
+	specular2Normal
+	{
+		Name = "Normal";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2IndirectStrength
+	{
+		Name = "Indirect strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	specular2IndirectClamp
+	{
+		Name = "Indirect clamp";
+	}
+	traceSetSpecular2
+	{
+		Name = "Trace set";
+	}
+	specular2CausticPaths
+	{
+		Name = "Caustics";
+	}
+	specular2InternalDirect
+	{
+		Name = "Internal direct reflections";
+	}
+	specular2Distribution
+	{
+		Name = "Distribution";
+		UIType = "Combo";
+		Items
+		{
+			"beckmann" = "beckmann";
+			"ggx" = "ggx";
+		}
+	}
+	transmissionStrength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionColor
+	{
+		Name = "Color";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionLinkToSpecular1
+	{
+		Name = "Link to specular 1";
+	}
+	transmissionRoughness
+	{
+		Name = "Roughness";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionIor
+	{
+		Name = "IOR";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	ssAttenuationColor
+	{
+		Name = "Color";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	ssInScatteringStrength
+	{
+		Name = "Scattering";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	ssDensityScale
+	{
+		Name = "Density scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	ssDirection
+	{
+		Name = "Direction";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionRoughnessDepthScale
+	{
+		Name = "Roughness depth scale";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionExtraSamples
+	{
+		Name = "Extra samples";
+	}
+	transmissionEnableCaustics
+	{
+		Name = "Enable internal reflections";
+	}
+	rrTransmissionDepth
+	{
+		Name = "RR depth";
+	}
+	transmissionClamp
+	{
+		Name = "Indirect clamp";
+	}
+	ssSpecifyCoefficients
+	{
+		Name = "Specify attenuation coeffs.";
+	}
+	ssScattering
+	{
+		Name = "Scattering";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	ssAbsorption
+	{
+		Name = "Absorption";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	traceSetTransmission
+	{
+		Name = "Trace set";
+	}
+	transmissionDoDirect
+	{
+		Name = "Direct lighting";
+	}
+	transmissionNormal
+	{
+		Name = "Normal";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	transmissionCausticPaths
+	{
+		Name = "Caustics";
+	}
+	emissionStrength
+	{
+		Name = "Strength";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	emissionColor
+	{
+		Name = "Color";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	opacity
+	{
+		Name = "Opacity";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id1
+	{
+		Name = "id1";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id2
+	{
+		Name = "id2";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id3
+	{
+		Name = "id3";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id4
+	{
+		Name = "id4";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id5
+	{
+		Name = "id5";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id6
+	{
+		Name = "id6";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id7
+	{
+		Name = "id7";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	id8
+	{
+		Name = "id8";
+		UIType = "rgb";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	crypto_asset_override
+	{
+		Name = "Crypto asset override";
+	}
+	crypto_object_override
+	{
+		Name = "Crypto object override";
+	}
+	crypto_material_override
+	{
+		Name = "Crypto material override";
+	}
+	standardCompatibleAOVs
+	{
+		Name = "Write standard AOVs only";
+	}
+	transmitAovs
+	{
+		Name = "Transmit AOVs";
+	}
+	aov_diffuse_color_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_direct_diffuse_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_direct_diffuse_raw_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_indirect_diffuse_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_indirect_diffuse_raw_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_direct_backlight_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_indirect_backlight_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_direct_specular_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_indirect_specular_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_direct_specular_2_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_indirect_specular_2_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_single_scatter_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_sss_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_refraction_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_emission_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_light_group_1_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_light_group_2_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_light_group_3_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_light_group_4_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_light_group_5_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_light_group_6_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_light_group_7_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	aov_light_group_8_clamp
+	{
+		Name = "Clamp";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	rr
+	{
+		Name = "RR";
+	}
+	traceSetAll
+	{
+		Name = "Global trace set";
+	}
+	traceSetShadows
+	{
+		Name = "Shadow trace set";
+	}
+	debug
+	{
+		Name = "Debug";
+		UIType = "Combo";
+		Items
+		{
+			"off" = "off";
+			"diffuse-strength" = "diffuse-strength";
+			"diffuse-color" = "diffuse-color";
+			"diffuse-roughness" = "diffuse-roughness";
+			"backlight-strength" = "backlight-strength";
+			"backlight-color" = "backlight-color";
+			"sss-mix" = "sss-mix";
+			"sss-weight-1" = "sss-weight-1";
+			"sss-color-1" = "sss-color-1";
+			"sss-weight-2" = "sss-weight-2";
+			"sss-color-2" = "sss-color-2";
+			"sss-weight-3" = "sss-weight-3";
+			"sss-color-3" = "sss-color-3";
+			"specular-1-strength" = "specular-1-strength";
+			"specular-1-color" = "specular-1-color";
+			"specular-1-roughness" = "specular-1-roughness";
+			"specular-2-strength" = "specular-2-strength";
+			"specular-2-color" = "specular-2-color";
+			"specular-2-roughness" = "specular-2-roughness";
+			"transmission-strength" = "transmission-strength";
+			"transmission-color" = "transmission-color";
+			"transmission-roughness" = "transmission-roughness";
+		}
+	}
+	aov_diffuse_color
+	{
+		Name = "aov_diffuse_color";
+	}
+	aov_direct_diffuse
+	{
+		Name = "aov_direct_diffuse";
+	}
+	aov_direct_diffuse_raw
+	{
+		Name = "aov_direct_diffuse_raw";
+	}
+	aov_indirect_diffuse
+	{
+		Name = "aov_indirect_diffuse";
+	}
+	aov_indirect_diffuse_raw
+	{
+		Name = "aov_indirect_diffuse_raw";
+	}
+	aov_direct_backlight
+	{
+		Name = "aov_direct_backlight";
+	}
+	aov_indirect_backlight
+	{
+		Name = "aov_indirect_backlight";
+	}
+	aov_direct_specular
+	{
+		Name = "aov_direct_specular";
+	}
+	aov_indirect_specular
+	{
+		Name = "aov_indirect_specular";
+	}
+	aov_direct_specular_2
+	{
+		Name = "aov_direct_specular_2";
+	}
+	aov_indirect_specular_2
+	{
+		Name = "aov_indirect_specular_2";
+	}
+	aov_single_scatter
+	{
+		Name = "aov_single_scatter";
+	}
+	aov_sss
+	{
+		Name = "aov_sss";
+	}
+	aov_refraction
+	{
+		Name = "aov_refraction";
+	}
+	aov_emission
+	{
+		Name = "aov_emission";
+	}
+	aov_uv
+	{
+		Name = "aov_uv";
+	}
+	aov_depth
+	{
+		Name = "aov_depth";
+	}
+	aov_light_group_1
+	{
+		Name = "aov_light_group_1";
+	}
+	aov_light_group_2
+	{
+		Name = "aov_light_group_2";
+	}
+	aov_light_group_3
+	{
+		Name = "aov_light_group_3";
+	}
+	aov_light_group_4
+	{
+		Name = "aov_light_group_4";
+	}
+	aov_light_group_5
+	{
+		Name = "aov_light_group_5";
+	}
+	aov_light_group_6
+	{
+		Name = "aov_light_group_6";
+	}
+	aov_light_group_7
+	{
+		Name = "aov_light_group_7";
+	}
+	aov_light_group_8
+	{
+		Name = "aov_light_group_8";
+	}
+	aov_id_1
+	{
+		Name = "aov_id_1";
+	}
+	aov_id_2
+	{
+		Name = "aov_id_2";
+	}
+	aov_id_3
+	{
+		Name = "aov_id_3";
+	}
+	aov_id_4
+	{
+		Name = "aov_id_4";
+	}
+	aov_id_5
+	{
+		Name = "aov_id_5";
+	}
+	aov_id_6
+	{
+		Name = "aov_id_6";
+	}
+	aov_id_7
+	{
+		Name = "aov_id_7";
+	}
+	aov_id_8
+	{
+		Name = "aov_id_8";
+	}
+	aov_crypto_asset
+	{
+		Name = "aov_crypto_asset";
+	}
+	aov_crypto_object
+	{
+		Name = "aov_crypto_object";
+	}
+	aov_crypto_material
+	{
+		Name = "aov_crypto_material";
+	}
+	aov_shadow_group_1
+	{
+		Name = "aov_shadow_group_1";
+	}
+	aov_shadow_group_2
+	{
+		Name = "aov_shadow_group_2";
+	}
+	aov_shadow_group_3
+	{
+		Name = "aov_shadow_group_3";
+	}
+	aov_shadow_group_4
+	{
+		Name = "aov_shadow_group_4";
+	}
+	aov_shadow_group_5
+	{
+		Name = "aov_shadow_group_5";
+	}
+	aov_shadow_group_6
+	{
+		Name = "aov_shadow_group_6";
+	}
+	aov_shadow_group_7
+	{
+		Name = "aov_shadow_group_7";
+	}
+	aov_shadow_group_8
+	{
+		Name = "aov_shadow_group_8";
+	}
+}
+Layout "Default"
+{
+	Tab "Diffuse"
+	{
+		diffuseStrength;
+		diffuseColor;
+		diffuseRoughness;
+		Group "Backlight"
+		{
+			backlightStrength;
+			backlightColor;
+			backlightIndirectStrength;
+		}
+		Group "SSS"
+		{
+			sssMix;
+			sssMode;
+			sssDensityScale;
+			sssRadius;
+			sssWeight1;
+			sssRadiusColor;
+			sssRadius2;
+			sssWeight2;
+			sssRadiusColor2;
+			sssRadius3;
+			sssWeight3;
+			sssRadiusColor3;
+			sssTraceSet;
+		}
+		Group "Advanced"
+		{
+			diffuseExtraSamples;
+			sssExtraSamples;
+			diffuseIndirectStrength;
+			diffuseIndirectClamp;
+			diffuseNormal;
+			traceSetDiffuse;
+			traceSetBacklight;
+		}
+	}
+	Tab "Specular 1"
+	{
+		specular1Strength;
+		specular1Color;
+		specular1Roughness;
+		specular1Anisotropy;
+		specular1Rotation;
+		Group "Fresnel"
+		{
+			specular1FresnelMode;
+			specular1Ior;
+			specular1Reflectivity;
+			specular1EdgeTint;
+		}
+		Group "Advanced"
+		{
+			specular1RoughnessDepthScale;
+			specular1ExtraSamples;
+			specular1Normal;
+			specular1IndirectStrength;
+			specular1IndirectClamp;
+			traceSetSpecular1;
+			specular1CausticPaths;
+			specular1InternalDirect;
+			specular1Distribution;
+		}
+	}
+	Tab "Specular 2"
+	{
+		specular2Strength;
+		specular2Color;
+		specular2Roughness;
+		specular2Anisotropy;
+		specular2Rotation;
+		Group "Fresnel"
+		{
+			specular2FresnelMode;
+			specular2Ior;
+			specular2Reflectivity;
+			specular2EdgeTint;
+		}
+		Group "Advanced"
+		{
+			specular2RoughnessDepthScale;
+			specular2ExtraSamples;
+			specular2Normal;
+			specular2IndirectStrength;
+			specular2IndirectClamp;
+			traceSetSpecular2;
+			specular2CausticPaths;
+			specular2InternalDirect;
+			specular2Distribution;
+		}
+	}
+	Tab "Transmission"
+	{
+		transmissionStrength;
+		transmissionColor;
+		transmissionLinkToSpecular1;
+		transmissionRoughness;
+		transmissionIor;
+		Group "Attenuation"
+		{
+			ssAttenuationColor;
+			ssInScatteringStrength;
+			ssDensityScale;
+			ssDirection;
+		}
+		Group "Advanced"
+		{
+			transmissionRoughnessDepthScale;
+			transmissionExtraSamples;
+			transmissionEnableCaustics;
+			rrTransmissionDepth;
+			transmissionClamp;
+			ssSpecifyCoefficients;
+			ssScattering;
+			ssAbsorption;
+			traceSetTransmission;
+			transmissionDoDirect;
+			transmissionNormal;
+			transmissionCausticPaths;
+		}
+	}
+	Tab "Emission"
+	{
+		emissionStrength;
+		emissionColor;
+	}
+	opacity;
+	Tab "IDs"
+	{
+		id1;
+		id2;
+		id3;
+		id4;
+		id5;
+		id6;
+		id7;
+		id8;
+	}
+	Tab "AOVs"
+	{
+		crypto_asset_override;
+		crypto_object_override;
+		crypto_material_override;
+		standardCompatibleAOVs;
+		transmitAovs;
+		aov_diffuse_color;
+		aov_diffuse_color_clamp;
+		aov_direct_diffuse;
+		aov_direct_diffuse_clamp;
+		aov_direct_diffuse_raw;
+		aov_direct_diffuse_raw_clamp;
+		aov_indirect_diffuse;
+		aov_indirect_diffuse_clamp;
+		aov_indirect_diffuse_raw;
+		aov_indirect_diffuse_raw_clamp;
+		aov_direct_backlight;
+		aov_direct_backlight_clamp;
+		aov_indirect_backlight;
+		aov_indirect_backlight_clamp;
+		aov_direct_specular;
+		aov_direct_specular_clamp;
+		aov_indirect_specular;
+		aov_indirect_specular_clamp;
+		aov_direct_specular_2;
+		aov_direct_specular_2_clamp;
+		aov_indirect_specular_2;
+		aov_indirect_specular_2_clamp;
+		aov_single_scatter;
+		aov_single_scatter_clamp;
+		aov_sss;
+		aov_sss_clamp;
+		aov_refraction;
+		aov_refraction_clamp;
+		aov_emission;
+		aov_emission_clamp;
+		aov_uv;
+		aov_depth;
+		aov_light_group_1;
+		aov_light_group_1_clamp;
+		aov_light_group_2;
+		aov_light_group_2_clamp;
+		aov_light_group_3;
+		aov_light_group_3_clamp;
+		aov_light_group_4;
+		aov_light_group_4_clamp;
+		aov_light_group_5;
+		aov_light_group_5_clamp;
+		aov_light_group_6;
+		aov_light_group_6_clamp;
+		aov_light_group_7;
+		aov_light_group_7_clamp;
+		aov_light_group_8;
+		aov_light_group_8_clamp;
+		aov_id_1;
+		aov_id_2;
+		aov_id_3;
+		aov_id_4;
+		aov_id_5;
+		aov_id_6;
+		aov_id_7;
+		aov_id_8;
+		aov_crypto_asset;
+		aov_crypto_object;
+		aov_crypto_material;
+		aov_shadow_group_1;
+		aov_shadow_group_2;
+		aov_shadow_group_3;
+		aov_shadow_group_4;
+		aov_shadow_group_5;
+		aov_shadow_group_6;
+		aov_shadow_group_7;
+		aov_shadow_group_8;
+	}
+	Tab "Advanced"
+	{
+		rr;
+		traceSetAll;
+		traceSetShadows;
+		debug;
+	}
+}
+Layout "RenderTree"
+{
+	Group "Diffuse"
+	{
+		diffuseStrength;
+		diffuseColor;
+		diffuseRoughness;
+		Group "Backlight"
+		{
+			backlightStrength;
+			backlightColor;
+			backlightIndirectStrength;
+		}
+		Group "SSS"
+		{
+			sssMix;
+			sssDensityScale;
+			sssRadius;
+			sssWeight1;
+			sssRadiusColor;
+			sssRadius2;
+			sssWeight2;
+			sssRadiusColor2;
+			sssRadius3;
+			sssWeight3;
+			sssRadiusColor3;
+		}
+		Group "Advanced"
+		{
+			diffuseIndirectStrength;
+			diffuseNormal;
+		}
+	}
+	Group "Specular 1"
+	{
+		specular1Strength;
+		specular1Color;
+		specular1Roughness;
+		specular1Anisotropy;
+		specular1Rotation;
+		Group "Fresnel"
+		{
+			specular1Ior;
+			specular1Reflectivity;
+			specular1EdgeTint;
+		}
+		Group "Advanced"
+		{
+			specular1Normal;
+			specular1IndirectStrength;
+		}
+	}
+	Group "Specular 2"
+	{
+		specular2Strength;
+		specular2Color;
+		specular2Roughness;
+		specular2Anisotropy;
+		specular2Rotation;
+		Group "Fresnel"
+		{
+			specular2Ior;
+			specular2Reflectivity;
+			specular2EdgeTint;
+		}
+		Group "Advanced"
+		{
+			specular2Normal;
+			specular2IndirectStrength;
+		}
+	}
+	Group "Transmission"
+	{
+		transmissionStrength;
+		transmissionColor;
+		transmissionRoughness;
+		transmissionIor;
+		Group "Attenuation"
+		{
+			ssAttenuationColor;
+			ssInScatteringStrength;
+			ssDensityScale;
+			ssDirection;
+		}
+		Group "Advanced"
+		{
+			transmissionRoughnessDepthScale;
+			ssScattering;
+			ssAbsorption;
+			transmissionNormal;
+		}
+	}
+	Group "Emission"
+	{
+		emissionStrength;
+		emissionColor;
+	}
+	opacity;
+	Group "IDs"
+	{
+		id1;
+		id2;
+		id3;
+		id4;
+		id5;
+		id6;
+		id7;
+		id8;
+	}
+	Group "AOVs"
+	{
+		aov_diffuse_color_clamp;
+		aov_direct_diffuse_clamp;
+		aov_direct_diffuse_raw_clamp;
+		aov_indirect_diffuse_clamp;
+		aov_indirect_diffuse_raw_clamp;
+		aov_direct_backlight_clamp;
+		aov_indirect_backlight_clamp;
+		aov_direct_specular_clamp;
+		aov_indirect_specular_clamp;
+		aov_direct_specular_2_clamp;
+		aov_indirect_specular_2_clamp;
+		aov_single_scatter_clamp;
+		aov_sss_clamp;
+		aov_refraction_clamp;
+		aov_emission_clamp;
+		aov_light_group_1_clamp;
+		aov_light_group_2_clamp;
+		aov_light_group_3_clamp;
+		aov_light_group_4_clamp;
+		aov_light_group_5_clamp;
+		aov_light_group_6_clamp;
+		aov_light_group_7_clamp;
+		aov_light_group_8_clamp;
+	}
+}
+Plugin = Shader
+{
+	Filename = "alSurface";
+}

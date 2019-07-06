@@ -1,0 +1,45 @@
+[node cryptomatte_aov]
+	desc STRING "Cryptomatte AOV Writer (pass-through)"
+	c4d.classification STRING "texture"
+	c4d.menu STRING "texture"
+	maya.name STRING "cryptomatteAOV"
+	maya.classification STRING "shader/surface"
+	maya.id INT 0x00116421
+	houdini.icon STRING "VOP_shadinglayer"
+	houdini.category STRING "AOV"
+	houdini.help_url STRING "http://www.anderslanglands.com/alshaders/cryptomatte_aov.html"
+	houdini.parm.folder.ROOT STRING "AOVs;6;"
+	houdini.order STRING "passthrough  ROOT"
+	houdini.order2 STRING " crypto_asset_override crypto_object_override crypto_material_override aov_crypto_asset aov_crypto_object aov_crypto_material"
+
+	[attr passthrough]
+		houdini.label STRING "Passthrough"
+		desc STRING "Plug your surface in here to trigger shader evaluation"
+		linkable BOOL TRUE
+	[attr crypto_asset_override]
+		houdini.label STRING "Crypto asset override"
+		desc STRING "Override the cryptomatte asset string for this shader"
+		linkable BOOL FALSE
+	[attr crypto_object_override]
+		houdini.label STRING "Crypto object override"
+		desc STRING "Override the cryptomatte object string for this shader"
+		linkable BOOL FALSE
+	[attr crypto_material_override]
+		houdini.label STRING "Crypto material override"
+		desc STRING "Override the cryptomatte material string for this shader"
+		linkable BOOL FALSE
+	[attr aov_crypto_asset]
+		houdini.label STRING "Asset AOV name"
+		aov.type INT 0x05
+		aov.enable_composition BOOL TRUE
+		default STRING "crypto_asset"
+	[attr aov_crypto_object]
+		houdini.label STRING "Object AOV name"
+		aov.type INT 0x05
+		aov.enable_composition BOOL TRUE
+		default STRING "crypto_object"
+	[attr aov_crypto_material]
+		houdini.label STRING "Material AOV name"
+		aov.type INT 0x05
+		aov.enable_composition BOOL TRUE
+		default STRING "crypto_material"

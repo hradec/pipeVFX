@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalInputVector">
+		<label>alInputVector</label>
+		<description>Combining these vectors can be useful as building blocks for more complex effects.</description>
+		<attribute name="input" type="maya.enum">
+			<label>Input</label>
+			<description>The vector from the shader globals to output. When User is selected, the user data vector named in the User name parameter will be output. When Custom is selected, the vector specified by the Custom parameter will be output.</description>
+		</attribute>
+		<attribute name="userName" type="maya.string">
+			<label>User name</label>
+			<description>Enter the name of a user data vector to output.</description>
+		</attribute>
+		<attribute name="vector" type="maya.float3">
+			<label>Custom</label>
+			<description>A manually-specified vector to output.</description>
+		</attribute>
+		<attribute name="type" type="maya.enum">
+			<label>Type</label>
+			<description>How to treat the vector when transorming it.</description>
+		</attribute>
+		<attribute name="matrix" type="maya.matrix">
+			<label>Matrix</label>
+			<description>A transformation matrix to apply to the vector. This can be useful for animating the position or scale of a point to drive a fractal.</description>
+		</attribute>
+		<attribute name="coordinates" type="maya.enum">
+			<label>Coordinates</label>
+			<description>Coordinate system to interpret the vector as being in (result will be transformed to cartesian before being output).</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalInputVector">
+			<property name="input"/>
+			<property name="userName"/>
+			<property name="vector"/>
+			<property name="type"/>
+			<group name="Transform">
+				<label>Transform</label>
+				<property name="matrix"/>
+				<property name="coordinates"/>
+			</group>
+		</view>
+</templates>

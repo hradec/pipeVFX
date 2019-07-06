@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -26,14 +26,14 @@ class nuke(current.engine):
     def __init__(self, scene, writeNode='Write1', name='', CPUS=0, extra={}, priority = 9999, range = '1-10', group = 'pipe'):
         self.writeNode = writeNode
         self.scene = scene
-        current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group)
-    
+        current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group, maxRunTime=60*15) # max time to run a nuke task is 15 mins!
+
     def cook(self):
-        
+
         writeNodes = self.writeNode
         if type(self.writeNode) == type([]):
             writeNodes = ','.join(self.writeNode)
-        
+
         self.licenses['nuke'] = True
         self.cmd = os.path.abspath( self.cmd )
         self.name += "| NUKE %s" % pipe.apps.nuke().version()
@@ -47,7 +47,7 @@ class nuke(current.engine):
             '"%s"' %  os.path.abspath( self.scene ),
 #            '%s,%s,1' % (self.frameNumber(), self.frameNumber()),
         ])
-        
+
         self.files = ["%s/images/none" % self.asset]
-        
+
 #"/usr/local/Nuke7.0v4/Nuke7.0" -t -x -X "Write1" -V -- "/mnt/Projetos/0216_HOOPONOPONO/SHOTS/_shot_01/DAN/NUKE/Comp_v031.nk"  138,138,1

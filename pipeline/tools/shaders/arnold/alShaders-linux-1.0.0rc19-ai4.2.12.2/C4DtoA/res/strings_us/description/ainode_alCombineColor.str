@@ -1,0 +1,12 @@
+STRINGTABLE ainode_alCombineColor
+{
+	ainode_alCombineColor   "Arnold alCombineColor node";
+
+	C4DAI_ALCOMBINECOLOR_MAIN_GRP   "Main";
+
+	C4DAIP_ALCOMBINECOLOR_INPUT1   "Input 1";
+	C4DAIP_ALCOMBINECOLOR_INPUT2   "Input 2";
+	C4DAIP_ALCOMBINECOLOR_INPUT3   "Input 3";
+	C4DAIP_ALCOMBINECOLOR_COMBINEOP   "Combine Op";
+}
+

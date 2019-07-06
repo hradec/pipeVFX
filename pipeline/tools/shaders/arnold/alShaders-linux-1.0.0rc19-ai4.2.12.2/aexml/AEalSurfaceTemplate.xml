@@ -1,0 +1,910 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="AEalSurface">
+		<label>alSurface</label>
+		<description>Suitable for any dielectric or metallic material including skin, plastic, wood, metal, glass, etc.</description>
+		<attribute name="diffuseStrength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the intensity of the diffuse reflection.</description>
+		</attribute>
+		<attribute name="diffuseColor" type="maya.float3">
+			<label>Color</label>
+			<description>Color of the diffuse reflection.</description>
+		</attribute>
+		<attribute name="diffuseRoughness" type="maya.float">
+			<label>Roughness</label>
+			<description>Roughness of the diffuse reflection. Higher values cause the surface to appear flatter and darker.</description>
+		</attribute>
+		<attribute name="backlightStrength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the intensity of the backlight transmission.</description>
+		</attribute>
+		<attribute name="backlightColor" type="maya.float3">
+			<label>Color</label>
+			<description>Color of the backlight transmission.</description>
+		</attribute>
+		<attribute name="backlightIndirectStrength" type="maya.float">
+			<label>Indirect strength</label>
+			<description>Multiplier on the amount of indirect light transmitted by the backlight lobe.</description>
+		</attribute>
+		<attribute name="sssMix" type="maya.float">
+			<label>Mix</label>
+			<description>How much to mix SSS in with the diffuse. 0 means no SSS, full diffuse. 1 means full SSS no diffuse.</description>
+		</attribute>
+		<attribute name="sssMode" type="maya.enum">
+			<label>Mode</label>
+			<description>Algorithm to use for SSS calculation. cubic is the standard Arnold SSS. The diffusion and directional modes both take longer to calculate but preserve detail much better than the cubic.</description>
+		</attribute>
+		<attribute name="sssDensityScale" type="maya.float">
+			<label>Density scale</label>
+			<description>A multiplier on the scale of the object. This simply multiplies down the Distance values below, but can be used to adapt materials from scenes of one scale to another without changing the look.</description>
+		</attribute>
+		<attribute name="sssRadius" type="maya.float">
+			<label>Distance 1</label>
+			<description>The scatter distance of the first layer. Higher values mean the light travels further through the object, lower values mean it travels a shorter distance.</description>
+		</attribute>
+		<attribute name="sssWeight1" type="maya.float">
+			<label>Weight 1</label>
+			<description>The weight of the first layer. Larger values relative to the other layers will cause more of this layer to be present in the result.</description>
+		</attribute>
+		<attribute name="sssRadiusColor" type="maya.float3">
+			<label>Color 1</label>
+			<description>The scatter color of the first layer. This is the color the light will tend to the further it travels through the material, e.g. reddish for skin.</description>
+		</attribute>
+		<attribute name="sssRadius2" type="maya.float">
+			<label>Distance 2</label>
+			<description>The scatter distance of the second layer. Higher values mean the light travels further through the object, lower values mean it travels a shorter distance.</description>
+		</attribute>
+		<attribute name="sssWeight2" type="maya.float">
+			<label>Weight 2</label>
+			<description>The weight of the second layer. Larger values relative to the other layers will cause more of this layer to be present in the result.</description>
+		</attribute>
+		<attribute name="sssRadiusColor2" type="maya.float3">
+			<label>Color 2</label>
+			<description>The scatter color of the second layer. This is the color the light will tend to the further it travels through the material, e.g. reddish for skin.</description>
+		</attribute>
+		<attribute name="sssRadius3" type="maya.float">
+			<label>Distance 3</label>
+			<description>The scatter distance of the third layer. Higher values mean the light travels further through the object, lower values mean it travels a shorter distance.</description>
+		</attribute>
+		<attribute name="sssWeight3" type="maya.float">
+			<label>Weight 3</label>
+			<description>The weight of the third layer. Larger values relative to the other layers will cause more of this layer to be present in the result.</description>
+		</attribute>
+		<attribute name="sssRadiusColor3" type="maya.float3">
+			<label>Color 3</label>
+			<description>The scatter color of the third layer. This is the color the light will tend to the further it travels through the material, e.g. reddish for skin.</description>
+		</attribute>
+		<attribute name="sssTraceSet" type="maya.string">
+			<label>Trace set</label>
+			<description>Enter the name of a trace set here to restrict the sss to trace only against that set.</description>
+		</attribute>
+		<attribute name="diffuseExtraSamples" type="maya.int">
+			<label>Diffuse extra samples</label>
+			<description>Add or subtract samples for the diffuse and backlight lobes from the global sampling rate.</description>
+		</attribute>
+		<attribute name="sssExtraSamples" type="maya.int">
+			<label>SSS extra samples</label>
+			<description>Add or subtract samples for the sss lobe from the global sampling rate. Note that this parameter only works with the diffusion and directional modes.</description>
+		</attribute>
+		<attribute name="diffuseIndirectStrength" type="maya.float">
+			<label>Indirect strength</label>
+			<description>Multiplier on the amount of indirect light transmitted by this lobe.</description>
+		</attribute>
+		<attribute name="diffuseIndirectClamp" type="maya.float">
+			<label>Indirect clamp</label>
+			<description>Clamp the brightness of indirect samples for this lobe. This can effectively reduce fireflies but makes the shader less accurate. The default value of 0 means no clamping.</description>
+		</attribute>
+		<attribute name="diffuseNormal" type="maya.float3">
+			<label>Normal</label>
+			<description>Override the normal used for this lobe.</description>
+		</attribute>
+		<attribute name="traceSetDiffuse" type="maya.string">
+			<label>Diffuse trace set</label>
+			<description>Enter the name of a trace set here to restrict the diffuse lobe to trace only against that set.</description>
+		</attribute>
+		<attribute name="traceSetBacklight" type="maya.string">
+			<label>Backlight trace set</label>
+			<description>Enter the name of a trace set here to restrict the backlight lobe to trace only against that set.</description>
+		</attribute>
+		<attribute name="specular1Strength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the intensity of the specular reflection.</description>
+		</attribute>
+		<attribute name="specular1Color" type="maya.float3">
+			<label>Color</label>
+			<description>Color tint on the specular reflection.</description>
+		</attribute>
+		<attribute name="specular1Roughness" type="maya.float">
+			<label>Roughness</label>
+			<description>The roughness of the specular reflection. Lower numbers produce sharper reflections, higher numbers produce blurrier reflections.</description>
+		</attribute>
+		<attribute name="specular1Anisotropy" type="maya.float">
+			<label>Anisotropy</label>
+			<description>Controls how much the specular highlight is stretched along its axis. The default value of 0.5 produces a round highlight. Higher values will stretch the highlight along the V axis, lower values stretch along the U axis.</description>
+		</attribute>
+		<attribute name="specular1Rotation" type="maya.float">
+			<label>Rotation</label>
+			<description>Rotates the axis of specular anisotropy around the surface normal. 0 gives no rotation, 0.5 gives 90 degree rotation, 1 gives 180 degree rotation.</description>
+		</attribute>
+		<attribute name="specular1FresnelMode" type="maya.enum">
+			<label>Mode</label>
+			<description>Selects which mode to use for the fresnel. Dielectric is appropriate for non-conductive materials such as most organics, plastic, glass and water etc. and gives dark reflections at normal incidence and bright reflections at glancing angles.</description>
+		</attribute>
+		<attribute name="specular1Ior" type="maya.float">
+			<label>IOR</label>
+			<description>The index of refraction for the dielectric fresnel mode.</description>
+		</attribute>
+		<attribute name="specular1Reflectivity" type="maya.float3">
+			<label>Reflectivity</label>
+			<description>Selects the color of the reflection at normal incidence for the metallic fresnel mode.</description>
+		</attribute>
+		<attribute name="specular1EdgeTint" type="maya.float3">
+			<label>Edge tint</label>
+			<description>Selects the color of the reflection at glancing angles for the metallic fresnel mode.</description>
+		</attribute>
+		<attribute name="specular1RoughnessDepthScale" type="maya.float">
+			<label>Roughness depth scale</label>
+			<description>Controls how much the specular roughness is scaled with each increasing bounce as a noise-reduction technique.</description>
+		</attribute>
+		<attribute name="specular1ExtraSamples" type="maya.int">
+			<label>Extra samples</label>
+			<description>Add or subtract samples for this lobe from the global sampling rate.</description>
+		</attribute>
+		<attribute name="specular1Normal" type="maya.float3">
+			<label>Normal</label>
+			<description>Override the normal used for this lobe.</description>
+		</attribute>
+		<attribute name="specular1IndirectStrength" type="maya.float">
+			<label>Indirect strength</label>
+			<description>Multiplier on the amount of indirect light reflected by this lobe.</description>
+		</attribute>
+		<attribute name="specular1IndirectClamp" type="maya.float">
+			<label>Indirect clamp</label>
+			<description>Clamp the brightness of indirect samples for this lobe. This can effectively reduce fireflies but makes the shader less accurate. The default value of 0 means no clamping.</description>
+		</attribute>
+		<attribute name="traceSetSpecular1" type="maya.string">
+			<label>Trace set</label>
+			<description>Enter the name of a trace set here to restrict this lobe to trace only against that set.</description>
+		</attribute>
+		<attribute name="specular1CausticPaths" type="maya.bool">
+			<label>Caustics</label>
+			<description>Enable this to allow this lobe to form caustic paths. You will need to enable this on all objects in your scene that contribute to the desired caustic. Use this at your own risk, it will be VERY noisy.</description>
+		</attribute>
+		<attribute name="specular1InternalDirect" type="maya.bool">
+			<label>Internal direct reflections</label>
+			<description>Disable this to turn off direct reflections from the inside of materials. This can give more plausible results in some cases when the default behavior leads to widely separated direct highlights.</description>
+		</attribute>
+		<attribute name="specular1Distribution" type="maya.enum">
+			<label>Distribution</label>
+			<description>Selects the distribution to use for this specular lobe. GGX matches better to empirical data, and will become the only distribution in a later version..</description>
+		</attribute>
+		<attribute name="specular2Strength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the intensity of the specular reflection.</description>
+		</attribute>
+		<attribute name="specular2Color" type="maya.float3">
+			<label>Color</label>
+			<description>Color tint on the specular reflection.</description>
+		</attribute>
+		<attribute name="specular2Roughness" type="maya.float">
+			<label>Roughness</label>
+			<description>The roughness of the specular reflection. Lower numbers produce sharper reflections, higher numbers produce blurrier reflections.</description>
+		</attribute>
+		<attribute name="specular2Anisotropy" type="maya.float">
+			<label>Anisotropy</label>
+			<description>Controls how much the specular highlight is stretched along its axis. The default value of 0.5 produces a round highlight. Higher values will stretch the highlight along the V axis, lower values stretch along the U axis.</description>
+		</attribute>
+		<attribute name="specular2Rotation" type="maya.float">
+			<label>Rotation</label>
+			<description>Rotates the axis of specular anisotropy around the surface normal. 0 gives no rotation, 0.5 gives 90 degree rotation, 1 gives 180 degree rotation.</description>
+		</attribute>
+		<attribute name="specular2FresnelMode" type="maya.enum">
+			<label>Mode</label>
+			<description>Selects which mode to use for the fresnel. Dielectric is appropriate for non-conductive materials such as most organics, plastic, glass and water etc. and gives dark reflections at normal incidence and bright reflections at glancing angles.</description>
+		</attribute>
+		<attribute name="specular2Ior" type="maya.float">
+			<label>IOR</label>
+			<description>The index of refraction for the dielectric fresnel mode.</description>
+		</attribute>
+		<attribute name="specular2Reflectivity" type="maya.float3">
+			<label>Reflectivity</label>
+			<description>Selects the color of the reflection at normal incidence for the metallic fresnel mode.</description>
+		</attribute>
+		<attribute name="specular2EdgeTint" type="maya.float3">
+			<label>Edge tint</label>
+			<description>Selects the color of the reflection at glancing angles for the metallic fresnel mode.</description>
+		</attribute>
+		<attribute name="specular2RoughnessDepthScale" type="maya.float">
+			<label>Roughness depth scale</label>
+			<description>Controls how much the specular roughness is scaled with each increasing bounce as a noise-reduction technique.</description>
+		</attribute>
+		<attribute name="specular2ExtraSamples" type="maya.int">
+			<label>Extra samples</label>
+			<description>Add or subtract samples for this lobe from the global sampling rate.</description>
+		</attribute>
+		<attribute name="specular2Normal" type="maya.float3">
+			<label>Normal</label>
+			<description>Override the normal used for this lobe.</description>
+		</attribute>
+		<attribute name="specular2IndirectStrength" type="maya.float">
+			<label>Indirect strength</label>
+			<description>Multiplier on the amount of indirect light reflected by this lobe.</description>
+		</attribute>
+		<attribute name="specular2IndirectClamp" type="maya.float">
+			<label>Indirect clamp</label>
+			<description>Clamp the brightness of indirect samples for this lobe. This can effectively reduce fireflies but makes the shader less accurate. The default value of 0 means no clamping.</description>
+		</attribute>
+		<attribute name="traceSetSpecular2" type="maya.string">
+			<label>Trace set</label>
+			<description>Enter the name of a trace set here to restrict this lobe to trace only against that set.</description>
+		</attribute>
+		<attribute name="specular2CausticPaths" type="maya.bool">
+			<label>Caustics</label>
+			<description>Enable this to allow this lobe to form caustic paths. You will need to enable this on all objects in your scene that contribute to the desired caustic. Use this at your own risk, it will be VERY noisy.</description>
+		</attribute>
+		<attribute name="specular2InternalDirect" type="maya.bool">
+			<label>Internal direct reflections</label>
+			<description>Disable this to turn off direct reflections from the inside of materials. This can give more plausible results in some cases when the default behavior leads to widely separated direct highlights.</description>
+		</attribute>
+		<attribute name="specular2Distribution" type="maya.enum">
+			<label>Distribution</label>
+			<description>Selects the distribution to use for this specular lobe. GGX matches better to empirical data, and will become the only distribution in a later version..</description>
+		</attribute>
+		<attribute name="transmissionStrength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the intensity of the transmission.</description>
+		</attribute>
+		<attribute name="transmissionColor" type="maya.float3">
+			<label>Color</label>
+			<description>Multiplier on the intensity of the transmission.</description>
+		</attribute>
+		<attribute name="transmissionLinkToSpecular1" type="maya.bool">
+			<label>Link to specular 1</label>
+			<description>When this is enabled, the transmission lobe will copy its Roughness and IOR values from the Specular 1 lobe. This is generally what you want for most materials.</description>
+		</attribute>
+		<attribute name="transmissionRoughness" type="maya.float">
+			<label>Roughness</label>
+			<description>The roughness of the transmission. 0 creates a perfect refracted image like water or highly polished glass. Higher values will give results like frosted glass.</description>
+		</attribute>
+		<attribute name="transmissionIor" type="maya.float">
+			<label>IOR</label>
+			<description>The index of refraction of the transmission lobe. Higher values cause a more distorted refracted image.</description>
+		</attribute>
+		<attribute name="ssAttenuationColor" type="maya.float3">
+			<label>Color</label>
+			<description>This is the color light tends towards the further it travels through the material.</description>
+		</attribute>
+		<attribute name="ssInScatteringStrength" type="maya.float">
+			<label>Scattering</label>
+			<description>How much in-scattering takes place along the transmitted ray. The default of 0 means no in-scattering. Higher values add more in-scattering at the cost of additional render time.</description>
+		</attribute>
+		<attribute name="ssDensityScale" type="maya.float">
+			<label>Density scale</label>
+			<description>A scale factor on the attenuation and scattering effects. Scaller values make the object feel smaller, larger values make the object feel larger.</description>
+		</attribute>
+		<attribute name="ssDirection" type="maya.float">
+			<label>Direction</label>
+			<description>The direction, or anisotropy, or the scattering. Values greater than zero means light tends to travel through the material from one side to the other, while values less than zero mean light tends to bounce back in the direction it came from.</description>
+		</attribute>
+		<attribute name="transmissionRoughnessDepthScale" type="maya.float">
+			<label>Roughness depth scale</label>
+			<description>Controls how much the roughness is scaled with each increasing bounce as a noise-reduction technique.</description>
+		</attribute>
+		<attribute name="transmissionExtraSamples" type="maya.int">
+			<label>Extra samples</label>
+			<description>Add or subtract samples for this lobe from the global sampling rate.</description>
+		</attribute>
+		<attribute name="transmissionEnableCaustics" type="maya.bool">
+			<label>Enable internal reflections</label>
+			<description>Enables internal reflection bounces. This should generally always be on, but if you don't care about realism you can make materials with rough transmission and reflection render significantly faster by disabling this.</description>
+		</attribute>
+		<attribute name="rrTransmissionDepth" type="maya.int">
+			<label>RR depth</label>
+			<description>Controls the depth at which the Russian roulette optimization kicks in. If you find your renders are too noisy with RR on try raising this to 2.</description>
+		</attribute>
+		<attribute name="transmissionClamp" type="maya.float">
+			<label>Indirect clamp</label>
+			<description>Clamp the brightness of indirect samples for this lobe. This can effectively reduce fireflies but makes the shader less accurate. The default value of 0 means no clamping.</description>
+		</attribute>
+		<attribute name="ssSpecifyCoefficients" type="maya.bool">
+			<label>Specify attenuation coeffs.</label>
+			<description>Enable this to directly specify the scattering and absorption parameters rather than use the Color and Scattering controls in the attenutaion section above.</description>
+		</attribute>
+		<attribute name="ssScattering" type="maya.float3">
+			<label>Scattering</label>
+			<description>Scattering coefficient</description>
+		</attribute>
+		<attribute name="ssAbsorption" type="maya.float3">
+			<label>Absorption</label>
+			<description>Absorption coefficient</description>
+		</attribute>
+		<attribute name="traceSetTransmission" type="maya.string">
+			<label>Trace set</label>
+			<description>Enter the name of a trace set here to restrict this lobe to trace only against that set.</description>
+		</attribute>
+		<attribute name="transmissionDoDirect" type="maya.bool">
+			<label>Direct lighting</label>
+			<description>Enable this to have the transmission lobe calculate direct lighting when leaving a closed volume. This allos you to, for instance, put a glass lens in front of a light source and see the image of the light source in the lens.</description>
+		</attribute>
+		<attribute name="transmissionNormal" type="maya.float3">
+			<label>Normal</label>
+			<description>Override the normal used for this lobe.</description>
+		</attribute>
+		<attribute name="transmissionCausticPaths" type="maya.bool">
+			<label>Caustics</label>
+			<description>Enable this to allow this lobe to form caustic paths. You will need to enable this on all objects in your scene that contribute to the desired caustic. Use this at your own risk, it will be VERY noisy.</description>
+		</attribute>
+		<attribute name="emissionStrength" type="maya.float">
+			<label>Strength</label>
+			<description>Multiplier on the intensity of the emitted light.</description>
+		</attribute>
+		<attribute name="emissionColor" type="maya.float3">
+			<label>Color</label>
+			<description>Color tint on the emitted light.</description>
+		</attribute>
+		<attribute name="opacity" type="maya.float3">
+			<label>Opacity</label>
+			<description>Opacity of the material. In the vast majority of cases, if you want to see through your material you should be using transmission. Opacity can be useful for doing cut out effects such as a leaf texture on a card.</description>
+		</attribute>
+		<attribute name="id1" type="maya.float3">
+			<label>id1</label>
+			<description>Color to be output in id_1 AOV.</description>
+		</attribute>
+		<attribute name="id2" type="maya.float3">
+			<label>id2</label>
+			<description>Color to be output in id_2 AOV.</description>
+		</attribute>
+		<attribute name="id3" type="maya.float3">
+			<label>id3</label>
+			<description>Color to be output in id_3 AOV.</description>
+		</attribute>
+		<attribute name="id4" type="maya.float3">
+			<label>id4</label>
+			<description>Color to be output in id_4 AOV.</description>
+		</attribute>
+		<attribute name="id5" type="maya.float3">
+			<label>id5</label>
+			<description>Color to be output in id_5 AOV.</description>
+		</attribute>
+		<attribute name="id6" type="maya.float3">
+			<label>id6</label>
+			<description>Color to be output in id_6 AOV.</description>
+		</attribute>
+		<attribute name="id7" type="maya.float3">
+			<label>id7</label>
+			<description>Color to be output in id_7 AOV.</description>
+		</attribute>
+		<attribute name="id8" type="maya.float3">
+			<label>id8</label>
+			<description>Color to be output in id_8 AOV.</description>
+		</attribute>
+		<attribute name="crypto_asset_override" type="maya.string">
+			<label>Crypto asset override</label>
+			<description>Overide the cryptomatte asset string for this shader</description>
+		</attribute>
+		<attribute name="crypto_object_override" type="maya.string">
+			<label>Crypto object override</label>
+			<description>Overide the cryptomatte object string for this shader</description>
+		</attribute>
+		<attribute name="crypto_material_override" type="maya.string">
+			<label>Crypto material override</label>
+			<description>Overide the cryptomatte material string for this shader</description>
+		</attribute>
+		<attribute name="standardCompatibleAOVs" type="maya.bool">
+			<label>Write standard AOVs only</label>
+			<description>Enable this to combine the AOVs into only the set that the standard shader outputs.</description>
+		</attribute>
+		<attribute name="transmitAovs" type="maya.bool">
+			<label>Transmit AOVs</label>
+			<description>When enabled on all surfaces in the scene, this will pull the AOVs through transmissive objects, so glass objects etc. will get the diffuse AOV of the objects they refract.</description>
+		</attribute>
+		<attribute name="aov_diffuse_color" type="maya.float3">
+			<label>Diffuse color</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_diffuse_color_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_direct_diffuse" type="maya.float3">
+			<label>Direct diffuse</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_diffuse_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_direct_diffuse_raw" type="maya.float3">
+			<label>Direct diffuse (raw)</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_diffuse_raw_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_indirect_diffuse" type="maya.float3">
+			<label>Indirect diffuse</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_diffuse_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_indirect_diffuse_raw" type="maya.float3">
+			<label>Indirect diffuse (raw)</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_diffuse_raw_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_direct_backlight" type="maya.float3">
+			<label>Direct backlight</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_backlight_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_indirect_backlight" type="maya.float3">
+			<label>Indirect backlight</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_backlight_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_direct_specular" type="maya.float3">
+			<label>Direct specular</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_specular_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_indirect_specular" type="maya.float3">
+			<label>Indirect specular</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_specular_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_direct_specular_2" type="maya.float3">
+			<label>Direct specular 2</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_direct_specular_2_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_indirect_specular_2" type="maya.float3">
+			<label>Indirect specular 2</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_indirect_specular_2_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_single_scatter" type="maya.float3">
+			<label>Single scatter</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_single_scatter_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_sss" type="maya.float3">
+			<label>SSS</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_sss_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_refraction" type="maya.float3">
+			<label>Refraction</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_refraction_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_emission" type="maya.float3">
+			<label>Emission</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_emission_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_uv" type="maya.float3">
+			<label>UV</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_depth" type="maya.float3">
+			<label>Depth</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_1" type="maya.float3">
+			<label>Light group [1]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_1_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_light_group_2" type="maya.float3">
+			<label>Light group [2]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_2_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_light_group_3" type="maya.float3">
+			<label>Light group [3]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_3_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_light_group_4" type="maya.float3">
+			<label>Light group [4]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_4_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_light_group_5" type="maya.float3">
+			<label>Light group [5]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_5_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_light_group_6" type="maya.float3">
+			<label>Light group [6]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_6_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_light_group_7" type="maya.float3">
+			<label>Light group [7]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_7_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_light_group_8" type="maya.float3">
+			<label>Light group [8]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_light_group_8_clamp" type="maya.float">
+			<label>Clamp</label>
+			<description>Clamp this AOV to this value</description>
+		</attribute>
+		<attribute name="aov_id_1" type="maya.float3">
+			<label>ID [1]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_2" type="maya.float3">
+			<label>ID [2]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_3" type="maya.float3">
+			<label>ID [3]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_4" type="maya.float3">
+			<label>ID [4]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_5" type="maya.float3">
+			<label>ID [5]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_6" type="maya.float3">
+			<label>ID [6]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_7" type="maya.float3">
+			<label>ID [7]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_id_8" type="maya.float3">
+			<label>ID [8]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_asset" type="maya.float3">
+			<label>Crypto Asset</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_object" type="maya.float3">
+			<label>Crypto Object</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_crypto_material" type="maya.float3">
+			<label>Crypto Material</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_1" type="maya.rgba">
+			<label>Shadow group [1]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_2" type="maya.rgba">
+			<label>Shadow group [2]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_3" type="maya.rgba">
+			<label>Shadow group [3]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_4" type="maya.rgba">
+			<label>Shadow group [4]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_5" type="maya.rgba">
+			<label>Shadow group [5]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_6" type="maya.rgba">
+			<label>Shadow group [6]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_7" type="maya.rgba">
+			<label>Shadow group [7]</label>
+			<description></description>
+		</attribute>
+		<attribute name="aov_shadow_group_8" type="maya.rgba">
+			<label>Shadow group [8]</label>
+			<description></description>
+		</attribute>
+		<attribute name="rr" type="maya.bool">
+			<label>RR</label>
+			<description>When this is enabled the shader will automatically stop tracing indirect bounces when the final contribution for continuing would be insignificant. This allows you to go to very high ray depths without a significant render time hit.</description>
+		</attribute>
+		<attribute name="traceSetAll" type="maya.string">
+			<label>Global trace set</label>
+			<description>Enter the name of a trace set here to restrict the shader to trace only against that set. Entering a different trace set in the individual lobes' Trace set parameters will override the one set here.</description>
+		</attribute>
+		<attribute name="traceSetShadows" type="maya.string">
+			<label>Shadow trace set</label>
+			<description>Enter the name of a trace set here to restrict the shader to trace only against that set for shadows.</description>
+		</attribute>
+		<attribute name="debug" type="maya.enum">
+			<label>Debug</label>
+			<description>Select a component here to replace the shader result with that component. This allows you to quickly debug your inputs and check value ranges while setting up shading.</description>
+		</attribute>
+	</template>
+		<view name="Lookdev" template="AEalSurface">
+			<group name="Diffuse">
+				<label>Diffuse</label>
+				<property name="diffuseStrength"/>
+				<property name="diffuseColor"/>
+				<property name="diffuseRoughness"/>
+				<group name="Backlight">
+					<label>Backlight</label>
+					<property name="backlightStrength"/>
+					<property name="backlightColor"/>
+					<property name="backlightIndirectStrength"/>
+				</group>
+				<group name="SSS">
+					<label>SSS</label>
+					<property name="sssMix"/>
+					<property name="sssMode"/>
+					<property name="sssDensityScale"/>
+					<property name="sssRadius"/>
+					<property name="sssWeight1"/>
+					<property name="sssRadiusColor"/>
+					<property name="sssRadius2"/>
+					<property name="sssWeight2"/>
+					<property name="sssRadiusColor2"/>
+					<property name="sssRadius3"/>
+					<property name="sssWeight3"/>
+					<property name="sssRadiusColor3"/>
+					<property name="sssTraceSet"/>
+				</group>
+				<group name="Advanced">
+					<label>Advanced</label>
+					<property name="diffuseExtraSamples"/>
+					<property name="sssExtraSamples"/>
+					<property name="diffuseIndirectStrength"/>
+					<property name="diffuseIndirectClamp"/>
+					<property name="diffuseNormal"/>
+					<property name="traceSetDiffuse"/>
+					<property name="traceSetBacklight"/>
+				</group>
+			</group>
+			<group name="Specular1">
+				<label>Specular 1</label>
+				<property name="specular1Strength"/>
+				<property name="specular1Color"/>
+				<property name="specular1Roughness"/>
+				<property name="specular1Anisotropy"/>
+				<property name="specular1Rotation"/>
+				<group name="Fresnel">
+					<label>Fresnel</label>
+					<property name="specular1FresnelMode"/>
+					<property name="specular1Ior"/>
+					<property name="specular1Reflectivity"/>
+					<property name="specular1EdgeTint"/>
+				</group>
+				<group name="Advanced">
+					<label>Advanced</label>
+					<property name="specular1RoughnessDepthScale"/>
+					<property name="specular1ExtraSamples"/>
+					<property name="specular1Normal"/>
+					<property name="specular1IndirectStrength"/>
+					<property name="specular1IndirectClamp"/>
+					<property name="traceSetSpecular1"/>
+					<property name="specular1CausticPaths"/>
+					<property name="specular1InternalDirect"/>
+					<property name="specular1Distribution"/>
+				</group>
+			</group>
+			<group name="Specular2">
+				<label>Specular 2</label>
+				<property name="specular2Strength"/>
+				<property name="specular2Color"/>
+				<property name="specular2Roughness"/>
+				<property name="specular2Anisotropy"/>
+				<property name="specular2Rotation"/>
+				<group name="Fresnel">
+					<label>Fresnel</label>
+					<property name="specular2FresnelMode"/>
+					<property name="specular2Ior"/>
+					<property name="specular2Reflectivity"/>
+					<property name="specular2EdgeTint"/>
+				</group>
+				<group name="Advanced">
+					<label>Advanced</label>
+					<property name="specular2RoughnessDepthScale"/>
+					<property name="specular2ExtraSamples"/>
+					<property name="specular2Normal"/>
+					<property name="specular2IndirectStrength"/>
+					<property name="specular2IndirectClamp"/>
+					<property name="traceSetSpecular2"/>
+					<property name="specular2CausticPaths"/>
+					<property name="specular2InternalDirect"/>
+					<property name="specular2Distribution"/>
+				</group>
+			</group>
+			<group name="Transmission">
+				<label>Transmission</label>
+				<property name="transmissionStrength"/>
+				<property name="transmissionColor"/>
+				<property name="transmissionLinkToSpecular1"/>
+				<property name="transmissionRoughness"/>
+				<property name="transmissionIor"/>
+				<group name="Attenuation">
+					<label>Attenuation</label>
+					<property name="ssAttenuationColor"/>
+					<property name="ssInScatteringStrength"/>
+					<property name="ssDensityScale"/>
+					<property name="ssDirection"/>
+				</group>
+				<group name="Advanced">
+					<label>Advanced</label>
+					<property name="transmissionRoughnessDepthScale"/>
+					<property name="transmissionExtraSamples"/>
+					<property name="transmissionEnableCaustics"/>
+					<property name="rrTransmissionDepth"/>
+					<property name="transmissionClamp"/>
+					<property name="ssSpecifyCoefficients"/>
+					<property name="ssScattering"/>
+					<property name="ssAbsorption"/>
+					<property name="traceSetTransmission"/>
+					<property name="transmissionDoDirect"/>
+					<property name="transmissionNormal"/>
+					<property name="transmissionCausticPaths"/>
+				</group>
+			</group>
+			<group name="Emission">
+				<label>Emission</label>
+				<property name="emissionStrength"/>
+				<property name="emissionColor"/>
+			</group>
+			<property name="opacity"/>
+			<group name="IDs">
+				<label>IDs</label>
+				<property name="id1"/>
+				<property name="id2"/>
+				<property name="id3"/>
+				<property name="id4"/>
+				<property name="id5"/>
+				<property name="id6"/>
+				<property name="id7"/>
+				<property name="id8"/>
+			</group>
+			<group name="AOVs">
+				<label>AOVs</label>
+				<property name="crypto_asset_override"/>
+				<property name="crypto_object_override"/>
+				<property name="crypto_material_override"/>
+				<property name="standardCompatibleAOVs"/>
+				<property name="transmitAovs"/>
+				<property name="aov_diffuse_color"/>
+				<property name="aov_diffuse_color_clamp"/>
+				<property name="aov_direct_diffuse"/>
+				<property name="aov_direct_diffuse_clamp"/>
+				<property name="aov_direct_diffuse_raw"/>
+				<property name="aov_direct_diffuse_raw_clamp"/>
+				<property name="aov_indirect_diffuse"/>
+				<property name="aov_indirect_diffuse_clamp"/>
+				<property name="aov_indirect_diffuse_raw"/>
+				<property name="aov_indirect_diffuse_raw_clamp"/>
+				<property name="aov_direct_backlight"/>
+				<property name="aov_direct_backlight_clamp"/>
+				<property name="aov_indirect_backlight"/>
+				<property name="aov_indirect_backlight_clamp"/>
+				<property name="aov_direct_specular"/>
+				<property name="aov_direct_specular_clamp"/>
+				<property name="aov_indirect_specular"/>
+				<property name="aov_indirect_specular_clamp"/>
+				<property name="aov_direct_specular_2"/>
+				<property name="aov_direct_specular_2_clamp"/>
+				<property name="aov_indirect_specular_2"/>
+				<property name="aov_indirect_specular_2_clamp"/>
+				<property name="aov_single_scatter"/>
+				<property name="aov_single_scatter_clamp"/>
+				<property name="aov_sss"/>
+				<property name="aov_sss_clamp"/>
+				<property name="aov_refraction"/>
+				<property name="aov_refraction_clamp"/>
+				<property name="aov_emission"/>
+				<property name="aov_emission_clamp"/>
+				<property name="aov_uv"/>
+				<property name="aov_depth"/>
+				<property name="aov_light_group_1"/>
+				<property name="aov_light_group_1_clamp"/>
+				<property name="aov_light_group_2"/>
+				<property name="aov_light_group_2_clamp"/>
+				<property name="aov_light_group_3"/>
+				<property name="aov_light_group_3_clamp"/>
+				<property name="aov_light_group_4"/>
+				<property name="aov_light_group_4_clamp"/>
+				<property name="aov_light_group_5"/>
+				<property name="aov_light_group_5_clamp"/>
+				<property name="aov_light_group_6"/>
+				<property name="aov_light_group_6_clamp"/>
+				<property name="aov_light_group_7"/>
+				<property name="aov_light_group_7_clamp"/>
+				<property name="aov_light_group_8"/>
+				<property name="aov_light_group_8_clamp"/>
+				<property name="aov_id_1"/>
+				<property name="aov_id_2"/>
+				<property name="aov_id_3"/>
+				<property name="aov_id_4"/>
+				<property name="aov_id_5"/>
+				<property name="aov_id_6"/>
+				<property name="aov_id_7"/>
+				<property name="aov_id_8"/>
+				<property name="aov_crypto_asset"/>
+				<property name="aov_crypto_object"/>
+				<property name="aov_crypto_material"/>
+				<property name="aov_shadow_group_1"/>
+				<property name="aov_shadow_group_2"/>
+				<property name="aov_shadow_group_3"/>
+				<property name="aov_shadow_group_4"/>
+				<property name="aov_shadow_group_5"/>
+				<property name="aov_shadow_group_6"/>
+				<property name="aov_shadow_group_7"/>
+				<property name="aov_shadow_group_8"/>
+			</group>
+			<group name="Advanced">
+				<label>Advanced</label>
+				<property name="rr"/>
+				<property name="traceSetAll"/>
+				<property name="traceSetShadows"/>
+				<property name="debug"/>
+			</group>
+		</view>
+</templates>

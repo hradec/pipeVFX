@@ -1,0 +1,140 @@
+#!/bin/python3
+
+image='nexenta.local:5000/centos_nuke'
+
+from io import BytesIO
+import docker, os, pwd, sys, tempfile, json, glob, pipe
+
+push = 'push' in sys.argv
+build = 'build' in sys.argv
+
+nvidia=''.join( os.popen( "nvidia-smi | grep Driver | awk '{print $(NF-1)}'" ).readlines() ).strip()
+user=pwd.getpwuid(os.getuid())[0]
+
+client = docker.from_env()
+cli = docker.APIClient(base_url='unix://var/run/docker.sock')
+
+if not [ x for x in client.images.list() if image in str(x.attrs) ]:
+    build = client.images.pull(image) == None
+
+if build:
+    dockerfile = '''
+    FROM centos:centos7
+    RUN yum update -y && yum install -y \
+        nano \
+        csh \
+        libXp \
+        libXmu \
+        libXpm \
+        libXi \
+        libtiff \
+        libXinerama \
+        elfutils \
+        gcc \
+        gstreamer-plugins-base.x86_64 \
+        gamin \
+        git \
+        mesa-utils \
+        mesa-libGL-devel \
+        tcsh \
+        xorg-x11-server-Xorg \
+        xorg-x11-server-Xvfb \
+        wget && \
+        yum groupinstall -y "X Window System" && \
+        yum clean all
+    RUN cd /tmp ; \
+        wget 'http://us.download.nvidia.com/XFree86/Linux-x86_64/%s/NVIDIA-Linux-x86_64-%s.run' && \
+        sh NVIDIA-Linux-x86_64-*.run  -a -s  --no-x-check -z --no-kernel-module -r --no-abi-note --skip-module-unload
+    RUN yum install -y mesa-libGLU libpng12 SDL freetype2
+    RUN yum groupinstall -y "X Window System" "Fonts"
+    # RUN rm /etc/fonts/fonts.conf
+    RUN ln -s /lib64/libbz2.so.1 /lib64/libbz2.so.1.0
+    RUN yum -y install xorg-x11-fonts*
+    # RUN yum -y install '*fonts'
+    RUN fc-cache
+    ''' % (nvidia,nvidia)
+    f = BytesIO(dockerfile.encode('utf-8'))
+    for line in cli.build(fileobj=f, rm=True, tag=image):
+        try:
+            sys.stdout.write(json.loads(line)['stream'])
+        except:
+            pass
+if push:
+    os.system( 'docker push '+image )
+
+
+if push or build:
+    print( "Run nuke again to actually run nuke!")
+else:
+    n=pipe.apps.nuke()
+    exec=False
+    version=1
+    for ps in client.containers.list(all=True):
+        if 'nuke' in ps.name:
+            if ps.status != "running":
+                ps.remove()
+            else:
+                # new_version = int(ps.name.split('_')[-1])+1
+                # if new_version > version:
+                #     version = new_version
+                exec=True
+
+    # we need to get the proper command line from pipe
+    alias = [ x for x in n.bins() if x[0]==os.path.basename(sys.argv[0])[1:] ][0][-1]
+    name="nuke_docker_%d" % version
+    command='''nice -n 19 /usr/bin/python2 -c "import pipe;pipe.apps.nuke().run('%s')" %s''' % ( alias, ' '.join(sys.argv[1:]) )
+    env=[ "%s=%s" % ( e, os.environ[e] ) for e in os.environ if 'PIPE' in e or 'PYTHON' in e]+[
+        'DISPLAY=:0',
+        'USER=%s' % user,
+        'CENTOS=1',
+        'QT_GRAPHICSSYSTEM=opengl',
+    ]
+    # print(command)
+    # print("%s/pythonextensions/site-packages/foundry/frameserver/nuke/runframeserver.py" % pipe.apps.nuke().path())
+
+    centos = client.containers.list( filters = {"name" : name } )
+    if centos:
+        centos[0].exec_run(
+            cmd=command,
+            environment=env,
+            stdout=True,
+            stderr=True,
+            user=os.getuid(),
+            detach=True
+        )
+    else:
+        centos = client.containers.run(
+            image=image,
+            command=command,
+            environment=env,
+            extra_hosts=[
+                "atomo2.no-ip.org:192.168.0.17",
+                "r610.local:192.168.0.12",
+            ],
+            network_mode="host",
+            volumes={
+                "%s/.Xauthority" % os.environ['HOME'] : { "bind" : "%s/.Xauthority"  % os.environ['HOME'] },
+                "/dev/null"      : { "bind" : "%s/pythonextensions/site-packages/foundry/frameserver/nuke/runframeserver.py" % n.path(), "mode" : "ro" },
+                "/nuke_sd_cache" : { "bind" : "/nuke_sd_cache" , 'mode' : 'rw' },
+                "/tmp/.X11-unix" : { "bind" : "/tmp/.X11-unix" },
+                "/atomo"         : { "bind" : "/atomo"      , 'mode' : 'ro' },
+                "/atomo/home"    : { "bind" : "/atomo/home" , 'mode' : 'rw' },
+                "/atomo/jobs"    : { "bind" : "/atomo/jobs" , 'mode' : 'rw' },
+                "/etc/group"     : { "bind" : "/etc/group"  , "mode" : "ro" },
+                "/etc/passwd"    : { "bind" : "/etc/passwd" , "mode" : "ro" },
+            },
+            devices=[
+                "/dev/snd:/dev/snd",
+                "/dev/dri:/dev/dri",
+            ] + [ "%s:%s" % (x, x) for x in glob.glob("/dev/nvidia*") ],
+            name=name,
+            stdout=True,
+            stderr=True,
+            auto_remove=True,
+            user=os.getuid(),
+            group_add=[os.getgid()],
+            detach=True
+        )
+
+    for line in centos.logs(stream=True):
+        sys.stdout.write(line.decode())

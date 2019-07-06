@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalJitterColor">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="input" type="maya.float3">
+			<label>Input</label>
+		</attribute>
+		<attribute name="signal" type="maya.float">
+			<label>Signal</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalJitterColor">
+		<property name="outColor" />
+		<property name="input" />
+		<property name="signal" />
+		</view>
+</templates>

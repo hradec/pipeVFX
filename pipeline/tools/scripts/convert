@@ -1,4 +1,4 @@
 #!/bin/sh 
 
 export MAGICK_OCL_DEVICE=OFF
-/usr/sbin/convert "$@"
+/usr/sbin/timeout --foreground -k 10 -s 9  60  /usr/sbin/convert "$@"

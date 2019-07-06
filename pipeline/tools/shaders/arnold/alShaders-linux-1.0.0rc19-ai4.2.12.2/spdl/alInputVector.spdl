@@ -1,0 +1,150 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{4f4ef81f-1516-4f0a-bd36-c200a5223bf0}";
+PropertySet "alInputVector_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{ed0999fb-046a-41a6-94d1-3fc55b660551}";
+		Type = vector;
+	}
+	Parameter "input" input
+	{
+		GUID = "{ae0d2875-435e-4425-ab0c-50daaf98074f}";
+		Type = string;
+		Texturable = off;
+		Value = "P";
+	}
+	Parameter "userName" input
+	{
+		GUID = "{6fb3edc9-ac84-4437-b508-c548a134fd12}";
+		Type = string;
+		Texturable = off;
+		Value = "";
+	}
+	Parameter "vector" input
+	{
+		GUID = "{250714a3-6686-4a10-93f0-d23170b8aaa4}";
+		Type = vector;
+		Texturable = on;
+		Value = 0.000000 0.000000 0.000000;
+	}
+	Parameter "type" input
+	{
+		GUID = "{83ce110c-77d0-4763-98d3-d55cfafb7c99}";
+		Type = string;
+		Texturable = off;
+		Value = "Point";
+	}
+	Parameter "matrix" input
+	{
+		GUID = "{71de43c6-68d9-41bd-8c45-9c3aed4d52f7}";
+		Type = matrix;
+		Texturable = on;
+	}
+	Parameter "coordinates" input
+	{
+		GUID = "{df5f30be-4168-4f0e-b00c-0e711e5b53a1}";
+		Type = string;
+		Texturable = off;
+		Value = "cartesian";
+	}
+}
+MetaShader "alInputVector_meta"
+{
+	Name = "ALS_InputVector";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_InputVector";
+		Filename = "alInputVector";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	input
+	{
+		Name = "Input";
+		UIType = "Combo";
+		Items
+		{
+			"P" = "P";
+			"Po" = "Po";
+			"N" = "N";
+			"Nf" = "Nf";
+			"Ng" = "Ng";
+			"Ngf" = "Ngf";
+			"Ns" = "Ns";
+			"dPdu" = "dPdu";
+			"dPdv" = "dPdv";
+			"Ld" = "Ld";
+			"Rd" = "Rd";
+			"uv" = "uv";
+			"User" = "User";
+			"Custom" = "Custom";
+		}
+	}
+	userName
+	{
+		Name = "User name";
+	}
+	vector
+	{
+		Name = "Custom";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	type
+	{
+		Name = "Type";
+		UIType = "Combo";
+		Items
+		{
+			"Point" = "Point";
+			"Vector" = "Vector";
+		}
+	}
+	matrix
+	{
+		Name = "Matrix";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	coordinates
+	{
+		Name = "Coordinates";
+		UIType = "Combo";
+		Items
+		{
+			"cartesian" = "cartesian";
+			"spherical" = "spherical";
+			"normalized spherical" = "normalized spherical";
+		}
+	}
+}
+Layout "Default"
+{
+	input;
+	userName;
+	vector;
+	type;
+	Tab "Transform"
+	{
+		matrix;
+		coordinates;
+	}
+}
+Layout "RenderTree"
+{
+	vector;
+	Group "Transform"
+	{
+		matrix;
+	}
+}
+Plugin = Shader
+{
+	Filename = "alInputVector";
+}

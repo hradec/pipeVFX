@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -19,11 +19,10 @@
 # =================================================================================
 
 
-from current import engine as job
-from maya import maya
-from nuke import nuke
-from daily import daily
-from houdini import houdini
-from cmds import cmds
-
-
+from pipe.farm.current import engine
+from pipe.farm.current import engine as job
+from pipe.farm.maya import maya
+from pipe.farm.nuke import nuke
+from pipe.farm.daily import daily
+from pipe.farm.houdini import houdini
+from pipe.farm.cmds import cmds

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<templates>
+	<template name="NEalSurface">
+		<attribute name="outColor" type="maya.float3">
+		<label>Out Color</label>
+</attribute>
+		<attribute name="diffuseStrength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="diffuseColor" type="maya.float3">
+			<label>Color</label>
+		</attribute>
+		<attribute name="specular1Strength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="specular1Color" type="maya.float3">
+			<label>Color</label>
+		</attribute>
+		<attribute name="specular1Roughness" type="maya.float">
+			<label>Roughness</label>
+		</attribute>
+		<attribute name="specular2Strength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="specular2Color" type="maya.float3">
+			<label>Color</label>
+		</attribute>
+		<attribute name="specular2Roughness" type="maya.float">
+			<label>Roughness</label>
+		</attribute>
+		<attribute name="transmissionStrength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="transmissionColor" type="maya.float3">
+			<label>Color</label>
+		</attribute>
+		<attribute name="transmissionRoughness" type="maya.float">
+			<label>Roughness</label>
+		</attribute>
+		<attribute name="emissionStrength" type="maya.float">
+			<label>Strength</label>
+		</attribute>
+		<attribute name="emissionColor" type="maya.float3">
+			<label>Color</label>
+		</attribute>
+		<attribute name="opacity" type="maya.float3">
+			<label>Opacity</label>
+		</attribute>
+		<attribute name="id1" type="maya.float3">
+			<label>id1</label>
+		</attribute>
+		<attribute name="id2" type="maya.float3">
+			<label>id2</label>
+		</attribute>
+		<attribute name="id3" type="maya.float3">
+			<label>id3</label>
+		</attribute>
+		<attribute name="id4" type="maya.float3">
+			<label>id4</label>
+		</attribute>
+		<attribute name="id5" type="maya.float3">
+			<label>id5</label>
+		</attribute>
+		<attribute name="id6" type="maya.float3">
+			<label>id6</label>
+		</attribute>
+		<attribute name="id7" type="maya.float3">
+			<label>id7</label>
+		</attribute>
+		<attribute name="id8" type="maya.float3">
+			<label>id8</label>
+		</attribute>
+	</template>
+		<view name="NEDefault" template="NEalSurface">
+		<property name="outColor" />
+		<property name="diffuseStrength" />
+		<property name="diffuseColor" />
+		<property name="specular1Strength" />
+		<property name="specular1Color" />
+		<property name="specular1Roughness" />
+		<property name="specular2Strength" />
+		<property name="specular2Color" />
+		<property name="specular2Roughness" />
+		<property name="transmissionStrength" />
+		<property name="transmissionColor" />
+		<property name="transmissionRoughness" />
+		<property name="emissionStrength" />
+		<property name="emissionColor" />
+		<property name="opacity" />
+		<property name="id1" />
+		<property name="id2" />
+		<property name="id3" />
+		<property name="id4" />
+		<property name="id5" />
+		<property name="id6" />
+		<property name="id7" />
+		<property name="id8" />
+		</view>
+</templates>

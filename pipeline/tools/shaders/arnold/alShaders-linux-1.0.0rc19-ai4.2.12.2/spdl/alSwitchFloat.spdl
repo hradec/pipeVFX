@@ -1,0 +1,178 @@
+SPDL
+Version = "2.0.0.0";
+Reference = "{804d8ddc-d727-40b2-86bb-aa69b9b9b4f0}";
+PropertySet "alSwitchFloat_pset"
+{
+	Parameter "out" output
+	{
+		GUID = "{6b9ce7e1-679f-47d7-9bd9-7e7ca72b9f4f}";
+		Type = color;
+	}
+	Parameter "inputA" input
+	{
+		GUID = "{6948285b-3876-489d-a8b1-44e5c58b6d8c}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.000000;
+	}
+	Parameter "inputB" input
+	{
+		GUID = "{afacc8d4-8c88-4283-8079-36fd101a83ff}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "inputC" input
+	{
+		GUID = "{a1204d2a-e8d8-4aed-b705-b1377def9052}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.150000;
+	}
+	Parameter "inputD" input
+	{
+		GUID = "{105b7d70-2fdb-4d38-8842-267535a6c862}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.300000;
+	}
+	Parameter "inputE" input
+	{
+		GUID = "{88345ecb-cc48-436a-abbf-dd7f9ad6f7d1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.450000;
+	}
+	Parameter "inputF" input
+	{
+		GUID = "{80610c2e-1209-4ece-9855-ecaf37458b41}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.600000;
+	}
+	Parameter "inputG" input
+	{
+		GUID = "{e644e433-f526-46a7-9888-1e5e45de10e1}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.750000;
+	}
+	Parameter "inputH" input
+	{
+		GUID = "{0bd32b12-703f-4eab-8664-5688746e3397}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.900000;
+	}
+	Parameter "mix" input
+	{
+		GUID = "{a48df9e6-9c31-43a3-9111-196762d24ee0}";
+		Type = scalar;
+		Texturable = on;
+		Value = 1.000000;
+	}
+	Parameter "threshold" input
+	{
+		GUID = "{a37b0455-5da6-4eb3-baa5-cc37b6ebac27}";
+		Type = scalar;
+		Texturable = on;
+		Value = 0.500000;
+	}
+}
+MetaShader "alSwitchFloat_meta"
+{
+	Name = "ALS_SwitchFloat";
+	Type = texture;
+	Renderer "mental ray"
+	{
+		Name = "ALS_SwitchFloat";
+		Filename = "alSwitchFloat";
+		Options
+		{
+			"version" = 1;
+		}
+	}
+}
+Defaults
+{
+	inputA
+	{
+		Name = "InputA";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputB
+	{
+		Name = "InputB";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputC
+	{
+		Name = "InputC";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputD
+	{
+		Name = "InputD";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputE
+	{
+		Name = "InputE";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputF
+	{
+		Name = "InputF";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputG
+	{
+		Name = "InputG";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	inputH
+	{
+		Name = "InputH";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	mix
+	{
+		Name = "mix";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+	threshold
+	{
+		Name = "threshold";
+		Commands = "{F5C75F11-2F05-11D3-AA95-00AA0068D2C0}";
+	}
+}
+Layout "Default"
+{
+	inputA;
+	inputB;
+	inputC;
+	inputD;
+	inputE;
+	inputF;
+	inputG;
+	inputH;
+	mix;
+	threshold;
+}
+Layout "RenderTree"
+{
+	inputA;
+	inputB;
+	inputC;
+	inputD;
+	inputE;
+	inputF;
+	inputG;
+	inputH;
+	mix;
+	threshold;
+}
+Plugin = Shader
+{
+	Filename = "alSwitchFloat";
+}
