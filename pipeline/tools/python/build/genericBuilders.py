@@ -21,6 +21,7 @@
 from  SCons.Environment import *
 from  SCons.Builder import *
 from  SCons.Action import *
+from  SCons.Script import *
 import os, traceback, sys, inspect
 
 
@@ -35,6 +36,9 @@ crtl_file_install = '.install'
 crtl_file_lastlog = '.lastlog'
 
 _spinnerCount = 0
+
+def DEBUG():
+    return ARGUMENTS.get('debug', 0)
 
 
 
@@ -603,9 +607,11 @@ class generic:
     def __check_target_log__(self,target, install=None):
         ret=255
         if os.path.exists(target):
-            lines = ''.join(open(target).readlines())
-            if "@runCMD_ERROR@" in lines:
-                ret = int(lines.split("@runCMD_ERROR@")[-2].strip())
+            lines = ''.join( open(target).readlines() )
+            if 'ld returned 1' in lines or 'ld: cannot find ' in lines:
+                ret = 1
+            elif "@runCMD_ERROR@" in lines:
+                ret = int( lines.split("@runCMD_ERROR@")[-2].strip() )
 
         if not self.installer or install:
             if not glob("%s/*/*" % os.path.dirname(target)):
@@ -912,12 +918,17 @@ class generic:
         # and then we need to setup a clean PYTHONPATH so ppython can find pipe, build and the correct modules
         #    os_environ['PYTHONPATH'] = pythonpath_original
 
-        pipeFile = ' > %s 2>%s.err' % (lastlog, lastlog)
-        cmd = cmd.replace( '&&', ' %s && ' % pipeFile )
+        showLog = ' > '
+        if DEBUG():
+            showLog = ' | tee -a '
+        pipeFile = ' 2>&1 \
+            | source-highlight -f esc -s errors \
+            | tee -a  %s %s %s.err ' % (lastlog, showLog, lastlog)
+        # cmd = cmd.replace( '&&', ' %s && ' % pipeFile )
 
         # go to build folder before anything!!
-        cmd  = 'cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
-        cmd += pipeFile+' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@"  >> %s 2>&1' % lastlog
+        cmd  = '( cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
+        cmd += ' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" ) %s' % pipeFile
 
         # remove Paths that don't exist from os_environ
         for each in os_environ:
@@ -956,6 +967,8 @@ class generic:
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
         proc.wait()
         ret = self.__check_target_log__(lastlog)
+
+        # finished without errors!!
         if ret == 0:
             f = open(target,'a')
             for each in open(lastlog).readlines():
@@ -968,6 +981,8 @@ class generic:
             f = open("%s.cmd" % target,'w')
             f.write('%s\n' % cmd)
             f.close()
+
+        # error during build!!
         else:
             print  '-'*tcols
             os.system( 'cat %s.err | source-highlight -f esc -s errors' % lastlog )

@@ -184,12 +184,11 @@ class all: # noqa
                 #    '4.8.5',
                 #    'bfe56e74d31d25009c8fb55fd3ca7e01'
                 # ),(
-                   'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
-                   'gcc-4.8.3.tar.gz',
-                   '4.8.3',
-                   'e2c60f5ef918be2db08df96c7d97d0c4'
-                #    'bfe56e74d31d25009c8fb55fd3ca7e01'
-                ),(
+                   # 'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
+                   # 'gcc-4.8.3.tar.gz',
+                   # '4.8.3',
+                   # 'e2c60f5ef918be2db08df96c7d97d0c4'
+                # ),(
                    'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
                    'gcc-4.1.2.tar.gz',
                    '4.1.2',
@@ -265,8 +264,8 @@ class all: # noqa
                 '205b03a87fc83dab653b628c59b9fc91'
             )],
             cmd = [
-                './configure',
-                'make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$TARGET_FOLDER',
+                './configure ',
+                'make -j $DCORES SHLIB_LIBS="-lncurses" CFLAGS="$CFLAGS -fPIC" PREFIX=$TARGET_FOLDER',
                 'make -j $DCORES PREFIX=$TARGET_FOLDER install',
             ],
         )
@@ -292,7 +291,7 @@ class all: # noqa
                 'Python-2.6.9.tar.gz',
                 '2.6.9',
                 'bddbd64bf6f5344fc55bbe49a72fe4f3',
-                { readline : '5.2.0', openssl : '1.0.2h' },
+                { readline : '7.0.0', openssl : '1.0.2h' },
             ),(
                 'http://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
                 'Python-2.7.12.tar.gz',
@@ -1016,7 +1015,7 @@ class all: # noqa
             #     '4.8.6',
             #     '2edbe4d6c2eff33ef91732602f3518eb',
             # ),(
-                'http://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
+                'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
                 'qt-everywhere-opensource-src-4.8.7.tar.gz',
                 '4.8.7',
                 'd990ee66bf7ab0c785589776f35ba6ad',

@@ -49,6 +49,10 @@ RUN ln -s /lib64/libbz2.so.1 /lib64/libbz2.so.1.0 ; \
     ln -s /usr/bin/ar /usr/sbin/ar
 
 RUN fc-cache
+RUN yum -y install source-highlight
+RUN yum -y install ncurses ncurses-devel ncurses-static
+RUN yum -y install sqlite-devel libdb-devel
+RUN yum -y install gdbm-devel tkinter
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
 
