@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM centos:centos7.6.1810
 
 RUN yum update -y && yum install -y \
     nano \
@@ -54,6 +54,8 @@ RUN yum -y install ncurses ncurses-devel ncurses-static
 RUN yum -y install sqlite-devel libdb-devel
 RUN yum -y install gdbm-devel tkinter
 RUN yum -y install libcurl-devel
+RUN yum -y install mesa-libGLU-devel
+RUN yum -y install dbus-devel dbus-glib-devel
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
 
