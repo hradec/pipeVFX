@@ -279,6 +279,11 @@ class all: # noqa
                 'openssl-OpenSSL_1_0_2h.tar.gz',
                 '1.0.2h',
                 'bd70ca76ef00c9b65a927883f62998d9'
+            ),(
+                'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2s.tar.gz',
+                'openssl-OpenSSL_1_0_2s.tar.gz',
+                '1.0.2s',
+                '24886418211ec05e3f1c764a489b29c1'
             )],
         )
         self.openssl = openssl
@@ -287,24 +292,31 @@ class all: # noqa
             ARGUMENTS,
             'python',
             download=[(
-                'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
-                'Python-2.6.9.tar.gz',
-                '2.6.9',
-                'bddbd64bf6f5344fc55bbe49a72fe4f3',
-                { readline : '7.0.0', openssl : '1.0.2h' },
-            ),(
-                'http://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
-                'Python-2.7.12.tar.gz',
-                '2.7.12',
-                '88d61f82e3616a4be952828b3694109d',
-                { readline : '5.2.0', openssl : None },
+                    'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
+                    'Python-2.6.9.tar.gz',
+                    '2.6.9',
+                    'bddbd64bf6f5344fc55bbe49a72fe4f3',
+                    { readline : '7.0.0', openssl : '1.0.2h' },
                 # ),(
-                #     'https://www.python.org/ftp/python/3.5.2/Python-3.5.2.tgz',
-                #     'Python-3.5.2.tar.gz',
-                #     '3.5.2',
-                #     '3fe8434643a78630c61c6464fe2e7e72',
-                #     { readline : '5.2.0', openssl : None },
+                #     'http://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
+                #     'Python-2.7.12.tar.gz',
+                #     '2.7.12',
+                #     '88d61f82e3616a4be952828b3694109d',
+                #     { readline : '7.0.0', openssl : '1.0.2s' },
+                ),(
+                    'http://www.python.org/ftp/python/2.7.16/Python-2.7.16.tgz',
+                    'Python-2.7.16.tar.gz',
+                    '2.7.16',
+                    'f1a2ace631068444831d01485466ece0',
+                    { readline : '7.0.0', openssl : '1.0.2s' },
+                ),(
+                    'https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz',
+                    'Python-3.7.3.tar.gz',
+                    '3.7.3',
+                    '2ee10f25e3d1b14215d56c3882486fcf',
+                    { readline : '7.0.0', openssl : '1.0.2s' },
             )],
+            environ = {"PYTHONHTTPSVERIFY" : "0"},
             depend = [readline,bzip2],
             pip = [
                 'epydoc',
