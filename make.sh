@@ -40,6 +40,6 @@ else
             -v $CD/:/atomo/ \
             -v $CD/docker/run.sh:/run.sh \
             hradec/pipevfx_centos_base:centos7 \
-            /bin/bash -l -i
+            /bin/bash -c 'echo ". /atomo/pipeline/tools/init/bash" >> $HOME/.bashrc ; bash -l -i '
     fi
 fi
