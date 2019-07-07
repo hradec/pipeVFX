@@ -5,13 +5,12 @@
 
 CD=$(readlink -f $(dirname $BASH_SOURCE))
 
-DEBUG=0
 SHELL=0
 while getopts hdse: option ; do
     case "${option}"
     in
         h) HELP=1;;
-        d) DEBUG=1;;
+        d) DEBUG="debug=1";;
         s) SHELL=1;;
         e) EXTRA="${OPTARG}";;
     esac
@@ -34,7 +33,7 @@ else
             -v $CD/:/atomo/ \
             -v $CD/docker/run.sh:/run.sh \
             hradec/pipevfx_centos_base:centos7 \
-            /run.sh $EXTRA debug=$DEBUG
+            /run.sh $EXTRA $DEBUG
     else
         docker run --rm --name pipevfx_make -ti \
             -v $CD/:/atomo/ \
