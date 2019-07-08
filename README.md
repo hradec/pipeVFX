@@ -1,31 +1,37 @@
-pipeVFX 
+pipeVFX
 =======
 [![Build Status](https://travis-ci.org/hradec/pipeVFX.svg?branch=master)](https://travis-ci.org/hradec/pipeVFX)
 
-
-REFACTORING IN PROGRESS - this readme is very outdated and will be updated in the next few days!
-
----
-
 A Visual Effects pipeline to manage jobs, shots and software assignment, with a "simple asset manager" called SAM.
 
-It comes with wrappers for the most common 3D and 2D softwares and renderers in the VFX market, with integrated version control, user folder management, proper file permissions setting, etc.
+To run it, one first need to build it!
 
-Its extensively integrated with CortexVFX and Gaffer, setting up the environment correctly to run ops, gaffer apps, etc.
-
-SAM (the "simple asset manager") uses CortexVFX and Gaffer for it's UI, and its capable of publish CortexVFX assets, as well as Alembic, Maya, Nuke, Texture, Image Sequence, etc; all versioned and properly tracked.
-
-SAM is also integrated with pipeVFX's renderfarm frontend, so publishing can trigger renderfarm actions. For example, when publishing Maya render assets, SAM sends a Maya scene to the farm, and publishes back the rendered frames into the render asset.
-
-If you want to give it a try, simply fork and clone pipeVFX and run in a bash shell:
+To build it, after cloning this depot, just run:
 
 ```
-#!bash
-
-
-   . pipeline/tools/init/bash
-
+    make.sh
 ```
 
-after that, your shell will be running inside pipeVFX!
+This will build all libraries needed (multiple versions of the libraries, actually), to support multiple versions of VFX softwares, like Maya, Houdini, Nuke, etc.
 
+It will also build CortexVFX and Gaffer, with different versions for each of the VFX Softwares you have instaled in apps/linux/x86_64/. (Did I mention the thirdy-party softwares go in apps/linux/x86_64/ ?)
+
+So, after a suscessfull build, you can run PipeVFX by running:
+
+```
+    make.sh -s
+```
+
+After running that command, you are inside CentOS 7, properly configured and running inside PipeVFX.
+
+You can see the current software versions by typing `version` and the current versions of libraries by typing `version -l`.
+
+You can create a new job using `opa mkjob`!
+
+And then, you can start working on the job, by typing `go <job number.jobname> shot <shot name>` or `go <job number.jobname> asset <asset name>` to work on something that will be used by all shots.
+
+After that, if you have maya installed in apps/linux, just type `maya`, and it will open Maya. And you'll see it will load cortexVFX in maya, and will show the S.A.M. window docked inside maya!
+
+Or you can type `gaffer` to launch gaffer!
+
+To edit a job, run `browser`.
