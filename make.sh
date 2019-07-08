@@ -25,7 +25,12 @@ if [ "$HELP" != "" ] ; then
     echo -e "\t-s   : run a interactive shell in the docker build container"
     echo ''
 else
-    docker build $CD/docker/ -t hradec/pipevfx_centos_base:centos7
+    docker build $CD/docker/ \
+        -t hradec/pipevfx_centos_base:centos7 \
+        --pull \
+        --compress \
+        --rm \
+
     if [ $? -ne 0 ] ; then
         echo ERROR!!
     elif [ "$SHELL" == "0" ] ; then
