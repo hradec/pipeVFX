@@ -87,9 +87,9 @@ if canBuildCortexNow:
             'alembic',
             targetSuffix = "maya%sprman%s" % (pipe.version.get('maya'),pipe.version.get('prman')),
             download=[(
-            #     'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
-            #     'alembic-1.6.1.tar.gz',
-            #     '1.6.1',
+            #     'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
+            #     'alembic-1.7.11.tar.gz',
+            #     '1.7.11',
             #     'e1f9f2cbe1899d3d55b58708b9307482',
             #     {ilmbase: "2.2.0", openexr: "2.2.0"},
             # ),(
@@ -183,10 +183,10 @@ if canBuildCortexNow:
     boostVersion = "1.51.0"
     download = [
         [
-            'https://github.com/ImageEngine/cortex/archive/10.0.0-a25.tar.gz',
-            'cortex-10.0.0-a25.tar.gz',
-            '10.0.0.a25',
-            '154613da4c7620a756c80f6082f1191a',
+            'https://github.com/ImageEngine/cortex/archive/10.0.0-a57.tar.gz',
+            'cortex-10.0.0-a57.tar.gz',
+            '10.0.0.a57',
+            '358ac361c1311114f86bc77f22ce0e0e',
             {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
         # ],[
         #     'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
@@ -301,7 +301,7 @@ if canBuildCortexNow:
                 for v in app[ self.versions ]:
                     # we use this to apply patches created when developing cortex
                     devPatch = []
-                    print app[ self.download ]
+                    # print app[ self.download ]
                     patchFile = os.environ['HOME']+'/dev/cortex.git/patch.$(basename $CORTEX_TARGET_FOLDER)'
                     if os.path.exists( patchFile ):
                         devPatch = [ ''.join(open(patchFile).readlines()) ]
@@ -334,25 +334,25 @@ if canBuildCortexNow:
                     'https://github.com/GafferHQ/gaffer/archive/0.30.0.0.tar.gz',
                     'gaffer-0.30.0.0.tar.gz',
                     '0.30.0.0',
-                    'c02822b86f17de8af08aaabf7e61e1a2',
+                    'af503fe9f014864ce0230e5da33ca446',
                     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
                 ],[
                     'https://github.com/GafferHQ/gaffer/archive/0.31.0.0.tar.gz',
                     'gaffer-0.31.0.0.tar.gz',
                     '0.31.0.0',
-                    'f2d0628faada546e8859b8e7882c3f94',
+                    '4f078feb478a186726ba9ce0de905845',
                     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
                 ],[
                     'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
                     'gaffer-0.32.0.0.tar.gz',
                     '0.32.0.0',
-                    '7e2e8fa206e33009d5a27dea65c75cc1',
+                    '2ae5c942f79dff458abda6bfb4c081f2',
                     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
                 ],[
-                    'https://github.com/GafferHQ/gaffer/archive/0.33.2.0.tar.gz',
-                    'gaffer-0.33.2.0.tar.gz',
-                    '0.33.2.0',
-                    '40302a9180ba09a915d99fbea650852e',
+                    'https://github.com/GafferHQ/gaffer/archive/0.53.6.3.tar.gz',
+                    'gaffer-0.53.6.3.tar.gz',
+                    '0.53.6.3',
+                    'dbbfd30eb280d7241969511a095a0c8f',
                     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
                 ]
 
@@ -377,38 +377,40 @@ if canBuildCortexNow:
 
 
     # build openvdb for each version of maya, so we get the plugins!
-    openvdb = []
-    for n in range(2):
-        pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
+    # openvdb = []
+    # for n in range(2):
+    #     pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
+    #
+    #     openvdb.append( build.openvdb(
+    #         ARGUMENTS,
+    #         'openvdb',
+    #         targetSuffix = "maya%s" % (pipe.version.get('maya')),
+    #         download=[(
+    #             'https://github.com/dreamworksanimation/openvdb/archive/v4.0.0.tar.gz',
+    #             'openvdb-4.0.0.tar.gz',
+    #             '4.0.0',
+    #             'c56d8a1a460f1d3327f2568e3934ca6a',
+    #             {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
+    #         ),(
+    #             'https://github.com/dreamworksanimation/openvdb/archive/v3.2.0.tar.gz',
+    #             'openvdb-3.2.0.tar.gz',
+    #             '3.2.0',
+    #             '54068805fb2ebedd3eeee44d7ecd56a2',
+    #             {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
+    #         )],
+    #         depend=[ pkgs.hdf5, pkgs.boost, pkgs.glfw, pkgs.log4cplus, pkgs.numpy, pkgs.python ],
+    #         environ = {
+    #             'MAYA_VERSION' : pipe.version.get('maya'),
+    #             'MAYA_ROOT' : pipe.apps.maya().path(),
+    #         },
+    #     ))
+    #
+    # pkgs.openvdb = openvdb[-1]
+    
 
-        openvdb.append( build.openvdb(
-            ARGUMENTS,
-            'openvdb',
-            targetSuffix = "maya%s" % (pipe.version.get('maya')),
-            download=[(
-                'https://github.com/dreamworksanimation/openvdb/archive/v4.0.0.tar.gz',
-                'openvdb-4.0.0.tar.gz',
-                '4.0.0',
-                'c56d8a1a460f1d3327f2568e3934ca6a',
-                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
-            ),(
-                'https://github.com/dreamworksanimation/openvdb/archive/v3.2.0.tar.gz',
-                'openvdb-3.2.0.tar.gz',
-                '3.2.0',
-                '54068805fb2ebedd3eeee44d7ecd56a2',
-                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
-            )],
-            depend=[ pkgs.hdf5, pkgs.boost, pkgs.glfw, pkgs.log4cplus, pkgs.numpy, pkgs.python ],
-            environ = {
-                'MAYA_VERSION' : pipe.version.get('maya'),
-                'MAYA_ROOT' : pipe.apps.maya().path(),
-            },
-        ))
-
-    pkgs.openvdb = openvdb[-1]
-
-
-
+    # https://github.com/wdas/ptex/archive/v2.3.2.tar.gz
+    # https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz
+    # https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz
 
 
 

@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM centos:centos7.6.1810
 
 RUN yum update -y && yum install -y \
     nano \
@@ -49,7 +49,18 @@ RUN ln -s /lib64/libbz2.so.1 /lib64/libbz2.so.1.0 ; \
     ln -s /usr/bin/ar /usr/sbin/ar
 
 RUN fc-cache
+RUN yum -y install source-highlight
+RUN yum -y install ncurses ncurses-devel ncurses-static
+RUN yum -y install sqlite-devel libdb-devel
+RUN yum -y install gdbm-devel tkinter
+RUN yum -y install libcurl-devel
+RUN yum -y install mesa-libGLU-devel
+RUN yum -y install dbus-devel dbus-glib-devel
+RUN yum -y install cmake
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
+
+#_tkinter           bsddb185           dl
+#imageop            sunaudiodev
 
 RUN ln -s /usr/bin/ranlib /usr/sbin/ranlib
