@@ -93,7 +93,7 @@ class gccBuild(configure):
                 # Do not run fixincludes
                 "sed -i -e 's@\./fixinc\.sh@-c true@' 'gcc/Makefile.in'",
                 # fix build with GCC 6
-                "curl -s 'https://aur.archlinux.org/cgit/aur.git/plain/gcc-4.9-fix-build-with-gcc-6.patch?h=gcc48' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
+                "curl -L -s 'https://aur.archlinux.org/cgit/aur.git/plain/gcc-4.9-fix-build-with-gcc-6.patch?h=gcc48' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
                 # Arch Linux installs x86_64 libraries /lib
                 "sed -i -e '/m64=/s/lib64/lib/' 'gcc/config/i386/t-linux64'",
                 # hack! - some configure tests for header files using "$CPP $CPPFLAGS"
@@ -191,8 +191,9 @@ class openssl(configure):
     ]
     def installer(self, target, source, env): # noqa
         targetFolder = os.path.dirname(str(target[0]))
-        ret = os.popen("ln -s libssl.so %s/lib/libssl.so.10" % targetFolder).readlines()
-        ret += os.popen("ln -s libcrypto.so %s/lib/libcrypto.so.10" % targetFolder).readlines()
+        ret = ''
+        # ret = os.popen("ln -s libssl.so %s/lib/libssl.so.10" % targetFolder).readlines()
+        # ret += os.popen("ln -s libcrypto.so %s/lib/libcrypto.so.10" % targetFolder).readlines()
         return ret
 
 
@@ -218,7 +219,7 @@ class boost(configure):
         # generic build command for versions 1.58 and up
         cmd = [
             './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-            './b2 -j $DCORES variant=release cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            './b2 -j $DCORES variant=release cxxflags="-fPIC -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
         ]
         # if version is below 1.58, use this build commands
         if self.versionMajor < 1.58 and  self.versionMajor > 1.55 :
@@ -232,23 +233,23 @@ class boost(configure):
 
         if self.versionMajor == 1.58:
             cmd = [
-                "curl -s 'http://www.boost.org/patches/1_58_0/0001-Fix-exec_file-for-Python-3-3.4.patch'            | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
-                "curl -s 'http://www.boost.org/patches/1_58_0/0002-Fix-a-regression-with-non-constexpr-types.patch' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
+                "curl -L -s 'http://www.boost.org/patches/1_58_0/0001-Fix-exec_file-for-Python-3-3.4.patch'            | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
+                "curl -L -s 'http://www.boost.org/patches/1_58_0/0002-Fix-a-regression-with-non-constexpr-types.patch' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
             ] + cmd
 
         if self.versionMajor == 1.55:
             cmd = [
-                "curl -s 'http://www.boost.org/patches/1_55_0/001-log_fix_dump_avx2.patch' | sed 's/libs/.\/libs/g'| patch -p1",
+                "curl -L -s 'http://www.boost.org/patches/1_55_0/001-log_fix_dump_avx2.patch' | sed 's/libs/.\/libs/g'| patch -p1",
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
                 './b2 -j $DCORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if self.versionMajor == 1.54:
             cmd = [
-                "curl -s 'http://www.boost.org/patches/1_54_0/001-coroutine.patch' | sed 's/1_54_0/./g' | patch -p1",
-                "curl -s 'http://www.boost.org/patches/1_54_0/002-date-time.patch' | sed 's/1_54_0/./g' | patch -p1",
-                "curl -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
-                "curl -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
+                "curl -L -s 'http://www.boost.org/patches/1_54_0/001-coroutine.patch' | sed 's/1_54_0/./g' | patch -p1",
+                "curl -L -s 'http://www.boost.org/patches/1_54_0/002-date-time.patch' | sed 's/1_54_0/./g' | patch -p1",
+                "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
+                "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
                 './b2 -j $DCORES  --without-log  variant=release cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
@@ -301,9 +302,12 @@ class python(configure):
     ]
     def fixCMD(self, cmd):
         cmd = configure.fixCMD(self,cmd)
+        if self.kargs.has_key('easy_install'):
+            for each in self.kargs['easy_install']:
+                cmd += '&& $TARGET_FOLDER/bin/easy_install %s' % each
         if self.kargs.has_key('pip'):
             for each in self.kargs['pip']:
-                cmd += '&& $TARGET_FOLDER/bin/easy_install %s' % each
+                cmd += '&& $TARGET_FOLDER/bin/pip install %s' % each
         return cmd
 
 
@@ -511,7 +515,7 @@ class cortex(configure):
 
 
 class gaffer(cortex):
-    ''' a make class to exclusively build openssl package
+    ''' a make class to exclusively build gaffer package
     we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
     src='SConstruct'
     environ = {
