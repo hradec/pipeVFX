@@ -985,7 +985,8 @@ class generic:
         # error during build!!
         else:
             print  '-'*tcols
-            os.system( 'cat %s.err | source-highlight -f esc -s errors' % lastlog )
+            if not DEBUG():
+                os.system( 'cat %s.err | source-highlight -f esc -s errors' % lastlog )
             #for each in open("%s.err" % lastlog).readlines() :
             #    print '::\t%s' % each.strip()
             print ret
@@ -1103,9 +1104,9 @@ class generic:
                 if self.__check_target_log__( self.__lastlog(__pkgInstalled__[s],python) ):
                     print ": uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], self.__lastlog(__pkgInstalled__[s])
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
-                    cmd = "mkdir %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
+                    cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                     if '.zip' in s:
-                        cmd = "mkdir %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
+                        cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
                         print cmd
                     lines = os.popen(cmd).readlines()
                     cmd =  "mv %s/%s %s && rm -rf %s 2>&1" % (tmp, os.path.basename(s.replace('.tar.gz','').replace('.zip','')), os.path.dirname(t), tmp)
