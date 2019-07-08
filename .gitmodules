@@ -1,5 +1,7 @@
 [submodule "pipeline/tools/openscad/MCAD"]
+	path = pipeline/tools/openscad/MCAD
 	url = https://github.com/D1plo1d/MCAD
+	branch = master
 [submodule "pipeline/tools/licenses"]
 	path = pipeline/tools/licenses
 	url = git@github.com:hradec/pipevfx-atomo-licenses.git
