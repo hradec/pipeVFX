@@ -270,6 +270,7 @@ class all: # noqa
             ],
         )
         self.readline = readline
+        build.allDepend.append(readline)
 
         openssl = build.openssl(
             ARGUMENTS,
@@ -287,43 +288,46 @@ class all: # noqa
             )],
         )
         self.openssl = openssl
+        build.allDepend.append(openssl)
 
         python = build.python(
             ARGUMENTS,
             'python',
             download=[(
-                    'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
-                    'Python-2.6.9.tar.gz',
-                    '2.6.9',
-                    'bddbd64bf6f5344fc55bbe49a72fe4f3',
-                    { readline : '7.0.0', openssl : '1.0.2h' },
+                    # 'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
+                    # 'Python-2.6.9.tar.gz',
+                    # '2.6.9',
+                    # 'bddbd64bf6f5344fc55bbe49a72fe4f3',
+                    # { readline : '7.0.0', openssl : '1.0.2h' },
                 # ),(
                 #     'http://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
                 #     'Python-2.7.12.tar.gz',
                 #     '2.7.12',
                 #     '88d61f82e3616a4be952828b3694109d',
                 #     { readline : '7.0.0', openssl : '1.0.2s' },
-                ),(
+                # ),(
                     'http://www.python.org/ftp/python/2.7.16/Python-2.7.16.tgz',
                     'Python-2.7.16.tar.gz',
                     '2.7.16',
                     'f1a2ace631068444831d01485466ece0',
                     { readline : '7.0.0', openssl : '1.0.2s' },
-                ),(
-                    'https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz',
-                    'Python-3.7.3.tar.gz',
-                    '3.7.3',
-                    '2ee10f25e3d1b14215d56c3882486fcf',
-                    { readline : '7.0.0', openssl : '1.0.2s' },
+                # ),(
+                #     'https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz',
+                #     'Python-3.7.3.tar.gz',
+                #     '3.7.3',
+                #     '2ee10f25e3d1b14215d56c3882486fcf',
+                #     { readline : '7.0.0', openssl : '1.0.2s' },
             )],
+            # this fixes https not finding certificate in easy_install
             environ = {"PYTHONHTTPSVERIFY" : "0"},
-            depend = [readline,bzip2],
+            depend = [readline,bzip2,openssl],
             pip = [
                 'epydoc',
                 'PyOpenGL',
                 'PyOpenGL-accelerate',
                 'cython',
                 'subprocess32',
+                'numpy',
             ]
         )
         self.python = python
@@ -346,6 +350,7 @@ class all: # noqa
             )],
         )
         self.tbb = tbb
+        build.allDepend.append(tbb)
 
         cmake = build.configure(
             ARGUMENTS,
@@ -369,10 +374,10 @@ class all: # noqa
                     ],
                 },
             },
-            # depend = [gcc],
+            depend=[gcc, openssl],
         )
-        # build.allDepend.append(cmake)
         self.cmake = cmake
+        build.allDepend.append(cmake)
 
         glew = build.glew(
             ARGUMENTS,
@@ -539,35 +544,38 @@ class all: # noqa
                 'fe69a2613e824463e74f10913708c88a'
             )],
             baseLibs=[python],
+            depend=[gcc, python, openssl],
         )
         self.dbus = dbus
+        build.allDepend.append(dbus)
 
-#        cython = build.pythonSetup(
-#            ARGUMENTS,
-#            'cython',
-#            download=[(
-#                'https://github.com/cython/cython/archive/0.24.1.tar.gz',
-#                'cython-0.24.1.tar.gz',
-#                '0.24.1',
-#                'ba3474937557f210acb45852e9ebb0fc'
-#            )],
-#            baseLibs=[python],
-#        )
-#        self.cython = cython
+        # cython = build.pythonSetup(
+        #    ARGUMENTS,
+        #    'cython',
+        #    download=[(
+        #        'https://github.com/cython/cython/archive/0.24.1.tar.gz',
+        #        'cython-0.24.1.tar.gz',
+        #        '0.24.1',
+        #        'ba3474937557f210acb45852e9ebb0fc'
+        #    )],
+        #    baseLibs=[python],
+        # )
+        # self.cython = cython
 
-        numpy = build.pythonSetup(
-            ARGUMENTS,
-            'numpy',
-            download=[(
-                'https://github.com/numpy/numpy/archive/v1.9.2.tar.gz',
-                'numpy-1.9.2.tar.gz',
-                '1.9.2',
-                '90f7434759088acccfddf5ba61b1f908'
-            )],
-            baseLibs=[python],
-            # depend=[cython],
-        )
-        self.numpy = numpy
+        # numpy = build.pythonSetup(
+        #     ARGUMENTS,
+        #     'numpy',
+        #     download=[(
+        #         'https://github.com/numpy/numpy/archive/v1.9.2.tar.gz',
+        #         'numpy-1.9.2.tar.gz',
+        #         '1.9.2',
+        #         '90f7434759088acccfddf5ba61b1f908'
+        #     )],
+        #     baseLibs=[python],
+        #     depend=[python, openssl],
+        # )
+        # self.numpy = numpy
+        # build.allDepend.append(numpy)
 
         self.scons = build.pythonSetup(
             ARGUMENTS,
@@ -579,6 +587,7 @@ class all: # noqa
                 '9afdfe0cc6d957568cc4386567a7c19e'
             )],
             baseLibs=[python],
+            depend=[python, openssl],
         )
 
         # build all simple python modules here.
@@ -622,13 +631,13 @@ class all: # noqa
                     module,
                     download=simpleModules[module],
                     baseLibs=[python],
-                    depend=[python,numpy],
+                    depend=[python],
                 )
             )
         # add all builders to the global dependency at once here
         # so they can all be built in parallel by scons, since theres no
         # dependency between then.
-        #build.allDepend.extend( simpleModulesBuilders )
+        build.allDepend.extend( simpleModulesBuilders )
         # ============================================================================================================================================
 
 
@@ -653,12 +662,12 @@ class all: # noqa
                 '1.56.0',
                 '8c54705c424513fa2be0042696a3a162',
                 { gcc : '4.1.2' }
-            ),(
-                'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
-                'boost_1_61_0.tar.gz',
-                '1.61.0',
-                '874805ba2e2ee415b1877ef3297bf8ad',
-                { gcc : '4.1.2' }
+            # ),(
+            #     'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
+            #     'boost_1_61_0.tar.gz',
+            #     '1.61.0',
+            #     '874805ba2e2ee415b1877ef3297bf8ad',
+            #     { gcc : '4.1.2' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
                 'boost_1_55_0.tar.gz',
@@ -667,9 +676,11 @@ class all: # noqa
                 { gcc : '4.1.2' }
             )],
             baseLibs=[python],
-            # depend=[gcc],
+            depend=[python, openssl, bzip2],
         )
         self.boost = boost
+        build.allDepend.append(boost)
+
 
         ilmbase = build.configure(
             ARGUMENTS,
@@ -693,7 +704,7 @@ class all: # noqa
                 'b540db502c5fa42078249f43d18a4652',
                 { gcc : '4.1.2' }
             )],
-            depend=[gcc],
+            depend=[gcc, python, openssl],
             environ={
                 'LDFLAGS' : "-Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
             },
@@ -704,6 +715,7 @@ class all: # noqa
             ],
         )
         self.ilmbase = ilmbase
+        build.allDepend.append(ilmbase)
 
         openexr = build.configure(
             ARGUMENTS,
@@ -728,7 +740,7 @@ class all: # noqa
                 { gcc : '4.1.2' }
             )],
             sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
-            depend=[ilmbase,gcc],
+            depend=[ilmbase, gcc, python, openssl],
             cmd = [
                 './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
                 'make -j $DCORES',
@@ -736,6 +748,7 @@ class all: # noqa
             ],
         )
         self.openexr = openexr
+        build.allDepend.append(openexr)
 
         # pyilmbase = build.configure(
         #     ARGUMENTS,
@@ -785,7 +798,7 @@ class all: # noqa
             )],
         )
         self.yasm = yasm
-        #build.allDepend.append(yasm)
+        build.allDepend.append(yasm)
 
         hdf5 = build.configure(
             ARGUMENTS,
@@ -798,7 +811,7 @@ class all: # noqa
             )],
         )
         self.hdf5 = hdf5
-        # build.allDepend.append(hdf5)
+        build.allDepend.append(hdf5)
 
         ocio = build.cmake(
             ARGUMENTS,
@@ -824,10 +837,11 @@ class all: # noqa
                 { gcc : '4.1.2' }
             )],
             baseLibs = [python],
-            depend   = [yasm,boost,gcc,cmake],
+            depend   = [yasm,boost,gcc,cmake,python],
             flags    = build.cmake.flags+['-DOCIO_BUILD_APPS=0 ']
         )
         self.ocio = ocio
+        build.allDepend.append(ocio)
 
         oiio = build.cmake(
             ARGUMENTS,
@@ -868,11 +882,12 @@ class all: # noqa
             #     'bcef05f5ff7f15ac580d9b3b4b6f690b',
             #     { gcc : '4.1.2' }
             )],
-            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake],
+            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl],
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
             flags = ['-DUSE_PYTHON=0','-DUSE_PTEX=0','-DUSE_OCIO=0']+build.cmake.flags,
         )
         self.oiio = oiio
+        build.allDepend.append(oiio)
 
 
         # use the download action as we only need this package to build llvm!
@@ -927,6 +942,7 @@ class all: # noqa
             ]
         )
         self.llvm = llvm
+        build.allDepend.append(llvm)
 
         flex = build.configure(
             ARGUMENTS,
@@ -939,6 +955,7 @@ class all: # noqa
             )],
         )
         self.flex = flex
+        build.allDepend.append(flex)
 
         bison = build.configure(
             ARGUMENTS,
@@ -951,6 +968,7 @@ class all: # noqa
             )],
         )
         self.bison = bison
+        build.allDepend.append(bison)
 
         osl = build.cmake(
             ARGUMENTS,
@@ -1007,6 +1025,7 @@ class all: # noqa
             ],
         )
         self.osl = osl
+        build.allDepend.append(osl)
         # =============================================================================================================================================
 
 
@@ -1033,9 +1052,9 @@ class all: # noqa
                 'd990ee66bf7ab0c785589776f35ba6ad',
                 { gcc : '4.1.2' }
             # ),(
-            #     'http://download.qt.io/official_releases/qt/5.7/5.7.0/single/qt-everywhere-opensource-src-5.7.0.tar.gz',
-            #     'qt-everywhere-opensource-src-5.7.0.tar.gz',
-            #     '5.7.0',
+            #     'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
+            #     'Maya2018.4.tar.gz',
+            #     '5.6.1',
             #     'd990ee66bf7ab0c785589776f35ba6ad',
             )],
             environ = {'LD' : 'g++'},
@@ -1048,6 +1067,7 @@ class all: # noqa
             depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc],
         )
         self.qt = qt
+        build.allDepend.append(qt)
 
         sip = build.pythonSetup(
             ARGUMENTS,
@@ -1117,6 +1137,7 @@ class all: # noqa
             ],
         )
         self.pyqt = pyqt
+        build.allDepend.append(pyqt)
 
 
         glfw = build.make(
@@ -1138,6 +1159,7 @@ class all: # noqa
             ],
         )
         self.glfw = glfw
+        build.allDepend.append(glfw)
 
         log4cplus = build.configure(
             ARGUMENTS,
@@ -1151,6 +1173,7 @@ class all: # noqa
             depend=[gcc],
         )
         self.log4cplus = log4cplus
+        build.allDepend.append(log4cplus)
 
         # blosc = build.cmake(
         #     ARGUMENTS,
