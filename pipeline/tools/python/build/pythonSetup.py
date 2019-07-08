@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -39,12 +39,13 @@ class pythonSetup(generic):
         mkdir = 'mkdir -p $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/'
         if mkdir.replace(' ','').lower() not in cmd.replace(' ','').lower():
             cmd = "%s && %s" % (mkdir,cmd)
-        return cmd 
+        return cmd
+
     
 #    def action(self, target, source):
 #        self.registerSconsBuilder(self.pythonSetup)
 #        return self.env.pythonSetup( target, source )
-        
+
 
 #    def pythonSetup(self, target, source, env):
 #        dirLevels = '..%s' % os.sep * (len(str(source[0]).split(os.sep))-1)
@@ -52,7 +53,7 @@ class pythonSetup(generic):
 #        pythonVersion = str(target[0]).split('python')[-1].split('.done')[0]
 #        site_packages = os.path.join(dirLevels,installDir,'lib/python$PYTHON_VERSION_MAJOR/site-packages')
 
-        
+
 #        cmd = 'python %s build' % (
 #            env['CMD'],
 #        )
@@ -67,10 +68,8 @@ class pythonSetup(generic):
 #        self.runCMD(cmd,target,source)
 
 #        cmd = 'ppython --python_version %s %s clean 2>&1' % (
-#            pythonVersion, 
+#            pythonVersion,
 #            os.path.basename(source)
 #        )
 #        print 'cleaning up...'
 #        runCMD(cmd,target)
-
-        
