@@ -8,9 +8,9 @@ To run it, one first need to build it!
 
 To build it, after cloning this depot, just run:
 
-    ```
-        make.sh
-    ```
+```
+    make.sh
+```
 
 This will build all libraries needed (multiple versions of the libraries, actually), to support multiple versions of VFX softwares, like Maya, Houdini, Nuke, etc.
 
