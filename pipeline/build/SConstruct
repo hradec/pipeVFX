@@ -87,9 +87,9 @@ if canBuildCortexNow:
             'alembic',
             targetSuffix = "maya%sprman%s" % (pipe.version.get('maya'),pipe.version.get('prman')),
             download=[(
-            #     'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
-            #     'alembic-1.6.1.tar.gz',
-            #     '1.6.1',
+            #     'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
+            #     'alembic-1.7.11.tar.gz',
+            #     '1.7.11',
             #     'e1f9f2cbe1899d3d55b58708b9307482',
             #     {ilmbase: "2.2.0", openexr: "2.2.0"},
             # ),(
@@ -406,9 +406,11 @@ if canBuildCortexNow:
     #     ))
     #
     # pkgs.openvdb = openvdb[-1]
+    
 
-
-
+    # https://github.com/wdas/ptex/archive/v2.3.2.tar.gz
+    # https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz
+    # https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz
 
 
 
