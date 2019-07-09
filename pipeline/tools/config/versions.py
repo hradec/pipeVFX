@@ -18,14 +18,14 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import pipe,os
-
-# default libraries set
-os.environ['GCC_VERSION'] = 'gcc-multi'
+import pipe, os
+from platform import dist
 
 # default farm engine!
 os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 
+# default libraries set
+os.environ['GCC_VERSION'] = 'gcc-multi' if 'centos' not in dist()[0] else 'gcc-'+''.join(os.popen("gcc --version | head -1 | awk '{print $3}'").readlines()).strip().replace('\r','')
 
 # setup apps global versions
 # ===================================================================
@@ -47,13 +47,13 @@ pipe.version.set( unreal    = '4.22.0.opengl' )
 
 # version support dropped
 # ===================================================================
+# maximum versions for maya 2014
 if float(pipe.version.get('maya')) <= 2014:
-    # maximum versions for maya 2014
     pipe.version.set( prman     = '20.11' )
 
-#if float(pipe.version.get('maya')) <= 2018:
-    # maximum versions for maya 2018
-#    pipe.version.set( prman     = '21.5' )
+# maximum versions for maya 2016.5
+if float(pipe.version.get('maya')) <= 2017:
+    pipe.version.set( prman     = '21.5' )
 
 
 # set global library versions
@@ -69,6 +69,7 @@ if 'GCC_VERSION' in os.environ:
     pipe.libs.version.set( tbb      = '4.3.6' )
     pipe.libs.version.set( pyqt     = '4.11.4' )
     pipe.libs.version.set( readline = '99.99.99' )
+# this is for compatibility only with older jobs
 else:
     pipe.version.set( python        = '2.6.8' )
     pipe.libs.version.set( alembic  = '1.1.1' )
@@ -84,6 +85,7 @@ if 'GCC_VERSION' in os.environ:
     pipe.version.set( gaffer      = '0.32' )
     pipe.libs.version.set( gaffer = '0.32' )
     pipe.libs.version.set( cortex = '9.13' )
+# this is for compatibility only with older jobs
 else:
     pipe.version.set( gaffer      = '2.0.0' )
     pipe.libs.version.set( cortex = '9.0.0.git_Oct_10_2014' )

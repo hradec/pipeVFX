@@ -200,14 +200,18 @@ class roots:
         return os.path.abspath( '%s/pipeline/tools/%s' % (root, subpath) )
 
 
-# hardcoded for now!!
-exec( ''.join( [ p for p in open( "%s/config/versions.py" % roots.tools() ).readlines() if 'os.environ[' in p ] ) )
+# we just extract the os.environ lines since, at this point, we need those,
+# but we don't have all the logic initialized yet to run pipe. functions.
+# this means we can't put os.environ inside if statements in the versions.py
+# file for the moment. (maybe in the future, if I find a better way to handle
+# this problem.)
+exec( ''.join( [ p for p in open( "%s/config/versions.py" % roots.tools() ).readlines() if 'os.environ[' in p or 'import' in p ] ) )
 import pipe.admin
 if pipe.admin:
     if pipe.admin.job.current() and pipe.admin.job.shot.current():
         for each in [ pipe.admin.job().path("/tools/config/versions.py"), pipe.admin.job.shot().path("/tools/config/versions.py"), pipe.admin.job.shot.user().path("/tools/config/versions.py") ]:
             if os.path.exists(each):
-                exec( ''.join( [ p for p in open( each ).readlines() if 'os.environ[' in p ] ) )
+                exec( ''.join( [ p for p in open( each ).readlines() if 'os.environ[' in p  or 'import' in p] ) )
 
 def getDistro(check=True):
     if platform == OSX:
