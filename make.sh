@@ -14,7 +14,7 @@ while getopts hdse: option ; do
         s) SHELL=1;;
         e) EXTRA="${OPTARG}";;
     esac
-done
+done 
 
 
 if [ "$HELP" != "" ] ; then

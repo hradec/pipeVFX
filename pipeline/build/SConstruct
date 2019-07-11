@@ -20,9 +20,12 @@
 # =================================================================================
 
 import sys, os, traceback
+import platform
 sys.path.insert( 0, os.path.abspath('../tools/python/') )
-os.environ['GCC_VERSION'] = 'gcc-multi'
-#os.environ['LD_PRELOAD'] ='/atomo/pipeline/libs/linux/x86_64/gcc-multi/mpfr/3.1.4/lib/libmpfr.so.4'
+
+import pipe
+print pipe.__file__
+print os.environ['GCC_VERSION'], pipe.base.getDistro()
 
 # build all pkgs, if not already built!
 import build
@@ -76,11 +79,11 @@ if canBuildCortexNow:
         pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
         pipe.version.set( prman = ppv[0] if len(ppv)<=n else ppv[n] )
 
-        gcc = '4.1.2'
-        if float(pipe.version.get('prman')) >= 21:
-            gcc = '4.8.3'
-        if float(pipe.version.get('maya')) >= 2018:
-            gcc = '4.8.3'
+        # gcc = '4.1.2'
+        # if float(pipe.version.get('prman')) >= 21:
+        #     gcc = '4.8.3'
+        # if float(pipe.version.get('maya')) >= 2018:
+        #     gcc = '4.8.3'
 
         alembic.append( build.alembic(
             ARGUMENTS,
@@ -97,7 +100,7 @@ if canBuildCortexNow:
                 'alembic-1.5.8.tar.gz',
                 '1.5.8',
                 'a70ba5f2e80b47d346d15d797c28731a',
-                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: gcc},
+                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0"},
             )],
             baseLibs=[pkgs.python],
             depend=[pkgs.hdf5,pkgs.python,pkgs.yasm,pkgs.boost],
@@ -123,8 +126,7 @@ if canBuildCortexNow:
                     'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
                     'sip-4.16.7.tar.gz',
                     '4.16.7.maya%s' % version,
-                    '32abc003980599d33ffd789734de4c36',
-                    { pkgs.gcc : '4.1.2' }
+                    '32abc003980599d33ffd789734de4c36'
                 )],
                 src = 'configure.py',
                 apps = [ (pipe.apps.maya, pipe.version.get('maya')) ],
@@ -148,10 +150,10 @@ if canBuildCortexNow:
                     'PyQt-x11-gpl-4.11.4.tar.gz',
                     '4.11.4.maya%s' % version,
                     '2fe8265b2ae2fc593241c2c84d09d481',
-                    {sip[-1]: '4.16.7.maya2016.5', pkgs.gcc : '4.1.2'},
+                    {sip[-1]: '4.16.7.maya2016.5'},
                 )],
                 # baseLibs=[pkgs.python],
-                depend=[sip[-1], pkgs.gcc],
+                depend=[sip[-1]],
                 apps = [ (pipe.apps.maya, pipe.version.get('maya')) ],
                 src = 'configure-ng.py',
                 cmd = [
@@ -187,13 +189,13 @@ if canBuildCortexNow:
             'cortex-10.0.0-a57.tar.gz',
             '10.0.0.a57',
             '358ac361c1311114f86bc77f22ce0e0e',
-            {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+            {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8"}
         # ],[
         #     'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
         #     'cortex-9.18.0.tar.gz',
         #     '9.18.0',
         #     '88793f1f723583b7b40fa69d4fbf0352',
-        #     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+        #     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8"}
         ]
     ]
 
@@ -292,7 +294,7 @@ if canBuildCortexNow:
                 ('prman',   pv[:2], pkgs.python, 'installRI',   noAlembic),
                 ('maya',    mv    , None,        'installMaya', noAlembic),
                 ('nuke',    nv[:2], None,        'installNuke', noAlembic),
-                ('houdini', hv[:2], None,        'installHoudini installMantra', pkg(pkg(pkg(noAlembic, pkgs.gcc, '4.8.3'), pkgs.boost, '1.55.0'), pkgs.tbb, None) ),
+                ('houdini', hv[:2], None,        'installHoudini installMantra', pkg(pkg(pkg(noAlembic, None), pkgs.boost, '1.55.0'), pkgs.tbb, None) ),
             ]
 
 
@@ -335,25 +337,25 @@ if canBuildCortexNow:
                     'gaffer-0.30.0.0.tar.gz',
                     '0.30.0.0',
                     'af503fe9f014864ce0230e5da33ca446',
-                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8"}
                 ],[
                     'https://github.com/GafferHQ/gaffer/archive/0.31.0.0.tar.gz',
                     'gaffer-0.31.0.0.tar.gz',
                     '0.31.0.0',
                     '4f078feb478a186726ba9ce0de905845',
-                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8"}
                 ],[
                     'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
                     'gaffer-0.32.0.0.tar.gz',
                     '0.32.0.0',
                     '2ae5c942f79dff458abda6bfb4c081f2',
-                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8"}
                 ],[
                     'https://github.com/GafferHQ/gaffer/archive/0.53.6.3.tar.gz',
                     'gaffer-0.53.6.3.tar.gz',
                     '0.53.6.3',
                     'dbbfd30eb280d7241969511a095a0c8f',
-                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8"}
                 ]
 
             ],
@@ -406,7 +408,7 @@ if canBuildCortexNow:
     #     ))
     #
     # pkgs.openvdb = openvdb[-1]
-    
+
 
     # https://github.com/wdas/ptex/archive/v2.3.2.tar.gz
     # https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz

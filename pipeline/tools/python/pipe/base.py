@@ -211,7 +211,7 @@ if pipe.admin:
     if pipe.admin.job.current() and pipe.admin.job.shot.current():
         for each in [ pipe.admin.job().path("/tools/config/versions.py"), pipe.admin.job.shot().path("/tools/config/versions.py"), pipe.admin.job.shot.user().path("/tools/config/versions.py") ]:
             if os.path.exists(each):
-                exec( ''.join( [ p for p in open( each ).readlines() if 'os.environ[' in p  or 'import' in p] ) )
+                exec( ''.join( [ p for p in open( each ).readlines() if 'os.environ[' in p  or 'import' in p ] ) )
 
 def getDistro(check=True):
     if platform == OSX:

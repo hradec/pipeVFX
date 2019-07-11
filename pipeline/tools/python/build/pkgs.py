@@ -25,33 +25,6 @@ import SCons, os
 SCons.Script.SetOption('warn', 'no-all')
 #SCons.Script.SetOption('num_jobs', 8)
 
-#zlib = build.configure(
-#        ARGUMENTS,
-#        'zlib',
-#        download=[
-#          (
-#            'http://zlib.net/zlib-1.2.8.tar.gz',
-#            'zlib-1.2.8.tar.gz',
-#            '1.2.8',
-#            '44d667c142d7cda120332623eab69f40'
-#          ),
-#        ],
-#)
-#build.allDepend.append(zlib)
-#curl = build.configure(
-#        ARGUMENTS,
-#        'curl',
-#        download=[
-#          (
-#            'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
-#            'curl-7.42.1.tar.gz',
-#            '7.42.1',
-#            '8df5874c4a67ad55496bf3af548d99a2'
-#          ),
-#        ],
-#)
-#build.allDepend.append(curl)
-
 def versionSort(versions):
     def method(v):
         v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
@@ -91,114 +64,102 @@ class all: # noqa
                ],
         )
         build.allDepend.append(zlib)
-        # curl = build.configure(
-        #        ARGUMENTS,
-        #        'curl',
-        #        download=[
-        #          (
-        #            'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
-        #            'curl-7.42.1.tar.gz',
-        #            '7.42.1',
-        #            '8df5874c4a67ad55496bf3af548d99a2'
-        #          ),
-        #        ],
-        # )
-        # build.allDepend.append(curl)
+
+        openssl = build.openssl(
+            ARGUMENTS,
+            'openssl',
+            download=[(
+                'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2h.tar.gz',
+                'openssl-OpenSSL_1_0_2h.tar.gz',
+                '1.0.2h',
+                'bd70ca76ef00c9b65a927883f62998d9'
+            ),(
+                'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2s.tar.gz',
+                'openssl-OpenSSL_1_0_2s.tar.gz',
+                '1.0.2s',
+                '24886418211ec05e3f1c764a489b29c1'
+            )],
+        )
+        self.openssl = openssl
+        build.allDepend.append(openssl)
+
         gmp = build.configure(
                ARGUMENTS,
                'gmp',
-               download=[
-                   # (
-                   #   'https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2',
-                   #   'gmp-6.0.0.tar.gz',
-                   #   '6.0.0',
-                   #   'b7ff2d88cae7f8085bd5006096eed470'
-                   # ),
-                   (
-                     'https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2',
-                     'gmp-6.1.2.tar.gz',
-                     '6.1.2',
-                     '8ddbb26dc3bd4e2302984debba1406a5'
-                   ),
-
-               ],
+               download=[(
+                 'https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2',
+                 'gmp-6.1.2.tar.gz',
+                 '6.1.2',
+                 '8ddbb26dc3bd4e2302984debba1406a5'
+               )],
         )
         build.allDepend.append(gmp)
+
         mpfr = build.configure(
-               ARGUMENTS,
-               'mpfr',
-               download=[
-                   # (
-                   #   'https://gforge.inria.fr/frs/download.php/file/35627/mpfr-3.1.4.tar.gz',
-                   #   'mpfr-3.1.4.tar.gz',
-                   #   '3.1.4',
-                   #   '482ab3c120ffc959f631b4ba9ec59a46'
-                   # ),
-                   (
-                     'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
-                     'mpfr-3.1.6.tar.gz',
-                     '3.1.6',
-                     '95dcfd8629937996f826667b9e24f6ff'
-                   ),
-               ],
-               depend = [ gmp ],
+                ARGUMENTS,
+                'mpfr',
+                download=[(
+                    'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
+                    'mpfr-3.1.6.tar.gz',
+                    '3.1.6',
+                    '95dcfd8629937996f826667b9e24f6ff'
+                )],
+                depend = [ gmp ],
         )
         build.allDepend.append(mpfr)
+
         mpc = build.configure(
-               ARGUMENTS,
-               'mpc',
-               download=[
-                 (
-                   'ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
-                   'mpc-1.0.3.tar.gz',
-                   '1.0.3',
-                   'd6a1d5f8ddea3abd2cc3e98f58352d26'
-                 ),
-               ],
+                ARGUMENTS,
+                'mpc',
+                download=[(
+                    'ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
+                    'mpc-1.0.3.tar.gz',
+                    '1.0.3',
+                    'd6a1d5f8ddea3abd2cc3e98f58352d26'
+                )],
         )
         build.allDepend.append(mpc)
+
         mpfr = build.configure(
-               ARGUMENTS,
-               'mpfr',
-               download=[
-                 (
+                ARGUMENTS,
+                'mpfr',
+                download=[(
                    'https://gforge.inria.fr/frs/download.php/file/35627/mpfr-3.1.4.tar.gz',
                    'mpfr-3.1.4.tar.gz',
                    '3.1.4',
                    '482ab3c120ffc959f631b4ba9ec59a46'
-                 ),
-               ],
-        )
-        gcc = build.gccBuild(
-                ARGUMENTS,
-                'gcc',
-                download=[
-                (
-                #    'http://gcc.parentingamerica.com/releases/gcc-5.4.0/gcc-5.4.0.tar.gz',
-                #    'gcc-5.4.0.tar.gz',
-                #    '5.4.0',
-                #    'f2b4d5a580061711e68f0f506e402e1c'
-                # ),(
-                #    'http://gcc.parentingamerica.com/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
-                #    'gcc-4.8.5.tar.gz',
-                #    '4.8.5',
-                #    'bfe56e74d31d25009c8fb55fd3ca7e01'
-                # ),(
-                   # 'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
-                   # 'gcc-4.8.3.tar.gz',
-                   # '4.8.3',
-                   # 'e2c60f5ef918be2db08df96c7d97d0c4'
-                # ),(
-                   'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
-                   'gcc-4.1.2.tar.gz',
-                   '4.1.2',
-                   'dd2a7f4dcd33808d344949fcec87aa86'
                 )],
-                depend = [ mpfr, mpc, gmp ],
         )
-        self.gcc = gcc
+
+        # gcc = build.gccBuild(
+        #         ARGUMENTS,
+        #         'gcc',
+        #         download=[(
+        #         #    'http://gcc.parentingamerica.com/releases/gcc-5.4.0/gcc-5.4.0.tar.gz',
+        #         #    'gcc-5.4.0.tar.gz',
+        #         #    '5.4.0',
+        #         #    'f2b4d5a580061711e68f0f506e402e1c'
+        #         # ),(
+        #         #    'http://gcc.parentingamerica.com/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
+        #         #    'gcc-4.8.5.tar.gz',
+        #         #    '4.8.5',
+        #         #    'bfe56e74d31d25009c8fb55fd3ca7e01'
+        #         # ),(
+        #         #    'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
+        #         #    'gcc-4.8.3.tar.gz',
+        #         #    '4.8.3',
+        #         #    'e2c60f5ef918be2db08df96c7d97d0c4'
+        #         # ),(
+        #            'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+        #            'gcc-4.1.2.tar.gz',
+        #            '4.1.2',
+        #            'dd2a7f4dcd33808d344949fcec87aa86'
+        #         )],
+        #         depend = [ mpfr, mpc, gmp ],
+        # )
+        # self.gcc = gcc
         # lets use our own latest GCC to build everything!!!
-        build.allDepend.append(gcc)
+        # build.allDepend.append(gcc)
 
         icu = build.configure(
             ARGUMENTS,
@@ -208,7 +169,6 @@ class all: # noqa
                 'icu.tar.gz',
                 '57.1',
                 '976734806026a4ef8bdd17937c8898b9',
-                { gcc : '4.1.2' }
             )],
             src = 'icu4c.css',
             cmd = ['cd ./source/'] + build.configure.cmd,
@@ -272,23 +232,20 @@ class all: # noqa
         self.readline = readline
         build.allDepend.append(readline)
 
-        openssl = build.openssl(
-            ARGUMENTS,
-            'openssl',
-            download=[(
-                'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2h.tar.gz',
-                'openssl-OpenSSL_1_0_2h.tar.gz',
-                '1.0.2h',
-                'bd70ca76ef00c9b65a927883f62998d9'
-            ),(
-                'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2s.tar.gz',
-                'openssl-OpenSSL_1_0_2s.tar.gz',
-                '1.0.2s',
-                '24886418211ec05e3f1c764a489b29c1'
-            )],
+        curl = build.configure(
+               ARGUMENTS,
+               'curl',
+               download=[
+                 (
+                   'http://curl.haxx.se/download/curl-7.42.1.tar.gz',
+                   'curl-7.42.1.tar.gz',
+                   '7.42.1',
+                   '8df5874c4a67ad55496bf3af548d99a2'
+                 ),
+               ],
         )
-        self.openssl = openssl
-        build.allDepend.append(openssl)
+        self.curl = curl
+        build.allDepend.append(curl)
 
         python = build.python(
             ARGUMENTS,
@@ -341,7 +298,6 @@ class all: # noqa
                 'tbb44_20160526oss.tar.gz',
                 '4.4.r20160526oss',
                 '6309541504a819dabe352130f27e57d5',
-                # { gcc : '4.1.2' }
             ),(
                 'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb43_20150611oss_src.tgz',
                 'tbb43_20150611oss.tar.gz',
@@ -374,7 +330,7 @@ class all: # noqa
                     ],
                 },
             },
-            depend=[gcc, openssl],
+            depend=[openssl],
         )
         self.cmake = cmake
         build.allDepend.append(cmake)
@@ -464,7 +420,6 @@ class all: # noqa
                 '0.17.2',
                 '7de042bcffb58864fd93d5209620e08d'
             )],
-            depend=[gcc],
             cmd = [
                 './mkdist.sh',
                 './configure --enable-shared --prefix=$TARGET_FOLDER',
@@ -477,6 +432,33 @@ class all: # noqa
         build.allDepend.append(libraw)
         self.libraw = libraw
 
+        tiff_versions = [(
+            'http://download.osgeo.org/libtiff/tiff-3.8.2.tar.gz',
+            'tiff-3.8.2.tar.gz',
+            '3.8.2',
+            'fbb6f446ea4ed18955e2714934e5b698'
+        ),(
+            'http://download.osgeo.org/libtiff/tiff-4.0.3.tar.gz',
+            'tiff-4.0.3.tar.gz',
+            '4.0.3',
+            '051c1068e6a0627f461948c365290410',
+        ),(
+            'http://download.osgeo.org/libtiff/tiff-4.0.6.tar.gz',
+            'tiff-4.0.6.tar.gz',
+            '4.0.6',
+            'd1d2e940dea0b5ad435f21f03d96dd72',
+        )]
+        # fix libtiff download link, if package is too old!
+        tiff_site_old_list = ''.join(os.popen("curl 'http://download.osgeo.org/libtiff/old/'").readlines())
+        for n in range(0, len(tiff_versions)):
+            if tiff_versions[n][1] in tiff_site_old_list:
+                tiff_versions[n] = (
+                    tiff_versions[n][0].replace('libtiff', 'libtiff/old'),
+                    tiff_versions[n][1],
+                    tiff_versions[n][2],
+                    tiff_versions[n][3]
+                )
+
         tiff = build.configure(
             ARGUMENTS,
             'tiff',
@@ -486,7 +468,7 @@ class all: # noqa
                 '3.8.2',
                 'fbb6f446ea4ed18955e2714934e5b698'
             ),(
-                'http://download.osgeo.org/libtiff/tiff-4.0.3.tar.gz',
+                'http://download.osgeo.org/libtiff/old/tiff-4.0.3.tar.gz',
                 'tiff-4.0.3.tar.gz',
                 '4.0.3',
                 '051c1068e6a0627f461948c365290410',
@@ -544,7 +526,7 @@ class all: # noqa
                 'fe69a2613e824463e74f10913708c88a'
             )],
             baseLibs=[python],
-            depend=[gcc, python, openssl],
+            depend=[python, openssl],
         )
         self.dbus = dbus
         build.allDepend.append(dbus)
@@ -649,31 +631,26 @@ class all: # noqa
                 'boost_1_51_0.tar.gz',
                 '1.51.0',
                 '6a1f32d902203ac70fbec78af95b3cf8',
-                { gcc : '4.1.2' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.gz',
                 'boost_1_54_0.tar.gz',
                 '1.54.0',
                 'efbfbff5a85a9330951f243d0a46e4b9',
-                { gcc : '4.1.2' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz',
                 'boost_1_56_0.tar.gz',
                 '1.56.0',
                 '8c54705c424513fa2be0042696a3a162',
-                { gcc : '4.1.2' }
-            # ),(
-            #     'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
-            #     'boost_1_61_0.tar.gz',
-            #     '1.61.0',
-            #     '874805ba2e2ee415b1877ef3297bf8ad',
-            #     { gcc : '4.1.2' }
+            ),(
+                'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
+                'boost_1_61_0.tar.gz',
+                '1.61.0',
+                '874805ba2e2ee415b1877ef3297bf8ad',
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
                 'boost_1_55_0.tar.gz',
                 '1.55.0',
                 '93780777cfbf999a600f62883bd54b17',
-                { gcc : '4.1.2' }
             )],
             baseLibs=[python],
             depend=[python, openssl, bzip2],
@@ -690,21 +667,18 @@ class all: # noqa
                 'ilmbase-2.0.0.tar.gz',
                 '2.0.0',
                 '70f1413840c2a228783d1332b8b168e6',
-                { gcc : '4.1.2' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
                 'ilmbase-2.1.0.tar.gz',
                 '2.1.0',
                 '8ba2f608191ad020e50277d8a3ba0850',
-                { gcc : '4.1.2' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
                 'ilmbase-2.2.0.tar.gz',
                 '2.2.0',
                 'b540db502c5fa42078249f43d18a4652',
-                { gcc : '4.1.2' }
             )],
-            depend=[gcc, python, openssl],
+            depend=[python, openssl],
             environ={
                 'LDFLAGS' : "-Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
             },
@@ -725,22 +699,19 @@ class all: # noqa
                 'openexr-2.0.0.tar.gz',
                 '2.0.0',
                 '0820e1a8665236cb9e728534ebf8df18',
-                { gcc : '4.1.2' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
                 'openexr-2.1.0.tar.gz',
                 '2.1.0',
                 '33735d37d2ee01c6d8fbd0df94fb8b43',
-                { gcc : '4.1.2' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
                 'openexr-2.2.0.tar.gz',
                 '2.2.0',
                 'b64e931c82aa3790329c21418373db4e',
-                { gcc : '4.1.2' }
             )],
             sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
-            depend=[ilmbase, gcc, python, openssl],
+            depend=[ilmbase, python, openssl],
             cmd = [
                 './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
                 'make -j $DCORES',
@@ -770,7 +741,7 @@ class all: # noqa
         #         'e84a6a4462f90b5e14d83d67253d8e5a'
         #     )],
         #     baseLibs=[python],
-        #     depend=[ilmbase,openexr,boost,python,numpy,gcc],
+        #     depend=[ilmbase,openexr,boost,python,numpy],
         #     environ={'DCORES' : 1, 'CORES' : 1},
         #     cmd = [
         #         'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
@@ -804,7 +775,7 @@ class all: # noqa
             ARGUMENTS,
             'hdf5',
             download=[(
-                'https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
+                'https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
                 'hdf5-1.8.17.tar.gz',
                 '1.8.17',
                 '7d572f8f3b798a628b8245af0391a0ca'
@@ -819,26 +790,42 @@ class all: # noqa
             # ocio for some reason doesn't add -fPIC when building the static external libraries,
             # so we have to patch it or build fail with gcc 4.1.2
             # also, we have to remove -fvisibility-inlines-hidden when building with gcc 4.1.2
-            sed = {'0.0.0' : {
-                'ext/tinyxml_2_6_1.patch' : [
-                    ('-fPIC', '-fPIC -DPIC'),
-                    (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
-                ],
-                'ext/yaml-cpp-0.3.0.patch' : [
-                    ('-fPIC', '-fPIC -DPIC'),
-                    (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
-                ],
-            }},
+            # sed = {'0.0.0' : {
+            #     'src/core/CMakeLists.txt' : [
+            #         ('Werror', 'Wno-error -fPIC -DPIC')
+            #     ],
+            #     'src/pyglue/CMakeLists.txt' : [
+            #         ('Werror', 'Wno-error -fPIC -DPIC')
+            #         ],
+            #         'ext/tinyxml_2_6_1.patch' : [
+            #         ('-fPIC', '-fPIC -DPIC'),
+            #         (' -fvisibility-inlines-hidden -fvisibility=hidden', ' -fPIC -DPIC'),
+            #     ],
+            #     'ext/yaml-cpp-0.3.0.patch' : [
+            #         ('-fPIC', '-fPIC -DPIC'),
+            #         (' -fvisibility-inlines-hidden -fvisibility=hidden', ' -fPIC -DPIC'),
+            #     ],
+            # }},
             download = [(
-                'https://github.com/imageworks/OpenColorIO/archive/v1.0.9.tar.gz',
-                'OpenColorIO-1.0.9.tar.gz',
-                '1.0.9',
-                '06d0efe9cc1b32d7b14134779c9d1251',
-                { gcc : '4.1.2' }
+            #     'https://github.com/imageworks/OpenColorIO/archive/v1.0.9.tar.gz',
+            #     'OpenColorIO-1.0.9.tar.gz',
+            #     '1.0.9',
+            #     '06d0efe9cc1b32d7b14134779c9d1251',
+            # ),(
+                'https://github.com/imageworks/OpenColorIO/archive/v1.1.1.tar.gz',
+                'OpenColorIO-1.1.1.tar.gz',
+                '1.1.1',
+                '23d8b9ac81599305539a5a8674b94a3d'
             )],
             baseLibs = [python],
-            depend   = [yasm,boost,gcc,cmake,python],
-            flags    = build.cmake.flags+['-DOCIO_BUILD_APPS=0 ']
+            depend   = [yasm,boost,python],
+            environ  = {"CXXFLAGS" : '$CXXFLAGS -Wno-error'},
+            flags    = build.cmake.flags+[
+                # '-DOCIO_BUILD_APPS=0',
+                # '-DOCIO_INLINES_HIDDEN=0',
+                # '-DCMAKE_CXX_COMPILER=$CXX -fPIC',
+                # '-DGCC_VERSION=4.1',
+            ]
         )
         self.ocio = ocio
         build.allDepend.append(ocio)
@@ -867,22 +854,20 @@ class all: # noqa
                 'https://github.com/OpenImageIO/oiio/archive/Release-1.5.24.tar.gz',
                 'oiio-Release-1.5.24.tar.gz',
                 '1.5.24',
-                '8c1f9a0ec5b55a18eeea76d33ca7a02c',
-                { gcc : '4.1.2' }
+                '8c1f9a0ec5b55a18eeea76d33ca7a02c'
             ),(
                 'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
                 'oiio-Release-1.6.15.tar.gz',
                 '1.6.15',
                 '3fe2cef4fb5f7bc78b136d2837e1062f',
-                { gcc : '4.1.2', boost : "1.51.0" }
+                { boost : "1.51.0" }
             # ),(
             #     'https://github.com/OpenImageIO/oiio/archive/Release-1.7.3dev.tar.gz',
             #     'oiio-Release-1.7.3dev.tar.gz',
             #     '1.7.3dev',
             #     'bcef05f5ff7f15ac580d9b3b4b6f690b',
-            #     { gcc : '4.1.2' }
             )],
-            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl],
+            depend=[ocio, python, boost, freetype, openexr, ilmbase, icu, openssl],
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
             flags = ['-DUSE_PYTHON=0','-DUSE_PTEX=0','-DUSE_OCIO=0']+build.cmake.flags,
         )
@@ -918,7 +903,6 @@ class all: # noqa
                 'llvm-3.5.2.src.tar.gz',
                 '3.5.2',
                 'f5a4dc595f7e8bd23397684d0906d014',
-                { gcc : '4.8.3' }
             )],
             sed = {'3.5.0' : {
                 # fix 3.5.2 with gcc 5!!
@@ -926,7 +910,7 @@ class all: # noqa
                     ('IntrusiveRefCntPtr.IntrusiveRefCntPtr.X.','friend class IntrusiveRefCntPtr;\ntemplate <class X> \nIntrusiveRefCntPtr(IntrusiveRefCntPtr<X>'),
                 ],
             },},
-            depend=[python, gcc],
+            depend=[python],
             compiler = build.gcc.system,
             # now we use the $CLANG_SRC_FOLDER env var to create a symlink
             # of clang into tools/clang folder, so llvm will build clang as well for us!
@@ -978,13 +962,13 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.7.3.tar.gz',
                 '1.7.3',
                 '42215e190d565c862043c0b02eca089b',
-                {oiio: "1.6.15", llvm : "3.5.2", gcc: "4.8.3", boost: "1.51.0"},
+                {oiio: "1.6.15", llvm : "3.5.2", boost: "1.51.0"},
             ),(
                 'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
                 'OpenShadingLanguage-Release-1.7.5.tar.gz',
                 '1.7.5',
                 '8b15d13c3fa510b421834d32338304c8',
-                {oiio: "1.6.15", llvm : "3.5.2", gcc: "4.8.3", boost: "1.51.0"},
+                {oiio: "1.6.15", llvm : "3.5.2", boost: "1.51.0"},
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.8.0dev.tar.gz',
             #     'OpenShadingLanguage-Release-1.8.0dev.tar.gz',
             #     '1.8.0dev',
@@ -1050,7 +1034,6 @@ class all: # noqa
                 'qt-everywhere-opensource-src-4.8.7.tar.gz',
                 '4.8.7',
                 'd990ee66bf7ab0c785589776f35ba6ad',
-                { gcc : '4.1.2' }
             # ),(
             #     'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
             #     'Maya2018.4.tar.gz',
@@ -1064,7 +1047,7 @@ class all: # noqa
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
-            depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc],
+            depend=[tiff,jpeg,libpng,freetype,freeglut,glew],
         )
         self.qt = qt
         build.allDepend.append(qt)
@@ -1076,20 +1059,17 @@ class all: # noqa
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.15.5/sip-4.15.5.tar.gz',
                 'sip-4.15.5.tar.gz',
                 '4.15.5',
-                '4c95447c7b0391b7f183cf9f92ae9bc6',
-                { gcc : '4.1.2' }
+                'afd33cb888461aae3bfd05b80c9e42a8'
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.4/sip-4.16.4.tar.gz',
                 'sip-4.16.4.tar.gz',
                 '4.16.4',
-                'a9840670a064dbf8f63a8f653776fec9',
-                { gcc : '4.1.2' }
+                'a9840670a064dbf8f63a8f653776fec9'
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18.1/sip-4.18.1.tar.gz',
                 'sip-4.18.1.tar.gz',
                 '4.18.1',
-                '9d664c33e8d0eabf1238a7ff44a399e9',
-                { gcc : '4.1.2' }
+                '9d664c33e8d0eabf1238a7ff44a399e9'
             )],
             baseLibs=[python],
             src = 'configure.py',
@@ -1114,7 +1094,7 @@ class all: # noqa
                 'PyQt-x11-gpl-4.11.4.tar.gz',
                 '4.11.4',
                 '2fe8265b2ae2fc593241c2c84d09d481',
-                {qt:'4.8.7', sip: '4.16.4', gcc : '4.1.2'},
+                {qt:'4.8.7', sip: '4.16.4'},
                 # ),(
                 #     'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.7/PyQt5_gpl-5.7.tar.gz',
                 #     'PyQt5_gpl-5.7.tar.gz',
@@ -1123,7 +1103,7 @@ class all: # noqa
                 #     {qt:'5.7.0', sip: '4.18.1'},
             )],
             baseLibs=[python],
-            depend=[sip,qt, gcc],
+            depend=[sip,qt],
             src = 'configure-ng.py',
             cmd = [
                 # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
@@ -1149,7 +1129,6 @@ class all: # noqa
                 '3.2.1',
                 '91b8250b6edcc26c9f5205555070a504',
             )],
-            depend=[gcc],
             src = 'README.md',
             cmd = [
                 'mkdir build',
@@ -1170,7 +1149,6 @@ class all: # noqa
                 '1.2.0',
                 'b39900d6b504726a20819f2ad73f5877',
             )],
-            depend=[gcc],
         )
         self.log4cplus = log4cplus
         build.allDepend.append(log4cplus)
