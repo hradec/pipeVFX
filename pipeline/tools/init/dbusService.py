@@ -289,12 +289,22 @@ class pipeAdminDBUSService(dbus.service.Object):
         administrators = self.loadCFG()
 
         def threadedMainLoop():
+            # only write if the file exists, to avoid writing files to dead caller processes, which
+            # won't be cleaned up later!
+            os.system('chown root:artists  %s' % tmpfile)
+            os.system('chown root:artists  %s_log' % tmpfile)
+            os.system('chmod a+r  %s' % tmpfile)
+            os.system('chmod a+r  %s_log' % tmpfile)
+            os.system('chmod a-w  %s' % tmpfile)
+            os.system('chmod a-w  %s_log' % tmpfile)
+
             ret = ' '
             current = ''
             try:
+                print cmd
                 for c in cmd.split(' ;; '):
+                    print c
                     for each in c.split('&&'):
-                        print each
                         each = each.strip()
                         firstCmd = each.split()[0].strip()
 
@@ -304,10 +314,12 @@ class pipeAdminDBUSService(dbus.service.Object):
                         for path in filter( lambda x: x.strip()[0]=='/', each.replace('\ ','').split() ):
                             # check if the path is /tmp/<something or a job path
                             if  path[0:5] not in ['/tmp/','/opt/','/var/','/usr/', '/Libr', '/dev/'] \
-                                and  path[0:len(pipe.roots.jobs())]!=pipe.roots.jobs() \
+                                and path[0:len(pipe.roots.jobs())] != pipe.roots.jobs() \
                                 and path[0:30] not in ['/atomo/pipeline/tools/licenses']:
                                     pathsOK = False
-                            print path,firstCmd,pathsOK
+                                    print path,firstCmd,pathsOK
+                                    break
+
 
                         # if any of the paths is not in /tmp/ or in /<studio>/jobs/
                         # don't do it!!
@@ -316,7 +328,6 @@ class pipeAdminDBUSService(dbus.service.Object):
                         if pathsOK and firstCmd in ['mkdir','chmod','chown', 'su', 'cp', 'rm'] or firstCmd in ['su', 'runuser', 'convert', 'montage']:
                             print "__runCMD", each, '|', firstCmd, '|', tmpfile
                             ret += self.__runCMD(each, firstCmd, tmpfile)
-                            print '|',ret,'|'
                         elif pathsOK:
                             ret += '-------------\n%s\n------------' %  each.split('taskset')[-1]
                             path = each.split('taskset')[-1].split(pipe.roots.jobs())[1].split()[0].strip()
@@ -351,11 +362,7 @@ class pipeAdminDBUSService(dbus.service.Object):
                 ret += "\n\t".join(traceback.format_exc().split('\n'))
 
             ret += '\n\nDONE\n'
-            # only write if the file exists, to avoid writing files to dead caller processes, which
-            # won't be cleaned up later!
-            print tmpfile
-            os.system('chown root:artists  %s' % tmpfile)
-            os.system('chmod a-w  %s' % tmpfile)
+            print 'returned:',ret
 #            if os.path.exists(tmpfile):
             f=open(tmpfile, 'w')
             f.write(ret)
@@ -384,8 +391,10 @@ class pipeAdminDBUSService(dbus.service.Object):
             if is_alive:
                 # kill the process and all children!
                 self.killPIDandChildren(pp.pid)
+            os.system('rm -rf %s' % tmpfile)
+            os.system('rm -rf %s_log' % tmpfile)
 
-        # run monitor is a separated thread as well!
+        # run monitor in a separated thread as well!
         pm = Process(target=threadedMonitorCaller)
         pm.start()
 
@@ -397,6 +406,8 @@ class pipeAdminDBUSService(dbus.service.Object):
         for each in self.pids.keys():
             if not self.pids[each].is_alive():
                 del self.pids[each]
+                # os.system('rm -rf %s' % tmpfile)
+                # os.system('rm -rf %s_log' % tmpfile)
 
         return str(p.pid)
 
