@@ -117,10 +117,11 @@ class sudo():
                 # in case our script ended up by a signal in the farm!
                 def handler(signum=-1, frame=0):
                     self.__admServiceKill(pid)
-                    if os.path.exists(file):
-                        os.remove(file)
-                    if os.path.exists("%s_log" % file):
-                        os.remove("%s_log" % file)
+                    # if os.path.exists(file):
+                    #     os.remove(file)
+                    # if os.path.exists("%s_log" % file):
+                    #     os.remove("%s_log" % file)
+                    print "\n\t".join(traceback.format_exc().split('\n'))
                     raise Exception("[PARSER ERROR]: The process was killed!! If runing in the farm, this is probably an job eject/stop/restart, BUT it can be a CRASH of a running render!")
 
                 # Set the signal handler and a 5-second alarm
@@ -169,7 +170,8 @@ class sudo():
                         f.close()
                         if filter( lambda x: 'DONE' in x, lines ):
                             ret = cmd+' -> '+''.join(lines)
-                            os.remove( file )
+                            # if os.path.exists(file):
+                            #     os.remove( file )
                             break
                         else:
                             time.sleep(0.5)
