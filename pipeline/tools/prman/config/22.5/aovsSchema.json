@@ -1,0 +1,63 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+        "channels": {
+            "type": "object",
+            "description": "displayChannel definitions",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "channelType": {
+                        "description": "Basic data type of this channel.",
+                        "type": "string",
+                        "enum": [
+                            "color",
+                            "float",
+                            "point",
+                            "vector",
+                            "normal"
+                        ]
+                    },
+                    "channelSource": {
+                        "description": "A variable name or a LPE expression.",
+                        "type": "string"
+                    },
+                    "group": {
+                        "description": "A group name or list of group names this channels belongs to in the UI.",
+                        "type": [
+                            "string",
+                            "array"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": true
+            }
+        },
+        "displays": {
+            "description": "A display definition, made of one or more channels.",
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "channels": {
+                        "description": "A list of displayChannels, referenced by name.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

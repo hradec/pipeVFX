@@ -1,0 +1,25 @@
+{
+    "PxrCryptomatte": {
+        "filename": {
+            "default": "<imagedir>/cryptomatte.<f4>.exr"
+        }
+    },
+    "PxrMarschnerHair": {
+        "specularEnergyCompensation": {
+            "default": 1.0
+        }
+    },
+    "PxrSurface": {
+        "specularEnergyCompensation": {
+            "default": 1.0
+        },
+        "clearcoatEnergyCompensation": {
+            "default": 1.0
+        }
+    },
+    "PxrRamp": {
+        "useNewRamp": {
+            "widget": "null"
+        }
+    }
+}

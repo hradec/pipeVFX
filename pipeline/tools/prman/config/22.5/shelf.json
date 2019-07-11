@@ -1,0 +1,533 @@
+{
+    "$schema": "./shelfSchema.json",
+    "shelf": {
+        "shelfID": "standard",
+        "buttons": {
+            "rfmShelfRender": {
+                "help": "Render Current Frame",
+                "image": "rm22_render.png",
+                "command": "load_rfm(\"22.5\", \"mel:setCurrentRenderer \\\"renderman\\\";rmanPreviewStartCmd();\");",
+                "commandType": "mel",
+                "popup": {
+                    "items": {
+                        "rfmShelfPreviewRender": {
+                            "label": "Preview Render",
+                            "command": "load_rfm(\"22.5\", \"mel:setCurrentRenderer \\\"renderman\\\";rmanPreviewStartCmd();\");",
+                            "commandType": "mel",
+                            "icon": "rm22_R_logo_small.png"
+                        },
+                        "rfmShelfBatchPreviewRender": {
+                            "label": "Batch Preview Render",
+                            "command": "load_rfm(\"22.5\", \"rfm2.spool.rfm_tractor.batch_preview()\")",
+                            "commandType": "mel",
+                            "icon": "rm22_R_logo_small.png"
+                        }
+                    }
+                }
+            },
+            "rfmShelfIPRStart": {
+                "help": "Start IPR - Right Click for Options",
+                "image": "rm22_IPR.png",
+                "command": "load_rfm(\"22.5\", \"mel:rmanIprStartCmd()\");",
+                "commandType": "mel",
+                "popup": {
+                    "items": {
+                        "rfmShelfIPRStop": {
+                            "label": "Stop IPR",
+                            "command": "load_rfm(\"22.5\", \"mel:stopIprRendering(`rmanGetRenderWindowPanel`)\");",
+                            "commandType": "mel",
+                            "icon": "rm22_IPRStop.png"
+                        },
+                        "rfmShelfFlushTextureCache": {
+                            "label": "Flush Texture Cache",
+                            "command": "load_rfm(\"22.5\", \"rfm2.txmanager_maya.invalidate_all_textures()\")",
+                            "commandType": "mel",
+                            "icon": "rm22_lightning_grey.png"
+                        },
+                        "rfmShelfSep1": {
+                            "divider": true
+                        },
+                        "rfmRenderSelected": {
+                            "label": "Render Selected Objects Only",
+                            "command": "import rfm2.api.ui_helpers; rfm2.api.ui_helpers.toggle_render_selected()",
+                            "commandType": "python",
+                            "checkbox": "True if mc.optionVar(q='renderViewRenderSelectedObj') else False"
+                        },
+                        "rfmShelfIprCameraMenu": {
+                            "label": "Camera",
+                            "subMenu": {
+                                "postMenuCommand": "renderWindowCreateCameraSubmenu(\"rfmShelfIprCameraMenu\", \"renderWindowRenderCamera iprRender (`rmanGetRenderWindowPanel`) \", \"renderView\")",
+                                "postMenuCommandType": "mel"
+                            },
+                            "icon": "rm22_camera.png"
+                        },
+                        "rfmShelfIprResolutionMenu": {
+                            "label": "Resolution",
+                            "subMenu": {
+                                "postMenuCommand": "try:\n\trfm2.ui.render_view.ipr_make_resolution_item(\"rfmShelfIprResolutionMenu\")\nexcept NameError:\n\timport maya.cmds\n\timport maya.utils\n\tmaya.utils.executeDeferred('''maya.cmds.loadPlugin('RenderMan_for_Maya.py')''')\n",
+                                "postMenuCommandType": "python"
+                            },
+                            "icon": "rm22_ResolutionGate.png"
+                        }
+                    }
+                }
+            },
+            "rfmSepIpr": {
+                "separator": true,
+                "width": 30
+            },
+            "rfmShelfIt": {
+                "help": "Open \"it\" - The Image Tool",
+                "image": "rm22_it.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.render.show_it()\")",
+                "popup": {
+                }
+            },
+            "rfmShelfLocalqueue": {
+                "help": "Open \"localqueue\" - Local Maya job queuing system",
+                "image": "rm22_localqueue.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.render.show_localqueue()\")",
+                "popup": {
+                }
+            },
+            "rfmSepIT": {
+                "separator": true,
+                "width": 30
+            },
+            "rfmShelfArealLight": {
+                "help": "Light - Right Click for Options",
+                "image": "rm22_areaLight.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrRectLight')\")",
+                "popup": {
+                    "items": {
+                        "rfmShelfRect": {
+                            "label": "PxrRectLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrRectLight')\")",
+                            "icon": "render_PxrRectLight.png"
+                        },
+                        "rfmShelfDisk": {
+                            "label": "PxrDiskLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrDiskLight')\")",
+                            "icon": "render_PxrDiskLight.png"
+                        },
+                        "rfmShelfDistant": {
+                            "label": "PxrDistantLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrDistantLight')\")",
+                            "icon": "render_PxrDistantLight.png"
+                        },
+                        "rfmShelfSphere": {
+                            "label": "PxrSphereLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrSphereLight')\")",
+                            "icon": "render_PxrSphereLight.png"
+                        },
+                        "rfmShelfCylinder": {
+                            "label": "PxrCylinderLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrCylinderLight')\")",
+                            "icon": "render_PxrCylinderLight.png"
+                        },
+                        "rfmShelfAOV": {
+                            "label": "PxrAovLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrAovLight')\")",
+                            "icon": "render_PxrAovLight.png"
+                        }
+                    }
+                }
+            },
+            "rfmShelfEnvLight": {
+                "help": "PxrDomeLight - Right Click for Options",
+                "image": "rm22_envLight.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrDomeLight')\")",
+                "popup": {
+                    "items": {
+                        "rfmShelfDome": {
+                            "label": "PxrDomeLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrDomeLight')\")",
+                            "icon": "render_PxrDomeLight.png"
+                        },
+                        "rfmShelfPortal": {
+                            "label": "PxrPortalLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_portal('PxrPortalLight')\")",
+                            "icon": "render_PxrPortalLight.png"
+                        },
+                        "rfmShelfDay": {
+                            "label": "PxrEnvDayLight",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_select('PxrEnvDayLight')\")",
+                            "icon": "render_PxrEnvDayLight.png"
+                        }
+                    }
+                }
+            },
+            "rfmShelfGeoLight": {
+                "help": "PxrMeshLight - Make Geometry Emissive",
+                "image": "rm22_emissive_geo.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_mesh_light()\")",
+                "popup": {
+                }
+            },
+            "rfmShelfLightFilters": {
+                "help": "Create Light Filter",
+                "image": "rm22_lightBlocker.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_light_filter('PxrRodLighFtilter')\")",
+                "popup": {
+                    "items": {
+                        "rfmShelfBarnLF": {
+                            "label": "PxrBarnLightFilter",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_light_filter('PxrBarnLightFilter')\")",
+                            "icon": "render_PxrBarnLightFilter.png"
+                        },
+                        "rfmShelfBlockerLF": {
+                            "label": "PxrBlockerLightFilter",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_light_filter('PxrBlockerLightFilter')\")",
+                            "icon": "render_PxrBlockerLightFilter.png"
+                        },
+                        "rfmShelfCookieLF": {
+                            "label": "PxrCookieLightFilter",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_light_filter('PxrCookieLightFilter')\")",
+                            "icon": "render_PxrCookieLightFilter.png"
+                        },
+                        "rfmShelfGoboLF": {
+                            "label": "PxrGoboLightFilter",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_light_filter('PxrGoboLightFilter')\")",
+                            "icon": "render_PxrGoboLightFilter.png"
+                        },
+                        "rfmShelfMultiLF": {
+                            "label": "PxrIntMultLightFilter",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_light_filter('PxrIntMultLightFilter')\")",
+                            "icon": "render_PxrIntMultLightFilter.png"
+                        },
+                        "rfmShelfRampLF": {
+                            "label": "PxrRampLightFilter",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_light_filter('PxrRampLightFilter')\")",
+                            "icon": "render_PxrRampLightFilter.png"
+                        },
+                        "rfmShelfRodLF": {
+                            "label": "PxrRodLightFilter",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_connect_light_filter('PxrRodLightFilter')\")",
+                            "icon": "render_PxrRodLightFilter.png"
+                        }
+                    }
+                }
+            },
+            "rfmSepLights": {
+                "separator": true,
+                "width": 30
+            },
+            "rfmShelfPxrSurface": {
+                "help": "PxrSurface - Right Click for Options",
+                "image": "rm22_luxo.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_assign_bxdf('PxrSurface')\")",
+                "popup": {
+                    "items": {
+                        "rfmShelfSurface": {
+                            "label": "PxrSurface",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_assign_bxdf('PxrSurface')\")",
+                            "icon": "render_PxrSurface.png"
+                        },
+                        "rfmShelfLayerSurf": {
+                            "label": "PxrLayerSurface",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_assign_bxdf('PxrLayerSurface')\")",
+                            "icon": "render_PxrLayerSurface.png"
+                        },
+                        "rfmShelfHair": {
+                            "label": "PxrMarschnerHair",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_assign_bxdf('PxrMarschnerHair')\")",
+                            "icon": "render_PxrMarschnerHair.png"
+                        },
+                        "rfmShelfDisney": {
+                            "label": "PxrDisney",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_assign_bxdf('PxrDisney')\")",
+                            "icon": "render_PxrDisney.png"
+                        },
+                        "rfmShelfConstant": {
+                            "label": "PxrConstant",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_assign_bxdf('PxrConstant')\")",
+                            "icon": "render_PxrConstant.png"
+                        },
+                        "rfmDispDivider":{
+                            "divider": true
+                        },
+                        "rfmShelfDisplace": {
+                            "label": "PxrDisplace",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_node('', 'PxrDisplace')\")",
+                            "icon": "render_PxrDisplace.png"
+                        }
+                    }
+                }
+            },
+            "rfmShelfPxrVolume": {
+                "help": "Volumes - Right Click for Options",
+                "image": "rm22_openvdb.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_assign_bxdf('PxrVolume')\")",
+                "popup": {
+                    "items": {
+                        "rfmShelfVolume": {
+                            "label": "Create PxrVolume",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_and_assign_bxdf('PxrVolume')\")",
+                            "icon": "render_PxrVolume.png"
+                        },
+                        "rfmDivVolumes": {
+                            "divider": true
+                        },
+                        "rfmShelfVDB": {
+                            "label": "Create OpenVDB Visualizer",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_openvdb()\")",
+                            "icon": "render_OpenVDBVisualize.png"
+                        },
+                        "rfmShelfVolumeBox": {
+                            "label": "Create Volume Box",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_volume('box')\")",
+                            "icon": "volumeCube.png"
+                        },
+                        "rfmShelfVolumeSphere": {
+                            "label": "Create Volume Sphere",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_volume('sphere')\")",
+                            "icon": "volumeSphere.png"
+                        },
+                        "rfmShelfVolumeCone": {
+                            "label": "Create Volume Cone",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_volume('cone')\")",
+                            "icon": "volumeCone.png"
+                        }
+                    }
+                }
+            },
+            "rfmShelfPxrHoldOut": {
+                "help": "Holdout - Create for Selected Geometry",
+                "image": "rm22_holdOut.png",
+                "command": "try:\n\trfm2.api.nodes.create_holdout()\nexcept NameError:\n\timport maya.cmds\n\timport maya.utils\n\tmaya.utils.executeDeferred('''maya.cmds.loadPlugin('RenderMan_for_Maya.py')''')\n",
+                "popup": {
+                    "items": {
+                        "rfmShelfCHoldout": {
+                            "label": "Create Holdout",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.create_holdout()\")"
+                        },
+                        "rfmShelfDHoldout": {
+                            "label": "Remove Holdout",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.api.nodes.remove_holdout()\")"
+                        }
+                    }
+                }
+            },
+            "rfmSepMaterials": {
+                "separator": true,
+                "width": 30
+            },
+            "rfmShelfPxrArchives": {
+                "help": "Create Alembic archives",
+                "image": "rm22_createArchive.png",
+                "popup": {
+                    "items": {
+                        "rfmShelfExportSelGpuCache": {
+                            "label": "Export Selected for GPU caches...",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.utils.abc_support.export(True, True)\")",
+                            "icon": "rm22_alembic_gpu.png"
+                        },
+                        "rfmShelfExportSceneGpuCache": {
+                            "label": "Export Scene for GPU caches...",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.utils.abc_support.export(True, False)\")",
+                            "icon": "rm22_alembic_gpu.png"
+                        },
+                        "rfmShelfExportSelAlembic": {
+                            "label": "Export Selected for Imported/Referenced caches...",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.utils.abc_support.export(False, True)\")",
+                            "icon": "rm22_alembic.png"
+                        },
+                        "rfmShelfExportSceneAlembic": {
+                            "label": "Export Scene for Imported/Referenced caches...",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.utils.abc_support.export(False, False)\")",
+                            "icon": "rm22_alembic.png"
+                        },
+                        "rfmAbcDivider":{
+                            "divider": true
+                        },
+                        "abcReferencePose": {
+                            "label": "Alembic Reference Pose",
+                            "subMenu": {
+                                "subItems": {
+                                    "rmanAddPref": {
+                                        "label": "Freeze positions ( __Pref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.freeze_points(for_alembic=True)",
+                                        "commandType": "python"
+                                    },
+                                    "rmanAddNref": {
+                                        "label": "Freeze normals ( __Nref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.freeze_normals(for_alembic=True)",
+                                        "commandType": "python"
+                                    },
+                                    "rmanAddWPref": {
+                                        "label": "Freeze world-space positions ( __WPref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.freeze_world_points(for_alembic=True)",
+                                        "commandType": "python"
+                                    },
+                                    "rmanAddWNref": {
+                                        "label": "Freeze world-space normals ( __WNref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.freeze_world_normals(for_alembic=True)",
+                                        "commandType": "python"
+                                    },
+                                    "rfmAbcRefDivider1": {
+                                        "divider": true
+                                    },
+                                    "rmanDelPref": {
+                                        "label": "Remove frozen positions ( __Pref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('__Pref')",
+                                        "commandType": "python"
+                                    },
+                                    "rmanDelNref": {
+                                        "label": "Remove frozen normals ( __Nref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('__Nref')",
+                                        "commandType": "python"
+                                    },
+                                    "rmanDelWPref": {
+                                        "label": "Remove frozen world-space positions ( __WPref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('__WPref')",
+                                        "commandType": "python"
+                                    },
+                                    "rmanDelWNref": {
+                                        "label": "Remove frozen world-space normals ( __WNref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('__WNref')",
+                                        "commandType": "python"
+                                    },
+                                    "rmanDelAny": {
+                                        "label": "Remove all reference primvars",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('<any>')",
+                                        "commandType": "python"
+                                    },
+                                    "rfmAbcRefDivider2": {
+                                        "divider": true
+                                    },
+                                    "rmanSelPref": {
+                                        "label": "Select objects with frozen positions ( __Pref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('__Pref')",
+                                        "commandType": "python"
+                                    },
+                                    "rmanSelNref": {
+                                        "label": "Select objects with frozen normals ( __Nref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('__Nref')",
+                                        "commandType": "python"
+                                    },
+                                    "rmanSelWPref": {
+                                        "label": "Select objects with world-space positions ( __WPref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('__WPref')",
+                                        "commandType": "python"
+                                    },
+                                    "rmanSelWNref": {
+                                        "label": "Select objects with frozen world-space normals ( __WNref )",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('__WNref')",
+                                        "commandType": "python"
+                                    },
+                                    "rmanSelAny": {
+                                        "label": "Select objects with any reference primvars",
+                                        "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('<any>')",
+                                        "commandType": "python"
+                                    }
+                                }
+                            }
+                        },
+                        "rfmAbcDivider2": {
+                            "divider": true
+                        },
+                            "rfmShelfImportGpuCache": {
+                            "label": "Import GPU cache...",
+                            "commandType": "mel",
+                            "command": "load_rfm(\"22.5\", \"rfm2.utils.abc_support.import_cache()\")",
+                            "icon": "rm22_alembic_gpu.png"
+                        }
+                    }
+                }
+            },
+            "rfmShelfRlfEditor":{
+                "help": "Open the Dynamic Rule Editor",
+                "image": "rm22_DynamicRulesEditor.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.ui.rlf_editor.show()\")",
+                "popup": {
+                }
+            },
+            "rfmShelfTxMake": {
+                "help": "Open Texture Manager",
+                "image": "rm22_txmake.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.txmanager_maya.show()\")",
+                "popup": {
+                }
+            },
+            "rfmShelfPresetBrowser": {
+                "help": "Open Preset Browser",
+                "image": "rm22_presetBrowser.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.ui.assets_browser.show_preset_browser()\")",
+                "popup": {
+                }
+            },
+            "rfmShelfStatistics": {
+                "help": "View Statistics",
+                "image": "rm22_viewStatistics.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.api.ui_helpers.view_statistics()\")",
+                "popup": {
+                }
+            },
+            "rfmSepUtils": {
+                "separator": true,
+                "width": 30
+            },
+            "rfmShelfLoadPlugin": {
+                "help": "Load Plugin - RenderMan For Maya",
+                "image": "rm22_loadPlugin.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"\");",
+                "popup": {
+                }
+            },
+            "rfmShelfHelp": {
+                "help": "Help - Online Documentation",
+                "image": "rm22_help.png",
+                "commandType": "mel",
+                "command": "load_rfm(\"22.5\", \"rfm2.api.ui_helpers.show_docs()\")",
+                "popup": {
+                }
+            }
+        }
+    }
+}

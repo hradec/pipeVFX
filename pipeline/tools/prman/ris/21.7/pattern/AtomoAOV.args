@@ -1,0 +1,67 @@
+<args format="1.0">
+  <shaderType>
+    <tag value="pattern"/>
+  </shaderType>
+  <help>
+    This utility pattern takes either an input parameter and passes it
+    through unchanged to its result.  As a side effect, it will send the
+    values out into an AOV when shading a camera-visible primary ray.  Note
+    that either inputF and resultF should be connected, or inputRGB and
+    resultRGB, but not both, and the type of the AOV should also match.
+  </help>
+
+  <param name="inputPassTrough"
+         label="Input RGB Pass Through"
+         type="color"
+         default="1.0 1.0 1.0"
+         widget="color">
+    <tags>
+      <tag value ="color"/>
+      <tag value ="vector"/>
+      <tag value ="normal"/>
+      <tag value ="point"/>
+    </tags>
+    <help>
+      The triple float to pass through to resultRGB.
+    </help>
+  </param>
+
+  <param name="inputRGB"
+         label="Input RGB to AOV"
+         type="color"
+         default="1.0 0.0 0.0"
+         widget="color">
+    <tags>
+      <tag value ="color"/>
+      <tag value ="vector"/>
+      <tag value ="normal"/>
+      <tag value ="point"/>
+    </tags>
+    <help>
+      The triple float to write to a color AOV.
+    </help>
+  </param>
+
+
+  <param name="aov"
+         label="AOV Name"
+         type="string"
+         default=""
+         widget="string"
+         connectable="False">
+    <help>
+      The name of the AOV to write to.
+    </help>
+  </param>
+
+  <output name="resultRGB">
+    <tags>
+      <tag value="color"/>
+      <tag value="vector"/>
+      <tag value="normal"/>
+      <tag value="point"/>
+    </tags>
+  </output>
+
+  <rfmdata nodeid="20000010" classification="rendernode/RenderMan/pattern"/>
+</args>

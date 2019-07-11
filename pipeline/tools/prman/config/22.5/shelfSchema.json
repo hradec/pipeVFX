@@ -1,0 +1,155 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "definitions": {
+        "button_items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "label": {
+                    "type": "string",
+                    "description": "Text of the menu item."
+                },
+                "help": {
+                    "type": "string",
+                    "description": "help text"
+                },
+                "icon": {
+                    "type": "string",
+                    "description": "The menu item's icon name."
+                },
+                "command": {
+                    "type": "string",
+                    "description": "A mel or python command"
+                },
+                "commandType": {
+                    "type": "string",
+                    "description": "the language used by this item's command AND optionCommand.",
+                    "enum": [
+                        "mel",
+                        "python"
+                    ]
+                },
+                "optionCommand": {
+                    "type": "string",
+                    "description": "command triggered by the menu's option box."
+                },
+                "optionImage": {
+                    "type": "string",
+                    "description": "Icon associated with the menu's option box."
+                },
+                "needLicense": {
+                    "type": "boolean",
+                    "description": "items that need a license will be greyed-out if the license is not available."
+                },
+                "divider": {
+                    "type": "boolean",
+                    "description": "A menu divider. Value is ignored."
+                },
+                "subMenu": {
+                    "type": "object",
+                    "properties": {
+                        "postMenuCommand": {
+                            "type": "string",
+                            "description": "a command to populate the sub-menu."
+                        },
+                        "postMenuCommandType": {
+                            "type": "string",
+                            "description": "The command's language.",
+                            "enum": [
+                                "mel",
+                                "python"
+                            ]
+                        },
+                        "subItems": {
+                            "$ref": "#/definitions/button_items"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "shelf": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "shelfID": {
+                    "type": "string"
+                },
+                "buttons": {
+                    "description": "A list of buttons",
+                    "type": "object",
+                    "items": {
+                        "description": "Button description.",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "description": "The name of the maya control. Should be unique if you want to attach a popup menu.",
+                                "type": "string"
+                            },
+                            "help": {
+                                "description": "A user-friendly doccumentation string that will be visible an annotation.",
+                                "type": "string"
+                            },
+                            "command": {
+                                "description": "Python or MEL command executed on left-click.",
+                                "type": "string"
+                            },
+                            "commandType": {
+                                "description": "Specify if the command is python or mel.",
+                                "type": "string",
+                                "enum": [
+                                    "python",
+                                    "mel"
+                                ]
+                            },
+                            "image": {
+                                "description": "the icon name, i.e. my_icon.svg",
+                                "type": "string"
+                            },
+                            "imageCommand": {
+                                "description": "A command returning the icon's name.",
+                                "type": "string"
+                            },
+                            "popup": {
+                                "type":"object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "items": {
+                                        "$ref": "#/definitions/button_items"
+                                    },
+                                    "postMenuCommand": {
+                                        "type": "string",
+                                        "description": "a command to populate the sub-menu."
+                                    },
+                                    "postMenuCommandType": {
+                                        "type": "string",
+                                        "description": "The command's language.",
+                                        "enum": [
+                                            "mel",
+                                            "python"
+                                        ]
+                                    }
+                                }
+                            },
+                            "separator": {
+                                "type": "boolean",
+                                "description": "Create a vertical separator in the shelf."
+                            },
+                            "width": {
+                                "type": "integer",
+                                "description": "The icon/separator's width. If not specified, a default width will be assumed."
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

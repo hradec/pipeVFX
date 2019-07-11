@@ -119,14 +119,14 @@ RixSCParamInfo const *AtomoOCC::GetParamTable()
     static RixSCParamInfo s_table[] =
     {
         // Outputs.
-        RixSCParamInfo( "resultRGB", k_RixSCColor, k_RixSCOutput ),
-        RixSCParamInfo( "resultF", k_RixSCFloat, k_RixSCOutput ),
+        RixSCParamInfo( RtUString("resultRGB"), k_RixSCColor, k_RixSCOutput ),
+        RixSCParamInfo( RtUString("resultF")  , k_RixSCFloat, k_RixSCOutput ),
 
         // Inputs.
-        RixSCParamInfo( "inputRGB", k_RixSCColor ),
-        RixSCParamInfo( "inputPassTrough", k_RixSCColor ),
-        RixSCParamInfo( "inputF",  k_RixSCFloat ),
-        RixSCParamInfo( "aov",  k_RixSCString ),
+        RixSCParamInfo( RtUString("inputRGB"), k_RixSCColor ),
+        RixSCParamInfo( RtUString("inputPassTrough"), k_RixSCColor ),
+        RixSCParamInfo( RtUString("inputF"),  k_RixSCFloat ),
+        RixSCParamInfo( RtUString("aov"),  k_RixSCString ),
 
         // End of table
         RixSCParamInfo()

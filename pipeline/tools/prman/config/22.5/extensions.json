@@ -1,0 +1,1008 @@
+{
+    "required_plugins": [
+        "OpenVDB",
+        "gpuCache"
+    ],
+    "extensions": [
+        {
+            "nodetypes": [
+                "transform"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_matteObject",
+                    "riattr": "Ri:Matte",
+                    "label": "Matte Object",
+                    "type": "int",
+                    "widget": "mapper",
+                    "options": "Inherit:-1|Yes:1|No:0",
+                    "default": -1,
+                    "channelBox": true,
+                    "page": "Shading",
+                    "help": "This object is rendered as a black hole"
+                },
+                {
+                    "name": "rman_holdout",
+                    "riattr": "trace:holdout",
+                    "label": "Hold-Out",
+                    "type": "int",
+                    "widget": "mapper",
+                    "options": "Inherit:-1|Yes:1|No:0",
+                    "default": -1,
+                    "channelBox": true,
+                    "page": "Shading",
+                    "help": "Useful in holdout workflow. These objects collect reflections, shadows, and transmission."
+                },
+                {
+                    "name": "rman_nestedInstancing",
+                    "label": "Nested Instancing",
+                    "type": "int",
+                    "widget": "checkBox",
+                    "default": 0,
+                    "channelBox": true,
+                    "page": "Instancing",
+                    "help": "Instances are typically flattened, which allows for shading overrides at leaf nodes.  However, nested instances can be more efficient."
+                },
+                {
+                    "name": "rman_lpeGroup",
+                    "riattr": "identifier:lpegroup",
+                    "label": "LPE Group",
+                    "type": "string",
+                    "default": "",
+                    "page": "Shading",
+                    "help": "Grouping membership used for light path expressions, eg. keylight"
+                },
+                {
+                    "name": "rman_maxDiffuseDepth",
+                    "riattr": "trace:maxdiffusedepth",
+                    "label": "Max Diffuse Depth",
+                    "type": "int",
+                    "default": -1,
+                    "channelBox": true,
+                    "page": "Trace",
+                    "help": "Maximum diffuse light bounces"
+                },
+                {
+                    "name": "rman_maxSpecularDepth",
+                    "riattr": "trace:maxspeculardepth",
+                    "label": "Max Specular Depth",
+                    "type": "int",
+                    "default": -1,
+                    "channelBox": true,
+                    "page": "Trace",
+                    "help": "Maximum specular light bounces"
+                },
+                {
+                    "name": "rman_relativePixelVariance",
+                    "riattr": "shade:relativepixelvariance",
+                    "label": "Relative Pixel Variance",
+                    "type": "float",
+                    "default": 1,
+                    "channelBox": true,
+                    "page": "Trace",
+                    "help": "This multiplier allows changing quality relative to the global pixel variance."
+                },
+                {
+                    "name": "rman_reflectExcludeSubset",
+                    "riattr": "trace:reflectexcludesubset",
+                    "label": "Reflect Exclude Subset",
+                    "type": "string",
+                    "default": "",
+                    "channelBox": true,
+                    "page": "Trace",
+                    "help": "Exclude object groups from reflections"
+                },
+                {
+                    "name": "rman_reflectSubset",
+                    "riattr": "trace:reflectsubset",
+                    "label": "Reflect Subset",
+                    "type": "string",
+                    "default": "",
+                    "page": "Trace",
+                    "help": "Object groups visible to reflections"
+                },
+                {
+                    "name": "rman_shadowExcludeSubset",
+                    "riattr": "trace:shadowexcludesubset",
+                    "label": "Shadow Exclude Subset",
+                    "type": "string",
+                    "default": "",
+                    "page": "Trace",
+                    "help": "Exclude object groups from casting shadows"
+                },
+                {
+                    "name": "rman_shadowSubset",
+                    "riattr": "trace:shadowsubset",
+                    "label": "Shadow Subset",
+                    "type": "string",
+                    "default": "",
+                    "page": "Trace",
+                    "help": "Object groups active in shadows"
+                },
+                {
+                    "name": "rman_transmitExcludeSubset",
+                    "riattr": "trace:transmitexcludesubset",
+                    "label": "Transmit Exclude Subset",
+                    "type": "string",
+                    "default": "",
+                    "page": "Trace",
+                    "help": "Exclude object groups from transmission/refractions"
+                },
+                {
+                    "name": "rman_transmitSubset",
+                    "riattr": "trace:transmitsubset",
+                    "label": "Transmit Subset",
+                    "type": "string",
+                    "default": "",
+                    "page": "Trace",
+                    "help": "Object groups visible to transmission/refractions"
+                },
+                {
+                    "name": "rman_intersectPriority",
+                    "riattr": "trace:intersectpriority",
+                    "label": "Intersection Priority",
+                    "type": "int",
+                    "default": -1,
+                    "channelBox": true,
+                    "page": "Nested Dielectrics",
+                    "help": "Raytrace intersection priority for nested dielectrics"
+                },
+                {
+                    "name": "rman_visibilityCamera",
+                    "riattr": "visibility:camera",
+                    "label": "Camera Visibility",
+                    "type": "int",
+                    "default": -1,
+                    "widget": "mapper",
+                    "options": "Inherit:-1|Yes:1|No:0",
+                    "channelBox": true,
+                    "page": "Visibility",
+                    "help": "Indicates if object is visible to camera rays"
+                },
+                {
+                    "name": "rman_visibilityIndirect",
+                    "riattr": "visibility:indirect",
+                    "label": "Indirect Visibility",
+                    "type": "int",
+                    "default": -1,
+                    "widget": "mapper",
+                    "options": "Inherit:-1|Yes:1|No:0",
+                    "channelBox": true,
+                    "page": "Visibility",
+                    "help": "Indicates if object is visible to indirect (reflection and specular refraction) rays"
+                },
+                {
+                    "name": "rman_visibilityTransmission",
+                    "riattr": "visibility:transmission",
+                    "label": "Transmission Visibility",
+                    "type": "int",
+                    "default": -1,
+                    "widget": "mapper",
+                    "options": "Inherit:-1|Yes:1|No:0",
+                    "channelBox": true,
+                    "page": "Visibility",
+                    "help": "Indicates if object is visible to shadow rays"
+                },
+                {
+                    "name": "rman_userAttrs",
+                    "type": "string",
+                    "widget": "userAttributes"
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "mesh",
+                "nurbsSurface"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_micropolygonlength",
+                    "primvar": "dice:micropolygonlength",
+                    "label": "MicroPolygon Length",
+                    "type": "float",
+                    "default": -1.0,
+                    "channelBox": true,
+                    "page": "Geometry"
+                },
+                {
+                    "name": "rman_watertight",
+                    "primvar": "dice:watertight",
+                    "label": "Water-tight dicing",
+                    "type": "int",
+                    "default": -1,
+                    "widget": "mapper",
+                    "options": "Inherit:-1|Yes:1|No:0",
+                    "page": "Geometry",
+                    "help": "Fix pin-holes in Subdivision Surfaces.<br>It may slow down dicing and time to first pixel."
+                },
+                {
+                    "name": "rman_traceDisplacements",
+                    "primvar": "trace:displacements",
+                    "label": "Trace Displacement",
+                    "type": "int",
+                    "default": 1,
+                    "widget": "checkBox",
+                    "page": "Trace"
+                },
+                {
+                    "name": "rman_autoBias",
+                    "primvar": "trace:autobias",
+                    "label": "Auto Bias",
+                    "type": "int",
+                    "default": -1,
+                    "widget": "mapper",
+                    "options": "Inherit:-1|Yes:1|No:0",
+                    "channelBox": true,
+                    "page": "Trace/Bias"
+                },
+                {
+                    "name": "rman_traceBias",
+                    "primvar": "trace:bias",
+                    "label": "Trace Bias",
+                    "type": "float",
+                    "default": 0.01,
+                    "channelBox": true,
+                    "page": "Trace/Bias",
+                    "conditionalVisOps": {
+                        "conditionalVisOp": "notEqualTo",
+                        "conditionalVisPath": "../rman_autoBias",
+                        "conditionalVisValue": 1
+                    }
+                },
+                {
+                    "name": "rman_displacementBound",
+                    "primvar": "displacementbound:sphere",
+                    "label": "Displacement Bound",
+                    "type": "float",
+                    "default": 0.1,
+                    "channelBox": true,
+                    "page": "Displacement"
+                },
+                {
+                    "name": "rman_displacementCoordSys",
+                    "primvar": "displacementbound:CoordinateSystem",
+                    "label": "Coordinate System",
+                    "type": "string",
+                    "default": "object",
+                    "widget": "popup",
+                    "options": "world|object",
+                    "channelBox": true,
+                    "page": "Displacement",
+                    "help": "Coordinate system of the displacement bound.  For example, a scaled up ground plane may want the displacement bound in world space, while a character would typically specify the value in object space."
+                },
+                {
+                    "name": "rman_emitPref",
+                    "label": "Emit Reference Points",
+                    "type": "int",
+                    "default": 1,
+                    "widget": "checkBox",
+                    "page": "Reference Object",
+                    "help": "A primvar called __Pref will be emitted for this shape if a texture reference object has been created.  Maya's place3dTexture nodes automatically use this."
+                },
+                {
+                    "name": "rman_emitWPref",
+                    "label": "Emit Reference Points (world)",
+                    "type": "int",
+                    "default": 1,
+                    "widget": "checkBox",
+                    "page": "Reference Object",
+                    "help": "A primvar called __WPref will be emitted for this shape if a texture reference object has been created.  Maya's place3dTexture nodes automatically use this."
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "mesh"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_subdivScheme",
+                    "label": "Subdivision Scheme",
+                    "type": "int",
+                    "default": 0,
+                    "widget": "mapper",
+                    "channelBox": true,
+                    "options": "None:0|Catmull-Clark:1|Loop:2|Bilinear:3",
+                    "page": "Subdivision Surface"
+                },
+                {
+                    "name": "rman_subdivInterp",
+                    "label": "Interpolation",
+                    "type": "int",
+                    "default": 1,
+                    "widget": "mapper",
+                    "options": "No interpolation:0|Sharp creases and corners:1|Sharp creases:2",
+                    "page": "Subdivision Surface",
+                    "conditionalVisOps": {
+                        "conditionalVisOp": "greaterThan",
+                        "conditionalVisPath": "../rman_subdivScheme",
+                        "conditionalVisValue": 0
+                    }
+                },
+                {
+                    "name": "rman_subdivFacevaryingInterp",
+                    "label": "Face-Varying Interpolation",
+                    "type": "int",
+                    "default": 3,
+                    "widget": "mapper",
+                    "options": "Old Style:0|New Style:1|New Style, no corners:2|New Style, internal only:3",
+                    "page": "Subdivision Surface",
+                    "conditionalVisOps": {
+                        "conditionalVisOp": "greaterThan",
+                        "conditionalVisPath": "../rman_subdivScheme",
+                        "conditionalVisValue": 0
+                    }
+                },
+                {
+                    "name": "rman_outputColorSets",
+                    "label": "Emit Color Sets",
+                    "type": "int",
+                    "widget": "checkBox",
+                    "default": 0,
+                    "page": "Color Sets",
+                    "help": "Emits all of the mesh's color sets with their given names, rather than only the current one, which goes out as Cs when this checkbox is not enabled."
+                },
+                {
+                    "name": "rman_emitFaceIDs",
+                    "label": "Emit Face IDs",
+                    "type": "int",
+                    "default": 0,
+                    "widget": "checkBox",
+                    "page": "Ptex",
+                    "help": "A primvar called __faceindex will be emitted for this shape, where each face is given an ID based on its index.  This is needed when using Ptex.  If custom facevarying values are required, add an array attribute called rmanfF__faceindex to the shape in maya, and those values will be respected instead."
+                },
+                {
+                    "name": "rman_emitNref",
+                    "label": "Emit Reference Normals",
+                    "type": "int",
+                    "default": 0,
+                    "widget": "checkBox",
+                    "page": "Reference Object",
+                    "help": "A primvar called __Nref will be emitted for this shape if a texture reference object has been created."
+                },
+                {
+                    "name": "rman_emitWNref",
+                    "label": "Emit Reference Normals (world)",
+                    "type": "int",
+                    "default": 0,
+                    "widget": "checkBox",
+                    "page": "Reference Object",
+                    "help": "A primvar called __WNref will be emitted for this shape if a texture reference object has been created."
+                },
+                {
+                    "name": "rman_preventPolyCracks",
+                    "primvar": "polygon:smoothdisplacement",
+                    "label": "Prevent polygon cracking",
+                    "type": "int",
+                    "default": 0,
+                    "widget": "checkBox",
+                    "channelBox": true,
+                    "page": "Displacement",
+                    "help": "Prevent polygon cracks on sharp edges, as long as both sides of the edge have similar displacement values, at the cost of slightly warping your displacement."
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "transform",
+                "mesh"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_motionSamples",
+                    "label": "Motion Samples",
+                    "type": "int",
+                    "default": -1,
+                    "channelBox": true,
+                    "page": "Motion Blur"
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "sketchPlane"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_clippingPlane",
+                    "label": "Clipping Plane",
+                    "type": "int",
+                    "widget": "checkBox",
+                    "default": 0
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "nurbsCurve",
+                "bezierCurve"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_renderCurve",
+                    "label": "Render Curve",
+                    "type": "int",
+                    "widget": "checkBox",
+                    "channelBox": true,
+                    "default": 0
+                },
+                {
+                    "name": "rman_curveBaseWidth",
+                    "label": "Base Width",
+                    "type": "float",
+                    "channelBox": true,
+                    "default": 0.1
+                },
+                {
+                    "name": "rman_curveTipWidth",
+                    "label": "Tip Width",
+                    "type": "float",
+                    "channelBox": true,
+                    "default": 0.1
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "PxrDomeLight"
+            ],
+            "attributes": [
+                {
+                    "name": "locatorScale",
+                    "label": "Locator Scale",
+                    "type": "float",
+                    "default": 2500.0,
+                    "min": 0.01,
+                    "slidermax": 10000.0,
+                    "page": "Viewport",
+                    "help": "Scale the representation of the Dome light in the viewport"
+                },
+                {
+                    "name": "rman_textureResolution",
+                    "label": "Texture Resolution",
+                    "type": "int",
+                    "default": 1024,
+                    "widget": "mapper",
+                    "options": "256:256|512:512|1024:1024|2048:2048",
+                    "page": "Viewport",
+                    "help": "Chose the texture resolution of the dome light. Typically, environment textures are rectangular and a resolution of 1024 will translate to a 2014x1024 texture."
+                },
+                {
+                    "name": "rman__portals",
+                    "label": "Portals",
+                    "type": "string",
+                    "size": -1,
+                    "widget": "scenegraphLocation",
+                    "options": "nodeType:PxrPortalLight|label:Create a new portal",
+                    "default": [
+                        null
+                    ]
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "PxrEnvDayLight",
+                "PxrDistantLight"
+            ],
+            "attributes": [
+                {
+                    "name": "locatorScale",
+                    "label": "Locator Scale",
+                    "type": "float",
+                    "default": 10.0,
+                    "page": "Viewport"
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "PxrRectLight",
+                "PxrDiskLight",
+                "PxrSphereLight"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_coneAngleDepth",
+                    "label": "Cone Angle Depth",
+                    "type": "float",
+                    "default": 10.0,
+                    "min": 0.0,
+                    "slidermax": 10.0,
+                    "page": "Viewport"
+                },
+                {
+                    "name": "rman_coneAngleOpacity",
+                    "label": "Cone Angle Opacity",
+                    "type": "float",
+                    "default": 0.5,
+                    "min": 0.1,
+                    "max": 1.0,
+                    "page": "Viewport"
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "file"
+            ],
+            "attributes": [
+                {
+                    "name": "rman__filter",
+                    "label": "Filter Type",
+                    "type": "int",
+                    "default": 1,
+                    "widget": "mapper",
+                    "options": "Nearest:0|Box:1|Bilinear:2|Bspline:3|Mitchell:4|Catmull-Rom:5|Gaussian:6|Lagrangian:7"
+                },
+                {
+                    "name": "rman__blur",
+                    "label": "Blur",
+                    "type": "float",
+                    "default": 0.0,
+                    "min": 0.0,
+                    "max": 1.0
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "shadingEngine"
+            ],
+            "attributes": [
+                {
+                    "name": "rman__surface",
+                    "label": "RenderMan Surface",
+                    "type": "color",
+                    "widget": "mayaLink",
+                    "options": "classification:rendernode/RenderMan/bxdf",
+                    "default": [
+                        0,
+                        0,
+                        0
+                    ]
+                },
+                {
+                    "name": "rman__displacement",
+                    "label": "RenderMan Displacement",
+                    "type": "color",
+                    "widget": "mayaLink",
+                    "options": "classification:rendernode/RenderMan/displace",
+                    "default": [
+                        0,
+                        0,
+                        0
+                    ]
+                },
+                {
+                    "name": "rman__torattr___areaLightShader",
+                    "label": "Mesh Light",
+                    "type": "string",
+                    "default": "",
+                    "widget": "scenegraphLocation",
+                    "options": "nodeType:PxrMeshLight"
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "objectSet",
+                "shadingEngine"
+            ],
+            "attributes": [
+                {
+                    "name": "rman__torattr___traceSet",
+                    "label": "Trace Set",
+                    "type": "int",
+                    "default": 0,
+                    "widget": "checkBox",
+                    "help": "Enable to allow the set to be used as a trace set."
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "place3dTexture",
+                "camera"
+            ],
+            "attributes": [
+                {
+                    "name": "rman__coordsys",
+                    "type": "string",
+                    "default": "<shapepath>",
+                    "widget": null
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "camera"
+            ],
+            "attributes": [
+                {
+                    "page": "Bokeh",
+                    "page_open": true,
+                    "name": "rman_apertureSides",
+                    "label": "Sides",
+                    "type": "int",
+                    "default": 0,
+                    "min": 0,
+                    "slidermax": 20,
+                    "help": "The number of sides (ie. blades) for the shape of the aperture.  If this value is less than 3, the default behavior of a circular aperture and uniform sampling are used."
+                },
+                {
+                    "page": "Bokeh",
+                    "page_open": true,
+                    "name": "rman_apertureAngle",
+                    "label": "Angle",
+                    "type": "float",
+                    "default": 0.0,
+                    "min": 0.0,
+                    "slidermax": 360.0,
+                    "help": "Rotate the angle of the apterture"
+                },
+                {
+                    "page": "Bokeh",
+                    "page_open": true,
+                    "name": "rman_apertureRoundness",
+                    "label": "Roundness",
+                    "type": "float",
+                    "default": 0,
+                    "min": -1,
+                    "slidermax": 1,
+                    "help": "A shape parameter from -1 to 1.  When 0, the apterture is a regular polygon with straight sides.  When 1, it's a perfect circle.  Values between 0 and 1 give polygons with curved edges bowed out, while values between 0 and -1 make the edges bow in."
+                },
+                {
+                    "page": "Bokeh",
+                    "page_open": true,
+                    "name": "rman_apertureDensity",
+                    "label": "Density",
+                    "type": "float",
+                    "default": 0,
+                    "min": -1,
+                    "slidermax": 1,
+                    "help": "The slope, between -1 and 1, of the (linearly varying) aperture density. A value of zero gives uniform density. Negative values make the aperture brighter near the center, and positive values make it brighter near the rim."
+                },
+                {
+                    "page": "Bokeh",
+                    "page_open": true,
+                    "name": "rman_dofaspect",
+                    "label": "Depth of Field Aspect",
+                    "type": "float",
+                    "default": 1,
+                    "min": 0,
+                    "slidermax": 2,
+                    "help": "Modify the ellipse of confusion. 1 is the default.  A value greater than 1 makes the blur bigger horizontally, and a value between 0 and 1 makes the blur bigger vertically."
+                },
+                {
+                    "page": "Camera Projection Plugin",
+                    "page_open": true,
+                    "name": "rman_enableCameraProjection",
+                    "label": "Enable Camera Projection",
+                    "type": "int",
+                    "default": 0,
+                    "widget": "checkBox",
+                    "help": "Enable to use a different camera projection for this camera."
+                },
+                {
+                    "page": "Camera Projection Plugin",
+                    "page_open": true,
+                    "name": "rman_cameraProjectionUseCameraFOV",
+                    "label": "Use Camera Settings",
+                    "type": "int",
+                    "default": 0,
+                    "widget": "checkBox",
+                    "conditionalVisOps": {
+                        "conditionalVisOp": "equalTo",
+                        "conditionalVisPath": "../rman_enableCameraProjection",
+                        "conditionalVisValue": 1
+                    },
+                    "help": "Enable to override the plugin's field of view, f-stop, focal length, and focal distance parameters with values from this camera."
+                },
+                {
+                    "page": "Camera Projection Plugin",
+                    "page_open": true,
+                    "name": "rman_cameraProjection",
+                    "label": "Camera Projection",
+                    "type": "string",
+                    "default": "PxrCamera",
+                    "widget": "scenegraphLocation",
+                    "options": "nodeCategory:projection",
+                    "conditionalVisOps": {
+                        "conditionalVisOp": "equalTo",
+                        "conditionalVisPath": "../rman_enableCameraProjection",
+                        "conditionalVisValue": 1
+                    },
+                    "help": "Choose the main projection plugin for this camera."
+                },
+                {
+                    "name": "rman__coordsys",
+                    "type": "string",
+                    "default": "<shapepath>",
+                    "widget": null
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "fluidShape"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_micropolygonlength",
+                    "primvar": "dice:micropolygonlength",
+                    "label": "MicroPolygon Length",
+                    "type": "float",
+                    "default": 10,
+                    "channelBox": true,
+                    "page": "Geometry"
+                },
+                {
+                    "name": "rman_minlength",
+                    "primvar": "dice:minlength",
+                    "label": "Min Length",
+                    "type": "float",
+                    "default": -1,
+                    "page": "Geometry"
+                },
+                {
+                    "name": "rman_minlengthspace",
+                    "primvar": "dice:minlengthspace",
+                    "label": "Min Length Space",
+                    "type": "string",
+                    "default": "world",
+                    "widget": "popup",
+                    "options": "world|object|camera",
+                    "page": "Geometry"
+                },
+                {
+                    "name": "rman_deformationBlurStyle",
+                    "label": "Blur Style",
+                    "type": "string",
+                    "default": "none",
+                    "widget": "popup",
+                    "options": "none|velocity",
+                    "page": "Motion Blur"
+                },
+                {
+                    "name": "rman_deformationBlurScale",
+                    "label": "Blur Scale",
+                    "type": "int",
+                    "default": 1,
+                    "page": "Motion Blur"
+                },
+                {
+                    "name": "outDensity",
+                    "type": "float",
+                    "widget": null
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "pfxHair",
+                "stroke",
+                "nurbsCurve",
+                "RenderManArchive",
+                "OpenVDBVisualize"
+            ],
+            "attributes": [
+                {
+                    "name": "rman__torattr___customShadingGroup",
+                    "label": "Shading Group",
+                    "type": "string",
+                    "widget": "scenegraphLocation",
+                    "options": "nodeType:shadingEngine",
+                    "page": "Shading",
+                    "help": "A shading group can be provided here to override default shading."
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "RenderManArchive",
+                "RenderManProcedural",
+                "RenderManProgram",
+                "gpuCache"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_lightingExcludeSubset",
+                    "riattr": "lighting:excludesubset",
+                    "label": "Lighting Exclude Subset",
+                    "type": "string",
+                    "page": "Lighting",
+                    "page_open": false,
+                    "help": "Comma separated list of names of lights that should not illuminate the archive."
+                },
+                {
+                    "name": "rman_lightingSubset",
+                    "riattr": "lighting:subset",
+                    "label": "Lighting Subset",
+                    "type": "string",
+                    "page": "Lighting",
+                    "help": "Comma separated list of names of the only lights that should illuminate the archive."
+                },
+                {
+                    "name": "rman__torattr___customShadingGroup",
+                    "label": "Shading Group",
+                    "type": "string",
+                    "widget": "scenegraphLocation",
+                    "options": "nodeType:shadingEngine",
+                    "page": "Shading",
+                    "page_open": false,
+                    "help": "A shading group can be provided here if the archive does not contain its own shading assignments."
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "fluidShape"
+            ],
+            "attributes": [
+                {
+                    "name": "rman__torattr___customShadingGroup",
+                    "label": "Shading Group",
+                    "type": "string",
+                    "widget": "scenegraphLocation",
+                    "options": "nodeType:shadingEngine|command:rfm2.api.nodes.create_fluid_shader()",
+                    "page": "Shading",
+                    "help": "Instantiate the default fluid shading as a PxrVolume network in the scene, which provides additional controls, like for multiscattering."
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "PxrBlack"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_areaLightShader",
+                    "label": "Light",
+                    "type": "string",
+                    "default": ""
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "gpuCache"
+            ],
+            "attributes": [
+                {
+                    "name": "rman__torattr___renderAlembicCache",
+                    "label": "Render Alembic Cache",
+                    "type": "int",
+                    "default": 1,
+                    "widget": "checkBox"
+                },
+                {
+                    "name": "rman__torattr___rlfName",
+                    "label": "RLF File Name",
+                    "type": "string",
+                    "default": "",
+                    "widget": "fileInput",
+                    "help": "The Renderman Look File used to shade this alembic archive."
+                },
+                {
+                    "name": "rman__torattr___abcFPS",
+                    "label": "Alembic FPS",
+                    "type": "float",
+                    "default": 24,
+                    "help": "The number of frames per second of this archive.<br>This is important for motion blur to match the rest of the scene."
+                },
+                {
+                    "name": "rman__torattr___abcFrame",
+                    "label": "Alembic Frame",
+                    "type": "float",
+                    "default": 1.0,
+                    "widget": "mayaTime",
+                    "help": "The current frame for the alembic cache."
+                },
+                {
+                    "name": "rman__torattr___abcManifest",
+                    "label": "Alembic contents",
+                    "type": "string",
+                    "default": "",
+                    "widget": "abcManifest"
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "PxrBarnLightFilter"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_frustumDepth",
+                    "label": "Frustum Depth",
+                    "type": "float",
+                    "default": 10.0,
+                    "min": 0.0
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "nParticle"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_falloffpower",
+                    "label": "Points Falloff Power",
+                    "type": "float",
+                    "default": 0.0,
+                    "min": 0.0,
+                    "slidermax": 1.0,
+                    "help": "For points, a value of 0 means the points will have a hard edge.  A value of 1 emulates the usual cosine based falloff.  Values between 0 and 1 make the falloff faster.  Values higher than 1 make the falloff slower."
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "locator"
+            ],
+            "attributes": [
+                {
+                    "name": "rman_dsoname",
+                    "label": "Dso Name",
+                    "type": "string",
+                    "help": "The name or path of the procedural plug-in.",
+                    "default": "",
+                    "widget": "assetIdInput",
+                    "page": "Procedural"
+                },
+                {
+                    "name": "rman_data",
+                    "label": "Data",
+                    "help": "The older style of procedural takes a string of arguments which are passed to the ConvertParameters method of the procedural.",
+                    "type": "string",
+                    "default": "",
+                    "page": "Procedural"
+
+                },
+                {
+                    "name": "rman_frame",
+                    "label": "Frame",
+                    "type": "float",
+                    "default": 1.0,
+                    "widget": "mayaTime",
+                    "help": "The current frame, for use by the procedural.",
+                    "page": "Procedural"
+                },
+                {
+                    "name": "rman_preShapeScript",
+                    "label": "Pre Shape Script",
+                    "type": "string",
+                    "default": "",
+                    "help": "A mel script which will be evaluated before translating the node.  This could edit the data string that gets passed to the procedural.",
+                    "page": "Procedural/Scripts"
+                },
+                {
+                    "name": "rman_preShapePythonScript",
+                    "label": "Pre Shape Python Script",
+                    "type": "string",
+                    "default": "",
+                    "help": "A python script which will be evaluated before translating the node.  This could edit the data string that gets passed to the procedural.",
+                    "page": "Procedural/Scripts"
+                }
+            ]
+        },
+        {
+            "nodetypes": [
+                "xgmDescription",
+                "gpuCache"
+            ],
+            "attributes": [
+                {
+                    "name": "visibleInReflections",
+                    "type": "int",
+                    "default": 1,
+                    "widget": "checkBox",
+                    "label": "Visible In Reflections"
+                }
+            ]
+        }
+    ]
+}

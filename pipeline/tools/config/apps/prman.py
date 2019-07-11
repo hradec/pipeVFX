@@ -35,8 +35,6 @@ class prman(baseApp):
         import socket
         from glob import glob
 
-
-
         mayaPluginName = 'RenderManForMaya'
 
         folders=[]
@@ -142,9 +140,19 @@ class prman(baseApp):
                 shader = [
                     '%s/prman/shaders'     % each,
                     '%s/prman/ris/pattern' % each,
+                    '%s/prman/%s/shaders'     % (each, self.version()),
+                    '%s/prman/%s/ris/pattern' % (each, self.version()),
+                    '%s/prman/shaders/%s'     % (each, self.version()),
+                    '%s/prman/ris/%s/pattern' % (each, self.version()),
                 ],
                 procedurals = [
                     '%s/prman/procedurals' % each,
+                    '%s/prman/%s/procedurals' % (each, self.version()),
+                    '%s/prman/procedurals/%s' % (each, self.version()),
+                ],
+                # renderman 22
+                config = [
+                    '%s/prman/%s/' % (each, self.version()),
                 ]
             )
 
@@ -161,7 +169,7 @@ class prman(baseApp):
         # self.ignorePipeLib( "libpng" )
 
     @staticmethod
-    def addon( caller, shader='', procedurals='', script='',python='', display='', texture='', lib='', rsl='' ):
+    def addon( caller, shader='', procedurals='', script='',python='', display='', texture='', lib='', rsl='', config='' ):
         caller['PYTHONPATH'] = script
         caller['PYTHONPATH'] = python
         caller['SHADERS_PATH'] = shader
@@ -179,6 +187,12 @@ class prman(baseApp):
         # gaffer hack
         caller['DL_SHADERS_PATH'] = shader
         caller['DL_DISPLAYS_PATH'] = display
+        # prman 22
+        caller['RFM_SITE_PATH'] =  config
+        caller['RFM_SHOW_PATH'] =  config
+        # prman 22.2
+        caller['RFM_PLUGINS_PATH'] =  config
+
 
 
     def bg(self,cmd,bin):

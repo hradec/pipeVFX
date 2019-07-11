@@ -1,0 +1,222 @@
+{
+    "osl": {
+        "background":
+        {
+            "color": [37, 37, 37]
+        },
+        "keywords": {
+            "color": [
+                106,
+                217,
+                239
+            ],
+            "patterns": [
+                "\\bbreak\\b",
+                "\\bclosure\\b",
+                "\\bcolor\\b",
+                "\\bcontinue\\b",
+                "\\bdo\\b",
+                "\\belse\\b",
+                "\\bemit\\b",
+                "\\bfloat\\b",
+                "\\bfor\\b",
+                "\\bif\\b",
+                "\\billuminance\\b",
+                "\\billuminate\\b",
+                "\\bint\\b",
+                "\\bmatrix\\b",
+                "\\bnormal\\b",
+                "\\boutput\\b",
+                "\\bpoint\\b",
+                "\\bpublic\\b",
+                "\\breturn\\b",
+                "\\bstring\\b",
+                "\\bstruct\\b",
+                "\\bvector\\b",
+                "\\bvoid\\b",
+                "\\bwhile\\b"
+            ]
+        },
+        "shaderTypes": {
+            "color": [
+                255,
+                80,
+                255
+            ],
+            "patterns": [
+                "\\bsurface\\b",
+                "\\bdisplacement\\b",
+                "\\blight\\b",
+                "\\bvolume\\b",
+                "\\bshader\\b"
+            ]
+        },
+        "singleLineComment": {
+            "color": [
+                128,
+                128,
+                128
+            ],
+            "patterns": [
+                "//[^\n]*"
+            ]
+        },
+        "multiLineComment": {
+            "color": [
+                128,
+                128,
+                128
+            ],
+            "patterns": [
+                "/\\*",
+                "\\*/"
+            ]
+        },
+        "operators": {
+            "color": [
+                247,
+                38,
+                114
+            ],
+            "patterns": [
+                "[<>+*=!?%-]",
+                "\\b/\\b"
+            ]
+        },
+        "preprocessor": {
+            "color": [
+                247,
+                38,
+                114
+            ],
+            "patterns": [
+                "#[a-z]+"
+            ]
+        },
+        "literals": {
+            "color": [
+                230,
+                219,
+                116
+            ],
+            "patterns": [
+                "\"[^\"]*\""
+            ]
+        },
+        "numbers": {
+            "color": [
+                174,
+                129,
+                255
+            ],
+            "patterns": [
+                "\\b[0-9]+\\.*[0-9]*"
+            ]
+        },
+        "functions": {
+            "color": [
+                167,
+                226,
+                46
+            ],
+            "patterns": [
+                "\\b[A-Za-z0-9_]+(?=\\()"
+            ]
+        },
+        "globals": {
+            "color": [
+                78,
+                181,
+                252
+            ],
+            "patterns":[
+                "\\b(P|I|N|Ng|u|v|dPdu|dPdv|Ps|time|dtime|dPdtime|Ci)\\b"
+            ]
+        }
+
+    },
+    "seexpr": {
+        "background":
+        {
+            "color": [37, 37, 37]
+        },
+        "lineBackground":
+        {
+            "color": [67, 67, 27]
+        },
+        "keywords": {
+            "color": [
+                106,
+                217,
+                239
+            ],
+            "patterns": [
+                "\\b$*[Puvstw]\\b",
+                "\\b$*Pobj\\b",
+                "\\b$*Vn\\b",
+                "\\b$*VLen\\b",
+                "\\b$*Nn\\b",
+                "\\b$*NnObj\\b",
+                "\\b$*Ngn\\b",
+                "\\b$*Tn\\b",
+                "\\b$*Tn\\b",
+                "\\b$*curvature\\b",
+                "\\b$*curvature_u\\b",
+                "\\b$*curvature_v\\b",
+                "\\bPI\\b",
+                "\\bE\\b"
+            ]
+        },
+        "singleLineComment": {
+            "color": [
+                128,
+                128,
+                128
+            ],
+            "patterns": [
+                "#[^\n]*"
+            ]
+        },
+        "numbers": {
+            "color": [
+                174,
+                129,
+                255
+            ],
+            "patterns": [
+                "\\b[0-9]+\\.*[0-9]*"
+            ]
+        },
+        "functions": {
+            "color": [
+                167,
+                226,
+                46
+            ],
+            "patterns": [
+                "\\b[A-Za-z0-9_]+(?=\\()"
+            ]
+        },
+        "operators": {
+            "color": [
+                247,
+                38,
+                114
+            ],
+            "patterns": [
+                "[<>+/*=!?%-]"
+            ]
+        },
+        "inputs": {
+            "color": [
+                38,
+                141,
+                242
+            ],
+            "patterns":[
+                "\\bfloatInput[1-4]\\b",
+                "\\bcolorInput[1-4]\\b"
+            ]
+        }
+    }
+}

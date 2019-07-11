@@ -1,0 +1,129 @@
+{
+    "paths": {
+        "RMANTREE": "${RMANTREE}",
+        "RFM_SITE_PATH": "${RFM_SITE_PATH}",
+        "RFM_SHOW_PATH": "${RFM_SHOW_PATH}",
+        "RFMTREE": "${RFMTREE}"
+    },
+    "maya compatibility": [
+        2017,
+        2018,
+        2019
+    ],
+    "dirmaps": {
+        "myserver_to_z": {
+            "to": "Z:/",
+            "from": "/myserver/",
+            "zone": "UNC"
+        }
+    },
+    "versions": {
+        "rman": "22.5",
+        "rfm": "22.5"
+    },
+    "rman search paths": {
+        "shader": [
+            "${HOME}/rfm",
+            "${SHADERS_PATH}",
+            "${RMS_SHADER_PATH}",
+            "${RMANTREE}/lib/shaders",
+            "@"
+        ],
+        "rixplugin": [
+            "${HOME}/rfm",
+            "${SHADERS_PATH}",
+            "${RMS_SHADER_PATH}",
+            "${RFMTREE}/lib/plugins",
+            "@"
+        ],
+        "texture": [
+            "@"
+        ],
+        "procedural": [
+            "${HOME}/rfm",
+            "${PROCEDURALS_PATH}",
+            "${SHADERS_PATH}",
+            "${RFMTREE}/lib/${RFM_MAYA_VERSION}",
+            "@"
+        ]
+    },
+    "tractor_cfg": {
+        "engine": "tractor-engine",
+        "port": 80,
+        "user": ""
+    },
+    "user tokens": [],
+    "$schema": "./rfmSchema.json",
+    "woffs": [
+        "R90007"
+    ],
+    "lpe": {
+        "lobe ids": {
+            "specular8": "Glass",
+            "user6": "DiffuseNormal,HairTangent,SubsurfaceNormal,SpecularNormal,RoughSpecularNormal,SingleScatterNormal,FuzzNormal,IridescenceNormal,GlassNormal",
+            "user4": "UserColor",
+            "user5": "",
+            "user2": "Albedo,DiffuseAlbedo,SubsurfaceAlbedo,HairAlbedo",
+            "user3": "Position",
+            "user8": "",
+            "user7": "",
+            "specular2": "Specular,HairSpecularR",
+            "specular3": "RoughSpecular,HairSpecularTRT",
+            "specular4": "Clearcoat",
+            "specular5": "Iridescence",
+            "specular6": "Fuzz,HairSpecularGLINTS",
+            "specular7": "SingleScatter,HairSpecularTT",
+            "user10": "",
+            "user11": "",
+            "user12": "",
+            "diffuse2": "Diffuse,HairDiffuse",
+            "diffuse3": "Subsurface",
+            "user9": ""
+        }
+    },
+    "resources": {
+        "core": {
+            "icons": "${RFMTREE}/icons",
+            "nodes": {
+                "node_exclusion_list": [
+                    "PxrHair",
+                    "PxrLMDiffuse",
+                    "PxrLMGlass",
+                    "PxrLMMetal",
+                    "PxrLMPlastic",
+                    "PxrLMSubsurface",
+                    "PxrSkin",
+                    "PxrUPBP",
+                    "PxrValidateBxdf",
+                    "PxrDebugShadingContext"
+                ],
+                "search_paths": [
+                    "${RMANTREE}/lib/plugins/Args",
+                    "${RMANTREE}/lib/shaders",
+                    "${RFMTREE}/lib/plugins/Args",
+                    "${RFMTREE}/nodes",
+                    "${RFMTREE}/test_files",
+                ]
+            },
+            "scripts": [
+                "${RFMTREE}/scripts",
+                "${PYTHONPATH}"
+            ],
+            "adapters": [
+                "$RFMTREE/adapters"
+            ],
+            "plugins": [
+                "${RFMTREE}/plugins"
+            ]
+        },
+        "user": {
+            "nodes": {
+                "search_paths": [
+                    "${SHADERS_PATH}"
+                ]
+            },
+            "adapters": [],
+            "icons": []
+        }
+    }
+}

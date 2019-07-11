@@ -1,0 +1,281 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "definitions": {
+        "nodes": {
+            "description": "Define which nodes will be loaded at startup.",
+            "type": "object",
+            "properties": {
+                "search_paths": {
+                    "description": "A list of search paths that contain '*.args', '*.oso' or '*.json' files.\nThe paths are recursively searched and may contain environment variables.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "node_exclusion_list": {
+                    "description": "a list of node types, eg. 'PxrDiffuse'",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "search_paths"
+            ]
+        },
+        "dirmap": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string",
+                    "enum": [
+                        "UNC",
+                        "NFS"
+                    ]
+                }
+            },
+            "required": [
+                "from",
+                "to",
+                "zone"
+            ]
+        },
+        "tractor_cfg": {
+            "type": "object",
+            "properties": {
+                "engine": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "adapters": {
+            "description": "A list directory paths containing adapter modules.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "description": "This is a validation schema for this file.\nSome editors can validate on the fly using this information.",
+            "type": "string"
+        },
+        "versions": {
+            "description": "Versions used by the RenderMan for Maya",
+            "type": "object",
+            "properties": {
+                "rfm": {
+                    "description": "Version string for RenderMan for Maya.",
+                    "type": "string"
+                },
+                "rman": {
+                    "description": "Version string for RenderMan Pro Server.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "rfm",
+                "rman"
+            ]
+        },
+        "maya compatibility": {
+            "type": "array",
+            "description": "Maya versions supported by this plugin.\nYou can specify one or more versions.",
+            "items": {
+                "type": "integer"
+            },
+            "minItems": 1
+        },
+        "woffs": {
+            "type": "array",
+            "description": "A list of Xcpt codes that will be removed from logging.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "user tokens": {
+            "type": "array",
+            "description": "A list of dicts containing a token name and a value.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "paths": {
+            "type": "object",
+            "properties": {
+                "RMANTREE": {
+                    "description": "Full path to the RenderManProServer directory.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "RFMTREE": {
+                    "description": "Full path to the RenderManForMaya directory.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "RFM_SITE_PATH": {
+                    "description": "Full path to a site-wide configuration directory.\n(optional)",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "RFM_SHOW_PATH": {
+                    "description": "Full path to a show-specific configuration directory.\n(optional)",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "RMANTREE"
+            ],
+            "additionalProperties": false
+        },
+        "rman search paths": {
+            "type": "object",
+            "properties": {
+                "procedural": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "rixplugin": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "shader": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "texture": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "resources": {
+            "type": "object",
+            "properties": {
+                "core": {
+                    "type": "object",
+                    "properties": {
+                        "plugins": {
+                            "type": "string"
+                        },
+                        "scripts": {
+                            "type": "string"
+                        },
+                        "icons": {
+                            "type": "string"
+                        },
+                        "adapters": {
+                            "$ref": "#/definitions/adapters"
+                        },
+                        "nodes": {
+                            "$ref": "#/definitions/nodes"
+                        }
+                    },
+                    "required": [
+                        "plugins",
+                        "scripts",
+                        "icons",
+                        "adapters",
+                        "nodes"
+                    ]
+                },
+                "user": {
+                    "type": "object",
+                    "properties": {
+                        "icons": {
+                            "description": "A path or list of paths to icon directories.",
+                            "type": [
+                                "string",
+                                "array"
+                            ],
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "nodes": {
+                            "$ref": "#/definitions/nodes"
+                        },
+                        "adapters": {
+                            "$ref": "#/definitions/adapters"
+                        },
+                        "viewport": {
+                            "type":"array",
+                            "items": {
+                                "type":"string"
+                            }
+                        }
+                    }
+                }
+            },
+            "required": [
+                "core"
+            ]
+        },
+        "dirmaps": {
+            "type": "object",
+            "patternProperties": {
+                "[A-Za-z0-9_-]+": {
+                    "$ref": "#/definitions/dirmap"
+                }
+            }
+        },
+        "lpe": {
+            "type": "object",
+            "properties": {
+                "lobe ids": {
+                    "type": "object",
+                    "description": "Mapping from lobe index to named events."
+                }
+            }
+        }
+    },
+    "required": [
+        "versions",
+        "maya compatibility",
+        "paths",
+        "rman search paths",
+        "resources",
+        "lpe"
+    ],
+    "additionalProperties": false
+}

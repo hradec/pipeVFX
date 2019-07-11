@@ -3,7 +3,7 @@ import pipe, os
 
 src = [
     'AtomoAOV.cpp',
-    'AtomoOcc.cpp',
+    # 'AtomoOcc.cpp',
 #    'AtomoOcclusion.cpp',
 ]
 
@@ -12,19 +12,22 @@ def versionSort(versions):
         v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
         return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
     tmp =  sorted( versions, key=method, reverse=True )
-    # print tmp
+    tmp = [ x for x in tmp if float('.'.join(x.split('.')[0:2])) > 20.0 ]
+    print tmp
     return tmp
 
 prman = pipe.apps.prman()
 
-for pv in versionSort(prman.versionList())[:2]:
+# only build for renderman 20 and up
+for pv in versionSort(prman.versionList()):
     env = Environment()
     pipe.apps.version.set(prman = pv)
 
     env['SHLIBPREFIX']  = ''
-    env['CC']           = 'g++'
+    env['CC']           = pipe.libs.python().path('../../gcc/4.8.3/bin/g++')
+    env['CXX']           = pipe.libs.python().path('../../gcc/4.8.3/bin/g++')
     env['LD']           = '$(CC) -shared'
-    env['CCFLAGS']      = '-Wno-deprecated -fPIC -I%s' % pipe.apps.prman().path('RenderManProServer-%s/include' % pv)
+    env['CCFLAGS']      = '-Wno-deprecated -std=c++11 -fPIC -I%s' % pipe.apps.prman().path('RenderManProServer-%s/include' % pv)
     env['CCFLAGS']     += ' -I%s' % pipe.apps.prman().path('RenderManProServer-%s/lib/examples/RIS/plugins/bxdf/' % pv)
 
     for s in src:

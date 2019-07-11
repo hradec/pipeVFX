@@ -1,0 +1,455 @@
+{
+    "$schema": "./menuSchema.json",
+    "items": {
+        "rmanMenuIPRRender": {
+            "label": "IPR Render",
+            "help": "Start an interactive session",
+            "icon": "rm22_IPR.png",
+            "command": "setCurrentRenderer(\"renderman\");rmanIprStartCmd()",
+            "commandType": "mel"
+        },
+        "rmanMenuSep0": {
+            "divider": true
+        },
+        "rmanMenuRender": {
+            "label": "Preview Render",
+            "help": "Render a preview image",
+            "icon": "rm22_render.svg",
+            "needLicense": true,
+            "command": "setCurrentRenderer(\"renderman\");rmanPreviewStartCmd()",
+            "commandType": "mel"
+        },
+        "rmanMenuBatchPreviewRender": {
+            "label": "Batch Preview Render",
+            "help": "Batch render a preview image",
+            "icon": "rm22_render.svg",
+            "needLicense": true,
+            "command": "import rfm2.spool.rfm_tractor;rfm2.spool.rfm_tractor.batch_preview()",
+            "commandType": "python"
+        },
+        "rmanMenuSep1": {
+            "divider": true
+        },
+        "rmanMenuBatchRender": {
+            "label": "Batch Render",
+            "help": "Render in the background",
+            "icon": "rm22_batch.svg",
+            "command": "setCurrentRenderer(\"renderman\");rmanBatchStartCmd()",
+            "commandType": "mel"
+        },
+        "rmanMenuBakeRender": {
+            "label": "Bake Render",
+            "help": "Output Baking Data",
+            "icon": "rm22_bake.svg",
+            "command": "setCurrentRenderer(\"renderman\");rmanBakeStartCmd()",
+            "commandType": "mel"
+        },
+        "rmanMenuSep2": {
+            "divider": true
+        },
+        "rmanMenuOpenGlobals": {
+            "label": "Render Settings",
+            "help": "Open RenderMan Settings",
+            "icon": "rvRenderGlobals.png",
+            "command": "setCurrentRenderer(\"renderman\");unifiedRenderGlobalsWindow()",
+            "commandType": "mel"
+        },
+        "rmanMenuOpenPrefs": {
+            "label": "Preferences",
+            "help": "Open RenderMan Preferences",
+            "command": "setCurrentRenderer(\"renderman\");rfmOpenPrefs()",
+            "commandType": "mel",
+            "icon": "rm22_prefs.svg"
+        },
+        "rmanMenuSep3": {
+            "divider": true
+        },
+        "rmanMenuTools": {
+            "label": "Tools",
+            "subMenu": {
+                "subItems": {
+                    "rmanMenuToolsIt": {
+                        "label": "'it'",
+                        "help": "Open the Image Tool",
+                        "command": "import rfm2.render; rfm2.render.show_it()",
+                        "commandType": "python",
+                        "icon": "rm22_it.svg"
+                    },
+                    "rmanMenuToolsLocalQueue": {
+                        "label": "LocalQueue",
+                        "help": "Open LocalQueue",
+                        "command": "import rfm2.render; rfm2.render.show_localqueue()",
+                        "commandType": "python",
+                        "icon": "rm22_localqueue.svg"
+                    },
+                    "rmanMenuToolsPresetBrowser": {
+                        "label": "Preset Browser",
+                        "help": "Open Preset Browser",
+                        "command": "import rfm2.ui.assets_browser; rfm2.ui.assets_browser.show_preset_browser()",
+                        "commandType": "python",
+                        "icon": "rm22_presetBrowser.svg"
+                    },
+                    "rmanMenuToolsTxMake": {
+                        "label": "Texture Manager",
+                        "help": "Open Texture Manager",
+                        "command": "import rfm2.txmanager_maya; rfm2.txmanager_maya.show()",
+                        "commandType": "python",
+                        "icon": "rm22_txmake.svg"
+                    },
+                    "rmanMenuToolsRlfEditor": {
+                        "label": "Dynamic Rules Editor",
+                        "help": "Open Dynamic Rules Editor",
+                        "command": "import rfm2.ui.rlf_editor; rfm2.ui.rlf_editor.show()",
+                        "commandType": "python",
+                        "icon": "rm22_DynamicRulesEditor.svg"
+                    }
+                }
+            }
+
+        },
+        "rmanArchives": {
+            "label": "Archive",
+            "subMenu": {
+                "subItems": {
+                    "rmanCreateArchive": {
+                        "label": "Import RIB Archive",
+                        "help": "Import RIB File Into Scene",
+                        "command": "import rfm2.api.nodes; rfm2.api.nodes.import_archive()",
+                        "commandType": "python"
+                    },
+                    "rmanExportActive": {
+                        "label": "Export Selected to RIB",
+                        "help": "Export Selected Objects to RIB File",
+                        "command": "optionVar -sv \"defaultFileExportActiveType\" \"RIB\";ExportSelection;",
+                        "optionCommand": "ExportSelectionOptions();setCurrentFileTypeOption \"\" \"\" \"RIB\";",
+                        "commandType": "mel"
+                    },
+                    "rmanExportAll": {
+                        "label": "Export All to RIB",
+                        "help": "Export Scene to RIB File",
+                        "command": "optionVar -sv \"defaultFileExportAllType\" \"RIB\";Export;",
+                        "optionCommand": "ExportOptions();setCurrentFileTypeOption \"\" \"\" \"RIB\";",
+                        "commandType": "mel"
+                    },
+                    "rmanExportDiv": {
+                        "divider": true
+                    },
+                    "rmanExportSelGpuCache": {
+                        "label": "Export Selected to GPU cache",
+                        "help": "Export Selected Objects to Alembic File",
+                        "command": "rfm2.utils.abc_support.export(True, True)",
+                        "icon": "rm22_alembic_gpu.svg",
+                        "commandType": "python"
+                    },
+                    "rmanExportSceneGpuCache": {
+                        "label": "Export Scene to GPU cache",
+                        "help": "Export Scene to Alembic File",
+                        "command": "rfm2.utils.abc_support.export(True, False)",
+                        "icon": "rm22_alembic_gpu.svg",
+                        "commandType": "python"
+                    },
+                    "rmanExportSelAlembic": {
+                        "label": "Export Selected to Imported/Referenced cache",
+                        "help": "Export Selected Objects to Reference File",
+                        "command": "rfm2.utils.abc_support.export(False, True)",
+                        "icon": "rm22_alembic.svg",
+                        "commandType": "python"
+                    },
+                    "rmanExportSceneAlembic": {
+                        "label": "Export Scene to Imported/Referenced cache",
+                        "help": "Export Scene to Reference File",
+                        "command": "rfm2.utils.abc_support.export(False, False)",
+                        "icon": "rm22_alembic.svg",
+                        "commandType": "python"
+                    },
+                    "rmanExportDiv2": {
+                        "divider": true
+                    },
+                    "rmanReferencePose": {
+                        "label": "Alembic Reference Pose",
+                        "subMenu": {
+                            "subItems": {
+                                "rmanAddPref": {
+                                    "label": "Freeze positions ( __Pref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.freeze_points(for_alembic=True)",
+                                    "commandType": "python"
+                                },
+                                "rmanAddNref": {
+                                    "label": "Freeze normals ( __Nref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.freeze_normals(for_alembic=True)",
+                                    "commandType": "python"
+                                },
+                                "rmanAddWPref": {
+                                    "label": "Freeze world-space positions ( __WPref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.freeze_world_points(for_alembic=True)",
+                                    "commandType": "python"
+                                },
+                                "rmanAddWNref": {
+                                    "label": "Freeze world-space normals ( __WNref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.freeze_world_normals(for_alembic=True)",
+                                    "commandType": "python"
+                                },
+                                "rfmAbcRefDivider1": {
+                                    "divider": true
+                                },
+                                "rmanDelPref": {
+                                    "label": "Remove frozen positions ( __Pref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('__Pref')",
+                                    "commandType": "python"
+                                },
+                                "rmanDelNref": {
+                                    "label": "Remove frozen normals ( __Nref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('__Nref')",
+                                    "commandType": "python"
+                                },
+                                "rmanDelWPref": {
+                                    "label": "Remove frozen world-space positions ( __WPref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('__WPref')",
+                                    "commandType": "python"
+                                },
+                                "rmanDelWNref": {
+                                    "label": "Remove frozen world-space normals ( __WNref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('__WNref')",
+                                    "commandType": "python"
+                                },
+                                "rmanDelAny": {
+                                    "label": "Remove all reference primvars",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.delete_primvar('<any>')",
+                                    "commandType": "python"
+                                },
+                                "rfmAbcRefDivider2": {
+                                    "divider": true
+                                },
+                                "rmanSelPref": {
+                                    "label": "Select objects with frozen positions ( __Pref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('__Pref')",
+                                    "commandType": "python"
+                                },
+                                "rmanSelNref": {
+                                    "label": "Select objects with frozen normals ( __Nref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('__Nref')",
+                                    "commandType": "python"
+                                },
+                                "rmanSelWPref": {
+                                    "label": "Select objects with world-space positions ( __WPref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('__WPref')",
+                                    "commandType": "python"
+                                },
+                                "rmanSelWNref": {
+                                    "label": "Select objects with frozen world-space normals ( __WNref )",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('__WNref')",
+                                    "commandType": "python"
+                                },
+                                "rmanSelAny": {
+                                    "label": "Select objects with any reference primvars",
+                                    "command": "import rfm2.utils.primvars; rfm2.utils.primvars.select_by_primvar('<any>')",
+                                    "commandType": "python"
+                                }
+                            }
+                        }
+                    },
+                    "rmanExportDiv3": {
+                        "divider": true
+                    },
+                    "rmanCreateProcedural": {
+                        "label": "Create Procedural Node",
+                        "help": "Import an arbitrary RenderMan procedural",
+                        "command": "import rfm2.api.nodes; rfm2.api.nodes.create_node('', 'RenderManProcedural')",
+                        "commandType": "python"
+                    },
+                    "rmanCreateRunProgram": {
+                        "label": "Create Run Program Node",
+                        "help": "Run a program that generates RIB",
+                        "command": "import rfm2.api.nodes; rfm2.api.nodes.create_node('', 'RenderManProgram')",
+                        "commandType": "python"
+                    }
+                }
+            }
+        },
+        "rmanDiagnose": {
+            "label": "Diagnose",
+            "subMenu": {
+                "subItems": {
+                    "rmanViewStatistics": {
+                        "label": "View Statistics",
+                        "help": "View statistics for last render",
+                        "command": "import rfm2.api.ui_helpers; rfm2.api.ui_helpers.view_statistics()",
+                        "icon": "rm22_viewStatistics.svg"
+                    },
+                    "rmanViewRIB": {
+                        "label": "View RIB",
+                        "help": "View RIB for the current frame",
+                        "command": "import rfm2.api.ui_helpers; rfm2.api.ui_helpers.view_rib()",
+                        "icon": "rm22_rib_small.svg"
+                    },
+                    "rmanViewRIBForSelection": {
+                        "label": "View RIB For Selection",
+                        "help": "View RIB for the current selection",
+                        "command": "import rfm2.api.ui_helpers; rfm2.api.ui_helpers.view_rib_for_selection()",
+                        "icon": "rm22_rib_small.svg"
+                    },
+                    "rmanDiagnoseMenuSep": {
+                        "divider": true
+                    },
+                    "rmanConsoleLog": {
+                        "label": "Script Editor Logging Level",
+                        "help": "Modify rfm's logging level in the script editor",
+                        "subMenu": {
+                            "subItems": {
+                                "maya_debug": {
+                                    "label": "debug",
+                                    "command": "import logging, rfm2; rfm2.set_console_log_level(logging.DEBUG)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "consoleLevelGrp",
+                                    "radioSelectedCommand": "rfm2.console_log_level() == rfm2.DEBUG"
+                                },
+                                "maya_verbose": {
+                                    "label": "verbose",
+                                    "command": "import logging, rfm2; rfm2.set_console_log_level(rfm2.VERBOSE)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "consoleLevelGrp",
+                                    "radioSelectedCommand": "rfm2.console_log_level() == rfm2.VERBOSE"
+                                },
+                                "maya_info": {
+                                    "label": "info",
+                                    "command": "import logging, rfm2; rfm2.set_console_log_level(logging.INFO)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "consoleLevelGrp",
+                                    "radioSelectedCommand": "rfm2.console_log_level() == rfm2.INFO"
+                                }
+                            }
+                        }
+                    },
+                    "rmanDiskLog": {
+                        "label": "Disk Logging Level",
+                        "help": "Modify rfm's logging to disk level",
+                        "subMenu": {
+                            "subItems": {
+                                "log_debug": {
+                                    "label": "debug",
+                                    "command": "rfm2.set_disk_log_level(rfm2.DEBUG)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "diskLevelGrp",
+                                    "radioSelectedCommand": "rfm2.disk_log_level() == rfm2.DEBUG"
+                                },
+                                "log_verbose": {
+                                    "label": "verbose",
+                                    "command": "rfm2.set_disk_log_level(rfm2.VERBOSE)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "diskLevelGrp",
+                                    "radioSelectedCommand": "rfm2.disk_log_level() == rfm2.VERBOSE"
+                                },
+                                "log_info": {
+                                    "label": "info",
+                                    "command": "rfm2.set_disk_log_level(rfm2.INFO)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "diskLevelGrp",
+                                    "radioSelectedCommand": "rfm2.disk_log_level() == rfm2.INFO"
+                                },
+                                "log_warning": {
+                                    "label": "warning",
+                                    "command": "rfm2.set_disk_log_level(rfm2.WARNING)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "diskLevelGrp",
+                                    "radioSelectedCommand": "rfm2.disk_log_level() == rfm2.WARNING"
+                                },
+                                "log_error": {
+                                    "label": "error",
+                                    "command": "rfm2.set_disk_log_level(rfm2.ERROR)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "diskLevelGrp",
+                                    "radioSelectedCommand": "rfm2.disk_log_level() == rfm2.ERROR"
+                                },
+                                "log_critical": {
+                                    "label": "critical",
+                                    "command": "rfm2.set_disk_log_level(rfm2.CRITICAL)",
+                                    "commandType": "python",
+                                    "radioButtonGrp": "diskLevelGrp",
+                                    "radioSelectedCommand": "rfm2.disk_log_level() == rfm2.CRITICAL"
+                                }
+                            }
+                        }
+                    },
+                    "rmanDiagnoseMenuSep2": {
+                        "divider": true
+                    },
+                    "rmanRefreshAE":{
+                        "label": "Force Attribute Editor Refresh",
+                        "help": "Rebuild the Attribute Editor in case something went wrong.",
+                        "command": "refreshEditorTemplates",
+                        "commandType": "mel"
+                    }
+                }
+            }
+        },
+        "rmanUtilities": {
+            "label": "Utilities",
+            "subMenu": {
+                "subItems": {
+                    "rmanUpdateGlobalsPresets": {
+                        "label": "Update Render Globals presets",
+                        "help": "Update the preset files that were created when the plugin was first loaded",
+                        "command": "import rfm2.ui.globals; rfm2.ui.globals.create_presets(force_update=True)"
+                    },
+                    "rmanConvertToLayer": {
+                        "label": "Convert to PxrLayerSurface",
+                        "help": "Convert the currently selected PxrSurface shader(s) to PxrLayerSurface",
+                        "command": "import rfm2.utils.convert_layered; rfm2.utils.convert_layered.convert_to_layered_pxrsurface() "
+                    },
+                    "rmanConvert21Scene": {
+                        "label": "Migrate 21.x scene to 22",
+                        "help": "Update an older 21.x scene",
+                        "command": "import rfm2.utils.scene_updater; rfm2.utils.scene_updater.update_scene()"
+                    }
+                }
+            }
+        },
+        "rmanLicense": {
+            "label": "License",
+            "subMenu": {
+                "subItems": {
+                    "rmanLicenseInit": {
+                        "label": "Retry License",
+                        "command": "rman licenseInit",
+                        "commandType": "mel"
+                    },
+                    "rmanLicenseApp": {
+                        "label": "License App...",
+                        "command": "import rfm2.render; rfm2.render.show_licenseapp()",
+                        "commandType": "python"
+                    }
+                }
+            }
+        },
+        "rmanMenuSep4": {
+            "divider": true
+        },
+        "rmanHelp": {
+            "label": "Help",
+            "subMenu": {
+                "subItems": {
+                    "rmanHelpDocs": {
+                        "label": "RenderMan Docs",
+                        "command": "showHelp -a \"https://rmanwiki.pixar.com\"",
+                        "commandType": "mel"
+                    },
+                    "rmanHelpForums": {
+                        "label": "RenderMan Forums",
+                        "command": "showHelp -a \"https://renderman.pixar.com/forum\"",
+                        "commandType": "mel"
+                    },
+                    "rmanHelpAnswers": {
+                        "label": "RenderMan Answers",
+                        "command": "showHelp -a \"https://renderman.pixar.com/answers/index.html\"",
+                        "commandType": "mel"
+                    }
+                }
+            }
+        },
+        "rmanMenuAbout": {
+            "label": "About",
+            "icon": "rman_about.png",
+            "command": "import rfm2.ui.about; rfm2.ui.about.show_dialog()"
+        }
+    }
+}

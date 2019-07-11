@@ -1,0 +1,90 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "Validation schema file."
+        },
+        "items": {
+            "type": "object",
+            "description": "Menu item objects. Names must be unique.",
+            "patternProperties": {
+                "^rmanMenu": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "label": {
+                            "type": "string",
+                            "description": "Text of the menu item."
+                        },
+                        "help": {
+                            "type": "string",
+                            "description": "help text"
+                        },
+                        "icon": {
+                            "type": "string",
+                            "description": "The menu item's icon name."
+                        },
+                        "command": {
+                            "type": "string",
+                            "description": "A mel or python command"
+                        },
+                        "commandType": {
+                            "type": "string",
+                            "description": "the language used by this item's command AND optionCommand.",
+                            "enum": [
+                                "mel",
+                                "python"
+                            ]
+                        },
+                        "optionCommand": {
+                            "type": "string",
+                            "description": "command triggered by the menu's option box."
+                        },
+                        "optionImage": {
+                            "type": "string",
+                            "description": "Icon associated with the menu's option box."
+                        },
+                        "needLicense": {
+                            "type": "boolean",
+                            "description": "items that need a license will be greyed-out if the license is not available."
+                        },
+                        "divider": {
+                            "type": "boolean",
+                            "description": "A menu divider. Value is ignored."
+                        },
+                        "radioButtonGrp": {
+                            "type": "string",
+                            "description": "A unique identifier for that group of radio menu items. If missing, the items will not be a radio menu item."
+                        },
+                        "radioSelectedCommand": {
+                            "type": "string",
+                            "description": "Python expression evaluating to True/False to set the state of radio menu items"
+                        },
+                        "subMenu": {
+                            "type": "object",
+                            "properties": {
+                                "postMenuCommand": {
+                                    "type": "string",
+                                    "description": "a command to populate the sub-menu."
+                                },
+                                "postMenuCommandType": {
+                                    "type": "string",
+                                    "description": "The command's language.",
+                                    "enum": [
+                                        "mel",
+                                        "python"
+                                    ]
+                                },
+                                "subItems": {
+                                    "$ref": "#/properties/items"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
