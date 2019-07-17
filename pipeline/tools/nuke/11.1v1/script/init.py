@@ -115,8 +115,6 @@ try:
     nuke.pluginAddPath('icons')
     nuke.pluginAddPath('plugin_libs')
 
-    # keentools
-    nuke.pluginAddPath('keentools/manual/KeenTools/')
 except:
     pass
 

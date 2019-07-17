@@ -76,6 +76,9 @@ class nuke(baseApp):
         if 'PIPE_NUKE_GENARTS' not in os.environ or os.environ['PIPE_NUKE_GENARTS']=='1':
             self.update( genarts_monsters_gt_ofx() )
 
+        self.update( keentools() )
+
+
         # rvNuke plugin needs this to find rv wrapper!
         self.update( rv() )
         self['RV_PATH'] = '%s/scripts/rv' % roots.tools()
