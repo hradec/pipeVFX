@@ -128,8 +128,8 @@ class environ(dict):
         #         if os.path.exists(expandvars(each)):
         #             tmp[each] = 1
         #     dict.__setitem__( self, VAR, tmp.keys() )
-
-        for each in self.keys():
+        keys = []+list(self.keys())
+        for each in keys:
             l = self[each]
             if not l:
                 del self[each]
@@ -157,7 +157,7 @@ class environ(dict):
                     os.environ[each] = os.environ[each].strip(os.pathsep)
 
 
-        keys = self.keys()
+        keys = list(self.keys())
         keys.sort()
         log.debug( bcolors.WARNING+"="*200 )
         for each in keys:

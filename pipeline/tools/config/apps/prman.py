@@ -37,8 +37,10 @@ class prman(baseApp):
 
         mayaPluginName = 'RenderManForMaya'
 
+        self.ignorePipeLib( "freetype" )
+
         folders=[]
-        rmantree = self.path('RenderManProServer-$PRMAN_VERSION')
+        rmantree = self.path('RenderManProServer-%s' % self.version())
         self['RMANTREE'] = rmantree
         self['LD_LIBRARY_PATH'] = "%s/lib" % rmantree
 
@@ -63,7 +65,11 @@ class prman(baseApp):
                 self['LD_PRELOAD'] = pipe.libs.python().LD_PRELOAD()
 
         # setup main renderman env vars!
-        rmstree = self.path('%s-$PRMAN_VERSION-maya$MAYA_VERSION' % self.RMAN_MAYA_NAME())
+        maya_folder = '%s-%s-maya%s' % (self.RMAN_MAYA_NAME(), self.version(), maya().version())
+        if os.path.exists(self.path(maya_folder)):
+            rmstree = self.path(maya_folder)
+        else:
+            rmstree = self.path("RenderManForMaya-%s" % self.version())
         if self.parent() not in ['houdini']:
             folders.append(rmstree)
             self['RMSTREE']  = rmstree
@@ -156,6 +162,15 @@ class prman(baseApp):
                 ]
             )
 
+        # prman 22
+        self['RFM_SITE_PATH'] = '%s/prman/%s'   % (pipe.roots().tools(), self.version())
+        self['RFMTREE']  = self['RMSTREE']
+
+        job_tools = [x for x in self.toolsPaths() if 'jobs' in x]
+        if job_tools:
+            job_tools.sort()
+            self['RFM_SHOW_PATH'] = '%s/prman/%s'   % (job_tools[0], self.version())
+
 
         # add houdini setup to use prman
         # http://archive.sidefx.com/docs/houdini15.0/render/renderman
@@ -188,8 +203,8 @@ class prman(baseApp):
         caller['DL_SHADERS_PATH'] = shader
         caller['DL_DISPLAYS_PATH'] = display
         # prman 22
-        caller['RFM_SITE_PATH'] =  config
-        caller['RFM_SHOW_PATH'] =  config
+        # caller['RFM_SITE_PATH'] =  config
+        # caller['RFM_SHOW_PATH'] =  config
         # prman 22.2
         caller['RFM_PLUGINS_PATH'] =  config
 

@@ -31,7 +31,7 @@ os.environ['GCC_VERSION'] = 'gcc-multi' if 'centos' not in dist()[0] else 'gcc-'
 # ===================================================================
 pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
 pipe.version.set( maya      = '2018' )
-#pipe.version.set( maya      = '2016.5' )
+# pipe.version.set( maya      = '2016.5' )
 pipe.version.set( nuke      = '9.0v9' )
 pipe.version.set( nuke      = '11.1v1' )
 pipe.version.set( houdini   = 'hfs15.5.480' )
@@ -41,7 +41,7 @@ pipe.version.set( mari      = '2.0v1' )
 pipe.version.set( xpra      = '0.15.svn9672' )
 pipe.version.set( arnold    = '5.1.0.1' )
 pipe.version.set( realflow  = '10.1' )
-pipe.version.set( prman     = '22.1' )
+pipe.version.set( prman     = '22.5' )
 pipe.version.set( unreal    = '4.22.0.opengl' )
 
 
@@ -52,8 +52,8 @@ if float(pipe.version.get('maya')) <= 2014:
     pipe.version.set( prman     = '20.11' )
 
 # maximum versions for maya 2016.5
-if float(pipe.version.get('maya')) <= 2017:
-    pipe.version.set( prman     = '21.5' )
+# if float(pipe.version.get('maya')) <= 2017:
+#     pipe.version.set( prman     = '21.5' )
 
 
 # set global library versions

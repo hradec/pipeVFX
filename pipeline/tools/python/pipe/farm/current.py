@@ -20,7 +20,9 @@
 
 
 
-import sys, os, engines
+import sys, os
+sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
+import engines
 
 if 'PIPE_FARM_ENGINE' in os.environ:
     if 'afanasy' in os.environ['PIPE_FARM_ENGINE'].lower().strip():

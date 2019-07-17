@@ -18,6 +18,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 import sys, os
+sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
 
 import afanasy as afanasy
 import qube as qube

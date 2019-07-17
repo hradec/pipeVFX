@@ -121,7 +121,7 @@ class sudo():
                     #     os.remove(file)
                     # if os.path.exists("%s_log" % file):
                     #     os.remove("%s_log" % file)
-                    print "\n\t".join(traceback.format_exc().split('\n'))
+                    print ( "\n\t".join(traceback.format_exc().split('\n')) )
                     raise Exception("[PARSER ERROR]: The process was killed!! If runing in the farm, this is probably an job eject/stop/restart, BUT it can be a CRASH of a running render!")
 
                 # Set the signal handler and a 5-second alarm

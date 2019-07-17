@@ -1,9 +1,9 @@
 {
     "paths": {
-        "RMANTREE": "${RMANTREE}",
-        "RFM_SITE_PATH": "${RFM_SITE_PATH}",
-        "RFM_SHOW_PATH": "${RFM_SHOW_PATH}",
-        "RFMTREE": "${RFMTREE}"
+        "RMANTREE": null,
+        "RFM_SITE_PATH": null,
+        "RFM_SHOW_PATH": null,
+        "RFMTREE": null
     },
     "maya compatibility": [
         2017,
@@ -24,15 +24,15 @@
     "rman search paths": {
         "shader": [
             "${HOME}/rfm",
-            "${SHADERS_PATH}",
-            "${RMS_SHADER_PATH}",
+            "${RFM_SHOW_PATH}",
+            "${RFM_SITE_PATH}", 
             "${RMANTREE}/lib/shaders",
             "@"
         ],
         "rixplugin": [
             "${HOME}/rfm",
-            "${SHADERS_PATH}",
-            "${RMS_SHADER_PATH}",
+            "${RFM_SHOW_PATH}",
+            "${RFM_SITE_PATH}",
             "${RFMTREE}/lib/plugins",
             "@"
         ],
@@ -41,8 +41,8 @@
         ],
         "procedural": [
             "${HOME}/rfm",
-            "${PROCEDURALS_PATH}",
-            "${SHADERS_PATH}",
+            "${RFM_SHOW_PATH}",
+            "${RFM_SITE_PATH}",
             "${RFMTREE}/lib/${RFM_MAYA_VERSION}",
             "@"
         ]
@@ -102,25 +102,18 @@
                     "${RMANTREE}/lib/shaders",
                     "${RFMTREE}/lib/plugins/Args",
                     "${RFMTREE}/nodes",
-                    "${RFMTREE}/test_files",
+                    "${RFMTREE}/test_files"
                 ]
             },
-            "scripts": [
-                "${RFMTREE}/scripts",
-                "${PYTHONPATH}"
-            ],
+            "scripts": "${RFMTREE}/scripts",
             "adapters": [
                 "$RFMTREE/adapters"
             ],
-            "plugins": [
-                "${RFMTREE}/plugins"
-            ]
+            "plugins": "${RFMTREE}/plugins"
         },
         "user": {
             "nodes": {
-                "search_paths": [
-                    "${SHADERS_PATH}"
-                ]
+                "search_paths": []
             },
             "adapters": [],
             "icons": []

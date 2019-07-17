@@ -1,0 +1,10 @@
+[Unit]
+Description=sshuttle service a permanent tunnel
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/sshuttle -r root@atomo.hradec.com:22003 --no-latency-control --disable-ipv6 -H --dns -v 192.168.0.0/24
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

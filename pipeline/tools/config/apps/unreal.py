@@ -108,7 +108,7 @@ class unreal(baseApp):
             for each in folders:
                 projectName = "%s/%s.uproject" % ( each, os.path.basename( each ) )
                 if not os.path.exists( projectName ):
-                    print "Creating missing project: ",projectName
+                    # print "Creating missing project: ",projectName
                     f = open(projectName,'w')
                     f.write('''
                     {
