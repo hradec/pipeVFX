@@ -25,6 +25,9 @@ import maya
 import maya.cmds as m
 from maya.mel import eval as meval
 
+# fix the F key, just in case!
+meval('optionVar  -fv "defaultFitFactor" 0.99')
+
 import pipe, os
 import traceback
 from time import time
