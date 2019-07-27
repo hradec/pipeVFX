@@ -1318,7 +1318,10 @@ class baseApp(_environ):
 
         # run preRun if it exists - returns the cmd to run!
         if hasattr( self, 'preRun'):
-            cmd = self.preRun(cmd)
+            _cmd = self.preRun(cmd)
+            if _cmd:
+                cmd = _cmd
+
 
         log.debug(cmd)
 
