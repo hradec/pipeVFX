@@ -45,7 +45,7 @@ class python(baseLib):
 
 
         # set PYTHONHOME for some apps...
-        if self.parent() in ['python','delight','houdini','cortex', 'qube']:
+        if self.parent() in ['python','delight','houdini','cortex', 'qube', 'cmake']:
             self['PYTHONHOME'] = self.path()
 
         if self.parent() in ['python','cortex','gaffer']:
