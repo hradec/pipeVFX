@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -35,7 +35,12 @@ def devInstall(plat=platform, distro=None):
 
 
 def gcc():
-    return "%s/gcc/bin" % install()
+    import os, pipe
+    bin = "%s/gcc/bin" % install()
+    if not os.path.exists(bin):
+        bin = "%s/gcc/%s/bin" % ( install(), pipe.libs.version.get("gcc") )
+    return bin
+
 
 def env():
     ''' return the PATH to add our custom gcc, so when we build something, it will use pipes gcc'''
@@ -43,4 +48,3 @@ def env():
         export PATH=%s:$PATH
         export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/  ## we need this to make our gcc work in debian/ubuntu systems!
     ''' % (gcc())
-
