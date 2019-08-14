@@ -6,7 +6,7 @@ project="orbital-ego-170117"
 cpus=64
 num=001
 
-gcloud config set project $project
+#gcloud config set project $project 2>&1 > /dev/null
 
 export SERVER="10.128.0.3"
 export EDIT_MODE=ro
@@ -15,6 +15,10 @@ export CACHE_PREFIX=""
 export __CLOUDSDK_COMPUTE_ZONE=$CLOUDSDK_COMPUTE_ZONE
 for i in "$@" ; do
 case $i in
+    --branch)
+	    export BRANCH="-branch-$(git branch | grep '*' | awk '{print $(NF)}')"
+        # export SERVER="10.142.0.2"
+    ;;
     --zone=*|-z=*)
 	    export CLOUDSDK_COMPUTE_ZONE="${i#*=}"
         # export SERVER="10.142.0.2"
@@ -24,6 +28,7 @@ case $i in
     ;;
     --suffix=*|-s=*)
 	    export SUFFIX="${i#*=}"
+        export SUFFIX="-branch-$SUFFIX"
     ;;
     --serverip=*|-ip=*)
 	    export SERVER="${i#*=}"
@@ -38,10 +43,10 @@ esac
 done
 if [ "$(echo $CLOUDSDK_COMPUTE_ZONE | grep us-east1)" != "" ] ; then
     export SERVER="10.142.0.3"
-    export SUFFIX="-us-east1"
+    # export SUFFIX="-us-east1"
 fi
 
-echo -e "CLOUDSDK_COMPUTE_ZONE=$CLOUDSDK_COMPUTE_ZONE\n\n"
+#echo -e "CLOUDSDK_COMPUTE_ZONE=$CLOUDSDK_COMPUTE_ZONE\n\n"
 #echo . $@
 
 createDiskFromSnapshot(){
@@ -72,6 +77,12 @@ __cache_list(){
 
 list(){
     __cache_list "gcloud compute --project $project  instances list $1" /tmp/.googleList.txt
+}
+list_ig(){
+    __cache_list "gcloud compute --project $project  instance-groups list $1" /tmp/.googleList_ig.txt
+}
+list_template(){
+    __cache_list "gcloud compute --project $project  instance-templates list $1" /tmp/.googleList_templates.txt
 }
 zones(){
 	__cache_list "gcloud compute zones list $1"  /tmp/.googleListZones.txt
@@ -108,12 +119,12 @@ create(){
 
     prefix="$CLOUDSDK_COMPUTE_ZONE"
 
-    minPlatform="Automatic" 
+    minPlatform="Automatic"
 	mem=32768
 	if [ $cpus -gt 32 ] ; then
         if [ $cpus -gt 64 ] ; then
 		  mem=88320
-          minPlatform="skylake" 
+          minPlatform="skylake"
         else
           mem=65536
         fi
@@ -172,7 +183,7 @@ create(){
             --preemptible --service-account "831087961927-compute@developer.gserviceaccount.com" \
     		--scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring.write","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
             --disk "name=googlefarm-001,device-name=googlefarm-001,mode=$EDIT_MODE,boot=no,auto-delete=no" \
-            --disk "name=arch-${num},device-name=arch-${num},mode=rw,boot=yes,auto-delete=no" 
+            --disk "name=arch-${num},device-name=arch-${num},mode=rw,boot=yes,auto-delete=no"
     	fi
 
     	if [ $? -ne 0 ] ; then
@@ -220,7 +231,7 @@ gserver(){
 	--disk "name=gserver-cache,device-name=gserver-cache,mode=rw,boot=no,auto-delete=no" \
 	--disk "name=zraid2,device-name=zraid2,mode=rw,boot=no,auto-delete=no" \
     --private-network-ip "$ip" \
-    --can-ip-forward 
+    --can-ip-forward
 
 
 
@@ -233,7 +244,7 @@ gserver(){
 	--disk "name=gserver-cache,device-name=gserver-cache,mode=rw,boot=no,auto-delete=no" \
 	--disk "name=zraid2,device-name=zraid2,mode=rw,boot=no,auto-delete=no" \
     --private-network-ip "$ip" \
-    --can-ip-forward 
+    --can-ip-forward
 
 #	--service-account "831087961927-compute@developer.gserviceaccount.com" \
 #	--scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring.write","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
@@ -257,19 +268,20 @@ cat > /dev/shm/serial.sh <<\EOF
         echo "serial: |$hostname|$zone|"
         export hostname
         #xterm -geometry 180x40 -bg "#222" -fg "white" -e "while true ; do gcloud beta compute --project orbital-ego-170117 connect-to-serial-port $hostname --extra-args replay-lines=2000 --zone $zone ; sleep 1; done" &
-        gcloud beta compute --project orbital-ego-170117 connect-to-serial-port $hostname --extra-args replay-lines=2000 --zone $zone 
+        gcloud compute --project orbital-ego-170117 connect-to-serial-port $hostname --extra-args replay-lines=2000 --zone $zone
     done
 EOF
 chmod a+x /dev/shm/serial.sh
 }
 serial(){
-    _serial 
+    _serial
     xterm -geometry 180x40 -bg "#222" -fg "white" -e "/dev/shm/serial.sh $1" &
     #tilix -e "/dev/shm/serial.sh $1" &
 }
 
 
 ssh(){
+    port=22000
     h="$1"
     if [ "$(let h=-5+$1+1 ; echo $h)" != "-4" ] ; then
         h=$(echo $1 | awk '{printf("%03d", $1)}')
@@ -277,16 +289,20 @@ ssh(){
         echo ""
     fi
     googlefarm.sh list
-    for each in $(googlefarm.sh list | grep "$h" | awk '{print $(NF-1)"@"$(NF)}') ; do
+    for each in $($0 list | grep "$h" | awk '{print $(NF-1)"@"$(NF)}') ; do
         export hostname=$(echo $each  | awk -F'@' '{print $(NF-1)}')
         export state=$(echo $each  | awk -F'@' '{print $(NF)}')
         echo $hostname
         echo $state
-        if [ "$hostname" != "" ] && [ "$state" == "RUNNING" ]; then 
+        if [ "$hostname" != "" ] && [ "$state" == "RUNNING" ]; then
         	#echo gcloud compute --project "$project"  connect-to-serial-port  $hostname
         	#gcloud compute --project "$project"  connect-to-serial-port  $hostname --extra-args replay-lines=800,on-dtr-low=disconnect
             #xterm -geometry 180x40 -bg "#222" -fg "white" -e 'gcloud beta compute --project "orbital-ego-170117" connect-to-serial-port "$hostname" --zone "$CLOUDSDK_COMPUTE_ZONE"' &
-            cmd="/bin/ssh  -p 22002 root@$hostname"
+            if [ "$(echo $hostname | grep gmonitor)" != "" ] ; then
+                 port=22002
+            fi
+
+            cmd="/bin/ssh  -p $port root@$hostname"
             echo $cmd
             $cmd
         else
@@ -307,7 +323,7 @@ startStopReset(){
     echo 'startStopReset'
     echo '=================================================='
     l=$(list)
-    echo -e "$l\n\n"
+    # echo -e "$l\n\n"
 	action=$1
     grep=$(echo "$l" | egrep "google.*cpus.*" |  grep "$2" | awk '{print $1}')
 	h=$2
@@ -320,10 +336,10 @@ startStopReset(){
         extra=''
     fi
     zone=$(echo "$l" | grep "$h" |  awk '{print $2}')
-    echo  "...$h....$zone..."
-	cmd="gcloud compute --project $project  instances $action  $h  $extra --zone $zone --quiet"
+    # echo  "...$h....$zone..."
+	cmd="gcloud compute --project $project  instances $action  $h  $extra --zone $zone" # --quiet"
     echo $cmd
-    $cmd > /tmp/.$h.startStopReset.log 2>&1
+    $cmd | tee /tmp/.$h.startStopReset.log 2>&1
 }
 start(){
     CACHE_PREFIX="start"
@@ -348,7 +364,7 @@ all(){
         action=$1
         # list
         export grep=$2
-        for each in $(list | egrep 'googlefarm.*cpus.*' | grep "$2"  | awk '{print $1}') ; do
+        for each in $(list | egrep 'rnode.*core.*' | grep "$2"  | awk '{print $1}') ; do
                 echo  "$0 $action $each &"
                 $0 $action $each &
                 #&& echo "[ OK ]" || echo "[ ERROR ]" &
@@ -357,20 +373,222 @@ all(){
 #       /bin/tail -f nohup.out
 }
 keepAlive(){
-        gcloud compute --project $project instances start $(gcloud compute instances list --uri --filter="name~'(google.*cpus.*)'")
+    gcloud compute --project $project instances start $(gcloud compute instances list --uri --filter="name~'(rnode.*core.*)'")
 }
-shutdown(){
-        gcloud compute --project $project  instances stop $(gcloud compute instances list --uri --filter="name~'(google.*cpus.*)'")
+shutdownAll(){
+    gcloud compute --project $project  instances stop $(gcloud compute instances list --uri --filter="name~'(rnode.*core.*)'")
 }
 resetAll(){
-	gcloud compute --project $project instances reset $(gcloud compute instances list --uri --filter="name~'(google.*cpus.*)'")
+	gcloud compute --project $project instances reset $(gcloud compute instances list --uri --filter="name~'(rnode.*core.*)'")
 }
 deleteAll(){
-	gcloud compute --project $project instances delete $(gcloud compute instances list --uri --filter="name~'(google.*cpus.*)'")
+	gcloud compute --project $project instances delete $(gcloud compute instances list --uri --filter="name~'(rnode.*core.*)'")
 }
 
 shutdownIfNoServer(){
-	[ "$($0 list | grep gserver | grep RUNNING)" == "" ] && echo googlefarm.sh shutdown
+	[ "$($0 list | egrep 'gserver|storage' | grep RUNNING)" == "" ] && echo $0 shutdownAll
+}
+
+current_zone(){
+    /bin/python2 -c "import os;x=eval(''.join(os.popen('''curl 'http://metadata.google.internal/computeMetadata/v1/instance/?recursive=true' -H 'Metadata-Flavor: Google' ''').readlines()));print x['zone'].split('/')[-1]"
+}
+
+current_hostname(){
+    echo $(curl "http://metadata.google.internal/computeMetadata/v1/instance/name" -H "Metadata-Flavor: Google" 2>/dev/null)
+}
+
+create_storage(){
+    # create the network
+    region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
+    network=custom-$region
+    gcloud compute --project=orbital-ego-170117 networks create \
+        $network --subnet-mode=custom
+    gcloud compute --project=orbital-ego-170117 networks subnets create sub1-$network \
+        --network=$network --region=$region\
+        --range=10.0.0.0/16 --secondary-range=r2-$network=192.168.0.0/16
+
+    # create the firewall rules (in background, since we don't need then to create the vm)
+    gcloud compute firewall-rules create http-$network \
+        --network $network \
+        --action allow \
+        --direction ingress \
+        --rules tcp:80 \
+        --source-ranges 0.0.0.0/0 \
+        --priority 10 &
+    gcloud compute firewall-rules create https-$network \
+        --network $network \
+        --action allow \
+        --direction ingress \
+        --rules tcp:443 \
+        --source-ranges 0.0.0.0/0 \
+        --priority 10 &
+    gcloud compute firewall-rules create proxmox-$network \
+        --network $network \
+        --action allow \
+        --direction ingress \
+        --rules tcp:8006,tcp:3128 \
+        --source-ranges 0.0.0.0/0 \
+        --priority 10 &
+    gcloud compute firewall-rules create ssh-$network \
+        --network $network \
+        --action allow \
+        --direction ingress \
+        --rules tcp:22000 \
+        --source-ranges 0.0.0.0/0 \
+        --priority 10 &
+    gcloud compute firewall-rules create all-$network \
+        --network $network \
+        --action allow \
+        --direction ingress \
+        --source-ranges 10.0.0.0/16,192.168.0.0/16 \
+        --rules all \
+        --priority 10 &
+
+    # create the storage vm!
+    vm_type="n1-standard-4"
+    vm_type="n1-highmem-4"
+    vm_type="n1-highcpu-8"
+	name="storage-${region}$SUFFIX$BRANCH"
+	gcloud beta compute --project=orbital-ego-170117 instances create $name\
+		--machine-type=$vm_type \
+		--network-interface "subnet=sub1-$network,aliases=r2-$network:192.168.0.0/16" \
+		--network-tier=PREMIUM \
+		--can-ip-forward \
+		--maintenance-policy=MIGRATE \
+		--service-account=831087961927-compute@developer.gserviceaccount.com \
+        --scopes=https://www.googleapis.com/auth/cloud-platform \
+		--tags=proxmox,http-server,https-server \
+		--image=nested-vm-proxmox \
+		--image-project=orbital-ego-170117 \
+		--boot-disk-size=50GB \
+		--boot-disk-type=pd-ssd \
+		--boot-disk-device-name=$name \
+		--create-disk=mode=rw,size=1000,type=projects/orbital-ego-170117/zones/$CLOUDSDK_COMPUTE_ZONE/diskTypes/pd-standard,device-name=persistent-disk-1,name=$name-cache
+
+    echo "last command result: $?"
+}
+
+create_render_node(){
+    [ "$2" == "" ] && cores=8 || cores=$2
+    type="n1-highcpu-$cores"
+    name="render-node$SUFFIX$BRANCH"
+    region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
+    network=custom-$region
+    gcloud compute --project=orbital-ego-170117 instances create $name \
+        --zone=$CLOUDSDK_COMPUTE_ZONE \
+        --machine-type=$type \
+        --subnet=sub1-$network \
+        --network-tier=PREMIUM \
+        --can-ip-forward \
+        --no-restart-on-failure \
+        --maintenance-policy=TERMINATE \
+        --preemptible \
+        --service-account=831087961927-compute@developer.gserviceaccount.com \
+        --scopes=https://www.googleapis.com/auth/cloud-platform \
+        --min-cpu-platform="Intel Skylake" \
+        --tags=proxmox,http-server,https-server \
+        --image=nested-vm-proxmox \
+        --image-project=orbital-ego-170117 \
+        --boot-disk-size=50GB \
+        --boot-disk-type=pd-ssd \
+        --boot-disk-device-name=$name
+
+    echo "last command result: $?"
+}
+
+create_render_node_instance(){
+    cores=$1
+    # if [ "$2" != "" ] ; then
+        # noaddress="-$2"
+        # extra="--no-address"
+    # fi
+
+    region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
+    network=custom-$region
+    name="render-node-$cores-cores-instance-$region$noaddress"
+    echo $name
+
+    type="n1-highcpu-"
+    [ $cores -lt 30 ] && type="n1-standard-"
+
+    # echo "$(list_template | grep $name)"
+    if [ "$(list_template | grep $name)" == "" ] ; then
+        gcloud compute --project=orbital-ego-170117 instance-templates \
+            create $name \
+            $extra \
+            --machine-type=$type$cores \
+            --subnet=projects/orbital-ego-170117/regions/$region/subnetworks/sub1-$network \
+            --network-tier=PREMIUM \
+            --can-ip-forward \
+            --no-restart-on-failure \
+            --maintenance-policy=TERMINATE \
+            --preemptible \
+            --service-account=831087961927-compute@developer.gserviceaccount.com \
+            --scopes=https://www.googleapis.com/auth/cloud-platform \
+            --region=$region \
+            --min-cpu-platform="Intel Skylake" \
+            --tags=http-server,https-server \
+            --image=nested-vm-proxmox \
+            --image-project=orbital-ego-170117 \
+            --boot-disk-size=50GB \
+            --boot-disk-type=pd-standard \
+            --boot-disk-device-name=$name
+    fi
+
+}
+create_instance_group(){
+    cores=$1
+    max_vms=$2
+    [ "$cores" == "" ] && cores=64
+    [ "$max_vms" == "" ] && max_vms=20
+    [ "$(echo $max_vms | grep '-')" != "" ] && max_vms=20
+    region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
+
+    zones="$(echo $(./bin/proxmox-vm/googlefarm.sh zones | grep $region | awk '{print $1}' | sort) | sed 's/ /,/g')"
+    [ $cores -lt 30 ] && zones=$CLOUDSDK_COMPUTE_ZONE
+
+    # create the template
+    template=$(create_render_node_instance $cores $region)
+    echo $template
+
+    name="ig-$cores-$region"
+
+    sleep 5
+    if [ "$(list_ig | grep $name)" == "" ] ; then
+        while true ; do
+            gcloud beta compute --project orbital-ego-170117 instance-groups managed \
+                create $name \
+                --base-instance-name=rnode-$cores-cores \
+                --template=$template \
+                --size=1 \
+                --health-check=check --initial-delay=300 \
+                --zones=$zones
+            # if template shows up, continue
+            if [ "$(gcloud compute --project orbital-ego-170117  instance-groups list | grep $name)" != "" ] ; then
+                break
+            fi
+            echo "It may take a while for the instance template be available... just retry."
+            sleep 5
+        done
+    fi
+
+
+    while true ; do
+        gcloud compute --project "orbital-ego-170117" instance-groups managed \
+            set-autoscaling "$name" \
+            --region "$region" \
+            --cool-down-period "120" \
+            --max-num-replicas "$max_vms" \
+            --min-num-replicas "1" \
+            --target-cpu-utilization "0.04"
+
+        if [ $? != 0 ] ; then
+            echo "It may take a while for the instance group be available to set autoscaling, after creating it... just retry."
+            sleep 5
+        else
+            break
+        fi
+    done
 }
 
 if [ "$1" == "create" ] ; then
@@ -404,19 +622,17 @@ elif  [ "$1" == "list" ] ; then
 	hostname=$2
 	list
 
+elif  [ "$1" == "hostname" ] ; then
+    current_hostname
+
+elif  [ "$1" == "zone" ] ; then
+    current_zone
+
 elif  [ "$1" != "" ] ; then
-	$1 $2 $3 $4
+	$1 $2 $3 $4 $5 $6 $7 $8 $9
 else
 cat << EOF
 $0
-
-________________________________________________________________________________________________________________________
-	to create a google farm machine:
-	 	$0 create <number of cpus> <machine name suffix>
-
-	ex: $0 create 64 001 - create a machine with 64 cores and named googlefarm-001-64cpus
-	ex: $0 create 22 002 - create a machine with 22 cores and named googlefarm-002-22cpus
-
 _______________________________________________________________________________________________________________________
 	to delete a google farm machine:
 	 	$0 delete <machine name>
@@ -426,12 +642,14 @@ ________________________________________________________________________________
 ________________________________________________________________________________________________________________________
 	to list stuff:
 		$0 list
+		$0 list_ig
+		$0 list_template
 		$0 zones
 		$0 disks
 		$0 snapshots
 
 	to start/stop/reset a vm:
-		$0 start|stop|reset <hostname>
+		$0 start|stop|reset|delete <hostname>
 
 	to display the serial console:
 		$0 tail <hostname>
@@ -439,18 +657,21 @@ ________________________________________________________________________________
 	to connect to the serial console:
 		$0 serial <hostname>
 
-	remove a disk:
-		$0 rmdisk <diskname> -z=<zone>
+	to connect via ssh:
+		$0 ssh <hostname>
 
-
-	shutdown a vm by its name (accepts multiple names)
-		$0 shutdown <name> <name> <...>
-
-	shutdown all machines if server is off
+	shutdown all machines if server is off (farm 1.0 - not working)
 		$0 shutdownIfNoServer
 
-	create a gserver
-		$0 gserver <nome>
+	create a storage server (farm 2.0)
+		$0 create_storage  < --suffix="-suffix-to-vm-name" > < -z="us-east1-b" >
+
+	create a render node (farm 2.0)
+		$0 create_render_node <number of cores - 4, 8(default), 16, 32, 64 or 96> <--suffix="-suffix-to-vm-name"(default="")> <-z="us-central1-a"(default)>
+
+	create an managed instance group of render-nodes (farm 2.0)
+		$0 create_instance_group <number of cores of each vm in the group - 32, 64(default), 96>  <max number of vms in the group - default=20>
 ________________________________________________________________________________________________________________________
 EOF
+
 fi
