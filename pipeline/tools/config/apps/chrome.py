@@ -20,6 +20,9 @@
 
 class chrome(baseApp):
     def environ(self):
+        # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
+        self.ignorePipeLib( "freetype" )
+        
         if os.popen('cat /proc/version | egrep "Debian|Ubuntu|ARCH"').readlines():
             pipe.version.set( chrome = 'beta' )
             self.debian = True
