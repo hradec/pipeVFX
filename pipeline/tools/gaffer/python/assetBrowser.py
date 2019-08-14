@@ -602,7 +602,7 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
             self.assets = populateAssets()
 
     def connect( self ) :
-        qtreeView = self.browser().pathChooser().pathListingWidget()._qtWidget()
+        self.qtreeView = self.browser().pathChooser().pathListingWidget()._qtWidget()
 
 
 
@@ -630,13 +630,13 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
 
         result = QtCore.QModelIndex()
         GafferUI._GafferUI._pathListingWidgetIndexForPath(
-            GafferUI._qtAddress( qtreeView ),
+            GafferUI._qtAddress( self.qtreeView ),
             Gaffer.Path('/') ,
             GafferUI._qtAddress( result ),
         )
 
         GafferUI._GafferUI._pathListingWidgetPropagateExpanded(
-            GafferUI._qtAddress( qtreeView ),
+            GafferUI._qtAddress( self.qtreeView ),
             GafferUI._qtAddress( result ),
             True,
             2
@@ -678,12 +678,22 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
             sudo.toFile( str(newCurrent), '%s/current' % os.path.dirname(newCurrent) )
             sudo.run()
 
+        def deleteVersion(value):
+            sudo = pipe.admin.sudo()
+            source = j.path( 'sam/%s' % value )
+            target = j.path( 'sam/.deleted/%s' % value )
+            sudo.cmd( "mkdir -p '%s'" % ( os.path.dirname(target) ) )
+            sudo.cmd( '''su -c "mv '%s' '%s'" ''' % ( source, target ) )
+            sudo.run()
+            self.refresh()
 
         if not len( selectedPaths ):
             for app in ['Maya', 'Nuke', 'Houdini', 'Mudbox', 'ZBrush', 'Realflow', 'Mari']:
             	menuDefinition.append( "/Create new in %s" % app, { "command" : IECore.curry(createNewInApp, app.lower(), self.parameterValue ) } )
         elif len(str(selectedPaths[0]).split('/'))>3:
             menuDefinition.append( "/Set current version to %s" % os.path.basename(str(self.parameterValue)), { "command" : IECore.curry(setCurrentVersion, self.parameterValue ) } )
+            menuDefinition.append( "/ " , { } )
+            menuDefinition.append( "/Delete version %s" % os.path.basename(str(self.parameterValue)), { "command" : IECore.curry(deleteVersion, self.parameterValue ) } )
 
     	self.__menu = GafferUI.Menu( menuDefinition )
     	if len( menuDefinition.items() ) :
@@ -761,6 +771,14 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
         self.populateAssets()
         self.browser().pathChooser().pathListingWidget().setPath(Gaffer.Path("/"))
         self.browser().pathChooser().pathListingWidget().setPath(self._initialPath())
+        result = QtCore.QModelIndex()
+        GafferUI._GafferUI._pathListingWidgetPropagateExpanded(
+            GafferUI._qtAddress( self.qtreeView ),
+            GafferUI._qtAddress( result ),
+            True,
+            2
+        )
+
 
 
 
