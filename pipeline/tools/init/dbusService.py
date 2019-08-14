@@ -354,13 +354,19 @@ class pipeAdminDBUSService(dbus.service.Object):
             # only write if the file exists, to avoid writing files to dead caller processes, which
             # won't be cleaned up later!
             print tmpfile
-            os.system('chown root:artists  %s' % tmpfile)
-            os.system('chmod a-w  %s' % tmpfile)
-#            if os.path.exists(tmpfile):
+            # if os.path.exists(tmpfile):
+            # os.system('chown root:artists  %s' % tmpfile)
+            os.system('chown %s  %s' % ('root', tmpfile))
+            os.system('chown %s  %s_log' % ('root', tmpfile))
+            os.system('chmod a+rwx  %s' % tmpfile)
+            os.system('chmod a+rwx  %s_log' % tmpfile)
             f=open(tmpfile, 'w')
             f.write(ret)
             f.close()
             os.system('chmod a+rwx  %s' % tmpfile)
+            os.system('chown %s  %s' % (uname, tmpfile))
+            os.system('chown %s  %s_log' % (uname, tmpfile))
+
 
         # start the execution in a different thread, so we can return as soon as possible and avoid
         # dbus timeout annoying problem!!!
