@@ -40,6 +40,9 @@ class gaffer(baseLib):
         ''' as this is a python application, we don't have to setup anything
             since python is already setting it for us! '''
 
+        # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
+        self.ignorePipeLib( "freetype" )
+
         self['PYTHONPATH'] = python().path('lib/python$PYTHON_VERSION_MAJOR/site-packages')
 
         if self.parent() not in ['maya']:
