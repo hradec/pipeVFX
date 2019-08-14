@@ -161,9 +161,12 @@ class gaffer(baseLib):
             things more professional! lol '''
         return [
             ('gaffer','gaffer.py'),
-#            ('op','gaffer.py op -gui 1'),
             ('opa','gaffer.py opa -gui 1'),
             ('browser','gaffer.py browser'),
             ('sam','gaffer.py sam'),
             ('bundle','gaffer.py test'),
         ]
+
+    def bg(self, cmd, bin):
+        ''' return True if a cmd or binary should run in background '''
+        return True

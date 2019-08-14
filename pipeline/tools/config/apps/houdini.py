@@ -33,6 +33,9 @@ class houdini(baseApp):
             pipe.libs.version.set(  boost = '1.55.0' )
 
     def environ(self):
+        # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
+        self.ignorePipeLib( "freetype" )
+
         self['HFS'] = self.path()
         self['HOUDINI_PYTHON_VERSION'] = '.'.join( pipe.libs.version.get( 'python' ).split('.')[:2] )
         if self.parent() in ['houdini']:
@@ -117,7 +120,7 @@ class houdini(baseApp):
             ('hserver'  ,'hserver'),
             ('mantra'   ,'mantra'),
             ('hcustom'  ,'hcustom'),
-            ('mplay'    ,'mplay'),
+            ('mplay'    ,'mplay-bin'),
         ]
 
     def preRun(self, cmd):
