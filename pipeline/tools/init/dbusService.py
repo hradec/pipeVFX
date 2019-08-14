@@ -354,9 +354,9 @@ class pipeAdminDBUSService(dbus.service.Object):
             # only write if the file exists, to avoid writing files to dead caller processes, which
             # won't be cleaned up later!
             print tmpfile
+            # if os.path.exists(tmpfile):
             os.system('chown root:artists  %s' % tmpfile)
-            os.system('chmod a-w  %s' % tmpfile)
-#            if os.path.exists(tmpfile):
+            os.system('chmod a+rwx  %s' % tmpfile)
             f=open(tmpfile, 'w')
             f.write(ret)
             f.close()

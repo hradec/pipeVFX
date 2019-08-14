@@ -105,6 +105,7 @@ class sudo():
                 file = tempfile.mkstemp("","dbusPipe_")
                 file = file[1]
                 open("%s_log" % file,'w').close() # touch it so we can delete later!
+                os.system('chmod a+rwx  %s' % file)
 
                 # call dbusPipeService sudo method, passing our tempfile
                 # so it can run in background and return the output to us through
@@ -124,12 +125,12 @@ class sudo():
                     raise Exception("[PARSER ERROR]: The process was killed!! If runing in the farm, this is probably an job eject/stop/restart, BUT it can be a CRASH of a running render!")
 
                 # Set the signal handler and a 5-second alarm
-                try:
-                    signal.signal(signal.SIGTERM, handler)
-                    signal.signal(signal.SIGABRT, handler)
-                    signal.signal(signal.SIGQUIT, handler)
-                except:
-                    pass
+                # try:
+                signal.signal(signal.SIGTERM, handler)
+                signal.signal(signal.SIGABRT, handler)
+                signal.signal(signal.SIGQUIT, handler)
+                # except:
+                #     pass
 
                 # run a loop monitoring our tmp file for a DONE line.
                 # dbus will add a DONE line to the file when it's done
