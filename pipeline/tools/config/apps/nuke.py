@@ -107,6 +107,7 @@ class nuke(baseApp):
                nuke.addon(self, nukepath = '%s/nuke/$NUKE_VERSION/gizmo' % each )
                nuke.addon(self, nukepath = '%s/nuke/$NUKE_VERSION/script' % each )
                nuke.addon(self, lib = '%s/nuke/$NUKE_VERSION/script' % each )
+               nuke.addon(self, lib = '%s/nuke/$NUKE_VERSION/plugins' % each )
 
         # mari bridge
         self.update( mari() )
