@@ -47,6 +47,8 @@ class python(baseLib):
         # set PYTHONHOME for some apps...
         if self.parent() in ['python','delight','houdini','cortex', 'qube']:
             self['PYTHONHOME'] = self.path()
+            # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
+            self.ignorePipeLib( "freetype" )
 
         if self.parent() in ['python','cortex','gaffer']:
             # if self.parent() in ['python']:
