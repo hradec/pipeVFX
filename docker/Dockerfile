@@ -1,4 +1,4 @@
-FROM centos:centos7.6.1810
+FROM centos:centos7
 
 RUN yum update -y && yum install -y \
     nano \
@@ -35,7 +35,7 @@ RUN yum update -y && yum install -y \
     yum groupinstall -y "X Window System" "Fonts"
 
 
-RUN yum group install -y "Development Tools"
+RUN yum groupinstall -y "Development Tools"
 RUN yum -y install xorg-x11-fonts*
 RUN fc-cache
 
