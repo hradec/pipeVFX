@@ -231,3 +231,121 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
 GafferUI.PathPreviewWidget.registerType( "Job Editing", jobPreview )
 GafferUI.BrowserEditor.registerMode( "Job Management", JobMode )
 GafferUI.BrowserEditor.JobMode = JobMode
+
+
+
+
+
+class JOBPanel( GafferUI.EditorWidget ):
+    def __init__(self, scriptNode=None, hostApp='gaffer', onRefreshPanel=None, **kw  ):
+        import assetUtils
+
+        self.onRefreshPanel = onRefreshPanel
+        self.layout = GafferUI.SplitContainer( GafferUI.ListContainer.Orientation.Horizontal )
+
+        self.__scriptNode = scriptNode
+        GafferUI.EditorWidget.__init__(self, self.layout, self.__scriptNode, **kw )
+
+        self.columnName = ' '
+        # if assetUtils.j:
+        #     self.columnName = "job/"+assetUtils.j.proj.split('.')[0] + '/' + '/'.join( assetUtils.j.shot().path().split('/')[-2:] )
+
+        # add new dock widget
+        self.__buttons = []
+        self.__buttonsSignals = []
+        with self.layout:
+            with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Vertical ):
+                with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Horizontal ) as toolbar:
+                    self.__buttons += [1]
+                    self.__buttons[-1] = GafferUI.Button( "", "samShelfPanelx20.png", toolTip="Refresh the panel from the most up-to-date data"  )
+                    self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.refreshPanel ) ) )
+
+                    self.__buttons += [1]
+                    self.__buttons[-1] = GafferUI.Button( "", "samShelfx20.png", toolTip="Open sam browser"  )
+                    self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
+                    # self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.openSAMBrowser ) ) )
+
+                    GafferUI.Spacer(IECore.V2i(10,10))
+
+                    self.__buttons += [1]
+                    self.__buttons[-1] = GafferUI.Button( "", "Autodesk-open-maya-icon_20.png", toolTip="Open selected asset in the current maya session"  )
+                    self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.mayaImportDependency() ) )
+                    self.__buttons[-1].setEnabled(assetUtils.m != None)
+
+                    self.__buttons += [1]
+                    self.__buttons[-1] = GafferUI.Button( "", "Autodesk-maya-icon-edit_20.png", toolTip="Open selected asset in a new maya session"  )
+                    self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.openDependency() ) )
+
+
+                    self.__buttons += [1]
+                    self.__buttons[-1] = GafferUI.Button( "", "gaffer-20.png", toolTip="Open selected asset in a new gaffer session"  )
+                    self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.openDependency( 'gaffer' ) ) )
+
+
+                # self.al = GafferUI.EditorWidget( self.layout, self.__scriptNode )
+
+                # with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Horizontal ) as filterBarString:
+                #     types = assetUtils.types()
+                #     keys = {}
+                #     for t in types.keys():
+                #         keys[ t.split('/')[0] ] =0
+                #     keys = keys.keys()
+                #     keys.sort()
+                #     for t in keys:
+                #         # print "assets/%s-20.png" % t
+                #         self.__buttons += [1]
+                #         self.__buttons[-1] = GafferUI.Button( "", "assets/%s-15.png" % t, toolTip="Show assets of type %s" % t  )
+                #         self.__buttons[-1]._qtWidget().setMaximumSize( 15, 15 )
+                #         self.__buttons[-1].type = t
+                #         self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.filter ) ) )
+                #
+                #     GafferUI.Spacer(IECore.V2i(10,1))
+
+                with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Horizontal ) as filterBar:
+                    self.__searchString = GafferUI.TextWidget()
+                    # self.__buttonsSignals.append( self.__searchString.editingFinishedSignal().connect( lambda b: self.al.assetFilter( self.__searchString  ) ) )
+
+
+                # make bg of filter bar black!
+                filterBar._qtWidget().setStyleSheet("background-color:black;")
+
+        self.layout._qtWidget().resize(100,100)
+        # self.al._qtWidget().resize(200,100)
+        self._qtWidget().resize(100,100)
+
+    def filter(self, b):
+        print b, b.type
+
+    def refreshPanel(self, button):
+        pass
+    #     t = time.time()
+    #     # assetUtils.types(True)
+    #     self.al.treeModelStateSave()
+    #
+    #     if self.onRefreshPanel:
+    #         self.onRefreshPanel(button)
+    #     else:
+    #         self.al._mayaNodeDeleted(force=True)
+    #
+    #     self.al._model.setColumnName(self.columnName)
+    #     print "SAMPanel(%s).refreshPanel():" % self.al.hostApp(),time.time()-t
+    #
+    #
+    # def openSAMBrowser(self, button):
+    #     import IECore
+    #     c = IECore.ClassLoader.defaultLoader( "GAFFER_APP_PATHS" )
+    #     a = c.load( "sam" )();a.run()
+
+    def __repr__( self ) :
+        return "GafferUI.SAMPanel( scriptNode )"
+
+
+
+
+GafferUI.JOBPanel = JOBPanel
+GafferUI.JOBListWidget = GafferUI.EditorWidget
+GafferUI.EditorWidget.registerType( "JOBList", JOBPanel )
