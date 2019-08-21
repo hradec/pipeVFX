@@ -1173,36 +1173,45 @@ class alembic(  _genericAssetClass ) :
                 'opposite',
             ]
 
-            if not self.__anyNode:
-                meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
-                # convert rman attributos to a cleaner version
-                attrs = [ a for a in attributesToExport if 'rman__torattr___' in a ]
-                pb = progressBar(len(attrs)*len(meshes)+1, 'setting up geometry for export...')
-                pb.step()
-                for attr in attrs:
-                    pb.step()
-                    for n in meshes:
-                        pb.step()
-                        if m.objExists( '%s.%s' % (n, attr) ):
-                            cleanAttr = attr.replace('rman__torattr___','')
-                            if not m.objExists( '%s.%s' % (n, cleanAttr) ):
-                                m.addAttr( n, ln=cleanAttr, at="long" )
-                            m.setAttr( '%s.%s' % (n, cleanAttr), m.getAttr( '%s.%s' % (n, attr) ) )
-                            attributesToExport.append(cleanAttr)
 
-                pb.close()
-
-                m.select( meshes )
+            curves = m.ls( sl, dag=1, ni=1, type='nurbsCurve' )
+            meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
+            # print "BUMM",sl, len(curves), len(meshes)
+            if curves and not meshes:
+                extra = ''
             else:
-                m.select( m.ls( sl, dag=1) )
+                if not self.__anyNode:
+                    meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
+                    # convert rman attributos to a cleaner version
+                    attrs = [ a for a in attributesToExport if 'rman__torattr___' in a ]
+                    pb = progressBar(len(attrs)*len(meshes)+1, 'setting up geometry for export...')
+                    pb.step()
+                    for attr in attrs:
+                        pb.step()
+                        for n in meshes:
+                            pb.step()
+                            if m.objExists( '%s.%s' % (n, attr) ):
+                                cleanAttr = attr.replace('rman__torattr___','')
+                                if not m.objExists( '%s.%s' % (n, cleanAttr) ):
+                                    m.addAttr( n, ln=cleanAttr, at="long" )
+                                m.setAttr( '%s.%s' % (n, cleanAttr), m.getAttr( '%s.%s' % (n, attr) ) )
+                                attributesToExport.append(cleanAttr)
 
-            if attributesToExport:
-                extra += ' -attr '+' -attr '.join(attributesToExport)
+                    pb.close()
+
+                    m.select( meshes )
+                else:
+                    m.select( m.ls( sl, dag=1) )
+
+                if attributesToExport:
+                    extra += ' -attr '+' -attr '.join(attributesToExport)
+
+                extra += ' -noNormals  -sl '
 
 
             className = str(self.__class__).split('.')[-1]
             root = ' '.join([ '-root '+x for x in sl ])
-            abcJob = "%s %s -noNormals -sl -step %s -wv -fr %s %s %s -file %s" % (
+            abcJob = "%s %s  -step %s -wv -fr %s %s %s -file %s" % (
                 extra,
                 '''-pythonPerFrameCallback "print globals().keys();import genericAsset;genericAsset.alembic.perFrameCallback(#FRAME#, '%s', %s )"''' % (shaveTmp,sl),
                 1.0,
@@ -1211,6 +1220,7 @@ class alembic(  _genericAssetClass ) :
                 root,
                 mfile,
             )
+
             print "m.AbcExport( j=abcJob) : ", abcJob ; sys.stdout.flush()
             m.AbcExport( j=abcJob)
             maya.cleanNodes(cleanup)
