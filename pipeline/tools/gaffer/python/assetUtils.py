@@ -170,7 +170,7 @@ def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnl
     if m:
         _jobs=[]
         if allowOnlyOne:
-            _jobs = m.scriptJob(listJobs=True)
+            _jobs = m.scriptJob(listJobs=1)
         if deleteEvent:
             if _jobs:
                 jobs =  [ str(x).strip().split(':') for x in _jobs if deleteEvent.func_name in x ]
