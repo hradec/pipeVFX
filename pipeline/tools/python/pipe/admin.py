@@ -121,10 +121,13 @@ class sudo():
                 def handler(signum=-1, frame=0):
                     self.__admServiceKill(pid)
                     if os.path.exists(file):
-                        os.remove(file)
+                        try: os.remove(file)
+                        except: pass
                     if os.path.exists("%s_log" % file):
-                        os.remove("%s_log" % file)
+                        try: os.remove("%s_log" % file)
+                        except: pass
                     raise Exception("[PARSER ERROR]: The process was killed!! If runing in the farm, this is probably an job eject/stop/restart, BUT it can be a CRASH of a running render!")
+
 
                 # Set the signal handler and a 5-second alarm
                 # try:
