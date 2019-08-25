@@ -72,10 +72,19 @@ def viewportOff( func ):
 def cleanAllShapeName():
     for each in m.ls(sl=1, dag=1, type='mesh', l=1):
         last = each.split('|')[-1]
-        for n in range(10):
-            last = last.replace(str(n),'')
+        # for n in range(10):
+        #     last = last.replace(str(n),'')
         #while last[-1].isdigit():
         #    each = each[:-1]
+        l = 0
+        for n in range(10):
+            # path = path.replace(str(n),'')
+            # split node name and gather the longest string!
+            for x in last.split(str(n)):
+                if len(x) > l:
+                    last = x
+                    l = len(last)
+
         each = '|'.join(each.split('|')[:-1]+[last])
         print each
 
@@ -617,7 +626,7 @@ class maya( _genericAssetClass ) :
                 return p
 
         def addRule(self, name, sg, node=''):
-            if name in self.cache.keys():
+            if name and name in self.cache.keys():
                 if sg != self.cache[name]:
                     if not node:
                         node=name
@@ -655,25 +664,51 @@ class maya( _genericAssetClass ) :
 
     @staticmethod
     def node2rule(nodeName):
+        if 'SAM_' in nodeName:
+            return ''
         #*[starts-with(name(),'paperclip')]
         print nodeName
         paths = []
-        for path in [ x for x in nodeName.split('|') if 'SAM_' not in x ]:
+        # for path in nodeName.split('|'):
+        for path in [nodeName.split('|')[-1]]:
             if path:
+                path = path.split(':')[-1]
+                # remove Shape from name
+                l = 0
+                for x in path.split('Shape'):
+                    if len(x) > l:
+                        path = x
+                        l = len(path)
+
                 for n in range(10):
-                    path = path.replace(str(n),'')
+                    # path = path.replace(str(n),'')
+                    # split node name and gather the longest string!
+                    l = 0
+                    for x in path.split(str(n)):
+                        if len(x) > l:
+                            path = x
+                            l = len(path)
+
                 paths += [path]
 
-        p = ''
-        # paths.reverse()
-        for ps in paths:
-            if not p:
-                p = "*[starts-with(name(),'%s')]" % ps
-            else:
-                p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
-        rule = p
+        if paths:
+            p = ''
+            # paths.reverse()
+            for ps in paths:
+                if not p:
+                    p = "*[starts-with(name(),'%s')]" % ps
+                else:
+                    p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
+            rule = p
 
-        rule = '/'.join( [ "*[contains(name(),'%s')]" % ps for ps in paths ] ).strip('|').replace('|','/')
+            rule = '/'.join( [ "*[contains(name(),'%s')]" % ps for ps in paths ] ).strip('|').replace('|','/')
+        else:
+            path = nodeName.split('|')[-1]
+            path = path.split(':')[-1]
+            p = "*[starts-with(name(),'%s')]" % path
+            rule = "*[contains(name(),'%s')]" % path
+            rule = rule.strip('|').replace('|','/')
+
         return rule
 
 
