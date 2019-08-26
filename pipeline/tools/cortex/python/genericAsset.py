@@ -165,31 +165,32 @@ def updateCurrentLoadedAssets(forceRefresh=False):
     # _updateCurrentLoadedAssets__ = globals()['_updateCurrentLoadedAssets__']
 
     # make sure evaluation mode is set to DG, or else
-    if 'off' not in ''.join(m.evaluationManager( q=1, mode=1 )):
-        m.evaluationManager( mode="off" )
+    if m:
+        if 'off' not in ''.join(m.evaluationManager( q=1, mode=1 )):
+            m.evaluationManager( mode="off" )
 
-    maya.applyCustomRules()
+        maya.applyCustomRules()
 
-    types = assetUtils.types(forceRefresh)
-    for t in types.keys():
-        tt = t.split('/')
-        nodeNamePrefix = _nodeNameTemplate(prefix=True) % (tt[0], tt[1])
-        # try:
-        #     if t not in _updateCurrentLoadedAssets__.keys():
-        #         _updateCurrentLoadedAssets__[t] = assetUtils.loadAssetOP(t)
-        # except:
-        #     _updateCurrentLoadedAssets__[t] = None
+        types = assetUtils.types(forceRefresh)
+        for t in types.keys():
+            tt = t.split('/')
+            nodeNamePrefix = _nodeNameTemplate(prefix=True) % (tt[0], tt[1])
+            # try:
+            #     if t not in _updateCurrentLoadedAssets__.keys():
+            #         _updateCurrentLoadedAssets__[t] = assetUtils.loadAssetOP(t)
+            # except:
+            #     _updateCurrentLoadedAssets__[t] = None
 
-        op = types.op(t)
-        # print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
-        if hasattr(op.op, 'typeOP') and hasattr(op.op.typeOP, 'onRefreshCallback'):
-            canRefresh = True
-            if m and not m.ls('|%s*_??_??_??_*' % nodeNamePrefix):
-                canRefresh = False
+            op = types.op(t)
+            # print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
+            if hasattr(op.op, 'typeOP') and hasattr(op.op.typeOP, 'onRefreshCallback'):
+                canRefresh = True
+                if m and not m.ls('|%s*_??_??_??_*' % nodeNamePrefix):
+                    canRefresh = False
 
-            if canRefresh:
-                print 'SAM REFRESH =>',t, nodeNamePrefix
-                op.op.typeOP.onRefreshCallback( t, nodeNamePrefix )
+                if canRefresh:
+                    print 'SAM REFRESH =>',t, nodeNamePrefix
+                    op.op.typeOP.onRefreshCallback( t, nodeNamePrefix )
 
 
 class progressBar():
