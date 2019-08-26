@@ -130,12 +130,12 @@ class sudo():
 
 
                 # Set the signal handler and a 5-second alarm
-                # try:
-                signal.signal(signal.SIGTERM, handler)
-                signal.signal(signal.SIGABRT, handler)
-                signal.signal(signal.SIGQUIT, handler)
-                # except:
-                #     pass
+                try:
+                    signal.signal(signal.SIGTERM, handler)
+                    signal.signal(signal.SIGABRT, handler)
+                    signal.signal(signal.SIGQUIT, handler)
+                except:
+                     pass
 
                 # run a loop monitoring our tmp file for a DONE line.
                 # dbus will add a DONE line to the file when it's done
