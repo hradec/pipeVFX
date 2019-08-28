@@ -521,7 +521,7 @@ class assetOP(object):
         self._openDependency( __runGaffer, copyToFolder=pipe.admin.job.shot.user().path('gaffer/'), app=pipe.apps.gaffer )
 
 
-    def _openDependency( self, cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', copyToFolder=pipe.admin.job.shot.user().path('maya/scenes/'), app=pipe.apps.maya ):
+    def _openDependency( self, cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', copyToFolder=None, app=None ):
         '''
         Open Button main function - its actually a generic button which can be configured by button attributes:
 
@@ -535,7 +535,14 @@ class assetOP(object):
         '''
         # other assets
         from pprint import pprint
-        import os
+        import os, pipe
+
+        if app == None:
+            app = pipe.apps.maya
+
+        if copyToFolder == None:
+            copyToFolder = pipe.admin.job.shot.user().path('maya/scenes/')
+
         # pprint(self.data)
         currentUserPath = pipe.admin.job.shot.user().path()
 
