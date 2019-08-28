@@ -591,6 +591,13 @@ create_instance_group(){
     done
 }
 
+delete_instance_group()
+{
+    region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
+    gcloud compute --project "orbital-ego-170117" instance-groups managed delete $1 --region "$region"
+    #--zone=$(list_ig | grep $1 | awk '{print $2}')
+}
+
 if [ "$1" == "create" ] ; then
     export _l=$(list)
 	if [ "$2" != "" ] ; then
@@ -669,8 +676,11 @@ ________________________________________________________________________________
 	create a render node (farm 2.0)
 		$0 create_render_node <number of cores - 4, 8(default), 16, 32, 64 or 96> <--suffix="-suffix-to-vm-name"(default="")> <-z="us-central1-a"(default)>
 
-	create an managed instance group of render-nodes (farm 2.0)
+    create an managed instance group of render-nodes (farm 2.0)
 		$0 create_instance_group <number of cores of each vm in the group - 32, 64(default), 96>  <max number of vms in the group - default=20>
+
+    delete an managed instance group (farm 2.0)
+		$0 delete_instance_group <instance group name>
 ________________________________________________________________________________________________________________________
 EOF
 
