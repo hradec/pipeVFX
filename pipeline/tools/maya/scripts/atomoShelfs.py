@@ -668,7 +668,86 @@ def xgenGlobalEditor():
 
     btn.setCommand(buttonPressed)
 
+def farmTime():
+    frame = int(m.currentTime(q=1))
+    # account for running in the farm
+    if "FRAME_NUMBER" in os.environ:
+        frame = int(os.environ["FRAME_NUMBER"])
+    return frame
 
+def xgen_collection_path(collection='collection8'):
+    proj  = m.workspace(rd=1,q=1)
+    return "%s/data/%s-%04d.xgen" % (proj, collection, farmTime())
+
+
+def xgen_export_for_ribbox(collection=None):
+    import xgenm as xg
+    import maya.cmds as m
+    from maya.mel import eval as meval
+    import os
+
+    if not collection :
+        collection = xg.palettes()
+
+    if type(collection) == type(""):
+        collection = [collection]
+
+    start = int(m.playbackOptions(q=1, minTime=1))
+    end   = int(m.playbackOptions(q=1, maxTime=1))
+    proj  = m.workspace(rd=1,q=1)
+    for n in range(start, end):
+        for col in collection:
+            m.currentTime(n,e=1)
+            path = str(xgen_collection_path(col))
+            xg.exportPalette( col, path )
+
+def xgen_ribbox(collection='collection8', descriptions='tranca_1_,trance_2_,trance_3_', abc='/atomo/jobs/0669.batavo_nuv/sam/animation/alembic/1120.cabeca_e_chapeu/01.17.00/1120.cabeca_e_chapeu.asset.abc', patch_name='baseCabeloXgen'):
+    '''
+        create a new shading group world ribbox, with the code inside to render xgen collections
+        just attach to a cube, and attach a shader to it to assign the shader to the xgen collection.
+    '''
+    import maya.cmds as m
+    from maya.mel import eval as meval
+    import os
+
+    proj = m.workspace(rd=1,q=1).rstrip('/')
+    pal = collection
+    # abc = '/atomo/jobs/0669.batavo_nuv/sam/animation/alembic/1120.cabeca_e_chapeu/01.17.00/1120.cabeca_e_chapeu.asset.abc'
+    # patch = 'baseCabeloXgen'
+    xgen= xgen_collection_path(collection)
+    fps = 24
+    extra = '-debug 1'
+    res=''
+    for desc in descriptions.split(','):
+        res += '''
+            Procedural "DynamicLoad" ["XGenProcPrim" " -frame %s -file %s -palette %s -geom %s -patch %s -description %s -fps %s  %s"] [-1000 1000 -1000 1000 -1000 1000]
+        ''' % (str(farmTime()), xgen, pal, abc, patch_name, desc, fps, extra)
+    print res
+    return res
+
+def xgen_create_ribbox(collection='collection8', descriptions=['tranca_1_', 'trance_2_', 'trance_3_'], abc='/atomo/jobs/0669.batavo_nuv/sam/animation/alembic/1120.cabeca_e_chapeu/01.17.00/1120.cabeca_e_chapeu.asset.abc', patch_name='baseCabeloXgen'):
+    import maya.cmds as m
+    from maya.mel import eval as meval
+    import os
+
+    ribbox = meval('''
+         string $attrName = `rmanGetAttrName "ribBox"`;
+         string $attrNameInterp = `rmanGetAttrName ribBoxInterpolation`;
+         string $sg = `sets -renderable true -noSurfaceShader true -empty -name rmanWorld`;
+         rmanAddAttr $sg $attrName "#your rib here";
+         rmanAddAttr $sg $attrNameInterp "";
+         select -r -ne $sg;
+         $attr=($sg+"."+$attrName);
+    ''')
+    value = '''[python("import atomoShelfs;reload(atomoShelfs);atomoShelfs.xgen_ribbox('%s','%s','%s','%s')")]''' % (
+        collection,
+        ','.join(descriptions),
+        abc,
+        patch_name
+    )
+    print "===>",value
+    m.setAttr( ribbox, value, type='string' )
+    m.setAttr( ribbox.split('.')[0]+".rman__torattr___ribBoxInterpolation", 'TCL', type='string' )
 
 
 def buildShelf():
@@ -845,6 +924,24 @@ def buildShelf():
     	python=True,
     	cmd="import atomoShelfs;reload(atomoShelfs);atomoShelfs.xgenGlobalEditor()"
     )
+
+    addShelfButton( name="", help="",icon="spacer.png",cmd="",enable=0,    )
+
+    addShelfButton(
+    	name="XgnExp",
+    	help="Export xgen collection to be used to render as ribbox animation",
+    	icon="rman_ribbox.png",
+    	python=True,
+    	cmd="import atomoShelfs;reload(atomoShelfs);atomoShelfs.xgen_export_for_ribbox()"
+    )
+    addShelfButton(
+    	name="XgnBox",
+    	help="Export xgen collection to be used to render as ribbox animation",
+    	icon="rman_ribbox.png",
+    	python=True,
+    	cmd="import atomoShelfs;reload(atomoShelfs);atomoShelfs.xgen_create_ribbox()"
+    )
+
 
 
     selectShelf("ATOMO_RENDER")
