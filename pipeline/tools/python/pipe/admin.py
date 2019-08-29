@@ -298,13 +298,23 @@ class job(sudo):
     def symlink(self, source, target):
         sudo.ln(self, source, target)
 
-    def mktools(self, path='tools', username=''):
+    def _mktools(self, path='tools', username=''):
         ''' create the tools folder as a copy of pipeline/tools '''
         ignore = ['init', 'licenses']
         for each in glob.glob( "%s/*" % roots.tools() ):
             beach = os.path.basename(each)
             if os.path.isdir(each) and beach not in ignore:
                 self.mkdir( "%s/%s" % (path, beach), username )
+
+    def mktools(self, path='tools', username=''):
+        ''' create the tools folder as a link to the latest tag of pipeline/tools '''
+        if not os.path.exists( path ):
+            tags = glob.glob( "%s/*.*.*" % roots.tags() )
+            tags.sort()
+            print tags
+            self.symlink( tags[-1], path )
+
+
 
     def mkpublished(self, path):
 #        self.mkdir( self.path("%s/published" % path) )
@@ -554,7 +564,7 @@ class job(sudo):
 
         self.mktools( self.path("tools"), 'rhradec' )
         if not os.path.exists( self.path("tools/config/versions.py") ):
-            self.cp( "%s/config/versions.py" % roots.tools(), self.path("tools/config"), 'rhradec' )
+            self.cp( "%s/config/versions.py" % roots.tools(), self.path("tools/config/versions.py"), 'rhradec' )
 
     def create(self):
         return self.run()

@@ -200,6 +200,17 @@ class roots:
 
         return os.path.abspath( '%s/pipeline/tools/%s' % (root, subpath) )
 
+    @staticmethod
+    def tags(plat=None, subpath=''):
+        if subpath:
+            subpath = '/%s' % subpath
+
+        root = depotRoot()
+        if plat:
+            root = roots.apps(plat)
+
+        return os.path.abspath( '%s/pipeline/tags/%s' % (root, subpath) )
+
 
 # hardcoded for now!!
 exec( ''.join( [ p for p in open( "%s/config/versions.py" % roots.tools() ).readlines() if 'os.environ[' in p ] ) )
