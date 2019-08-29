@@ -19,6 +19,7 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+max_render_machines = 20
 
 import os, sys, socket, time, re
 from pprint import pprint
@@ -34,11 +35,6 @@ import pipe
 CD=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 print "running this script from:", CD
 
-# preventing from running more than once, when called from cron!
-processes = os.popen( "ps -AHfc | grep %s | grep -v grep | grep -v tail" % os.path.basename( __file__ ) ).readlines()
-# print len(processes), processes
-if len( processes ) > 2:
-    exit(0)
 
 def restartAFBrokenTasks( filter = "" ):
     # error list to check in log.
@@ -323,6 +319,18 @@ def pauseAFStorageServes( title = "", filter = 'google.*setup' ):
         pipe.farm.current.engine()._renderNodeSetParameter( rn['name'], 'hidden', hidden )
 
 
+def googlefarm():
+    # find googlefarm.sh script
+    path = os.path.dirname( os.path.dirname( os.path.abspath( __file__ ) ) )
+    googlefarm_sh = "%s/%s" % (path, "proxmox-vm/googlefarm.sh")
+    if not os.path.exists( googlefarm_sh ):
+        if os.path.exists( "/bin/googlefarm.sh" ):
+            googlefarm_sh = "/bin/googlefarm.sh"
+        else:
+            googlefarm_sh = "%s/scripts/googlefarm.sh" % pipe.roots().tools()
+    print "using googlefarm.sh located at:", googlefarm_sh
+    return googlefarm_sh
+
 # start or stop gfarm 2.0 machines, depending of if there's
 # jobs to render in afanasy
 def startStopGFarm(forceStop=False):
@@ -334,18 +342,15 @@ def startStopGFarm(forceStop=False):
     ]
 
     # find googlefarm.sh script
-    path = os.path.dirname( os.path.dirname( os.path.abspath( __file__ ) ) )
-    googlefarm_sh = "%s/%s" % (path, "proxmox-vm/googlefarm.sh")
-    if not os.path.exists( googlefarm_sh ):
-        if os.path.exists( "/bin/googlefarm.sh" ):
-            googlefarm_sh = "/bin/googlefarm.sh"
-        else:
-            googlefarm_sh = "%s/scripts/googlefarm.sh" % pipe.roots().tools()
+    googlefarm_sh = googlefarm()
 
-    print "using googlefarm.sh located at:", googlefarm_sh
+    # default region
     region = regions[0]
 
+    # get all instances
     instances = [ x.split() for x in os.popen( '%s list | grep RUNNING' % googlefarm_sh ).readlines() ]
+
+    # get all instance groups
     ig = [ x.split() for x in os.popen( '%s list_ig' % googlefarm_sh ).readlines() if 'ig-' in str(x) ]
 
     # we have frames to render on google, so lets do it
@@ -370,8 +375,8 @@ def startStopGFarm(forceStop=False):
 
         # start/update instance group with the number of frames to render!
         # limit it to a max of nodes due here
-        if max_nodes > 20:
-            max_nodes = 20
+        if max_nodes > max_render_machines:
+            max_nodes = max_render_machines
 
         # get the current number of nodes we have
         nodes = 0
@@ -381,13 +386,13 @@ def startStopGFarm(forceStop=False):
         print "max_nodes:", max_nodes
         print "current number of nodes:", nodes
         if nodes != max_nodes:
-            os.system( 'timeout 30 %s create_instance_group 32 %s' % (googlefarm_sh, max_nodes) )
+            os.system( 'timeout 30 %s create_instance_group 64 %s' % (googlefarm_sh, max_nodes) )
 
         # keep the frames_to_render log in a sane size
         os.system( "tail -n 1000  /dev/shm/frames_to_render > /tmp/__frames_to_render && mv -f /tmp/__frames_to_render /dev/shm/frames_to_render")
 
 
-    # no more frames to render, so delete everything at google
+    # no more frames to render (or forceStop=True), so delete everything at google
     # frames will come from the bucket, so we dont need anything there!
     else:
         os.system("echo 1 >> /dev/shm/stopGFarm")
@@ -399,32 +404,76 @@ def startStopGFarm(forceStop=False):
             for instance in [ x for x in instances if 'storage' in str(x) ]:
                 os.system( 'echo Y | timeout 30 %s delete %s' % (googlefarm_sh, instance[0]) )
 
-            for instance in [ x for x in ig if 'ig-' in str(x) ]:
-                os.system( 'echo Y | timeout 30 %s delete_instance_group %s' % (googlefarm_sh, instance[0]) )
+            deleteInstanceGroup()
 
             # for instance in [ x for x in instances if 'rnode' in str(x) ]:
             #     os.system( 'echo Y | %s delete %s' % (googlefarm_sh, instance[0]) )
             print "Done!"
 
 
+def deleteInstanceGroup(filter=''):
+    # find googlefarm.sh script
+    googlefarm_sh = googlefarm()
+
+    ig = [ x.split() for x in os.popen( '%s list_ig' % googlefarm_sh ).readlines() if 'ig-' in str(x) ]
+    for instance in [ x for x in ig if 'ig-' in str(x) ]:
+        if filter in instance[0]:
+            os.system( 'echo Y | timeout 30 %s delete_instance_group %s' % (googlefarm_sh, instance[0]) )
+
+
+def cleanCaches(folder='/cache*/atomo_jobs/'):
+    ''' cleanup cache folder stored in google bucket '''
+    os.system('gsutil -m rm -rf gs://farm2/%s' % folder.lstrip('/'))
+
+
+def pauseUploadRenderNode():
+    resources = pipe.farm.current.engine()._renderNodesResources("google")
+    for each in resources:
+        for r in resources[each]['resources']['renders']:
+            print each, r['host_resources']['cpu_user']
+    # print [n["host_resources"] for n in x["renders"] if "tasks_percents" in n][1]'
+
 
 if __name__ == "__main__":
-    # start gfarm if we have something to render
-    forceStop = '--forceStop' in sys.argv
-    startStopGFarm(forceStop)
+    if [ x for x in sys.argv if '-h' in x ]:
+        print('''
 
-    if not forceStop:
-        # delete offline render nodes
-        running_machines = deleteAFOfflineRenderNodes( 'google.*cores' )
-        running_machines = deleteAFOfflineRenderNodes( 'render.*' )
+            --forceStop                 stop google farm to update cache for new jobs
+            --clean-cache-jobs          cleanup cached atomo/jobs from farm2 bucket
+            --delete-instance-groups    delete all intance groups
+            --start-gfarm               only start the google farm - won't check afanasy jobs for errors
 
-        # make sure storage server is paused
-        pauseAFStorageServes( "running %s google machines..." % running_machines )
+        ''')
+    else:
+        # start gfarm if we have something to render
+        forceStop = '--forceStop' in sys.argv
+        startStopGFarm(forceStop)
 
-        # check the first 100 jobs in afanasy for
-        # DON tasks which actually failed and restart it!
-        # for now, just check maya renders
-        restartAFBrokenTasks('SAM.*MAYA.*')
+        if '--clean-cache-jobs' in sys.argv or forceStop:
+            cleanCaches(folder='/cache*/atomo_jobs/')
+
+        if '--delete-instance-groups' in sys.argv:
+            deleteInstanceGroup()
+
+        if not forceStop:
+            # delete offline render nodes
+            running_machines = deleteAFOfflineRenderNodes( 'google.*cores' )
+            running_machines = deleteAFOfflineRenderNodes( 'render.*' )
+
+            # make sure storage server is paused
+            pauseAFStorageServes( "running %s google machines..." % running_machines )
+
+            if '--start-gfarm' not in sys.argv:
+                # preventing from running more than once, when called from cron!
+                processes = os.popen( "ps -AHfc | grep %s | grep -v grep | grep -v tail" % os.path.basename( __file__ ) ).readlines()
+                # print len(processes), processes
+                if len( processes ) > 2:
+                    exit(0)
+
+                # check the first 100 jobs in afanasy for
+                # DON tasks which actually failed and restart it!
+                # for now, just check maya renders
+                restartAFBrokenTasks('SAM.*MAYA.*')
 
 
 
