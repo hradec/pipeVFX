@@ -1320,6 +1320,26 @@ class baseApp(_environ):
         if hasattr( self, 'preRun'):
             cmd = self.preRun(cmd)
 
+        # workaround for centos 6.5
+        if os.path.exists('/etc/centos-release'):
+            _preload = [
+                "/opt/glibc-2.14/lib/libc.so.6",
+                "/opt/centos7/usr/lib64/libXft.so.2",
+            ]
+
+            if 'LD_PRELOAD' in os.environ.keys():
+                _preload += os.environ['LD_PRELOAD'].split(':')
+
+            # only preloads if they exist!
+            preload = []
+            for each in _preload:
+                if os.path.exists( each ):
+                    preload += [ each ]
+                else:
+                    print ("pipevfx dev warning: can't preload %s since it doesn't exist." % each)
+
+            os.environ['LD_PRELOAD']=":".join(preload)
+
         log.debug(cmd)
 
         # remove TBB_VERSION to avoid TBB spitting out information!!

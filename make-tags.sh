@@ -7,7 +7,9 @@ cd $CD/pipeline/tags/
 git tag | while read tag ; do 
 	echo $tag
 	echo "https://github.com/hradec/pipeVFX/archive/$tag.tar.gz"
-	curl -L "https://github.com/hradec/pipeVFX/archive/$tag.tar.gz" | \
-		tar xzv --exclude="golaem" --xform="s/pipeVFX-......pipeline.tools/$tag/x"  pipeVFX-$tag/pipeline/tools
+	if [ ! -e $tag ] ; then
+		curl -L "https://github.com/hradec/pipeVFX/archive/$tag.tar.gz" | \
+			tar xzv --exclude="golaem" --xform="s/pipeVFX-......pipeline.tools/$tag/x"  pipeVFX-$tag/pipeline/tools
+	fi
 done
 

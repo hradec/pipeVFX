@@ -121,18 +121,21 @@ class sudo():
                 def handler(signum=-1, frame=0):
                     self.__admServiceKill(pid)
                     if os.path.exists(file):
-                        os.remove(file)
+                        try: os.remove(file)
+                        except: pass
                     if os.path.exists("%s_log" % file):
-                        os.remove("%s_log" % file)
+                        try: os.remove("%s_log" % file)
+                        except: pass
                     raise Exception("[PARSER ERROR]: The process was killed!! If runing in the farm, this is probably an job eject/stop/restart, BUT it can be a CRASH of a running render!")
 
+
                 # Set the signal handler and a 5-second alarm
-                # try:
-                signal.signal(signal.SIGTERM, handler)
-                signal.signal(signal.SIGABRT, handler)
-                signal.signal(signal.SIGQUIT, handler)
-                # except:
-                #     pass
+                try:
+                    signal.signal(signal.SIGTERM, handler)
+                    signal.signal(signal.SIGABRT, handler)
+                    signal.signal(signal.SIGQUIT, handler)
+                except:
+                     pass
 
                 # run a loop monitoring our tmp file for a DONE line.
                 # dbus will add a DONE line to the file when it's done
@@ -295,13 +298,23 @@ class job(sudo):
     def symlink(self, source, target):
         sudo.ln(self, source, target)
 
-    def mktools(self, path='tools', username=''):
+    def _mktools(self, path='tools', username=''):
         ''' create the tools folder as a copy of pipeline/tools '''
         ignore = ['init', 'licenses']
         for each in glob.glob( "%s/*" % roots.tools() ):
             beach = os.path.basename(each)
             if os.path.isdir(each) and beach not in ignore:
                 self.mkdir( "%s/%s" % (path, beach), username )
+
+    def mktools(self, path='tools', username=''):
+        ''' create the tools folder as a link to the latest tag of pipeline/tools '''
+        if not os.path.exists( path ):
+            tags = glob.glob( "%s/*.*.*" % roots.tags() )
+            tags.sort()
+            print tags
+            self.symlink( tags[-1], path )
+
+
 
     def mkpublished(self, path):
 #        self.mkdir( self.path("%s/published" % path) )
@@ -551,7 +564,7 @@ class job(sudo):
 
         self.mktools( self.path("tools"), 'rhradec' )
         if not os.path.exists( self.path("tools/config/versions.py") ):
-            self.cp( "%s/config/versions.py" % roots.tools(), self.path("tools/config"), 'rhradec' )
+            self.cp( "%s/config/versions.py" % roots.tools(), self.path("tools/config/versions.py"), 'rhradec' )
 
     def create(self):
         return self.run()

@@ -555,6 +555,200 @@ def generic_menus(classe='light'):
     return menus
 
 
+def xgenGlobalEditor():
+    '''
+        an global editor to edit all modifiers in all xgen descriptions
+    '''
+    import pymel.core as pm
+    import maya.cmds as m
+    import xgenm as xg
+    import xgenm.xgGlobal as xgg
+    import os
+    p=os.environ['MAYA_PROJECT']
+
+
+    def densityPar(parent):
+         pal = desc.keys()[0]
+         each = desc[pal].keys()[0]
+         v = xg.getAttr( 'density',pal,each,'RandomGenerator' )
+         def density(*args):
+             v = pm.floatField( dens, v=1, q=1)
+             for attrName in pars:
+                 for pal in desc:
+                     for each in desc[pal]:
+                         xg.setAttr( 'density',str(v), pal, each, 'RandomGenerator' )
+         dens = parameter( 'density', float(v), parent, 100, density )
+
+
+    def buttonPressed(*args):
+        for attrName in pars:
+            for pal in desc:
+                for each in desc[pal]:
+                    v = pm.floatField( pars[attrName], v=1, q=1)
+                    a = '_'.join(attrName.split('_')[0:-1])
+                    m = attrName.split('_')[-1]
+                    print a, v, pal, each, m
+                    xg.setAttr( a, str(v), pal, each, m )
+
+    def createWin(name):
+        if m.dockControl( name.replace(' ','_'), exists=1 ):
+            m.deleteUI(name.replace(' ','_'))
+
+        win = pm.window(name+'_window',
+            nestedDockingEnabled=1,
+            resizeToFitChildren=1,
+            sizeable = True,
+    #        width = 180,
+    #        height = 600,
+            minimizeButton = True,
+            maximizeButton = False
+        )
+        pm.scrollLayout()
+        dock = m.dockControl( name, area='right', content=win, visible=1,allowedArea='all', fh=0, fw=1, w=168, h=6000, retain=0,floating=0)
+        return dock
+
+    def tab(name, win):
+        return pm.columnLayout(name+'_col')
+
+    def parameter(name, value, l, w=100, callback=None):
+        r=pm.rowLayout(numberOfColumns = 2, parent = l, h = 18, columnAlign2=('right','left'))
+        pm.text(name, parent = r, annotation = "", width = w)
+        if callback:
+            return pm.floatField(parent = r, width = 50, annotation = "", v=value, changeCommand=callback)
+        return pm.floatField(parent = r, width = 50, annotation = "", v=value)
+
+
+    for pal in xg.palettes():
+        xg.exportPalette( pal, '%s/data/sam_xgen_collection_%s.xgen' % (p,pal))
+
+        desc={ pal : {} }
+        for each in xg.descriptions():
+            desc[pal][each] = {
+                'attrs' : xg.allAttrs( pal, each ),
+                'mods' : {}
+            }
+            modules = desc[pal][each]['mods']
+            for n in xg.fxModules( pal, each ):
+                modules[n] =  {
+                    'name': n,
+                    'attrs' :  xg.allAttrs( pal, each, n )
+                }
+
+
+    win = createWin('xgen global editor')
+    l=tab('modifiers parameters', win)
+    #chkBox = pm.checkBox(label = "My Checkbox", value=True, parent=l)
+    densityPar(l)
+    pars={}
+    frames={}
+    for pal in desc:
+        for each in desc[pal]:
+            for mod in desc[pal][each]['mods']:
+              if mod not in frames:
+                  frames[mod]=pm.frameLayout(mod+' Parameters', parent=l, w=160,collapsable=1, collapse=0, backgroundColor=(0.2,0.2,0.7),backgroundShade=1)
+              print pal,each,mod
+              if 'true' in xg.getAttr( 'active', pal, each, mod ):
+                modules = desc[pal][each]['mods']
+                for mod_attr in modules[mod]['attrs']:
+                    attrName = "%s_%s" % ( mod_attr, mod )
+                    v = xg.getAttr( mod_attr , pal, each, mod )
+                    v = v.strip()
+                    if ( not [ x for x in ['pt','map','control','mode','texels','radiusvariance','bake'] if x in attrName.lower() ] ) and v:
+                        if '# backup original:' in v:
+                            v = float(v.replace('# backup original:', '').strip().replace('\\','').replace('\n','n').split('n')[0])
+                        elif v[0].isdigit():
+                            v = float(v)
+                        else:
+                            v = None
+
+                        if v != None and attrName not in pars:
+                            pars[attrName] = parameter( mod_attr, v, frames[mod], 100,buttonPressed )
+
+    btn = pm.button(label="Apply to all", parent=l)
+
+    btn.setCommand(buttonPressed)
+
+def farmTime():
+    frame = int(m.currentTime(q=1))
+    # account for running in the farm
+    if "FRAME_NUMBER" in os.environ:
+        frame = int(os.environ["FRAME_NUMBER"])
+    return frame
+
+def xgen_collection_path(collection='collection8'):
+    proj  = m.workspace(rd=1,q=1)
+    return "%s/data/%s-%04d.xgen" % (proj, collection, farmTime())
+
+
+def xgen_export_for_ribbox(collection=None):
+    import xgenm as xg
+    import maya.cmds as m
+    from maya.mel import eval as meval
+    import os
+
+    if not collection :
+        collection = xg.palettes()
+
+    if type(collection) == type(""):
+        collection = [collection]
+
+    start = int(m.playbackOptions(q=1, minTime=1))
+    end   = int(m.playbackOptions(q=1, maxTime=1))
+    proj  = m.workspace(rd=1,q=1)
+    for n in range(start, end):
+        for col in collection:
+            m.currentTime(n,e=1)
+            path = str(xgen_collection_path(col))
+            xg.exportPalette( col, path )
+
+def xgen_ribbox(collection='collection8', descriptions='tranca_1_,trance_2_,trance_3_', abc='/atomo/jobs/0669.batavo_nuv/sam/animation/alembic/1120.cabeca_e_chapeu/01.17.00/1120.cabeca_e_chapeu.asset.abc', patch_name='baseCabeloXgen'):
+    '''
+        create a new shading group world ribbox, with the code inside to render xgen collections
+        just attach to a cube, and attach a shader to it to assign the shader to the xgen collection.
+    '''
+    import maya.cmds as m
+    from maya.mel import eval as meval
+    import os
+
+    proj = m.workspace(rd=1,q=1).rstrip('/')
+    pal = collection
+    # abc = '/atomo/jobs/0669.batavo_nuv/sam/animation/alembic/1120.cabeca_e_chapeu/01.17.00/1120.cabeca_e_chapeu.asset.abc'
+    # patch = 'baseCabeloXgen'
+    xgen= xgen_collection_path(collection)
+    fps = 24
+    extra = '-debug 1'
+    res=''
+    for desc in descriptions.split(','):
+        res += '''
+            Procedural "DynamicLoad" ["XGenProcPrim" " -frame %s -file %s -palette %s -geom %s -patch %s -description %s -fps %s  %s"] [-1000 1000 -1000 1000 -1000 1000]
+        ''' % (str(farmTime()), xgen, pal, abc, patch_name, desc, fps, extra)
+    print res
+    return res
+
+def xgen_create_ribbox(collection='collection8', descriptions=['tranca_1_', 'trance_2_', 'trance_3_'], abc='/atomo/jobs/0669.batavo_nuv/sam/animation/alembic/1120.cabeca_e_chapeu/01.17.00/1120.cabeca_e_chapeu.asset.abc', patch_name='baseCabeloXgen'):
+    import maya.cmds as m
+    from maya.mel import eval as meval
+    import os
+
+    ribbox = meval('''
+         string $attrName = `rmanGetAttrName "ribBox"`;
+         string $attrNameInterp = `rmanGetAttrName ribBoxInterpolation`;
+         string $sg = `sets -renderable true -noSurfaceShader true -empty -name rmanWorld`;
+         rmanAddAttr $sg $attrName "#your rib here";
+         rmanAddAttr $sg $attrNameInterp "";
+         select -r -ne $sg;
+         $attr=($sg+"."+$attrName);
+    ''')
+    value = '''[python("import atomoShelfs;reload(atomoShelfs);atomoShelfs.xgen_ribbox('%s','%s','%s','%s')")]''' % (
+        collection,
+        ','.join(descriptions),
+        abc,
+        patch_name
+    )
+    print "===>",value
+    m.setAttr( ribbox, value, type='string' )
+    m.setAttr( ribbox.split('.')[0]+".rman__torattr___ribBoxInterpolation", 'TCL', type='string' )
+
 
 def buildShelf():
     addEmptyShelf("ATOMO_RENDER")
@@ -720,6 +914,35 @@ def buildShelf():
 	python=True,
 	cmd="import studiolibrary; studiolibrary.main()"
     )
+
+    addShelfButton( name="", help="",icon="spacer.png",cmd="",enable=0,    )
+
+    addShelfButton(
+    	name="XgnGlb",
+    	help="Tool to edit all modifiers in all xgen descriptions",
+    	icon="Objects.png",
+    	python=True,
+    	cmd="import atomoShelfs;reload(atomoShelfs);atomoShelfs.xgenGlobalEditor()"
+    )
+
+    addShelfButton( name="", help="",icon="spacer.png",cmd="",enable=0,    )
+
+    addShelfButton(
+    	name="XgnExp",
+    	help="Export xgen collection to be used to render as ribbox animation",
+    	icon="rman_ribbox.png",
+    	python=True,
+    	cmd="import atomoShelfs;reload(atomoShelfs);atomoShelfs.xgen_export_for_ribbox()"
+    )
+    addShelfButton(
+    	name="XgnBox",
+    	help="Export xgen collection to be used to render as ribbox animation",
+    	icon="rman_ribbox.png",
+    	python=True,
+    	cmd="import atomoShelfs;reload(atomoShelfs);atomoShelfs.xgen_create_ribbox()"
+    )
+
+
 
     selectShelf("ATOMO_RENDER")
 

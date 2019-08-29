@@ -72,10 +72,19 @@ def viewportOff( func ):
 def cleanAllShapeName():
     for each in m.ls(sl=1, dag=1, type='mesh', l=1):
         last = each.split('|')[-1]
-        for n in range(10):
-            last = last.replace(str(n),'')
+        # for n in range(10):
+        #     last = last.replace(str(n),'')
         #while last[-1].isdigit():
         #    each = each[:-1]
+        l = 0
+        for n in range(10):
+            # path = path.replace(str(n),'')
+            # split node name and gather the longest string!
+            for x in last.split(str(n)):
+                if len(x) > l:
+                    last = x
+                    l = len(last)
+
         each = '|'.join(each.split('|')[:-1]+[last])
         print each
 
@@ -156,31 +165,32 @@ def updateCurrentLoadedAssets(forceRefresh=False):
     # _updateCurrentLoadedAssets__ = globals()['_updateCurrentLoadedAssets__']
 
     # make sure evaluation mode is set to DG, or else
-    if 'off' not in ''.join(m.evaluationManager( q=1, mode=1 )):
-        m.evaluationManager( mode="off" )
+    if m:
+        if 'off' not in ''.join(m.evaluationManager( q=1, mode=1 )):
+            m.evaluationManager( mode="off" )
 
-    maya.applyCustomRules()
+        maya.applyCustomRules()
 
-    types = assetUtils.types(forceRefresh)
-    for t in types.keys():
-        tt = t.split('/')
-        nodeNamePrefix = _nodeNameTemplate(prefix=True) % (tt[0], tt[1])
-        # try:
-        #     if t not in _updateCurrentLoadedAssets__.keys():
-        #         _updateCurrentLoadedAssets__[t] = assetUtils.loadAssetOP(t)
-        # except:
-        #     _updateCurrentLoadedAssets__[t] = None
+        types = assetUtils.types(forceRefresh)
+        for t in types.keys():
+            tt = t.split('/')
+            nodeNamePrefix = _nodeNameTemplate(prefix=True) % (tt[0], tt[1])
+            # try:
+            #     if t not in _updateCurrentLoadedAssets__.keys():
+            #         _updateCurrentLoadedAssets__[t] = assetUtils.loadAssetOP(t)
+            # except:
+            #     _updateCurrentLoadedAssets__[t] = None
 
-        op = types.op(t)
-        # print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
-        if hasattr(op.op, 'typeOP') and hasattr(op.op.typeOP, 'onRefreshCallback'):
-            canRefresh = True
-            if m and not m.ls('|%s*_??_??_??_*' % nodeNamePrefix):
-                canRefresh = False
+            op = types.op(t)
+            # print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
+            if hasattr(op.op, 'typeOP') and hasattr(op.op.typeOP, 'onRefreshCallback'):
+                canRefresh = True
+                if m and not m.ls('|%s*_??_??_??_*' % nodeNamePrefix):
+                    canRefresh = False
 
-            if canRefresh:
-                print 'SAM REFRESH =>',t, nodeNamePrefix
-                op.op.typeOP.onRefreshCallback( t, nodeNamePrefix )
+                if canRefresh:
+                    print 'SAM REFRESH =>',t, nodeNamePrefix
+                    op.op.typeOP.onRefreshCallback( t, nodeNamePrefix )
 
 
 class progressBar():
@@ -617,7 +627,7 @@ class maya( _genericAssetClass ) :
                 return p
 
         def addRule(self, name, sg, node=''):
-            if name in self.cache.keys():
+            if name and name in self.cache.keys():
                 if sg != self.cache[name]:
                     if not node:
                         node=name
@@ -655,25 +665,51 @@ class maya( _genericAssetClass ) :
 
     @staticmethod
     def node2rule(nodeName):
+        if 'SAM_' in nodeName:
+            return ''
         #*[starts-with(name(),'paperclip')]
         print nodeName
         paths = []
-        for path in [ x for x in nodeName.split('|') if 'SAM_' not in x ]:
+        # for path in nodeName.split('|'):
+        for path in [nodeName.split('|')[-1]]:
             if path:
+                path = path.split(':')[-1]
+                # remove Shape from name
+                l = 0
+                for x in path.split('Shape'):
+                    if len(x) > l:
+                        path = x
+                        l = len(path)
+
                 for n in range(10):
-                    path = path.replace(str(n),'')
+                    # path = path.replace(str(n),'')
+                    # split node name and gather the longest string!
+                    l = 0
+                    for x in path.split(str(n)):
+                        if len(x) > l:
+                            path = x
+                            l = len(path)
+
                 paths += [path]
 
-        p = ''
-        # paths.reverse()
-        for ps in paths:
-            if not p:
-                p = "*[starts-with(name(),'%s')]" % ps
-            else:
-                p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
-        rule = p
+        if paths:
+            p = ''
+            # paths.reverse()
+            for ps in paths:
+                if not p:
+                    p = "*[starts-with(name(),'%s')]" % ps
+                else:
+                    p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
+            rule = p
 
-        rule = '/'.join( [ "*[contains(name(),'%s')]" % ps for ps in paths ] ).strip('|').replace('|','/')
+            rule = '/'.join( [ "*[contains(name(),'%s')]" % ps for ps in paths ] ).strip('|').replace('|','/')
+        else:
+            path = nodeName.split('|')[-1]
+            path = path.split(':')[-1]
+            p = "*[starts-with(name(),'%s')]" % path
+            rule = "*[contains(name(),'%s')]" % path
+            rule = rule.strip('|').replace('|','/')
+
         return rule
 
 
@@ -1173,36 +1209,45 @@ class alembic(  _genericAssetClass ) :
                 'opposite',
             ]
 
-            if not self.__anyNode:
-                meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
-                # convert rman attributos to a cleaner version
-                attrs = [ a for a in attributesToExport if 'rman__torattr___' in a ]
-                pb = progressBar(len(attrs)*len(meshes)+1, 'setting up geometry for export...')
-                pb.step()
-                for attr in attrs:
-                    pb.step()
-                    for n in meshes:
-                        pb.step()
-                        if m.objExists( '%s.%s' % (n, attr) ):
-                            cleanAttr = attr.replace('rman__torattr___','')
-                            if not m.objExists( '%s.%s' % (n, cleanAttr) ):
-                                m.addAttr( n, ln=cleanAttr, at="long" )
-                            m.setAttr( '%s.%s' % (n, cleanAttr), m.getAttr( '%s.%s' % (n, attr) ) )
-                            attributesToExport.append(cleanAttr)
 
-                pb.close()
-
-                m.select( meshes )
+            curves = m.ls( sl, dag=1, ni=1, type='nurbsCurve' )
+            meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
+            # print "BUMM",sl, len(curves), len(meshes)
+            if curves and not meshes:
+                extra = ''
             else:
-                m.select( m.ls( sl, dag=1) )
+                if not self.__anyNode:
+                    meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
+                    # convert rman attributos to a cleaner version
+                    attrs = [ a for a in attributesToExport if 'rman__torattr___' in a ]
+                    pb = progressBar(len(attrs)*len(meshes)+1, 'setting up geometry for export...')
+                    pb.step()
+                    for attr in attrs:
+                        pb.step()
+                        for n in meshes:
+                            pb.step()
+                            if m.objExists( '%s.%s' % (n, attr) ):
+                                cleanAttr = attr.replace('rman__torattr___','')
+                                if not m.objExists( '%s.%s' % (n, cleanAttr) ):
+                                    m.addAttr( n, ln=cleanAttr, at="long" )
+                                m.setAttr( '%s.%s' % (n, cleanAttr), m.getAttr( '%s.%s' % (n, attr) ) )
+                                attributesToExport.append(cleanAttr)
 
-            if attributesToExport:
-                extra += ' -attr '+' -attr '.join(attributesToExport)
+                    pb.close()
+
+                    m.select( meshes )
+                else:
+                    m.select( m.ls( sl, dag=1) )
+
+                if attributesToExport:
+                    extra += ' -attr '+' -attr '.join(attributesToExport)
+
+                extra += ' -noNormals  -sl '
 
 
             className = str(self.__class__).split('.')[-1]
             root = ' '.join([ '-root '+x for x in sl ])
-            abcJob = "%s %s -noNormals -sl -step %s -wv -fr %s %s %s -file %s" % (
+            abcJob = "%s %s  -step %s -wv -fr %s %s %s -file %s" % (
                 extra,
                 '''-pythonPerFrameCallback "print globals().keys();import genericAsset;genericAsset.alembic.perFrameCallback(#FRAME#, '%s', %s )"''' % (shaveTmp,sl),
                 1.0,
@@ -1211,6 +1256,7 @@ class alembic(  _genericAssetClass ) :
                 root,
                 mfile,
             )
+
             print "m.AbcExport( j=abcJob) : ", abcJob ; sys.stdout.flush()
             m.AbcExport( j=abcJob)
             maya.cleanNodes(cleanup)

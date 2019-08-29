@@ -221,11 +221,12 @@ class pipeAdminDBUSService(dbus.service.Object):
             f.write( '\n' )
             f.close()
         else:
-            ret = ''.join( os.popen("%s 2>&1 " % (each)).readlines() )
+            ret = ''.join( os.popen( "%s 2>&1 | tee -a %s" % (each,tmpfile) ).readlines() )
             print '---',ret
-            f=open("%s_log" % tmpfile,'w')
-            f.write(ret+'\n')
-            f.close()
+            # os.system('chmod a+rwx  %s_log' % tmpfile)
+            # f=open("%s_log" % tmpfile,'w')
+            # f.write(ret+'\n')
+            # f.close()
 #            exitCode, ret = pipe.base.runProcess(each)
         return ret
 

@@ -48,9 +48,10 @@ def runProcess(exe):
                         std = map(lambda x: "PROGRESS: "+x if '%' in x else x, std)
                         std = ' '.join(std)+"\n"
               secs = '%s | ' % str(datetime.timedelta( seconds = int(time.time()-_start) ))
-              sys.stdout.write( secs + prefix + std )
-              log += std
-              sys.stdout.flush()
+              if 'Fontconfig' not in std:
+                  log += std
+                  sys.stdout.write( secs + prefix + std )
+                  sys.stdout.flush()
           if err:
               sys.stderr.write( "ERROR: " + err )
               log += "ERROR: " + std
@@ -198,6 +199,17 @@ class roots:
             root = roots.apps(plat)
 
         return os.path.abspath( '%s/pipeline/tools/%s' % (root, subpath) )
+
+    @staticmethod
+    def tags(plat=None, subpath=''):
+        if subpath:
+            subpath = '/%s' % subpath
+
+        root = depotRoot()
+        if plat:
+            root = roots.apps(plat)
+
+        return os.path.abspath( '%s/pipeline/tags/%s' % (root, subpath) )
 
 
 # hardcoded for now!!
