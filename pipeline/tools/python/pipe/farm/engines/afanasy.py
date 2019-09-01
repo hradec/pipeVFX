@@ -227,7 +227,7 @@ class job(baseFarmJobClass):
     def _renderNodeSetParameter(self, name, par='', value=''):
         tmp = self._renderNodes(name)
         for j in tmp:
-            print( j['name'] )
+            # print( j['name'] )
             v = value
 
             # print par, v, None if not j.has_key(par) else j[par]
@@ -249,7 +249,7 @@ class job(baseFarmJobClass):
         #{"action":{"user_name":"coord","host_name":"pc","type":"renders","ids":[29],"operation":{"type":"delete"}}}
         for tmp in self._renderNodes(name):
             if 'storage' not in tmp['name'] and 'setup' not in tmp['name']:
-                print tmp['name']
+                # print(tmp['name'])
                 json = {"action":{
                     "user_name":"coord",
                     "host_name":"pc",
@@ -258,7 +258,7 @@ class job(baseFarmJobClass):
                     "operation":{"type":"delete"}
                 }}
                 print( json )
-                print self._runJSON(json)
+                print( self._runJSON(json) )
 
 
     def jobsByID(self, id):

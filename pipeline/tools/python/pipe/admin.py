@@ -311,7 +311,6 @@ class job(sudo):
         if not os.path.exists( path ):
             tags = glob.glob( "%s/*.*.*" % roots.tags() )
             tags.sort()
-            print tags
             self.symlink( tags[-1], path )
 
 
