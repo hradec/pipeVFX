@@ -22,3 +22,5 @@ sys.path += [os.path.dirname(__file__)]
 
 import afanasy as afanasy
 import qube as qube
+
+sys.path.remove( os.path.dirname(__file__) )
