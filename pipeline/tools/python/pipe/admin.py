@@ -562,8 +562,8 @@ class job(sudo):
 #        self.mkshot( "assets" )
 
         self.mktools( self.path("tools"), 'rhradec' )
-        if not os.path.exists( self.path("tools/config/versions.py") ):
-            self.cp( "%s/config/versions.py" % roots.tools(), self.path("tools/config/versions.py"), 'rhradec' )
+        # if not os.path.exists( self.path("tools/config/versions.py") ):
+        #     self.cp( "%s/config/versions.py" % roots.tools(), self.path("tools/config/versions.py"), 'rhradec' )
 
     def create(self):
         return self.run()
