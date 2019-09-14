@@ -64,6 +64,8 @@ class maya(baseApp):
             self.update( golaem() )
             self.update( shave() )
             self.update( houdini() )
+            self.update( substance() )
+
             if 'PIPE_MAYA_ZYNC' in os.environ and os.environ['PIPE_MAYA_ZYNC']=='1':
                 self.update( zync() )
             if mv <= 2015:

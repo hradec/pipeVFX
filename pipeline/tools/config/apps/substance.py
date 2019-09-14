@@ -29,28 +29,40 @@ class substance(baseApp):
 
         '''
 
-        self['LD_LIBRARY_PATH'] = self.path('painter/')
-        self['PATH']            = self.path('painter/')
-        self['QML_IMPORT_PATH'] = self.path('painter/qml/')
-        self['QML_IMPORT_PATH'] = self.path('painter/resources/')
-        self['QT_PLUGIN_PATH']  = self.path('painter/')
-        self['QT_PLUGIN_PATH']  = self.path('painter/qml/')
-        self['QT_PLUGIN_PATH']  = self.path('painter/resources/')
-        
+        for n in [ 'Substance_Designer', 'Substance_Painter' ] :
+            self['LD_LIBRARY_PATH'] = self.path('%s/' % n)
+            self['PATH']            = self.path('%s/' % n)
+            self['QML_IMPORT_PATH'] = self.path('%s/qml/' % n)
+            self['QML_IMPORT_PATH'] = self.path('%s/resources/' % n)
+            self['QT_PLUGIN_PATH']  = self.path('%s/' % n)
+            self['QT_PLUGIN_PATH']  = self.path('%s/qml/' % n)
+            self['QT_PLUGIN_PATH']  = self.path('%s/resources/' % n)
+            self['PYTHONPATH']      = self.path('%s/tools/scripting/' % n)
+
         # self.ignorePipeLib( "readline" )
         # self.ignorePipeLib( "log4cplus" )
         # self['LD_PRELOAD'] = '/usr/lib/liblog4cplus-1.2.so.5'
 
+        maya.addon( self,
+            script  = self.path('/maya/$MAYA_VERSION_MAJOR/plug-ins/substance/scripts/'),
+            plugin  = self.path('/maya/$MAYA_VERSION_MAJOR/plug-ins/substance/plug-ins/'),
+            lib     = [
+                self.path('/maya/$MAYA_VERSION_MAJOR/lib/'),
+                self.path('/maya/$MAYA_VERSION_MAJOR/plug-ins/substance/lib/'),
+            ],
+            icon    = self.path('/maya/$MAYA_VERSION_MAJOR/plug-ins/substance/icons/'),
+        )
+
 
     def bins(self):
         return [
-            ('spainter','painter/Substance\ Painter\ 2'),
-            ('sdesigner', 'designer/Substance\ Designer'),
+            ('spainter','Substance_Painter/Substance\ Painter'),
+            ('sdesigner', 'Substance_Designer/Substance\ Designer'),
         ]
 
-    def license(self):
-        self['SUBSTANCE_PAINTER_2_LICENSE'] = '%s/licenses/substance/painter2/SubstancePainter2.key' % pipe.roots.tools()
-        self['SUBSTANCE_DESIGNER_6_LICENSE'] = '%s/licenses/substance/painter2/SubstanceDesigner6.key' % pipe.roots.tools()
+    # def license(self):
+    #     self['SUBSTANCE_PAINTER_2_LICENSE'] = '%s/licenses/substance/painter2/SubstancePainter2.key' % pipe.roots.tools()
+    #     self['SUBSTANCE_DESIGNER_6_LICENSE'] = '%s/licenses/substance/painter2/SubstanceDesigner6.key' % pipe.roots.tools()
 
     def userSetup(self, jobuser):
         self['__USER_FOLDER__'] = jobuser.path('substance')
