@@ -89,45 +89,65 @@ class gccBuild(configure):
             ])
         elif self.versionMajor == 4.8:
             # extract from https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=gcc48
-            cmd = ' && '.join([
-                # Do not run fixincludes
-                "sed -i -e 's@\./fixinc\.sh@-c true@' 'gcc/Makefile.in'",
-                # fix build with GCC 6
-                "curl -L -s 'https://aur.archlinux.org/cgit/aur.git/plain/gcc-4.9-fix-build-with-gcc-6.patch?h=gcc48' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
-                # Arch Linux installs x86_64 libraries /lib
-                "sed -i -e '/m64=/s/lib64/lib/' 'gcc/config/i386/t-linux64'",
-                # hack! - some configure tests for header files using "$CPP $CPPFLAGS"
-                "sed -i -e '/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/' {libiberty,gcc}/configure",
-                # installing libiberty headers is broken
-                # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56780#c6
-                # "sed -i -e 's#@target_header_dir@#libiberty#' 'libiberty/Makefile.in'",
+            distroSpecific = []
+            distroSpecificConfigure = ''
+            if 'arch' in pipe.distro:
+                distroSpecific = [
+                    # Do not run fixincludes
+                    "sed -i -e 's@\./fixinc\.sh@-c true@' 'gcc/Makefile.in'",
+                    # fix build with GCC 6
+                    "curl -L -s 'https://aur.archlinux.org/cgit/aur.git/plain/gcc-4.9-fix-build-with-gcc-6.patch?h=gcc48' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
+                    # Arch Linux installs x86_64 libraries /lib
+                    "sed -i -e '/m64=/s/lib64/lib/' 'gcc/config/i386/t-linux64'",
+                    # hack! - some configure tests for header files using "$CPP $CPPFLAGS"
+                    "sed -i -e '/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/' {libiberty,gcc}/configure",
+                    # installing libiberty headers is broken
+                    # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56780#c6
+                    # "sed -i -e 's#@target_header_dir@#libiberty#' 'libiberty/Makefile.in'",
+                ]
+                distroSpecificConfigure = ' '.join([
+                    '--disable-libstdcxx-pch '
+                    '--disable-libunwind-exceptions '
+                    '--disable-multilib '
+                    '--disable-werror '
+                    '--enable-__cxa_atexit '
+                    '--enable-checking=release '
+                    '--enable-clocale=gnu '
+                    '--enable-cloog-backend=isl '
+                    '--enable-gnu-unique-object '
+                    '--enable-gold '
+                    '--enable-languages="c,c++" '
+                    '--enable-plugin '
+                    '--enable-shared '
+                    '--enable-threads=posix '
+                    '--enable-version-specific-runtime-libs '
+                    '--infodir="$TARGET_FOLDER/share/info" '
+                    '--libdir="$TARGET_FOLDER/lib" '
+                    '--libexecdir="$TARGET_FOLDER/lib" '
+                    '--mandir=$TARGET_FOLDER/share/man '
+                    "--program-suffix=$(basename $TARGET_FOLDER) "
+                    "--with-ppl "
+                    "--with-system-zlib "
+                ])
+
+
+            cmd = ' && '.join(distroSpecific+[
+                "./contrib/download_prerequisites",
                 "mkdir -p build",
                 "cd build",
                 "ulimit -s 32768",
                 '../configure '
-                        '--disable-libstdcxx-pch '
-                        '--disable-libunwind-exceptions '
                         '--disable-multilib '
                         '--disable-werror '
-                        '--enable-__cxa_atexit '
-                        '--enable-checking=release '
-                        '--enable-clocale=gnu '
-                        '--enable-cloog-backend=isl '
-                        '--enable-gnu-unique-object '
-                        '--enable-gold '
                         '--enable-languages="c,c++" '
-                        '--enable-plugin '
-                        '--enable-shared '
-                        '--enable-threads=posix '
-                        '--enable-version-specific-runtime-libs '
+                        "--with-ppl "
+                        "--with-system-zlib "
                         '--infodir="$TARGET_FOLDER/share/info" '
                         '--libdir="$TARGET_FOLDER/lib" '
                         '--libexecdir="$TARGET_FOLDER/lib" '
                         '--mandir=$TARGET_FOLDER/share/man '
                         "--program-suffix=$(basename $TARGET_FOLDER) "
-                        "--with-ppl "
-                        "--with-system-zlib "
-                        "--prefix=$TARGET_FOLDER ",
+                        "%s --prefix=$TARGET_FOLDER " % distroSpecificConfigure,
                 'make -j $DCORES',
                 'make install',
             ])

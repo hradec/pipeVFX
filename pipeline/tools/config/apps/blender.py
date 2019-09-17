@@ -43,6 +43,13 @@ class blender(baseApp):
 
         return cmd
 
+    def userSetup(self, jobuser):
+        ''' this method is implemented when we want to do especial folder structure creation and setup
+        for a user in a shot'''
+        # self['XDG_CONFIG_HOME'] = jobuser.path()
+
+
+
         # self.ignorePipeLib( "tiff" )
         # self.ignorePipeLib( "libpng" )
         # self.ignorePipeLib( "jpeg" )

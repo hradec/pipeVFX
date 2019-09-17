@@ -21,8 +21,10 @@
 
 import sys, os, traceback
 sys.path.insert( 0, os.path.abspath('../tools/python/') )
-os.environ['GCC_VERSION'] = 'gcc-multi'
-#os.environ['LD_PRELOAD'] ='/atomo/pipeline/libs/linux/x86_64/gcc-multi/mpfr/3.1.4/lib/libmpfr.so.4'
+
+gcc_version = ''.join(os.popen("gcc --version | head -1 | awk '{print $(NF)}' | awk -F'-' '{print $1}'").readlines())
+os.environ['GCC_VERSION'] = 'gcc-%s' % gcc_version
+# os.environ['GCC_VERSION'] = 'gcc-multi'
 
 # build all pkgs, if not already built!
 import build
@@ -406,7 +408,7 @@ if canBuildCortexNow:
     #     ))
     #
     # pkgs.openvdb = openvdb[-1]
-    
+
 
     # https://github.com/wdas/ptex/archive/v2.3.2.tar.gz
     # https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz

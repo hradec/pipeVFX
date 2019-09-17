@@ -169,6 +169,20 @@ class all: # noqa
                  ),
                ],
         )
+
+        flex = build.configure(
+            ARGUMENTS,
+            'flex',
+            download=[(
+                'http://downloads.sourceforge.net/project/flex/flex-2.5.39.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fflex%2Ffiles%2F&ts=1433811270&use_mirror=iweb',
+                'flex-2.5.39.tar.gz',
+                '2.5.39',
+                'e133e9ead8ec0a58d81166b461244fde'
+            )],
+        )
+        self.flex = flex
+        build.allDepend.append(flex)
+
         gcc = build.gccBuild(
                 ARGUMENTS,
                 'gcc',
@@ -184,12 +198,12 @@ class all: # noqa
                 #    '4.8.5',
                 #    'bfe56e74d31d25009c8fb55fd3ca7e01'
                 # ),(
-                   # 'http://gcc.parentingamerica.com/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
-                   # 'gcc-4.8.3.tar.gz',
-                   # '4.8.3',
-                   # 'e2c60f5ef918be2db08df96c7d97d0c4'
+                #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.3/gcc-4.8.3.tar.gz',
+                #    'gcc-4.8.3.tar.gz',
+                #    '4.8.3',
+                #    'e2c60f5ef918be2db08df96c7d97d0c4'
                 # ),(
-                   'http://gcc.parentingamerica.com/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                   'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
                    'gcc-4.1.2.tar.gz',
                    '4.1.2',
                    'dd2a7f4dcd33808d344949fcec87aa86'
@@ -411,7 +425,9 @@ class all: # noqa
                 # '3.0.0',
                 # '90c3ca4dd9d51cf32276bc5344ec9754',
             )],
-            environ = {'LDFLAGS' : '$LDFLAGS -lm -lGL'}
+            environ = {
+                'LDFLAGS' : '$LDFLAGS -lm -lGL',
+            }
         )
         build.allDepend.append(freeglut)
         self.freeglut = freeglut
@@ -819,26 +835,39 @@ class all: # noqa
             # ocio for some reason doesn't add -fPIC when building the static external libraries,
             # so we have to patch it or build fail with gcc 4.1.2
             # also, we have to remove -fvisibility-inlines-hidden when building with gcc 4.1.2
-            sed = {'0.0.0' : {
-                'ext/tinyxml_2_6_1.patch' : [
-                    ('-fPIC', '-fPIC -DPIC'),
-                    (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
-                ],
-                'ext/yaml-cpp-0.3.0.patch' : [
-                    ('-fPIC', '-fPIC -DPIC'),
-                    (' -fvisibility-inlines-hidden -fvisibility=hidden', ''),
-                ],
-            }},
+            # sed = {'0.0.0' : {
+            #     'ext/tinyxml_2_6_1.patch' : [
+            #         # ('+    tinystr.cpp','+ '),
+            #         ('-fPIC', ' -fPIC -DPIC '),
+            #         # ('-DTIXML_USE_STL', '' ),
+            #         (' -fvisibility-inlines-hidden', ' -fPIC -Wno-unused -fvisibility=default '),
+            #         ('-fvisibility=hidden', ''),
+            #     ],
+            #     'ext/yaml-cpp-0.3.0.patch' : [
+            #         ('-fPIC', '-fPIC -DPIC '),
+            #         (' -fvisibility-inlines-hidden', ' -fPIC -Wno-unused -fvisibility=default '),
+            #         ('-fvisibility=hidden', ''),
+            #     ],
+            #     'src/core/CMakeLists.txt' : [
+            #         ('-Werror', ' '),
+            #     ],
+            # }},
             download = [(
-                'https://github.com/imageworks/OpenColorIO/archive/v1.0.9.tar.gz',
-                'OpenColorIO-1.0.9.tar.gz',
-                '1.0.9',
-                '06d0efe9cc1b32d7b14134779c9d1251',
+            #     'https://github.com/imageworks/OpenColorIO/archive/v1.0.9.tar.gz',
+            #     'OpenColorIO-1.0.9.tar.gz',
+            #     '1.0.9',
+            #     '06d0efe9cc1b32d7b14134779c9d1251',
+            #     { gcc : '4.1.2' }
+            # ),(
+                'https://github.com/imageworks/OpenColorIO/archive/v1.1.1.tar.gz',
+                'OpenColorIO-1.1.1.tar.gz',
+                '1.1.1',
+                '23d8b9ac81599305539a5a8674b94a3d',
                 { gcc : '4.1.2' }
             )],
             baseLibs = [python],
-            depend   = [yasm,boost,gcc,cmake,python],
-            flags    = build.cmake.flags+['-DOCIO_BUILD_APPS=0 ']
+            depend   = [yasm,boost,gcc,python],
+            flags    = build.cmake.flags+['-DOCIO_BUILD_APPS=0'] #  -DUSE_EXTERNAL_TINYXML=1  -DUSE_EXTERNAL_YAML=1']
         )
         self.ocio = ocio
         build.allDepend.append(ocio)
@@ -943,19 +972,6 @@ class all: # noqa
         )
         self.llvm = llvm
         build.allDepend.append(llvm)
-
-        flex = build.configure(
-            ARGUMENTS,
-            'flex',
-            download=[(
-                'http://downloads.sourceforge.net/project/flex/flex-2.5.39.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fflex%2Ffiles%2F&ts=1433811270&use_mirror=iweb',
-                'flex-2.5.39.tar.gz',
-                '2.5.39',
-                'e133e9ead8ec0a58d81166b461244fde'
-            )],
-        )
-        self.flex = flex
-        build.allDepend.append(flex)
 
         bison = build.configure(
             ARGUMENTS,

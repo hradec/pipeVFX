@@ -79,7 +79,7 @@ class cmake(make):
             '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
             '-DILMBASE_HOME=$ILMBASE_TARGET_FOLDER',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
-            '-DILMBASE_LIBRARIES=\\"$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread\\" '
+            '-DILMBASE_LIBRARIES="$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread" '
             '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
             '-DPYILMBASE_LIBRARY_DIR=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
             # '-DGCC_VERSION=%s' % pipe.build.distro.split('-')[-1],
