@@ -24,6 +24,7 @@ exec( pipe.include( __file__ ) )
 
 try:
     import nuke
+    nuke.root()
 except:
     nuke=None
 
@@ -33,6 +34,7 @@ class nuke( render ) :
     def __init__( self ) :
         try:
             import nuke
+            nuke.root()
         except:
             nuke=None
 
