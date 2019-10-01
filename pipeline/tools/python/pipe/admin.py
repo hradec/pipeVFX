@@ -308,10 +308,12 @@ class job(sudo):
 
     def mktools(self, path='tools', username=''):
         ''' create the tools folder as a link to the latest tag of pipeline/tools '''
+        from distutils.version import StrictVersion
         if not os.path.exists( path ):
-            tags = glob.glob( "%s/*.*.*" % roots.tags() )
-            tags.sort()
-            self.symlink( tags[-1], path )
+            tags = [ x.split('/')[-1] for x in glob.glob( "%s/*.*.*" % roots.tags() ) if x.split('/')[-1][0].isdigit() ]
+            tags.sort(key=StrictVersion)
+            print tags
+            self.symlink( '%s/%s' % (roots.tags(), tags[-1]), path )
 
 
 
