@@ -1254,7 +1254,7 @@ class baseApp(_environ):
                 d = "-d %s" % d
             debug = '%s +v %s %s %s env LD_LIBRARY_PATH=$LD_LIBRARY_PATH' % (vglrun, d, m32, debug)
         elif display > 9:
-            debug = 'env QT_X11_NO_MITSHM=1 QT_GRAPHICSSYSTEM=opengl LIBGL_ALWAYS_INDIRECT=1  %s ' % (debug)
+            debug = 'xhost + ; env QT_X11_NO_MITSHM=1 QT_GRAPHICSSYSTEM=opengl LIBGL_ALWAYS_INDIRECT=1  %s ' % (debug)
 
 
         # construct the command line to run the software
