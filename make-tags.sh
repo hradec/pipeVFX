@@ -17,5 +17,6 @@ git tag | while read tag ; do
 
 			# upload to server
 			sudo rsync -avpP ./$tag/ $server:/atomo/pipeline/tags/$tag/
+			ssh 192.168.0.12 " cd /atomo/pipeline/tags/ ; sudo rm -f latest ; sudo ln -s $(ls | egrep '.*\..*\..*' |  sort  -V | tail -1) latest "
 	fi
 done
