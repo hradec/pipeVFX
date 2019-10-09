@@ -41,7 +41,9 @@ def rlf2rib():
 
 def attachRLF(rlfFile):
     # meval('RiArchiveRecord("comment", "#RLF ScopeEnd\\n##RLF ScopeBegin -rlffilename %s -namespace")' % rlfFile)
-    meval('RiArchiveRecord("comment", "\\n##RLF ScopeBegin -rlffilename %s -namespace")' % rlfFile)
+    mel = 'RiArchiveRecord("comment", "\\n##RLF ScopeBegin -rlffilename %s -namespace")' % rlfFile
+    print mel
+    meval(mel)
 
 def getRibFolder(frame=m.currentTime(q=1)):
     return "%s/%s/%04d/" % ( m.workspace(q=1,rd=1), meval("rman subst `rman getvar rfmRIBs`"), frame )
@@ -55,16 +57,22 @@ def getRLF(frame=m.currentTime(q=1)):
             ret += [f]
     return ret
 
-def exportRLF(frame=m.currentTime(q=1), animation=None):
+def exportRLF(frame=m.currentTime(q=1), animation=None, range=None):
     import genericAsset, os
 
     minFrame = frame
     maxFrame = frame
     by       = 1
     if animation:
-        minFrame = m.playbackOptions(q=1, minTime=1)
-        maxFrame = m.playbackOptions(q=1, maxTime=1)
-        by       = m.playbackOptions(q=1, by=1)
+        if not range:
+            minFrame = m.playbackOptions(q=1, minTime=1)
+            maxFrame = m.playbackOptions(q=1, maxTime=1)
+            by       = m.playbackOptions(q=1, by=1)
+        else:
+            minFrame = range[0]
+            maxFrame = range[1]
+            by       = range[2]
+
 
     # progress bar
     pb = genericAsset.progressBar( (maxFrame-minFrame)+3, "Exporting Renderman Look Files for each frame in the frame range...")

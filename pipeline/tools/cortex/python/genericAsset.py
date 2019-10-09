@@ -292,13 +292,23 @@ class _genericAssetClass( IECore.Op ) :
                 ),
             ])
 
+
         self.parameters().addParameters([
-            IECore.CompoundParameter("FrameRange","",[
-                IECore.V3fParameter("range","Inicio, fim e 'step' da sequencia a ser rendida.",IECore.V3f(0, 10, 1), userData=disabled),
-            ],userData = { "UI": {
-                "collapsed" : IECore.BoolData(False),
-                "visible" : IECore.BoolData(self.animation),
-            }}),
+                IECore.BoolParameter(
+                    name="enableAnimation",
+                    description = "Enable exporting animation.",
+                    defaultValue = False,
+                    userData = { "UI": {
+                        "collapsed" : IECore.BoolData(False),
+                        "visible" : IECore.BoolData(animation),
+                    }},
+                ),
+                IECore.CompoundParameter("FrameRange","",[
+                    IECore.V3fParameter("range","Inicio, fim e 'step' da sequencia a ser rendida.",IECore.V3f(0, 10, 1), userData=disabled),
+                ],userData = { "UI": {
+                    "collapsed" : IECore.BoolData(True),
+                    "visible" : IECore.BoolData(animation),
+                }}),
         ])
 
         self.canPublish = True
@@ -354,6 +364,29 @@ class _genericAssetClass( IECore.Op ) :
 
             self.parameters()["%s%s" % (self.prefix, self.nameDependency)].setValue(  IECore.StringData(scene) )
 
+
+    def parameterChanged(self, parameter):
+        if hasattr( parameter, 'parameterChanged' ):
+            parameter.parameterChanged( parameter )
+
+        if parameter.name == 'enableAnimation':
+            print dir(parameter)
+            self.animation = bool(parameter.getValue())
+            self.parameters()["FrameRange"].userData()["UI"]["visible"] = IECore.BoolData(bool(parameter.getValue()))
+            self.updateFromHost()
+
+        if hasattr( self, 'uiCallback' ):
+            self.uiCallback(parameter)
+
+    @staticmethod
+    def cleanupScene():
+        '''
+            Delete namespaces in a scene!
+        '''
+        if hostApp()=='maya' and m:
+            for each in { ':%s' % ':'.join(x.split(':')[:-1]) : x.split(':')[-1] for x in  m.ls("*:*")}:
+                print each
+                m.namespace( removeNamespace = each, mergeNamespaceWithParent = True)
 
     @staticmethod
     def doPublishPreview(data={}):
@@ -556,13 +589,14 @@ class maya( _genericAssetClass ) :
     _whoCanPublish = ['maya']
     _whoCanOpen = ["maya"]
 
-    def __init__( self, prefix, mayaNodeTypes='transform', mayaScenePublishType=None ) :
-        _genericAssetClass.__init__( self, prefix, animation=False, mayaNodeTypes=mayaNodeTypes )
+    def __init__( self, prefix, mayaNodeTypes='transform', mayaScenePublishType=None, animation=False ) :
+        _genericAssetClass.__init__( self, prefix, animation=animation, mayaNodeTypes=mayaNodeTypes )
         self.__mayaScenePublishType = mayaScenePublishType
 
 
     def setMayaSceneType(self, st):
         self.__mayaScenePublishType = st
+
 
 
     @staticmethod
@@ -867,12 +901,27 @@ class maya( _genericAssetClass ) :
     @staticmethod
     def setFileTexture( node, fileText ):
         ''' set the file texture string from any texture node type '''
+        backup = []
         if m.objExists('%s.fileTextureName' % node):
+            backup += ["m.setAttr('%s.fileTextureName', '%s', type='string')" % ( node, m.getAttr('%s.fileTextureName' % node) )]
             m.setAttr('%s.fileTextureName' % node, fileText, type='string')
         if m.objExists('%s.filename' % node):
+            backup = ["m.setAttr('%s.filename', '%s', type='string')" % ( node, m.getAttr('%s.filename' % node) )]
             m.setAttr('%s.filename' % node, fileText, type='string')
         if m.objExists('%s.file' % node):
+            backup = ["m.setAttr('%s.file', '%s', type='string')" % ( node, m.getAttr('%s.file' % node) )]
             m.setAttr('%s.file' % node, fileText, type='string')
+
+        if not m.objExists('%s.SAM_BACKUP_TEXTURE' % node):
+            m.addAttr( node, ln="SAM_BACKUP_TEXTURE", dt="string" )
+        m.setAttr( node + '.SAM_BACKUP_TEXTURE', ';'.join(backup), type="string"  )
+
+
+    @staticmethod
+    def undoSetFileTexture( node ):
+        if m.objExists('%s.SAM_BACKUP_TEXTURE' % node):
+            eval( m.getAttr('%s.SAM_BACKUP_TEXTURE' % node) )
+
 
     @staticmethod
     def getFileTexture( node ):

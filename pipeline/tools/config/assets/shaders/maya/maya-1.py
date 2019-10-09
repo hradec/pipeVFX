@@ -35,7 +35,7 @@ class maya( genericAsset.maya ) :
     _color = IECore.Color3f( 0.0, 0.25, 0.45 )
 
     def __init__( self ) :
-        genericAsset.maya.__init__(self, 'shaders')
+        genericAsset.maya.__init__(self, 'shaders', animation=False)
 
     @staticmethod
     def onRefreshCallback( assetType, nodeNamePrefix ):
@@ -48,6 +48,9 @@ class maya( genericAsset.maya ) :
     def publishMayaShadersAndTextures(self, shadingFile,  operands):
         from threading import Thread
         import math
+
+        # cleanup scene before publishing
+        self.cleanupScene()
 
         # loop over all meshs and gather shading mapping!
         shadingMap, shadingGroups, shadingNodes, displacementNodes, textures = maya.getShadingMap( self.data['meshPrimitives'] )
@@ -90,7 +93,7 @@ class maya( genericAsset.maya ) :
 
                 # fileName = '%s/sourceimages/%s' % ( m.workspace(q=1, rd=1), os.path.basename( self.data['textures'][text] ) )
                 ext = os.path.splitext( self.data['textures'][node] )[-1].lower()
-                if '/sam/' not in self.data['textures'][node] or ext != '.tex':
+                if 1: #'/sam/' not in self.data['textures'][node] or ext != '.tex':
                     publishedText = "%s/%s" % ( self.data['publishPath'], os.path.basename( self.data['textures'][node] ) )
                     tex = '%s.tex' % os.path.basename( cleanFileName(self.data['textures'][node]) )
 
@@ -179,10 +182,6 @@ class maya( genericAsset.maya ) :
 
         m.select(newNodes)
 
-        mayaExt = os.path.splitext(shadingFile)[-1]
-        m.file(shadingFile, force=1, pr=1, es=1, typ=("mayaBinary" if mayaExt=='.mb'else 'mayaAscii'))
-        # print shadingFile
-
         cleanup = m.ls("SAM_SHADER_%s_%s*" % (
             self.data['assetType'].replace('/','_'),
             self.data['assetName'].split('.')[-1]
@@ -191,16 +190,25 @@ class maya( genericAsset.maya ) :
 
         # export RLF data for prman
         if m.pluginInfo('RenderMan_for_Maya.so', query=1, loaded=1):
-            self.exportRLF()
+            self.exportRLF(operands)
+
+        # restore original file texture paths before saving scene.
+        for node in self.data['publishedTextures']:
+            maya.undoSetFileTexture( node )
+
+        mayaExt = os.path.splitext(shadingFile)[-1]
+        m.file(shadingFile, force=1, pr=1, es=1, typ=("mayaBinary" if mayaExt=='.mb'else 'mayaAscii'))
 
 
-    def exportRLF(self, animation=0):
+
+    def exportRLF(self, operands):
         import samPrman
         reload(samPrman)
+        self.frameRange = operands['FrameRange']['range'].value
 
         m.select(self.data['meshPrimitives'])
 
-        rlf =  samPrman.exportRLF(animation=animation)
+        rlf =  samPrman.exportRLF(animation=operands['enableAnimation'].value, range=[self.frameRange.x,self.frameRange.y,self.frameRange.z])
 
         pb = genericAsset.progressBar( len(rlf)+1, "Publishing Renderman Look Files...")
 
@@ -301,6 +309,8 @@ class maya( genericAsset.maya ) :
         if 'RLF' in self.data:
             import samPrman
             node = m.createNode("transform", n=nodeName)
+            m.addAttr( node, ln="SAM_DATA", dt="string" )
+            m.setAttr( node + '.SAM_DATA', str(self.data), type="string"  )
             m.addAttr( node, ln="SAM_RLF_FILE", dt="string" )
             m.setAttr( node + '.SAM_RLF_FILE', str(self.data['RLF']), type="string"  )
             samPrman.setRenderScripts()
