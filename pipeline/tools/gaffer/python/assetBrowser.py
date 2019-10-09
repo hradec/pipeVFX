@@ -690,7 +690,7 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
         if not len( selectedPaths ):
             for app in ['Maya', 'Nuke', 'Houdini', 'Mudbox', 'ZBrush', 'Realflow', 'Mari']:
             	menuDefinition.append( "/Create new in %s" % app, { "command" : IECore.curry(createNewInApp, app.lower(), self.parameterValue ) } )
-        elif len(str(selectedPaths[0]).split('/'))>3:
+        elif len(str(selectedPaths[0]).split('/'))>2:
             menuDefinition.append( "/Set current version to %s" % os.path.basename(str(self.parameterValue)), { "command" : IECore.curry(setCurrentVersion, self.parameterValue ) } )
             menuDefinition.append( "/ " , { } )
             menuDefinition.append( "/Delete version %s" % os.path.basename(str(self.parameterValue)), { "command" : IECore.curry(deleteVersion, self.parameterValue ) } )
