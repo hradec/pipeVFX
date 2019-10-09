@@ -155,9 +155,14 @@ class maya(baseApp):
             if mv==2014:
                 self.ignorePipeLib( "hdf5" )
             if mv>2014:
-                self.ignorePipeLib( "freetype" )
                 if 'centos' not in pipe.distro:
                     self.ignorePipeLib( "libpng" )
+
+                # freetype setup
+                self.ignorePipeLib( "freetype" )
+                if self.parent() in ['maya']:
+                    self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
+
 
         # set the proper sip/pyqt so gaffer works
         if mv > 2015:
@@ -188,6 +193,7 @@ class maya(baseApp):
         self['MAYA_FORCE_SHOW_ACTIVATE'] = '1'
         self['MAYA_DEBUG_ENABLE_CRASH_REPORTING'] = '1'
         self['MAYA_ENABLE_LEGACY_RENDER_LAYERS'] = '1'
+        self['MAYA_OPENCL_IGNORE_DRIVER_VERSION'] = '1'
         # self['MAYA_USE_MALLOC'] = '1'
         # self['MAYA_DISABLE_CASCADING'] = '1'
         self['MAYA_LOCATION'] = self.path()
