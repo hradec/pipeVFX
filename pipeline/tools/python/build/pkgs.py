@@ -161,11 +161,11 @@ class all: # noqa
                 # }},
                 download=[
                 (
-                #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.1/gcc-6.3.1.tar.gz',
-                #    'gcc-6.3.1.tar.gz',
-                #    '6.3.1',
-                #    'f2b4d5a580061711e68f0f506e402e1c'
-                # ),(
+                   'https://github.com/gcc-mirror/gcc/archive/gcc-6_3_0-release.tar.gz',
+                   'gcc-6.3.0.tar.gz',
+                   '6.3.0',
+                   'f9814c01dd6eb2b4befcc7b402d012d9'
+                ),(
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
@@ -270,7 +270,7 @@ class all: # noqa
                 'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2s.tar.gz',
                 'openssl-OpenSSL_1_0_2s.tar.gz',
                 '1.0.2s',
-                '24886418211ec05e3f1c764a489b29c1'
+                '24886418211ec05e3f1c764a489b29c1',
                 { gcc : '4.1.2' }
             )],
         )
@@ -972,7 +972,7 @@ class all: # noqa
                 'ln -s cfe-3.5.2.src ./clang',
                 'cd ..',
                 'mkdir -p build && cd build',
-                ' && '.join(build.configure.cmd).replace('./configure','../configure --disable-docs'),
+                ' && '.join(build.configure.cmd).replace('./configure','../configure --disable-docs').replace('make', 'make ONLY_TOOLS=1'),
             ]
         )
         self.llvm = llvm
