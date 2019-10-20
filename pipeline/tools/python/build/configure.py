@@ -174,6 +174,7 @@ class gccBuild(configure):
                     '--enable-languages=c,c++ '
                     '--enable-__cxa_atexit  '
                     '--disable-multilib '
+                    "--with-ppl "
                     '--enable-clocale=gnu '
                     '--disable-libstdcxx-pch '
                     '--enable-fdpic '
@@ -181,10 +182,11 @@ class gccBuild(configure):
                     '--enable-threads=posix '
                     '--enable-version-specific-runtime-libs '
                     '--enable-checking=release '
-                    '--program-suffix=-$(basename $TARGET_FOLDER)'
+                    "--with-system-zlib "
                     '--with-gmp=$GMP_TARGET_FOLDER '
                     '--with-mpfr=$MPFR_TARGET_FOLDER '
-                    '--with-mpc=$MPC_TARGET_FOLDER ',
+                    '--with-mpc=$MPC_TARGET_FOLDER '
+                    '--program-suffix=-$(basename $TARGET_FOLDER)',
                 'make -j $DCORES',
                 'make install',
             ])

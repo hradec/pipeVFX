@@ -161,11 +161,11 @@ class all: # noqa
                 # }},
                 download=[
                 (
-                #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
-                #    'gcc-6.3.0.tar.gz',
-                #    '6.3.0',
-                #    '6e5ea04789678f1250c1b30c4d9ec417'
-                # ),(
+                   'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
+                   'gcc-6.3.0.tar.gz',
+                   '6.3.0',
+                   '6e5ea04789678f1250c1b30c4d9ec417'
+                ),(
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
@@ -813,7 +813,7 @@ class all: # noqa
             ARGUMENTS,
             'hdf5',
             download=[(
-                'https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
+                'https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
                 'hdf5-1.8.17.tar.gz',
                 '1.8.17',
                 '7d572f8f3b798a628b8245af0391a0ca',
