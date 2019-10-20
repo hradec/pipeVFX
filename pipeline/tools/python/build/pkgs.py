@@ -161,11 +161,11 @@ class all: # noqa
                 # }},
                 download=[
                 (
-                   'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
-                   'gcc-6.3.0.tar.gz',
-                   '6.3.0',
-                   '6e5ea04789678f1250c1b30c4d9ec417'
-                ),(
+                #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
+                #    'gcc-6.3.0.tar.gz',
+                #    '6.3.0',
+                #    '6e5ea04789678f1250c1b30c4d9ec417'
+                # ),(
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
@@ -483,7 +483,7 @@ class all: # noqa
                 'fbb6f446ea4ed18955e2714934e5b698',
                 { gcc : '4.1.2' }
             ),(
-                'http://download.osgeo.org/libtiff/tiff-4.0.3.tar.gz',
+                'http://download.osgeo.org/libtiff/old/tiff-4.0.3.tar.gz',
                 'tiff-4.0.3.tar.gz',
                 '4.0.3',
                 '051c1068e6a0627f461948c365290410',
