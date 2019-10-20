@@ -161,10 +161,10 @@ class all: # noqa
                 # }},
                 download=[
                 (
-                   'https://github.com/gcc-mirror/gcc/archive/gcc-6_3_0-release.tar.gz',
+                   'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
                    'gcc-6.3.0.tar.gz',
                    '6.3.0',
-                   'f9814c01dd6eb2b4befcc7b402d012d9'
+                   '6e5ea04789678f1250c1b30c4d9ec417'
                 ),(
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
