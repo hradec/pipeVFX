@@ -78,11 +78,16 @@ class gccBuild(configure):
                     '--disable-multilib '
                     '--enable-clocale=gnu '
                     '--disable-libstdcxx-pch '
+                    '--enable-fdpic '
                     '--disable-werror '
+                    '--enable-visibility '
+                    '--with-gmp=$GMP_TARGET_FOLDER '
+                    '--with-mpfr=$MPFR_TARGET_FOLDER '
+                    '--with-mpc=$MPC_TARGET_FOLDER '
                     '--enable-threads=posix '
                     '--enable-version-specific-runtime-libs '
                     '--enable-checking=release '
-                    '--program-suffix=-$(basename $TARGET_FOLDER)',
+                    '--program-suffix=-$(basename $TARGET_FOLDER) ',
                 'sed -i.bak -e "s/CC = gcc/CC = gcc -fgnu89-inline/" -e "s/CXX = g++/CXX = g++ -fgnu89-inline/" Makefile',
                 'make -j $DCORES',
                 'make install',
@@ -118,6 +123,7 @@ class gccBuild(configure):
                     '--enable-gold '
                     '--enable-languages="c,c++" '
                     '--enable-plugin '
+                    '--enable-fdpic '
                     '--enable-shared '
                     '--enable-threads=posix '
                     '--enable-version-specific-runtime-libs '
@@ -132,7 +138,7 @@ class gccBuild(configure):
 
 
             cmd = ' && '.join(distroSpecific+[
-                "./contrib/download_prerequisites",
+                # "./contrib/download_prerequisites",
                 "mkdir -p build",
                 "cd build",
                 "ulimit -s 32768",
@@ -141,7 +147,12 @@ class gccBuild(configure):
                         '--disable-werror '
                         '--enable-languages="c,c++" '
                         "--with-ppl "
+                        '--disable-werror '
+                        '--enable-fdpic '
                         "--with-system-zlib "
+                        '--with-gmp=$GMP_TARGET_FOLDER '
+                        '--with-mpfr=$MPFR_TARGET_FOLDER '
+                        '--with-mpc=$MPC_TARGET_FOLDER '
                         '--infodir="$TARGET_FOLDER/share/info" '
                         '--libdir="$TARGET_FOLDER/lib" '
                         '--libexecdir="$TARGET_FOLDER/lib" '
@@ -165,11 +176,15 @@ class gccBuild(configure):
                     '--disable-multilib '
                     '--enable-clocale=gnu '
                     '--disable-libstdcxx-pch '
+                    '--enable-fdpic '
                     '--disable-werror '
                     '--enable-threads=posix '
                     '--enable-version-specific-runtime-libs '
                     '--enable-checking=release '
-                    '--program-suffix=-$(basename $TARGET_FOLDER)',
+                    '--program-suffix=-$(basename $TARGET_FOLDER)'
+                    '--with-gmp=$GMP_TARGET_FOLDER '
+                    '--with-mpfr=$MPFR_TARGET_FOLDER '
+                    '--with-mpc=$MPC_TARGET_FOLDER ',
                 'make -j $DCORES',
                 'make install',
             ])

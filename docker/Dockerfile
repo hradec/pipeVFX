@@ -59,6 +59,24 @@ RUN yum -y install dbus-devel dbus-glib-devel
 RUN yum -y install cmake
 RUN yum -y install yaml-cpp*
 RUN yum -y install tinyxml*
+RUN yum -y install xz
+RUN yum -y install centos-release-scl
+
+#
+#	Install OSL dependencies
+#
+RUN	yum install -y \
+		flex \
+		bison
+#
+#	Install Qt dependencies
+#
+RUN	yum install -y \
+		xkeyboard-config.noarch \
+		fontconfig-devel.x86_64
+
+RUN yum -y install  enca readline-devel flex-devel
+#RUN yum search devtoolset
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
 

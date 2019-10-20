@@ -696,10 +696,10 @@ class generic:
             'LD'                : 'ld',
             'LDSHARED'          : '%sgcc -shared' % prefix,
             'LDFLAGS'           : '',
-            'CFLAGS'            : '',
-            'CPPFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 ',
-            'CXXFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 ',
-            'CPPCXXFLAGS'       : '',
+            'CFLAGS'            : ' -w ',
+            'CPPFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
+            'CXXFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
+            'CPPCXXFLAGS'       : ' -w ',
             'PKG_CONFIG_PATH'   : '',
             'LD_LIBRARY_PATH'   : "%s/lib/" % installDir,
             'CLICOLOR_FORCE'    : '1',
@@ -710,7 +710,7 @@ class generic:
 
 
 
-        CFLAGS=['-fPIC']
+        CFLAGS=['-fPIC -w']
         LDFLAGS=[]
         gcc={
             'gcc' : 'gcc',
