@@ -32,12 +32,12 @@ class bcolors:
     END = '\033[0m'+BS
     if 'TRAVIS' in os.environ:
         BS = ''
-        HEADER = '\e[95m'+BS
-        BLUE = '\e[94m'+BS
-        GREEN = '\e[92m'+BS
-        WARNING = '\e[93m'+BS
-        FAIL = '\e[91m'+BS
-        END = '\e[0m'+BS
+        HEADER = ''
+        BLUE = ''
+        GREEN = ''
+        WARNING = ''
+        FAIL = ''
+        END = ''
 
 
     def disable(self):
