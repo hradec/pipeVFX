@@ -31,7 +31,7 @@ class bcolors:
     FAIL = '\033[91m'+BS
     END = '\033[0m'+BS
     if 'TRAVIS' in os.environ:
-        BS = '\e[1D'
+        BS = ''
         HEADER = '\e[95m'+BS
         BLUE = '\e[94m'+BS
         GREEN = '\e[92m'+BS
