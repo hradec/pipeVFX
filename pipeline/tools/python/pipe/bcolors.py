@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 
 
 class bcolors:
+    import os
     BS = '\033[1D'
     HEADER = '\033[95m'+BS
     BLUE = '\033[94m'+BS
@@ -29,6 +30,15 @@ class bcolors:
     WARNING = '\033[93m'+BS
     FAIL = '\033[91m'+BS
     END = '\033[0m'+BS
+    if 'TRAVIS' in os.environ:
+        BS = '\e[1D'
+        HEADER = '\e[95m'+BS
+        BLUE = '\e[94m'+BS
+        GREEN = '\e[92m'+BS
+        WARNING = '\e[93m'+BS
+        FAIL = '\e[91m'+BS
+        END = '\e[0m'+BS
+
 
     def disable(self):
         self.HEADER = ''
@@ -37,4 +47,3 @@ class bcolors:
         self.WARNING = ''
         self.FAIL = ''
         self.END = ''
-        
