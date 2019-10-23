@@ -190,6 +190,13 @@ class gccBuild(configure):
                 'make -j $DCORES',
                 'make install',
             ])
+
+        # make sure we're using the distros GCC to build GCC
+        cmd = ';'.join([
+            'export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/bin"',
+            'unset LD_LIBRARY_PATH',
+            cmd
+        ])
         return cmd
 
     def installer(self, target, source, env): # noqa

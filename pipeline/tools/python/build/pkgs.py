@@ -157,15 +157,15 @@ class all: # noqa
                 #    '6.3.0',
                 #    '6e5ea04789678f1250c1b30c4d9ec417'
                 # ),(
+                    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                    'gcc-4.1.2.tar.gz',
+                    '4.1.2',
+                    'dd2a7f4dcd33808d344949fcec87aa86'
+                ),(
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
                     'bfe56e74d31d25009c8fb55fd3ca7e01'
-                ),(
-                   'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
-                   'gcc-4.1.2.tar.gz',
-                   '4.1.2',
-                   'dd2a7f4dcd33808d344949fcec87aa86'
                 )],
                 depend = [ mpfr, mpc, gmp, flex ],
         )
@@ -1042,12 +1042,12 @@ class all: # noqa
                 '4.8.7',
                 'd990ee66bf7ab0c785589776f35ba6ad',
                 { gcc : '4.1.2' }
-            # ),(
-            #     'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
-            #     'Maya2018.4.tar.gz',
-            #     '5.6.1',
-            #     'd990ee66bf7ab0c785589776f35ba6ad',
-            #     { gcc : '4.8.5' }
+            ),(
+                'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
+                'Maya2018.4.tar.gz',
+                '5.6.1',
+                '7fde8ea6f9cfb240a13987fd1ba5c410',
+                { gcc : '4.8.5' }
             )],
             environ = {'LD' : 'g++'},
             cmd = [
