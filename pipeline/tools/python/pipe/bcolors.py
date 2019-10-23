@@ -33,12 +33,12 @@ class bcolors:
 
     if ('TRAVIS' in os.environ and os.environ['TRAVIS']==1) or ('ENVIRON_TRAVIS' in os.environ and os.environ['ENVIRON_TRAVIS']==1):
         BS = ''
-        # HEADER = ''
-        # BLUE = ''
-        # GREEN = ''
-        # WARNING = ''
-        # FAIL = ''
-        # END = ''
+        HEADER = ''
+        BLUE = ''
+        GREEN = ''
+        WARNING = ''
+        FAIL = ''
+        END = ''
 
 
     def disable(self):
