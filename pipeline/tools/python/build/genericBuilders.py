@@ -263,7 +263,10 @@ class generic:
             self.src = kargs['src']
 
         if kargs.has_key('flags'):
-            self.flags = kargs['flags']
+            if not hasattr(self, 'flags'):
+                self.flags = []
+            self.flags += kargs['flags']
+
 
         self.targetSuffix=""
         if kargs.has_key('targetSuffix'):
@@ -311,13 +314,20 @@ class generic:
         for n in self.environ.keys():
             self.set("ENVIRON_%s" % n.upper(), self.environ[n])
 
+        # check if we're running in TRAVIS-CI
+        self.travis=False
+        if 'TRAVIS' in os.environ:
+            self.set("TRAVIS", '1')
+            self.travis=True
+
         # add all extra arguments as env vars!
         for each in kargs:
             v=kargs[each]
             if type(v)==type(""):
                 v=[kargs[each]]
-            for n in range(len(v)):
-                self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
+            if type(v) not in [int, float]:
+                for n in range(len(v)):
+                    self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
 
         # build all python versions specified
         self.buildFolder = {}
@@ -834,6 +844,8 @@ class generic:
         os_environ['LDFLAGS']       = "%s -L/usr/lib64 %s" % (' '.join(LDFLAGS), os_environ['LDFLAGS'])
         os_environ['LLDFLAGS']      = "%s -L/usr/lib64 %s" % (' '.join(LDFLAGS), os_environ['LDFLAGS'])
 
+        if self.travis:
+            os_environ['TRAVIS']    = '1'
 
         #os_environ['LD_RUN_PATH'] = os_environ['LD_LIBRARY_PATH']
         # if running in fedora

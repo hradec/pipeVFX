@@ -33,21 +33,53 @@ class make(generic):
     ''' a class to handle make installs '''
     src = 'Makefile'
     cmd = 'make -j $DCORES && make install'
+    _parallel=''
+    _verbose=''
+    _verbose_cmake=''
+    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.system, **kargs):
+        generic.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
+        # some extra parameters to control log output and parallel building
+        # default uses the double of cores to build,
+        # 1 uses the number of cores and 0 builds single threaded
+        self._parallel = '-j $DCORES'
+        if 'parallel' in kargs and kargs['parallel'] == 0:
+            self._parallel = ''
+        if 'parallel' in kargs and kargs['parallel'] == 1:
+            self._parallel = '-j $CORES'
+
+        # default builds without verbose (nice and clean cmake output)
+        # verbose=1 show the command lines in cmake
+        self._verbose = ''
+        self._verbose_cmake = ''
+        if 'verbose' in kargs and kargs['verbose'] == 1:
+            self._verbose = 'VERBOSE=1'
+            self._verbose_cmake = '-DVERBOSE=1'
+
+    def fixCMD(self, cmd, environ=[]):
+        ''' cmake is kindy picky with environment variables and has lots of
+        variables override to force it to find packages in non-usual places.
+        So here we force some env vars and command line overrides to make sure
+        cmake finds pipeVFX packages first!'''
+        environ += [
+            'export MAKE_PARALLEL="$(echo %s)"' % self._parallel,
+            'export MAKE_VERBOSE="$(echo %s)"' % self._verbose,
+            'export CMAKE_VERBOSE="$(echo %s)"' % self._verbose_cmake,
+        ]
+        return cmd
 
 
 class cmake(make):
     ''' a class to handle cmake installs '''
     src = 'CMakeLists.txt'
     cmd = [
-        'cmake $SOURCE_FOLDER && '
-        'make -j $DCORES VERBOSE=1 && make install'
+        'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER && '
+        'make $MAKE_PARALLEL $MAKE_VERBOSE && make install'
     ]
     flags = [
             '-Wno-dev',
             '-DUSE_SIMD=0',
             '-DUSE_FFMPEG=0',
             '-DUSE_OPENCV=0',
-            '-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER',
 #            '-DCMAKE_CC_COMPILER=$CC',
 #            '-DCMAKE_CXX_COMPILER=$CXX',
 #            '-DCMAKE_CPP_COMPILER=$CPP',
@@ -70,16 +102,17 @@ class cmake(make):
             '-DBOOST_HOME=$BOOST_TARGET_FOLDER',
             '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
             '-DBOOST_INCLUDEDIR=$BOOST_TARGET_FOLDER/include',
-            '-DBOOST_LIBRARYDIR=$( if [ "$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)" == "" ] ; then ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 ; else echo "$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/" ; fi)/',
+            '''-DBOOST_LIBRARYDIR=$( if [ \"$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)\" == '' ] ; then ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 ; else echo $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi)/ ''',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
-            '-DVERBOSE=1',
+            '$CMAKE_VERBOSE ',
             # '-DMAYA_ROOT=$MAYA_ROOT',
             # '-DARNOLD_ROOT=$ARNOLD_ROOT',
             # '-DPRMAN_ROOT=$PRMAN_ROOT',
             '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
             '-DILMBASE_HOME=$ILMBASE_TARGET_FOLDER',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
-            '-DILMBASE_LIBRARIES="$ILMBASE_TARGET_FOLDER/lib/libImath.so;$ILMBASE_TARGET_FOLDER/lib/libIex.so;$ILMBASE_TARGET_FOLDER/lib/libHalf.so;$ILMBASE_TARGET_FOLDER/lib/libIlmThread.so;-lpthread" '
+            # '''-DILMBASE_LIBRARIES=$(echo \"${ILMBASE_TARGET_FOLDER}/lib/libImath.so';'${ILMBASE_TARGET_FOLDER}/lib/libIex.so';'${ILMBASE_TARGET_FOLDER}/lib/libHalf.so';'${ILMBASE_TARGET_FOLDER}/lib/libIlmThread.so';'-lpthread\") '''
+            '''-DILMBASE_LIBRARIES=$(echo \"${ILMBASE_TARGET_FOLDER}/lib/libImath.so;${ILMBASE_TARGET_FOLDER}/lib/libIex.so;${ILMBASE_TARGET_FOLDER}/lib/libHalf.so;${ILMBASE_TARGET_FOLDER}/lib/libIlmThread.so;-lpthread\") '''
             '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER',
             '-DPYILMBASE_LIBRARY_DIR=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
             # '-DGCC_VERSION=%s' % pipe.build.distro.split('-')[-1],
@@ -89,12 +122,15 @@ class cmake(make):
             "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
         ]
 
+    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.system, **kargs):
+        make.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
 
     def fixCMD(self, cmd, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
         cmake finds pipeVFX packages first!'''
+        cmd = make.fixCMD(self, cmd, environ)
         environ += [
             'export HDF5_ROOT=$HDF5_TARGET_FOLDER',
             'export HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
@@ -102,6 +138,9 @@ class cmake(make):
             'export OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include',
             'export OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
             'export OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
+            'export MAKE_PARALLEL="$(echo %s)"' % self._parallel,
+            'export MAKE_VERBOSE="$(echo %s)"' % self._verbose,
+            'export CMAKE_VERBOSE="$(echo %s)"' % self._verbose_cmake,
         ]
         for each in self.flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
@@ -112,7 +151,6 @@ class cmake(make):
 
         cmd = ' && '.join(environ)+" && "+cmd
         #cmd = 'find ./ -name CMakeCache.txt -exec rm -rf {} \; && '+cmd
-        print
         return cmd
 
 
@@ -120,7 +158,7 @@ class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
         'cmake $SOURCE_FOLDER && '
-        'make -j $DCORES VERBOSE=1 && make install'
+        'make $MAKE_PARALLEL $MAKE_VERBOSE  && make install'
     ]
     # alembic has some hard-coded path to find python, and the only
     # way to make it respect the PYTHON related environment variables,
@@ -179,6 +217,8 @@ class alembic(cmake):
     def fixCMD(self, cmd):
         # update the buld environment with all the enviroment variables
         # specified in apps argument!
+        cmd = make.fixCMD(self, cmd, environ)
+
         pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
         pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
         print bcolors.WARNING+": ", bcolors.BLUE+"  apps: ",

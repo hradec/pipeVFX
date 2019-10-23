@@ -101,39 +101,30 @@ class all: # noqa
         # build.allDepend.append(gmp)
 
         mpfr = build.configure(
-               ARGUMENTS,
-               'mpfr',
-               download=[
-                   # (
-                   #   'https://gforge.inria.fr/frs/download.php/file/35627/mpfr-3.1.4.tar.gz',
-                   #   'mpfr-3.1.4.tar.gz',
-                   #   '3.1.4',
-                   #   '482ab3c120ffc959f631b4ba9ec59a46'
-                   # ),
-                   (
-                     'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
-                     'mpfr-3.1.6.tar.gz',
-                     '3.1.6',
-                     '95dcfd8629937996f826667b9e24f6ff'
-                   ),
-               ],
-               depend = [ gmp ],
+                ARGUMENTS,
+                'mpfr',
+                download=[(
+                    'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
+                    'mpfr-3.1.6.tar.gz',
+                    '3.1.6',
+                    '95dcfd8629937996f826667b9e24f6ff',
+                )],
+                depend = [ gmp ],
         )
         # build.allDepend.append(mpfr)
 
         mpc = build.configure(
-               ARGUMENTS,
-               'mpc',
-               download=[
-                 (
+                ARGUMENTS,
+                'mpc',
+                download=[(
                    'ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
                    'mpc-1.0.3.tar.gz',
                    '1.0.3',
-                   'd6a1d5f8ddea3abd2cc3e98f58352d26'
-                 ),
-               ],
+                   'd6a1d5f8ddea3abd2cc3e98f58352d26',
+                )],
+                depend = [ gmp, mpfr ],
         )
-        build.allDepend.append(mpc)
+        # build.allDepend.append(mpc)
 
         flex = build.configure(
             ARGUMENTS,
@@ -161,11 +152,11 @@ class all: # noqa
                 # }},
                 download=[
                 (
-                   'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
-                   'gcc-6.3.0.tar.gz',
-                   '6.3.0',
-                   '6e5ea04789678f1250c1b30c4d9ec417'
-                ),(
+                #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
+                #    'gcc-6.3.0.tar.gz',
+                #    '6.3.0',
+                #    '6e5ea04789678f1250c1b30c4d9ec417'
+                # ),(
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
@@ -176,11 +167,11 @@ class all: # noqa
                    '4.1.2',
                    'dd2a7f4dcd33808d344949fcec87aa86'
                 )],
-                depend = [ mpfr, mpc, gmp ],
+                depend = [ mpfr, mpc, gmp, flex ],
         )
         self.gcc = gcc
         # lets use our own latest GCC to build everything!!!
-        build.allDepend.append(gcc)
+        # build.allDepend.append(gcc)
 
         icu = build.configure(
             ARGUMENTS,
@@ -214,23 +205,6 @@ class all: # noqa
             ],
         )
         self.bzip2 = bzip2
-
-        # ncurses = build.configure(
-        #         ARGUMENTS,
-        #         'ncurses',
-        #         download=[(
-        #             'http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz',
-        #             'ncurses-5.9.tar.gz',
-        #             '5.9.0',
-        #             '8cb9c412e5f2d96bc6f459aa8c6282a1'
-        #         )],
-        #         environ = {"CPPFLAGS" : "-P $CPPFLAGS",},
-        #         #        cmd=[
-        #         #            './configure --with-shared',
-        #         #            'make -j $DCORES && make -j $DCORES install',
-        #         #        ]
-        # )
-        # all['ncurses'] = ncurses
 
         readline = build.configure(
             ARGUMENTS,
@@ -318,7 +292,7 @@ class all: # noqa
             ]
         )
         self.python = python
-        #build.allDepend.append(python)
+        build.allDepend.append(python)
 
         tbb = build.tbb(
             ARGUMENTS,
@@ -344,10 +318,10 @@ class all: # noqa
             ARGUMENTS,
             'cmake',
             download=[(
-                'http://www.cmake.org/files/v3.2/cmake-3.2.2.tar.gz',
-                'cmake-3.2.2.tar.gz',
-                '3.2.2',
-                '2da57308071ea98b10253a87d2419281',
+                'http://www.cmake.org/files/v3.4/cmake-3.4.3.tar.gz',
+                'cmake-3.4.3.tar.gz',
+                '3.4.3',
+                '4cb3ff35b2472aae70f542116d616e63',
                 { gcc : '4.1.2' }
             )],
             cmd = [
@@ -366,7 +340,7 @@ class all: # noqa
             depend=[gcc, openssl],
         )
         self.cmake = cmake
-        # build.allDepend.append(cmake)
+        build.allDepend.append(cmake)
 
         glew = build.glew(
             ARGUMENTS,
@@ -385,21 +359,16 @@ class all: # noqa
             ARGUMENTS,
             'freeglut',
             download=[(
-            #     'http://downloads.sourceforge.net/project/freeglut/freeglut/2.6.0/freeglut-2.6.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619050&use_mirror=iweb',
-            #     'freeglut-2.6.0.tar.gz',
-            #     '2.6.0',
-            #     '39f0f2de89f399529d2b981188082218'
-            # ),(
                 'http://downloads.sourceforge.net/project/freeglut/freeglut/2.8.1/freeglut-2.8.1.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619092&use_mirror=hivelocity',
                 'freeglut-2.8.1.tar.gz',
                 '2.8.1',
                 '918ffbddcffbac83c218bc52355b6d5a',
                 { gcc : '4.1.2' }
-                # ),(
-                # 'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
-                # 'freeglut-3.0.0.tar.gz',
-                # '3.0.0',
-                # '90c3ca4dd9d51cf32276bc5344ec9754',
+            # ),(
+            #     'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
+            #     'freeglut-3.0.0.tar.gz',
+            #     '3.0.0',
+            #     '90c3ca4dd9d51cf32276bc5344ec9754',
             )],
             environ = {
                 'LDFLAGS' : '$LDFLAGS -lm -lGL',
@@ -432,8 +401,6 @@ class all: # noqa
         build.allDepend.append(jpeg)
         self.jpeg = jpeg
 
-
-
         jasper = build.configure(
             ARGUMENTS,
             'jasper',
@@ -447,7 +414,6 @@ class all: # noqa
         )
         # build.allDepend.append(jasper)
         self.jasper = jasper
-
 
         libraw = build.configure(
             ARGUMENTS,
@@ -518,12 +484,6 @@ class all: # noqa
             ARGUMENTS,
             'freetype',
             download=[(
-                'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.4.0.tar.gz',
-                'freetype-2.4.0.tar.gz',
-                '2.4.0',
-                'f900148ae8e258803eb1ab9f564f2151',
-                { gcc : '4.1.2' }
-            ),(
                 'http://mirror.csclub.uwaterloo.ca/nongnu//freetype/freetype-2.5.5.tar.gz',
                 'freetype-2.5.5.tar.gz',
                 '2.5.5',
@@ -645,7 +605,6 @@ class all: # noqa
         build.allDepend.extend( simpleModulesBuilders )
         # ============================================================================================================================================
 
-
         boost = build.boost(
             ARGUMENTS,
             'boost',
@@ -662,6 +621,12 @@ class all: # noqa
                 'efbfbff5a85a9330951f243d0a46e4b9',
                 { gcc : '4.1.2' }
             ),(
+                'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
+                'boost_1_55_0.tar.gz',
+                '1.55.0',
+                '93780777cfbf999a600f62883bd54b17',
+                { gcc : '4.1.2' }
+            ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz',
                 'boost_1_56_0.tar.gz',
                 '1.56.0',
@@ -673,19 +638,12 @@ class all: # noqa
             #     '1.61.0',
             #     '874805ba2e2ee415b1877ef3297bf8ad',
             #     { gcc : '4.1.2' }
-            ),(
-                'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
-                'boost_1_55_0.tar.gz',
-                '1.55.0',
-                '93780777cfbf999a600f62883bd54b17',
-                { gcc : '4.1.2' }
             )],
             baseLibs=[python],
             depend=[python, openssl, bzip2],
         )
         self.boost = boost
         build.allDepend.append(boost)
-
 
         ilmbase = build.configure(
             ARGUMENTS,
@@ -708,6 +666,12 @@ class all: # noqa
                 '2.2.0',
                 'b540db502c5fa42078249f43d18a4652',
                 { gcc : '4.1.2' }
+            # ),(
+            #     'https://github.com/openexr/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
+            #     'ilmbase-2.3.0.tar.gz',
+            #     '2.3.0',
+            #     '354bf86de3b930ab87ac63619d60c860',
+            #     { gcc : '4.8.5' }
             )],
             depend=[gcc, python, openssl],
             environ={
@@ -743,6 +707,12 @@ class all: # noqa
                 '2.2.0',
                 'b64e931c82aa3790329c21418373db4e',
                 { gcc : '4.1.2' }
+            # ),(
+            #     'https://github.com/openexr/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
+            #     'openexr-2.3.0.tar.gz',
+            #     '2.3.0',
+            #     'a157e8a46596bc185f2472a5a4682174',
+            #     { gcc : '4.8.5' }
             )],
             sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
             depend=[ilmbase, gcc, python, openssl],
@@ -774,6 +744,12 @@ class all: # noqa
         #         'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
         #         'pyilmbase-2.2.0.tar.gz',
         #         '2.2.0',
+        #         'e84a6a4462f90b5e14d83d67253d8e5a',
+        #         { gcc : '4.1.2' }
+        #     ),(
+        #         'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
+        #         'pyilmbase-2.3.0.tar.gz',
+        #         '2.3.0',
         #         'e84a6a4462f90b5e14d83d67253d8e5a',
         #         { gcc : '4.1.2' }
         #     )],
@@ -913,70 +889,62 @@ class all: # noqa
                 '1.6.15',
                 '3fe2cef4fb5f7bc78b136d2837e1062f',
                 { gcc : '4.1.2', boost : "1.51.0" }
-            # ),(
-            #     'https://github.com/OpenImageIO/oiio/archive/Release-1.7.3dev.tar.gz',
-            #     'oiio-Release-1.7.3dev.tar.gz',
-            #     '1.7.3dev',
-            #     'bcef05f5ff7f15ac580d9b3b4b6f690b',
-            #     { gcc : '4.1.2' }
+            ),(
+                'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
+                'oiio-Release-2.0.11.tar.gz',
+                '2.0.11',
+                '4fa0ce4538fb2d7eb72f54f4036972d5',
+                { gcc : '4.8.5', boost : "1.56.0" }
             )],
-            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl],
+            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2],
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
-            flags = ['-DUSE_PYTHON=0','-DUSE_PTEX=0','-DUSE_OCIO=0']+build.cmake.flags,
+            flags = [
+                '-DUSE_PYTHON=0',
+                '-DUSE_PTEX=0',
+                '-DUSE_OCIO=0',
+                '-DCMAKE_PREFIX_PATH='+"';'".join([
+                    '$OPENEXR_TARGET_FOLDER',
+                    '$ILMBASE_TARGET_FOLDER',
+                    '$JPEG_TARGET_FOLDER',
+                    '$LIBRAW_TARGET_FOLDER',
+                    '$LIBPNG_TARGET_FOLDER',
+                ])
+            ]+build.cmake.flags,
         )
         self.oiio = oiio
         # build.allDepend.append(oiio)
 
-
-        # use the download action as we only need this package to build llvm!
-        # download action will avoid installing this package!
-        # clang = build.download(
-        #     ARGUMENTS,
-        #     'clang',
-        #     download=[(
-        #         'http://llvm.org/releases/3.5.2/cfe-3.5.2.src.tar.xz',
-        #         'cfe-3.5.2.src.tar.gz',
-        #         '3.5.2',
-        #         'aba5d02251bf7845a2013d6bb0702ac7',
-        #     ),(
-        #         'http://llvm.org/releases/3.4.2/cfe-3.4.2.src.tar.gz',
-        #         'cfe-3.4.2.src.tar.gz',
-        #         '3.4.2',
-        #         '87945973b7c73038871c5f849a818588',
-        #     )],
-        # )
-        # self.clang = clang
-
-        clang_url = 'http://releases.llvm.org/3.5.2/cfe-3.5.2.src.tar.xz'
-        llvm = build.configure(
+        clang_url = 'http://releases.llvm.org/9.0.0/cfe-9.0.0.src.tar.xz'
+        llvm = build.cmake(
             ARGUMENTS,
             'llvm',
             download=[(
-                'http://llvm.org/releases/3.5.2/llvm-3.5.2.src.tar.xz',
-                'llvm-3.5.2.src.tar.gz',
-                '3.5.2',
-                'f5a4dc595f7e8bd23397684d0906d014',
+                'http://releases.llvm.org/9.0.0/llvm-9.0.0.src.tar.xz',
+                'llvm-9.0.0.src.tar.gz',
+                '9.0.0',
+                '0fd4283ff485dffb71a4f1cc8fd3fc72',
                 { gcc : '4.8.5' }
             )],
-            sed = {'3.5.0' : {
-                # fix 3.5.2 with gcc 5!!
-                'include/llvm/ADT/IntrusiveRefCntPtr.h' : [
-                    ('IntrusiveRefCntPtr.IntrusiveRefCntPtr.X.','friend class IntrusiveRefCntPtr;\ntemplate <class X> \nIntrusiveRefCntPtr(IntrusiveRefCntPtr<X>'),
-                ],
-            },},
-            depend=[python, gcc, boost],
-            compiler = build.gcc.system,
+            sed = {
+                '3.5.2' : {
+                    # fix 3.5.2 with gcc 5!!
+                    'include/llvm/ADT/IntrusiveRefCntPtr.h' : [
+                        ('IntrusiveRefCntPtr.IntrusiveRefCntPtr.X.','friend class IntrusiveRefCntPtr;\ntemplate <class X> \nIntrusiveRefCntPtr(IntrusiveRefCntPtr<X>'),
+                    ],
+                },
+            },
+            depend=[python, boost, gcc],
+            # we have to build LLVM with 1 thread or else we run out of
+            # memory during linking on a 32GB RAM machine!
+            parallel=1,
             cmd = [
-                'cd ./tools',
-                "curl -L '%s' | tar xJf - " % clang_url,
-                'ln -s cfe-3.5.2.src ./clang',
-                'cd ..',
                 'mkdir -p build && cd build',
-                ' && '.join(build.configure.cmd).replace('./configure','../configure --disable-docs').replace('make', 'make ONLY_TOOLS=1'),
-            ]
+                ' && '.join(build.cmake.cmd),
+            ],
+            flags = [ '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1' ]+build.cmake.flags
         )
         self.llvm = llvm
-        build.allDepend.append(llvm)
+        # build.allDepend.append(llvm)
 
         # bison = build.configure(
         #     ARGUMENTS,
@@ -985,6 +953,11 @@ class all: # noqa
         #         'http://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.gz',
         #         'bison-3.0.4.tar.gz',
         #         '3.0.4',
+        #         'a586e11cd4aff49c3ff6d3b6a4c9ccf8'
+        #     ),(
+        #         'http://ftp.gnu.org/gnu/bison/bison-3.4.tar.gz',
+        #         'bison-3.4.0.tar.gz',
+        #         '3.4.0',
         #         'a586e11cd4aff49c3ff6d3b6a4c9ccf8'
         #     )],
         # )
@@ -995,24 +968,19 @@ class all: # noqa
             ARGUMENTS,
             'osl',
             download=[(
-                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.3.tar.gz',
-                'OpenShadingLanguage-Release-1.7.3.tar.gz',
-                '1.7.3',
-                '42215e190d565c862043c0b02eca089b',
-                {oiio: "1.6.15", llvm : "3.5.2", gcc: "4.8.5", boost: "1.51.0"},
+                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.10.7.tar.gz',
+                'OpenShadingLanguage-Release-1.10.7.tar.gz',
+                '1.10.7',
+                '53f66e12c3e29c62dc51b070f027a0ad',
+                {oiio: "2.0.11", llvm : "9.0.0", gcc: "4.8.5", boost: "1.51.0"},
             ),(
                 'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
                 'OpenShadingLanguage-Release-1.7.5.tar.gz',
                 '1.7.5',
                 '8b15d13c3fa510b421834d32338304c8',
-                {oiio: "1.6.15", llvm : "3.5.2", gcc: "4.8.5", boost: "1.51.0"},
-            #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.8.0dev.tar.gz',
-            #     'OpenShadingLanguage-Release-1.8.0dev.tar.gz',
-            #     '1.8.0dev',
-            #     '167c049c96deae9edcb76a14651069fd',
-            #     {oiio: "1.6.15", llvm : "3.5.2"},
+                {oiio: "1.6.15", llvm : "9.0.0", gcc: "4.8.5", boost: "1.51.0"},
             )],
-            depend=[llvm, oiio, boost, ilmbase, openexr, icu],
+            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake],
             sed = {
                 '0.0.0' : {
                     'CMakeLists.txt' : [
@@ -1023,12 +991,14 @@ class all: # noqa
                         ('string (REPLACE " " ";" LLVM_LIBRARY ${LLVM_LIBRARY})', 'string (REPLACE "\\\\\\n" " " LLVM_LIBRARY ${LLVM_LIBRARY})\nstring (REPLACE " " ";" LLVM_LIBRARY ${LLVM_LIBRARY})'),
                     ]
                 },
+                '1.10.0' : {
+                },
             },
             cmd = [
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS="-DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags)+'" '
+                'MY_CMAKE_FLAGS="-DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
                 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags))+' ENABLERTTI=1" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
@@ -1046,7 +1016,7 @@ class all: # noqa
             ],
         )
         self.osl = osl
-        build.allDepend.append(osl)
+        # build.allDepend.append(osl)
         # =============================================================================================================================================
 
 
