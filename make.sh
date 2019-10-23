@@ -52,9 +52,16 @@ else
     fi
 
     APPS_MOUNT=""
+    # use real apps folder if we have one!
     if [ -e /atomo/apps ] ; then
-        APPS_MOUNT="-v /atomo/apps:/atomo/apps"
+        APPS_MOUNT="$APPS_MOUNT -v /atomo/apps:/atomo/apps"
     fi
+    # use wget proxy setup if it exists
+    if [ -e $HOME/.wgetrc ] ; then
+        APPS_MOUNT="$APPS_MOUNT -v $HOME/.wgetrc:/root/.wgetrc"
+    fi
+
+
 
     # now we can finally run a build!
     docker run --rm --name pipevfx_make -ti \

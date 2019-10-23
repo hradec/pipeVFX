@@ -405,7 +405,7 @@ if canBuildCortexNow:
     for prman in gaffer_versions:
         sufix = ''
         apps = []
-        if int(prman) > 0:
+        if float(prman) > 0:
             sufix = 'prman.'+ prman
             apps = ( 'prman', prman )
 

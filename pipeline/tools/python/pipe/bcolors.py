@@ -31,7 +31,7 @@ class bcolors:
     FAIL = '\033[91m'+BS
     END = '\033[0m'+BS
 
-    if ('TRAVIS' in os.environ and os.environ['TRAVIS']==1) or ('ENVIRON_TRAVIS' in os.environ and os.environ['ENVIRON_TRAVIS']==1):
+    if ('TRAVIS' in os.environ and os.environ['TRAVIS']=='1') or ('ENVIRON_TRAVIS' in os.environ and os.environ['ENVIRON_TRAVIS']=='1'):
         BS = ''
         HEADER = ''
         BLUE = ''
