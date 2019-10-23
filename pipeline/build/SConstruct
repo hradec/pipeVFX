@@ -72,8 +72,10 @@ if canBuildCortexNow:
     alembic = []
     ppv = pv
     for n in range(2):
-        pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
-        pipe.version.set( prman = ppv[0] if len(ppv)<=n else ppv[n] )
+        if mv:
+            pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
+        if ppv:
+            pipe.version.set( prman = ppv[0] if len(ppv)<=n else ppv[n] )
 
         gcc = '4.1.2'
         if float(pipe.version.get('prman')) >= 21:
@@ -111,8 +113,10 @@ if canBuildCortexNow:
     sip = []
     pyqt = []
     for n in range(2):
-        version = mv[0] if len(mv)<=n else mv[n]
-        pipe.version.set( maya  = version )
+        version = 0
+        if mv:
+            version = mv[0] if len(mv)<=n else mv[n]
+            pipe.version.set( maya  = version )
 
         if float(version) > 2015 and float(version) < 2017:
             sip.append( build.pythonSetup(
@@ -394,9 +398,17 @@ if canBuildCortexNow:
     cortexApps(download)
 
     # build gaffer
+    gaffer_versions = ['0']
     gaffer = {}
-    for prman in pv[:2]:
-        sufix = 'prman.'+ prman
+    if pv:
+        gaffer_versions += pv[:2]
+    for prman in gaffer_versions:
+        sufix = ''
+        apps = []
+        if int(prman) > 0:
+            sufix = 'prman.'+ prman
+            apps = ( 'prman', prman )
+
         gaffer = build.gaffer(
             ARGUMENTS, # noqa
             'gaffer',
@@ -431,7 +443,7 @@ if canBuildCortexNow:
             ],
             # baseLibs = [pkgs.python],
             depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm, pkgs.python ],
-            apps = ( 'prman', prman ),
+            apps = apps,
             sconsInstall = "install"
         )
 
