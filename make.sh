@@ -64,5 +64,6 @@ else
         -e RUN_SHELL=$SHELL \
         -e EXTRA=$EXTRA \
         -e DEBUG=$DEBUG \
+        -e TRAVIS=$TRAVIS \
         hradec/pipevfx_centos_base:centos7
 fi

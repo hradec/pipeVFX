@@ -30,7 +30,8 @@ class bcolors:
     WARNING = '\033[93m'+BS
     FAIL = '\033[91m'+BS
     END = '\033[0m'+BS
-    if 'TRAVIS' in os.environ:
+
+    if 'TRAVIS' in os.environ or 'ENVIRON_TRAVIS' in os.environ:
         BS = ''
         HEADER = ''
         BLUE = ''
