@@ -28,18 +28,21 @@ if [ "$HELP" != "" ] ; then
     echo -e "\t-b   : build and upload the docker image"
     echo ''
 else
+    # try to pull build image from docker hub
     docker pull hradec/pipevfx_centos_base:centos7
     if [ $? != 0 ] ; then
         BUILD=1
     fi
 
+    # if no image in docker hub or we used -b to force a build, build it
+    # and push it to docker hub!
     if [ "$BUILD" == "1" ] ; then
         docker build $CD/docker/ \
             -t hradec/pipevfx_centos_base:centos7 \
             --pull \
             --compress \
             --rm
-            
+
         if [ $? -ne 0 ] ; then
             echo ERROR!!
             exit -1
@@ -48,17 +51,18 @@ else
         fi
     fi
 
-    if [ "$SHELL" == "0" ] ; then
-        docker run --rm --name pipevfx_make -ti \
-            -v $CD/:/atomo/ \
-            -v $CD/docker/run.sh:/run.sh \
-            hradec/pipevfx_centos_base:centos7 \
-            /run.sh $EXTRA $DEBUG
-    else
-        docker run --rm --name pipevfx_make -ti \
-            -v $CD/:/atomo/ \
-            -v $CD/docker/run.sh:/run.sh \
-            hradec/pipevfx_centos_base:centos7 \
-            /bin/bash -c 'echo ". /atomo/pipeline/tools/init/bash" >> $HOME/.bashrc ; bash -l -i '
+    APPS_MOUNT=""
+    if [ -e /atomo/apps ] ; then
+        APPS_MOUNT="-v /atomo/apps:/atomo/apps"
     fi
+
+    # now we can finally run a build!
+    docker run --rm --name pipevfx_make -ti \
+        -v $CD/:/atomo/ \
+        -v $CD/docker/run.sh:/run.sh \
+        $APPS_MOUNT \
+        -e RUN_SHELL=$SHELL \
+        -e EXTRA=$EXTRA \
+        -e DEBUG=$DEBUG \
+        hradec/pipevfx_centos_base:centos7
 fi

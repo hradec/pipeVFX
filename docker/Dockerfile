@@ -61,6 +61,8 @@ RUN yum -y install yaml-cpp*
 RUN yum -y install tinyxml*
 RUN yum -y install xz
 RUN yum -y install centos-release-scl
+RUN yum -y install devtoolset-6
+RUN yum -y install glibc-devel binutils
 
 #
 #	Install OSL dependencies
@@ -84,3 +86,9 @@ RUN rm -rf /var/cache/yum/*
 #imageop            sunaudiodev
 
 RUN ln -s /usr/bin/ranlib /usr/sbin/ranlib
+
+# add default to gcc 6.3.1 to /etc/bashrc, so running bash will automatically set it
+RUN printf "\nsource scl_source enable devtoolset-6\n" >> /etc/bashrc
+
+ADD run.sh /run.sh
+ENTRYPOINT "/run.sh"
