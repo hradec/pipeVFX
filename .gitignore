@@ -12,3 +12,5 @@ pipeline/build/build
 .idea
 .svn
 pipeline/tags/*
+pipeline/libs/*
+pipeline/build/.build
