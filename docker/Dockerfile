@@ -101,6 +101,6 @@ RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     touch /atomo/.root && \
     mkdir -p /atomo/pipeline/build/ && \
     cd /atomo/pipeline/build && \
-    PYTHONPATH=/atomo/pipeline/tools/python scons -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) downloader
+    PYTHONPATH=/atomo/pipeline/tools/python scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) 
 
 ENTRYPOINT "/run.sh"

@@ -168,9 +168,12 @@ class generic:
     environ = {}
 
 
-    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.system, **kargs):
+    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
         global __pkgInstalled__
         self.__dict__.update(kargs)
+
+        self.gcc_pipe = gcc.pipe
+        self.gcc_system = gcc.system
 
         self.spinnerCount = 0
 
@@ -320,6 +323,15 @@ class generic:
             self.set("TRAVIS", '1')
             self.travis=True
 
+        if 'http_proxy' in os.environ:
+            self.set("http_proxy", os.environ['http_proxy'])
+            self.http_proxy = os.environ['http_proxy']
+
+        if 'https_proxy' in os.environ:
+            self.set("https_proxy", os.environ['https_proxy'])
+            self.https_proxy = os.environ['https_proxy']
+
+
         # add all extra arguments as env vars!
         for each in kargs:
             v=kargs[each]
@@ -425,6 +437,7 @@ class generic:
                     self.depend[p].append(t)
                     self.installAll.append(t)
                     self.env.Default(self.env.Alias( 'install', t ))
+                    self.env.Default(self.env.Alias( 'download', pkgs ))
                     self.env.Alias( 'build-%s' % name, t )
 
 
@@ -718,8 +731,6 @@ class generic:
         if not os_environ.has_key('INCLUDE'):
             os_environ['INCLUDE'] = ''
 
-
-
         CFLAGS=['-fPIC -w']
         LDFLAGS=[]
         gcc={
@@ -862,7 +873,7 @@ class generic:
         for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
             # print name.split('ENVIRON_')[-1], v.strip()
 
-            env = name.split('ENVIRON_')[-1]
+            _env = name.split('ENVIRON_')[-1]
             bkp = ''
 
             # expand $var if exists in os_environ
@@ -883,7 +894,7 @@ class generic:
                                 continue
                         bkp = p+' '+bkp
 
-            os_environ[env] = bkp.strip(':').strip(' ')
+            os_environ[_env] = bkp.strip(':').strip(' ')
 
 
         # update LIB and LIBRARY_PATH
@@ -953,10 +964,14 @@ class generic:
                         cleaned.append(p)
                 os_environ[each] = ':'.join(cleaned)
 
+        # set proxies, if needed
+        proxies = { x[0]:x[1] for x in env.items() if '_PROXY' in x[0] }
+        for each in proxies:
+            os_environ[each.lower()] = proxies[each]
+
         # use dependency gcc, if any!
         os_environ['CC']  = "%s %s" % (gcc['gcc'], os_environ['CC'].replace(':',"").replace('gcc',''))
         os_environ['CXX'] = "%s %s" % (gcc['g++'], os_environ['CXX'].replace(':',"").replace('g++',''))
-
 
         if gcc['gcc'] != 'gcc':
             tmp = glob('%s/lib/gcc/x86_64-pc-linux-gnu/*' % os_environ['GCC_TARGET_FOLDER'])
