@@ -944,7 +944,7 @@ class all: # noqa
                 'mkdir -p build && cd build',
                 # since llvm link uses lots of memory, we define the number
                 # of threads by dividing the ammount of memory in GB by 12
-                'export CORES=%s' % (int(mem)/1024/1024/12),
+                'export MAKE_PARALLEL="-j %s"' % (int(mem)/1024/1024/12),
                 ' && '.join(build.cmake.cmd),
             ],
             flags = [ '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1' ]+build.cmake.flags
