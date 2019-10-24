@@ -37,11 +37,13 @@ else
     # if no image in docker hub or we used -b to force a build, build it
     # and push it to docker hub!
     if [ "$BUILD" == "1" ] ; then
-        docker build $CD/docker/ \
+        docker build $CD/ \
+            -f $CD/docker/Dockerfile \
             -t hradec/pipevfx_centos_base:centos7 \
             --pull \
             --compress \
-            --rm
+            --rm \
+
 
         if [ $? -ne 0 ] ; then
             echo ERROR!!
@@ -51,10 +53,10 @@ else
         fi
     fi
 
-    APPS_MOUNT=""
+    APPS_MOUNT=" -v $CD/apps:/atomo/apps"
     # use real apps folder if we have one!
     if [ -e /atomo/apps ] ; then
-        APPS_MOUNT="$APPS_MOUNT -v /atomo/apps:/atomo/apps"
+        APPS_MOUNT=" -v /atomo/apps:/atomo/apps"
     fi
     # use wget proxy setup if it exists
     if [ -e $HOME/.wgetrc ] ; then
@@ -62,15 +64,18 @@ else
     fi
 
 
-
     # now we can finally run a build!
     docker run --rm --name pipevfx_make -ti \
-        -v $CD/:/atomo/ \
+        -v $CD/pipeline/tools/:/atomo/pipeline/tools/ \
+        -v $CD/pipeline/libs/:/atomo/pipeline/libs/ \
+        -v $CD/pipeline/build/SConstruct:/atomo/pipeline/build/SConstruct \
         -v $CD/docker/run.sh:/run.sh \
         $APPS_MOUNT \
         -e RUN_SHELL=$SHELL \
         -e EXTRA=$EXTRA \
         -e DEBUG=$DEBUG \
         -e TRAVIS=$TRAVIS \
+        -e http_proxy=$http_proxy \
+        -e https_proxy=$https_proxy \
         hradec/pipevfx_centos_base:centos7
 fi

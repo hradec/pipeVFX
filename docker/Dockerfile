@@ -88,7 +88,19 @@ RUN rm -rf /var/cache/yum/*
 RUN ln -s /usr/bin/ranlib /usr/sbin/ranlib
 
 # add default to gcc 6.3.1 to /etc/bashrc, so running bash will automatically set it
-RUN printf "\nsource scl_source enable devtoolset-6\n" >> /etc/bashrc
+# RUN printf "\nsource scl_source enable devtoolset-6\n" >> /etc/bashrc
 
-ADD run.sh /run.sh
+ADD docker/run.sh /run.sh
+ADD pipeline/tools/python /atomo/pipeline/tools/python
+ADD pipeline/tools/config /atomo/pipeline/tools/config
+ADD pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
+
+# download packages so the image contain all tarballs.
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    export TERM=xterm && \
+    touch /atomo/.root && \
+    mkdir -p /atomo/pipeline/build/ && \
+    cd /atomo/pipeline/build && \
+    PYTHONPATH=/atomo/pipeline/tools/python scons -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) downloader
+
 ENTRYPOINT "/run.sh"
