@@ -138,9 +138,6 @@ class cmake(make):
             'export OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include',
             'export OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
             'export OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
-            'export MAKE_PARALLEL="$(echo %s)"' % self._parallel,
-            'export MAKE_VERBOSE="$(echo %s)"' % self._verbose,
-            'export CMAKE_VERBOSE="$(echo %s)"' % self._verbose_cmake,
         ]
         for each in self.flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
