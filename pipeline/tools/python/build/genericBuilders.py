@@ -1026,10 +1026,14 @@ class generic:
             print cmd
             print '-'*tcols
             sys.stdout.flush()
-            os.chdir(os_environ['SOURCE_FOLDER'])
-            proc=Popen("/bin/sh", bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
-            proc.wait()
+            if 'TRAVIS' not in os_environ or os_environ['TRAVIS'] != "1":
+                os.chdir(os_environ['SOURCE_FOLDER'])
+                proc=Popen("/bin/sh", bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
+                proc.wait()
             raise Exception('Error!')
+
+        # cleanup so we have space to build.
+        os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
 
         print bcolors.END,
 
@@ -1072,6 +1076,11 @@ class generic:
         source = [source]
         for n in range(len(source)):
             # print __pkgInstalled__[os.path.abspath(source[n])]
+            download_path=os.path.dirname(source[n])+'/../.download/'
+            download_file=os.path.dirname(source[n])+'/../.download/'+os.path.basename(source[n])
+            os.system('mkdir -p "%s"' % download_path)
+            os.system('rm -rf "%s" ' % (source[n]) )
+            os.system('ln -s "../.download/%s" "%s"' % (os.path.basename(source[n]), source[n] ) )
             if not os.path.exists(__pkgInstalled__[os.path.abspath(source[n])]):
                 url=_url
                 if not url:
@@ -1079,9 +1088,9 @@ class generic:
                 md5 = self.md5(source[n])
                 if md5 != url[3]:
                     print bcolors.GREEN,
-                    print "\tDownloading %s..." % source[n]
+                    print "\tDownloading %s..." % download_file
                     print bcolors.END,
-                    os.popen("wget --timeout=15 '%s' -O %s >%s.log 2>&1" % (url[0], source[n], source[n])).readlines()
+                    os.popen("wget --timeout=15 '%s' -O %s >%s.log 2>&1" % (url[0], download_file, source[n])).readlines()
     #                lines = os.system("curl '%s' -o %s 2>&1" % (url[0], source[n]))
                     if os.stat(source[n]).st_size == 0:
                         raise Exception ("error downloading %s" % source[n])
@@ -1093,7 +1102,8 @@ class generic:
                         sys.stdout.flush()
                         self.error = True
             else:
-                open(str(source[n]), 'a').close()
+                if not os.path.exists(download_file):
+                    open(download_file, 'a').close()
 
         return source
 

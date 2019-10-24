@@ -69,6 +69,7 @@ else
         -v $CD/pipeline/tools/:/atomo/pipeline/tools/ \
         -v $CD/pipeline/libs/:/atomo/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/atomo/pipeline/build/SConstruct \
+        -v $CD/pipeline/build/.build/:/atomo/pipeline/build/.build/ \
         -v $CD/docker/run.sh:/run.sh \
         -v $CD/.root:/atomo/.root \
         $APPS_MOUNT \
