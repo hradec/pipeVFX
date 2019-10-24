@@ -996,7 +996,7 @@ class all: # noqa
                 },
             },
             cmd = [
-                # we have to use the devtoolset-6 gcc 
+                # we have to use the devtoolset-6 gcc
                 'source scl_source enable devtoolset-6',
                 'make -j $DCORES '
                 'USE_CPP11=1 '
@@ -1079,6 +1079,11 @@ class all: # noqa
                 '4.16.4',
                 'a9840670a064dbf8f63a8f653776fec9',
                 { gcc : '4.1.2' }
+            ),(
+                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
+                'sip-4.16.7.tar.gz',
+                '4.16.7.maya%s' % version,
+                '32abc003980599d33ffd789734de4c36',
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18.1/sip-4.18.1.tar.gz',
                 'sip-4.18.1.tar.gz',
