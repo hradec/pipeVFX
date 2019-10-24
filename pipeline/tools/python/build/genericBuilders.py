@@ -967,7 +967,7 @@ class generic:
         # set proxies, if needed
         proxies = { x[0]:x[1] for x in env.items() if '_PROXY' in x[0] }
         for each in proxies:
-            os_environ[each.lower()] = proxies[each]
+            os_environ[each.lower()] = proxies[each].strip()
 
         # use dependency gcc, if any!
         os_environ['CC']  = "%s %s" % (gcc['gcc'], os_environ['CC'].replace(':',"").replace('gcc',''))
