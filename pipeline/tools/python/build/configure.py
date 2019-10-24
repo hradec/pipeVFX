@@ -348,10 +348,10 @@ class python(configure):
         cmd = configure.fixCMD(self,cmd)
         if self.kargs.has_key('easy_install'):
             for each in self.kargs['easy_install']:
-                cmd += '&& $TARGET_FOLDER/bin/easy_install %s' % each
+                cmd += ' && $TARGET_FOLDER/bin/easy_install %s ' % each
         if self.kargs.has_key('pip'):
             for each in self.kargs['pip']:
-                cmd += '&& $TARGET_FOLDER/bin/pip install %s' % each
+                cmd += ' && $TARGET_FOLDER/bin/pip install %s ' % each
         return cmd
 
 
