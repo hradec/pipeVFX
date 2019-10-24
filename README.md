@@ -1,6 +1,6 @@
 pipeVFX
 =======
-[![Build Status](https://travis-ci.org/hradec/pipeVFX.svg?branch=master)](https://travis-ci.org/hradec/pipeVFX)
+[![Build Status](https://dev.azure.com/hradec/pipeVFX/_apis/build/status/hradec.pipeVFX?branchName=devel)](https://dev.azure.com/hradec/pipeVFX/_build/latest?definitionId=1&branchName=devel)
 
 A Visual Effects pipeline to manage jobs, shots and software assignment, with a "simple asset manager" called SAM.
 
