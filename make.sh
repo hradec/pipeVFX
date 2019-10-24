@@ -56,7 +56,7 @@ else
     APPS_MOUNT=" -v $CD/apps:/atomo/apps"
     # use real apps folder if we have one!
     if [ -e /atomo/apps ] ; then
-        APPS_MOUNT=" -v /atomo/apps:/atomo/apps"
+        APPS_MOUNT=" -v /atomo/apps:/atomo/apps "
     fi
     # use wget proxy setup if it exists
     if [ -e $HOME/.wgetrc ] ; then
@@ -65,17 +65,21 @@ else
 
 
     # now we can finally run a build!
-    docker run --rm --name pipevfx_make -ti \
+    cmd="docker run --rm --name pipevfx_make -ti \
         -v $CD/pipeline/tools/:/atomo/pipeline/tools/ \
         -v $CD/pipeline/libs/:/atomo/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/atomo/pipeline/build/SConstruct \
         -v $CD/docker/run.sh:/run.sh \
+        -v $CD/.root:/atomo/.root \
         $APPS_MOUNT \
         -e RUN_SHELL=$SHELL \
         -e EXTRA=$EXTRA \
         -e DEBUG=$DEBUG \
         -e TRAVIS=$TRAVIS \
-        -e http_proxy=$http_proxy \
+        -e http_proxy='$http_proxy' \
         -e https_proxy=$https_proxy \
-        hradec/pipevfx_centos_base:centos7
+        hradec/pipevfx_centos_base:centos7"
+
+    echo $cmd
+    eval $cmd
 fi
