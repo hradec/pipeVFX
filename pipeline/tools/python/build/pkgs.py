@@ -22,6 +22,9 @@
 import build, devRoot
 import SCons, os
 
+
+mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
+
 SCons.Script.SetOption('warn', 'no-all')
 #SCons.Script.SetOption('num_jobs', 8)
 
@@ -188,7 +191,6 @@ class all: # noqa
         )
         self.icu = icu
 
-
         bzip2 = build.make(
             ARGUMENTS,
             'bzip2',
@@ -205,6 +207,7 @@ class all: # noqa
             ],
         )
         self.bzip2 = bzip2
+        build.allDepend.append(bzip2)
 
         readline = build.configure(
             ARGUMENTS,
@@ -915,6 +918,7 @@ class all: # noqa
         self.oiio = oiio
         # build.allDepend.append(oiio)
 
+
         clang_url = 'http://releases.llvm.org/9.0.0/cfe-9.0.0.src.tar.xz'
         llvm = build.cmake(
             ARGUMENTS,
@@ -937,7 +941,7 @@ class all: # noqa
             depend=[python, boost],
             # we have to build LLVM with 1 thread or else we run out of
             # memory during linking on a 32GB RAM machine!
-            parallel=0,
+            parallel=0 if int(mem)/1024/1024 < 32 else 1,
             cmd = [
                 'mkdir -p build && cd build',
                 ' && '.join(build.cmake.cmd),
