@@ -939,11 +939,12 @@ class all: # noqa
                 },
             },
             depend=[python, boost],
-            # we have to build LLVM with 1 thread or else we run out of
-            # memory during linking on a 32GB RAM machine!
-            parallel=0 if int(mem)/1024/1024 < 32 else 1,
+            parallel=1,
             cmd = [
                 'mkdir -p build && cd build',
+                # since llvm link uses lots of memory, we define the number
+                # of threads by dividing the ammount of memory in GB by 12
+                'export CORES=%s' % (int(mem)/1024/1024/12),
                 ' && '.join(build.cmake.cmd),
             ],
             flags = [ '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1' ]+build.cmake.flags
