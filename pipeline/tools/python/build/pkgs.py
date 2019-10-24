@@ -349,7 +349,8 @@ class all: # noqa
                 'http://downloads.sourceforge.net/glew/glew-1.13.0.tgz',
                 'glew-1.13.0.tar.gz',
                 '1.13.0',
-                '7cbada3166d2aadfc4169c4283701066'
+                '7cbada3166d2aadfc4169c4283701066',
+                { gcc : '4.1.2' }
             )],
         )
         build.allDepend.append(glew)
@@ -933,10 +934,10 @@ class all: # noqa
                     ],
                 },
             },
-            depend=[python, boost, gcc],
+            depend=[python, boost],
             # we have to build LLVM with 1 thread or else we run out of
             # memory during linking on a 32GB RAM machine!
-            parallel=1,
+            parallel=0,
             cmd = [
                 'mkdir -p build && cd build',
                 ' && '.join(build.cmake.cmd),
@@ -995,6 +996,8 @@ class all: # noqa
                 },
             },
             cmd = [
+                # we have to use the devtoolset-6 gcc 
+                'source scl_source enable devtoolset-6',
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
