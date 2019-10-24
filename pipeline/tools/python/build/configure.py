@@ -263,14 +263,14 @@ class boost(configure):
         # generic build command for versions 1.58 and up
         cmd = [
             './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-            './b2 -j $DCORES variant=release cxxflags="-fPIC -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            './b2 -j $CORES variant=release cxxflags="-fPIC -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
         ]
         # if version is below 1.58, use this build commands
         if self.versionMajor < 1.58 and  self.versionMajor > 1.55 :
             cmd = [
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER ',
                 'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
-                './b2 -j $DCORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
+                './b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
                 # './b2 -j $DCORES --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS -std=gnu++11" linkflags="$LDFLAGS" -d+2 install',
             ]
 
@@ -285,7 +285,7 @@ class boost(configure):
             cmd = [
                 "curl -L -s 'http://www.boost.org/patches/1_55_0/001-log_fix_dump_avx2.patch' | sed 's/libs/.\/libs/g'| patch -p1",
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $DCORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                './b2 -j $CORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if self.versionMajor == 1.54:
@@ -295,13 +295,13 @@ class boost(configure):
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $DCORES  --without-log  variant=release cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                './b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if self.versionMajor == 1.51:
             cmd = [
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $DCORES   variant=release cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                './b2 -j $CORES   variant=release cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
 
