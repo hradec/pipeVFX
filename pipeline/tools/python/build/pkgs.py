@@ -843,7 +843,7 @@ class all: # noqa
                 'OpenColorIO-1.0.9.tar.gz',
                 '1.0.9',
                 '06d0efe9cc1b32d7b14134779c9d1251',
-                { gcc : '4.1.2' }
+                { gcc : '4.8.5' }
             ),(
                 'https://github.com/imageworks/OpenColorIO/archive/v1.1.1.tar.gz',
                 'OpenColorIO-1.1.1.tar.gz',
@@ -897,7 +897,7 @@ class all: # noqa
                 '4fa0ce4538fb2d7eb72f54f4036972d5',
                 { gcc : '4.8.5', boost : "1.56.0" }
             )],
-            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2],
+            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2, libraw],
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
             flags = [
                 '-DUSE_PYTHON=0',
@@ -1079,11 +1079,6 @@ class all: # noqa
                 '4.16.4',
                 'a9840670a064dbf8f63a8f653776fec9',
                 { gcc : '4.1.2' }
-            ),(
-                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
-                'sip-4.16.7.tar.gz',
-                '4.16.7.maya%s' % version,
-                '32abc003980599d33ffd789734de4c36',
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18.1/sip-4.18.1.tar.gz',
                 'sip-4.18.1.tar.gz',
