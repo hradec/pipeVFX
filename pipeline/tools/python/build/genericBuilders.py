@@ -320,8 +320,8 @@ class generic:
         # check if we're running in TRAVIS-CI
         self.travis=False
         if 'TRAVIS' in os.environ:
-            self.set("TRAVIS", '1')
-            self.travis=True
+            self.travis=False if not os.environ['TRAVIS'].strip() else True
+            self.set("TRAVIS", os.environ['TRAVIS'])
 
         if 'http_proxy' in os.environ:
             self.set("http_proxy", os.environ['http_proxy'])
@@ -992,7 +992,15 @@ class generic:
 
         from subprocess import Popen
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
-        proc.wait()
+        # it's better to keep printing something so travis-ci doesn't
+        # kill our build!
+        if self.travis:
+            while proc.poll() is None:
+                print '.',
+                sys.stdout.flush()
+                time.sleep(60)
+        else:
+            proc.wait()
         ret = self.__check_target_log__(lastlog)
 
         # finished without errors!!
@@ -1026,7 +1034,7 @@ class generic:
             print cmd
             print '-'*tcols
             sys.stdout.flush()
-            if 'TRAVIS' not in os_environ or os_environ['TRAVIS'] != "1":
+            if not self.travis:
                 os.chdir(os_environ['SOURCE_FOLDER'])
                 proc=Popen("/bin/sh", bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
                 proc.wait()
