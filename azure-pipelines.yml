@@ -11,6 +11,9 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  TRAVIS: 1
+
 steps:
 - script: ./make.sh
   displayName: 'build pipevfx'
