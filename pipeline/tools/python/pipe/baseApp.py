@@ -879,6 +879,8 @@ class baseApp(_environ):
     def versionList(self, numbersOnly=True):
         ''' returns all the versions available for the app'''
         zappsDB = self.DB(self.className)
+        if not zappsDB:
+            return zappsDB
         if numbersOnly and self.className != 'houdini':
             return filter(lambda x: x[0].isdigit(), zappsDB[self.className]['versions'])
         return zappsDB[self.className]['versions']
