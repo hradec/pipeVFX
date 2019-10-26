@@ -918,8 +918,25 @@ class all: # noqa
         self.oiio = oiio
         # build.allDepend.append(oiio)
 
+        # use the download action as we only need this package to build llvm!
+        # download action will avoid installing this package!
+        # we also set keep_source_folder=True so the source folder is not
+        # deleted after the build ends.
+        clang = build.download(
+            ARGUMENTS,
+            'clang',
+            download=[(
+                'http://releases.llvm.org/9.0.0/cfe-9.0.0.src.tar.xz',
+                'cfe-9.0.0.src.tar.gz',
+                '9.0.0',
+                '0df6971e2f99b1e99e7bfb533e4067af',
+            )],
+            keep_source_folder=True,
+        )
+        self.clang = clang
 
-        clang_url = 'http://releases.llvm.org/9.0.0/cfe-9.0.0.src.tar.xz'
+        # build llvm using clang source folder that has being
+        # just downloaded and uncompressed
         llvm = build.cmake(
             ARGUMENTS,
             'llvm',
@@ -928,7 +945,7 @@ class all: # noqa
                 'llvm-9.0.0.src.tar.gz',
                 '9.0.0',
                 '0fd4283ff485dffb71a4f1cc8fd3fc72',
-                { gcc : '4.8.5' }
+                { gcc : '4.8.5', clang : '9.0.0' }
             )],
             sed = {
                 '3.5.2' : {
@@ -938,16 +955,22 @@ class all: # noqa
                     ],
                 },
             },
-            depend=[python, boost],
+            depend=[python, boost, clang],
             parallel=1,
             cmd = [
+                # mv clang to the tools folder so LLVM can automatically build it!
+                'mv $CLANG_SRC_FOLDER $SOURCE_FOLDER/tools/clang',
                 'mkdir -p build && cd build',
                 # since llvm link uses lots of memory, we define the number
                 # of threads by dividing the ammount of memory in GB by 12
                 'export MAKE_PARALLEL="-j %s"' % (int(mem)/1024/1024/12),
                 ' && '.join(build.cmake.cmd),
             ],
-            flags = [ '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1' ]+build.cmake.flags
+            flags = [
+                '-DCMAKE_BUILD_TYPE=Release',
+                '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1',
+                '-DGCC_INSTALL_PREFIX=$GCC_TARGET_FOLDER',
+            ]+build.cmake.flags
         )
         self.llvm = llvm
         # build.allDepend.append(llvm)
@@ -970,6 +993,19 @@ class all: # noqa
         # self.bison = bison
         # build.allDepend.append(bison)
 
+        pugixml = build.cmake(
+            ARGUMENTS,
+            'pugixml',
+            download=[(
+                'https://github.com/zeux/pugixml/archive/v1.10.tar.gz',
+                'pugixml-1.10.tar.gz',
+                '1.10.0',
+                '0c208b0664c7fb822bf1b49ad035e8fd',
+                { gcc : '4.1.2' },
+            )],
+        )
+        self.pugixml = pugixml
+
         osl = build.cmake(
             ARGUMENTS,
             'osl',
@@ -978,7 +1014,7 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.10.7.tar.gz',
                 '1.10.7',
                 '53f66e12c3e29c62dc51b070f027a0ad',
-                {oiio: "2.0.11", llvm : "9.0.0", gcc: "4.8.5", boost: "1.51.0"},
+                {oiio: "2.0.11", llvm : "9.0.0", gcc: "4.8.5", boost: "1.56.0"},
             ),(
                 'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
                 'OpenShadingLanguage-Release-1.7.5.tar.gz',
@@ -986,7 +1022,7 @@ class all: # noqa
                 '8b15d13c3fa510b421834d32338304c8',
                 {oiio: "1.6.15", llvm : "9.0.0", gcc: "4.8.5", boost: "1.51.0"},
             )],
-            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake],
+            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, gcc, openssl, bzip2, libraw],
             sed = {
                 '0.0.0' : {
                     'CMakeLists.txt' : [
@@ -1006,8 +1042,8 @@ class all: # noqa
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS="-DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
-                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags))+' ENABLERTTI=1" '
+                'MY_CMAKE_FLAGS=" -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+'" '
+                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+' ENABLERTTI=1" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
                 'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '

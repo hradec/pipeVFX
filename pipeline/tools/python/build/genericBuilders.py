@@ -270,6 +270,9 @@ class generic:
                 self.flags = []
             self.flags += kargs['flags']
 
+        if kargs.has_key('keep_source_folder'):
+            self.keep_source_folder = kargs['keep_source_folder']
+            self.set( "KEEP_SOURCE_FOLDER", '1' if self.keep_source_folder else '0')
 
         self.targetSuffix=""
         if kargs.has_key('targetSuffix'):
@@ -337,7 +340,7 @@ class generic:
             v=kargs[each]
             if type(v)==type(""):
                 v=[kargs[each]]
-            if type(v) not in [int, float]:
+            if type(v) not in [int, float, bool]:
                 for n in range(len(v)):
                     self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
 
@@ -1033,6 +1036,7 @@ class generic:
             print bcolors.END
             print cmd
             print '-'*tcols
+            print self.travis, self.__class__
             sys.stdout.flush()
             if not self.travis:
                 os.chdir(os_environ['SOURCE_FOLDER'])
@@ -1041,7 +1045,9 @@ class generic:
             raise Exception('Error!')
 
         # cleanup so we have space to build.
-        os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
+        keep_source = filter(lambda x: 'KEEP_SOURCE_FOLDER' in x[0], env.items())
+        if keep_source and keep_source[0][1].strip() != '1':
+            os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
 
         print bcolors.END,
 
