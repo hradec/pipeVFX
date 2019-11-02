@@ -325,6 +325,31 @@ class glew(make):
                 ret = os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
         return ret
 
+class glfw(cmake):
+    ''' a make class to exclusively build glfw package
+    coz it install its libs in the lib64 folder, so we use a custom
+    installer method to create a link lib -> lib64'''
+    # sed = {
+    #     '0.0.0' : {
+    #         'config/Makefile.linux' : [
+    #             ('lib64','lib'),
+    #         ],
+    #     },
+    # }
+    def installer(self, target, source, env):
+        ''' just a small installation patch to link lib64 to lib, which is the
+        expected shared library folder name, since pipeVFX organize packages in
+        arch specific hierarchy - linux/x86_64/package '''
+        ret = []
+        targetFolder = os.path.dirname(str(target[0]))
+        if os.path.exists("%s/lib" % targetFolder):
+            if os.path.exists("%s/lib64" % targetFolder):
+                ret = os.popen("rm -rf  %s/lib" % targetFolder).readlines()
+                ret = os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
+        return ret
+
+
+
 class tbb(make):
     ''' a make class to exclusively build intels TBB package
     since we need to handle the installation by ourselfs, we override

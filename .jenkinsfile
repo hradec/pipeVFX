@@ -1,11 +1,11 @@
 pipeline {
-    agent {
-        docker { image 'docker:19.03.3' }
-    }
+    agent  any
     stages {
         stage('build') {
             steps {
-                sh 'sh ./make.sh'
+                ansiColor('gnome-terminal') {
+                    sh './make.sh'
+                }
             }
         }
     }

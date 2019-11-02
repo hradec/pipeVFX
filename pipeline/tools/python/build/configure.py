@@ -263,14 +263,14 @@ class boost(configure):
         # generic build command for versions 1.58 and up
         cmd = [
             './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-            './b2 -j $CORES variant=release cxxflags="-fPIC -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            './b2 -j $CORES variant=release cxxflags="-fPIC -fpermissive -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
         ]
         # if version is below 1.58, use this build commands
         if self.versionMajor < 1.58 and  self.versionMajor > 1.55 :
             cmd = [
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER ',
                 'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
-                './b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
+                './b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC -fpermissive  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
                 # './b2 -j $DCORES --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS -std=gnu++11" linkflags="$LDFLAGS" -d+2 install',
             ]
 
@@ -285,7 +285,7 @@ class boost(configure):
             cmd = [
                 "curl -L -s 'http://www.boost.org/patches/1_55_0/001-log_fix_dump_avx2.patch' | sed 's/libs/.\/libs/g'| patch -p1",
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $CORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                './b2 -j $CORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if self.versionMajor == 1.54:
@@ -295,13 +295,13 @@ class boost(configure):
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                './b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if self.versionMajor == 1.51:
             cmd = [
                 './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $CORES   variant=release cxxflags="-fPIC  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                './b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
 
@@ -338,11 +338,14 @@ class python(configure):
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
         'make -j $DCORES',
         'make -j $DCORES install',
-        '$TARGET_FOLDER/bin/python ./ez_setup.py',
-        '$TARGET_FOLDER/bin/easy_install hashlib',
+        '( [ ! -e  $TARGET_FOLDER/bin/easy_install ] && $TARGET_FOLDER/bin/python$PYTHON_VERSION_MAJOR ./ez_setup.py || true)',
+        'ln -s python$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/python || true',
+        'ln -s python3.7$PYTHON_VERSION_MAJOR-config  $TARGET_FOLDER/bin/python-config || true',
+        "[ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $TARGET_FOLDER/bin/easy_install hashlib || true",
+        '( [ ! -e  $TARGET_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $TARGET_FOLDER/bin/easy_install pip || true)',
+        'ln -s pip$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/pip || true',
+        "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $TARGET_FOLDER/bin/pip install  readline || true)",
         # '$TARGET_FOLDER/bin/easy_install scons',
-        '$TARGET_FOLDER/bin/easy_install pip',
-        '$TARGET_FOLDER/bin/easy_install readline',
     ]
     def fixCMD(self, cmd):
         cmd = configure.fixCMD(self,cmd)
@@ -351,9 +354,16 @@ class python(configure):
                 cmd += ' && $TARGET_FOLDER/bin/easy_install %s ' % each
         if self.kargs.has_key('pip'):
             for each in self.kargs['pip']:
-                cmd += ' && $TARGET_FOLDER/bin/pip install %s ' % each
+                if int(pipe.apps.version.get('python').split('.')[0]) < 3 or 'PyOpenGL-accelerate' not in each:
+                    cmd += ' && $TARGET_FOLDER/bin/pip install %s ' % each
         return cmd
 
+    # def installer(self, target, source, env): # noqa
+    #     ''' create the bin apps without the version numbers '''
+    #     ret=[]
+    #     for each in ['python', 'pip']:
+    #             ret += os.popen( 'sudo ln -s %s$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/%s' % (each, each) ).readlines()
+    #     return ret
 
 
 class cortex(configure):

@@ -55,18 +55,21 @@ class all: # noqa
         '''
 
         zlib = build.configure(
-               ARGUMENTS,
-               'zlib',
-               download=[
-                 (
-                   'http://zlib.net/fossils/zlib-1.2.8.tar.gz',
-                   'zlib-1.2.8.tar.gz',
-                   '1.2.8',
-                   '44d667c142d7cda120332623eab69f40'
-                 ),
-               ],
+            ARGUMENTS,
+            'zlib',
+            download=[(
+                'http://zlib.net/fossils/zlib-1.2.8.tar.gz',
+                'zlib-1.2.8.tar.gz',
+                '1.2.8',
+                '44d667c142d7cda120332623eab69f40'
+            ),(
+                'http://zlib.net/zlib-1.2.11.tar.gz',
+                'zlib-1.2.11.tar.gz',
+                '1.2.11',
+                '1c9f62f0778697a09d36121ead88e08e'
+            )],
         )
-        build.allDepend.append(zlib)
+        # build.allDepend.append(zlib)
 
         # curl = build.configure(
         #        ARGUMENTS,
@@ -275,16 +278,16 @@ class all: # noqa
                     '2.7.16',
                     'f1a2ace631068444831d01485466ece0',
                     { gcc : '4.1.2', readline : '7.0.0', openssl : '1.0.2s' },
-                # ),(
-                #     'https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz',
-                #     'Python-3.7.3.tar.gz',
-                #     '3.7.3',
-                #     '2ee10f25e3d1b14215d56c3882486fcf',
-                #     { readline : '7.0.0', openssl : '1.0.2s' },
+                ),(
+                    'https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz',
+                    'Python-3.7.5.tar.gz',
+                    '3.7.5',
+                    '1cd071f78ff6d9c7524c95303a3057aa',
+                    { gcc : '4.8.5', readline : '7.0.0', openssl : '1.0.2s' },
             )],
             # this fixes https not finding certificate in easy_install
             environ = {"PYTHONHTTPSVERIFY" : "0"},
-            depend = [readline,bzip2,openssl],
+            depend = [readline,bzip2], #,openssl],
             pip = [
                 'epydoc',
                 'PyOpenGL',
@@ -292,6 +295,7 @@ class all: # noqa
                 'cython',
                 'subprocess32',
                 'numpy',
+                'dbus-python'
             ]
         )
         self.python = python
@@ -504,11 +508,16 @@ class all: # noqa
             ARGUMENTS,
             'dbus',
             download=[(
-                'https://pypi.python.org/packages/source/d/dbus-python/dbus-python-0.84.0.tar.gz#md5=fe69a2613e824463e74f10913708c88a',
-                'dbus-python-0.84.0.tar.gz',
-                '0.84.0',
-                'fe69a2613e824463e74f10913708c88a',
-                { gcc : '4.1.2' }
+            #     'https://pypi.python.org/packages/source/d/dbus-python/dbus-python-0.84.0.tar.gz#md5=fe69a2613e824463e74f10913708c88a',
+            #     'dbus-python-0.84.0.tar.gz',
+            #     '0.84.0',
+            #     'fe69a2613e824463e74f10913708c88a',
+            #     { gcc : '4.1.2', python: '2.7.16' }
+            # ),(
+                'https://files.pythonhosted.org/packages/b6/85/7b46d31f15a970665533ad5956adee013f03f0ad4421c3c83304ae9c9906/dbus-python-1.2.12.tar.gz',
+                'dbus-python-1.2.12.tar.gz',
+                '1.2.12',
+                '428b7a9e7e2d154a7ceb3e13536283e4',
             )],
             baseLibs=[python],
             depend=[gcc, python, openssl],
@@ -548,14 +557,22 @@ class all: # noqa
             ARGUMENTS,
             'scons',
             download=[(
-                'http://downloads.sourceforge.net/project/scons/scons/1.0.0/scons-1.0.0.tar.gz',
-                'scons-1.0.0.tar.gz',
-                '1.0.0',
-                '9afdfe0cc6d957568cc4386567a7c19e',
-                { gcc : '4.1.2' }
+                # 'http://downloads.sourceforge.net/project/scons/scons/1.0.0/scons-1.0.0.tar.gz',
+                # 'scons-1.0.0.tar.gz',
+                # '1.0.0',
+                # '9afdfe0cc6d957568cc4386567a7c19e',
+                'https://github.com/SCons/scons/archive/3.0.4.tar.gz',
+                'scons-3.0.4.tar.gz',
+                '3.0.4',
+                '15966194360560ee40ff75fcbe875f0c',
             )],
             baseLibs=[python],
             depend=[python, openssl],
+            src = 'bootstrap.py',
+            cmd=[
+                './bootstrap.py build/scons',
+                'cd build/scons',
+            ]+build.pythonSetup.cmd
         )
 
         # build all simple python modules here.
@@ -565,11 +582,10 @@ class all: # noqa
         # without any special setup.
         simpleModules = {
             'pil' : [(
-                'http://effbot.org/downloads/Imaging-1.1.7.tar.gz',
-                'Imaging-1.1.7.tar.gz',
-                '1.1.7',
-                'fc14a54e1ce02a0225be8854bfba478e',
-                { gcc : '4.1.2' }
+                'https://github.com/python-pillow/Pillow/archive/6.2.1.tar.gz',
+                'Pillow-6.2.1.tar.gz',
+                '6.2.1',
+                '14711cb3ff6bbd9634aad3bbcb2d935d',
             )],
             # 'pythonldap' : [(
             #     'https://pypi.python.org/packages/source/p/python-ldap/python-ldap-2.4.19.tar.gz#md5=b941bf31d09739492aa19ef679e94ae3',
@@ -647,7 +663,7 @@ class all: # noqa
             depend=[python, openssl, bzip2],
         )
         self.boost = boost
-        build.allDepend.append(boost)
+        # build.allDepend.append(boost)
 
         ilmbase = build.configure(
             ARGUMENTS,
@@ -783,7 +799,7 @@ class all: # noqa
                 'yasm-1.3.0.tar.gz',
                 '1.3.0',
                 'fc9e586751ff789b34b1f21d572d96af',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python : '2.7.16'}
             )],
         )
         self.yasm = yasm
@@ -886,19 +902,19 @@ class all: # noqa
                 'oiio-Release-1.5.24.tar.gz',
                 '1.5.24',
                 '8c1f9a0ec5b55a18eeea76d33ca7a02c',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2',  boost : "1.51.0", python: '2.7.16' }
             ),(
                 'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
                 'oiio-Release-1.6.15.tar.gz',
                 '1.6.15',
                 '3fe2cef4fb5f7bc78b136d2837e1062f',
-                { gcc : '4.1.2', boost : "1.51.0" }
+                { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16' }
             ),(
                 'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                 'oiio-Release-2.0.11.tar.gz',
                 '2.0.11',
                 '4fa0ce4538fb2d7eb72f54f4036972d5',
-                { gcc : '4.8.5', boost : "1.56.0" }
+                { gcc : '4.8.5', boost : "1.56.0", python: '2.7.16' }
             )],
             depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2, libraw],
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
@@ -1005,6 +1021,104 @@ class all: # noqa
             )],
         )
         self.pugixml = pugixml
+
+        # glfw = build.make(
+        #     ARGUMENTS,
+        #     'glfw',
+        #     download=[(
+        #         'https://github.com/glfw/glfw/releases/download/3.3/glfw-3.3.zip',
+        #         'glfw-3.3.zip',
+        #         '3.2.1',
+        #         'e4f3c4848710093f29b1781f2d1b7acc',
+        #         { gcc : '4.1.2' }
+        #     )],
+        #     depend=[gcc],
+        #     src = 'README.md',
+        #     cmd = [
+        #         'mkdir build',
+        #         'cd build',
+        #         '$CMAKE_TARGET_FOLDER/bin/cmake -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER -DBUILD_SHARED_LIBS=ON $SOURCE_FOLDER ',
+        #         'make -j $DCORES install'
+        #     ],
+        # )
+        # self.glfw = glfw
+        # build.allDepend.append(glfw)
+
+        glfw = build.glfw(
+            ARGUMENTS,
+            'glfw',
+            download=[(
+                'https://github.com/glfw/glfw/archive/3.3.tar.gz',
+                'glfw-3.3.tar.gz',
+                '3.3.0',
+                '5be03812f5d109817e6558c3fab7bbe1',
+                { gcc : '4.8.5' },
+            )],
+            depend=[python, glew],
+            baseLibs=[python],
+            flags = [
+                '-DBUILD_SHARED_LIBS=1',
+            ]+build.glfw.flags
+        )
+        self.glfw = glfw
+
+        #
+        # nanogui_glfw = build.download(
+        #     ARGUMENTS,
+        #     'nanogui_glfw',
+        #     download=[(
+        #         'https://github.com/wjakob/glfw/archive/6a0dde2a65448bb54dee7a45979f3ebe72253a19.zip',
+        #         'glfw-6a0dde2a65448bb54dee7a45979f3ebe72253a19.zip',
+        #         '6a0dde',
+        #         '56f932e0a7e0ccc0dff4ed338e93e2d3',
+        #     )],
+        #     keep_source_folder=True,
+        # )
+        # nanogui = build.cmake(
+        #     ARGUMENTS,
+        #     'nanogui',
+        #     sed = {'0.0.0' : {
+        #         'CMakeLists.txt' : [
+        #             ('PythonLibsNew','PythonLibs'),
+        #         ],
+        #     },},
+        #     download=[(
+        #         'https://github.com/wjakob/nanogui.git',
+        #         'nanogui-e9ec8.zip',
+        #         'e9ec8',
+        #         None, # git clonned zip gives a different md5sum everytime, so disable it for now.
+        #         { gcc : '4.8.5', python: '3.7.5' },
+        #     )],
+        #     depend=[python, freeglut],
+        #     flags = [
+        #         '-DCMAKE_PREFIX_PATH=$PYTHON_TARGET_FOLDER',
+        #         '-DNANOGUI_PYTHON_VERSION=$PYTHON_VERSION',
+        #
+        #     ],
+        # )
+        # self.nanogui = nanogui
+
+
+        materialx = build.cmake(
+            ARGUMENTS,
+            'materialx',
+            download=[(
+                'https://github.com/materialx/MaterialX.git',
+                'MaterialX-v1.36.4.zip',
+                'v1.36.4', 
+                None,
+                { gcc : '4.8.5', python: '3.7.5' },
+            )],
+            depend=[python, freeglut],
+            flags = [
+                '-DMATERIALX_BUILD_PYTHON=1',
+                '-DMATERIALX_BUILD_VIEWER=1',
+            ],
+        )
+        self.materialx = materialx
+
+
+
 
         osl = build.cmake(
             ARGUMENTS,
@@ -1176,27 +1290,6 @@ class all: # noqa
         build.allDepend.append(pyqt)
 
 
-        glfw = build.make(
-            ARGUMENTS,
-            'glfw',
-            download=[(
-                'https://github.com/glfw/glfw/archive/3.2.1.tar.gz',
-                'glfw-3.2.1.tar.gz',
-                '3.2.1',
-                '91b8250b6edcc26c9f5205555070a504',
-                { gcc : '4.1.2' }
-            )],
-            depend=[gcc],
-            src = 'README.md',
-            cmd = [
-                'mkdir build',
-                'cd build',
-                '$CMAKE_TARGET_FOLDER/bin/cmake -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER -DBUILD_SHARED_LIBS=ON $SOURCE_FOLDER ',
-                'make -j $DCORES install'
-            ],
-        )
-        self.glfw = glfw
-        build.allDepend.append(glfw)
 
         log4cplus = build.configure(
             ARGUMENTS,

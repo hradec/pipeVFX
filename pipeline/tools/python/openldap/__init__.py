@@ -24,6 +24,12 @@
 #cn=Admin,dc=atomovfx,dc=lan
 #Admin: Atomo2013openldap
 
+# centos setup
+# copy certs from another place - sudo rsync -avpP   /etc/openldap/cacerts/  <centos ip>:/etc/openldap/cacerts/
+# yum install openldap openldap-clients nss-pam-ldapd
+# authconfig --enableldaptls --update
+# authconfig --enableldap --enableldapauth --ldapserver=192.168.0.3 --ldapbasedn="dc=atomovfx,dc=lan" --enablemkhomedir --update
+
 
 
 def password(passwd):

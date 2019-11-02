@@ -101,6 +101,12 @@ RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     touch /atomo/.root && \
     mkdir -p /atomo/pipeline/build/ && \
     cd /atomo/pipeline/build && \
-    PYTHONPATH=/atomo/pipeline/tools/python scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) 
+    PYTHONPATH=/atomo/pipeline/tools/python scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 ))
+
+# to avoid clashing in osl
+RUN yum -y remove boost
+
+# we need this to build python3.n
+RUN yum -y install libffi-devel tcl-devel tk-devel libXt-devel
 
 ENTRYPOINT "/run.sh"

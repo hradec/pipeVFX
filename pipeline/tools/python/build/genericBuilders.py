@@ -22,7 +22,7 @@ from  SCons.Environment import *
 from  SCons.Builder import *
 from  SCons.Action import *
 from  SCons.Script import *
-import os, traceback, sys, inspect
+import os, traceback, sys, inspect, re
 
 
 
@@ -36,6 +36,19 @@ crtl_file_install = '.install'
 crtl_file_lastlog = '.lastlog'
 
 _spinnerCount = 0
+
+def expandvars(path, env=os.environ, default=None, skip_escaped=False):
+    """Expand environment variables of form $var and ${var}.
+       If parameter 'skip_escaped' is True, all escaped variable references
+       (i.e. preceded by backslashes) are skipped.
+       Unknown variables are set to 'default'. If 'default' is None,
+       they are left unchanged.
+    """
+    def replace_var(m):
+        return env.get(m.group(2) or m.group(1), m.group(0) if default is None else default)
+    reVar = (r'(?<!\\)' if skip_escaped else '') + r'\$(\w+|\{([^}]*)\})'
+    return re.sub(reVar, replace_var, path)
+
 
 def DEBUG():
     return ARGUMENTS.get('debug', 0)
@@ -170,6 +183,9 @@ class generic:
 
     def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
         global __pkgInstalled__
+
+        download = [ list(x) for x in download ]
+
         self.__dict__.update(kargs)
 
         self.gcc_pipe = gcc.pipe
@@ -223,6 +239,9 @@ class generic:
             if d not in self.dependOn:
                 self.dependOn[d] = None
 
+
+
+        # initialize environment
         self.env = env
         if self.env is None:
             self.env = Environment()
@@ -238,6 +257,8 @@ class generic:
 
         if type(self.baseLibs) != list:
             self.baseLibs = [self.baseLibs] #noqa
+
+
 
         # the download list of package versions
         self.downloadList = download
@@ -361,13 +382,34 @@ class generic:
                 self.targetFolder[p] = []
 
                 # if we have a real baseLib, add it as dependency
+                baselib_gcc = None
+                baselib_gcc_version = None
                 if 'noBaseLib' not in baselib.name:
                     # if baselib not in self.dependOn:
                     #    self.dependOn[baselib] = None
                     self.dependOn.update( {baselib :  baselibDownloadList[2] } )
 
+                    # find if baselib has gcc as dependency.
+                    baselib_gcc = [ x for x in baselib.dependOn if 'gcc' in x.name ]
+                    if baselib_gcc:
+                        baselib_version = self.dependOn[baselib]
+                        baselib_gcc_version = [ x for x in baselib.downloadList if x[2] == baselib_version ]
+                        if baselib_gcc_version:
+                            if len(baselib_gcc_version[0])>4:
+                                baselib_gcc_version = baselib_gcc_version[0][4][baselib_gcc[0]]
+
+
+
                 # build all versions of the package specified by the download parameter
                 for n in range(len(download)):
+
+                    # if we're using baseLibs,
+                    # set the gcc version to the baselib gcc version!
+                    if baselib_gcc and baselib_gcc_version:
+                        if len(download[n]) < 5:
+                            download[n] += [{}]
+                        download[n][4][baselib_gcc[0]] = baselib_gcc_version
+
 
                     targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.tar.gz',pythonDependency))
                     if '.zip' in download[n][1]:
@@ -406,6 +448,7 @@ class generic:
                     #uncompress
                     s = self.uncompress(setup, pkgs)
 
+
                     # run the action method of the class
                     # add dependencies as source
                     source = [s]
@@ -418,6 +461,8 @@ class generic:
                             if len(download[n])>4:
                                 __dependencyID = filter( lambda z: z.name == dependOn.name, download[n][4] )
                                 if __dependencyID:
+                                    # if we have set the dependency in the download, but set it to None,
+                                    # we're explicitly disabling the dependency
                                     if not download[n][4][__dependencyID[0]]:
                                         continue
 
@@ -616,15 +661,17 @@ class generic:
                 if dependOn in download[4]:
                     dependOnVersion = download[4][dependOn]
 
+        # set version dependency to be the same as the current package version
+        # for openexr/ilmbase
         for each in range(len(dependOn.downloadList)):
-#            if currVersion == '1.6.7':
-#                print each, currVersion, dependOn.name, dependOn.downloadList[each][2], dependOnVersion
-#                for n in self.dependOn:
-#                    print n.name,self.dependOn[n]
             if dependOnVersion:
                 if dependOn.downloadList[each][2] == dependOnVersion:
+                    # we have the version specified in the download
                     depend_n = each
                     break
+
+            # if the version in the download is the same as the current
+            # pkg version, use it..
             if dependOn.downloadList[each][2] == currVersion:
                 depend_n = each
                 break
@@ -670,6 +717,9 @@ class generic:
 
         # set a python version if none is set
         pythonVersion = '1.0.0' if pkgName != 'python' else pkgVersion
+
+
+        # set the python version needed (baseLib build!)
         if '.python' in os.path.basename(target) or pkgName == 'python':
             # pythonVersion = pipe.apps.baseApp("python").version()
             # os_environ['PYTHON_VERSION'] = pythonVersion
@@ -686,7 +736,7 @@ class generic:
                     tmp += n
                 pythonVersion = tmp
 
-
+            # fix pythonN.N folders if we have a PYTHON_VERSION_MAJOR env var
             for var in os_environ:
                 pp = []
                 for each in os_environ[var].split(':'):
@@ -698,10 +748,15 @@ class generic:
                     pp.append(each)
                 os_environ[var] = ':'.join(pp)
 
+        # set lastlog file name
+        lastlog = self.__lastlog( target, pythonVersion)
+
+        # set Python version env vars.
         os_environ['PYTHON_VERSION'] = pythonVersion
         os_environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
         pipe.apps.version.set(python=pythonVersion)
 
+        # set target folder and python folder for the current pkg
         target_folder = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         site_packages = '/'.join([
             target_folder,
@@ -727,7 +782,7 @@ class generic:
             'CXXFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
             'CPPCXXFLAGS'       : ' -w ',
             'PKG_CONFIG_PATH'   : '',
-            'LD_LIBRARY_PATH'   : "%s/lib/" % installDir,
+            'LD_LIBRARY_PATH'   : "%s/lib/" % (installDir),
             'CLICOLOR_FORCE'    : '1',
         })
 
@@ -750,18 +805,33 @@ class generic:
                 if dependOn.name not in sourceList:
                     continue
 
-                # deal with python dependency, specially because its a noBaseLib but it has
-                # the paths for its own versions.
+                # deal with python dependency
+                # the noBaseLib key holds all the paths for the python versions being built
                 if 'python' in dependOn.name:
+                    # grab the target folder for the python version we're building to!
                     tmp = filter(lambda x: pythonVersion in os.path.basename(x), dependOn.targetFolder['noBaseLib'])
+                    # if we have a python target folder for the requested version, use it!
                     if tmp:
                         dependOn.targetFolder[os.path.basename(tmp[0])] = [tmp[0]]
                         os_environ['PYTHON_ROOT'] = tmp[0]
 
+                # we have to use the same gcc version as the current python build used.
+                if 'gcc' in dependOn.name:
+                    for python in [ x for x in self.dependOn if 'python' in x.name ]:
+                        # find the gcc version used for the current python version
+                        _gcc = [ x for x in python.dependOn if 'gcc' in x.name ]
+                        if _gcc:
+                            print dir(_gcc[0])
+                            print [ x for x in _gcc[0].targetFolder['noBaseLib'] if python.dependOn[_gcc[0]] in x ]
+
+
+
+                # grab the index for the version needed
                 depend_n = self.depend_n(dependOn, target.split('/')[-2])
                 k = dependOn.targetFolder.keys()
                 p = pythonVersion
 
+                # print dependOn.name, k
                 if k:
                     p = filter(lambda x: p in x, k)
                     if p:
@@ -778,6 +848,7 @@ class generic:
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
 
                     # if dependOn.name == 'gcc':
+                    #     print dependOn.name ,dependOn.targetFolder
                     #     gcc['gcc'] = 'gcc-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
                     #     gcc['g++'] = 'g++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
                     #     gcc['cpp'] = 'cpp-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
@@ -789,6 +860,7 @@ class generic:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder['noBaseLib'][depend_n])
 
                     os_environ['PKG_CONFIG_PATH'] = ':'.join([
+                        '%s/lib64/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
                         '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
                         os_environ['PKG_CONFIG_PATH'],
                     ])
@@ -797,11 +869,15 @@ class generic:
                     # include the dependency folders into CFLAGS(CPPFLAGS/CXXFLAGS) and LDFLAGS parameters
                     # if dependOn in self.GCCFLAGS or not glob( "%s/lib/pkgconfig/*.pc" % dependOn.targetFolder[p][depend_n] ):
                     CFLAGS.append("-I%s/include/" % dependOn.targetFolder[p][depend_n])
+                    LDFLAGS.append("-L%s/lib64/" % dependOn.targetFolder[p][depend_n])
+                    LDFLAGS.append("-L%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
                     LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
                     LDFLAGS.append("-L%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
 
                     os_environ['LD_LIBRARY_PATH'] = ':'.join([
                         os_environ['LD_LIBRARY_PATH'],
+                        "%s/lib64/" % dependOn.targetFolder[p][depend_n],
+                        "%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib/" % dependOn.targetFolder[p][depend_n],
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                     ])
@@ -818,6 +894,9 @@ class generic:
                             CFLAGS.append("-I%s" % each)
 
                     os_environ['PYTHONPATH'] = ':'.join([
+                        "%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
+                        "%s/lib64/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
+                        '%s/lib64/python%s/lib-dynload/' % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         '%s/lib/python%s/lib-dynload/' % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
@@ -829,6 +908,7 @@ class generic:
                         os_environ['PATH'],
                     ])
 
+                    # pull env vars from dependency classes
                     for each in dependOn.environ:
                         sep = ' '
                         if dependOn.environ[each] and type(dependOn.environ[each])==str:
@@ -849,6 +929,26 @@ class generic:
                             else:
                                 os_environ[each] = cleanV
 
+
+        # fix PYTHON_VERSION_MAJOR based on PYTHON_VERSION
+        # from dependent classes
+        if 'PYTHON_VERSION' in os_environ:
+            os_environ['PYTHON_VERSION_MAJOR'] = '.'.join(os_environ['PYTHON_VERSION'].split('.')[:2])
+            os_environ['PYTHON_ROOT'] = os_environ['PYTHON_TARGET_FOLDER']
+            # pythonVersion = os_environ['PYTHON_VERSION']
+
+        # fix pythonN.N folders after getting python version
+        # env vars from dependency.
+        for var in os_environ:
+            pp = []
+            for each in os_environ[var].split(':'):
+                if  'PYTHON_VERSION' not in each:
+                    if 'PYTHON_VERSION' in os_environ and '/python/' in each:
+                        each = each.replace(each.split('/python/')[1].split('/')[0], '$PYTHON_VERSION')
+                    if 'PYTHON_VERSION_MAJOR' in os_environ:
+                        each = re.sub('/python.../', '/python$PYTHON_VERSION_MAJOR/', each)
+                pp.append(each)
+            os_environ[var] = ':'.join(pp)
 
 
         os_environ['CFLAGS']        += "%s" % ' '.join(CFLAGS+LDFLAGS)
@@ -874,30 +974,31 @@ class generic:
 
         # set extra env vars that were passed to the builder class in the environ parameter!
         for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
-            # print name.split('ENVIRON_')[-1], v.strip()
-
             _env = name.split('ENVIRON_')[-1]
-            bkp = ''
+            if _env not in os_environ:
+                os_environ[_env]=''
+            os_environ[_env] = ':'.join([v,os_environ[_env]]).strip(':')
 
-            # expand $var if exists in os_environ
-            if '/' in v:
-                for p in v.strip().split(':'):
-                    if p:
-                        if p[0]=='$':
-                            if p[1:] in os_environ.keys():
-                                bkp = os_environ[p[1:]]+':'+bkp
-                                continue
-                        bkp = p+':'+bkp
-            else:
-                for p in v.strip().split(' '):
-                    if p:
-                        if p[0]=='$':
-                            if p[1:] in os_environ.keys():
-                                bkp = os_environ[p[1:]]+':'+bkp
-                                continue
-                        bkp = p+' '+bkp
-
-            os_environ[_env] = bkp.strip(':').strip(' ')
+            # bkp = ''
+            # # expand $var if exists in os_environ
+            # if '/' in v:
+            #     for p in v.strip().split(':'):
+            #         if p:
+            #             if p[0]=='$':
+            #                 if p[1:] in os_environ.keys():
+            #                     bkp = os_environ[p[1:]]+':'+bkp
+            #                     continue
+            #             bkp = p+':'+bkp
+            # else:
+            #     for p in v.strip().split(' '):
+            #         if p:
+            #             if p[0]=='$':
+            #                 if p[1:] in os_environ.keys():
+            #                     bkp = os_environ[p[1:]]+':'+bkp
+            #                     continue
+            #             bkp = p+' '+bkp
+            #
+            # os_environ[_env] = bkp.strip(':').strip(' ')
 
 
         # update LIB and LIBRARY_PATH
@@ -915,7 +1016,6 @@ class generic:
 
         # set lastlog filename
         extraLabel = ''
-        lastlog = self.__lastlog( target, os_environ['PYTHON_VERSION_MAJOR'])
         if 'noBaseLib' not in target:
             extraLabel = '(python %s)' % os_environ['PYTHON_VERSION']
 
@@ -957,17 +1057,17 @@ class generic:
         cmd += ' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" ) %s' % pipeFile
 
         # remove Paths that don't exist from os_environ
-        for each in os_environ:
-            if '/' in os_environ[each] and ':' in os_environ[each]:
-                cleaned = []
-                for p in os_environ[each].split(':'):
-                    # we want to keep install folder in the path, even if doens't exists,
-                    # just in case the build will need to use for testing/install after build
-                    if os.path.exists(p) or installDir in p:
-                        cleaned.append(p)
-                os_environ[each] = ':'.join(cleaned)
+        # for each in os_environ:
+        #     if '/' in os_environ[each] and ':' in os_environ[each]:
+        #         cleaned = []
+        #         for p in os_environ[each].split(':'):
+        #             # we want to keep install folder in the path, even if doens't exists,
+        #             # just in case the build will need to use for testing/install after build
+        #             if os.path.exists(p) or installDir in p:
+        #                 cleaned.append(p)
+        #         os_environ[each] = ':'.join(cleaned)
 
-        # set proxies, if needed
+        # set internet proxies, if needed
         proxies = { x[0]:x[1] for x in env.items() if '_PROXY' in x[0] }
         for each in proxies:
             os_environ[each.lower()] = proxies[each].strip()
@@ -979,7 +1079,8 @@ class generic:
         if gcc['gcc'] != 'gcc':
             tmp = glob('%s/lib/gcc/x86_64-pc-linux-gnu/*' % os_environ['GCC_TARGET_FOLDER'])
             os_environ['LD_LIBRARY_PATH'] = ':'.join(tmp+[
-                'lib/gcc/x86_64-pc-linux-gnu/lib64/',
+                '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                '%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 os_environ['LD_LIBRARY_PATH']
             ])
 
@@ -990,9 +1091,18 @@ class generic:
 
         if 'GCC_TARGET_FOLDER' in os_environ:
             os_environ['LIBRARY_PATH'] = os_environ['GCC_TARGET_FOLDER'] + \
-                '/lib/gcc/x86_64-pc-linux-gnu/lib64/:' + \
+                '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'] + \
+                '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'] + \
                 os_environ['LIBRARY_PATH']
 
+        # this helps configure to find the corret python
+        os_environ['PYTHON'] = '$PYTHON_TARGET_FOLDER/bin/python'
+
+        # expand variables in os_environ
+        for each in os_environ:
+            os_environ[each] = expandvars(os_environ[each], env=os_environ)
+
+        # run the build!!
         from subprocess import Popen
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
         # it's better to keep printing something so travis-ci doesn't
@@ -1098,23 +1208,53 @@ class generic:
             if not os.path.exists(__pkgInstalled__[os.path.abspath(source[n])]):
                 url=_url
                 if not url:
-                    url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
+                    downloadList = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)
+                    url = downloadList[0]
                 md5 = self.md5(source[n])
                 if md5 != url[3]:
                     print bcolors.GREEN,
                     print "\tDownloading %s..." % download_file
                     print bcolors.END,
-                    os.popen("wget --timeout=15 '%s' -O %s >%s.log 2>&1" % (url[0], download_file, source[n])).readlines()
-    #                lines = os.system("curl '%s' -o %s 2>&1" % (url[0], source[n]))
+                    if '.git' in os.path.splitext(url[0])[-1]:
+                        # clone a git depot and zip it
+                        # we specify a tag as version
+                        # TODO: implement logic to use a commit hash as version!
+                        cmd= '''( \
+                            git clone --recursive --depth=1 --branch %s '%s' %s && \
+                            CD=$(pwd) && \
+                            pwd && \
+                            cd %s && \
+                                git checkout --detach %s && \
+                                ( find . -name '.git' | while read p ; do rm -rf $p ; done ) && \
+                            cd .. && \
+                            zip -r %s %s &&\
+                            cd $CD ) >%s.log 2>&1
+                        ''' % (
+                            url[2], # version / commit number as this is a git download
+                            url[0], # git url
+                            os.path.splitext(download_file)[0], # git folder
+                            os.path.splitext(download_file)[0], # git folder
+                            url[2], # version / commit number as this is a git download
+                            os.path.basename(download_file),
+                            os.path.splitext(os.path.basename(download_file))[0],
+                            source[n],
+                        )
+                    else:
+                        cmd = "wget --timeout=15 '%s' -O %s >%s.log 2>&1" % (url[0], download_file, source[n])
+
+                    # print cmd
+                    os.popen(cmd).readlines()
+                    # lines = os.system("curl '%s' -o %s 2>&1" % (url[0], source[n]))
                     if os.stat(source[n]).st_size == 0:
                         raise Exception ("error downloading %s" % source[n])
-                    md5 = self.md5(source[n])
-                    if md5 != url[3]:
-                        sys.stdout.write( bcolors.WARNING )
-                        print "\tmd5 for file:", url[1], md5
-                        sys.stdout.write( bcolors.FAIL )
-                        sys.stdout.flush()
-                        self.error = True
+                    if url[3] and not '.git' in os.path.splitext(url[0])[-1]:
+                        md5 = self.md5(source[n])
+                        if md5 != url[3]:
+                            sys.stdout.write( bcolors.WARNING )
+                            print "\tmd5 for file:", url[1], md5
+                            sys.stdout.write( bcolors.FAIL )
+                            sys.stdout.flush()
+                            self.error = True
             else:
                 if not os.path.exists(download_file):
                     open(download_file, 'a').close()
@@ -1136,9 +1276,7 @@ class generic:
             # print source[n]
             s = os.path.abspath(str(source[n]))
             t = os.path.abspath(str(target[n]))
-            md5 = self.md5(source[n])
-            # print "..%s...%s..." % (md5, url[3])
-            if md5 == url[3]:
+            if not url[3] or self.md5(source[n]) == url[3]:
                 import random
                 tmp = int(random.random()*10000000)
                 tmp = "%s/tmp.%s" % (os.path.dirname(os.path.dirname(str(target[n]))), str(tmp))
@@ -1166,7 +1304,9 @@ class generic:
                         print '-'*tcols
                         for l in lines:
                             print '\t%s' % l.strip()
+                        print str(target[n])
                         print '-'*tcols
+                        os.system('/bin/bash')
                         raise Exception("Uncompress failed!")
 
                     for updates in ['config.sub', 'config.guess']:
@@ -1217,37 +1357,38 @@ class generic:
         for version in ids:
             v  = map(lambda x: int(x), version.split('.')[:3])
             vv = map(lambda x: int(''.join(filter(lambda z: z.isdigit(),x))), url[2].split('.')[:3])
-            if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]:
-                for each in self.sed[version]:
-                    f = "%s/%s" % (t,each)
+            if len(vv)>2:
+                if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]:
+                    for each in self.sed[version]:
+                        f = "%s/%s" % (t,each)
 
-                    # sed a file if it exists!
-                    if os.path.exists("%s" % f):
+                        # sed a file if it exists!
+                        if os.path.exists("%s" % f):
 
-                        # we make a copy of the original file, before running sed
-                        # if we already have a copy, we restore it before running sed
-                        if os.path.exists("%s.original" % f):
-                            os.popen("cp %s.original %s" % (f,f)).readlines()
+                            # we make a copy of the original file, before running sed
+                            # if we already have a copy, we restore it before running sed
+                            if os.path.exists("%s.original" % f):
+                                os.popen("cp %s.original %s" % (f,f)).readlines()
+                            else:
+                                os.popen("cp %s %s.original" % (f,f)).readlines()
+                            # apply seds
+                            for sed in self.sed[version][each]:
+                                cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
+                                    f,
+                                    sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
+                                    sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
+                                )
+                                # print "\n\n"+cmd+"\n\n"
+                                os.popen(cmd).readlines()
+
+                        # if it doesnt exist, create it!!
                         else:
-                            os.popen("cp %s %s.original" % (f,f)).readlines()
-                        # apply seds
-                        for sed in self.sed[version][each]:
-                            cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
-                                f,
-                                sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
-                                sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
-                            )
-                            # print "\n\n"+cmd+"\n\n"
-                            os.popen(cmd).readlines()
+                            ptr = open(f, 'w')
+                            for sed in self.sed[version][each]:
+                                ptr.write(sed[1])
+                            ptr.close()
 
-                    # if it doesnt exist, create it!!
-                    else:
-                        ptr = open(f, 'w')
-                        for sed in self.sed[version][each]:
-                            ptr.write(sed[1])
-                        ptr.close()
-
-                break
+                    break
 
     def install(self, target, source):
         ret = source

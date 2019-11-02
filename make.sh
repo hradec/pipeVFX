@@ -28,6 +28,12 @@ if [ "$HELP" != "" ] ; then
     echo -e "\t-b   : build and upload the docker image"
     echo ''
 else
+    # use real apps folder if we have one!
+    APPS_MOUNT=" -v $CD/apps:/atomo/apps"
+    if [ -e /atomo/apps ] ; then
+        APPS_MOUNT=" -v /atomo/apps:/atomo/apps "
+    fi
+
     # try to pull build image from docker hub
     docker pull hradec/pipevfx_centos_base:centos7
     if [ $? != 0 ] ; then
@@ -53,11 +59,6 @@ else
         fi
     fi
 
-    APPS_MOUNT=" -v $CD/apps:/atomo/apps"
-    # use real apps folder if we have one!
-    if [ -e /atomo/apps ] ; then
-        APPS_MOUNT=" -v /atomo/apps:/atomo/apps "
-    fi
     # use wget proxy setup if it exists
     if [ -e $HOME/.wgetrc ] ; then
         APPS_MOUNT="$APPS_MOUNT -v $HOME/.wgetrc:/root/.wgetrc"
@@ -67,6 +68,10 @@ else
     if [ "$TRAVIS" == "1" ] ; then
         TI="-t"
     fi
+
+    # create lib folder
+    mkdir -p "$CD/pipeline/libs/"
+    mkdir -p "$CD/pipeline/build/.build/"
 
     # now we can finally run a build!
     cmd="docker run --rm --name pipevfx_make $TI \

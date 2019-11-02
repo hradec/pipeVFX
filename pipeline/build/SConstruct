@@ -441,7 +441,7 @@ if canBuildCortexNow:
                 ]
 
             ],
-            # baseLibs = [pkgs.python],
+            baseLibs = [pkgs.python],
             depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm, pkgs.python ],
             apps = apps,
             sconsInstall = "install"
