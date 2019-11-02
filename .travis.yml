@@ -6,5 +6,10 @@ git:
 services:
   - docker
 
+cache:
+  directories:
+    - pipeline/build/
+    - pipeline/libs/
+    
 script:
   - ./make.sh
