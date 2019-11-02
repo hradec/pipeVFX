@@ -23,22 +23,17 @@
 
 class bcolors:
     import os
+    
     BS = '\033[1D'
+    if ('TRAVIS' in os.environ and os.environ['TRAVIS']=='1') or ('ENVIRON_TRAVIS' in os.environ and os.environ['ENVIRON_TRAVIS']=='1'):
+        BS = ''
+
     HEADER = '\033[95m'+BS
     BLUE = '\033[94m'+BS
     GREEN = '\033[92m'+BS
     WARNING = '\033[93m'+BS
     FAIL = '\033[91m'+BS
     END = '\033[0m'+BS
-
-    if ('TRAVIS' in os.environ and os.environ['TRAVIS']=='1') or ('ENVIRON_TRAVIS' in os.environ and os.environ['ENVIRON_TRAVIS']=='1'):
-        BS = ''
-        HEADER = ''
-        BLUE = ''
-        GREEN = ''
-        WARNING = ''
-        FAIL = ''
-        END = ''
 
 
     def disable(self):

@@ -4,7 +4,7 @@ pipeline {
         stage('build') {
             steps {
                 ansiColor('gnome-terminal') {
-                    sh './make.sh'
+                    sh 'export TRAVIS=1 ; ./make.sh'
                 }
             }
         }

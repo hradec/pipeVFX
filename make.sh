@@ -64,7 +64,7 @@ else
         APPS_MOUNT="$APPS_MOUNT -v $HOME/.wgetrc:/root/.wgetrc"
     fi
 
-    TI="-ti"
+    TI=" -ti --name pipevfx_make "
     if [ "$TRAVIS" == "1" ] ; then
         TI="-t"
     fi
@@ -74,7 +74,7 @@ else
     mkdir -p "$CD/pipeline/build/.build/"
 
     # now we can finally run a build!
-    cmd="docker run --rm --name pipevfx_make $TI \
+    cmd="docker run --rm $TI \
         -v $CD/pipeline/tools/:/atomo/pipeline/tools/ \
         -v $CD/pipeline/libs/:/atomo/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/atomo/pipeline/build/SConstruct \
