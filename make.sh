@@ -5,6 +5,9 @@
 
 CD=$(readlink -f $(dirname $BASH_SOURCE))
 
+echo $CD
+
+
 SHELL=0
 PUSH=0
 while getopts hdsbe: option ; do
@@ -43,20 +46,23 @@ else
     # if no image in docker hub or we used -b to force a build, build it
     # and push it to docker hub!
     if [ "$BUILD" == "1" ] ; then
-        docker build $CD/ \
+        docker build \
             -f $CD/docker/Dockerfile \
+            $CD/ \
             -t hradec/pipevfx_centos_base:centos7 \
             --pull \
             --compress \
             --rm \
+            --build-arg http="$http_proxy" \
+            --build-arg https="$https_proxy"
 
 
         if [ $? -ne 0 ] ; then
             echo ERROR!!
             exit -1
-        else
-            docker push hradec/pipevfx_centos_base:centos7
         fi
+
+        docker push hradec/pipevfx_centos_base:centos7
     fi
 
     # use wget proxy setup if it exists

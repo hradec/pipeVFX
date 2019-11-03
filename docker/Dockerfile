@@ -1,5 +1,11 @@
 FROM centos:centos7
 
+ARG http
+ARG https
+
+ENV http_proxy=$http
+ENV https_proxy=$https
+
 RUN yum update -y && yum install -y \
     nano \
     csh \
@@ -39,7 +45,15 @@ RUN yum groupinstall -y "Development Tools"
 RUN yum -y install xorg-x11-fonts*
 RUN fc-cache
 
-RUN yum -y install epel-release && yum -y install python2-scons
+RUN yum -y install epel-release
+# remove mirrors from epel or else it will fail if there are no mirrors
+# in the country the build machine is
+RUN cat /etc/yum.repos.d/epel.repo \
+    | sed 's/.baseurl/baseurl/' \
+    | sed 's/metalink/#metalink/' > /tmp/epel.repo && \
+    /bin/mv /tmp/epel.repo /etc/yum.repos.d/epel.repo
+RUN yum clean all && yum makecache
+RUN yum -y install python2-scons
 
 RUN ln -s /lib64/libbz2.so.1 /lib64/libbz2.so.1.0 ; \
     ln -s libcrypto.so.1.0.2k /usr/lib64/libcrypto.so.10 ; \
@@ -98,9 +112,11 @@ ADD pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
 # download packages so the image contain all tarballs.
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     export TERM=xterm && \
+    export ftp_proxy=$http_proxy && \
     touch /atomo/.root && \
     mkdir -p /atomo/pipeline/build/ && \
     cd /atomo/pipeline/build && \
+    env && \
     PYTHONPATH=/atomo/pipeline/tools/python scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 ))
 
 # to avoid clashing in osl

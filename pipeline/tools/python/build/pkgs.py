@@ -86,49 +86,40 @@ class all: # noqa
         # build.allDepend.append(curl)
 
         gmp = build.configure(
-               ARGUMENTS,
-               'gmp',
-               download=[
-                   # (
-                   #   'https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2',
-                   #   'gmp-6.0.0.tar.gz',
-                   #   '6.0.0',
-                   #   'b7ff2d88cae7f8085bd5006096eed470'
-                   # ),
-                   (
-                     'https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2',
-                     'gmp-6.1.2.tar.gz',
-                     '6.1.2',
-                     '8ddbb26dc3bd4e2302984debba1406a5'
-                   ),
-
-               ],
+           ARGUMENTS,
+           'gmp',
+           download=[(
+                 'https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2',
+                 'gmp-6.1.2.tar.gz',
+                 '6.1.2',
+                 '8ddbb26dc3bd4e2302984debba1406a5'
+            )],
         )
         # build.allDepend.append(gmp)
 
         mpfr = build.configure(
-                ARGUMENTS,
-                'mpfr',
-                download=[(
-                    'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
-                    'mpfr-3.1.6.tar.gz',
-                    '3.1.6',
-                    '95dcfd8629937996f826667b9e24f6ff',
-                )],
-                depend = [ gmp ],
+            ARGUMENTS,
+            'mpfr',
+            download=[(
+                'https://www.mpfr.org/mpfr-3.1.6/mpfr-3.1.6.tar.gz',
+                'mpfr-3.1.6.tar.gz',
+                '3.1.6',
+                '95dcfd8629937996f826667b9e24f6ff',
+            )],
+            depend = [ gmp ],
         )
         # build.allDepend.append(mpfr)
 
         mpc = build.configure(
-                ARGUMENTS,
-                'mpc',
-                download=[(
-                   'ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
-                   'mpc-1.0.3.tar.gz',
-                   '1.0.3',
-                   'd6a1d5f8ddea3abd2cc3e98f58352d26',
-                )],
-                depend = [ gmp, mpfr ],
+            ARGUMENTS,
+            'mpc',
+            download=[(
+               'https://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz',
+               'mpc-1.0.3.tar.gz',
+               '1.0.3',
+               'd6a1d5f8ddea3abd2cc3e98f58352d26',
+            )],
+            depend = [ gmp, mpfr ],
         )
         # build.allDepend.append(mpc)
 
@@ -1105,7 +1096,7 @@ class all: # noqa
             download=[(
                 'https://github.com/materialx/MaterialX.git',
                 'MaterialX-v1.36.4.zip',
-                'v1.36.4', 
+                'v1.36.4',
                 None,
                 { gcc : '4.8.5', python: '3.7.5' },
             )],
