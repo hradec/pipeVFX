@@ -749,7 +749,7 @@ class generic:
                 os_environ[var] = ':'.join(pp)
 
         # set lastlog file name
-        lastlog = self.__lastlog( target, pythonVersion)
+        lastlog = self.__lastlog( target, '.'.join(pythonVersion.split('.')[:2]) )
 
         # set Python version env vars.
         os_environ['PYTHON_VERSION'] = pythonVersion
@@ -816,13 +816,13 @@ class generic:
                         os_environ['PYTHON_ROOT'] = tmp[0]
 
                 # we have to use the same gcc version as the current python build used.
-                if 'gcc' in dependOn.name:
-                    for python in [ x for x in self.dependOn if 'python' in x.name ]:
-                        # find the gcc version used for the current python version
-                        _gcc = [ x for x in python.dependOn if 'gcc' in x.name ]
-                        if _gcc:
-                            print dir(_gcc[0])
-                            print [ x for x in _gcc[0].targetFolder['noBaseLib'] if python.dependOn[_gcc[0]] in x ]
+                # if 'gcc' in dependOn.name:
+                #     for python in [ x for x in self.dependOn if 'python' in x.name ]:
+                #         # find the gcc version used for the current python version
+                #         _gcc = [ x for x in python.dependOn if 'gcc' in x.name ]
+                #         if _gcc:
+                #             print python.dependOn[_gcc[0]]
+                #             print [ x for x in _gcc[0].targetFolder['noBaseLib'] if python.dependOn[_gcc[0]] in x ]
 
 
 
@@ -1090,10 +1090,18 @@ class generic:
             ])
 
         if 'GCC_TARGET_FOLDER' in os_environ:
-            os_environ['LIBRARY_PATH'] = os_environ['GCC_TARGET_FOLDER'] + \
-                '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'] + \
-                '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'] + \
-                os_environ['LIBRARY_PATH']
+            os_environ['LIBRARY_PATH'] = ':'.join([
+                '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
+                '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
+                os_environ['LIBRARY_PATH'],
+            ])
+
+            os_environ['LLDFLAGS']      = ' '.join([
+                '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                os_environ['LLDFLAGS']
+            ])
+
 
         # this helps configure to find the corret python
         os_environ['PYTHON'] = '$PYTHON_TARGET_FOLDER/bin/python'
