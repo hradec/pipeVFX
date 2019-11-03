@@ -1,6 +1,6 @@
 pipeVFX
 =======
-![Badge](http://192.168.10.52:8080/job/pipeVFX/job/pipeVFX/job/devel/badge/icon?build=last)
+[![Build Status](http://jenkins.hradec.com:62345/buildStatus/icon?job=pipeVFX%2FpipeVFX%2Fdevel)](http://jenkins.hradec.com:62345/job/pipeVFX/job/pipeVFX/job/devel/)
 
 A Visual Effects pipeline to manage jobs, shots and software assignment, with a "simple asset manager" called SAM.
 
