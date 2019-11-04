@@ -847,8 +847,8 @@ class generic:
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
 
-                    # if dependOn.name == 'gcc':
-                    #     print dependOn.name ,dependOn.targetFolder
+                    if dependOn.name == 'gcc':
+                        print dependOn.name ,dependOn.targetFolder
                     #     gcc['gcc'] = 'gcc-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
                     #     gcc['g++'] = 'g++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
                     #     gcc['cpp'] = 'cpp-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
@@ -1243,7 +1243,7 @@ class generic:
                 md5 = self.md5(source[n])
                 if md5 != url[3]:
                     count = 5
-                    while os.stat(source[n]).st_size == 0 or count>0:
+                    while count>0:
                         count -= 1
                         print bcolors.GREEN,
                         print "\tDownloading %s..." % download_file
@@ -1278,6 +1278,8 @@ class generic:
                         # print cmd
                         os.popen(cmd).readlines()
                         # lines = os.system("curl '%s' -o %s 2>&1" % (url[0], source[n]))
+                        if os.stat(source[n]).st_size > 0:
+                            break
 
                     if os.stat(source[n]).st_size == 0:
                         raise Exception ("error downloading %s" % source[n])
