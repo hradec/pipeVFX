@@ -1242,39 +1242,43 @@ class generic:
                     url = downloadList[0]
                 md5 = self.md5(source[n])
                 if md5 != url[3]:
-                    print bcolors.GREEN,
-                    print "\tDownloading %s..." % download_file
-                    print bcolors.END,
-                    if '.git' in os.path.splitext(url[0])[-1]:
-                        # clone a git depot and zip it
-                        # we specify a tag as version
-                        # TODO: implement logic to use a commit hash as version!
-                        cmd= '''( \
-                            git clone --recursive --depth=1 --branch %s '%s' %s && \
-                            CD=$(pwd) && \
-                            pwd && \
-                            cd %s && \
-                                git checkout --detach %s && \
-                                ( find . -name '.git' | while read p ; do rm -rf $p ; done ) && \
-                            cd .. && \
-                            zip -r %s %s &&\
-                            cd $CD ) >%s.log 2>&1
-                        ''' % (
-                            url[2], # version / commit number as this is a git download
-                            url[0], # git url
-                            os.path.splitext(download_file)[0], # git folder
-                            os.path.splitext(download_file)[0], # git folder
-                            url[2], # version / commit number as this is a git download
-                            os.path.basename(download_file),
-                            os.path.splitext(os.path.basename(download_file))[0],
-                            source[n],
-                        )
-                    else:
-                        cmd = "wget --timeout=15 '%s' -O %s >%s.log 2>&1" % (url[0], download_file, source[n])
+                    count = 5
+                    while os.stat(source[n]).st_size == 0 or count>0:
+                        count -= 1
+                        print bcolors.GREEN,
+                        print "\tDownloading %s..." % download_file
+                        print bcolors.END,
+                        if '.git' in os.path.splitext(url[0])[-1]:
+                            # clone a git depot and zip it
+                            # we specify a tag as version
+                            # TODO: implement logic to use a commit hash as version!
+                            cmd= '''( \
+                                git clone --recursive --depth=1 --branch %s '%s' %s && \
+                                CD=$(pwd) && \
+                                pwd && \
+                                cd %s && \
+                                    git checkout --detach %s && \
+                                    ( find . -name '.git' | while read p ; do rm -rf $p ; done ) && \
+                                cd .. && \
+                                zip -r %s %s &&\
+                                cd $CD ) >%s.log 2>&1
+                            ''' % (
+                                url[2], # version / commit number as this is a git download
+                                url[0], # git url
+                                os.path.splitext(download_file)[0], # git folder
+                                os.path.splitext(download_file)[0], # git folder
+                                url[2], # version / commit number as this is a git download
+                                os.path.basename(download_file),
+                                os.path.splitext(os.path.basename(download_file))[0],
+                                source[n],
+                            )
+                        else:
+                            cmd = "wget --timeout=15 '%s' -O %s >%s.log 2>&1" % (url[0], download_file, source[n])
 
-                    # print cmd
-                    os.popen(cmd).readlines()
-                    # lines = os.system("curl '%s' -o %s 2>&1" % (url[0], source[n]))
+                        # print cmd
+                        os.popen(cmd).readlines()
+                        # lines = os.system("curl '%s' -o %s 2>&1" % (url[0], source[n]))
+
                     if os.stat(source[n]).st_size == 0:
                         raise Exception ("error downloading %s" % source[n])
                     if url[3] and not '.git' in os.path.splitext(url[0])[-1]:
