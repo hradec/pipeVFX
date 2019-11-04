@@ -776,7 +776,7 @@ class generic:
             'CXXCPP'            : 'cpp',
             'LD'                : 'ld',
             'LDSHARED'          : '%sgcc -shared' % prefix,
-            'LDFLAGS'           : '',
+            'LDFLAGS'           : ' ',
             'CFLAGS'            : ' -w ',
             'CPPFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
             'CXXFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
@@ -941,14 +941,15 @@ class generic:
         # env vars from dependency.
         for var in os_environ:
             pp = []
-            for each in os_environ[var].split(':'):
-                if  'PYTHON_VERSION' not in each:
-                    if 'PYTHON_VERSION' in os_environ and '/python/' in each:
-                        each = each.replace(each.split('/python/')[1].split('/')[0], '$PYTHON_VERSION')
-                    if 'PYTHON_VERSION_MAJOR' in os_environ:
-                        each = re.sub('/python.../', '/python$PYTHON_VERSION_MAJOR/', each)
-                pp.append(each)
-            os_environ[var] = ':'.join(pp)
+            if ':' in os_environ[var]:
+                for each in os_environ[var].split(':'):
+                    if  'PYTHON_VERSION' not in each:
+                        if 'PYTHON_VERSION' in os_environ and '/python/' in each:
+                            each = each.replace(each.split('/python/')[1].split('/')[0], '$PYTHON_VERSION')
+                        if 'PYTHON_VERSION_MAJOR' in os_environ:
+                            each = re.sub('/python.../', '/python$PYTHON_VERSION_MAJOR/', each)
+                    pp.append(each)
+                os_environ[var] = ':'.join(pp)
 
 
         os_environ['CFLAGS']        += "%s" % ' '.join(CFLAGS+LDFLAGS)
@@ -977,7 +978,10 @@ class generic:
             _env = name.split('ENVIRON_')[-1]
             if _env not in os_environ:
                 os_environ[_env]=''
-            os_environ[_env] = ':'.join([v,os_environ[_env]]).strip(':')
+            if ':' in v:
+                os_environ[_env] = ':'.join([v,os_environ[_env]]).strip(':')
+            else:
+                os_environ[_env] = ' '.join([v,os_environ[_env]]).strip(' ')
 
             # bkp = ''
             # # expand $var if exists in os_environ
@@ -1096,6 +1100,12 @@ class generic:
                     '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
                     '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LIBRARY_PATH'],
+                ])
+
+                os_environ['LDFLAGS']      = ' '.join([
+                    '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    os_environ['LDFLAGS']
                 ])
 
                 os_environ['LLDFLAGS']      = ' '.join([
