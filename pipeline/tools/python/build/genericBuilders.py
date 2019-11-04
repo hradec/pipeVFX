@@ -108,7 +108,7 @@ if os.popen('''cat %s 2>&1 | grep "'/usr/lib'"''' % f).readlines():
         x64 libGL.la pointing to the x32 version!
 
         This can be fixed in 2 ways:
-            1. remove %s (it builds fine without it!)
+            1. remove %s (it environ_builds fine without it!)
             2. install a newer Nvidia driver, which fixes this (since it's their fault it seems newer drivers fix it!!)
 
     ''' % (f,f) + bcolors.END )
@@ -978,31 +978,31 @@ class generic:
             _env = name.split('ENVIRON_')[-1]
             if _env not in os_environ:
                 os_environ[_env]=''
-            if ':' in v:
-                os_environ[_env] = ':'.join([v,os_environ[_env]]).strip(':')
-            else:
-                os_environ[_env] = ' '.join([v,os_environ[_env]]).strip(' ')
-
-            # bkp = ''
-            # # expand $var if exists in os_environ
-            # if '/' in v:
-            #     for p in v.strip().split(':'):
-            #         if p:
-            #             if p[0]=='$':
-            #                 if p[1:] in os_environ.keys():
-            #                     bkp = os_environ[p[1:]]+':'+bkp
-            #                     continue
-            #             bkp = p+':'+bkp
+            # if ':' in v:
+            #     os_environ[_env] = ':'.join([v,os_environ[_env]]).strip(':')
             # else:
-            #     for p in v.strip().split(' '):
-            #         if p:
-            #             if p[0]=='$':
-            #                 if p[1:] in os_environ.keys():
-            #                     bkp = os_environ[p[1:]]+':'+bkp
-            #                     continue
-            #             bkp = p+' '+bkp
-            #
-            # os_environ[_env] = bkp.strip(':').strip(' ')
+            #     os_environ[_env] = ' '.join([v,os_environ[_env]]).strip(' ')
+
+            bkp = ''
+            # expand $var if exists in os_environ
+            if '/' in v:
+                for p in v.strip().split(':'):
+                    if p:
+                        if p[0]=='$':
+                            if p[1:] in os_environ.keys():
+                                bkp = os_environ[p[1:]]+':'+bkp
+                                continue
+                        bkp = p+':'+bkp
+            else:
+                for p in v.strip().split(' '):
+                    if p:
+                        if p[0]=='$':
+                            if p[1:] in os_environ.keys():
+                                bkp = os_environ[p[1:]]+':'+bkp
+                                continue
+                        bkp = p+' '+bkp
+
+            os_environ[_env] = bkp.strip(':').strip(' ')
 
 
         # update LIB and LIBRARY_PATH

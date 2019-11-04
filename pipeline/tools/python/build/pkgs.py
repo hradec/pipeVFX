@@ -300,19 +300,19 @@ class all: # noqa
                 'tbb44_20160526oss.tar.gz',
                 '4.4.r20160526oss',
                 '6309541504a819dabe352130f27e57d5',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb43_20150611oss_src.tgz',
                 'tbb43_20150611oss.tar.gz',
                 '4.3.6',
                 'bb144ec868c53244ea6be11921d86f03',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'https://github.com/intel/tbb.git',
                 'tbb-2019_U9.zip',
                 '2019_U9',
                 None,
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
         )
         self.tbb = tbb
@@ -354,7 +354,7 @@ class all: # noqa
                 'glew-1.13.0.tar.gz',
                 '1.13.0',
                 '7cbada3166d2aadfc4169c4283701066',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
         )
         build.allDepend.append(glew)
@@ -368,7 +368,7 @@ class all: # noqa
                 'freeglut-2.8.1.tar.gz',
                 '2.8.1',
                 '918ffbddcffbac83c218bc52355b6d5a',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             # ),(
             #     'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
             #     'freeglut-3.0.0.tar.gz',
@@ -376,7 +376,7 @@ class all: # noqa
             #     '90c3ca4dd9d51cf32276bc5344ec9754',
             )],
             environ = {
-                'LDFLAGS' : ' -lm -lGL ',
+                'LDFLAGS' : '$LDFLAGS -lm -lGL ',
             }
         )
         build.allDepend.append(freeglut)
@@ -390,13 +390,13 @@ class all: # noqa
                 'jpeg-6b.tar.gz',
                 '6b',
                 'dbd5f3b47ed13132f04c685d608a7547',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://www.ijg.org/files/jpegsrc.v9a.tar.gz',
                 'jpeg-9a.tar.gz',
                 '9a',
                 '3353992aecaee1805ef4109aadd433e7',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
             cmd = [
                 './configure --enable-shared --prefix=$TARGET_FOLDER',
@@ -414,7 +414,7 @@ class all: # noqa
                 'jasper-1.900.1.zip',
                 '1.900.1',
                 'a342b2b4495b3e1394e161eb5d85d754',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
         )
         # build.allDepend.append(jasper)
@@ -429,7 +429,7 @@ class all: # noqa
                 'LibRaw-0.17.2.tar.gz',
                 '0.17.2',
                 '7de042bcffb58864fd93d5209620e08d',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend=[gcc],
             cmd = [
@@ -452,19 +452,19 @@ class all: # noqa
                 'tiff-3.8.2.tar.gz',
                 '3.8.2',
                 'fbb6f446ea4ed18955e2714934e5b698',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://download.osgeo.org/libtiff/old/tiff-4.0.3.tar.gz',
                 'tiff-4.0.3.tar.gz',
                 '4.0.3',
                 '051c1068e6a0627f461948c365290410',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://download.osgeo.org/libtiff/tiff-4.0.6.tar.gz',
                 'tiff-4.0.6.tar.gz',
                 '4.0.6',
                 'd1d2e940dea0b5ad435f21f03d96dd72',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend=[jpeg],
         )
@@ -479,7 +479,7 @@ class all: # noqa
                 'libpng-1.6.23.tar.gz',
                 '1.6.23',
                 '9b320a05ed4db1f3f0865c8a951fd9aa',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
         )
         build.allDepend.append(libpng)
@@ -493,7 +493,7 @@ class all: # noqa
                 'freetype-2.5.5.tar.gz',
                 '2.5.5',
                 '7448edfbd40c7aa5088684b0a3edb2b8',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
         )
         build.allDepend.append(freetype)
@@ -630,25 +630,25 @@ class all: # noqa
                 'boost_1_51_0.tar.gz',
                 '1.51.0',
                 '6a1f32d902203ac70fbec78af95b3cf8',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.gz',
                 'boost_1_54_0.tar.gz',
                 '1.54.0',
                 'efbfbff5a85a9330951f243d0a46e4b9',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
                 'boost_1_55_0.tar.gz',
                 '1.55.0',
                 '93780777cfbf999a600f62883bd54b17',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz',
                 'boost_1_56_0.tar.gz',
                 '1.56.0',
                 '8c54705c424513fa2be0042696a3a162',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             # ),(
             #     'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
             #     'boost_1_61_0.tar.gz',
@@ -670,19 +670,19 @@ class all: # noqa
                 'ilmbase-2.0.0.tar.gz',
                 '2.0.0',
                 '70f1413840c2a228783d1332b8b168e6',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
                 'ilmbase-2.1.0.tar.gz',
                 '2.1.0',
                 '8ba2f608191ad020e50277d8a3ba0850',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
                 'ilmbase-2.2.0.tar.gz',
                 '2.2.0',
                 'b540db502c5fa42078249f43d18a4652',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             # ),(
             #     'https://github.com/openexr/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
             #     'ilmbase-2.3.0.tar.gz',
@@ -692,7 +692,7 @@ class all: # noqa
             )],
             depend=[gcc, python, openssl],
             environ={
-                'LDFLAGS' : "-Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
+                'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
             },
             cmd = [
                 './configure  --enable-shared ',
@@ -711,19 +711,19 @@ class all: # noqa
                 'openexr-2.0.0.tar.gz',
                 '2.0.0',
                 '0820e1a8665236cb9e728534ebf8df18',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
                 'openexr-2.1.0.tar.gz',
                 '2.1.0',
                 '33735d37d2ee01c6d8fbd0df94fb8b43',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
                 'openexr-2.2.0.tar.gz',
                 '2.2.0',
                 'b64e931c82aa3790329c21418373db4e',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             # ),(
             #     'https://github.com/openexr/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
             #     'openexr-2.3.0.tar.gz',
@@ -750,25 +750,25 @@ class all: # noqa
         #         'pyilmbase-2.0.0.tar.gz',
         #         '2.0.0',
         #         '4585eba94a82f0b0916445990a47d143',
-        #         { gcc : '4.1.2' }
+        #         { gcc : '4.1.2', python: '2.7.16' }
         #     ),(
         #         'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
         #         'pyilmbase-2.1.0.tar.gz',
         #         '2.1.0',
         #         'af1115f4d759c574ce84efcde9845d29',
-        #         { gcc : '4.1.2' }
+        #         { gcc : '4.1.2', python: '2.7.16' }
         #     ),(
         #         'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
         #         'pyilmbase-2.2.0.tar.gz',
         #         '2.2.0',
         #         'e84a6a4462f90b5e14d83d67253d8e5a',
-        #         { gcc : '4.1.2' }
+        #         { gcc : '4.1.2', python: '2.7.16' }
         #     ),(
         #         'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
         #         'pyilmbase-2.3.0.tar.gz',
         #         '2.3.0',
         #         'e84a6a4462f90b5e14d83d67253d8e5a',
-        #         { gcc : '4.1.2' }
+        #         { gcc : '4.1.2', python: '2.7.16' }
         #     )],
         #     baseLibs=[python],
         #     depend=[ilmbase,openexr,boost,python,numpy,gcc],
@@ -810,7 +810,7 @@ class all: # noqa
                 'hdf5-1.8.17.tar.gz',
                 '1.8.17',
                 '7d572f8f3b798a628b8245af0391a0ca',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
         )
         self.hdf5 = hdf5
@@ -1014,7 +1014,7 @@ class all: # noqa
                 'pugixml-1.10.tar.gz',
                 '1.10.0',
                 '0c208b0664c7fb822bf1b49ad035e8fd',
-                { gcc : '4.1.2' },
+                { gcc : '4.1.2', python: '2.7.16' },
             )],
         )
         self.pugixml = pugixml
@@ -1114,9 +1114,48 @@ class all: # noqa
         )
         self.materialx = materialx
 
+        # =============================================================================================================================================
+        qt = build.configure(
+            ARGUMENTS,
+            'qt',
+            download=[(
+            #     'https://download.qt.io/archive/qt/4.8/4.8.4/qt-everywhere-opensource-src-4.8.4.tar.gz',
+            #     'qt-everywhere-opensource-src-4.8.4.tar.gz',
+            #     '4.8.4',
+            #     '89c5ecba180cae74c66260ac732dc5cb',
+            # ),(
+            #     'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
+            #     'qt-everywhere-opensource-src-4.8.6.tar.gz',
+            #     '4.8.6',
+            #     '2edbe4d6c2eff33ef91732602f3518eb',
+            # ),(
+                'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
+                'qt-everywhere-opensource-src-4.8.7.tar.gz',
+                '4.8.7',
+                'd990ee66bf7ab0c785589776f35ba6ad',
+                { gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
+                'Maya2018.4.tar.gz',
+                '5.6.1',
+                '7fde8ea6f9cfb240a13987fd1ba5c410',
+                { gcc : '4.8.5', python: '3.7.5' }
+            )],
+            environ = {'LD' : 'g++'},
+            cmd = [
+                # './configure  -opensource -shared --confirm-license  -no-webkit -silent',
+                './configure  -opensource -shared --confirm-license -silent',
+                'make -j $DCORES',
+                'make -j $DCORES install',
+            ],
+            depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc],
+
+        )
+        self.qt = qt
+        build.allDepend.append(qt)
 
 
-
+        # =============================================================================================================================================
         osl = build.cmake(
             ARGUMENTS,
             'osl',
@@ -1125,13 +1164,13 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.10.7.tar.gz',
                 '1.10.7',
                 '53f66e12c3e29c62dc51b070f027a0ad',
-                {oiio: "2.0.11", llvm : "9.0.0", gcc: "4.8.5", boost: "1.56.0"},
+                {oiio: "2.0.11", llvm : "9.0.0", gcc: "4.8.5", boost: "1.56.0", qt : '5.6.1'},
             ),(
                 'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
                 'OpenShadingLanguage-Release-1.7.5.tar.gz',
                 '1.7.5',
                 '8b15d13c3fa510b421834d32338304c8',
-                {oiio: "1.6.15", llvm : "9.0.0", gcc: "4.8.5", boost: "1.51.0"},
+                {oiio: "1.6.15", llvm : "9.0.0", gcc: "4.8.5", boost: "1.51.0", qt : '5.6.1'},
             )],
             depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, gcc, openssl, bzip2, libraw],
             sed = {
@@ -1154,7 +1193,7 @@ class all: # noqa
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
                 'MY_CMAKE_FLAGS=" -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+'" '
-                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+' ENABLERTTI=1" '
+                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
                 'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
@@ -1169,53 +1208,15 @@ class all: # noqa
                 'HIDE_SYMBOLS=0 '
                 # 'install '
             ],
+            verbose=1,
         )
         self.osl = osl
         # build.allDepend.append(osl)
-        # =============================================================================================================================================
 
 
 
         # qt packages
         # =============================================================================================================================================
-        qt = build.configure(
-            ARGUMENTS,
-            'qt',
-            download=[(
-            #     'https://download.qt.io/archive/qt/4.8/4.8.4/qt-everywhere-opensource-src-4.8.4.tar.gz',
-            #     'qt-everywhere-opensource-src-4.8.4.tar.gz',
-            #     '4.8.4',
-            #     '89c5ecba180cae74c66260ac732dc5cb',
-            # ),(
-            #     'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
-            #     'qt-everywhere-opensource-src-4.8.6.tar.gz',
-            #     '4.8.6',
-            #     '2edbe4d6c2eff33ef91732602f3518eb',
-            # ),(
-                'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
-                'qt-everywhere-opensource-src-4.8.7.tar.gz',
-                '4.8.7',
-                'd990ee66bf7ab0c785589776f35ba6ad',
-                { gcc : '4.1.2' }
-            ),(
-                'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
-                'Maya2018.4.tar.gz',
-                '5.6.1',
-                '7fde8ea6f9cfb240a13987fd1ba5c410',
-                { gcc : '4.8.5' }
-            )],
-            environ = {'LD' : 'g++'},
-            cmd = [
-                # './configure  -opensource -shared --confirm-license  -no-webkit -silent',
-                './configure  -opensource -shared --confirm-license -silent',
-                'make -j $DCORES',
-                'make -j $DCORES install',
-            ],
-            depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc],
-        )
-        self.qt = qt
-        build.allDepend.append(qt)
-
         sip = build.pythonSetup(
             ARGUMENTS,
             'sip',
