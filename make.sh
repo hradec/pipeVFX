@@ -73,7 +73,6 @@ else
     TI=" -ti --name pipevfx_make "
     if [ "$TRAVIS" == "1" ] ; then
         TI="-t"
-        rm -rf "$CD/pipeline/libs/"
     fi
 
     # create lib folder

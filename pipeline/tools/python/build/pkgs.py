@@ -630,25 +630,25 @@ class all: # noqa
                 'boost_1_51_0.tar.gz',
                 '1.51.0',
                 '6a1f32d902203ac70fbec78af95b3cf8',
-                { gcc : '4.1.2', python: '2.7.16' }
+                # { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.gz',
                 'boost_1_54_0.tar.gz',
                 '1.54.0',
                 'efbfbff5a85a9330951f243d0a46e4b9',
-                { gcc : '4.1.2', python: '2.7.16' }
+                # { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
                 'boost_1_55_0.tar.gz',
                 '1.55.0',
                 '93780777cfbf999a600f62883bd54b17',
-                { gcc : '4.1.2', python: '2.7.16' }
+                # { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz',
                 'boost_1_56_0.tar.gz',
                 '1.56.0',
                 '8c54705c424513fa2be0042696a3a162',
-                { gcc : '4.1.2', python: '2.7.16' }
+                # { gcc : '4.1.2', python: '2.7.16' }
             # ),(
             #     'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
             #     'boost_1_61_0.tar.gz',

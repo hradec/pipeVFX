@@ -389,7 +389,7 @@ class generic:
                     #    self.dependOn[baselib] = None
                     self.dependOn.update( {baselib :  baselibDownloadList[2] } )
 
-                    # find if baselib has gcc as dependency.
+                    # find if baselib has gcc as dependency and add it to the list
                     baselib_gcc = [ x for x in baselib.dependOn if 'gcc' in x.name ]
                     if baselib_gcc:
                         baselib_version = self.dependOn[baselib]
@@ -397,18 +397,11 @@ class generic:
                         if baselib_gcc_version:
                             if len(baselib_gcc_version[0])>4:
                                 baselib_gcc_version = baselib_gcc_version[0][4][baselib_gcc[0]]
-
+                                self.dependOn.update( {baselib_gcc[0] :  baselib_gcc_version } )
 
 
                 # build all versions of the package specified by the download parameter
                 for n in range(len(download)):
-
-                    # if we're using baseLibs,
-                    # set the gcc version to the baselib gcc version!
-                    if baselib_gcc and baselib_gcc_version:
-                        if len(download[n]) < 5:
-                            download[n] += [{}]
-                        download[n][4][baselib_gcc[0]] = baselib_gcc_version
 
 
                     targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.tar.gz',pythonDependency))
@@ -447,7 +440,6 @@ class generic:
 
                     #uncompress
                     s = self.uncompress(setup, pkgs)
-
 
                     # run the action method of the class
                     # add dependencies as source
@@ -654,6 +646,19 @@ class generic:
         # also, for packages who need an specific version of a dependency to build, sets it here!
         '''
         depend_n = -1
+
+        # we have to use the same gcc version as the current python build used.
+        if 'PYTHON_VERSION' in self.os_environ:
+            if 'gcc' in dependOn.name:
+                for python in [ x for x in self.dependOn if 'python' in x.name ]:
+                    # find the gcc version used for the current python version
+                    for gcc_version in [ x for x in python.downloadList if x[2] ==  self.os_environ['PYTHON_VERSION'] ]:
+                        # and set it
+                        self.dependOn[ dependOn ] = gcc_version[4][ dependOn ]
+            if 'python' in dependOn.name:
+                self.dependOn[ dependOn ] = self.os_environ['PYTHON_VERSION']
+
+
         dependOnVersion = self.dependOn[dependOn]
         # grab dependency version from download list
         for download in filter(lambda x: x[2] == currVersion, self.downloadList):
@@ -667,14 +672,17 @@ class generic:
             if dependOnVersion:
                 if dependOn.downloadList[each][2] == dependOnVersion:
                     # we have the version specified in the download
+                    print "download version",dependOn.name,self.dependOn[dependOn], currVersion, dependOnVersion
                     depend_n = each
                     break
 
             # if the version in the download is the same as the current
             # pkg version, use it..
             if dependOn.downloadList[each][2] == currVersion:
+                print "match match",dependOn.name,self.dependOn[dependOn], dependOn.downloadList[each][2], currVersion
                 depend_n = each
                 break
+
         return depend_n
 
     def __check_target_log__(self,target, install=None):
@@ -694,7 +702,7 @@ class generic:
 
 
     def runCMD(self, cmd , target, source, env):
-        ''' the main method to run system calls, like configure, make, cmake, etc '''
+        ''' the main method to run system calls, like configure, make, cmake, etc  '''
         # for each in  source:
         #     print str(each)
 
@@ -815,17 +823,6 @@ class generic:
                         dependOn.targetFolder[os.path.basename(tmp[0])] = [tmp[0]]
                         os_environ['PYTHON_ROOT'] = tmp[0]
 
-                # we have to use the same gcc version as the current python build used.
-                # if 'gcc' in dependOn.name:
-                #     for python in [ x for x in self.dependOn if 'python' in x.name ]:
-                #         # find the gcc version used for the current python version
-                #         _gcc = [ x for x in python.dependOn if 'gcc' in x.name ]
-                #         if _gcc:
-                #             print python.dependOn[_gcc[0]]
-                #             print [ x for x in _gcc[0].targetFolder['noBaseLib'] if python.dependOn[_gcc[0]] in x ]
-
-
-
                 # grab the index for the version needed
                 depend_n = self.depend_n(dependOn, target.split('/')[-2])
                 k = dependOn.targetFolder.keys()
@@ -848,7 +845,7 @@ class generic:
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
 
                     if dependOn.name == 'gcc':
-                        print dependOn.name ,dependOn.targetFolder
+                        print dependOn.name ,dependOn.targetFolder,depend_n
                     #     gcc['gcc'] = 'gcc-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
                     #     gcc['g++'] = 'g++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
                     #     gcc['cpp'] = 'cpp-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
