@@ -978,31 +978,41 @@ class generic:
             _env = name.split('ENVIRON_')[-1]
             if _env not in os_environ:
                 os_environ[_env]=''
+
+            # expand variables en v using os_environ
+            v = expandvars( v, env=os_environ )
+
+            # and now replace the variable in os_environ
+            # this way, one can add to the env var by assigning
+            # itself + the extra data. ex: LDFLAGS="$LDFLAGS -lGL"
+            # or can just replace the one created so far.
+            os_environ[_env] = v.strip(':').strip(' ')
+
             # if ':' in v:
             #     os_environ[_env] = ':'.join([v,os_environ[_env]]).strip(':')
             # else:
             #     os_environ[_env] = ' '.join([v,os_environ[_env]]).strip(' ')
 
-            bkp = ''
-            # expand $var if exists in os_environ
-            if '/' in v:
-                for p in v.strip().split(':'):
-                    if p:
-                        if p[0]=='$':
-                            if p[1:] in os_environ.keys():
-                                bkp = os_environ[p[1:]]+':'+bkp
-                                continue
-                        bkp = p+':'+bkp
-            else:
-                for p in v.strip().split(' '):
-                    if p:
-                        if p[0]=='$':
-                            if p[1:] in os_environ.keys():
-                                bkp = os_environ[p[1:]]+':'+bkp
-                                continue
-                        bkp = p+' '+bkp
-
-            os_environ[_env] = bkp.strip(':').strip(' ')
+            #
+            # bkp = ''
+            # # expand $var if exists in os_environ
+            # if '/' in v:
+            #     for p in v.strip().split(':'):
+            #         if p:
+            #             if p[0]=='$':
+            #                 if p[1:] in os_environ.keys():
+            #                     bkp = os_environ[p[1:]]+':'+bkp
+            #                     continue
+            #             bkp = p+':'+bkp
+            # else:
+            #     for p in v.strip().split(' '):
+            #         if p:
+            #             if p[0]=='$':
+            #                 if p[1:] in os_environ.keys():
+            #                     bkp = os_environ[p[1:]]+':'+bkp
+            #                     continue
+            #             bkp = p+' '+bkp
+            # os_environ[_env] = bkp.strip(':').strip(' ')
 
 
         # update LIB and LIBRARY_PATH
