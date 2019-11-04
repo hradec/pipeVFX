@@ -917,7 +917,7 @@ class generic:
 
                             cleanV = ' '
                             for v in dependOn.environ[each].split(' '):
-                                if v[0] != '$':
+                                if v.strip()  and v[0] != '$':
                                     cleanV += v+' '
 
                             # print dependOn.name, each, cleanV, sep
