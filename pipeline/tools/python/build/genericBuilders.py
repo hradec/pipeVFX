@@ -1076,31 +1076,33 @@ class generic:
         os_environ['CC']  = "%s %s" % (gcc['gcc'], os_environ['CC'].replace(':',"").replace('gcc',''))
         os_environ['CXX'] = "%s %s" % (gcc['g++'], os_environ['CXX'].replace(':',"").replace('g++',''))
 
-        if gcc['gcc'] != 'gcc':
-            tmp = glob('%s/lib/gcc/x86_64-pc-linux-gnu/*' % os_environ['GCC_TARGET_FOLDER'])
-            os_environ['LD_LIBRARY_PATH'] = ':'.join(tmp+[
-                '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                '%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                os_environ['LD_LIBRARY_PATH']
-            ])
+        # if building gcc, don't add it to search paths
+        if '/gcc/' not in target:
+            if gcc['gcc'] != 'gcc':
+                tmp = glob('%s/lib/gcc/x86_64-pc-linux-gnu/*' % os_environ['GCC_TARGET_FOLDER'])
+                os_environ['LD_LIBRARY_PATH'] = ':'.join(tmp+[
+                    '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    os_environ['LD_LIBRARY_PATH']
+                ])
 
-            os_environ['PATH'] = ':'.join([
-                '%s/bin' % os_environ['GCC_TARGET_FOLDER'],
-                os_environ['PATH'],
-            ])
+                os_environ['PATH'] = ':'.join([
+                    '%s/bin' % os_environ['GCC_TARGET_FOLDER'],
+                    os_environ['PATH'],
+                ])
 
-        if 'GCC_TARGET_FOLDER' in os_environ:
-            os_environ['LIBRARY_PATH'] = ':'.join([
-                '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
-                '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
-                os_environ['LIBRARY_PATH'],
-            ])
+            if 'GCC_TARGET_FOLDER' in os_environ:
+                os_environ['LIBRARY_PATH'] = ':'.join([
+                    '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
+                    '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
+                    os_environ['LIBRARY_PATH'],
+                ])
 
-            os_environ['LLDFLAGS']      = ' '.join([
-                '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                os_environ['LLDFLAGS']
-            ])
+                os_environ['LLDFLAGS']      = ' '.join([
+                    '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    os_environ['LLDFLAGS']
+                ])
 
 
         # this helps configure to find the corret python
