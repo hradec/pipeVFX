@@ -307,6 +307,12 @@ class all: # noqa
                 '4.3.6',
                 'bb144ec868c53244ea6be11921d86f03',
                 { gcc : '4.1.2' }
+            ),(
+                'https://github.com/intel/tbb.git',
+                'tbb-2019_U9.zip',
+                '2019_U9',
+                None,
+                { gcc : '4.1.2' }
             )],
         )
         self.tbb = tbb
@@ -370,7 +376,7 @@ class all: # noqa
             #     '90c3ca4dd9d51cf32276bc5344ec9754',
             )],
             environ = {
-                'LDFLAGS' : '$LDFLAGS -lm -lGL',
+                'LDFLAGS' : ' -lm -lGL ',
             }
         )
         build.allDepend.append(freeglut)
