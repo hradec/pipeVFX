@@ -54,6 +54,8 @@ class all: # noqa
         To build a package with a specific version of GCC, just add gcc as a dependency to the package. (see python again!)
         '''
 
+        allDepend = []
+
         zlib = build.configure(
             ARGUMENTS,
             'zlib',
@@ -69,7 +71,7 @@ class all: # noqa
                 '1c9f62f0778697a09d36121ead88e08e'
             )],
         )
-        # build.allDepend.append(zlib)
+        allDepend += [zlib]
 
         # curl = build.configure(
         #        ARGUMENTS,
@@ -85,6 +87,35 @@ class all: # noqa
         # )
         # build.allDepend.append(curl)
 
+        binutils = build.configure(
+            ARGUMENTS,
+            'binutils',
+            sed = { '0.0.0' : {
+                'gprof/Makefile.in' : [
+                    ('SUFFIXES = .m','SUFFIXES ='),
+                    ('.SUFFIXES: .m ','.SUFFIXES: '),
+                ],
+            }},
+            # binutils-2.17 is the best for gcc 4.1.2
+            # but it doesn't work with shared libs in centos 7.
+            download=[(
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.17a.tar.bz2',
+                'binutils-2.17.tar.gz',
+                '2.17.1',
+                '1d81edd0569de4d84091526fd578dd7b'
+            ),(
+            # so we're defaulting to 2.22.0 for now.
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
+                'binutils-2.22.tar.gz',
+                '2.22.0',
+                '8b3ad7090e3989810943aa19103fdb83'
+            )],
+            depend = allDepend,
+        )
+        self.binutils = binutils
+        allDepend += [binutils]
+
+
         gmp = build.configure(
            ARGUMENTS,
            'gmp',
@@ -94,8 +125,9 @@ class all: # noqa
                  '6.1.2',
                  '8ddbb26dc3bd4e2302984debba1406a5'
             )],
+            depend = allDepend
         )
-        # build.allDepend.append(gmp)
+        allDepend += [gmp]
 
         mpfr = build.configure(
             ARGUMENTS,
@@ -106,9 +138,9 @@ class all: # noqa
                 '3.1.6',
                 '95dcfd8629937996f826667b9e24f6ff',
             )],
-            depend = [ gmp ],
+            depend = allDepend,
         )
-        # build.allDepend.append(mpfr)
+        allDepend += [mpfr]
 
         mpc = build.configure(
             ARGUMENTS,
@@ -119,9 +151,9 @@ class all: # noqa
                '1.0.3',
                'd6a1d5f8ddea3abd2cc3e98f58352d26',
             )],
-            depend = [ gmp, mpfr ],
+            depend = allDepend,
         )
-        # build.allDepend.append(mpc)
+        allDepend += [mpc]
 
         flex = build.configure(
             ARGUMENTS,
@@ -134,7 +166,8 @@ class all: # noqa
             )],
         )
         self.flex = flex
-        build.allDepend.append(flex)
+        allDepend += [flex]
+
 
         gcc = build.gccBuild(
                 ARGUMENTS,
@@ -147,8 +180,7 @@ class all: # noqa
                 #         ('M4.m4.not.required','M4=m4')
                 #     ],
                 # }},
-                download=[
-                (
+                download=[(
                 #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
                 #    'gcc-6.3.0.tar.gz',
                 #    '6.3.0',
@@ -164,11 +196,12 @@ class all: # noqa
                     '4.8.5',
                     'bfe56e74d31d25009c8fb55fd3ca7e01'
                 )],
-                depend = [ mpfr, mpc, gmp, flex ],
+                depend = allDepend,
         )
         self.gcc = gcc
         # lets use our own latest GCC to build everything!!!
-        # build.allDepend.append(gcc)
+        allDepend += [gcc]
+        
 
         icu = build.configure(
             ARGUMENTS,
@@ -182,6 +215,7 @@ class all: # noqa
             )],
             src = 'icu4c.css',
             cmd = ['cd ./source/'] + build.configure.cmd,
+            depend = allDepend,
         )
         self.icu = icu
 
@@ -199,9 +233,10 @@ class all: # noqa
                 'make -j $DCORES CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$TARGET_FOLDER',
                 'make -j $DCORES PREFIX=$TARGET_FOLDER install',
             ],
+            depend = allDepend,
         )
         self.bzip2 = bzip2
-        build.allDepend.append(bzip2)
+        allDepend += [bzip2]
 
         readline = build.configure(
             ARGUMENTS,
@@ -224,9 +259,10 @@ class all: # noqa
                 'make -j $DCORES SHLIB_LIBS="-lncurses" CFLAGS="$CFLAGS -fPIC" PREFIX=$TARGET_FOLDER',
                 'make -j $DCORES PREFIX=$TARGET_FOLDER install',
             ],
+            depend = allDepend,
         )
         self.readline = readline
-        build.allDepend.append(readline)
+        allDepend += [readline]
 
         openssl = build.openssl(
             ARGUMENTS,
@@ -244,9 +280,10 @@ class all: # noqa
                 '24886418211ec05e3f1c764a489b29c1',
                 { gcc : '4.1.2' }
             )],
+            depend = allDepend,
         )
         self.openssl = openssl
-        build.allDepend.append(openssl)
+        allDepend += [openssl]
 
         python = build.python(
             ARGUMENTS,
@@ -278,7 +315,7 @@ class all: # noqa
             )],
             # this fixes https not finding certificate in easy_install
             environ = {"PYTHONHTTPSVERIFY" : "0"},
-            depend = [readline,bzip2], #,openssl],
+            depend = allDepend+[readline,bzip2], #,openssl],
             pip = [
                 'epydoc',
                 'PyOpenGL',
@@ -290,7 +327,7 @@ class all: # noqa
             ]
         )
         self.python = python
-        build.allDepend.append(python)
+        allDepend += [python]
 
         tbb = build.tbb(
             ARGUMENTS,
@@ -314,9 +351,10 @@ class all: # noqa
                 None,
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
+            depend = allDepend,
         )
         self.tbb = tbb
-        build.allDepend.append(tbb)
+        allDepend += [tbb]
 
         cmake = build.configure(
             ARGUMENTS,
@@ -334,17 +372,15 @@ class all: # noqa
                 "make -j $DCORES VERBOSE=1",
                 "make -j $DCORES install",
             ],
-            sed = {
-                '0.0.0' : {
-                    'Source/kwsys/Terminal.c' : [
-                        ('/* If running inside emacs the terminal is not VT100.  Some emacs','return 1;'),
-                    ],
-                },
-            },
-            depend=[gcc, openssl],
+            sed = { '0.0.0' : {
+                'Source/kwsys/Terminal.c' : [
+                    ('/* If running inside emacs the terminal is not VT100.  Some emacs','return 1;'),
+                ],
+            }},
+            depend=[gcc, openssl]+allDepend,
         )
         self.cmake = cmake
-        build.allDepend.append(cmake)
+        allDepend += [cmake]
 
         glew = build.glew(
             ARGUMENTS,
@@ -356,9 +392,10 @@ class all: # noqa
                 '7cbada3166d2aadfc4169c4283701066',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
+            depend = allDepend,
         )
-        build.allDepend.append(glew)
         self.glew = glew
+        allDepend += [glew]
 
         freeglut = build.configure(
             ARGUMENTS,
@@ -377,10 +414,11 @@ class all: # noqa
             )],
             environ = {
                 'LDFLAGS' : '$LDFLAGS -lm -lGL ',
-            }
+            },
+            depend = allDepend,
         )
-        build.allDepend.append(freeglut)
         self.freeglut = freeglut
+        allDepend += [freeglut]
 
         jpeg = build.configure(
             ARGUMENTS,
@@ -401,10 +439,11 @@ class all: # noqa
             cmd = [
                 './configure --enable-shared --prefix=$TARGET_FOLDER',
                 'make install INSTALL="/usr/bin/install -D"',
-            ]
+            ],
+            depend = allDepend,
         )
-        build.allDepend.append(jpeg)
         self.jpeg = jpeg
+        allDepend += [jpeg]
 
         jasper = build.configure(
             ARGUMENTS,
@@ -416,9 +455,10 @@ class all: # noqa
                 'a342b2b4495b3e1394e161eb5d85d754',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
+            depend = allDepend,
         )
-        # build.allDepend.append(jasper)
         self.jasper = jasper
+        allDepend += [jasper]
 
         libraw = build.configure(
             ARGUMENTS,
@@ -431,7 +471,7 @@ class all: # noqa
                 '7de042bcffb58864fd93d5209620e08d',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend=[gcc],
+            depend=[gcc]+allDepend,
             cmd = [
                 './mkdist.sh',
                 './configure --enable-shared --prefix=$TARGET_FOLDER',
@@ -466,10 +506,10 @@ class all: # noqa
                 'd1d2e940dea0b5ad435f21f03d96dd72',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend=[jpeg],
+            depend=[jpeg]+allDepend,
         )
-        build.allDepend.append(tiff)
         self.tiff = tiff
+        allDepend += [tiff]
 
         libpng = build.configure(
             ARGUMENTS,
@@ -481,9 +521,10 @@ class all: # noqa
                 '9b320a05ed4db1f3f0865c8a951fd9aa',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
+            depend = allDepend,
         )
-        build.allDepend.append(libpng)
         self.libpng = libpng
+        allDepend += [libpng]
 
         freetype = build.freetype(
             ARGUMENTS,
@@ -495,9 +536,10 @@ class all: # noqa
                 '7448edfbd40c7aa5088684b0a3edb2b8',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
+            depend = allDepend,
         )
-        build.allDepend.append(freetype)
         self.freetype = freetype
+        allDepend += [freetype]
 
         # python modules
         # ============================================================================================================================================
@@ -517,10 +559,10 @@ class all: # noqa
                 '428b7a9e7e2d154a7ceb3e13536283e4',
             )],
             baseLibs=[python],
-            depend=[gcc, python, openssl],
+            depend=[gcc, python, openssl]+allDepend,
         )
         self.dbus = dbus
-        build.allDepend.append(dbus)
+        allDepend += [dbus]
 
         # cython = build.pythonSetup(
         #    ARGUMENTS,
@@ -564,7 +606,7 @@ class all: # noqa
                 '15966194360560ee40ff75fcbe875f0c',
             )],
             baseLibs=[python],
-            depend=[python, openssl],
+            depend=[python, openssl]+allDepend,
             src = 'bootstrap.py',
             cmd=[
                 './bootstrap.py build/scons',
@@ -613,7 +655,7 @@ class all: # noqa
                     module,
                     download=simpleModules[module],
                     baseLibs=[python],
-                    depend=[python],
+                    depend=[python]+allDepend,
                 )
             )
         # add all builders to the global dependency at once here
@@ -657,7 +699,7 @@ class all: # noqa
             #     { gcc : '4.1.2' }
             )],
             baseLibs=[python],
-            depend=[python, openssl, bzip2],
+            depend=[python, openssl, bzip2]+allDepend,
         )
         self.boost = boost
         # build.allDepend.append(boost)
@@ -690,7 +732,7 @@ class all: # noqa
             #     '354bf86de3b930ab87ac63619d60c860',
             #     { gcc : '4.8.5' }
             )],
-            depend=[gcc, python, openssl],
+            depend=[gcc, python, openssl]+allDepend,
             environ={
                 'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
             },
@@ -701,7 +743,7 @@ class all: # noqa
             ],
         )
         self.ilmbase = ilmbase
-        build.allDepend.append(ilmbase)
+
 
         openexr = build.configure(
             ARGUMENTS,
@@ -732,7 +774,10 @@ class all: # noqa
             #     { gcc : '4.8.5' }
             )],
             sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
-            depend=[ilmbase, gcc, python, openssl],
+            depend=[ilmbase, gcc, python, openssl]+allDepend,
+            environ={
+                'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
+            },
             cmd = [
                 './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
                 'make -j $DCORES',
@@ -740,7 +785,6 @@ class all: # noqa
             ],
         )
         self.openexr = openexr
-        build.allDepend.append(openexr)
 
         # pyilmbase = build.configure(
         #     ARGUMENTS,
@@ -798,9 +842,10 @@ class all: # noqa
                 'fc9e586751ff789b34b1f21d572d96af',
                 { gcc : '4.1.2', python : '2.7.16'}
             )],
+            depend = allDepend,
         )
         self.yasm = yasm
-        build.allDepend.append(yasm)
+        allDepend += [yasm]
 
         hdf5 = build.configure(
             ARGUMENTS,
@@ -812,9 +857,9 @@ class all: # noqa
                 '7d572f8f3b798a628b8245af0391a0ca',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
+            depend = allDepend,
         )
         self.hdf5 = hdf5
-        # build.allDepend.append(hdf5)
 
         ocio = build.cmake(
             ARGUMENTS,
@@ -868,11 +913,10 @@ class all: # noqa
                 { gcc : '4.8.5' }
             )],
             baseLibs = [python],
-            depend   = [yasm,boost,gcc,python],
+            depend   = [yasm,boost,gcc,python]+allDepend,
             flags    = build.cmake.flags+['-DOCIO_BUILD_APPS=0','-D OCIO_USE_BOOST_PTR=1', 'OCIO_BUILD_TRUELIGHT=OFF', 'OCIO_BUILD_NUKE=OFF'] # -DUSE_EXTERNAL_TINYXML=1  -DUSE_EXTERNAL_YAML=1']
         )
         self.ocio = ocio
-        # build.allDepend.append(ocio)
 
         oiio = build.cmake(
             ARGUMENTS,
@@ -913,7 +957,7 @@ class all: # noqa
                 '4fa0ce4538fb2d7eb72f54f4036972d5',
                 { gcc : '4.8.5', boost : "1.56.0", python: '2.7.16' }
             )],
-            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2, libraw],
+            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2, libraw]+allDepend,
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
             flags = [
                 '-DUSE_PYTHON=0',
@@ -929,7 +973,6 @@ class all: # noqa
             ]+build.cmake.flags,
         )
         self.oiio = oiio
-        # build.allDepend.append(oiio)
 
         # use the download action as we only need this package to build llvm!
         # download action will avoid installing this package!
@@ -945,6 +988,7 @@ class all: # noqa
                 '0df6971e2f99b1e99e7bfb533e4067af',
             )],
             keep_source_folder=True,
+            depend = allDepend,
         )
         self.clang = clang
 
@@ -968,7 +1012,7 @@ class all: # noqa
                     ],
                 },
             },
-            depend=[python, boost, clang],
+            depend=[python, boost, clang]+allDepend,
             parallel=1,
             cmd = [
                 # mv clang to the tools folder so LLVM can automatically build it!
@@ -1016,6 +1060,7 @@ class all: # noqa
                 '0c208b0664c7fb822bf1b49ad035e8fd',
                 { gcc : '4.1.2', python: '2.7.16' },
             )],
+            depend = allDepend,
         )
         self.pugixml = pugixml
 
@@ -1051,7 +1096,7 @@ class all: # noqa
                 '5be03812f5d109817e6558c3fab7bbe1',
                 { gcc : '4.8.5' },
             )],
-            depend=[python, glew],
+            depend=[python, glew]+allDepend,
             baseLibs=[python],
             flags = [
                 '-DBUILD_SHARED_LIBS=1',
@@ -1106,7 +1151,7 @@ class all: # noqa
                 None,
                 { gcc : '4.8.5', python: '3.7.5' },
             )],
-            depend=[python, freeglut],
+            depend=[python, freeglut]+allDepend,
             flags = [
                 '-DMATERIALX_BUILD_PYTHON=1',
                 '-DMATERIALX_BUILD_VIEWER=1',
@@ -1141,18 +1186,22 @@ class all: # noqa
                 '7fde8ea6f9cfb240a13987fd1ba5c410',
                 { gcc : '4.8.5', python: '3.7.5' }
             )],
-            environ = {'LD' : 'g++'},
+            environ = {
+                'LD' : '$CXX -fPIC ',
+                'CC' : '$CC -fPIC',
+                'CXX' : '$CXX -fPIC',
+            },
             cmd = [
                 # './configure  -opensource -shared --confirm-license  -no-webkit -silent',
                 './configure  -opensource -shared --confirm-license -silent',
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
-            depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc],
-
+            depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc]+allDepend,
+            verbose=1,
         )
         self.qt = qt
-        build.allDepend.append(qt)
+        allDepend += [qt]
 
 
         # =============================================================================================================================================
@@ -1172,7 +1221,7 @@ class all: # noqa
                 '8b15d13c3fa510b421834d32338304c8',
                 {oiio: "1.6.15", llvm : "9.0.0", gcc: "4.8.5", boost: "1.51.0", qt : '5.6.1'},
             )],
-            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, gcc, openssl, bzip2, libraw],
+            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, gcc, openssl, bzip2, libraw]+allDepend,
             sed = {
                 '0.0.0' : {
                     'CMakeLists.txt' : [
@@ -1211,7 +1260,6 @@ class all: # noqa
             verbose=1,
         )
         self.osl = osl
-        # build.allDepend.append(osl)
 
 
 
@@ -1251,6 +1299,7 @@ class all: # noqa
                 'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
                 'make -j $DCORES && make -j $DCORES install',
             ],
+            depend = allDepend,
         )
         self.sip = sip
 
@@ -1271,7 +1320,7 @@ class all: # noqa
                 #     {qt:'5.7.0', sip: '4.18.1', gcc : '4.8.5' },
             )],
             baseLibs=[python],
-            depend=[sip,qt, gcc],
+            depend=[sip,qt, gcc]+allDepend,
             src = 'configure-ng.py',
             cmd = [
                 # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
@@ -1285,7 +1334,7 @@ class all: # noqa
             ],
         )
         self.pyqt = pyqt
-        build.allDepend.append(pyqt)
+        allDepend += [pyqt]
 
 
 
@@ -1299,10 +1348,10 @@ class all: # noqa
                 'b39900d6b504726a20819f2ad73f5877',
                 { gcc : '4.1.2' }
             )],
-            depend=[gcc],
+            depend=[gcc]+allDepend,
         )
         self.log4cplus = log4cplus
-        build.allDepend.append(log4cplus)
+        allDepend += [log4cplus]
 
         # blosc = build.cmake(
         #     ARGUMENTS,

@@ -36,7 +36,7 @@ class make(generic):
     _parallel=''
     _verbose=''
     _verbose_cmake=''
-    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.system, **kargs):
+    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         generic.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
         # some extra parameters to control log output and parallel building
         # default uses the double of cores to build,
@@ -122,7 +122,7 @@ class cmake(make):
             "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
         ]
 
-    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.system, **kargs):
+    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         make.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
 
     def fixCMD(self, cmd, environ=[]):

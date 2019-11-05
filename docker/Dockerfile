@@ -124,5 +124,6 @@ RUN yum -y remove boost
 
 # we need this to build python3.n
 RUN yum -y install libffi-devel tcl-devel tk-devel libXt-devel
+RUN yum -y install gcc-objc++
 
 ENTRYPOINT "/run.sh"

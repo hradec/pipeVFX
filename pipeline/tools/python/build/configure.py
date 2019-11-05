@@ -41,6 +41,8 @@ class configure(generic):
     def fixCMD(self, cmd):
         if 'configure' in cmd and '--prefix=' not in cmd:
             cmd = cmd.replace('configure', 'configure --prefix=$TARGET_FOLDER ')
+        if self.name not in ['zlib']:
+            cmd += ' --disable-werror '  
         if 'make' in cmd and 'cmake' not in cmd:
             if not '-j' in cmd:
                 cmd = cmd.replace('make', "make -j $DCORES")
@@ -78,20 +80,51 @@ class gccBuild(configure):
                     '--disable-multilib '
                     '--enable-clocale=gnu '
                     '--disable-libstdcxx-pch '
-                    '--enable-fdpic '
                     '--disable-werror '
-                    '--enable-visibility '
-                    '--with-gmp=$GMP_TARGET_FOLDER '
-                    '--with-mpfr=$MPFR_TARGET_FOLDER '
-                    '--with-mpc=$MPC_TARGET_FOLDER '
                     '--enable-threads=posix '
                     '--enable-version-specific-runtime-libs '
                     '--enable-checking=release '
-                    '--program-suffix=-$(basename $TARGET_FOLDER) ',
+                    '--program-suffix=-$(basename $TARGET_FOLDER)',
                 'sed -i.bak -e "s/CC = gcc/CC = gcc -fgnu89-inline/" -e "s/CXX = g++/CXX = g++ -fgnu89-inline/" Makefile',
                 'make -j $DCORES',
                 'make install',
             ])
+        # if self.versionMajor == 4.1:
+        #     cmd = ' && '.join([
+        #         # got this build options for arch AUR-mirror for gcc 4.1
+        #         # " sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in",
+        #         ''' sed -i -e 's@\./fixinc\.sh@-c true@' gcc/Makefile.in ''',
+        #         ''' sed -i -e 's/echo \$ldver |/echo \$ldver | cut -d"\)" -f2 | /' ./libstdc++-v3/configure''', # fix wrong LD version detection
+        #         # 'export CFLAGS="-fgnu89-inline -g -O2 $CFLAGS"',
+        #         # 'export CXXFLAGS="-fgnu89-inline -g -O2 $CXXFLAGS"',
+        #         "mkdir -p build",
+        #         "cd build",
+        #         '../configure  --prefix=$TARGET_FOLDER '
+        #             '--mandir=$TARGET_FOLDER/share/man '
+        #             '--libdir=$TARGET_FOLDER/lib '
+        #             '--infodir=$TARGET_FOLDER/share/info '
+        #             '--libexecdir=$TARGET_FOLDER/lib '
+        #             '--enable-languages=c,c++ '
+        #             '--enable-__cxa_atexit  '
+        #             '--disable-multilib '
+        #             '--enable-clocale=gnu '
+        #             '--disable-libstdcxx-pch '
+        #             # '--enable-fdpic '
+        #             '--disable-werror '
+        #             # '--enable-visibility '
+        #             '--with-gmp=$GMP_TARGET_FOLDER '
+        #             '--with-mpfr=$MPFR_TARGET_FOLDER '
+        #             '--with-mpc=$MPC_TARGET_FOLDER '
+        #             '--enable-threads=posix '
+        #             '--enable-version-specific-runtime-libs '
+        #             '--enable-checking=release '
+        #             '--enable-shared '
+        #             # '--enable-host-shared '
+        #             '--program-suffix=-$(basename $TARGET_FOLDER) ',
+        #         # 'sed -i.bak -e "s/CC = gcc/CC = gcc -fgnu89-inline/" -e "s/CXX = g++/CXX = g++ -fgnu89-inline/" Makefile',
+        #         'make -j $DCORES',
+        #         'make install',
+        #     ])
         elif self.versionMajor == 4.8:
             # extract from https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=gcc48
             distroSpecific = []
@@ -179,6 +212,7 @@ class gccBuild(configure):
                     '--disable-libstdcxx-pch '
                     '--enable-fdpic '
                     '--disable-werror '
+                    '--enable-shared '
                     '--enable-threads=posix '
                     '--enable-version-specific-runtime-libs '
                     '--enable-checking=release '

@@ -181,7 +181,7 @@ class generic:
     environ = {}
 
 
-    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
+    def __init__(self, args, name, download, baseLibs=None, env=None, depend=[], GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
         global __pkgInstalled__
 
         download = [ list(x) for x in download ]
@@ -199,6 +199,7 @@ class generic:
         self.baseLibs = baseLibs
         self.env      = env
         self.depend   = depend
+        self.name     = name
         if hasattr(self, "init"):
             self.init()
             args     = self.args
@@ -207,6 +208,12 @@ class generic:
             baseLibs = self.baseLibs
             env      = self.env
             depend   = self.depend
+            name     = self.name
+
+
+        # initialize environment
+        if self.env is None:
+            self.env = Environment()
 
         if not self.baseLibs:
             self.baseLibs = 'noBaseLib'
@@ -225,6 +232,7 @@ class generic:
         allPkgs[name] = self
 
         # dependency
+        self.set( "ENVIRON_DEPEND",  ' '.join([x.name for x in depend]) )
         self.dependOn = depend
         if type(depend) == type([]):
             self.dependOn = {}
@@ -240,12 +248,6 @@ class generic:
                 self.dependOn[d] = None
 
 
-
-        # initialize environment
-        self.env = env
-        if self.env is None:
-            self.env = Environment()
-        self.name = name
 
         # set the base libraries to build for.
         # we'll repeat this package build for each base library version
@@ -340,6 +342,7 @@ class generic:
         # set extra environment variables to env
         for n in self.environ.keys():
             self.set("ENVIRON_%s" % n.upper(), self.environ[n])
+
 
         # check if we're running in TRAVIS-CI
         self.travis=False
@@ -446,7 +449,6 @@ class generic:
                     source = [s]
                     for dependOn in self.dependOn:
                         if dependOn:
-
                             # check if this dependency applies to this version of the package!
                             # if the version has the dependency as None, we should NOT depend on
                             # it for this version! (ex: openssl for python 2.6 and not for python 2.7)
@@ -465,8 +467,11 @@ class generic:
                                 if dependOn.depend[p][depend_n] not in source:
                                     source.append( dependOn.depend[p][depend_n] )
                             elif len(k)>0:
-                                if dependOn.depend[k[-1]][depend_n] not in source:
-                                    source.append( dependOn.depend[k[-1]][depend_n] )
+                                kk=k[-1]
+                                if dependOn.name in ['gcc','python']:
+                                    kk=k[0]
+                                if dependOn.depend[kk][depend_n] not in source:
+                                    source.append( dependOn.depend[kk][depend_n] )
 
                     # build
                     b = self.action( build, source )
@@ -672,14 +677,14 @@ class generic:
             if dependOnVersion:
                 if dependOn.downloadList[each][2] == dependOnVersion:
                     # we have the version specified in the download
-                    print "download version",dependOn.name,self.dependOn[dependOn], currVersion, dependOnVersion
+                    # print "download version",dependOn.name,self.dependOn[dependOn], currVersion, dependOnVersion
                     depend_n = each
                     break
 
             # if the version in the download is the same as the current
             # pkg version, use it..
             if dependOn.downloadList[each][2] == currVersion:
-                print "match match",dependOn.name,self.dependOn[dependOn], dependOn.downloadList[each][2], currVersion
+                # print "match match",dependOn.name,self.dependOn[dependOn], dependOn.downloadList[each][2], currVersion
                 depend_n = each
                 break
 
@@ -710,9 +715,12 @@ class generic:
 
         # restore original environment before ruuning anything.
         os_environ=self.os_environ
-        os_environ.update( os.environ )
+        # os_environ.update( os.environ )
 
         # first, cleanup pipe gcc/bin folder from path, if any
+        os_environ['PYTHON_TARGET_FOLDER'] = os.environ['PYTHON_TARGET_FOLDER']
+        os_environ['PYTHONPATH'] = os.environ['PYTHONPATH']
+        os_environ['PATH'] = os.environ['PATH']
         os_environ['PATH'] = os_environ['PATH'].replace(pipe.build.gcc(),'').replace('::',':')
 
         target=str(target[0])
@@ -785,10 +793,12 @@ class generic:
             'LD'                : 'ld',
             'LDSHARED'          : '%sgcc -shared' % prefix,
             'LDFLAGS'           : ' ',
-            'CFLAGS'            : ' -w ',
-            'CPPFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
-            'CXXFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
-            'CPPCXXFLAGS'       : ' -w ',
+            'CFLAGS'            : ' ',
+            # 'CPPFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
+            # 'CXXFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
+            'CPPFLAGS'          : ' ',
+            'CXXFLAGS'          : ' ',
+            'CPPCXXFLAGS'       : ' ',
             'PKG_CONFIG_PATH'   : '',
             'LD_LIBRARY_PATH'   : "%s/lib/" % (installDir),
             'CLICOLOR_FORCE'    : '1',
@@ -797,8 +807,8 @@ class generic:
         if not os_environ.has_key('INCLUDE'):
             os_environ['INCLUDE'] = ''
 
-        CFLAGS=['-fPIC -w']
-        LDFLAGS=[]
+        CFLAGS=['-g -O2 -fPIC -w']
+        LDFLAGS=['-fPIC']
         gcc={
             'gcc' : 'gcc',
             'g++' : 'g++',
@@ -810,7 +820,7 @@ class generic:
         for dependOn in self.dependOn:
             if dependOn and dependOn.name not in dependList:
                 # if not in the source list, skip it
-                if dependOn.name not in sourceList:
+                if dependOn.name not in self.env['ENVIRON_DEPEND'].split(' '):
                     continue
 
                 # deal with python dependency
@@ -835,7 +845,10 @@ class generic:
                         p = p[0]
                     else:
                         k.sort()
-                        p = k[-1]
+                        if dependOn.name in ['gcc','python']:
+                            p = k[0]
+                        else:
+                            p = k[-1]
 
                     if len(dependOn.targetFolder[p])==1:
                         depend_n = 0
@@ -846,10 +859,6 @@ class generic:
 
                     if dependOn.name == 'gcc':
                         print dependOn.name ,dependOn.targetFolder,depend_n
-                    #     gcc['gcc'] = 'gcc-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
-                    #     gcc['g++'] = 'g++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
-                    #     gcc['cpp'] = 'cpp-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
-                    #     gcc['c++'] = 'c++-%s' % os.path.basename(dependOn.targetFolder[p][depend_n])
 
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
@@ -970,6 +979,10 @@ class generic:
         os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
 
+        # use dependency gcc, if any!
+        os_environ['CC']  = "%s %s" % (gcc['gcc'], os_environ['CC'].replace(':',"").replace('gcc',''))
+        os_environ['CXX'] = "%s %s" % (gcc['g++'], os_environ['CXX'].replace(':',"").replace('g++',''))
+
         # set extra env vars that were passed to the builder class in the environ parameter!
         for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
             _env = name.split('ENVIRON_')[-1]
@@ -984,32 +997,6 @@ class generic:
             # itself + the extra data. ex: LDFLAGS="$LDFLAGS -lGL"
             # or can just replace the one created so far.
             os_environ[_env] = v.strip(':').strip(' ')
-
-            # if ':' in v:
-            #     os_environ[_env] = ':'.join([v,os_environ[_env]]).strip(':')
-            # else:
-            #     os_environ[_env] = ' '.join([v,os_environ[_env]]).strip(' ')
-
-            #
-            # bkp = ''
-            # # expand $var if exists in os_environ
-            # if '/' in v:
-            #     for p in v.strip().split(':'):
-            #         if p:
-            #             if p[0]=='$':
-            #                 if p[1:] in os_environ.keys():
-            #                     bkp = os_environ[p[1:]]+':'+bkp
-            #                     continue
-            #             bkp = p+':'+bkp
-            # else:
-            #     for p in v.strip().split(' '):
-            #         if p:
-            #             if p[0]=='$':
-            #                 if p[1:] in os_environ.keys():
-            #                     bkp = os_environ[p[1:]]+':'+bkp
-            #                     continue
-            #             bkp = p+' '+bkp
-            # os_environ[_env] = bkp.strip(':').strip(' ')
 
 
         # update LIB and LIBRARY_PATH
@@ -1083,15 +1070,14 @@ class generic:
         for each in proxies:
             os_environ[each.lower()] = proxies[each].strip()
 
-        # use dependency gcc, if any!
-        os_environ['CC']  = "%s %s" % (gcc['gcc'], os_environ['CC'].replace(':',"").replace('gcc',''))
-        os_environ['CXX'] = "%s %s" % (gcc['g++'], os_environ['CXX'].replace(':',"").replace('g++',''))
-
         # if building gcc, don't add it to search paths
+        # we need this to force the build to use our gcc
+        # libstdc++.so!!
         if '/gcc/' not in target:
             if gcc['gcc'] != 'gcc':
                 tmp = glob('%s/lib/gcc/x86_64-pc-linux-gnu/*' % os_environ['GCC_TARGET_FOLDER'])
                 os_environ['LD_LIBRARY_PATH'] = ':'.join(tmp+[
+                    '%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     '%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LD_LIBRARY_PATH']
@@ -1104,18 +1090,21 @@ class generic:
 
             if 'GCC_TARGET_FOLDER' in os_environ:
                 os_environ['LIBRARY_PATH'] = ':'.join([
+                    '%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
                     '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LIBRARY_PATH'],
                 ])
 
                 os_environ['LDFLAGS']      = ' '.join([
+                    '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LDFLAGS']
                 ])
 
                 os_environ['LLDFLAGS']      = ' '.join([
+                    '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LLDFLAGS']
@@ -1128,6 +1117,9 @@ class generic:
         # expand variables in os_environ
         for each in os_environ:
             os_environ[each] = expandvars(os_environ[each], env=os_environ)
+
+        # set LD_RUN_PATH to be the same as LIBRARY_PATH
+        os_environ['LD_RUN_PATH'] = os_environ['LIBRARY_PATH']
 
         # run the build!!
         from subprocess import Popen
@@ -1390,7 +1382,7 @@ class generic:
         for version in ids:
             v  = map(lambda x: int(x), version.split('.')[:3])
             vv = map(lambda x: int(''.join(filter(lambda z: z.isdigit(),x))), url[2].split('.')[:3])
-            if len(vv)>2:
+            if len(vv)> 2:
                 if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]:
                     for each in self.sed[version]:
                         f = "%s/%s" % (t,each)
