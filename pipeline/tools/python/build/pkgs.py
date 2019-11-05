@@ -87,35 +87,6 @@ class all: # noqa
         # )
         # build.allDepend.append(curl)
 
-        binutils = build.configure(
-            ARGUMENTS,
-            'binutils',
-            sed = { '0.0.0' : {
-                'gprof/Makefile.in' : [
-                    ('SUFFIXES = .m','SUFFIXES ='),
-                    ('.SUFFIXES: .m ','.SUFFIXES: '),
-                ],
-            }},
-            # binutils-2.17 is the best for gcc 4.1.2
-            # but it doesn't work with shared libs in centos 7.
-            download=[(
-                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.17a.tar.bz2',
-                'binutils-2.17.tar.gz',
-                '2.17.1',
-                '1d81edd0569de4d84091526fd578dd7b'
-            ),(
-            # so we're defaulting to 2.22.0 for now.
-                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
-                'binutils-2.22.tar.gz',
-                '2.22.0',
-                '8b3ad7090e3989810943aa19103fdb83'
-            )],
-            depend = allDepend,
-        )
-        self.binutils = binutils
-        allDepend += [binutils]
-
-
         gmp = build.configure(
            ARGUMENTS,
            'gmp',
@@ -169,6 +140,35 @@ class all: # noqa
         allDepend += [flex]
 
 
+        binutils = build.configure(
+            ARGUMENTS,
+            'binutils',
+            sed = { '0.0.0' : {
+                'gprof/Makefile.in' : [
+                    ('SUFFIXES = .m','SUFFIXES ='),
+                    ('.SUFFIXES: .m ','.SUFFIXES: '),
+                ],
+            }},
+            # binutils-2.17 is the best for gcc 4.1.2
+            # but it doesn't work with shared libs in centos 7.
+            download=[(
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.17a.tar.bz2',
+                'binutils-2.17.tar.gz',
+                '2.17.1',
+                '1d81edd0569de4d84091526fd578dd7b'
+            ),(
+            # so we're defaulting to 2.22.0 for now.
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
+                'binutils-2.22.tar.gz',
+                '2.22.0',
+                '8b3ad7090e3989810943aa19103fdb83'
+            )],
+            depend = allDepend,
+        )
+        self.binutils = binutils
+        allDepend += [binutils]
+
+
         gcc = build.gccBuild(
                 ARGUMENTS,
                 'gcc',
@@ -201,7 +201,7 @@ class all: # noqa
         self.gcc = gcc
         # lets use our own latest GCC to build everything!!!
         allDepend += [gcc]
-        
+
 
         icu = build.configure(
             ARGUMENTS,

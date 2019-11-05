@@ -49,6 +49,30 @@ def expandvars(path, env=os.environ, default=None, skip_escaped=False):
     reVar = (r'(?<!\\)' if skip_escaped else '') + r'\$(\w+|\{([^}]*)\})'
     return re.sub(reVar, replace_var, path)
 
+def checkPathsExist( os_environ ):
+    for each in os_environ.keys():
+        # check if the paths in the env vars exists.
+        # skip the ones that doesn't
+        parts = []
+        for each in os_environ[each].split(':'):
+            if each.strip():
+                # check if we have a path,
+                # so we can check if the path exists
+                if each[0] == '/' and not os.path.exists( each ):
+                    continue
+                parts += [each]
+        os_environ[each] = ':'.join(parts)
+
+        parts = []
+        for each in os_environ[each].split(' '):
+            if each.strip():
+                # check if we have a path,
+                # so we can check if the path exists
+                if each[0:2] in ['-L', '-I'] and not os.path.exists( each[2:] ):
+                    continue
+                parts += [each]
+        os_environ[each] = ':'.join(parts)
+
 
 def DEBUG():
     return ARGUMENTS.get('debug', 0)
@@ -1117,6 +1141,9 @@ class generic:
         # expand variables in os_environ
         for each in os_environ:
             os_environ[each] = expandvars(os_environ[each], env=os_environ)
+
+        # cleanup paths that don't exist from the env vars!
+        checkPathsExist( os_environ )
 
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
         os_environ['LD_RUN_PATH'] = os_environ['LIBRARY_PATH']

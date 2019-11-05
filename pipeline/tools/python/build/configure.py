@@ -41,8 +41,8 @@ class configure(generic):
     def fixCMD(self, cmd):
         if 'configure' in cmd and '--prefix=' not in cmd:
             cmd = cmd.replace('configure', 'configure --prefix=$TARGET_FOLDER ')
-        if self.name not in ['zlib']:
-            cmd += ' --disable-werror '  
+        if 'configure' in cmd and self.name not in ['zlib','binutils']:
+            cmd = cmd.replace('configure', 'configure --disable-werror ')
         if 'make' in cmd and 'cmake' not in cmd:
             if not '-j' in cmd:
                 cmd = cmd.replace('make', "make -j $DCORES")
