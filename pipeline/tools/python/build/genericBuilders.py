@@ -37,6 +37,10 @@ crtl_file_lastlog = '.lastlog'
 
 _spinnerCount = 0
 
+
+mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
+memGB = int(mem)/1024/1024
+
 def expandvars(path, env=os.environ, default=None, skip_escaped=False):
     """Expand environment variables of form $var and ${var}.
        If parameter 'skip_escaped' is True, all escaped variable references
@@ -50,28 +54,33 @@ def expandvars(path, env=os.environ, default=None, skip_escaped=False):
     return re.sub(reVar, replace_var, path)
 
 def checkPathsExist( os_environ ):
+    '''' remove unexistent paths from a env vars dict '''
     for each in os_environ.keys():
         # check if the paths in the env vars exists.
         # skip the ones that doesn't
-        parts = []
-        for each in os_environ[each].split(':'):
-            if each.strip():
-                # check if we have a path,
-                # so we can check if the path exists
-                if each[0] == '/' and not os.path.exists( each ):
-                    continue
-                parts += [each]
-        os_environ[each] = ':'.join(parts)
-
-        parts = []
-        for each in os_environ[each].split(' '):
-            if each.strip():
-                # check if we have a path,
-                # so we can check if the path exists
-                if each[0:2] in ['-L', '-I'] and not os.path.exists( each[2:] ):
-                    continue
-                parts += [each]
-        os_environ[each] = ':'.join(parts)
+        if not [ x for x in ['TARGET', 'ROOT'] if x in each ]:
+            if '-L' in os_environ[each] or '-I' in os_environ[each]:
+                # if it's a FLAGS env var
+                parts = []
+                for n in os_environ[each].split(' '):
+                    if n.strip():
+                        # check if we have a path,
+                        # so we can check if the path exists
+                        if n[0:2] in ['-L', '-I'] and not os.path.exists( n[2:] ):
+                            continue
+                        parts += [n]
+                os_environ[each] = ' '.join(parts)
+            else:
+                # or else, consider it a search path
+                parts = []
+                for n in os_environ[each].split(':'):
+                    if n.strip():
+                        # check if we have a path,
+                        # so we can check if the path exists
+                        if n[0] == '/' and not os.path.exists( n ):
+                            continue
+                        parts += [n]
+                os_environ[each] = ':'.join(parts)
 
 
 def DEBUG():
@@ -100,6 +109,13 @@ __pkgInstalled__={}
 CORES=int(multiprocessing.cpu_count())
 os.environ['CORES'] = '%d' % CORES
 os.environ['DCORES'] = '%d' % (2*CORES)
+
+# if we have less than 8GB, use half of the cores to build
+if memGB < 8:
+    os.environ['CORES'] = '%d' % (CORES/2)
+    os.environ['DCORES'] = '%d' % (CORES)
+
+
 
 # we store in this list all builds that we want to make
 # subsequent builds depend on.
@@ -256,7 +272,6 @@ class generic:
         allPkgs[name] = self
 
         # dependency
-        self.set( "ENVIRON_DEPEND",  ' '.join([x.name for x in depend]) )
         self.dependOn = depend
         if type(depend) == type([]):
             self.dependOn = {}
@@ -270,7 +285,7 @@ class generic:
         for d in allDepend:
             if d not in self.dependOn:
                 self.dependOn[d] = None
-
+        self.set( "ENVIRON_DEPEND",  ' '.join([x.name for x in self.dependOn]) )
 
 
         # set the base libraries to build for.
@@ -492,8 +507,6 @@ class generic:
                                     source.append( dependOn.depend[p][depend_n] )
                             elif len(k)>0:
                                 kk=k[-1]
-                                if dependOn.name in ['gcc','python']:
-                                    kk=k[0]
                                 if dependOn.depend[kk][depend_n] not in source:
                                     source.append( dependOn.depend[kk][depend_n] )
 
@@ -674,7 +687,12 @@ class generic:
         # released with the same version!
         # also, for packages who need an specific version of a dependency to build, sets it here!
         '''
+
+        # by default, use the latest version
         depend_n = -1
+        if dependOn.name in ['gcc', 'python']:
+            # or the oldest if it's gcc or python
+            depend_n = 0
 
         # we have to use the same gcc version as the current python build used.
         if 'PYTHON_VERSION' in self.os_environ:
@@ -686,6 +704,10 @@ class generic:
                         self.dependOn[ dependOn ] = gcc_version[4][ dependOn ]
             if 'python' in dependOn.name:
                 self.dependOn[ dependOn ] = self.os_environ['PYTHON_VERSION']
+        else:
+            self.dependOn[ dependOn ] = dependOn.downloadList[depend_n][2]
+            if 'python' in dependOn.name:
+                self.os_environ['PYTHON_VERSION'] = dependOn.downloadList[depend_n][2]
 
 
         dependOnVersion = self.dependOn[dependOn]
@@ -844,7 +866,7 @@ class generic:
         for dependOn in self.dependOn:
             if dependOn and dependOn.name not in dependList:
                 # if not in the source list, skip it
-                if dependOn.name not in self.env['ENVIRON_DEPEND'].split(' '):
+                if dependOn.name not in target and dependOn.name not in self.env['ENVIRON_DEPEND'].split(' '):
                     continue
 
                 # deal with python dependency
@@ -881,8 +903,8 @@ class generic:
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
 
-                    if dependOn.name == 'gcc':
-                        print dependOn.name ,dependOn.targetFolder,depend_n
+                    # if dependOn.name == 'gcc':
+                    #     print dependOn.name ,dependOn.targetFolder,depend_n
 
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
@@ -1029,7 +1051,6 @@ class generic:
             os_environ['LD_LIBRARY_PATH'],
             '/usr/lib/x86_64-linux-gnu/',
         ])
-        os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
 
         # os_environ['PATH'] = ':'.join([
         #     pipe.apps.python().path('bin'),
@@ -1113,17 +1134,26 @@ class generic:
                 ])
 
             if 'GCC_TARGET_FOLDER' in os_environ:
+
+                # os_environ['LD_LIBRARY_PATH'] = ':'.join([
+                #     '%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                #     '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
+                #     '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
+                #     os_environ['LD_LIBRARY_PATH'],
+                # ])
                 os_environ['LIBRARY_PATH'] = ':'.join([
                     '%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
                     '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LIBRARY_PATH'],
                 ])
-
                 os_environ['LDFLAGS']      = ' '.join([
                     '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LDFLAGS']
                 ])
 
@@ -1131,12 +1161,22 @@ class generic:
                     '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                    '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LLDFLAGS']
                 ])
 
 
         # this helps configure to find the corret python
         os_environ['PYTHON'] = '$PYTHON_TARGET_FOLDER/bin/python'
+
+        # create current package bin/libs folders so paths are not
+        # removed from env vars
+        for n in ['bin', 'lib', 'lib64']:
+            path = '%s/%s' % (os_environ['TARGET_FOLDER'], n )
+            if not os.path.exists( path ):
+                os.makedirs( path )
 
         # expand variables in os_environ
         for each in os_environ:
@@ -1147,6 +1187,7 @@ class generic:
 
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
         os_environ['LD_RUN_PATH'] = os_environ['LIBRARY_PATH']
+        os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
 
         # run the build!!
         from subprocess import Popen

@@ -260,7 +260,7 @@ if canBuildCortexNow:
 
     # cortex dependency
     depend = [
-        pkgs.icu, pkgs.scons, pkgs.tbb,
+        pkgs.icu, pkgs.tbb,
         pkgs.freeglut, pkgs.freetype, pkgs.libpng, pkgs.hdf5,
         pkgs.tiff, pkgs.jpeg, pkgs.alembic, pkgs.openssl,
         pkgs.ilmbase, pkgs.openexr

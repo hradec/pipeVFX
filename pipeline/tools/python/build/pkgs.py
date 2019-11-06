@@ -56,22 +56,22 @@ class all: # noqa
 
         allDepend = []
 
-        zlib = build.configure(
-            ARGUMENTS,
-            'zlib',
-            download=[(
-                'http://zlib.net/fossils/zlib-1.2.8.tar.gz',
-                'zlib-1.2.8.tar.gz',
-                '1.2.8',
-                '44d667c142d7cda120332623eab69f40'
-            ),(
-                'http://zlib.net/zlib-1.2.11.tar.gz',
-                'zlib-1.2.11.tar.gz',
-                '1.2.11',
-                '1c9f62f0778697a09d36121ead88e08e'
-            )],
-        )
-        allDepend += [zlib]
+        # zlib = build.configure(
+        #     ARGUMENTS,
+        #     'zlib',
+        #     download=[(
+        #         'http://zlib.net/fossils/zlib-1.2.8.tar.gz',
+        #         'zlib-1.2.8.tar.gz',
+        #         '1.2.8',
+        #         '44d667c142d7cda120332623eab69f40'
+        #     ),(
+        #         'http://zlib.net/zlib-1.2.11.tar.gz',
+        #         'zlib-1.2.11.tar.gz',
+        #         '1.2.11',
+        #         '1c9f62f0778697a09d36121ead88e08e'
+        #     )],
+        # )
+        # allDepend += [zlib]
 
         # curl = build.configure(
         #        ARGUMENTS,
@@ -162,11 +162,18 @@ class all: # noqa
                 'binutils-2.22.tar.gz',
                 '2.22.0',
                 '8b3ad7090e3989810943aa19103fdb83'
+            ),(
+            # so we're defaulting to 2.22.0 for now.
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.33.1.tar.gz',
+                'binutils-2.33.1.tar.gz',
+                '2.33.1',
+                '1a6b16bcc926e312633fcc3fae14ba0a'
+
             )],
             depend = allDepend,
         )
         self.binutils = binutils
-        allDepend += [binutils]
+        # allDepend += [binutils]
 
 
         gcc = build.gccBuild(
@@ -189,12 +196,14 @@ class all: # noqa
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
                     'gcc-4.1.2.tar.gz',
                     '4.1.2',
-                    'dd2a7f4dcd33808d344949fcec87aa86'
+                    'dd2a7f4dcd33808d344949fcec87aa86',
+                    { binutils : '2.22.0' }
                 ),(
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
-                    'bfe56e74d31d25009c8fb55fd3ca7e01'
+                    'bfe56e74d31d25009c8fb55fd3ca7e01',
+                    { binutils : '2.22.0' }
                 )],
                 depend = allDepend,
         )
@@ -268,19 +277,18 @@ class all: # noqa
             ARGUMENTS,
             'openssl',
             download=[(
-                'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2h.tar.gz',
-                'openssl-OpenSSL_1_0_2h.tar.gz',
-                '1.0.2h',
-                'bd70ca76ef00c9b65a927883f62998d9',
-                { gcc : '4.1.2' }
-            ),(
+            #     'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2h.tar.gz',
+            #     'openssl-OpenSSL_1_0_2h.tar.gz',
+            #     '1.0.2h',
+            #     'bd70ca76ef00c9b65a927883f62998d9',
+            # ),(
                 'https://github.com/openssl/openssl/archive/OpenSSL_1_0_2s.tar.gz',
                 'openssl-OpenSSL_1_0_2s.tar.gz',
                 '1.0.2s',
                 '24886418211ec05e3f1c764a489b29c1',
-                { gcc : '4.1.2' }
             )],
             depend = allDepend,
+            parallel = 0,
         )
         self.openssl = openssl
         allDepend += [openssl]
@@ -323,7 +331,8 @@ class all: # noqa
                 'cython',
                 'subprocess32',
                 'numpy',
-                'dbus-python'
+                'dbus-python',
+                'scons'
             ]
         )
         self.python = python
@@ -407,9 +416,9 @@ class all: # noqa
                 '918ffbddcffbac83c218bc52355b6d5a',
                 { gcc : '4.1.2', python: '2.7.16' }
             # ),(
-            #     'http://downloads.sourceforge.net/project/freeglut/freeglut/3.0.0/freeglut-3.0.0.tar.gz?r=http%3A%2F%2Ffreeglut.sourceforge.net%2Findex.php&ts=1432619114&use_mirror=hivelocity',
-            #     'freeglut-3.0.0.tar.gz',
-            #     '3.0.0',
+            #     'https://github.com/dcnieho/FreeGLUT/archive/FG_3_2_1.tar.gz',
+            #     'FreeGLUT-FG_3_2_1.tar.gz',
+            #     '3.2.1',
             #     '90c3ca4dd9d51cf32276bc5344ec9754',
             )],
             environ = {
@@ -506,7 +515,8 @@ class all: # noqa
                 'd1d2e940dea0b5ad435f21f03d96dd72',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend=[jpeg]+allDepend,
+            depend=[jpeg, libraw]+allDepend,
+            parallel=0,
         )
         self.tiff = tiff
         allDepend += [tiff]
@@ -534,6 +544,12 @@ class all: # noqa
                 'freetype-2.5.5.tar.gz',
                 '2.5.5',
                 '7448edfbd40c7aa5088684b0a3edb2b8',
+                { gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                'https://download.savannah.gnu.org/releases/freetype/freetype-2.10.0.tar.gz',
+                'freetype-2.10.0.tar.gz',
+                '2.10.0',
+                '58d56c9ad775326d6c9c5417c462a527',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend = allDepend,
@@ -592,27 +608,27 @@ class all: # noqa
         # self.numpy = numpy
         # build.allDepend.append(numpy)
 
-        self.scons = build.pythonSetup(
-            ARGUMENTS,
-            'scons',
-            download=[(
-                # 'http://downloads.sourceforge.net/project/scons/scons/1.0.0/scons-1.0.0.tar.gz',
-                # 'scons-1.0.0.tar.gz',
-                # '1.0.0',
-                # '9afdfe0cc6d957568cc4386567a7c19e',
-                'https://github.com/SCons/scons/archive/3.0.4.tar.gz',
-                'scons-3.0.4.tar.gz',
-                '3.0.4',
-                '15966194360560ee40ff75fcbe875f0c',
-            )],
-            baseLibs=[python],
-            depend=[python, openssl]+allDepend,
-            src = 'bootstrap.py',
-            cmd=[
-                './bootstrap.py build/scons',
-                'cd build/scons',
-            ]+build.pythonSetup.cmd
-        )
+        # self.scons = build.pythonSetup(
+        #     ARGUMENTS,
+        #     'scons',
+        #     download=[(
+        #         # 'http://downloads.sourceforge.net/project/scons/scons/1.0.0/scons-1.0.0.tar.gz',
+        #         # 'scons-1.0.0.tar.gz',
+        #         # '1.0.0',
+        #         # '9afdfe0cc6d957568cc4386567a7c19e',
+        #         'https://github.com/SCons/scons/archive/3.0.4.tar.gz',
+        #         'scons-3.0.4.tar.gz',
+        #         '3.0.4',
+        #         '15966194360560ee40ff75fcbe875f0c',
+        #     )],
+        #     baseLibs=[python],
+        #     depend=[python, openssl]+allDepend,
+        #     src = 'bootstrap.py',
+        #     cmd=[
+        #         './bootstrap.py build/scons',
+        #         'cd build/scons',
+        #     ]+build.pythonSetup.cmd
+        # )
 
         # build all simple python modules here.
         # since its just a matter of running setup.py (hence "simple"),

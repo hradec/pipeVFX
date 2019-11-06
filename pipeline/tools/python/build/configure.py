@@ -41,12 +41,13 @@ class configure(generic):
     def fixCMD(self, cmd):
         if 'configure' in cmd and '--prefix=' not in cmd:
             cmd = cmd.replace('configure', 'configure --prefix=$TARGET_FOLDER ')
-        if 'configure' in cmd and self.name not in ['zlib','binutils']:
+        if 'configure' in cmd and self.name not in ['zlib','binutils','cmake']:
             cmd = cmd.replace('configure', 'configure --disable-werror ')
-        if 'make' in cmd and 'cmake' not in cmd:
-            if not '-j' in cmd:
-                cmd = cmd.replace('make', "make -j $DCORES")
-#            cmd = cmd.replace('make', "make CC=$CC CXX=$CXX CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' ")
+        if 'parallel' not in self.kargs or self.kargs['parallel'] == 1:
+            if 'make' in cmd and 'cmake' not in cmd:
+                if not '-j' in cmd:
+                    cmd = cmd.replace('make', "make -j $DCORES")
+                    # cmd = cmd.replace('make', "make CC=$CC CXX=$CXX CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' ")
         return cmd
 
 
@@ -262,10 +263,10 @@ class openssl(configure):
     cmd=[
         # './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$TARGET_FOLDER',
         # 'make depend && make && make install',
-        '''echo "OPENSSL_$(basename $OPENSSL_TARGET_FOLDER | awk -F'.' '{print $1.$2.$3}') { global: *;};" | tee ./openssl.ld''',
-        '''echo "OPENSSL_$(basename $OPENSSL_TARGET_FOLDER | awk -F'.' '{print $1.$2.0}') { global: *;};" | tee -a ./openssl.ld''',
+        '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.$3}') { global: *;};" | tee ./openssl.ld''',
+        '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.0}') { global: *;};" | tee -a ./openssl.ld''',
         './config shared enable-tlsext --prefix=$TARGET_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
-        'make -j $DCORES && make -j $DCORES install',
+        'make && make install',
     ]
     def installer(self, target, source, env): # noqa
         targetFolder = os.path.dirname(str(target[0]))
