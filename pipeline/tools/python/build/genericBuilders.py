@@ -111,7 +111,10 @@ os.environ['CORES'] = '%d' % CORES
 os.environ['DCORES'] = '%d' % (2*CORES)
 
 # if we have less than 8GB, use half of the cores to build
-if memGB < 8:
+if memGB < 4:
+    os.environ['CORES'] = '%d' % (CORES/4)
+    os.environ['DCORES'] = '%d' % (CORES/2)
+elif memGB < 8:
     os.environ['CORES'] = '%d' % (CORES/2)
     os.environ['DCORES'] = '%d' % (CORES)
 
@@ -768,6 +771,9 @@ class generic:
         os_environ['PYTHONPATH'] = os.environ['PYTHONPATH']
         os_environ['PATH'] = os.environ['PATH']
         os_environ['PATH'] = os_environ['PATH'].replace(pipe.build.gcc(),'').replace('::',':')
+        os_environ['CORES'] = os.environ['CORES']
+        os_environ['DCORES'] = os.environ['DCORES']
+
 
         target=str(target[0])
         pkgVersion = os.path.basename(os.path.dirname(target))
@@ -1173,7 +1179,11 @@ class generic:
 
         # create current package bin/libs folders so paths are not
         # removed from env vars
-        for n in ['bin', 'lib', 'lib64']:
+        folders = ['bin', 'lib', 'lib64']
+        _p = '.'.join( lastlog.split('.')[-2] )
+        if float(_p) > 1.0:
+            folders += ['lib/python%s/site-packages' % _p]
+        for n in folders:
             path = '%s/%s' % (os_environ['TARGET_FOLDER'], n )
             if not os.path.exists( path ):
                 os.makedirs( path )

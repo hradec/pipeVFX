@@ -36,12 +36,12 @@ class pythonSetup(generic):
     ]
 
     def fixCMD(self, cmd):
-        mkdir = 'mkdir -p $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/'
+        mkdir = 'mkdir -p $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ && export PYTHONPATH=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/:$PYTHONPATH'
         if mkdir.replace(' ','').lower() not in cmd.replace(' ','').lower():
             cmd = "%s && %s" % (mkdir,cmd)
         return cmd
 
-    
+
 #    def action(self, target, source):
 #        self.registerSconsBuilder(self.pythonSetup)
 #        return self.env.pythonSetup( target, source )

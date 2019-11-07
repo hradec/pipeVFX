@@ -41,7 +41,7 @@ class configure(generic):
     def fixCMD(self, cmd):
         if 'configure' in cmd and '--prefix=' not in cmd:
             cmd = cmd.replace('configure', 'configure --prefix=$TARGET_FOLDER ')
-        if 'configure' in cmd and self.name not in ['zlib','binutils','cmake']:
+        if 'configure' in cmd and self.name not in ['zlib','binutils','cmake', 'qt']:
             cmd = cmd.replace('configure', 'configure --disable-werror ')
         if 'parallel' not in self.kargs or self.kargs['parallel'] == 1:
             if 'make' in cmd and 'cmake' not in cmd:

@@ -608,28 +608,6 @@ class all: # noqa
         # self.numpy = numpy
         # build.allDepend.append(numpy)
 
-        # self.scons = build.pythonSetup(
-        #     ARGUMENTS,
-        #     'scons',
-        #     download=[(
-        #         # 'http://downloads.sourceforge.net/project/scons/scons/1.0.0/scons-1.0.0.tar.gz',
-        #         # 'scons-1.0.0.tar.gz',
-        #         # '1.0.0',
-        #         # '9afdfe0cc6d957568cc4386567a7c19e',
-        #         'https://github.com/SCons/scons/archive/3.0.4.tar.gz',
-        #         'scons-3.0.4.tar.gz',
-        #         '3.0.4',
-        #         '15966194360560ee40ff75fcbe875f0c',
-        #     )],
-        #     baseLibs=[python],
-        #     depend=[python, openssl]+allDepend,
-        #     src = 'bootstrap.py',
-        #     cmd=[
-        #         './bootstrap.py build/scons',
-        #         'cd build/scons',
-        #     ]+build.pythonSetup.cmd
-        # )
-
         # build all simple python modules here.
         # since its just a matter of running setup.py (hence "simple"),
         # we put all name/version/download infor in a dict for easy maintainance,
