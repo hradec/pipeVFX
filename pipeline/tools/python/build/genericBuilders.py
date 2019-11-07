@@ -77,7 +77,7 @@ def checkPathsExist( os_environ ):
                     if n.strip():
                         # check if we have a path,
                         # so we can check if the path exists
-                        if n[0] == '/' and not os.path.exists( n ):
+                        if n[0] == '/' and not os.path.exists( n ) and 'http' not in n:
                             continue
                         parts += [n]
                 os_environ[each] = ':'.join(parts)
