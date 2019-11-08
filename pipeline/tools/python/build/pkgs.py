@@ -180,6 +180,7 @@ class all: # noqa
                 ARGUMENTS,
                 'gcc',
                 download=[(
+                    # CY2014
                     # although we have the URL for the source code of 4.1.2,
                     # we are using a pre-build tarball done in arch since
                     # building it in centos 7 breaks something, and some shared
@@ -197,14 +198,16 @@ class all: # noqa
                     'bf35fabc47ead3b1f743492052296336',
                     { binutils : '2.22.0' }
                 ),(
+                    # CY2015
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
                     'bfe56e74d31d25009c8fb55fd3ca7e01',
                     { binutils : '2.22.0' }
                 # ),(
-                #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
-                #    'gcc-6.3.0.tar.gz',
+                #     # CY2018 GCC 6.3.1 source code.
+                #    'http://vault.centos.org/7.5.1804/sclo/Source/rh/devtoolset-6/devtoolset-6-gcc-6.3.1-3.1.el7.src.rpm',
+                #    'gcc-6.3.1.tar.gz',
                 #    '6.3.0',
                 #    '6e5ea04789678f1250c1b30c4d9ec417'
                 )],
@@ -312,12 +315,14 @@ class all: # noqa
                 #     '88d61f82e3616a4be952828b3694109d',
                 #     { readline : '7.0.0', openssl : '1.0.2s' },
                 # ),(
+                    # CY2015 - CY2019
                     'http://www.python.org/ftp/python/2.7.16/Python-2.7.16.tgz',
                     'Python-2.7.16.tar.gz',
                     '2.7.16',
                     'f1a2ace631068444831d01485466ece0',
                     { gcc : '4.1.2', readline : '7.0.0', openssl : '1.0.2s' },
                 ),(
+                    # CY2020
                     'https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz',
                     'Python-3.7.5.tar.gz',
                     '3.7.5',
@@ -345,16 +350,39 @@ class all: # noqa
             ARGUMENTS,
             'tbb',
             download=[(
+                # CY2016
+                'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb43_20150611oss_src.tgz',
+                'tbb43_20150611oss.tar.gz',
+                '4.3.6',
+                'bb144ec868c53244ea6be11921d86f03',
+                { gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                # CY2017
                 'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb44_20160526oss_src_0.tgz',
                 'tbb44_20160526oss.tar.gz',
                 '4.4.r20160526oss',
                 '6309541504a819dabe352130f27e57d5',
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
-                'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb43_20150611oss_src.tgz',
-                'tbb43_20150611oss.tar.gz',
-                '4.3.6',
-                'bb144ec868c53244ea6be11921d86f03',
+                # CY2018
+                'https://github.com/intel/tbb.git',
+                'tbb-2017_U6.zip',
+                '2017_U6',
+                None,
+                { gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                # CY2019
+                'https://github.com/intel/tbb.git',
+                'tbb-2018.zip',
+                '2018',
+                None,
+                { gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                # CY2020
+                'https://github.com/intel/tbb.git',
+                'tbb-2019_U6.zip',
+                '2019_U6',
+                None,
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 'https://github.com/intel/tbb.git',
@@ -560,6 +588,36 @@ class all: # noqa
         self.freetype = freetype
         allDepend += [freetype]
 
+        gperf = build.configure(
+            ARGUMENTS,
+            'gperf',
+            download=[(
+                'https://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz',
+                'gperf-3.1.tar.gz',
+                '3.1.0',
+                '9e251c0a618ad0824b51117d5d9db87e'
+            )],
+            depend = allDepend,
+        )
+        self.gperf = gperf
+        allDepend += [gperf]
+
+        fontconfig = build.configure(
+            ARGUMENTS,
+            'fontconfig',
+            download=[(
+                'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.gz',
+                'fontconfig-2.13.92.tar.gz',
+                '2.13.92',
+                'eda1551685c25c4588da39222142f063'
+            )],
+            depend = allDepend,
+        )
+        self.fontconfig = fontconfig
+        allDepend += [fontconfig]
+
+
+
         # python modules
         # ============================================================================================================================================
         dbus = build.configure(
@@ -677,21 +735,38 @@ class all: # noqa
                 'efbfbff5a85a9330951f243d0a46e4b9',
                 # { gcc : '4.1.2', python: '2.7.16' }
             ),(
+                # CY2015 - CY2016
                 'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
                 'boost_1_55_0.tar.gz',
                 '1.55.0',
                 '93780777cfbf999a600f62883bd54b17',
                 # { gcc : '4.1.2', python: '2.7.16' }
             ),(
+                # not sure why we build this yet...
                 'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz',
                 'boost_1_56_0.tar.gz',
                 '1.56.0',
                 '8c54705c424513fa2be0042696a3a162',
                 # { gcc : '4.1.2', python: '2.7.16' }
             # ),(
+            #     # CY2017 - CY2018
             #     'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
             #     'boost_1_61_0.tar.gz',
             #     '1.61.0',
+            #     '874805ba2e2ee415b1877ef3297bf8ad',
+            #     { gcc : '4.1.2' }
+            # ),(
+            #     # CY2019
+            #     'http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.gz',
+            #     'boost_1_66_0.tar.gz',
+            #     '1.66.0',
+            #     '874805ba2e2ee415b1877ef3297bf8ad',
+            #     { gcc : '4.1.2' }
+            # ),(
+            #     # CY2020
+            #     'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
+            #     'boost_1_70_0.tar.gz',
+            #     '1.70.0',
             #     '874805ba2e2ee415b1877ef3297bf8ad',
             #     { gcc : '4.1.2' }
             )],
@@ -717,15 +792,24 @@ class all: # noqa
                 '8ba2f608191ad020e50277d8a3ba0850',
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
+                # CY2016 - CY2018
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
                 'ilmbase-2.2.0.tar.gz',
                 '2.2.0',
                 'b540db502c5fa42078249f43d18a4652',
                 { gcc : '4.1.2', python: '2.7.16' }
             # ),(
+            #     # CY2019
             #     'https://github.com/openexr/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
             #     'ilmbase-2.3.0.tar.gz',
             #     '2.3.0',
+            #     '354bf86de3b930ab87ac63619d60c860',
+            #     { gcc : '4.8.5' }
+            # ),(
+            #     # CY2020
+            #     'https://github.com/openexr/openexr/releases/download/v2.4.0/ilmbase-2.4.0.tar.gz',
+            #     'ilmbase-2.4.0.tar.gz',
+            #     '2.4.0',
             #     '354bf86de3b930ab87ac63619d60c860',
             #     { gcc : '4.8.5' }
             )],
@@ -758,15 +842,24 @@ class all: # noqa
                 '33735d37d2ee01c6d8fbd0df94fb8b43',
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
+                # CY2016 - CY2018
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
                 'openexr-2.2.0.tar.gz',
                 '2.2.0',
                 'b64e931c82aa3790329c21418373db4e',
                 { gcc : '4.1.2', python: '2.7.16' }
             # ),(
+            #     # CY2019
             #     'https://github.com/openexr/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
             #     'openexr-2.3.0.tar.gz',
             #     '2.3.0',
+            #     'a157e8a46596bc185f2472a5a4682174',
+            #     { gcc : '4.8.5' }
+            # ),(
+            #     # CY2020
+            #     'https://github.com/openexr/openexr/releases/download/v2.4.0/openexr-2.4.0.tar.gz',
+            #     'openexr-2.4.0.tar.gz',
+            #     '2.4.0',
             #     'a157e8a46596bc185f2472a5a4682174',
             #     { gcc : '4.8.5' }
             )],
@@ -897,12 +990,21 @@ class all: # noqa
             },'1.1.0' : {
             }},
             download = [(
+                # CY2015 - CY2018
                 'https://github.com/imageworks/OpenColorIO/archive/v1.0.9.tar.gz',
                 'OpenColorIO-1.0.9.tar.gz',
                 '1.0.9',
                 '06d0efe9cc1b32d7b14134779c9d1251',
                 { gcc : '4.1.2' }
             ),(
+                # CY2019
+                'https://github.com/imageworks/OpenColorIO/archive/v1.1.0.tar.gz',
+                'OpenColorIO-1.1.0.tar.gz',
+                '1.1.0',
+                '802d8f5b1d1fe316ec5f76511aa611b8',
+                { gcc : '4.8.5' }
+            ),(
+                # CY2020
                 'https://github.com/imageworks/OpenColorIO/archive/v1.1.1.tar.gz',
                 'OpenColorIO-1.1.1.tar.gz',
                 '1.1.1',
@@ -1157,6 +1259,47 @@ class all: # noqa
         self.materialx = materialx
 
         # =============================================================================================================================================
+        qtMaya = build.download(
+            ARGUMENTS,
+            'qtmaya',
+            download=[(
+                'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
+                'qtbase-Maya2018.4.tar.gz',
+                '5.6.1',
+                '7fde8ea6f9cfb240a13987fd1ba5c410',
+            )],
+            depend = allDepend,
+            src = 'configure'
+        )
+        self.qtMaya = qtMaya
+        qtMayaDeclarative = build.download(
+            ARGUMENTS,
+            'qtmaya_declarative',
+            download=[(
+                'https://github.com/autodesk-forks/qtdeclarative/archive/v5.6.1.tar.gz',
+                'qtdeclarative-5.6.1.tar.gz',
+                '5.6.1',
+                '2cee923e6298297fbd02c511dfd315f2',
+            )],
+            depend = allDepend,
+            src = '.tag'
+        )
+        self.qtMayaDeclarative = qtMayaDeclarative
+        qtMayaX11Extras = build.download(
+            ARGUMENTS,
+            'qtmaya_x11extras',
+            download=[(
+                'https://github.com/autodesk-forks/qtx11extras/archive/v5.6.1.tar.gz',
+                'qtx11extras-5.6.1.tar.gz',
+                '5.6.1',
+                'ab5b5f6c7afa392d2819a29aaf162501',
+            )],
+            depend = allDepend,
+            src = '.tag'
+        )
+        self.qtMayaX11Extras = qtMayaX11Extras
+
+
         qt = build.configure(
             ARGUMENTS,
             'qt',
@@ -1171,30 +1314,44 @@ class all: # noqa
             #     '4.8.6',
             #     '2edbe4d6c2eff33ef91732602f3518eb',
             # ),(
+                # VFXPLATFORM CY2015
                 'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
                 'qt-everywhere-opensource-src-4.8.7.tar.gz',
                 '4.8.7',
                 'd990ee66bf7ab0c785589776f35ba6ad',
                 { gcc : '4.1.2' }
             ),(
-                'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
-                'Maya2018.4.tar.gz',
+                # VFXPLATFORM CY2016-CY2018
+                'http://mirror.csclub.uwaterloo.ca/qtproject/archive/qt/5.6/5.6.1/single/qt-everywhere-opensource-src-5.6.1.tar.gz',
+                'qt-everywhere-opensource-src-5.6.1.tar.gz',
                 '5.6.1',
-                '7fde8ea6f9cfb240a13987fd1ba5c410',
+                'ed16ef2a30c674f91f8615678005d44c',
                 { gcc : '4.8.5' }
+
             )],
             environ = {
-                'LD' : '$CXX -fPIC ',
+                'LD' : '$CXX -fPIC -L$SOURCE_FOLDER/lib/',
                 'CC' : '$CC -fPIC',
                 'CXX' : '$CXX -fPIC',
+                'LD_LIBRARY_PATH' : '$SOURCE_FOLDER/lib/:$LD_LIBRARY_PATH',
             },
             cmd = [
+                # if building 5.6.1, we have to use autodesk qt patches to be
+                # VFXPLATFORM complaint (CY2016 to CY2018)
+                # https://vfxplatform.com/#footnote-qt
+                # it also helps with maya compatibility.
+                '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_TARGET_FOLDER/* qtbase/ )',
+                '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_DECLARATIVE_TARGET_FOLDER/* qtdeclarative/ )',
+                '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_X11EXTRAS_TARGET_FOLDER/* qtx11extras/ )',
                 # './configure  -opensource -shared --confirm-license  -no-webkit -silent',
-                './configure  -opensource -shared --confirm-license -silent',
+                './configure  -opensource -shared --confirm-license -v',
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
-            depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc]+[ x for x in allDepend if python != x ],
+            depend=[
+                tiff,jpeg,libpng,freetype,freeglut,glew,gcc,
+                qtMaya, qtMayaDeclarative, qtMayaX11Extras,
+            ]+[ x for x in allDepend if python != x ],
             verbose=1,
         )
         self.qt = qt

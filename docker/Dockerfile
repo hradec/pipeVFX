@@ -132,6 +132,9 @@ RUN yum -y remove boost
 # we need this to build python3.n
 RUN yum -y install libffi-devel tcl-devel tk-devel libXt-devel
 RUN yum -y install gcc-objc++
+RUN yum -y install xcb-util-wm-devel libxcb-devel.x86_64 \
+    xcb-util-image-devel.x86_64 xcb-util-keysyms-devel.x86_64 \
+    xcb-util-renderutil-devel.x86_64 xcb-util-wm-devel.x86_64
 
 
 ENTRYPOINT "/run.sh"

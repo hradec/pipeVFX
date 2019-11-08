@@ -93,7 +93,7 @@ else
         -e DEBUG=$DEBUG \
         -e TRAVIS=$TRAVIS \
         -e http_proxy='$http_proxy' \
-        -e https_proxy=$https_proxy \
+        -e https_proxy='$https_proxy' \
         hradec/pipevfx_centos_base:centos7"
 
     echo $cmd

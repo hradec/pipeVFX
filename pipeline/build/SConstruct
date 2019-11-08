@@ -88,17 +88,26 @@ if canBuildCortexNow:
             'alembic',
             targetSuffix = "maya%sprman%s" % ( pipe.version.get('maya'), pipe.version.get('prman') ),
             download=[(
-            #     'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
-            #     'alembic-1.7.11.tar.gz',
-            #     '1.7.11',
-            #     'e1f9f2cbe1899d3d55b58708b9307482',
-            #     {ilmbase: "2.2.0", openexr: "2.2.0"},
-            # ),(
+                # CY2014 - CY2016
                 'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
                 'alembic-1.5.8.tar.gz',
                 '1.5.8',
                 'a70ba5f2e80b47d346d15d797c28731a',
                 {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: gcc},
+            # ),(
+            #     # CY2017
+            #     'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
+            #     'alembic-1.6.1.tar.gz',
+            #     '1.6.1',
+            #     'e1f9f2cbe1899d3d55b58708b9307482',
+            #     {ilmbase: "2.2.0", openexr: "2.2.0"},
+            # ),(
+            #     # CY2018 - CY2020
+            #     'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
+            #     'alembic-1.7.11.tar.gz',
+            #     '1.7.11',
+            #     'e1f9f2cbe1899d3d55b58708b9307482',
+            #     {ilmbase: "2.2.0", openexr: "2.2.0"},
             )],
             baseLibs=[pkgs.python],
             depend=[pkgs.hdf5,pkgs.python,pkgs.yasm,pkgs.boost],
@@ -277,7 +286,7 @@ if canBuildCortexNow:
 
     # build one version of IECore, IECorePython and IECoreGL libraries for each boost version
     for bv in pkgs.boost.versions:
-        if bv in ['1.51.0','1.55.0','1.56.0']:
+        if bv in ['1.51.0','1.55.0']:
             # build cortex core libraries only
             sufix = "core.boost.%s" % bv
             cortex[sufix] = build.cortex(
