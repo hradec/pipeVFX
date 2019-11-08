@@ -1371,8 +1371,6 @@ class generic:
         if self.error:
             raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
-
-
         self.shouldBuild( target, source )
         for n in range(len(source)):
             url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
@@ -1400,15 +1398,16 @@ class generic:
                     if '.zip' in s:
                         cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
                         print cmd
-                    lines = os.popen(cmd).readlines()
-                    cmd =  "mv %s/%s %s && rm -rf %s 2>&1" % (tmp, os.path.basename(s.replace('.tar.gz','').replace('.zip','')), os.path.dirname(t), tmp)
-                    lines += os.popen( cmd ).readlines()
+                    cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (os.path.basename(s.replace('.tar.gz','').replace('.zip','')), os.path.dirname(t), tmp)
+                    lines = os.popen( cmd ).readlines()
                     if not os.path.exists(str(target[n])):
                         print '-'*tcols
                         for l in lines:
                             print '\t%s' % l.strip()
                         print str(target[n])
+                        print cmd
                         print '-'*tcols
+                        print "str(target[n])",str(target[n])
                         os.system('/bin/bash')
                         raise Exception("Uncompress failed!")
 

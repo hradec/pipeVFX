@@ -53,79 +53,85 @@ class configure(generic):
 
 class gccBuild(configure):
     ''' build class designed to build differente versions of GCC '''
+    # we're using a tarball for 4.1.2 made on arch linux, since
+    # building it in centos makes some shared libraries build
+    # fail complaining about the need of -fPIC on objects.
+    # It only happens when building gcc 4.1.2 in centos 7 (gcc 4.8.5)
+    # Until we can figure out and fix the build in centos, we're
+    # relying in this 4.1.2 binary tarball.
+    use_bin_tarball = 1
+
     src = 'configure'
     cmd = [
         './configure  --enable-shared',
         'make -j $DCORES',
         'make -j $DCORES install',
     ]
+    # sed = {'4.1.2' : {
+    #     # disable -fvisibility-inlines-hidden since it causes a
+    #     # lot of issues with shared libraries (it will always be disabled)
+    #     'gcc/c-opts.c' : [
+    #         ('visibility_options.inlines_hidden = value', 'visibility_options.inlines_hidden = 0')
+    #     ],
+    # }}
+    # sed = {'4.8.3' : {
+    #     'gmp-4.3.2/configure.in' : [
+    #         ('M4.m4.not.required','M4=m4')
+    #     ],
+    #     'gmp-4.3.2/configure' : [
+    #         ('M4.m4.not.required','M4=m4')
+    #     ],
+    # }},
+
+    def uncompressor( self, target, source, env):
+        ''' we just need this for the 4.1.2 binary tarball!'''
+        t = os.path.abspath(str(target[0]))
+        v = '.'.join(os.path.basename(os.path.dirname(t)).split('-')[-1].split('.')[:2])
+        if self.use_bin_tarball and float(v) == 4.1:
+            # change the target for the gcc 4.1.2 version, since we're using
+            # a binary tarball
+            tt = '/'.join([os.path.dirname(t),'bin'])
+            configure.uncompressor( self, [tt], source, env)
+        else:
+            configure.uncompressor( self, target, source, env)
 
     def fixCMD(self, cmd):
         if self.versionMajor == 4.1:
-            cmd = ' && '.join([
-                # got this build options for arch AUR-mirror for gcc 4.1
-                # " sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in",
-                ''' sed -i -e 's@\./fixinc\.sh@-c true@' gcc/Makefile.in ''',
-                ''' sed -i -e 's/echo \$ldver |/echo \$ldver | cut -d"\)" -f2 | /' ./libstdc++-v3/configure''', # fix wrong LD version detection
-                # 'export CFLAGS="-fgnu89-inline -g -O2 $CFLAGS"',
-                # 'export CXXFLAGS="-fgnu89-inline -g -O2 $CXXFLAGS"',
-                "mkdir -p build",
-                "cd build",
-                '../configure  --prefix=$TARGET_FOLDER '
-                    '--mandir=$TARGET_FOLDER/share/man '
-                    '--libdir=$TARGET_FOLDER/lib '
-                    '--infodir=$TARGET_FOLDER/share/info '
-                    '--libexecdir=$TARGET_FOLDER/lib '
-                    '--enable-languages=c,c++ '
-                    '--enable-__cxa_atexit  '
-                    '--disable-multilib '
-                    '--enable-clocale=gnu '
-                    '--disable-libstdcxx-pch '
-                    '--disable-werror '
-                    '--enable-threads=posix '
-                    '--enable-version-specific-runtime-libs '
-                    '--enable-checking=release '
-                    '--program-suffix=-$(basename $TARGET_FOLDER)',
-                'sed -i.bak -e "s/CC = gcc/CC = gcc -fgnu89-inline/" -e "s/CXX = g++/CXX = g++ -fgnu89-inline/" Makefile',
-                'make -j $DCORES',
-                'make install',
-            ])
-        # if self.versionMajor == 4.1:
-        #     cmd = ' && '.join([
-        #         # got this build options for arch AUR-mirror for gcc 4.1
-        #         # " sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in",
-        #         ''' sed -i -e 's@\./fixinc\.sh@-c true@' gcc/Makefile.in ''',
-        #         ''' sed -i -e 's/echo \$ldver |/echo \$ldver | cut -d"\)" -f2 | /' ./libstdc++-v3/configure''', # fix wrong LD version detection
-        #         # 'export CFLAGS="-fgnu89-inline -g -O2 $CFLAGS"',
-        #         # 'export CXXFLAGS="-fgnu89-inline -g -O2 $CXXFLAGS"',
-        #         "mkdir -p build",
-        #         "cd build",
-        #         '../configure  --prefix=$TARGET_FOLDER '
-        #             '--mandir=$TARGET_FOLDER/share/man '
-        #             '--libdir=$TARGET_FOLDER/lib '
-        #             '--infodir=$TARGET_FOLDER/share/info '
-        #             '--libexecdir=$TARGET_FOLDER/lib '
-        #             '--enable-languages=c,c++ '
-        #             '--enable-__cxa_atexit  '
-        #             '--disable-multilib '
-        #             '--enable-clocale=gnu '
-        #             '--disable-libstdcxx-pch '
-        #             # '--enable-fdpic '
-        #             '--disable-werror '
-        #             # '--enable-visibility '
-        #             '--with-gmp=$GMP_TARGET_FOLDER '
-        #             '--with-mpfr=$MPFR_TARGET_FOLDER '
-        #             '--with-mpc=$MPC_TARGET_FOLDER '
-        #             '--enable-threads=posix '
-        #             '--enable-version-specific-runtime-libs '
-        #             '--enable-checking=release '
-        #             '--enable-shared '
-        #             # '--enable-host-shared '
-        #             '--program-suffix=-$(basename $TARGET_FOLDER) ',
-        #         # 'sed -i.bak -e "s/CC = gcc/CC = gcc -fgnu89-inline/" -e "s/CXX = g++/CXX = g++ -fgnu89-inline/" Makefile',
-        #         'make -j $DCORES',
-        #         'make install',
-        #     ])
+            if self.use_bin_tarball:
+                cmd = 'cp -ruvf ./* $TARGET_FOLDER/'
+            else:
+                cmd = ' && '.join([
+                    # got this build options for arch AUR-mirror for gcc 4.1
+                    # " sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in",
+                    ''' sed -i -e 's@\./fixinc\.sh@-c true@' gcc/Makefile.in ''',
+                    ''' sed -i -e 's/echo \$ldver |/echo \$ldver | cut -d"\)" -f2 | /' ./libstdc++-v3/configure''', # fix wrong LD version detection
+                    # 'export CFLAGS="-fgnu89-inline -g -O2 $CFLAGS"',
+                    # 'export CXXFLAGS="-fgnu89-inline -g -O2 $CXXFLAGS"',
+                    "mkdir -p build",
+                    'source scl_source enable devtoolset-6',
+                    'export CC="$CC -fgnu89-inline -fPIC -O2"',
+                    'export CXX="$CC -fgnu89-inline -fPIC -O2"',
+                    "cd build",
+                    '../configure  --prefix=$TARGET_FOLDER '
+                        '--mandir=$TARGET_FOLDER/share/man '
+                        '--libdir=$TARGET_FOLDER/lib '
+                        '--infodir=$TARGET_FOLDER/share/info '
+                        '--libexecdir=$TARGET_FOLDER/lib '
+                        '--enable-languages=c,c++ '
+                        '--enable-__cxa_atexit  '
+                        '--disable-multilib '
+                        '--enable-clocale=gnu '
+                        '--disable-libstdcxx-pch '
+                        '--disable-werror '
+                        '--enable-threads=posix '
+                        '--enable-version-specific-runtime-libs '
+                        '--enable-checking=release '
+                        '--program-suffix=-$(basename $TARGET_FOLDER)',
+                    # 'sed -i.bak -e "s/CC = gcc/CC = gcc -fgnu89-inline/" -e "s/CXX = g++/CXX = g++ -fgnu89-inline/" Makefile',
+                    'make -j $DCORES',
+                    'make install',
+                ])
+
         elif self.versionMajor == 4.8:
             # extract from https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=gcc48
             distroSpecific = []

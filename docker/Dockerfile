@@ -104,10 +104,17 @@ RUN ln -s /usr/bin/ranlib /usr/sbin/ranlib
 # add default to gcc 6.3.1 to /etc/bashrc, so running bash will automatically set it
 # RUN printf "\nsource scl_source enable devtoolset-6\n" >> /etc/bashrc
 
-ADD docker/run.sh /run.sh
+COPY docker/run.sh /run.sh
 ADD pipeline/tools/python /atomo/pipeline/tools/python
 ADD pipeline/tools/config /atomo/pipeline/tools/config
-ADD pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
+COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
+
+# since we're having trouble with a gcc 4.1.2 built in centos
+# (link complains about code needing -fPIC, when it was compiled with it!)
+# we are adopting this quick and dirty solution, using a pre-compiled binary
+# of gcc 4.1.2, done in an arch linux distro!
+# this binaries work without issue, not complening about -fPIC.
+COPY docker/gcc-bin-4.1.2.tgz /atomo/pipeline/build/.download/4.1.2.tar.gz
 
 # download packages so the image contain all tarballs.
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
@@ -125,5 +132,6 @@ RUN yum -y remove boost
 # we need this to build python3.n
 RUN yum -y install libffi-devel tcl-devel tk-devel libXt-devel
 RUN yum -y install gcc-objc++
+
 
 ENTRYPOINT "/run.sh"

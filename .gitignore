@@ -14,3 +14,4 @@ pipeline/build/build
 pipeline/tags/*
 pipeline/libs/*
 pipeline/build/.build
+pipeline/build/.download

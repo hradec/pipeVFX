@@ -179,24 +179,22 @@ class all: # noqa
         gcc = build.gccBuild(
                 ARGUMENTS,
                 'gcc',
-                # sed = {'4.8.3' : {
-                #     'gmp-4.3.2/configure.in' : [
-                #         ('M4.m4.not.required','M4=m4')
-                #     ],
-                #     'gmp-4.3.2/configure' : [
-                #         ('M4.m4.not.required','M4=m4')
-                #     ],
-                # }},
                 download=[(
-                #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
-                #    'gcc-6.3.0.tar.gz',
-                #    '6.3.0',
-                #    '6e5ea04789678f1250c1b30c4d9ec417'
-                # ),(
+                    # although we have the URL for the source code of 4.1.2,
+                    # we are using a pre-build tarball done in arch since
+                    # building it in centos 7 breaks something, and some shared
+                    # libraries build with 4.1.2 will complain about needing
+                    # objects compiled with -fPIC, when they actually have being!
+                    # the pre-built tarball.
+                    # the bin tarball is already in the build docker image!
+                    # original source md5: 'dd2a7f4dcd33808d344949fcec87aa86',
+                    # origial source file: 'gcc-4.1.2.tar.gz',
+                    # bin tarball md5: 'bf35fabc47ead3b1f743492052296336',
+                    # bin tarball file: '4.1.2.tar.gz',
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
-                    'gcc-4.1.2.tar.gz',
+                    '4.1.2.tar.gz',
                     '4.1.2',
-                    'dd2a7f4dcd33808d344949fcec87aa86',
+                    'bf35fabc47ead3b1f743492052296336',
                     { binutils : '2.22.0' }
                 ),(
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
@@ -204,6 +202,11 @@ class all: # noqa
                     '4.8.5',
                     'bfe56e74d31d25009c8fb55fd3ca7e01',
                     { binutils : '2.22.0' }
+                # ),(
+                #    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-6.3.0/gcc-6.3.0.tar.gz',
+                #    'gcc-6.3.0.tar.gz',
+                #    '6.3.0',
+                #    '6e5ea04789678f1250c1b30c4d9ec417'
                 )],
                 depend = allDepend,
         )
@@ -875,10 +878,10 @@ class all: # noqa
                 'src/pyglue/CMakeLists.txt' : [
                     ('-Werror', '-Wno-error'),
                 ],
-                'src/core/OCIOYaml.cpp' : [
-                    ('ifndef WIN32', 'if 0'), # disable a block of code
-                    ('ifndef WINDOWS', 'if 0'), # disable a block of code
-                ],
+                # 'src/core/OCIOYaml.cpp' : [
+                #     ('ifndef WIN32', 'if 0'), # disable a block of code
+                #     ('ifndef WINDOWS', 'if 0'), # disable a block of code
+                # ],
                 'ext/tinyxml_2_6_1.patch' : [
                     # ('+    tinystr.cpp','+ '),
                     ('-fPIC', ' -fPIC -DPIC '),
@@ -898,7 +901,7 @@ class all: # noqa
                 'OpenColorIO-1.0.9.tar.gz',
                 '1.0.9',
                 '06d0efe9cc1b32d7b14134779c9d1251',
-                { gcc : '4.8.5' }
+                { gcc : '4.1.2' }
             ),(
                 'https://github.com/imageworks/OpenColorIO/archive/v1.1.1.tar.gz',
                 'OpenColorIO-1.1.1.tar.gz',
@@ -1172,13 +1175,13 @@ class all: # noqa
                 'qt-everywhere-opensource-src-4.8.7.tar.gz',
                 '4.8.7',
                 'd990ee66bf7ab0c785589776f35ba6ad',
-                { gcc : '4.1.2', python: '2.7.16' }
+                { gcc : '4.1.2' }
             ),(
                 'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
                 'Maya2018.4.tar.gz',
                 '5.6.1',
                 '7fde8ea6f9cfb240a13987fd1ba5c410',
-                { gcc : '4.8.5', python: '3.7.5' }
+                { gcc : '4.8.5' }
             )],
             environ = {
                 'LD' : '$CXX -fPIC ',
@@ -1191,7 +1194,7 @@ class all: # noqa
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
-            depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc]+allDepend,
+            depend=[tiff,jpeg,libpng,freetype,freeglut,glew,gcc]+[ x for x in allDepend if python != x ],
             verbose=1,
         )
         self.qt = qt
