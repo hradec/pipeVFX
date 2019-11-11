@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM hradec/pipevfx_centos:centos7
 
 ARG http
 ARG https
@@ -129,12 +129,15 @@ RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
 # to avoid clashing in osl
 RUN yum -y remove boost
 
-# we need this to build python3.n
+# we need this to build python3
 RUN yum -y install libffi-devel tcl-devel tk-devel libXt-devel
 RUN yum -y install gcc-objc++
+
+# and we need this for qt 5.x
 RUN yum -y install xcb-util-wm-devel libxcb-devel.x86_64 \
     xcb-util-image-devel.x86_64 xcb-util-keysyms-devel.x86_64 \
     xcb-util-renderutil-devel.x86_64 xcb-util-wm-devel.x86_64
+RUN yum -y install xcb*devel
 
 
 ENTRYPOINT "/run.sh"
