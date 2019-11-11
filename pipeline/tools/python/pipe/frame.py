@@ -22,6 +22,9 @@ import pipe
 import os,sys, time
 import tempfile
 
+PIPE_DISABLE_THREADS=1
+if 'PIPE_DISABLE_THREADS' in os.environ:
+    PIPE_DISABLE_THREADS = int(os.environ['PIPE_DISABLE_THREADS'])
 
 def check(frames, returnLog=""):
     error = False
@@ -235,26 +238,27 @@ def publish(frames, assetPath):
         threads = []
         threads_return = Queue()
 
-        # single thread
-        # for n in range(0,len(images)):
-        #     __thread01__(n, threads_return)
+        if PIPE_DISABLE_THREADS:
+            # single thread
+            for n in range(0,len(images)):
+                __thread01__(n, threads_return)
+        else:
+            # multi threaded
+            threadMax=multiprocessing.cpu_count()
+            threads = []
+            for n in range(0,len(images)):
+                threads += [ Thread(target=__thread01__, args=(n,threads_return,)) ]
+                threads[-1].start()
 
-        # multi threaded
-        threadMax=multiprocessing.cpu_count()
-        threads = []
-        for n in range(0,len(images)):
-            threads += [ Thread(target=__thread01__, args=(n,threads_return,)) ]
-            threads[-1].start()
-
-            # wait so only maxThreads at a time!!
-            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
-                time.sleep(1)
+                # wait so only maxThreads at a time!!
+                while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                    time.sleep(1)
 
 
-        # wait for threads to finish!
-        print( "Waiting threads to finish..." )
-        for t in threads:
-            t.join()
+            # wait for threads to finish!
+            print( "Waiting threads to finish..." )
+            for t in threads:
+                t.join()
 
         # now check if we got a false success, and raise exception if any!
         while not threads_return.empty():
@@ -270,60 +274,60 @@ def publish(frames, assetPath):
 
         montageImages.sort()
 
-
-        # run montage commands as root
         def __threadedSudoCmd__(cmd):
             sudo = pipe.admin.sudo()
             sudo.cmd( cmd )
             print( sudo.run() )
 
-        #multi thread
-        threads = []
-        for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
-            threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
-            threads[-1].start()
+        # run montage commands as root
+        if PIPE_DISABLE_THREADS:
+            # single thread
+            for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
+                __threadedSudoCmd__(cmd)
 
-            # wait so only maxThreads at a time!!
-            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
-                time.sleep(1)
+            # fix filenames for webplayer
+            for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
+                __threadedSudoCmd__(cmd)
 
+            # remove montageImages
+            for each in montageImages:
+                __threadedSudoCmd__("rm -rf %s" % each)
+        else:
+            #multi thread
+            threads = []
+            for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
+                threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
+                threads[-1].start()
 
-        # fix filenames for webplayer
-        for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
-            threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
-            threads[-1].start()
-            # wait so only maxThreads at a time!!
-            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
-                time.sleep(1)
-
-        print( "Waiting threads to finish..." )
-        for t in threads:
-            t.join()
-
-
-        # remove montageImages after all threads have finished!
-        for each in montageImages:
-            threads += [ Thread(target=__threadedSudoCmd__, args=("rm -rf %s" % each,)) ]
-            threads[-1].start()
-            # wait so only maxThreads at a time!!
-            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
-                time.sleep(1)
-
-        print( "Waiting threads to finish..." )
-        for t in threads:
-            t.join()
+                # wait so only maxThreads at a time!!
+                while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                    time.sleep(1)
 
 
-        # single thread
-        # sudo = pipe.admin.sudo()
-        # for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
-        #     sudo.cmd( cmd )
-        #
-        # # fix filenames for webplayer
-        # for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
-        #     sudo.cmd( cmd )
-        #
-        # print sudo.run()
+            # fix filenames for webplayer
+            for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
+                threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
+                threads[-1].start()
+                # wait so only maxThreads at a time!!
+                while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                    time.sleep(1)
+
+            print( "Waiting threads to finish..." )
+            for t in threads:
+                t.join()
+
+            # remove montageImages after all threads have finished!
+            for each in montageImages:
+                threads += [ Thread(target=__threadedSudoCmd__, args=("rm -rf %s" % each,)) ]
+                threads[-1].start()
+                # wait so only maxThreads at a time!!
+                while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                    time.sleep(1)
+
+            print( "Waiting threads to finish..." )
+            for t in threads:
+                t.join()
+
 
         # check if frame was copied suscessfully and remove it from original folder!
         for each in images:
@@ -347,8 +351,6 @@ def publish(frames, assetPath):
         #             if not os.path.exists( "%s/%s" % (imagePath, os.path.basename(each)) ):
         #                 sudo.ln( symlinks[each], imagePath )
         #     sudo.run()
-
-
 
 
         print( '\n','='*300 )
