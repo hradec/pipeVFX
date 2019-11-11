@@ -1086,8 +1086,6 @@ class all: # noqa
                 '9.0.0',
                 '0df6971e2f99b1e99e7bfb533e4067af',
             )],
-            keep_source_folder=True,
-            depend = allDepend,
         )
         self.clang = clang
 
@@ -1115,7 +1113,8 @@ class all: # noqa
             parallel=1,
             cmd = [
                 # mv clang to the tools folder so LLVM can automatically build it!
-                'mv $CLANG_SRC_FOLDER $SOURCE_FOLDER/tools/clang',
+                'mkdir -p $SOURCE_FOLDER/tools/clang/',
+                'cp -rfuv $CLANG_TARGET_FOLDER/* $SOURCE_FOLDER/tools/clang/',
                 'mkdir -p build && cd build',
                 # since llvm link uses lots of memory, we define the number
                 # of threads by dividing the ammount of memory in GB by 12
@@ -1162,28 +1161,6 @@ class all: # noqa
             depend = allDepend,
         )
         self.pugixml = pugixml
-
-        # glfw = build.make(
-        #     ARGUMENTS,
-        #     'glfw',
-        #     download=[(
-        #         'https://github.com/glfw/glfw/releases/download/3.3/glfw-3.3.zip',
-        #         'glfw-3.3.zip',
-        #         '3.2.1',
-        #         'e4f3c4848710093f29b1781f2d1b7acc',
-        #         { gcc : '4.1.2' }
-        #     )],
-        #     depend=[gcc],
-        #     src = 'README.md',
-        #     cmd = [
-        #         'mkdir build',
-        #         'cd build',
-        #         '$CMAKE_TARGET_FOLDER/bin/cmake -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER -DBUILD_SHARED_LIBS=ON $SOURCE_FOLDER ',
-        #         'make -j $DCORES install'
-        #     ],
-        # )
-        # self.glfw = glfw
-        # build.allDepend.append(glfw)
 
         glfw = build.glfw(
             ARGUMENTS,
@@ -1258,48 +1235,6 @@ class all: # noqa
         )
         self.materialx = materialx
 
-        # =============================================================================================================================================
-        qtMaya = build.download(
-            ARGUMENTS,
-            'qtmaya',
-            download=[(
-                'https://github.com/autodesk-forks/qtbase/archive/Maya2018.4.tar.gz',
-                'qtbase-Maya2018.4.tar.gz',
-                '5.6.1',
-                '7fde8ea6f9cfb240a13987fd1ba5c410',
-            )],
-            depend = allDepend,
-            src = 'configure'
-        )
-        self.qtMaya = qtMaya
-        qtMayaDeclarative = build.download(
-            ARGUMENTS,
-            'qtmaya_declarative',
-            download=[(
-                'https://github.com/autodesk-forks/qtdeclarative/archive/v5.6.1.tar.gz',
-                'qtdeclarative-5.6.1.tar.gz',
-                '5.6.1',
-                '2cee923e6298297fbd02c511dfd315f2',
-            )],
-            depend = allDepend,
-            src = '.tag'
-        )
-        self.qtMayaDeclarative = qtMayaDeclarative
-        qtMayaX11Extras = build.download(
-            ARGUMENTS,
-            'qtmaya_x11extras',
-            download=[(
-                'https://github.com/autodesk-forks/qtx11extras/archive/v5.6.1.tar.gz',
-                'qtx11extras-5.6.1.tar.gz',
-                '5.6.1',
-                'ab5b5f6c7afa392d2819a29aaf162501',
-            )],
-            depend = allDepend,
-            src = '.tag'
-        )
-        self.qtMayaX11Extras = qtMayaX11Extras
-
-
         qt = build.configure(
             ARGUMENTS,
             'qt',
@@ -1322,10 +1257,13 @@ class all: # noqa
                 { gcc : '4.1.2' }
             ),(
                 # VFXPLATFORM CY2016-CY2018
-                'http://mirror.csclub.uwaterloo.ca/qtproject/archive/qt/5.6/5.6.1/single/qt-everywhere-opensource-src-5.6.1.tar.gz',
-                'qt-everywhere-opensource-src-5.6.1.tar.gz',
+                # 'http://mirror.csclub.uwaterloo.ca/qtproject/archive/qt/5.6/5.6.1/single/qt-everywhere-opensource-src-5.6.1.tar.gz',
+                # 'qt-everywhere-opensource-src-5.6.1.tar.gz',
+                # 'ed16ef2a30c674f91f8615678005d44c',
+                'https://damassets.autodesk.net/content/dam/autodesk/www/Company/files/2018/Qt561ForMaya2018Update4.zip',
+                'qt-adsk-5.6.1-vfx.zip',
                 '5.6.1',
-                'ed16ef2a30c674f91f8615678005d44c',
+                '5e4de3cef0225d094c1ab718c1fc468b',
                 { gcc : '4.8.5' }
 
             )],
@@ -1340,17 +1278,18 @@ class all: # noqa
                 # VFXPLATFORM complaint (CY2016 to CY2018)
                 # https://vfxplatform.com/#footnote-qt
                 # it also helps with maya compatibility.
-                '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_TARGET_FOLDER/* qtbase/ )',
-                '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_DECLARATIVE_TARGET_FOLDER/* qtdeclarative/ )',
-                '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_X11EXTRAS_TARGET_FOLDER/* qtx11extras/ )',
+                # '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_TARGET_FOLDER/* qtbase/ )',
+                # '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_DECLARATIVE_TARGET_FOLDER/* qtdeclarative/ )',
+                # '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_X11EXTRAS_TARGET_FOLDER/* qtx11extras/ )',
                 # './configure  -opensource -shared --confirm-license  -no-webkit -silent',
-                './configure  -opensource -shared --confirm-license -v',
+                './configure -release -opensource -shared --confirm-license -v -no-warnings-are-errors -nomake examples -nomake tests -c++std c++11 '
+                '-no-gtkstyle -no-dbus -skip qtconnectivity -no-libudev -no-gstreamer -no-icu -qt-pcre ',
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
             depend=[
                 tiff,jpeg,libpng,freetype,freeglut,glew,gcc,
-                qtMaya, qtMayaDeclarative, qtMayaX11Extras,
+                # qtMaya, qtMayaDeclarative, qtMayaX11Extras,
             ]+[ x for x in allDepend if python != x ],
             verbose=1,
         )
@@ -1391,11 +1330,11 @@ class all: # noqa
             },
             cmd = [
                 # we have to use the devtoolset-6 gcc
-                'source scl_source enable devtoolset-6',
+                # 'source scl_source enable devtoolset-6',
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS=" -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+'" '
+                'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+'" '
                 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '

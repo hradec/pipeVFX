@@ -5,18 +5,32 @@
 
 CD=$(readlink -f $(dirname $BASH_SOURCE))
 
-echo $CD
+# base image from centos used
+base_centos=centos:7.6.1810
 
+# base image name for pipeVFX images
+base=hradec/pipevfx
+
+# the image name for the image that holds package files (our pkg cache image!)
+base_image=${base}_pkgs:centos7
+
+# a tag name so the build image pulls the latest always
+pkg_image_tag=${base}_pkgs:centos7_latest
+
+
+# the build image name!
+build_image=${base}_build:centos7
 
 SHELL=0
 PUSH=0
-while getopts hdsbe: option ; do
+while getopts hdsbpe: option ; do
     case "${option}"
     in
         h) HELP=1;;
         d) DEBUG="debug=1";;
         s) SHELL=1;;
         b) BUILD=1;;
+        p) PKGS=1;;
         e) EXTRA="${OPTARG}";;
     esac
 done
@@ -37,8 +51,34 @@ else
         APPS_MOUNT=" -v /atomo/apps:/atomo/apps "
     fi
 
+    latest_tag=$(echo $base_image | awk -F':' '{print $1}'):$(
+        wget -q \
+        https://registry.hub.docker.com/v1/repositories/"$(echo $base_image | awk -F: '{print $1}')"/tags -O - \
+        | tr -d '[]" ' \
+        | tr '}' '\n' \
+        | awk -F: '{print $3}' \
+        | grep -v latest \
+        | sort -h | tail -1
+    )
+    if [ "$latest_tag" == "$(echo $base_image | awk -F':' '{print $1}'):" ] ; then
+        latest_tag=$base_image
+        previous_tag=$base_centos
+    else
+        if [ "$PKGS" == "1" ] ; then
+            tmp=$latest_tag
+            latest_tag=${base_image}_$(echo $latest_tag | awk -Fcentos7_ '{$2++;printf("%04d",$2)}')
+            previous_tag=$tmp
+        fi
+    fi
+
+    # try to pull pkg image from docker hub
+    docker pull $latest_tag
+    if [ $? != 0 ] ; then
+        BUILD=1
+        PKGS=1
+    fi
     # try to pull build image from docker hub
-    docker pull hradec/pipevfx_centos_base:centos7
+    docker pull $build_image
     if [ $? != 0 ] ; then
         BUILD=1
     fi
@@ -46,23 +86,48 @@ else
     # if no image in docker hub or we used -b to force a build, build it
     # and push it to docker hub!
     if [ "$BUILD" == "1" ] ; then
+        if [ "$PKGS" == "1" ] ; then
+            echo -e "\n\nusing base_image:$previous_tag \nto build new_tag:$latest_tag\n"
+            # packages download
+            docker build \
+                -f $CD/docker/Dockerfile.pkgs \
+                $CD/ \
+                -t $latest_tag \
+                --pull \
+                --compress \
+                --rm \
+                --build-arg http="$http_proxy" \
+                --build-arg https="$https_proxy" \
+                --build-arg BASE_IMAGE="$previous_tag"
+
+            if [ $? -ne 0 ] ; then
+                echo ERROR!!
+                exit -1
+            fi
+            docker image tag $latest_tag $pkg_image_tag
+            docker push $latest_tag
+            docker push $pkg_image_tag
+        fi
+
+        # build image!
+        echo -e "\nusing base_image:$base_image\npackage image:$latest_tag\n\n"
         docker build \
-            -f $CD/docker/Dockerfile \
+            -f $CD/docker/Dockerfile.build \
             $CD/ \
-            -t hradec/pipevfx_centos_base:centos7 \
+            -t $build_image \
             --pull \
             --compress \
             --rm \
             --build-arg http="$http_proxy" \
-            --build-arg https="$https_proxy"
-
+            --build-arg https="$https_proxy" \
+            --build-arg PACKAGES="$latest_tag" \
+            --build-arg BASE_IMAGE="$base_image"
 
         if [ $? -ne 0 ] ; then
             echo ERROR!!
             exit -1
         fi
-
-        docker push hradec/pipevfx_centos_base:centos7
+        docker push $build_image
     fi
 
     # use wget proxy setup if it exists
@@ -94,7 +159,7 @@ else
         -e TRAVIS=$TRAVIS \
         -e http_proxy='$http_proxy' \
         -e https_proxy='$https_proxy' \
-        hradec/pipevfx_centos_base:centos7"
+        $build_image"
 
     echo $cmd
     eval $cmd

@@ -289,9 +289,12 @@ class alembic(cmake):
 
 
 class download(make):
-    ''' a simple class to download and uncompress packages, so they can be used by other packages for building '''
+    '''
+    a simple class to download and uncompress packages, so they can be used by other packages for building
+    the build is just copying over the uncompressed source to the target folder to be used later by other builds
+    '''
     src='CMakeLists.txt'
-    cmd=['cp -rfuv $SOURCE_FOLDER/* $TARGET_FOLDER/']
+    cmd=['mkdir -p $TARGET_FOLDER && cp -rfuv $SOURCE_FOLDER/* $TARGET_FOLDER/']
     # as we want this packages just to be used for building other packages, we don't need a installation target_folder
 #    def installer(self, target, source, env):
 #        os.system("rm -rf %s" % os.path.abspath(os.path.dirname(os.path.dirname(str(target[0])))) )
