@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-
+env
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 cd /atomo/pipeline/build/
 [ "$TRAVIS" == "1" ] && rm -rf "/atomo/pipeline/libs/"

@@ -374,6 +374,7 @@ class python(configure):
 
     }}
     cmd = [
+        'env',
         'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
         './configure  --enable-shared --enable-unicode=ucs4',
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
