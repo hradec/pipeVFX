@@ -58,7 +58,7 @@ def checkPathsExist( os_environ ):
     for each in os_environ.keys():
         # check if the paths in the env vars exists.
         # skip the ones that doesn't
-        if not [ x for x in ['TARGET', 'ROOT'] if x in each ]:
+        if not [ x for x in ['TARGET', 'ROOT', 'proxy'] if x in each ]:
             if '-L' in os_environ[each] or '-I' in os_environ[each]:
                 # if it's a FLAGS env var
                 parts = []

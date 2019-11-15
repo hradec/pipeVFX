@@ -1090,12 +1090,19 @@ class all: # noqa
                 'cfe-7.1.0.src.tar.gz',
                 '7.1.0',
                 '2a3651e54e1a9c512d4ee6bd84183cf6',
+            ),(
+                'http://releases.llvm.org/3.9.1/cfe-3.9.1.src.tar.xz',
+                'cfe-3.9.1.src.tar.gz',
+                '3.9.1',
+                '45713ec5c417ed9cad614cd283d786a1',
+
             )],
         )
         self.clang = clang
 
         # build llvm using clang source folder that has being
         # just downloaded and uncompressed
+        _mem = int(mem)/1024/1024
         llvm = build.cmake(
             ARGUMENTS,
             'llvm',
@@ -1110,7 +1117,13 @@ class all: # noqa
                 'llvm-7.1.0.src.tar.gz',
                 '7.1.0',
                 '26844e21dbad09dc7f9b37b89d7a2e48',
-                { gcc : '4.8.5', clang : '7.0.0' }
+                { gcc : '4.8.5', clang : '7.1.0' }
+            ),(
+                'http://releases.llvm.org/3.9.1/llvm-3.9.1.src.tar.xz',
+                'llvm-3.9.1.src.tar.gz',
+                '3.9.1',
+                '3259018a7437e157f3642df80f1983ea',
+                { gcc : '4.8.5', clang : '3.9.1' }
             )],
             sed = {
                 '3.5.2' : {
@@ -1129,7 +1142,7 @@ class all: # noqa
                 'mkdir -p build && cd build',
                 # since llvm link uses lots of memory, we define the number
                 # of threads by dividing the ammount of memory in GB by 12
-                'export MAKE_PARALLEL="-j %s"' % (int(mem)/1024/1024/12),
+                'export MAKE_PARALLEL="-j %s"' % (str(_mem/12) if _mem < 35 else "$CORES" ),
                 ' && '.join(build.cmake.cmd),
             ],
             flags = [
@@ -1331,13 +1344,13 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.10.7.tar.gz',
                 '1.10.7',
                 '53f66e12c3e29c62dc51b070f027a0ad',
-                {oiio: "2.0.11", llvm : "7.0.0", gcc: "4.8.5", boost: "1.56.0"},
-            ),(
-                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
-                'OpenShadingLanguage-Release-1.7.5.tar.gz',
-                '1.7.5',
-                '8b15d13c3fa510b421834d32338304c8',
-                {oiio: "1.6.15", llvm : "7.0.0", gcc: "4.8.5", boost: "1.51.0"},
+                {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.56.0"},
+            # ),(
+            #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
+            #     'OpenShadingLanguage-Release-1.7.5.tar.gz',
+            #     '1.7.5',
+            #     '8b15d13c3fa510b421834d32338304c8',
+            #     {oiio: "1.6.15", llvm : "3.9.1", gcc: "4.8.5", boost: "1.51.0"},
             )],
             depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, gcc, openssl, bzip2, libraw]+allDepend,
             cmd = [

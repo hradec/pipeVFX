@@ -60,7 +60,7 @@ class make(generic):
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
         cmake finds pipeVFX packages first!'''
-        environ += [
+        environ = [
             'export MAKE_PARALLEL="$(echo %s)"' % self._parallel,
             'export MAKE_VERBOSE="$(echo %s)"' % self._verbose,
             'export CMAKE_VERBOSE="$(echo %s)"' % self._verbose_cmake,
