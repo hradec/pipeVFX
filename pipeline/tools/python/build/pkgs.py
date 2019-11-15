@@ -1085,6 +1085,11 @@ class all: # noqa
                 'cfe-9.0.0.src.tar.gz',
                 '9.0.0',
                 '0df6971e2f99b1e99e7bfb533e4067af',
+            ),(
+                'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/cfe-7.1.0.src.tar.xz',
+                'cfe-7.1.0.src.tar.gz',
+                '7.1.0',
+                '2a3651e54e1a9c512d4ee6bd84183cf6',
             )],
         )
         self.clang = clang
@@ -1100,6 +1105,12 @@ class all: # noqa
                 '9.0.0',
                 '0fd4283ff485dffb71a4f1cc8fd3fc72',
                 { gcc : '4.8.5', clang : '9.0.0' }
+            ),(
+                'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/llvm-7.1.0.src.tar.xz',
+                'llvm-7.1.0.src.tar.gz',
+                '7.1.0',
+                '26844e21dbad09dc7f9b37b89d7a2e48',
+                { gcc : '4.8.5', clang : '7.0.0' }
             )],
             sed = {
                 '3.5.2' : {
@@ -1123,6 +1134,7 @@ class all: # noqa
             ],
             flags = [
                 '-DCMAKE_BUILD_TYPE=Release',
+                '-DLLVM_ENABLE_RTTI=1',
                 '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1',
                 '-DGCC_INSTALL_PREFIX=$GCC_TARGET_FOLDER',
             ]+build.cmake.flags
@@ -1156,7 +1168,7 @@ class all: # noqa
                 'pugixml-1.10.tar.gz',
                 '1.10.0',
                 '0c208b0664c7fb822bf1b49ad035e8fd',
-                { gcc : '4.1.2', python: '2.7.16' },
+                { gcc : '4.8.5', python: '2.7.16' },
             )],
             depend = allDepend,
         )
@@ -1294,27 +1306,13 @@ class all: # noqa
             verbose=1,
         )
         self.qt = qt
-        allDepend += [qt]
+        # allDepend += [qt]
 
 
         # =============================================================================================================================================
         osl = build.cmake(
             ARGUMENTS,
             'osl',
-            download=[(
-                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.10.7.tar.gz',
-                'OpenShadingLanguage-Release-1.10.7.tar.gz',
-                '1.10.7',
-                '53f66e12c3e29c62dc51b070f027a0ad',
-                {oiio: "2.0.11", llvm : "9.0.0", gcc: "4.8.5", boost: "1.56.0", qt : '5.6.1'},
-            ),(
-                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
-                'OpenShadingLanguage-Release-1.7.5.tar.gz',
-                '1.7.5',
-                '8b15d13c3fa510b421834d32338304c8',
-                {oiio: "1.6.15", llvm : "9.0.0", gcc: "4.8.5", boost: "1.51.0", qt : '5.6.1'},
-            )],
-            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, gcc, openssl, bzip2, libraw]+allDepend,
             sed = {
                 '0.0.0' : {
                     'CMakeLists.txt' : [
@@ -1328,18 +1326,32 @@ class all: # noqa
                 '1.10.0' : {
                 },
             },
+            download=[(
+                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.10.7.tar.gz',
+                'OpenShadingLanguage-Release-1.10.7.tar.gz',
+                '1.10.7',
+                '53f66e12c3e29c62dc51b070f027a0ad',
+                {oiio: "2.0.11", llvm : "7.0.0", gcc: "4.8.5", boost: "1.56.0"},
+            ),(
+                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
+                'OpenShadingLanguage-Release-1.7.5.tar.gz',
+                '1.7.5',
+                '8b15d13c3fa510b421834d32338304c8',
+                {oiio: "1.6.15", llvm : "7.0.0", gcc: "4.8.5", boost: "1.51.0"},
+            )],
+            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, gcc, openssl, bzip2, libraw]+allDepend,
             cmd = [
                 # we have to use the devtoolset-6 gcc
                 # 'source scl_source enable devtoolset-6',
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+'" '
+                'MY_CMAKE_FLAGS="-DENABLERTTI=0 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+'" '
                 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
                 'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
-                'LLVM_STATIC=1 '
+                'LLVM_STATIC=0 '
                 'PARTIO_HOME="" '
                 'STOP_ON_WARNING=0 '
                 'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
