@@ -1,6 +1,6 @@
 pipeVFX
 =======
-![Build Status](http://jenkins.hradec.com:62345/buildStatus/icon?job=pipeVFX%2FpipeVFX%2Fdevel)
+![Build Status](http://jenkins.hradec.com:62346/buildStatus/icon?job=pipeVFX%2FpipeVFX%2Fdevel)
 
 A Visual Effects pipeline to manage jobs, shots and software assignment, with a "simple asset manager" called SAM.
 
