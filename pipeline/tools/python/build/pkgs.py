@@ -1807,7 +1807,7 @@ class all: # noqa
                 {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11'},
             )],
             baseLibs=[python],
-            depend=allDepend+[alembic, openexr, ilmbase, opensubdiv],
+            depend=allDepend+[alembic, openexr, ilmbase, opensubdiv, materialx, openvdb, osl],
             cmd = [
                 "cmake"
                 " -D CMAKE_INSTALL_PREFIX=$TARGET_FOLDER"

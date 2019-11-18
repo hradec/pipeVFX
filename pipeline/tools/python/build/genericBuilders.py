@@ -253,6 +253,9 @@ class generic:
             depend   = self.depend
             name     = self.name
 
+        # fix depend in case we're reusing it from another package
+        self.depend = [x for x in self.depend if hasattr(x, 'name')]
+        depend = [x for x in depend if hasattr(x, 'name')]
 
         # initialize environment
         if self.env is None:
@@ -288,7 +291,7 @@ class generic:
         for d in allDepend:
             if d not in self.dependOn:
                 self.dependOn[d] = None
-        self.set( "ENVIRON_DEPEND",  ' '.join([x.name for x in self.dependOn]) )
+        self.set( "ENVIRON_DEPEND",  ' '.join([x.name for x in self.dependOn if hasattr(x, 'name')]) )
 
 
         # set the base libraries to build for.

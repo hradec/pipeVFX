@@ -96,7 +96,7 @@ if canBuildCortexNow:
                     { pkgs.gcc : '4.1.2' }
                 )],
                 src = 'configure.py',
-                apps = [ (pipe.apps.maya, pipe.version.get('maya')) ],
+                apps = [ (pipe.apps.maya, version) ],
                 cmd = [
                     # 'export MAYA_LOCATION=$(/bin/python2 -c "import pipe;print pipe.roots.apps()")/maya/%s' % version,
                     'mayapy configure.py '
@@ -116,11 +116,10 @@ if canBuildCortexNow:
                     'PyQt-x11-gpl-4.11.4.tar.gz',
                     '4.11.4.maya%s' % version,
                     '2fe8265b2ae2fc593241c2c84d09d481',
-                    {sip[-1]: '4.16.7.maya2016.5', pkgs.gcc : '4.1.2'},
+                    {pkgs.maya_sip[-1]: '4.16.7.maya%s' % version, pkgs.gcc : '4.1.2'},
                 )],
                 # baseLibs=[pkgs.python],
-                depend=[sip[-1], pkgs.gcc],
-                apps = [ (pipe.apps.maya, pipe.version.get('maya')) ],
+                apps = [ (pipe.apps.maya, version) ],
                 src = 'configure-ng.py',
                 cmd = [
                     # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',

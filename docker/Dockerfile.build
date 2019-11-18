@@ -77,6 +77,9 @@ RUN yum -y install xcb-util-wm-devel libxcb-devel.x86_64 \
     install xcb*devel
 
 # copy over the latest packages from the latest pkg TAG image!
+# this makes upload/download a large layer all the time,
+# but prevents this image from being rebuild all the time when we add
+# a new package.
 COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download/*  /atomo/pipeline/build/.download/
 
 # to avoid clashing in osl
