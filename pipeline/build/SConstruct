@@ -67,68 +67,25 @@ if canBuildCortexNow:
     # disable arnold!
     #pipe.version.set(arnold='0.0.0')
 
-
-    # build alembic for each version of maya and prman, so we get the plugins!
-    alembic = []
-    ppv = pv
-    for n in range(2):
-        if mv:
-            pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
-        if ppv:
-            pipe.version.set( prman = ppv[0] if len(ppv)<=n else ppv[n] )
-
-        gcc = '4.1.2'
-        if float(pipe.version.get('prman')) >= 21:
-            gcc = '4.8.5'
-        if float(pipe.version.get('maya')) >= 2018:
-            gcc = '4.8.5'
-
-        alembic.append( build.alembic(
-            ARGUMENTS,
-            'alembic',
-            targetSuffix = "maya%sprman%s" % ( pipe.version.get('maya'), pipe.version.get('prman') ),
-            download=[(
-                # CY2014 - CY2016
-                'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
-                'alembic-1.5.8.tar.gz',
-                '1.5.8',
-                'a70ba5f2e80b47d346d15d797c28731a',
-                {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: gcc},
-            # ),(
-            #     # CY2017
-            #     'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
-            #     'alembic-1.6.1.tar.gz',
-            #     '1.6.1',
-            #     'e1f9f2cbe1899d3d55b58708b9307482',
-            #     {ilmbase: "2.2.0", openexr: "2.2.0"},
-            # ),(
-            #     # CY2018 - CY2020
-            #     'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
-            #     'alembic-1.7.11.tar.gz',
-            #     '1.7.11',
-            #     'e1f9f2cbe1899d3d55b58708b9307482',
-            #     {ilmbase: "2.2.0", openexr: "2.2.0"},
-            )],
-            baseLibs=[pkgs.python],
-            depend=[pkgs.hdf5,pkgs.python,pkgs.yasm,pkgs.boost],
-            apps = [
-                ( pipe.apps.maya, pipe.version.get('maya')),
-                ( pipe.apps.prman, pipe.version.get('prman')),
-            ]
-        ))
-    pkgs.alembic = alembic[-1]
-
-    # build sip/pyqt for maya version!
-    sip = []
-    pyqt = []
-    for n in range(2):
+    # ===========================================================================================
+    # MAYA
+    # ===========================================================================================
+    pkgs.maya_sip = []
+    pkgs.maya_pyqt = []
+    pkgs.maya_usd = []
+    pkgs.maya_alembic = []
+    pkgs.maya_openvdb = []
+    for n in range(len(mv)):
         version = 0
         if mv:
             version = mv[0] if len(mv)<=n else mv[n]
             pipe.version.set( maya  = version )
 
-        if float(version) > 2015 and float(version) < 2017:
-            sip.append( build.pythonSetup(
+        # build sip/pyqt for maya version!
+        # for maya 2018 we're building pyside using autodesk qt 5.6.1
+        # so we don't need maya to build it!
+        if float(version) > 2015 and float(version) < 2018:
+            pkgs.maya_sip += [build.pythonSetup(
                 ARGUMENTS,
                 'sip',
                 download=[(
@@ -150,9 +107,8 @@ if canBuildCortexNow:
                     'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
                     'make -j $DCORES && make -j $DCORES install',
                 ],
-            ))
-
-            pyqt.append( build.pythonSetup(
+            )]
+            pkgs.maya_pyqt += [build.pythonSetup(
                 ARGUMENTS,
                 'pyqt',
                 download=[(
@@ -183,87 +139,99 @@ if canBuildCortexNow:
                     'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
                     'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install',
                 ],
-            ))
+            )]
 
-        if float(version) >= 2018:
-            sip.append( build.pythonSetup(
-                ARGUMENTS,
-                'sip',
-                download=[(
-                    'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
-                    'sip-4.16.7.tar.gz',
-                    '4.16.7.maya%s' % version,
-                    '32abc003980599d33ffd789734de4c36',
-                    { pkgs.gcc : '4.1.2' }
-                )],
-                src = 'configure.py',
-                apps = [ (pipe.apps.maya, pipe.version.get('maya')) ],
-                cmd = [
-                    # 'export MAYA_LOCATION=$(/bin/python2 -c "import pipe;print pipe.roots.apps()")/maya/%s' % version,
-                    'mayapy configure.py '
-                    '-b $TARGET_FOLDER/bin '
-                    '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-                    '-e $TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
-                    '-v $TARGET_FOLDER/share/sip/ '
-                    'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
-                    'make -j $DCORES && make -j $DCORES install',
-                ],
-            ))
+        # build plugins
+        pkgs.maya_usd += [build.make(
+            ARGUMENTS,
+            'usd',
+            sed = {},
+            targetSuffix = "maya%s" % version,
+            download = pkgs.usd.download,
+            depend = pkgs.usd.depend,
+            cmd = [
+                pkgs.usd.cmd[0].replace( 'cmake', 'cmake -D PXR_BUILD_MAYA_PLUGIN=1' ),
+                'make -j $DCORES && make install',
+            ],
+            apps = [ (pipe.apps.maya, version) ],
+        )]
+        pkgs.maya_alembic += [build.alembic(
+            ARGUMENTS,
+            'alembic',
+            targetSuffix = "maya%s" % version,
+            baseLibs = pkgs.alembic.baseLibs,
+            download = pkgs.alembic.download,
+            depend = pkgs.alembic.depend,
+            cmd = pkgs.alembic.cmd,
+            apps = [ (pipe.apps.maya, version) ],
+        )]
 
-            pyqt.append( build.pythonSetup(
-                ARGUMENTS,
-                'pyqt',
-                download=[(
-                    'https://svwh.dl.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz',
-                    'PyQt-x11-gpl-4.11.4.tar.gz',
-                    '4.11.4.maya%s' % version,
-                    '2fe8265b2ae2fc593241c2c84d09d481',
-                    {sip[-1]: '4.16.7.maya2016.5', pkgs.gcc : '4.1.2'},
-                )],
-                # baseLibs=[pkgs.python],
-                depend=[sip[-1], pkgs.gcc],
-                apps = [ (pipe.apps.maya, pipe.version.get('maya')) ],
-                src = 'configure-ng.py',
-                cmd = [
-                    # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
-                    '''export PYTHON_VERSION_MAJOR=$(mayapy --version 2>&1 | awk '{split($2,a,"."); print a[1] "." a[2] }')'''
-                    'export QTDIR=$MAYA_LOCATION',
-                    'export QMAKESPEC=$MAYA_LOCATION/mkspecs/linux-g++-64',
-                    'export INCDIR_QT=$MAYA_LOCATION/include',
-                    'export LIBDIR_QT=$MAYA_LOCATION/lib',
-                    'export PATH=$MAYA_LOCATION/bin:$PATH',
-                    'mayapy configure.py --confirm-license --assume-shared --verbose --no-designer-plugin '
-                    '-b $TARGET_FOLDER/bin '
-                    '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-                    '-v $TARGET_FOLDER/share/sip/PyQt4 '
-                    'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
-                    'LIBDIR_QT=$MAYA_LOCATION/lib INCDIR_QT=$MAYA_LOCATION/include MOC=$MAYA_LOCATION/bin/moc -w -g ',
-                    'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
-                    'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install',
-                ],
-            ))
+        pkgs.maya_openvdb += [build.make(
+            ARGUMENTS,
+            'openvdb',
+            targetSuffix = "maya%s" % version,
+            download = pkgs.openvdb.download,
+            depend = pkgs.openvdb.depend,
+            cmd = ['cd openvdb_maya']+pkgs.openvdb.cmd[1:],
+            environ = {
+                'MAYA_VERSION' : version,
+                'MAYA_ROOT' : pipe.apps.maya().path(),
+            },
+        )]
 
-    if sip:
-        pkgs.sip_maya = sip[-1]
-        pkgs.pyqt_maya = pyqt[-1]
+    # ===========================================================================================
+    # PRMAN
+    # ===========================================================================================
+    pkgs.prman_usd = []
+    pkgs.prman_alembic = []
+    for n in range(len(pv)):
+        version = 0
+        if pv:
+            version = pv[0] if len(pv)<=n else pv[n]
+            pipe.version.set( prman  = version )
+
+        pkgs.prman_usd += [build.cmake(
+            ARGUMENTS,
+            'usd',
+            sed = {},
+            targetSuffix = "prman%s" % version,
+            download=pkgs.usd.download,
+            depend=pkgs.usd.depend,
+            cmd = [
+                pkgs.usd.cmd[0].replace('cmake', 'cmake -D PXR_BUILD_PRMAN_PLUGIN=1'),
+                'make -j $DCORES && make install',
+            ],
+            apps = [ (pipe.apps.prman, version) ],
+        )]
+        pkgs.prman_alembic += [build.alembic(
+            ARGUMENTS,
+            'alembic',
+            targetSuffix = "prman%s" % version,
+            baseLibs = pkgs.alembic.baseLibs,
+            download = pkgs.alembic.download,
+            depend = pkgs.alembic.depend,
+            cmd = pkgs.alembic.cmd,
+            apps = [ (pipe.apps.prman, version) ],
+        )]
 
 
-
-    # cortex versions to build
-    boostVersion = "1.51.0"
+    # ===========================================================================================
+    # CORTEX VFX
+    # ===========================================================================================
+    boostMasterVersion = "1.51.0"
     download = [
         [
             'https://github.com/ImageEngine/cortex/archive/10.0.0-a65.tar.gz',
             'cortex-10.0.0-a65.tar.gz',
             '10.0.0.a65',
             '6d74b28f18574c2358a2946d97ba0499',
-            {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+            {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
         # ],[
         #     'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
         #     'cortex-9.18.0.tar.gz',
         #     '9.18.0',
         #     '88793f1f723583b7b40fa69d4fbf0352',
-        #     {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+        #     {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
         ]
     ]
 
@@ -272,10 +240,11 @@ if canBuildCortexNow:
         pkgs.icu, pkgs.tbb,
         pkgs.freeglut, pkgs.freetype, pkgs.libpng, pkgs.hdf5,
         pkgs.tiff, pkgs.jpeg, pkgs.alembic, pkgs.openssl,
-        pkgs.ilmbase, pkgs.openexr
+        pkgs.ilmbase, pkgs.openexr,
+        pkgs.usd, pkgs.opensubdiv, pkgs.ptex, pkgs.openvdb
     ]
 
-    # build cortex
+    # build cortex matrix
     cortex = {}
 
     # we use this to apply patches created when developing cortex
@@ -285,15 +254,15 @@ if canBuildCortexNow:
         devPatch = [ ''.join(open(patchFile).readlines()) ]
 
     # build one version of IECore, IECorePython and IECoreGL libraries for each boost version
-    for bv in pkgs.boost.versions:
-        if bv in ['1.51.0','1.55.0']:
+    for boost_version in pkgs.boost.versions:
+        if boost_version in ['1.51.0','1.55.0']:
             # build cortex core libraries only
-            sufix = "core.boost.%s" % bv
+            sufix = "core.boost.%s" % boost_version
             cortex[sufix] = build.cortex(
                 ARGUMENTS, # noqa
                 'cortex',
                 targetSuffix = sufix,
-                download = build.cortex.pkg(download, pkgs.boost, bv),
+                download = build.cortex.pkg(download, pkgs.boost, boost_version),
                 baseLibs = [pkgs.python],
                 depend = depend,
                 sconsInstall = "installCore installGL",
@@ -301,13 +270,13 @@ if canBuildCortexNow:
             )
 
     # now build IECoreAlembic for all versions of alembic
-    for v in pkgs.alembic.versions:
-        sufix = "core.alembic.%s" % v
+    for alembic_version in pkgs.alembic.versions:
+        sufix = "core.alembic.%s" % alembic_version
         cortex[sufix] = build.cortex(
             ARGUMENTS, # noqa
             'cortex',
             targetSuffix = sufix,
-            download = build.cortex.pkg(download, pkgs.alembic, v),
+            download = build.cortex.pkg(download, pkgs.alembic, alembic_version),
             sed = build.cortex.noIECoreSED(),
             baseLibs = [pkgs.python],
             depend = depend,
@@ -315,71 +284,25 @@ if canBuildCortexNow:
             patch = devPatch,
         )
 
-    # nuke_ocio = {'9.0' : '1.0.9'}
-    # ocio_nuke = []
-    # for n in range(1):
-    #     pipe.version.set( nuke  = nv[0] if len(nv)<=n else nv[n] )
-    #     nuke_version = pipe.version.get( 'nuke' )
-    #
-    #     # change the version name - add .nukeVersion
-    #     download = [ x for x in pkgs.ocio.download if nuke_ocio[nuke_version[:3]] in x[2] ]
-    #     newDownload = []
-    #     for n in range(len(download)):
-    #         newDownload.append((
-    #             download[n][0],
-    #             download[n][1],
-    #             download[n][2] + '.nuke%s' % nuke_version,
-    #             download[n][3],
-    #             download[n][4],
-    #         ))
-    #     print newDownload
-    #
-    #     ocio_nuke.append( build.cmake(
-    #         ARGUMENTS,
-    #         'ocio',
-    #         # ocio for some reason doesn't add -fPIC when building the static external libraries,
-    #         # so we have to patch it or build fail with gcc 4.1.2
-    #         # also, we have to remove -fvisibility-inlines-hidden when building with gcc 4.1.2
-    #         sed      = pkgs.ocio.sed,
-    #         download = newDownload,
-    #         baseLibs = pkgs.ocio.baseLibs,
-    #         depend   = pkgs.ocio.depend,
-    #         flags    = pkgs.ocio.flags,
-    #         environ  = {
-    #             'NUKE_INSTALL_PATH' : pipe.apps.nuke().path(),
-    #         },
-    #     ))
-
-
-    #https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz
-
-
     class cortexApps:
         ''' # this class stores data to build cortex for all the apps.'''
         name, versions, baseLibs, install, download = (0,1,2,3,4)
         def __init__(self, download):
             # disable alembic from now on...
             pkg = build.cortex.pkg
+            # remove alembic dependency from per app cortex
             noAlembic = pkg(download, pkgs.alembic, None)
+            # set the version of each pkg needed for each build.
             self.builds = [
                 # IECoreRI needs to be build first since IECoreMaya depends on it!
-                ('prman',   pv[:2], pkgs.python, 'installRI',   noAlembic),
-                ('maya',    mv    , None,        'installMaya', noAlembic),
-                ('nuke',    nv[:2], None,        'installNuke', noAlembic),
-                ('houdini', hv[:2], None,        'installHoudini installMantra',
-                    pkg(
-                        pkg(
-                            pkg(
-                                noAlembic,
-                                pkgs.gcc, '4.8.3'
-                            ),
-                            pkgs.boost, '1.55.0'
-                        ),
-                        pkgs.tbb, None
-                    )
-                ),
+                # we also need to build for all python versions
+                ('prman',   pv, pkgs.python, 'installRI',   noAlembic),
+                # for maya/nuke/houdini, we only need to build for the needed python version.
+                ('maya',    mv, None,        'installMaya', noAlembic),
+                ('nuke',    nv, None,        'installNuke', noAlembic),
+                # houdini has specific needs regarding pkg versions.
+                ('houdini', hv, None,        'installHoudini installMantra', pkg(pkg(pkg(noAlembic, pkgs.gcc, '4.8.3'), pkgs.boost, '1.55.0'), pkgs.tbb, None)),
             ]
-
 
             # use the data in buildList to build cortex for all apps
             for app in self.builds:
@@ -406,7 +329,9 @@ if canBuildCortexNow:
                     )
     cortexApps(download)
 
-    # build gaffer
+    # ===========================================================================================
+    # GAFFER
+    # ===========================================================================================
     gaffer_versions = ['0']
     gaffer = {}
     if pv:
@@ -424,34 +349,25 @@ if canBuildCortexNow:
             targetSuffix = "",
             download = [
                 [
-                    'https://github.com/GafferHQ/gaffer/archive/0.30.0.0.tar.gz',
-                    'gaffer-0.30.0.0.tar.gz',
-                    '0.30.0.0',
-                    'af503fe9f014864ce0230e5da33ca446',
-                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
-                ],[
-                    'https://github.com/GafferHQ/gaffer/archive/0.31.0.0.tar.gz',
-                    'gaffer-0.31.0.0.tar.gz',
-                    '0.31.0.0',
-                    '4f078feb478a186726ba9ce0de905845',
-                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
-                ],[
                     'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
                     'gaffer-0.32.0.0.tar.gz',
                     '0.32.0.0',
                     '2ae5c942f79dff458abda6bfb4c081f2',
-                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                    {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
                 ],[
                     'https://github.com/GafferHQ/gaffer/archive/0.53.6.3.tar.gz',
                     'gaffer-0.53.6.3.tar.gz',
                     '0.53.6.3',
                     'dbbfd30eb280d7241969511a095a0c8f',
-                    {pkgs.boost : boostVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+                    {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.8.5'}
                 ]
 
             ],
             baseLibs = [pkgs.python],
-            depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm, pkgs.python ],
+            depend =  depend + [
+                cortex['core.boost.%s' % boostMasterVersion],
+                pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm
+            ],
             apps = apps,
             sconsInstall = "install"
         )
@@ -463,47 +379,10 @@ if canBuildCortexNow:
     #         'gaffer',
     #         targetSuffix = "",
     #         download = d,
-    #         depend =  depend + [ cortex['core.boost.%s' % boostVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm, pkgs.python ],
+    #         depend =  depend + [ cortex['core.boost.%s' % boostMasterVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm, pkgs.python ],
     #         apps = ( 'prman', prman ),
     #         sconsInstall = "install"
     #     )
-
-
-    # build openvdb for each version of maya, so we get the plugins!
-    # openvdb = []
-    # for n in range(2):
-    #     pipe.version.set( maya  = mv[0] if len(mv)<=n else mv[n] )
-    #
-    #     openvdb.append( build.openvdb(
-    #         ARGUMENTS,
-    #         'openvdb',
-    #         targetSuffix = "maya%s" % (pipe.version.get('maya')),
-    #         download=[(
-    #             'https://github.com/dreamworksanimation/openvdb/archive/v4.0.0.tar.gz',
-    #             'openvdb-4.0.0.tar.gz',
-    #             '4.0.0',
-    #             'c56d8a1a460f1d3327f2568e3934ca6a',
-    #             {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
-    #         ),(
-    #             'https://github.com/dreamworksanimation/openvdb/archive/v3.2.0.tar.gz',
-    #             'openvdb-3.2.0.tar.gz',
-    #             '3.2.0',
-    #             '54068805fb2ebedd3eeee44d7ecd56a2',
-    #             {pkgs.ilmbase: "2.2.0", pkgs.openexr: "2.2.0", pkgs.gcc: '4.8.3'},
-    #         )],
-    #         depend=[ pkgs.hdf5, pkgs.boost, pkgs.glfw, pkgs.log4cplus, pkgs.numpy, pkgs.python ],
-    #         environ = {
-    #             'MAYA_VERSION' : pipe.version.get('maya'),
-    #             'MAYA_ROOT' : pipe.apps.maya().path(),
-    #         },
-    #     ))
-    #
-    # pkgs.openvdb = openvdb[-1]
-
-
-    # https://github.com/wdas/ptex/archive/v2.3.2.tar.gz
-    # https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz
-    # https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz
 
 
 

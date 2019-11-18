@@ -192,10 +192,10 @@ class all: # noqa
                     # origial source file: 'gcc-4.1.2.tar.gz',
                     # bin tarball md5: 'bf35fabc47ead3b1f743492052296336',
                     # bin tarball file: '4.1.2.tar.gz',
-                    'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                    '--ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
                     '4.1.2.tar.gz',
                     '4.1.2',
-                    'bf35fabc47ead3b1f743492052296336',
+                    '094fa468653d11cf65df94cc41fb257c',
                     { binutils : '2.22.0' }
                 ),(
                     # CY2015
@@ -400,6 +400,12 @@ class all: # noqa
             ARGUMENTS,
             'cmake',
             download=[(
+                'https://cmake.org/files/v3.8/cmake-3.8.2.tar.gz',
+                'cmake-3.8.2.tar.gz',
+                '3.8.2',
+                'b5dff61f6a7f1305271ab3f6ae261419',
+                { gcc : '4.1.2' }
+            ),(
                 'http://www.cmake.org/files/v3.4/cmake-3.4.3.tar.gz',
                 'cmake-3.4.3.tar.gz',
                 '3.4.3',
@@ -946,8 +952,19 @@ class all: # noqa
                 '1.8.17',
                 '7d572f8f3b798a628b8245af0391a0ca',
                 { gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                'https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.20/src/hdf5-1.8.20.tar.gz',
+                'hdf5-1.8.20.tar.gz',
+                '1.8.20',
+                '7f2d3fd67106968eb45d133f5a22150f',
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend = allDepend,
+            cmd = [
+                './configure --enable-threadsafe --disable-hl --with-pthread=/usr/include',
+                'make -j $DCORES',
+                'make -j $DCORES install',
+            ],
         )
         self.hdf5 = hdf5
 
@@ -1274,14 +1291,15 @@ class all: # noqa
             #     '4.8.6',
             #     '2edbe4d6c2eff33ef91732602f3518eb',
             # ),(
-                # VFXPLATFORM CY2015
+                # VFXPLATFORM CY2015 (maya 2016)
                 'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
                 'qt-everywhere-opensource-src-4.8.7.tar.gz',
                 '4.8.7',
                 'd990ee66bf7ab0c785589776f35ba6ad',
                 { gcc : '4.1.2' }
             ),(
-                # VFXPLATFORM CY2016-CY2018
+                # VFXPLATFORM CY2016-CY2018 (maya 2018)
+                # http://www.autodesk.com/lgplsource
                 # 'http://mirror.csclub.uwaterloo.ca/qtproject/archive/qt/5.6/5.6.1/single/qt-everywhere-opensource-src-5.6.1.tar.gz',
                 # 'qt-everywhere-opensource-src-5.6.1.tar.gz',
                 # 'ed16ef2a30c674f91f8615678005d44c',
@@ -1306,9 +1324,15 @@ class all: # noqa
                 # '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_TARGET_FOLDER/* qtbase/ )',
                 # '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_DECLARATIVE_TARGET_FOLDER/* qtdeclarative/ )',
                 # '( [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && cp -rfuv $QTMAYA_X11EXTRAS_TARGET_FOLDER/* qtx11extras/ )',
-                # './configure  -opensource -shared --confirm-license  -no-webkit -silent',
-                './configure -release -opensource -shared --confirm-license -v -no-warnings-are-errors -nomake examples -nomake tests -c++std c++11 '
-                '-no-gtkstyle -no-dbus -skip qtconnectivity -no-libudev -no-gstreamer -no-icu -qt-pcre ',
+                '( [ "$(basename $TARGET_FOLDER)" == "4.8.7" ] && '
+                    './configure  -opensource -shared --confirm-license  -no-webkit -silent '
+                '|| '
+                    './configure -plugindir $TARGET_FOLDER/qt/plugins -release -opensource --confirm-license '
+                    '-no-rpath -no-gtkstyle -no-audio-backend -no-dbus '
+                    '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
+                    '-no-libudev -no-gstreamer -no-icu -qt-pcre -qt-xcb '
+                    '-nomake examples -nomake tests -c++std c++11 '
+                ')',
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
@@ -1346,6 +1370,12 @@ class all: # noqa
                 '53f66e12c3e29c62dc51b070f027a0ad',
                 {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.56.0"},
             # ),(
+            #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.9.9.tar.gz',
+            #     'OpenShadingLanguage-Release-1.9.9.tar.gz',
+            #     '1.9.9',
+            #     '53f66e12c3e29c62dc51b070f027a0ad',
+            #     {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.56.0"},
+            # ),(
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
             #     'OpenShadingLanguage-Release-1.7.5.tar.gz',
             #     '1.7.5',
@@ -1379,10 +1409,32 @@ class all: # noqa
         )
         self.osl = osl
 
-
-
         # qt packages
         # =============================================================================================================================================
+        qtpy = build.download(
+            ARGUMENTS,
+            'qtpy',
+            download=[(
+                'https://github.com/mottosso/Qt.py/archive/1.1.0.b3.tar.gz',
+                'Qt.py-1.1.0.b3.tar.gz',
+                '1.1.0.b3',
+                '5c1acbf9bdec2359d414cc7d2a2b6b7f',
+            )],
+            cmd = [
+                'rm -rf $TARGET_FOLDER/*',
+                'mkdir -p $TARGET_FOLDER/lib/python/site_packages/src',
+                'ln -s python $TARGET_FOLDER/lib/python2.6',
+                'ln -s python $TARGET_FOLDER/lib/python2.7',
+                'ln -s python $TARGET_FOLDER/lib/python3.5',
+                'ln -s python $TARGET_FOLDER/lib/python3.6',
+                'ln -s python $TARGET_FOLDER/lib/python3.7',
+                'ln -s lib $TARGET_FOLDER/lib64',
+                'cp -rf ./Qt.py $TARGET_FOLDER/lib/python/site_packages/',
+                'cp -rf ./* $TARGET_FOLDER/lib/python/site_packages/src/',
+            ],
+            src = 'Qt.py'
+        )
+
         sip = build.pythonSetup(
             ARGUMENTS,
             'sip',
@@ -1393,10 +1445,22 @@ class all: # noqa
                 '4c95447c7b0391b7f183cf9f92ae9bc6',
                 { gcc : '4.1.2' }
             ),(
+                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
+                'sip-4.16.7.tar.gz',
+                '4.16.7',
+                '32abc003980599d33ffd789734de4c36',
+                { gcc : '4.1.2' }
+            ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.4/sip-4.16.4.tar.gz',
                 'sip-4.16.4.tar.gz',
                 '4.16.4',
                 'a9840670a064dbf8f63a8f653776fec9',
+                { gcc : '4.1.2' }
+            ),(
+                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18/sip-4.18.tar.gz',
+                'sip-4.18.tar.gz',
+                '4.18.0',
+                '78724bf2a79878201c3bc81a1d8248ea',
                 { gcc : '4.1.2' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18.1/sip-4.18.1.tar.gz',
@@ -1404,6 +1468,12 @@ class all: # noqa
                 '4.18.1',
                 '9d664c33e8d0eabf1238a7ff44a399e9',
                 { gcc : '4.1.2' }
+            # ),(
+            #     'https://sourceforge.net/project/pyqt/files/sip/sip-4.19.13/sip-4.19.13.tar.gz',
+            #     'sip-4.19.13.tar.gz',
+            #     '4.19.13',
+            #     '9124cb8978742685747a5415179a9890',
+            #     { gcc : '4.1.2' }
             )],
             baseLibs=[python],
             src = 'configure.py',
@@ -1425,36 +1495,86 @@ class all: # noqa
             ARGUMENTS,
             'pyqt',
             download=[(
+                # CY 2014-2015
                 'http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz',
                 'PyQt-x11-gpl-4.11.4.tar.gz',
                 '4.11.4',
                 '2fe8265b2ae2fc593241c2c84d09d481',
-                {qt:'4.8.7', sip: '4.16.4', gcc : '4.1.2'},
-                # ),(
-                #     'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.7/PyQt5_gpl-5.7.tar.gz',
-                #     'PyQt5_gpl-5.7.tar.gz',
-                #     '5.7.0',
-                #     '2fe8265b2ae2fc593241c2c84d09d481',
-                #     {qt:'5.7.0', sip: '4.18.1', gcc : '4.8.5' },
+                { qt:'4.8.7', sip: '4.16.7', gcc : '4.1.2'},
+            ),(
+                # CY 2016-2018
+                'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.6/PyQt5_gpl-5.6.tar.gz',
+                'PyQt5_gpl-5.6.tar.gz',
+                '5.6.0',
+                'dbfc885c0548e024ba5260c4f44e0481',
+                { qt:'5.6.1', sip: '4.18.0', gcc : '4.8.5' },
+            ),(
+                # CY 2019-2020
+                'https://www.riverbankcomputing.com/static/Downloads/PyQt5/5.12/PyQt5_gpl-5.12.tar.gz',
+                'PyQt5_gpl-5.12.tar.gz',
+                '5.12.0',
+                '0d839c6218a4287d51bf79d6195016f0',
+                { qt:'5.12.0', sip: '4.18.0', gcc : '4.8.5' },
             )],
             baseLibs=[python],
             depend=[sip,qt, gcc]+allDepend,
-            src = 'configure-ng.py',
+            src = 'configure.py',
             cmd = [
-                # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
-                'python configure.py --confirm-license --assume-shared --verbose --no-designer-plugin '
-                '-b $TARGET_FOLDER/bin '
-                '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-                '-v $TARGET_FOLDER/share/sip/PyQt4 '
-                'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
-                'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
-                'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install',
+                '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
+                        'python configure.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
+                    # =======================================================
+                    # TODO: PyQt5 is failing to build, not sure why.
+                    # for now, we will be using PySide2 for maya 2018 and up,
+                    # since it build without problems!
+                    # =======================================================
+                    # '|| '
+                    #     'python configure.py --confirm-license --verbose --no-designer-plugin -w --protected-is-public '
+                    #     '-b $TARGET_FOLDER/bin '
+                    #     '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+                    #     "-v $TARGET_FOLDER/share/sip/PyQt$(echo $QT_VERSION | awk -F'.' '{print $1}') "
+                    #     'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                    #     '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                    #     '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
+                ')'
+                # we return true if pyqt 5 since we want to download
+                # the pkgs to keep then around, but not build then.
+                ' || true'
             ],
         )
         self.pyqt = pyqt
-        allDepend += [pyqt]
+        # allDepend += [pyqt]
 
-
+        pyside = build.pythonSetup(
+            ARGUMENTS,
+            'pyside',
+            download=[(
+               # CY 2016-2018 (maya 2018.4)
+               'https://www.autodesk.com/content/dam/autodesk/www/Company/files/pyside2-maya2018.4.zip',
+               'pyside2-maya2018.4.zip',
+               '2.0.18',
+               'aa93469f528db7ce9a596f36828102dc',
+               { qt:'5.6.1', gcc : '4.8.5', python: '2.7.16' },
+            ),(
+               # CY 2016-2018 (maya 2018.6 and maya 2019.1)
+               'https://www.autodesk.com/content/dam/autodesk/www/Company/files/PySide2-Maya-2018_6.tgz',
+               'pyside2-maya2018.6.tar.gz',
+               '2.0.19',
+               '84558ad5952c5d86a648f319978413e9',
+               { qt:'5.6.1', gcc : '4.8.5', python: '2.7.16' },
+            )],
+            # since booth files create the same path, we have to instruct the
+            # decompressor to use the same folder name for booth.
+            uncompressed_path = {
+                'pyside2-maya2018.4' : 'pyside-setup',
+                'pyside2-maya2018.6' : 'pyside-setup',
+            },
+            # baseLibs=[python],
+            depend=[qt, gcc]+allDepend,
+        )
+        self.pyside = pyside
+        # allDepend += [pyside]
 
         log4cplus = build.configure(
             ARGUMENTS,
@@ -1471,21 +1591,247 @@ class all: # noqa
         self.log4cplus = log4cplus
         allDepend += [log4cplus]
 
-        # blosc = build.cmake(
-        #     ARGUMENTS,
-        #     'blosc',
-        #     download=[(
-        #         'https://github.com/Blosc/c-blosc/archive/v1.11.1.tar.gz',
-        #         'c-blosc-1.11.1.tar.gz',
-        #         '1.11.1',
-        #         'e236550640afa50155f3881f2d300206',
-        #     )],
-        #     depend=[gcc],
-        #     flags=['-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER '],
-        # )
-        # self.blosc = blosc
+        blosc = build.cmake(
+            ARGUMENTS,
+            'blosc',
+            download=[(
+                'https://github.com/Blosc/c-blosc/archive/1.15.1.tar.gz',
+                'c-blosc-1.15.1.tar.gz',
+                '1.15.1',
+                'ff2f5a0fe5c7a8a9e2eb0c6f224e2823',
+                { gcc : '4.1.2' }
+            )],
+            depend=[gcc],
+            flags=['-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER '],
+        )
+        self.blosc = blosc
+        allDepend += [blosc]
+
+        ptex = build.cmake(
+            ARGUMENTS,
+            'ptex',
+            sed = {},
+            download=[(
+                # CY 2020
+                'https://github.com/wdas/ptex/archive/v2.3.2.tar.gz',
+                'ptex-2.3.2.tar.gz',
+                '2.3.2',
+                'd409eecde96f89517bc271b1d4909bc5',
+                { cmake: '3.8.2', gcc : '4.1.2' }
+            ),(
+                # CY 2019
+                'https://github.com/wdas/ptex/archive/v2.1.33.tar.gz',
+                'ptex-2.1.33.tar.gz',
+                '2.1.33',
+                'ce1f1af2a151a2bf1057e0456c91dbb6',
+                { cmake: '3.8.2', gcc : '4.1.2' }
+            ),(
+                # CY 2017-2018
+                'https://github.com/wdas/ptex/archive/v2.1.28.tar.gz',
+                'ptex-2.1.28.tar.gz',
+                '2.1.28',
+                'ce4eb665f686f8391968fa137113bc69',
+                { cmake: '3.8.2', gcc : '4.1.2' }
+            )],
+            depend=allDepend,
+            cmd = ' && '.join(build.cmake.cmd).replace('cmake','cmake -DPTEX_VER=$(basename $TARGET_FOLDER)')
+        )
+        self.ptex = ptex
+        allDepend += [ptex]
+
+        openvdb = build.cmake(
+            ARGUMENTS,
+            'openvdb',
+            sed = {},
+            download=[(
+            #     # CY 2020
+            #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
+            #     'openvdb-7.0.0.tar.gz',
+            #     '7.0.0',
+            #     'd409eecde96f89517bc271b1d4909bc5',
+            # ),(
+                # CY 2019
+                'https://github.com/AcademySoftwareFoundation/openvdb/archive/v6.0.0.tar.gz',
+                'openvdb-6.0.0.tar.gz',
+                '6.0.0',
+                '43604208441b1f3625c479ef0a36d7ad',
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+            ),(
+                # CY 2018
+                'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
+                'openvdb-5.0.0.tar.gz',
+                '5.0.0',
+                '9ba08c29dda60ec625acb8a5928875e5',
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+            ),(
+                # CY 2017
+                'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
+                'openvdb-4.0.0.tar.gz',
+                '4.0.0',
+                'c56d8a1a460f1d3327f2568e3934ca6a',
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+            ),(
+                # CY 2015-2016
+                'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
+                'openvdb-3.0.0.tar.gz',
+                '3.0.0',
+                '3ca8f930ddf759763088e265654f4084',
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+            )],
+            depend=allDepend+[openexr, ilmbase, glfw],
+            cmd = [
+            "cd openvdb",
+            " make install -j $DCORES"
+			" DESTDIR=$TARGET_FOLDER"
+			" BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include"
+			" BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+			" BOOST_PYTHON_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+			" BOOST_PYTHON_LIB=-lboost_python"
+			" EXR_INCL_DIR=$OPENEXR_TARGET_FOLDER/include"
+			" EXR_LIB_DIR=$OPENEXR_TARGET_FOLDER/lib"
+			# " TBB_INCL_DIR=$TBB_TARGET_FOLDER/include"
+			" TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib"
+			" PYTHON_VERSION=$PYTHON_VERSION"
+			" PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include"
+			" PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib"
+			" BLOSC_INCL_DIR=$BLOSC_TARGET_FOLDER/include"
+			" BLOSC_LIB_DIR=$BLOSC_TARGET_FOLDER/lib"
+			" NUMPY_INCL_DIR="
+			" CONCURRENT_MALLOC_LIB="
+			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
+			" LOG4CPLUS_INCL_DIR="
+			" EPYDOC= ",
+            "cp $TARGET_FOLDER/python/lib/python{pythonVersion}/pyopenvdb.so $TARGET_FOLDER/python",
+		    "cp $TARGET_FOLDER/python/include/python{pythonVersion}/pyopenvdb.h $TARGET_FOLDER/include",
+            ]
+        )
+        self.openvdb = openvdb
+        allDepend += [openvdb]
+
+        # build alembic without apps plugins
+        alembic = build.alembic(
+            ARGUMENTS,
+            'alembic',
+            download=[(
+                # CY2014 - CY2016
+                'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
+                'alembic-1.5.8.tar.gz',
+                '1.5.8',
+                'a70ba5f2e80b47d346d15d797c28731a',
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.1.2'},
+            ),(
+                # CY2017
+                'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
+                'alembic-1.6.1.tar.gz',
+                '1.6.1',
+                'e1f9f2cbe1899d3d55b58708b9307482',
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5'},
+            ),(
+                # CY2018 - CY2020
+                'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
+                'alembic-1.7.11.tar.gz',
+                '1.7.11',
+                'e156568a8d8b48c4da4fe2496386243d',
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5'},
+            )],
+            baseLibs=[python],
+            depend=allDepend,
+        )
+        self.alembic = alembic
+
+        # build alembic without apps plugins
+        opensubdiv = build.alembic(
+            ARGUMENTS,
+            'opensubdiv',
+            download=[(
+                # CY 2014
+                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_3_3.tar.gz',
+                'OpenSubdiv-2_3_3.tar.gz',
+                '2.3.3',
+                'b7312b63bf6dfb38b49b17f15c976849',
+            ),(
+                # CY 2015
+                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_5_1.tar.gz',
+                'OpenSubdiv-2_5_1.tar.gz',
+                '2.5.1',
+                '73da98bdb1e944b3ec5b046b3d8008d6',
+            ),(
+                # CY 2016
+                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_0_5.tar.gz',
+                'OpenSubdiv-3_0_5.tar.gz',
+                '3.0.5',
+                'f16fa309b3fa3d400e6dcbf59d316dfe',
+            ),(
+                # CY 2017
+                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_1_1.tar.gz',
+                'OpenSubdiv-3_1_1.tar.gz',
+                '3.1.1',
+                '0f50e6aaca1d174d6b878433d13faa7f',
+            ),(
+                # CY 2018-2019
+                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_3_3.tar.gz',
+                'OpenSubdiv-3_3_3.tar.gz',
+                '3.3.3',
+                '29c79dc01ef616aab02670bed5544ddd',
+            ),(
+                # CY 2020
+                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz',
+                'OpenSubdiv-3_4_0.tar.gz',
+                '3.4.0',
+                '2eea21ef2d85bcbbcee94e287c34a07e',
+            )],
+            # baseLibs=[python],
+            depend=allDepend,
+        )
+        self.opensubdiv = opensubdiv
 
 
+        # build USD without plugins
+        usd = build.cmake(
+            ARGUMENTS,
+            'usd',
+            sed = {},
+            download=[(
+                # theres no CY for USD - not in VFX Platform yet.
+                # so lets build the one in Gaffer dependencies
+                'https://github.com/PixarAnimationStudios/USD/archive/v18.09.tar.gz',
+                'USD-18.09.tar.gz',
+                '18.9.0',
+                '10a06767c6a9c69733bb5f9fbadcb52a',
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11'},
+            ),(
+                # this is the latest for now - nov/2019
+                'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
+                'USD-19.07.tar.gz',
+                '19.7.0',
+                '8d274089364cfed23004ae52fa3d258f',
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11'},
+            )],
+            baseLibs=[python],
+            depend=allDepend+[alembic, openexr, ilmbase, opensubdiv],
+            cmd = [
+                "cmake"
+                " -D CMAKE_INSTALL_PREFIX=$TARGET_FOLDER"
+                " -D CMAKE_PREFIX_PATH=$TARGET_FOLDER"
+                " -D Boost_NO_SYSTEM_PATHS=TRUE"
+                " -D Boost_NO_BOOST_CMAKE=TRUE"
+                " -D PXR_BUILD_IMAGING=FALSE"
+                " -D PXR_BUILD_TESTS=FALSE"
+                " -D PXR_BUILD_ALEMBIC_PLUGIN=TRUE"
+                " -D PXR_ENABLE_HDF5_SUPPORT=FALSE"
+                " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER/lib"
+                " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
+                # " -D PXR_BUILD_MAYA_PLUGIN=1"
+                # " -D PXR_BUILD_HOUDINI_PLUGIN=1"
+                # " -D PXR_BUILD_PRMAN_PLUGIN=1"
+                # " -D PXR_BUILD_KATANA_PLUGIN=1"
+                " .",
+                "make VERBOSE=1 -j $CORES",
+                "make install",
+                "mv $TARGET_FOLDER/lib/python/pxr $TARGET_FOLDER/python",
+            ]
+        )
+        self.usd = usd
 
 
 
@@ -1498,6 +1844,8 @@ class all: # noqa
             )
         )
 
+
+        self.allDepend = allDepend
 
         # =============================================================================================================================================
 

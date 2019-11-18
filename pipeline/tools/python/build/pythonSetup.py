@@ -35,6 +35,20 @@ class pythonSetup(generic):
         'python setup.py install --prefix=$TARGET_FOLDER',
     ]
 
+    # def uncompressor( self, target, source, env):
+    #     ''' pyside2 has the same file name for all package versions - thanks autodesk!'''
+    #     t = os.path.abspath(str(target[0]))
+    #     if 'pyside' in t:
+    #         # copy original to pyside-setup file,
+    #         # so uncompressor can work
+    #         pyside = os.path.dirname(t)+'pyside-setup'+os.path.splitext(t)[-1]
+    #         if os.system( 'cp %s %s' % (t, pyside) ) == 0:
+    #             configure.uncompressor( self, [pyside], source, env)
+    #         else:
+    #             Exception("Can't crete pyside-setup file!")
+    #     else:
+    #         configure.uncompressor( self, target, source, env)
+
     def fixCMD(self, cmd):
         mkdir = 'mkdir -p $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ && export PYTHONPATH=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/:$PYTHONPATH'
         if mkdir.replace(' ','').lower() not in cmd.replace(' ','').lower():

@@ -1428,8 +1428,14 @@ class generic:
     def fix_uncompressed_path(self, path):
         if self.kargs.has_key('uncompressed_path'):
             path = os.path.basename(path)
-            if path in self.kargs['uncompressed_path'].keys():
-                return self.kargs['uncompressed_path'][path]
+            k = [ x for x in self.kargs['uncompressed_path'].keys() if path in x ]
+            if len(k)==1:
+                return self.kargs['uncompressed_path'][k[0]]
+            else:
+                if len(k)==0:
+                    print "\n\nCouldn't find the uncompressed folder name from the list: %s\n\n" % str(self.kargs['uncompressed_path'])
+                else:
+                    print "\n\nMore than one match for path %s: %s\n\n" % (path, str(k))
         return path
 
 

@@ -214,6 +214,7 @@ class alembic(cmake):
     def fixCMD(self, cmd):
         # update the buld environment with all the enviroment variables
         # specified in apps argument!
+        environ = []
         cmd = make.fixCMD(self, cmd, environ)
 
         pipe.version.set(python=self.os_environ['PYTHON_VERSION'])

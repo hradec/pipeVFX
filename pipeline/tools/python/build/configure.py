@@ -91,6 +91,7 @@ class gccBuild(configure):
             # change the target for the gcc 4.1.2 version, since we're using
             # a binary tarball
             tt = '/'.join([os.path.dirname(t),'bin'])
+            print tt
             configure.uncompressor( self, [tt], source, env)
         else:
             configure.uncompressor( self, target, source, env)
@@ -98,7 +99,11 @@ class gccBuild(configure):
     def fixCMD(self, cmd):
         if self.versionMajor == 4.1:
             if self.use_bin_tarball:
-                cmd = 'cp -ruvf ./* $TARGET_FOLDER/'
+                cmd = ';'.join([
+                    'cp -ruvf ./* $TARGET_FOLDER/',
+                    'mkdir -p /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/',
+                    'ln -s  $TARGET_FOLDER /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2',
+                ])
             else:
                 cmd = ' && '.join([
                     # got this build options for arch AUR-mirror for gcc 4.1
