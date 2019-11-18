@@ -406,7 +406,7 @@ class generic:
             v=kargs[each]
             if type(v)==type(""):
                 v=[kargs[each]]
-            if type(v) not in [int, float, bool]:
+            if type(v) not in [int, float, bool, dict]:
                 for n in range(len(v)):
                     self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
 
@@ -1398,7 +1398,9 @@ class generic:
                     if '.zip' in s:
                         cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
                         print cmd
-                    cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (os.path.basename(s.replace('.tar.gz','').replace('.zip','')), os.path.dirname(t), tmp)
+
+                    uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
+                    cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (uncompressed_folder, os.path.dirname(t), tmp)
                     lines = os.popen( cmd ).readlines()
                     if not os.path.exists(str(target[n])):
                         print '-'*tcols
@@ -1422,6 +1424,14 @@ class generic:
                     if not os.path.exists(os.path.dirname(t)):
                         os.mkdir(os.path.dirname(t))
                         open(t, 'a').close()
+
+    def fix_uncompressed_path(self, path):
+        if self.kargs.has_key('uncompressed_path'):
+            path = os.path.basename(path)
+            if path in self.kargs['uncompressed_path'].keys():
+                return self.kargs['uncompressed_path'][path]
+        return path
+
 
 
     def runSED(self,t):
