@@ -1700,8 +1700,8 @@ class all: # noqa
 			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
 			" LOG4CPLUS_INCL_DIR="
 			" EPYDOC= ",
-            "cp $TARGET_FOLDER/python/lib/python{pythonVersion}/pyopenvdb.so $TARGET_FOLDER/python",
-		    "cp $TARGET_FOLDER/python/include/python{pythonVersion}/pyopenvdb.h $TARGET_FOLDER/include",
+            "cp $TARGET_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $TARGET_FOLDER/python",
+		    "cp $TARGET_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $TARGET_FOLDER/include",
             ]
         )
         self.openvdb = openvdb

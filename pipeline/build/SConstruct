@@ -142,42 +142,43 @@ if canBuildCortexNow:
             )]
 
         # build plugins
-        pkgs.maya_usd += [build.make(
-            ARGUMENTS,
-            'usd',
-            sed = {},
-            targetSuffix = "maya%s" % version,
-            download = pkgs.usd.download,
-            depend = pkgs.usd.depend,
-            cmd = [
-                pkgs.usd.cmd[0].replace( 'cmake', 'cmake -D PXR_BUILD_MAYA_PLUGIN=1' ),
-                'make -j $DCORES && make install',
-            ],
-            apps = [ (pipe.apps.maya, version) ],
-        )]
-        pkgs.maya_alembic += [build.alembic(
-            ARGUMENTS,
-            'alembic',
-            targetSuffix = "maya%s" % version,
-            baseLibs = pkgs.alembic.baseLibs,
-            download = pkgs.alembic.download,
-            depend = pkgs.alembic.depend,
-            cmd = pkgs.alembic.cmd,
-            apps = [ (pipe.apps.maya, version) ],
-        )]
+        if version:
+            pkgs.maya_usd += [build.make(
+                ARGUMENTS,
+                'usd',
+                sed = {},
+                targetSuffix = "maya%s" % str(version),
+                download = pkgs.usd.download,
+                depend = pkgs.usd.depend,
+                cmd = [
+                    pkgs.usd.cmd[0].replace( 'cmake', 'cmake -D PXR_BUILD_MAYA_PLUGIN=1' ),
+                    'make -j $DCORES && make install',
+                ],
+                apps = [ (pipe.apps.maya, str(version)) ],
+            )]
+            pkgs.maya_alembic += [build.alembic(
+                ARGUMENTS,
+                'alembic',
+                targetSuffix = "maya%s" % str(version),
+                baseLibs = pkgs.alembic.baseLibs,
+                download = pkgs.alembic.download,
+                depend = pkgs.alembic.depend,
+                cmd = pkgs.alembic.cmd,
+                apps = [ (pipe.apps.maya, str(version)) ],
+            )]
 
-        pkgs.maya_openvdb += [build.make(
-            ARGUMENTS,
-            'openvdb',
-            targetSuffix = "maya%s" % version,
-            download = pkgs.openvdb.download,
-            depend = pkgs.openvdb.depend,
-            cmd = ['cd openvdb_maya']+pkgs.openvdb.cmd[1:],
-            environ = {
-                'MAYA_VERSION' : version,
-                'MAYA_ROOT' : pipe.apps.maya().path(),
-            },
-        )]
+            pkgs.maya_openvdb += [build.make(
+                ARGUMENTS,
+                'openvdb',
+                targetSuffix = "maya%s" % str(version),
+                download = pkgs.openvdb.download,
+                depend = pkgs.openvdb.depend,
+                cmd = ['cd openvdb_maya']+pkgs.openvdb.cmd[1:],
+                environ = {
+                    'MAYA_VERSION' : str(version),
+                    'MAYA_ROOT' : pipe.apps.maya().path(),
+                },
+            )]
 
     # ===========================================================================================
     # PRMAN
@@ -190,29 +191,30 @@ if canBuildCortexNow:
             version = pv[0] if len(pv)<=n else pv[n]
             pipe.version.set( prman  = version )
 
-        pkgs.prman_usd += [build.cmake(
-            ARGUMENTS,
-            'usd',
-            sed = {},
-            targetSuffix = "prman%s" % version,
-            download=pkgs.usd.download,
-            depend=pkgs.usd.depend,
-            cmd = [
-                pkgs.usd.cmd[0].replace('cmake', 'cmake -D PXR_BUILD_PRMAN_PLUGIN=1'),
-                'make -j $DCORES && make install',
-            ],
-            apps = [ (pipe.apps.prman, version) ],
-        )]
-        pkgs.prman_alembic += [build.alembic(
-            ARGUMENTS,
-            'alembic',
-            targetSuffix = "prman%s" % version,
-            baseLibs = pkgs.alembic.baseLibs,
-            download = pkgs.alembic.download,
-            depend = pkgs.alembic.depend,
-            cmd = pkgs.alembic.cmd,
-            apps = [ (pipe.apps.prman, version) ],
-        )]
+        if version:
+            pkgs.prman_usd += [build.cmake(
+                ARGUMENTS,
+                'usd',
+                sed = {},
+                targetSuffix = "prman%s" % str(version),
+                download=pkgs.usd.download,
+                depend=pkgs.usd.depend,
+                cmd = [
+                    pkgs.usd.cmd[0].replace('cmake', 'cmake -D PXR_BUILD_PRMAN_PLUGIN=1'),
+                    'make -j $DCORES && make install',
+                ],
+                apps = [ (pipe.apps.prman, str(version)) ],
+            )]
+            pkgs.prman_alembic += [build.alembic(
+                ARGUMENTS,
+                'alembic',
+                targetSuffix = "prman%s" % str(version),
+                baseLibs = pkgs.alembic.baseLibs,
+                download = pkgs.alembic.download,
+                depend = pkgs.alembic.depend,
+                cmd = pkgs.alembic.cmd,
+                apps = [ (pipe.apps.prman, str(version)) ],
+            )]
 
 
     # ===========================================================================================
