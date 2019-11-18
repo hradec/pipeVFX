@@ -218,22 +218,20 @@ if canBuildCortexNow:
     # ===========================================================================================
     # CORTEX VFX
     # ===========================================================================================
-    boostMasterVersion = "1.51.0"
-    download = [
-        [
-            'https://github.com/ImageEngine/cortex/archive/10.0.0-a65.tar.gz',
-            'cortex-10.0.0-a65.tar.gz',
-            '10.0.0.a65',
-            '6d74b28f18574c2358a2946d97ba0499',
-            {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
-        # ],[
-        #     'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
-        #     'cortex-9.18.0.tar.gz',
-        #     '9.18.0',
-        #     '88793f1f723583b7b40fa69d4fbf0352',
-        #     {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
-        ]
-    ]
+    boostMasterVersion = "1.55.0"
+    download = [[
+        'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
+        'cortex-9.18.0.tar.gz',
+        '9.18.0',
+        'b3c55cc5e0e95668208713a01a145869',
+        {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
+    ],[
+        'https://github.com/ImageEngine/cortex/archive/10.0.0-a65.tar.gz',
+        'cortex-10.0.0-a65.tar.gz',
+        '10.0.0.a65',
+        '6d74b28f18574c2358a2946d97ba0499',
+        {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.8.5'}
+    ]]
 
     # cortex dependency
     depend = [
@@ -285,7 +283,7 @@ if canBuildCortexNow:
         )
 
     class cortexApps:
-        ''' # this class stores data to build cortex for all the apps.'''
+        ''' # this class construct data to build cortex for all the apps.'''
         name, versions, baseLibs, install, download = (0,1,2,3,4)
         def __init__(self, download):
             # disable alembic from now on...
@@ -332,59 +330,47 @@ if canBuildCortexNow:
     # ===========================================================================================
     # GAFFER
     # ===========================================================================================
+    pkgs.gaffer = {}
+    # set first version to 0, so we build gaffer without any app support.
     gaffer_versions = ['0']
-    gaffer = {}
-    if pv:
-        gaffer_versions += pv[:2]
-    for prman in gaffer_versions:
+    # now, add prman versions to build gaffer against
+    gaffer_versions += pv
+
+    # so now we can build!
+    for version in gaffer_versions:
         sufix = ''
         apps = []
-        if float(prman) > 0:
-            sufix = 'prman.'+ prman
-            apps = ( 'prman', prman )
+        if float(version) > 0:
+            sufix = 'prman.'+ version
+            apps = ( 'prman', version )
 
-        gaffer = build.gaffer(
+        pkgs.gaffer[sufix] = build.gaffer(
             ARGUMENTS, # noqa
             'gaffer',
-            targetSuffix = "",
-            download = [
-                [
-                    'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
-                    'gaffer-0.32.0.0.tar.gz',
-                    '0.32.0.0',
-                    '2ae5c942f79dff458abda6bfb4c081f2',
-                    {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
-                ],[
-                    'https://github.com/GafferHQ/gaffer/archive/0.53.6.3.tar.gz',
-                    'gaffer-0.53.6.3.tar.gz',
-                    '0.53.6.3',
-                    'dbbfd30eb280d7241969511a095a0c8f',
-                    {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.8.5'}
-                ]
-
-            ],
+            targetSuffix = sufix,
+            download = [[
+                'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
+                'gaffer-0.32.0.0.tar.gz',
+                '0.32.0.0',
+                '2ae5c942f79dff458abda6bfb4c081f2',
+                {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8",
+                pkgs.gcc : '4.1.2', cortex['core.boost.1.51.0'] : '9.18.0'}
+            ],[
+                'https://github.com/GafferHQ/gaffer/archive/0.53.6.3.tar.gz',
+                'gaffer-0.53.6.3.tar.gz',
+                '0.53.6.3',
+                'dbbfd30eb280d7241969511a095a0c8f',
+                {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.7.11",
+                pkgs.gcc : '4.8.5',  cortex['core.boost.%s' % boostMasterVersion] : '10.0.0.a65'}
+            ]],
             baseLibs = [pkgs.python],
             depend =  depend + [
-                cortex['core.boost.%s' % boostMasterVersion],
-                pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm
+                pkgs.qt, pkgs.pyqt, pkgs.osl,
+                pkgs.oiio, pkgs.ocio, pkgs.llvm
             ],
             apps = apps,
             sconsInstall = "install"
         )
-
-    # for prman in pv[:2]:
-    #     sufix = 'prman.'+ prman
-    #     gaffer = build.gaffer(
-    #         ARGUMENTS, # noqa
-    #         'gaffer',
-    #         targetSuffix = "",
-    #         download = d,
-    #         depend =  depend + [ cortex['core.boost.%s' % boostMasterVersion], pkgs.qt, pkgs.pyqt, pkgs.osl, pkgs.oiio, pkgs.ocio, pkgs.llvm, pkgs.python ],
-    #         apps = ( 'prman', prman ),
-    #         sconsInstall = "install"
-    #     )
-
-
 
 
 

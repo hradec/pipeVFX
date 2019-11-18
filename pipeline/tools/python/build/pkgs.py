@@ -1212,10 +1212,9 @@ class all: # noqa
                 'glfw-3.3.tar.gz',
                 '3.3.0',
                 '5be03812f5d109817e6558c3fab7bbe1',
-                { gcc : '4.8.5' },
+                { gcc : '4.1.2' },
             )],
             depend=[python, glew]+allDepend,
-            baseLibs=[python],
             flags = [
                 '-DBUILD_SHARED_LIBS=1',
             ]+build.glfw.flags
@@ -1689,9 +1688,9 @@ class all: # noqa
 			" BOOST_PYTHON_LIB=-lboost_python"
 			" EXR_INCL_DIR=$OPENEXR_TARGET_FOLDER/include"
 			" EXR_LIB_DIR=$OPENEXR_TARGET_FOLDER/lib"
-			# " TBB_INCL_DIR=$TBB_TARGET_FOLDER/include"
+			" TBB_INCL_DIR=$TBB_TARGET_FOLDER/include/tbb"
 			" TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib"
-			" PYTHON_VERSION=$PYTHON_VERSION"
+			" PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
 			" PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include"
 			" PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib"
 			" BLOSC_INCL_DIR=$BLOSC_TARGET_FOLDER/include"
