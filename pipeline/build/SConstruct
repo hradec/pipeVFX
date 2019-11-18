@@ -197,8 +197,8 @@ if canBuildCortexNow:
                 'usd',
                 sed = {},
                 targetSuffix = "prman%s" % str(version),
-                download=pkgs.usd.download,
-                depend=pkgs.usd.depend,
+                download = pkgs.usd.download,
+                depend = pkgs.usd.depend,
                 cmd = [
                     pkgs.usd.cmd[0].replace('cmake', 'cmake -D PXR_BUILD_PRMAN_PLUGIN=1'),
                     'make -j $DCORES && make install',
