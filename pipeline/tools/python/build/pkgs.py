@@ -1858,14 +1858,14 @@ class all: # noqa
                 'USD-18.09.tar.gz',
                 '18.9.0',
                 '10a06767c6a9c69733bb5f9fbadcb52a',
-                {boost: "1.51.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', cmake: '3.8.2'},
+                {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', cmake: '3.8.2'},
             ),(
                 # this is the latest for now - nov/2019
                 'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
                 'USD-19.07.tar.gz',
                 '19.7.0',
                 '8d274089364cfed23004ae52fa3d258f',
-                {boost: "1.51.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', cmake: '3.8.2'},
+                {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', cmake: '3.8.2'},
             )],
             baseLibs=[python],
             depend=allDepend+[
