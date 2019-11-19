@@ -1106,8 +1106,14 @@ class generic:
         # cmd = cmd.replace( '&&', ' %s && ' % pipeFile )
 
         # go to build folder before anything!!
-        cmd  = '( cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
-        cmd += ' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" ) %s' % pipeFile
+        cmd  =  '( cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
+        cmd +=  ' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" '
+        # make sure lib and lib64 have the same contents
+        cmd +=  ' ; [ "$(ls $TARGET_FOLDER/lib64/*)" == "" ] '
+        cmd +=  '&& ( cd $TARGET_FOLDER/lib64/ && ln -s ../lib/* ./ ) '
+        cmd +=  '|| ( cd $TARGET_FOLDER/lib/ && ln -s ../lib64/* ./ ) '
+        # and pipe all to the log file
+        cmd +=  ') %s' % pipeFile
 
         # remove Paths that don't exist from os_environ
         # for each in os_environ:
