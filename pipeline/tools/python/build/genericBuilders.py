@@ -1094,6 +1094,10 @@ class generic:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
 
         cmd = cmd.replace('"','\"') #.replace('$','\$')
+        print bcolors.WARNING+':'+bcolors.GREEN+'\tCORES: %s' % os.environ['CORES'],
+        print '\tDCORES: %s' % os.environ['DCORES'],
+        print '\tHCORES: %s' % os.environ['HCORES']
+        print bcolors.WARNING+':'
         for l in cmd.split('&&'):
             print bcolors.WARNING+':\t%s%s : %s %s  %s ' % ('.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]),extraLabel,bcolors.GREEN,l.strip(),bcolors.END)
         # we need to save the current pythonpath to set it later inside pythons system call
@@ -1113,9 +1117,12 @@ class generic:
         cmd  =  '( cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
         cmd +=  ' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" '
         # make sure lib and lib64 have the same contents
+        cmd +=  " ; [ $(find  $TARGET_FOLDER/ -type f | egrep -v '\/\...*' | wc -l) -lt 1 ] "
+        cmd +=  "&& (echo 'Not Installed!!' && error_not_installed)"
+        cmd +=  "|| echo Instaled Susccessfully "
         cmd +=  ' ; [ "$(ls $TARGET_FOLDER/lib64/*)" == "" ] '
-        cmd +=  '&& ( cd $TARGET_FOLDER/lib64/ && ln -s ../lib/* ./ ) '
-        cmd +=  '|| ( cd $TARGET_FOLDER/lib/ && ln -s ../lib64/* ./ ) '
+        cmd +=  '&& ( cd $TARGET_FOLDER/lib64/ && ln -s ../lib/* ./ && rm -rf ./\* ) '
+        cmd +=  '|| ( cd $TARGET_FOLDER/lib/ && ln -s ../lib64/* ./ && rm -rf ./\* ) '
         # and pipe all to the log file
         cmd +=  ') %s' % pipeFile
 
@@ -1210,8 +1217,10 @@ class generic:
         checkPathsExist( os_environ )
 
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
-        os_environ['LD_RUN_PATH'] = os_environ['LIBRARY_PATH']
-        os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
+        if '/gcc/' not in target:
+            os_environ['LD_RUN_PATH'] = os_environ['LIBRARY_PATH']
+            os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
+        os_environ['TERM'] = 'xterm-256color'
 
         # run the build!!
         from subprocess import Popen
@@ -1322,7 +1331,7 @@ class generic:
                     downloadList = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)
                     url = downloadList[0]
                 md5 = self.md5(source[n])
-                if md5 != url[3]:
+                if md5 != url[3] and not ( '.git' in os.path.splitext(url[0])[-1] and os.stat(source[n]).st_size > 10 ):
                     count = 5
                     while count>0:
                         count -= 1
