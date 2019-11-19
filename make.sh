@@ -72,16 +72,16 @@ else
     fi
 
     # try to pull pkg image from docker hub
-    docker pull $latest_tag
-    if [ $? != 0 ] ; then
-        BUILD=1
-        PKGS=1
-    fi
-    # try to pull build image from docker hub
-    docker pull $build_image
-    if [ $? != 0 ] ; then
-        BUILD=1
-    fi
+    # docker pull $latest_tag
+    # if [ $? != 0 ] ; then
+    #     BUILD=1
+    #     PKGS=1
+    # fi
+    # # try to pull build image from docker hub
+    # docker pull $build_image
+    # if [ $? != 0 ] ; then
+    #     BUILD=1
+    # fi
 
     # if no image in docker hub or we used -b to force a build, build it
     # and push it to docker hub!
