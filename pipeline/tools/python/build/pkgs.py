@@ -1561,6 +1561,9 @@ class all: # noqa
         pyside = build.pythonSetup(
             ARGUMENTS,
             'pyside',
+            sed = { '0.0.0' : { './setup.py' : [
+                ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2', 'pyside2uic.port_v3'\]''')
+            ]}},
             download=[(
                # CY 2016-2018 (maya 2018.4)
                'https://www.autodesk.com/content/dam/autodesk/www/Company/files/pyside2-maya2018.4.zip',
@@ -1866,7 +1869,7 @@ class all: # noqa
             baseLibs=[python],
             depend=allDepend+[
                 alembic, openexr, ilmbase, opensubdiv, materialx,
-                openvdb, osl, boost, hdf5, glfw, glew, ptex, pyside
+                openvdb, osl, boost, hdf5, glfw, glew, ptex, pyside, qt
             ],
             cmd = [
                 "cmake"
@@ -1877,7 +1880,7 @@ class all: # noqa
                 " -D PXR_BUILD_IMAGING=TRUE"
                 " -D PXR_BUILD_TESTS=FALSE"
                 " -D PXR_BUILD_ALEMBIC_PLUGIN=TRUE"
-                " -D PXR_ENABLE_HDF5_SUPPORT=TRUE"
+                " -D PXR_ENABLE_HDF5_SUPPORT=FALSE"
                 " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER"
                 " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
                 " -D GLEW_LOCATION=$GLEW_TARGET_FOLDER/"
