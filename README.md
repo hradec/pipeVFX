@@ -15,7 +15,7 @@ Bellow you can see the VFX Platform table, and crosshatched are the versions not
 | Python    | 3.7.x     | 2.7.latst | 2.7.latst | 2.7.latst | 2.7.latst | 2.7.x	    | ~~2.7.3~~ |
 | Qt        | ~~5.12.x~~| ~~5.12.x~~| 5.6.1(adk)| 5.6.1(adk)| 5.6.1(adk)| 4.8.x     | ~~4.8.5~~ |
 | PyQt	    | ~~5.12~~  | ~~5.12~~  | ~~5.6~~   | ~~5.6~~   | ~~5.6~~ 	|           |           |
-| PySide	| 5.12 brnch| 5.12 brnch| 2.0.x(adk)| 2.0.x(adk)| 2.0(adk)  | ~~1.2.x~~ | ~~1.2~~   |
+| PySide	| ~~5.12 brnch~~| ~~5.12 brnch~~| 2.0.x(adk)| 2.0.x(adk)| 2.0(adk)  | ~~1.2.x~~ | ~~1.2~~   |
 | NumPy     | 1.17.x	| 1.14.x	| 1.12.1	| 1.9.2	    | 1.9.2	 	|           |           |
 | OpenEXR	| ~~2.4.x~~ | ~~2.3.x~~ | 2.2.x     | 2.2.x     | 2.2.x     | 2.2.x     | 2.0.1     |
 | Ptex      | 2.3.2     | 2.1.33	| 2.1.28	| 2.1.28	| 2.0.42	|           |           |
@@ -23,7 +23,7 @@ Bellow you can see the VFX Platform table, and crosshatched are the versions not
 | OpenVDB   | ~~7.x~~   | 6.x       | 5.x       | 4.x       | 3.x       | 3.0.x	    |           |
 | Alembic	| 1.7.x     | 1.7.x     | 1.7.x     | 1.6.x     | 1.5.8     | 1.5.x     | 1.5.x     |
 | FBX       | ~~2020.x~~| ~~2019.x~~| ~~2018.x~~|~~latest~~ | ~~latest~~| ~~latest~~| ~~2015~~  |
-| OpenColrIO| 1.1.x     | 1.1.0     | 1.0.9     | 1.0.9     | 1.0.9     | 1.0.9     | ~~1.0.7~~ |
+|OpenColorIO| 1.1.x     | 1.1.0     | 1.0.9     | 1.0.9     | 1.0.9     | 1.0.9     | ~~1.0.7~~ |
 | ACES      | ~~1.1~~   | ~~1.1~~ |~~1.0.latst~~| ~~1.0.x~~ | ~~1.0~~ 	|           |           |
 | Boost     | 1.70      | 1.66      | 1.61      | 1.61      | 1.55      | 1.55      | 1.53      |
 | Intel TBB | 2019 U6   | 2018      | 2017 U6   | 4.4       | 4.3       | 4.2       | 4.1       |
