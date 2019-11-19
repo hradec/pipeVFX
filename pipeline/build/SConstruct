@@ -165,19 +165,19 @@ if canBuildCortexNow:
                 cmd = pkgs.alembic.cmd,
                 apps = [ (pipe.apps.maya, str(version)) ],
             )]
-
-            pkgs.maya_openvdb += [build.make(
-                ARGUMENTS,
-                'openvdb',
-                targetSuffix = "maya%s" % str(version),
-                download = pkgs.openvdb.download,
-                depend = pkgs.openvdb.depend,
-                cmd = ['cd openvdb_maya']+pkgs.openvdb.cmd[1:],
-                environ = {
-                    'MAYA_VERSION' : str(version),
-                    'MAYA_ROOT' : pipe.apps.maya().path(),
-                },
-            )]
+            
+            # pkgs.maya_openvdb += [build.make(
+            #     ARGUMENTS,
+            #     'openvdb',
+            #     targetSuffix = "maya%s" % str(version),
+            #     download = pkgs.openvdb.download,
+            #     depend = pkgs.openvdb.depend,
+            #     cmd = ['cd openvdb_maya']+pkgs.openvdb.cmd[1:],
+            #     environ = {
+            #         'MAYA_VERSION' : str(version),
+            #         'MAYA_ROOT' : pipe.apps.maya().path(),
+            #     },
+            # )]
 
     # ===========================================================================================
     # PRMAN
@@ -204,16 +204,16 @@ if canBuildCortexNow:
                 ],
                 apps = [ (pipe.apps.prman, str(version)) ],
             )]
-            pkgs.prman_alembic += [build.alembic(
-                ARGUMENTS,
-                'alembic',
-                targetSuffix = "prman%s" % str(version),
-                baseLibs = pkgs.alembic.baseLibs,
-                download = pkgs.alembic.download,
-                depend = pkgs.alembic.depend,
-                cmd = pkgs.alembic.cmd,
-                apps = [ (pipe.apps.prman, str(version)) ],
-            )]
+            # pkgs.prman_alembic += [build.alembic(
+            #     ARGUMENTS,
+            #     'alembic',
+            #     targetSuffix = "prman%s" % str(version),
+            #     baseLibs = pkgs.alembic.baseLibs,
+            #     download = pkgs.alembic.download,
+            #     depend = pkgs.alembic.depend,
+            #     cmd = pkgs.alembic.cmd,
+            #     apps = [ (pipe.apps.prman, str(version)) ],
+            # )]
 
 
     # ===========================================================================================

@@ -437,6 +437,12 @@ class all: # noqa
                 '1.13.0',
                 '7cbada3166d2aadfc4169c4283701066',
                 { gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                'https://github.com/nigels-com/glew/releases/download/glew-2.1.0/glew-2.1.0.tgz',
+                'glew-2.1.0.tar.gz',
+                '2.1.0',
+                'b2ab12331033ddfaa50dc39345343980',
+                { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend = allDepend,
         )
@@ -961,7 +967,8 @@ class all: # noqa
             )],
             depend = allDepend,
             cmd = [
-                './configure --enable-threadsafe --disable-hl --with-pthread=/usr/include',
+                # './configure --enable-threadsafe --disable-hl --with-pthread=/usr/include',
+                './configure --enable-shared  --with-pthread=/usr/include',
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
@@ -1631,9 +1638,27 @@ class all: # noqa
                 '2.1.28',
                 'ce4eb665f686f8391968fa137113bc69',
                 { cmake: '3.8.2', gcc : '4.1.2' }
+            ),(
+                # CY 2016
+                'https://github.com/wdas/ptex/archive/v2.0.42.tar.gz',
+                'ptex-2.0.42.tar.gz',
+                '2.0.42',
+                '09450bd49dab3db878504a6e51c0745d',
+                { cmake: '3.8.2', gcc : '4.1.2' }
             )],
             depend=allDepend,
-            cmd = ' && '.join(build.cmake.cmd).replace('cmake','cmake -DPTEX_VER=$(basename $TARGET_FOLDER)')
+            src = 'README',
+            cmd = [
+                '( [ "$(basename $TARGET_FOLDER)" == "2.0.42" ] ',
+                    'cd src',
+                    'make',
+                    'cp -rfuv ../install/* $TARGET_FOLDER/',
+                    'cp $TARGET_FOLDER/lib/* $TARGET_FOLDER/lib64/'
+                ' ) || ( '+\
+                    ' && '.join(build.cmake.cmd).replace('cmake','cmake -DPTEX_VER=$(basename $TARGET_FOLDER)'),
+                    'cp $TARGET_FOLDER/lib64/* $TARGET_FOLDER/lib/'
+                ' )'
+            ]
         )
         self.ptex = ptex
         allDepend += [ptex]
@@ -1641,7 +1666,6 @@ class all: # noqa
         openvdb = build.cmake(
             ARGUMENTS,
             'openvdb',
-            sed = {},
             download=[(
             #     # CY 2020
             #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
@@ -1678,6 +1702,7 @@ class all: # noqa
                 { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
             )],
             depend=allDepend+[openexr, ilmbase, glfw],
+            src = "README",
             cmd = [
             "cd openvdb",
             " make install -j $DCORES"
@@ -1711,76 +1736,103 @@ class all: # noqa
         alembic = build.alembic(
             ARGUMENTS,
             'alembic',
+            sed = {'1.5.8' : {
+                'lib/AbcOpenGL/Foundation.h' : [
+                    ('.include .GL.glext.h.',''),
+                ]
+            },'1.7.0' : {}
+            },
             download=[(
                 # CY2014 - CY2016
                 'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
                 'alembic-1.5.8.tar.gz',
                 '1.5.8',
                 'a70ba5f2e80b47d346d15d797c28731a',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.1.2'},
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.1.2', boost: '1.51.0'},
             ),(
                 # CY2017
                 'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
                 'alembic-1.6.1.tar.gz',
                 '1.6.1',
                 'e1f9f2cbe1899d3d55b58708b9307482',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5'},
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0'},
             ),(
                 # CY2018 - CY2020
                 'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
                 'alembic-1.7.11.tar.gz',
                 '1.7.11',
                 'e156568a8d8b48c4da4fe2496386243d',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5'},
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0'},
             )],
             baseLibs=[python],
-            depend=allDepend,
+            depend=allDepend+[hdf5],
         )
         self.alembic = alembic
 
         # build alembic without apps plugins
-        opensubdiv = build.alembic(
+        opensubdiv = build.cmake(
             ARGUMENTS,
             'opensubdiv',
+            # fix for cuda 10
+            sed = { '0.0.0' : { 'opensubdiv/osd/CMakeLists.txt' : [
+                ('compute_11','compute_30'),
+            ], './opensubdiv/CMakeLists.txt' : [
+                ('compute_11','compute_30'),
+            ], './CMakeLists.txt' : [
+                ('compute_20','compute_30'),
+            ]}},
             download=[(
                 # CY 2014
                 'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_3_3.tar.gz',
                 'OpenSubdiv-2_3_3.tar.gz',
                 '2.3.3',
                 'b7312b63bf6dfb38b49b17f15c976849',
+                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
             ),(
                 # CY 2015
                 'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_5_1.tar.gz',
                 'OpenSubdiv-2_5_1.tar.gz',
                 '2.5.1',
                 '73da98bdb1e944b3ec5b046b3d8008d6',
+                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
             ),(
                 # CY 2016
                 'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_0_5.tar.gz',
                 'OpenSubdiv-3_0_5.tar.gz',
                 '3.0.5',
                 'f16fa309b3fa3d400e6dcbf59d316dfe',
+                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
             ),(
                 # CY 2017
                 'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_1_1.tar.gz',
                 'OpenSubdiv-3_1_1.tar.gz',
                 '3.1.1',
                 '0f50e6aaca1d174d6b878433d13faa7f',
+                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.1.28'},
             ),(
                 # CY 2018-2019
                 'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_3_3.tar.gz',
                 'OpenSubdiv-3_3_3.tar.gz',
                 '3.3.3',
                 '29c79dc01ef616aab02670bed5544ddd',
+                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.1.33'},
             ),(
                 # CY 2020
                 'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz',
                 'OpenSubdiv-3_4_0.tar.gz',
                 '3.4.0',
                 '2eea21ef2d85bcbbcee94e287c34a07e',
+                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.3.2'},
             )],
             # baseLibs=[python],
-            depend=allDepend,
+            depend=allDepend+[boost, hdf5, glfw, glew, ptex],
+            flags=[
+                "-DGLEW_LOCATION=$GLEW_TARGET_FOLDER/",
+            ],
+            environ = {
+                'CFLAGS'   : ' -fopenmp $CFLAGS',
+                'CXXFLAGS' : ' -fopenmp $CXXFLAGS',
+            }
         )
         self.opensubdiv = opensubdiv
 
@@ -1789,7 +1841,6 @@ class all: # noqa
         usd = build.cmake(
             ARGUMENTS,
             'usd',
-            sed = {},
             download=[(
                 # theres no CY for USD - not in VFX Platform yet.
                 # so lets build the one in Gaffer dependencies
@@ -1797,29 +1848,33 @@ class all: # noqa
                 'USD-18.09.tar.gz',
                 '18.9.0',
                 '10a06767c6a9c69733bb5f9fbadcb52a',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11'},
+                {boost: "1.51.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', cmake: '3.8.2'},
             ),(
                 # this is the latest for now - nov/2019
                 'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
                 'USD-19.07.tar.gz',
                 '19.7.0',
                 '8d274089364cfed23004ae52fa3d258f',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11'},
+                {boost: "1.51.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', cmake: '3.8.2'},
             )],
             baseLibs=[python],
-            depend=allDepend+[alembic, openexr, ilmbase, opensubdiv, materialx, openvdb, osl],
+            depend=allDepend+[
+                alembic, openexr, ilmbase, opensubdiv, materialx,
+                openvdb, osl, boost, hdf5, glfw, glew, ptex, pyside
+            ],
             cmd = [
                 "cmake"
                 " -D CMAKE_INSTALL_PREFIX=$TARGET_FOLDER"
                 " -D CMAKE_PREFIX_PATH=$TARGET_FOLDER"
                 " -D Boost_NO_SYSTEM_PATHS=TRUE"
                 " -D Boost_NO_BOOST_CMAKE=TRUE"
-                " -D PXR_BUILD_IMAGING=FALSE"
+                " -D PXR_BUILD_IMAGING=TRUE"
                 " -D PXR_BUILD_TESTS=FALSE"
                 " -D PXR_BUILD_ALEMBIC_PLUGIN=TRUE"
-                " -D PXR_ENABLE_HDF5_SUPPORT=FALSE"
-                " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER/lib"
+                " -D PXR_ENABLE_HDF5_SUPPORT=TRUE"
+                " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER"
                 " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
+                " -D GLEW_LOCATION=$GLEW_TARGET_FOLDER/"
                 # " -D PXR_BUILD_MAYA_PLUGIN=1"
                 # " -D PXR_BUILD_HOUDINI_PLUGIN=1"
                 # " -D PXR_BUILD_PRMAN_PLUGIN=1"
@@ -1828,26 +1883,11 @@ class all: # noqa
                 "make VERBOSE=1 -j $CORES",
                 "make install",
                 "mv $TARGET_FOLDER/lib/python/pxr $TARGET_FOLDER/python",
-            ]
+            ],
         )
         self.usd = usd
 
-
-
-        # if all build is done correctly, make install folder ready!
-        SCons.Script.Alias( 'install',
-            SCons.Script.Command(
-                target = os.path.join( devRoot.installRoot(ARGUMENTS), '.done'),
-                source = self.qt.installAll + self.osl.installAll + self.boost.installAll + self.ilmbase.installAll + self.openexr.installAll,
-                action = "touch $TARGET"
-            )
-        )
-
-
-        self.allDepend = allDepend
-
         # =============================================================================================================================================
-
         ##appleseed = build.cmake(
         ##        ARGUMENTS,
         ##        'appleseed',
@@ -1860,3 +1900,15 @@ class all: # noqa
         ##          ),
         ##        ],
         ##)
+        # =============================================================================================================================================
+
+        # if all build is done correctly, make install folder ready!
+        SCons.Script.Alias( 'install',
+            SCons.Script.Command(
+                target = os.path.join( devRoot.installRoot(ARGUMENTS), '.done'),
+                source = self.qt.installAll + self.osl.installAll + self.boost.installAll + self.ilmbase.installAll + self.openexr.installAll,
+                action = "touch $TARGET"
+            )
+        )
+
+        self.allDepend = allDepend

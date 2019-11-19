@@ -76,6 +76,18 @@ RUN yum -y install xcb-util-wm-devel libxcb-devel.x86_64 \
     xkeyboard-config.noarch \
     install xcb*devel
 
+# opencl
+RUN yum -y install opencl-headers ocl-icd-devel
+
+# cuda
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-10.0.130-1.x86_64.rpm && \
+    rpm -i cuda-repo-*.rpm && \
+    rm -rf cuda-repo-*.rpm && \
+    yum -y install cuda
+
+# to get colors in the build log.
+RUN yum -y install source-highlight
+
 # copy over the latest packages from the latest pkg TAG image!
 # this makes upload/download a large layer all the time,
 # but prevents this image from being rebuild all the time when we add
@@ -86,7 +98,6 @@ COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download/*
 RUN yum -y remove boost
 
 # cleanup
-RUN yum -y install source-highlight
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
 ENV TERM=xterm

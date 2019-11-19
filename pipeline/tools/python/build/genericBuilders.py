@@ -911,6 +911,7 @@ class generic:
 
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
+                    os_environ['%s_ROOT' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()]
 
                     # if dependOn.name == 'gcc':
                     #     print dependOn.name ,dependOn.targetFolder,depend_n

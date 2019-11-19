@@ -30,8 +30,8 @@ os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 # setup apps global versions
 # ===================================================================
 pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
-#pipe.version.set( maya      = '2018' )
-pipe.version.set( maya      = '2016.5' )
+pipe.version.set( maya      = '2018' )
+#pipe.version.set( maya      = '2016.5' )
 pipe.version.set( nuke      = '11.1v1' )
 pipe.version.set( houdini   = 'hfs16.0.557' )
 pipe.version.set( delight   = '11.0.12' )
