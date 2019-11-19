@@ -165,7 +165,7 @@ if canBuildCortexNow:
                 cmd = pkgs.alembic.cmd,
                 apps = [ (pipe.apps.maya, str(version)) ],
             )]
-            
+
             # pkgs.maya_openvdb += [build.make(
             #     ARGUMENTS,
             #     'openvdb',
@@ -227,10 +227,10 @@ if canBuildCortexNow:
         'b3c55cc5e0e95668208713a01a145869',
         {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8", pkgs.gcc : '4.1.2'}
     ],[
-        'https://github.com/ImageEngine/cortex/archive/10.0.0-a65.tar.gz',
-        'cortex-10.0.0-a65.tar.gz',
-        '10.0.0.a65',
-        '6d74b28f18574c2358a2946d97ba0499',
+        'https://github.com/ImageEngine/cortex/archive/10.0.0-a68.tar.gz',
+        'cortex-10.0.0-a68.tar.gz',
+        '10.0.0.a68',
+        'e506ed51b6e94f729925d5a6742c75c2',
         {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.5.8", pkgs.gcc : '4.8.5'}
     ]]
 
@@ -357,10 +357,10 @@ if canBuildCortexNow:
                 {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8",
                 pkgs.gcc : '4.1.2', cortex['core.boost.1.51.0'] : '9.18.0'}
             ],[
-                'https://github.com/GafferHQ/gaffer/archive/0.53.6.3.tar.gz',
-                'gaffer-0.53.6.3.tar.gz',
-                '0.53.6.3',
-                'dbbfd30eb280d7241969511a095a0c8f',
+                'https://github.com/GafferHQ/gaffer/archive/0.55.0.0.tar.gz',
+                'gaffer-0.55.0.0.tar.gz',
+                '0.55.0.0',
+                '876127bfe6fd62ab9d6a8a9e6da2f75f',
                 {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.7.11",
                 pkgs.gcc : '4.8.5',  cortex['core.boost.%s' % boostMasterVersion] : '10.0.0.a65'}
             ]],
