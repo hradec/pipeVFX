@@ -1557,10 +1557,12 @@ class all: # noqa
         pyside = build.pythonSetup(
             ARGUMENTS,
             'pyside',
+            # install is broken in pyside2, and it won't install sub-modules.
+            # this patch fixes that, and USD can be built now!
             sed = { '2.0.18' : { './setup.py' : [
                 ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2'\]'''),
-            ]}, '2.0.19' : { './setup.py' : [
-                ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2', 'pyside2uic.port_v3'\]'''),
+            # ]}, '2.0.19' : { './setup.py' : [
+            #     ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2', 'pyside2uic.port_v3'\]'''),
             ]}},
             download=[(
                # CY 2016-2018 (maya 2018.4)
@@ -1585,7 +1587,7 @@ class all: # noqa
             },
             # baseLibs=[python],
             depend=[qt, gcc]+allDepend,
-            flags = ['--jobs $DCORES'],
+            flags = ['--jobs $CORES'],
         )
         self.pyside = pyside
         # allDepend += [pyside]
