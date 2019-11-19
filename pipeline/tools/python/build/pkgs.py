@@ -1293,15 +1293,11 @@ class all: # noqa
             ARGUMENTS,
             'qt',
             download=[(
-            #     'https://download.qt.io/archive/qt/4.8/4.8.4/qt-everywhere-opensource-src-4.8.4.tar.gz',
-            #     'qt-everywhere-opensource-src-4.8.4.tar.gz',
-            #     '4.8.4',
+            #     # VFXPLATFORM CY2014
+            #     'https://download.qt.io/archive/qt/4.8/4.8.5/qt-everywhere-opensource-src-4.8.5.tar.gz',
+            #     'qt-everywhere-opensource-src-4.8.5.tar.gz',
+            #     '4.8.5',
             #     '89c5ecba180cae74c66260ac732dc5cb',
-            # ),(
-            #     'http://download.qt.io/archive/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz',
-            #     'qt-everywhere-opensource-src-4.8.6.tar.gz',
-            #     '4.8.6',
-            #     '2edbe4d6c2eff33ef91732602f3518eb',
             # ),(
                 # VFXPLATFORM CY2015 (maya 2016)
                 'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
@@ -1561,8 +1557,10 @@ class all: # noqa
         pyside = build.pythonSetup(
             ARGUMENTS,
             'pyside',
-            sed = { '0.0.0' : { './setup.py' : [
-                ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2', 'pyside2uic.port_v3'\]''')
+            sed = { '2.0.18' : { './setup.py' : [
+                ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2'\]'''),
+            ]}, '2.0.19' : { './setup.py' : [
+                ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2', 'pyside2uic.port_v3'\]'''),
             ]}},
             download=[(
                # CY 2016-2018 (maya 2018.4)
@@ -1587,6 +1585,7 @@ class all: # noqa
             },
             # baseLibs=[python],
             depend=[qt, gcc]+allDepend,
+            flags = ['--jobs $DCORES'],
         )
         self.pyside = pyside
         # allDepend += [pyside]

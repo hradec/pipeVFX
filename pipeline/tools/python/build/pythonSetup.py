@@ -32,7 +32,7 @@ import os,sys
 class pythonSetup(generic):
     src = 'setup.py'
     cmd = [
-        'python setup.py install --prefix=$TARGET_FOLDER',
+        'python setup.py install  --prefix=$TARGET_FOLDER',
     ]
 
     # def uncompressor( self, target, source, env):
@@ -53,6 +53,10 @@ class pythonSetup(generic):
         mkdir = 'mkdir -p $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ && export PYTHONPATH=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/:$PYTHONPATH'
         if mkdir.replace(' ','').lower() not in cmd.replace(' ','').lower():
             cmd = "%s && %s" % (mkdir,cmd)
+
+        f = ' '.join(set(self.flags))
+        if f not in cmd:
+            cmd += ' ' + f
         return cmd
 
 
