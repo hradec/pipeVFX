@@ -158,9 +158,15 @@ class alembic(cmake):
     cmd = [
         'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER && '
         'make $MAKE_PARALLEL $MAKE_VERBOSE  && make install',
-        'mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $TARGET_FOLDER/bin/',
-        'mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $TARGET_FOLDER/include/',
-        'mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $TARGET_FOLDER/lib/',
+        '( [ "$(basename $TARGET_FOLDER)" == "1.5.8" ] ',
+        '( mkdir -p $TARGET_FOLDER/bin/',
+        '  mkdir -p $TARGET_FOLDER/include/',
+        '  mkdir -p $TARGET_FOLDER/lib/',
+        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $TARGET_FOLDER/bin/',
+        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $TARGET_FOLDER/include/',
+        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $TARGET_FOLDER/lib/',
+        '  rm -rf $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER) '
+        ') || true )'
     ]
     # alembic has some hard-coded path to find python, and the only
     # way to make it respect the PYTHON related environment variables,
