@@ -107,16 +107,19 @@ __pkgInstalled__={}
 # initialize CORES and DCORES(double cores) env var based on the number of cores
 # the host machine has
 CORES=int(multiprocessing.cpu_count())
-os.environ['CORES'] = '%d' % CORES
 os.environ['DCORES'] = '%d' % (2*CORES)
+os.environ['CORES']  = '%d' % CORES
+os.environ['HCORES'] = '%d' % (CORES/2)
 
 # if we have less than 8GB, use half of the cores to build
 if memGB < 4:
-    os.environ['CORES'] = '%d' % (CORES/4)
     os.environ['DCORES'] = '%d' % (CORES/2)
+    os.environ['CORES']  = '%d' % (CORES/4)
+    os.environ['HCORES'] = '%d' % (CORES/8)
 elif memGB < 8:
-    os.environ['CORES'] = '%d' % (CORES/2)
     os.environ['DCORES'] = '%d' % (CORES)
+    os.environ['CORES']  = '%d' % (CORES/2)
+    os.environ['HCORES'] = '%d' % (CORES/4)
 
 
 
@@ -776,6 +779,7 @@ class generic:
         os_environ['PATH'] = os_environ['PATH'].replace(pipe.build.gcc(),'').replace('::',':')
         os_environ['CORES'] = os.environ['CORES']
         os_environ['DCORES'] = os.environ['DCORES']
+        os_environ['HCORES'] = os.environ['HCORES']
 
 
         target=str(target[0])
