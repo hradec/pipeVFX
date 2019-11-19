@@ -1587,7 +1587,7 @@ class all: # noqa
             },
             # baseLibs=[python],
             depend=[qt, gcc]+allDepend,
-            flags = ['--jobs $CORES'],
+            flags = ['--jobs $HCORES'],
         )
         self.pyside = pyside
         # allDepend += [pyside]
