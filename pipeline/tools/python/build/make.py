@@ -130,8 +130,10 @@ class cmake(make):
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
         cmake finds pipeVFX packages first!'''
-        cmd = make.fixCMD(self, cmd, environ)
         environ += [
+            'export MAKE_PARALLEL="$(echo %s)"' % self._parallel,
+            'export MAKE_VERBOSE="$(echo %s)"' % self._verbose,
+            'export CMAKE_VERBOSE="$(echo %s)"' % self._verbose_cmake,
             'export HDF5_ROOT=$HDF5_TARGET_FOLDER',
             'export HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
             'export HDF5_LIBRARIES=$HDF5_TARGET_FOLDER/lib/libhdf5.so',
@@ -154,8 +156,11 @@ class cmake(make):
 class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
-        'cmake $SOURCE_FOLDER && '
-        'make $MAKE_PARALLEL $MAKE_VERBOSE  && make install'
+        'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER && '
+        'make $MAKE_PARALLEL $MAKE_VERBOSE  && make install',
+        'mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $TARGET_FOLDER/bin/',
+        'mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $TARGET_FOLDER/include/',
+        'mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $TARGET_FOLDER/lib/',
     ]
     # alembic has some hard-coded path to find python, and the only
     # way to make it respect the PYTHON related environment variables,
@@ -215,7 +220,6 @@ class alembic(cmake):
         # update the buld environment with all the enviroment variables
         # specified in apps argument!
         environ = []
-        cmd = make.fixCMD(self, cmd, environ)
 
         pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
         pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
@@ -280,12 +284,6 @@ class alembic(cmake):
         cmd = cmd.replace('cmake', 'cmake  -DBUILD_SHARED_LIBS:BOOL="TRUE"  -DBUILD_STATIC_LIBS:BOOL="FALSE" ')
 
         return cmake.fixCMD(self, cmd, [
-            'export HDF5_ROOT=$HDF5_TARGET_FOLDER',
-            'export HDF5_INCLUDE_DIR=$HDF5_TARGET_FOLDER/include',
-            'export HDF5_LIBRARIES=$HDF5_TARGET_FOLDER/lib/libhdf5.so',
-            'export OPENEXR_INCLUDE_PATHS=$OPENEXR_TARGET_FOLDER/include',
-            'export OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
-            'export OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
             'export PRMAN_ROOT=$PRMAN_ROOT/RenderManProServer-$PRMAN_VERSION'
         ])
 
