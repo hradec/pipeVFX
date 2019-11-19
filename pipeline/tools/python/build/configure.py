@@ -238,9 +238,11 @@ class gccBuild(configure):
             ])
 
         # make sure we're using the distros GCC to build GCC
-        cmd = ';'.join([
+        cmd = ' && '.join([
             'export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/bin"',
             'unset LD_LIBRARY_PATH',
+            # set the system crtbegin.o path so the system gcc can build our gcc
+            "export LIBRARY_PATH=$(echo $(find /usr/ -name crtbegin.o -exec dirname {} \;) | sed 's/ /:/g'):$LIBRARY_PATH",
             cmd
         ])
         return cmd
