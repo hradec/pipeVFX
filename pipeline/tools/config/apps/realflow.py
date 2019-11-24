@@ -50,6 +50,7 @@ class realflow(baseApp):
             os.remove(file)
 
         self['nextlimit_LICENSE']=os.environ['PIPE_REALFLOW_LICENSE']
+        self['NL_LICENSE_MANAGER_ADDRESS']=os.environ['PIPE_REALFLOW_LICENSE'].split('@')[-1]
 
 
     def userSetup(self, jobuser):
