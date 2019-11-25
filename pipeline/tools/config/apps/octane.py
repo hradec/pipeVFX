@@ -19,12 +19,18 @@
 # =================================================================================
 
 
+class octane(baseApp):
+    def environ(self):
+        # configure maya plugin/scripts/icons
+        maya.addon ( self,
+            plugin     = self.path('usr/autodesk/maya$MAYA_VERSION-x64/bin/plug-ins/'),
+            renderDesc = self.path('usr/autodesk/maya2016.5-x64/bin/rendererDesc/'),
+        )
 
-os.environ['PIPE_MAYA_ARNOLD']       = '0'
-os.environ['PIPE_MAYA_VRAY']         = '0'
-os.environ['PIPE_MAYA_ZYNC']         = '0'
-os.environ['PIPE_MAYA_FABRICENGINE'] = '1'
-os.environ['PIPE_MAYA_OCTANE']       = '1'
+        self['LD_LIBRARY_PATH'] = self.path('usr/lib')
+        self['LD_LIBRARY_PATH'] = self.path('standalone')
+        self['PATH'] = self.path('standalone')
 
-os.environ['PIPE_NUKE_CRYPTOMATTE']  = '1'
-os.environ['PIPE_NUKE_GENARTS']      = '0'
+    def license(self):
+        if not os.path.exists( '%s/.OctaneRender/thirdparty/cudnn_7_4_1/libcudnn.so.7.4.1' % os.environ['HOME'] ):
+            os.system( 'rsync -avpP  %s/.OctaneRender/ %s/.OctaneRender/' % (self.path(), os.environ['HOME']) )

@@ -81,6 +81,8 @@ class maya(baseApp):
                     self.update( arnold() )
                 if 'PIPE_MAYA_VRAY' in os.environ and os.environ['PIPE_MAYA_VRAY']=='1':
                     self.update( vray() )
+                if 'PIPE_MAYA_OCTANE' in os.environ and os.environ['PIPE_MAYA_OCTANE']=='1':
+                    self.update( octane() )
 
 
         # add tools paths
