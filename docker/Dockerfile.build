@@ -80,10 +80,15 @@ RUN yum -y install xcb-util-wm-devel libxcb-devel.x86_64 \
 RUN yum -y install opencl-headers ocl-icd-devel
 
 # cuda
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-10.0.130-1.x86_64.rpm && \
-    rpm -i cuda-repo-*.rpm && \
-    rm -rf cuda-repo-*.rpm && \
-    yum -y install cuda
+# this package won't install from yum for some reason
+RUN yumPlugin=$(curl https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/ | grep yum-plugin | awk -F"'" '{print $4}' | sort  | tail -1) && \
+    curl -L https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/$yumPlugin -O && \
+    rpm -i $yumPlugin && \
+    rm -rf $yumPlugin
+
+RUN yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo && \
+    yum clean all && \
+    yum -y install nvidia-driver-latest-dkms cuda cuda-drivers
 
 # to get colors in the build log.
 RUN yum -y install source-highlight
