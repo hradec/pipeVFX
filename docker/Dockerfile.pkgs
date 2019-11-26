@@ -47,6 +47,10 @@ COPY docker/gcc-bin-4.1.2.tgz /atomo/pipeline/build/.download/4.1.2.tar.gz
 
 # download packages so the image contain all tarballs.
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    ( cat /etc/yum.repos.d/epel.repo \
+     | sed 's/.baseurl/baseurl/' \
+     | sed 's/metalink/#metalink/' > /tmp/epel.repo && \
+     /bin/mv /tmp/epel.repo /etc/yum.repos.d/epel.repo ) && \
     export TERM=xterm && \
     export ftp_proxy=$http_proxy && \
     touch /atomo/.root && \
