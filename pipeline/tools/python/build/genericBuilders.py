@@ -1094,9 +1094,9 @@ class generic:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
 
         cmd = cmd.replace('"','\"') #.replace('$','\$')
-        print bcolors.WARNING+':'+bcolors.GREEN+'\tCORES: %s' % os.environ['CORES'],
-        print '\tDCORES: %s' % os.environ['DCORES'],
-        print '\tHCORES: %s' % os.environ['HCORES']
+        print bcolors.WARNING+':'+bcolors.BLUE+'\tCORES: '+bcolors.WARNING+os.environ['CORES'],
+        print bcolors.BLUE+', DCORES: '+bcolors.WARNING+os.environ['DCORES'],
+        print bcolors.BLUE+', HCORES: '+bcolors.WARNING+os.environ['HCORES']
         print bcolors.WARNING+':'
         for l in cmd.split('&&'):
             print bcolors.WARNING+':\t%s%s : %s %s  %s ' % ('.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]),extraLabel,bcolors.GREEN,l.strip(),bcolors.END)
@@ -1219,7 +1219,9 @@ class generic:
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
         if '/gcc/' not in target:
             os_environ['LD_RUN_PATH'] = os_environ['LIBRARY_PATH']
+            # os_environ['LD_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
             os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
+            os_environ['LTLD_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
         os_environ['TERM'] = 'xterm-256color'
 
         # run the build!!
@@ -1331,7 +1333,7 @@ class generic:
                     downloadList = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)
                     url = downloadList[0]
                 md5 = self.md5(source[n])
-                if md5 != url[3] and not ( '.git' in os.path.splitext(url[0])[-1] and os.stat(source[n]).st_size > 10 ):
+                if md5 != url[3] and not ( '.git' in os.path.splitext(url[0])[-1] and os.path.exists(source[n]) and os.stat(source[n]).st_size > 10 ):
                     count = 5
                     while count>0:
                         count -= 1
