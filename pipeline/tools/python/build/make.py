@@ -285,6 +285,7 @@ class alembic(cmake):
             '-DUSE_MAYA=1',
             '-DBUILD_SHARED_LIBS:BOOL="TRUE"',
             '-DBUILD_STATIC_LIBS:BOOL="FALSE" ',
+            "-DUSE_HDF5=ON",
         ]
 
         cmd = cmd.replace('cmake', 'cmake  -DBUILD_SHARED_LIBS:BOOL="TRUE"  -DBUILD_STATIC_LIBS:BOOL="FALSE" ')
