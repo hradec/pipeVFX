@@ -21,7 +21,7 @@ Bellow you can see the VFX Platform table, and crosshatched are the versions not
 | Ptex      |           | 2.3.2     | 2.1.33	| 2.1.28	| 2.1.28	| 2.0.42	|           |           |
 | OpenSubdiv|           | 3.4.x     | 3.3.x     | 3.3.x     | 3.1.x     | 3.0.x     | 2.5.x     | 2.3.3     |
 | OpenVDB   |           | ~~7.x~~   | 6.x       | 5.x       | 4.x       | 3.x       | 3.0.x	    |           |
-| Alembic	|           | 11.7.x    | 1.7.x     | 1.7.x     | 1.6.x     | 1.5.8     | 1.5.x     | 1.5.x     |
+| Alembic	|           | 1.7.x     | 1.7.x     | 1.7.x     | 1.6.x     | 1.5.8     | 1.5.x     | 1.5.x     |
 | FBX       |           | ~~2020.x~~| ~~2019.x~~| ~~2018.x~~|~~latest~~ | ~~latest~~| ~~latest~~| ~~2015~~  |
 |OpenColorIO|   ~~v2~~  | 1.1.x     | 1.1.0     | 1.0.9     | 1.0.9     | 1.0.9     | 1.0.9     | ~~1.0.7~~ |
 | ACES      |           | ~~1.1~~   | ~~1.1~~ |~~1.0.latst~~| ~~1.0.x~~ | ~~1.0~~ 	|           |           |
