@@ -31,7 +31,7 @@ RUN [ ! -e /atomo/.root ] && yum -y install epel-release || echo done
 #     | sed 's/metalink/#metalink/' > /tmp/epel.repo && \
 #     /bin/mv /tmp/epel.repo /etc/yum.repos.d/epel.repo
 RUN [ ! -e /atomo/.root ] && yum clean all && yum makecache && \
-    python2-scons && wget && git zip || echo done
+    yum -y install python2-scons wget git zip || echo "done"
 
 COPY docker/run.sh /run.sh
 ADD pipeline/tools/python /atomo/pipeline/tools/python
