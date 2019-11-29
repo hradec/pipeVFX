@@ -128,6 +128,8 @@ else
             exit -1
         fi
         docker push $build_image
+    else
+        docker pull $build_image
     fi
 
     # use wget proxy setup if it exists
@@ -145,7 +147,9 @@ else
     mkdir -p "$CD/pipeline/build/.build/"
 
     # now we can finally run a build!
-    cmd="docker run --rm $TI \
+    cmd="docker rm -f pipevfx_make >/dev/null 2>&1 ; \
+        docker pull $build_image ; \
+        docker run --rm $TI \
         -v $CD/pipeline/tools/:/atomo/pipeline/tools/ \
         -v $CD/pipeline/libs/:/atomo/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/atomo/pipeline/build/SConstruct \
@@ -154,11 +158,12 @@ else
         -v $CD/.root:/atomo/.root \
         $APPS_MOUNT \
         -e RUN_SHELL=$SHELL \
-        -e EXTRA=$EXTRA \
-        -e DEBUG=$DEBUG \
+        -e EXTRA=\\"$EXTRA\\" \
+        -e DEBUG=\"$DEBUG\" \
         -e TRAVIS=$TRAVIS \
         -e http_proxy='$http_proxy' \
         -e https_proxy='$https_proxy' \
+        --privileged \
         $build_image"
 
     echo $cmd
