@@ -99,6 +99,9 @@ RUN yum -y install source-highlight
 # a new package.
 COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download/*  /atomo/pipeline/build/.download/
 
+# add strace
+RUN yum -y install strace
+
 # to avoid clashing in osl
 RUN yum -y remove boost
 
