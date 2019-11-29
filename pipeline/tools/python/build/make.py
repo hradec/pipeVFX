@@ -83,6 +83,9 @@ class cmake(make):
 #            '-DCMAKE_CC_COMPILER=$CC',
 #            '-DCMAKE_CXX_COMPILER=$CXX',
 #            '-DCMAKE_CPP_COMPILER=$CPP',
+           '-DCMAKE_CC_FLAGS="$CFLAGS"',
+           '-DCMAKE_CXX_FLAGS="$CXXFLAGS"',
+           '-DCMAKE_CPP_FLAGS="$CPPFLAGS"',
 #            '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
 #            '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
 #            '-DCMAKE_LINKER=$LD',
@@ -130,7 +133,7 @@ class cmake(make):
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
         cmake finds pipeVFX packages first!'''
-        environ += [
+        environ = [
             'export MAKE_PARALLEL="$(echo %s)"' % self._parallel,
             'export MAKE_VERBOSE="$(echo %s)"' % self._verbose,
             'export CMAKE_VERBOSE="$(echo %s)"' % self._verbose_cmake,
@@ -315,7 +318,7 @@ class glew(make):
     cmd = ' && '.join([
 #        './cmake-testbuild.sh'
 #        'cd auto && make destroy && make && cd ..',
-        'make GLEW_DEST=$TARGET_FOLDER install.all',
+        'make CC="$CC" CFLAGS="$CFLAGS -Iinclude" GLEW_DEST=$TARGET_FOLDER install.all',
     ])
     sed = {
         '0.0.0' : {

@@ -153,7 +153,7 @@ class gccBuild(configure):
                     "sed -i -e '/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/' {libiberty,gcc}/configure",
                     # installing libiberty headers is broken
                     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56780#c6
-                    # "sed -i -e 's#@target_header_dir@#libiberty#' 'libiberty/Makefile.in'",
+                    # "sed -i -e 's/@target_header_dir@/libiberty/' 'libiberty/Makefile.in'",
                 ]
                 distroSpecificConfigure = ' '.join([
                     '--disable-libstdcxx-pch '
@@ -178,7 +178,7 @@ class gccBuild(configure):
                     '--mandir=$TARGET_FOLDER/share/man '
                     "--program-suffix=$(basename $TARGET_FOLDER) "
                     "--with-ppl "
-                    "--with-system-zlib "
+                    "--without-system-zlib "
                 ])
 
 
@@ -190,11 +190,15 @@ class gccBuild(configure):
                 '../configure '
                         '--disable-multilib '
                         '--disable-werror '
-                        '--enable-languages="c,c++" '
-                        "--with-ppl "
+                        '--disable-bootstrap '
+                        '--disable-install-libiberty '
                         '--disable-werror '
+                        '--enable-__cxa_atexit '
+                        '--enable-checking=release '
+                        '--enable-languages="c,c++" '
                         '--enable-fdpic '
-                        "--with-system-zlib "
+                        "--without-system-zlib "
+                        "--with-ppl "
                         '--with-gmp=$GMP_TARGET_FOLDER '
                         '--with-mpfr=$MPFR_TARGET_FOLDER '
                         '--with-mpc=$MPC_TARGET_FOLDER '
@@ -211,38 +215,38 @@ class gccBuild(configure):
             cmd = ' && '.join([
                 "mkdir -p build",
                 "cd build",
-                '../configure  --prefix=$TARGET_FOLDER '
-                    '--mandir=$TARGET_FOLDER/share/man '
-                    '--libdir=$TARGET_FOLDER/lib '
-                    '--infodir=$TARGET_FOLDER/share/info '
-                    '--libexecdir=$TARGET_FOLDER/lib '
-                    '--enable-languages=c,c++ '
-                    '--enable-__cxa_atexit  '
-                    '--disable-multilib '
-                    "--with-ppl "
-                    '--enable-clocale=gnu '
-                    '--disable-libstdcxx-pch '
-                    '--enable-fdpic '
-                    '--disable-werror '
-                    '--enable-shared '
-                    '--enable-threads=posix '
-                    '--enable-version-specific-runtime-libs '
-                    '--enable-checking=release '
-                    "--with-system-zlib "
-                    '--with-gmp=$GMP_TARGET_FOLDER '
-                    '--with-mpfr=$MPFR_TARGET_FOLDER '
-                    '--with-mpc=$MPC_TARGET_FOLDER '
-                    '--program-suffix=-$(basename $TARGET_FOLDER)',
-                'make -j $DCORES',
-                'make install',
+                # '../configure  --prefix=$TARGET_FOLDER '
+                #     '--mandir=$TARGET_FOLDER/share/man '
+                #     '--libdir=$TARGET_FOLDER/lib '
+                #     '--infodir=$TARGET_FOLDER/share/info '
+                #     '--libexecdir=$TARGET_FOLDER/lib '
+                #     '--enable-languages=c,c++ '
+                #     '--enable-__cxa_atexit  '
+                #     '--disable-multilib '
+                #     "--with-ppl "
+                #     '--enable-clocale=gnu '
+                #     '--disable-libstdcxx-pch '
+                #     '--enable-fdpic '
+                #     '--disable-werror '
+                #     '--enable-shared '
+                #     '--enable-threads=posix '
+                #     '--enable-version-specific-runtime-libs '
+                #     '--enable-checking=release '
+                #     "--with-system-zlib "
+                #     '--with-gmp=$GMP_TARGET_FOLDER '
+                #     '--with-mpfr=$MPFR_TARGET_FOLDER '
+                #     '--with-mpc=$MPC_TARGET_FOLDER '
+                #     '--program-suffix=-$(basename $TARGET_FOLDER)',
+                # 'make -j $DCORES',
+                # 'make install',
             ])
 
         # make sure we're using the distros GCC to build GCC
         cmd = ' && '.join([
-            'export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/bin"',
+            'export PATH="$TARGET_FOLDER/../4.1.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/bin"',
             'unset LD_LIBRARY_PATH',
             # set the system crtbegin.o path so the system gcc can build our gcc
-            "export LIBRARY_PATH=$(echo $(find /usr/ -name crtbegin.o -exec dirname {} \;) | sed 's/ /:/g'):$LIBRARY_PATH",
+            "export LIBRARY_PATH=$(echo $(find $TARGET_FOLDER/../4.1.2/ -name crtbegin.o -exec dirname {} \;) | sed 's/ /:/g'):$LIBRARY_PATH",
             cmd
         ])
         return cmd
@@ -383,7 +387,7 @@ class python(configure):
     cmd = [
         'env',
         'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
-        './configure  --enable-shared --enable-unicode=ucs4',
+        './configure  --enable-shared --enable-unicode=ucs4 --enable-optimizations',
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
         'make -j $DCORES',
         'make -j $DCORES install',

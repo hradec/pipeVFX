@@ -56,6 +56,34 @@ class all: # noqa
 
         allDepend = []
 
+        # we start by uncompressing a binary tarball of gcc 4.1.2, to use
+        # as cold start compiler to build other gcc's
+        gcc = build.gccBuild(
+                ARGUMENTS,
+                'gcc',
+                targetSuffix = "pre",
+                download=[(
+                    # CY2014
+                    # although we have the URL for the source code of 4.1.2,
+                    # we are using a pre-build tarball done in arch since
+                    # building it in centos 7 breaks something, and some shared
+                    # libraries build with 4.1.2 will complain about needing
+                    # objects compiled with -fPIC, when they actually have being!
+                    # the pre-built tarball.
+                    # the bin tarball is already in the build docker image!
+                    # original source md5: 'dd2a7f4dcd33808d344949fcec87aa86',
+                    # origial source file: 'gcc-4.1.2.tar.gz',
+                    # bin tarball md5: 'bf35fabc47ead3b1f743492052296336',
+                    # bin tarball file: '4.1.2.tar.gz',
+                    '--ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                    '4.1.2.tar.gz',
+                    '4.1.2',
+                    '094fa468653d11cf65df94cc41fb257c',
+                )],
+        )
+        self.gcc_4_1_2 = gcc
+
+
         # zlib = build.configure(
         #     ARGUMENTS,
         #     'zlib',
@@ -91,12 +119,17 @@ class all: # noqa
            ARGUMENTS,
            'gmp',
            download=[(
-                 'https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2',
-                 'gmp-6.1.2.tar.gz',
-                 '6.1.2',
-                 '8ddbb26dc3bd4e2302984debba1406a5'
+                'https://gmplib.org/download/gmp/gmp-6.1.2.tar.bz2',
+                'gmp-6.1.2.tar.gz',
+                '6.1.2',
+                '8ddbb26dc3bd4e2302984debba1406a5'
+            # ),(
+            #     'https://gmplib.org/download/gmp/archive/gmp-4.2.1.tar.bz2',
+            #     'gmp-4.2.1.tar.gz',
+            #     '4.2.1',
+            #     '091c56e0e1cca6b09b17b69d47ef18e3'
             )],
-            depend = allDepend
+            depend = [self.gcc_4_1_2],
         )
         allDepend += [gmp]
 
@@ -109,7 +142,7 @@ class all: # noqa
                 '3.1.6',
                 '95dcfd8629937996f826667b9e24f6ff',
             )],
-            depend = allDepend,
+            depend = [gmp, self.gcc_4_1_2],
         )
         allDepend += [mpfr]
 
@@ -122,7 +155,7 @@ class all: # noqa
                '1.0.3',
                'd6a1d5f8ddea3abd2cc3e98f58352d26',
             )],
-            depend = allDepend,
+            depend = [mpfr, gmp, self.gcc_4_1_2],
         )
         allDepend += [mpc]
 
@@ -135,45 +168,46 @@ class all: # noqa
                 '2.5.39',
                 'e133e9ead8ec0a58d81166b461244fde'
             )],
+            depend = [mpc, mpfr, gmp, self.gcc_4_1_2],
         )
         self.flex = flex
         allDepend += [flex]
 
 
-        binutils = build.configure(
-            ARGUMENTS,
-            'binutils',
-            sed = { '0.0.0' : {
-                'gprof/Makefile.in' : [
-                    ('SUFFIXES = .m','SUFFIXES ='),
-                    ('.SUFFIXES: .m ','.SUFFIXES: '),
-                ],
-            }},
-            # binutils-2.17 is the best for gcc 4.1.2
-            # but it doesn't work with shared libs in centos 7.
-            download=[(
-                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.17a.tar.bz2',
-                'binutils-2.17.tar.gz',
-                '2.17.1',
-                '1d81edd0569de4d84091526fd578dd7b'
-            ),(
-            # so we're defaulting to 2.22.0 for now.
-                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
-                'binutils-2.22.tar.gz',
-                '2.22.0',
-                '8b3ad7090e3989810943aa19103fdb83'
-            ),(
-            # so we're defaulting to 2.22.0 for now.
-                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.33.1.tar.gz',
-                'binutils-2.33.1.tar.gz',
-                '2.33.1',
-                '1a6b16bcc926e312633fcc3fae14ba0a'
-
-            )],
-            depend = allDepend,
-        )
-        self.binutils = binutils
-        # allDepend += [binutils]
+        # binutils = build.configure(
+        #     ARGUMENTS,
+        #     'binutils',
+        #     sed = { '0.0.0' : {
+        #         'gprof/Makefile.in' : [
+        #             ('SUFFIXES = .m','SUFFIXES ='),
+        #             ('.SUFFIXES: .m ','.SUFFIXES: '),
+        #         ],
+        #     }},
+        #     # binutils-2.17 is the best for gcc 4.1.2
+        #     # but it doesn't work with shared libs in centos 7.
+        #     download=[(
+        #     #     'https://mirror.its.dal.ca/gnu/binutils/binutils-2.17a.tar.bz2',
+        #     #     'binutils-2.17.tar.gz',
+        #     #     '2.17.1',
+        #     #     '1d81edd0569de4d84091526fd578dd7b'
+        #     # ),(
+        #     # so we're defaulting to 2.22.0 for now.
+        #         'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
+        #         'binutils-2.22.tar.gz',
+        #         '2.22.0',
+        #         '8b3ad7090e3989810943aa19103fdb83'
+        #     ),(
+        #     # so we're defaulting to 2.22.0 for now.
+        #         'https://mirror.its.dal.ca/gnu/binutils/binutils-2.33.1.tar.gz',
+        #         'binutils-2.33.1.tar.gz',
+        #         '2.33.1',
+        #         '1a6b16bcc926e312633fcc3fae14ba0a'
+        #
+        #     )],
+        #     depend = allDepend+[self.gcc_4_1_2],
+        # )
+        # self.binutils = binutils
+        # # allDepend += [binutils]
 
 
         gcc = build.gccBuild(
@@ -196,22 +230,23 @@ class all: # noqa
                     '4.1.2.tar.gz',
                     '4.1.2',
                     '094fa468653d11cf65df94cc41fb257c',
-                    { binutils : '2.22.0' }
+                    # { binutils : '2.22.0' }
                 ),(
                     # CY2015
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
                     'bfe56e74d31d25009c8fb55fd3ca7e01',
-                    { binutils : '2.22.0' }
-                # ),(
-                #     # CY2018 GCC 6.3.1 source code.
-                #    'http://vault.centos.org/7.5.1804/sclo/Source/rh/devtoolset-6/devtoolset-6-gcc-6.3.1-3.1.el7.src.rpm',
-                #    'gcc-6.3.1.tar.gz',
-                #    '6.3.0',
-                #    '6e5ea04789678f1250c1b30c4d9ec417'
+                    # { binutils : '2.22.0' }
+                ),(
+                    # CY2018 GCC 6.3.1 source code.
+                   'http://vault.centos.org/7.5.1804/sclo/Source/rh/devtoolset-6/devtoolset-6-gcc-6.3.1-3.1.el7.src.rpm',
+                   'gcc-6.3.1.rpm.tar.gz',
+                   '6.3.0',
+                   'f6f508c03da14106554604b1ad3a5aab',
+                   { build.override.src: 'gcc.spec' }
                 )],
-                depend = allDepend,
+                depend = allDepend+[self.gcc_4_1_2],
         )
         self.gcc = gcc
         # lets use our own latest GCC to build everything!!!
@@ -303,11 +338,11 @@ class all: # noqa
             ARGUMENTS,
             'python',
             download=[(
-                    # 'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
-                    # 'Python-2.6.9.tar.gz',
-                    # '2.6.9',
-                    # 'bddbd64bf6f5344fc55bbe49a72fe4f3',
-                    # { readline : '7.0.0', openssl : '1.0.2h' },
+                #     'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
+                #     'Python-2.6.9.tar.gz',
+                #     '2.6.9',
+                #     'bddbd64bf6f5344fc55bbe49a72fe4f3',
+                #     { readline : '7.0.0', openssl : '1.0.2h' },
                 # ),(
                 #     'http://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
                 #     'Python-2.7.12.tar.gz',
@@ -331,7 +366,7 @@ class all: # noqa
             )],
             # this fixes https not finding certificate in easy_install
             environ = {"PYTHONHTTPSVERIFY" : "0"},
-            depend = allDepend+[readline,bzip2], #,openssl],
+            depend = allDepend+[readline,bzip2],
             pip = [
                 'epydoc',
                 'PyOpenGL',
@@ -340,7 +375,8 @@ class all: # noqa
                 'subprocess32',
                 'numpy',
                 'dbus-python',
-                'scons'
+                'scons',
+                'jinja2', # needed by USD
             ]
         )
         self.python = python
@@ -364,6 +400,13 @@ class all: # noqa
                 '6309541504a819dabe352130f27e57d5',
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
+                # USD
+                'https://github.com/intel/tbb/archive/4.4.6.tar.gz',
+                'tbb-4.4.6.tar.gz',
+                '4.4.6',
+                None,
+                { gcc : '4.1.2', python: '2.7.16' }
+            ),(
                 # CY2018
                 'https://github.com/intel/tbb.git',
                 'tbb-2017_U6.zip',
@@ -385,6 +428,7 @@ class all: # noqa
                 None,
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
+                # CY2021 ?
                 'https://github.com/intel/tbb.git',
                 'tbb-2019_U9.zip',
                 '2019_U9',
@@ -612,7 +656,7 @@ class all: # noqa
             depend = allDepend,
         )
         self.gperf = gperf
-        allDepend += [gperf]
+        # allDepend += [gperf]
 
         fontconfig = build.configure(
             ARGUMENTS,
@@ -623,7 +667,7 @@ class all: # noqa
                 '2.13.92',
                 'eda1551685c25c4588da39222142f063'
             )],
-            depend = allDepend,
+            depend = allDepend+[gperf],
         )
         self.fontconfig = fontconfig
         allDepend += [fontconfig]
@@ -670,9 +714,28 @@ class all: # noqa
         #     ARGUMENTS,
         #     'numpy',
         #     download=[(
+        #         # CY 2016 and 2017
         #         'https://github.com/numpy/numpy/archive/v1.9.2.tar.gz',
         #         'numpy-1.9.2.tar.gz',
         #         '1.9.2',
+        #         '90f7434759088acccfddf5ba61b1f908'
+        #     ),(
+        #         # CY 2018
+        #         'https://github.com/numpy/numpy/archive/v1.12.1.tar.gz',
+        #         'numpy-1.12.1.tar.gz',
+        #         '1.12.1',
+        #         '90f7434759088acccfddf5ba61b1f908'
+        #     ),(
+        #         # CY 2019
+        #         'https://github.com/numpy/numpy/archive/v1.14.x.tar.gz',
+        #         'numpy-1.14.x.tar.gz',
+        #         '1.14.x',
+        #         '90f7434759088acccfddf5ba61b1f908'
+        #     ),(
+        #         # CY 2020
+        #         'https://github.com/numpy/numpy/archive/v1.17.x.tar.gz',
+        #         'numpy-1.17.x.tar.gz',
+        #         '1.17.x',
         #         '90f7434759088acccfddf5ba61b1f908'
         #     )],
         #     baseLibs=[python],
@@ -957,6 +1020,14 @@ class all: # noqa
             ARGUMENTS,
             'hdf5',
             download=[(
+                # this is the version tested with USD
+                # https://github.com/PixarAnimationStudios/USD/blob/master/VERSIONS.md
+                'https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.11/src/hdf5-1.8.11.tar.gz',
+                'hdf5-1.8.11.tar.gz',
+                '1.8.11',
+                '1a4cc04f7dbe34e072ddcf3325717504',
+                { gcc : '4.1.2', python: '2.7.16' }
+            ),(
                 'https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.17/src/hdf5-1.8.17.tar.gz',
                 'hdf5-1.8.17.tar.gz',
                 '1.8.17',
@@ -972,7 +1043,7 @@ class all: # noqa
             depend = allDepend,
             cmd = [
                 # './configure --enable-threadsafe --disable-hl --with-pthread=/usr/include',
-                './configure --enable-shared  --with-pthread=/usr/include',
+                './configure --enable-shared --enable-cxx --enable-production --with-pthread=/usr/include',
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
@@ -1170,15 +1241,15 @@ class all: # noqa
                 'mkdir -p build && cd build',
                 # since llvm link uses lots of memory, we define the number
                 # of threads by dividing the ammount of memory in GB by 12
-                'export MAKE_PARALLEL=""',
+                # 'export MAKE_PARALLEL=""',
                 ' && '.join(build.cmake.cmd),
             ],
             flags = [
                 '-DCMAKE_BUILD_TYPE=Release',
                 '-DLLVM_ENABLE_RTTI=1',
                 '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1',
-                '-DLLVM_PARALLEL_COMPILE_JOBS=$DCORES'
-                '-DLLVM_PARALLEL_LINK_JOBS=2'
+                '-DLLVM_PARALLEL_COMPILE_JOBS=$DCORES',
+                '-DLLVM_PARALLEL_LINK_JOBS=2',
                 '-DGCC_INSTALL_PREFIX=$GCC_TARGET_FOLDER',
             ]+build.cmake.flags
         )
@@ -1397,8 +1468,9 @@ class all: # noqa
                 'make -j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS="-DENABLERTTI=0 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ")+'" '
-                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"',"\\'").replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
+                'INSTALL_PREFIX=$TARGET_FOLDER '
+                'MY_CMAKE_FLAGS="-DENABLERTTI=0 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
+                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
                 'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
@@ -1529,7 +1601,7 @@ class all: # noqa
             src = 'configure.py',
             cmd = [
                 '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
-                        'python configure.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        'python configure.py --confirm-license --assume-shared --protected-is-public  --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
                         '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
                         '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
                     # =======================================================
@@ -1548,7 +1620,7 @@ class all: # noqa
                 ')'
                 # we return true if pyqt 5 since we want to download
                 # the pkgs to keep then around, but not build then.
-                ' || true'
+                ' || echo -e "\n\n NOT BUILDING PYQT5 FOR NOW! (more info in pkgs.py)\n\n"'
             ],
         )
         self.pyqt = pyqt
@@ -1709,10 +1781,10 @@ class all: # noqa
                 'openvdb-3.0.0.tar.gz',
                 '3.0.0',
                 '3ca8f930ddf759763088e265654f4084',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', build.override.src: 'README' }
             )],
             depend=allDepend+[openexr, ilmbase, glfw],
-            src = "README",
+            src = "README.md",
             cmd = [
             "cd openvdb",
             " make install -j $DCORES"
@@ -1758,21 +1830,28 @@ class all: # noqa
                 'alembic-1.5.8.tar.gz',
                 '1.5.8',
                 'a70ba5f2e80b47d346d15d797c28731a',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.1.2', boost: '1.51.0'},
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.1.2', boost: '1.51.0', hdf5: '1.8.11'},
             ),(
                 # CY2017
                 'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
                 'alembic-1.6.1.tar.gz',
                 '1.6.1',
                 'e1f9f2cbe1899d3d55b58708b9307482',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0'},
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11'},
             ),(
                 # CY2018 - CY2020
                 'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
                 'alembic-1.7.11.tar.gz',
                 '1.7.11',
                 'e156568a8d8b48c4da4fe2496386243d',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0'},
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11'},
+            ),(
+                # CY2018 - CY2020 (USD Version)
+                'https://github.com/alembic/alembic/archive/1.7.1.tar.gz',
+                'alembic-1.7.1.tar.gz',
+                '1.7.1',
+                'c8e2c8f951af09cfdacb2ca1fd5823a5',
+                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11'},
             )],
             # baseLibs=[python],
             depend=allDepend+[hdf5],
@@ -1847,7 +1926,9 @@ class all: # noqa
         self.opensubdiv = opensubdiv
 
 
-        # build USD without plugins
+        # build USD without applications plugins
+        # dependency version table:
+        # https://github.com/PixarAnimationStudios/USD/blob/master/VERSIONS.md
         usd = build.cmake(
             ARGUMENTS,
             'usd',
@@ -1858,42 +1939,70 @@ class all: # noqa
                 'USD-18.09.tar.gz',
                 '18.9.0',
                 '10a06767c6a9c69733bb5f9fbadcb52a',
-                {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', cmake: '3.8.2'},
+                {boost: "1.56.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
+                opensubdiv: '3.4.0', alembic: '1.7.1', hdf5: '1.8.11', cmake: '3.8.2',
+                oiio: '1.6.15', tbb: '4.4.6'},
             ),(
                 # this is the latest for now - nov/2019
                 'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
                 'USD-19.07.tar.gz',
                 '19.7.0',
                 '8d274089364cfed23004ae52fa3d258f',
-                {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', cmake: '3.8.2'},
+                {boost: "1.56.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
+                opensubdiv: '3.4.0', alembic: '1.7.1', hdf5: '1.8.11', cmake: '3.8.2',
+                oiio: '1.6.15', tbb: '4.4.6'},
             )],
-            baseLibs=[python],
+            # baseLibs=[python],
             depend=allDepend+[
-                alembic, openexr, ilmbase, opensubdiv, materialx,
-                openvdb, osl, boost, hdf5, glfw, glew, ptex, pyside, qt
+                alembic, openexr, ilmbase, opensubdiv, materialx, oiio, ocio,
+                openvdb, osl, boost, hdf5, glfw, glew, ptex, pyside, qt, python
             ],
             cmd = [
+                "mkdir build",
+                "cd build",
                 "cmake"
                 " -D CMAKE_INSTALL_PREFIX=$TARGET_FOLDER"
                 " -D CMAKE_PREFIX_PATH=$TARGET_FOLDER"
+                " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
+                " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
                 " -D Boost_NO_SYSTEM_PATHS=TRUE"
                 " -D Boost_NO_BOOST_CMAKE=TRUE"
-                " -D PXR_BUILD_IMAGING=TRUE"
-                " -D PXR_BUILD_TESTS=FALSE"
                 " -D PXR_BUILD_ALEMBIC_PLUGIN=TRUE"
-                " -D PXR_ENABLE_HDF5_SUPPORT=FALSE"
                 " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER"
+                " -D PXR_ENABLE_HDF5_SUPPORT=TRUE"
+                " -D HDF5_LOCATION=$HDF5_TARGET_FOLDER"
+                " -D PXR_BUILD_IMAGING=TRUE"
+                " -D PXR_BUILD_OPENIMAGEIO_PLUGIN=TRUE"
+                " -D PXR_BUILD_OPENCOLORIO_PLUGIN=TRUE"
                 " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
                 " -D GLEW_LOCATION=$GLEW_TARGET_FOLDER/"
-                # " -D PXR_BUILD_MAYA_PLUGIN=1"
-                # " -D PXR_BUILD_HOUDINI_PLUGIN=1"
-                # " -D PXR_BUILD_PRMAN_PLUGIN=1"
-                # " -D PXR_BUILD_KATANA_PLUGIN=1"
-                " .",
-                "make VERBOSE=1 -j $CORES",
+                " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
+                " -D OIIO_LOCATION=$OIIO_TARGET_FOLDER"
+                " -D PXR_BUILD_TESTS=FALSE"
+                # " -D PXR_BUILD_MAYA_PLUGIN=TRUE"
+                # " -D MAYA_LOCATION=$MAYA_ROOT"
+                # " -D PXR_BUILD_HOUDINI_PLUGIN=TRUE"
+                # " -D HOUDINI_ROOT=$HOUDINIT_ROOT"
+                # " -D PXR_BUILD_PRMAN_PLUGIN=TRUE"
+                # " -D RENDERMAN_LOCATION=$PRMAN_ROOT"
+                # " -D PXR_BUILD_KATANA_PLUGIN=TRUE"
+                # " -D KATANA_API_LOCATION=$KATANA_ROOT"
+                " -D PXR_ENABLE_OSL_SUPPORT=TRUE"
+                " -D OSL_LOCATION=$OSL_TARGET_FOLDER"
+                " -D PXR_ENABLE_PTEX_SUPPORT=TRUE"
+                " -D PTEX_LOCATION=$PTEX_TARGET_FOLDER"
+                " -D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER"
+                # " -D PXR_BUILD_EMBREE_PLUGIN=TRUE"
+                # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
+                " --build --target install -j $HCORES ..",
+                "make -j $HCORES",
                 "make install",
                 "mv $TARGET_FOLDER/lib/python/pxr $TARGET_FOLDER/python",
             ],
+            environ = {
+                'CFLAGS'   : ' -fopenmp -O2 -fPIC -w ',
+                'CXXFLAGS' : ' -fopenmp -O2 -fPIC -w ',
+            },
         )
         self.usd = usd
 

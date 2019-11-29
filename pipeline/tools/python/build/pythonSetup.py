@@ -54,10 +54,13 @@ class pythonSetup(generic):
         if mkdir.replace(' ','').lower() not in cmd.replace(' ','').lower():
             cmd = "%s && %s" % (mkdir,cmd)
 
-        f = ' '.join(set(self.flags))
-        if f not in cmd:
-            cmd += ' ' + f
+        if hasattr(self, 'flags'):
+            f = ' '.join(set(self.flags))
+            if f not in cmd:
+                cmd += ' ' + f
+                
         return cmd
+
 
 
 #    def action(self, target, source):

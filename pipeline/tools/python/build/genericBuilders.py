@@ -159,6 +159,19 @@ if os.popen('''cat %s 2>&1 | grep "'/usr/lib'"''' % f).readlines():
 
     ''' % (f,f) + bcolors.END )
 
+class _parameter_override_:
+    name='None'
+    downloadList=[range(10)]
+    _depend={}
+    do_not_use=True
+
+# a class to override builder parameters in the download dependency dictionary,
+# so we can override a default parameter for a specific version of a package,
+# like src, for example.
+class override:
+    class src(_parameter_override_):
+        pass
+
 class gcc:
     ''' a simple "enum" class so we can use gcc.system/gcc.pipe instead of numbers in the code'''
     system=0
@@ -225,6 +238,7 @@ class generic:
     extra = ''
     sed = {}
     environ = {}
+    do_not_use=False
 
 
     def __init__(self, args, name, download, baseLibs=None, env=None, depend=[], GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
@@ -419,7 +433,7 @@ class generic:
         # build all python versions specified
         self.buildFolder = {}
         self.targetFolder = {}
-        self.depend = {}
+        self._depend = {}
         self.installAll = []
         for baselib in self.baseLibs:
             for baselibDownloadList in baselib.downloadList:
@@ -428,7 +442,7 @@ class generic:
                     p = "%s%s" % (baselib.name,baselibDownloadList[2])
                 pythonDependency = ".%s%s" % (p,self.targetSuffix)
 
-                self.depend[p] = []
+                self._depend[p] = []
                 self.buildFolder[p] = []
                 self.targetFolder[p] = []
 
@@ -468,6 +482,11 @@ class generic:
                     os.environ['%s_TARGET_FOLDER' % self.name.upper()] = os.path.abspath(self.targetFolder[p][-1])
 
                     setup = os.path.join(self.buildFolder[p][-1], self.src)
+                    # custom src in the download dictionary
+                    if  len(download[n])>4:
+                        if override.src in download[n][4]:
+                            setup = os.path.join(self.buildFolder[p][-1], download[n][4][override.src])
+
                     build = os.path.join( self.targetFolder[p][-1], '%s%s.done' % (crtl_file_build, pythonDependency) )
                     install = os.path.join( self.targetFolder[p][-1], '%s%s.done' % (crtl_file_install, pythonDependency) )
 
@@ -510,14 +529,14 @@ class generic:
 
                             # now, add all dependencies needed!
                             depend_n = self.depend_n(dependOn, download[n][2])
-                            k = dependOn.depend.keys()
+                            k = dependOn._depend.keys()
                             if p in k:
-                                if dependOn.depend[p][depend_n] not in source:
-                                    source.append( dependOn.depend[p][depend_n] )
+                                if dependOn._depend[p][depend_n] not in source:
+                                    source.append( dependOn._depend[p][depend_n] )
                             elif len(k)>0:
                                 kk=k[-1]
-                                if dependOn.depend[kk][depend_n] not in source:
-                                    source.append( dependOn.depend[kk][depend_n] )
+                                if dependOn._depend[kk][depend_n] not in source:
+                                    source.append( dependOn._depend[kk][depend_n] )
 
                     # build
                     b = self.action( build, source )
@@ -525,7 +544,7 @@ class generic:
                     # call the install builder, in case a class need to do custom installation
                     t = self.install( install, [b,source[0]] )
 
-                    self.depend[p].append(t)
+                    self._depend[p].append(t)
                     self.installAll.append(t)
                     self.env.Default(self.env.Alias( 'install', t ))
                     self.env.Default(self.env.Alias( 'download', pkgs ))
@@ -561,6 +580,7 @@ class generic:
             print bcolors.WARNING+": "
             d=map(lambda x: '.'.join(str(x).split(os.path.sep)[-3:-1]), source[1:])
             print bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0])
+            d.sort()
             for n in range(0,len(d),6):
                 print bcolors.WARNING+": "+bcolors.BLUE+"           %s" % ', '.join(d[n:n+6])
             print bcolors.WARNING+": "+bcolors.END
@@ -590,7 +610,7 @@ class generic:
         return cmd
 
     def __lastlog(self, target, pythonVersion=None):
-        lastlogFile = "%s/%s" % ( os.path.dirname(str(target)), crtl_file_lastlog )
+        lastlogFile = "%s/.%s%s" % ( os.path.dirname(str(target)), os.path.basename(str(target)), crtl_file_lastlog )
 
         # if no pythonVersion specified, see if we can figure it out from target
         if not pythonVersion:
@@ -626,8 +646,8 @@ class generic:
         # if not lastlog:
         #     # check if dependency changed!
         #     for t in target:
-        #         if os.path.exists("%s.depend" % t) and os.path.exists("%s.cmd" % t):
-        #             for l in open("%s.depend" % t,'r').readlines():
+        #         if os.path.exists("%s._depend" % t) and os.path.exists("%s.cmd" % t):
+        #             for l in open("%s._depend" % t,'r').readlines():
         #                 if l in source:
         #                     lastlog=255
         #                     break
@@ -769,8 +789,8 @@ class generic:
         buildCompiler = int(filter(lambda x: 'BUILD_COMPILER' in x[0], env.items())[0][1])
 
         # restore original environment before ruuning anything.
-        os_environ=self.os_environ
-        # os_environ.update( os.environ )
+        os_environ = {}
+        os_environ.update( self.os_environ )
 
         # first, cleanup pipe gcc/bin folder from path, if any
         os_environ['PYTHON_TARGET_FOLDER'] = os.environ['PYTHON_TARGET_FOLDER']
@@ -823,9 +843,6 @@ class generic:
                     pp.append(each)
                 os_environ[var] = ':'.join(pp)
 
-        # set lastlog file name
-        lastlog = self.__lastlog( target, '.'.join(pythonVersion.split('.')[:2]) )
-
         # set Python version env vars.
         os_environ['PYTHON_VERSION'] = pythonVersion
         os_environ['PYTHON_VERSION_MAJOR'] = pythonVersion[:3]
@@ -845,6 +862,7 @@ class generic:
 
         prefix = ''
         os_environ.update( {
+            'CLICOLOR_FORCE'    : '1',
             'CC'                : '%sgcc' % prefix,
             'CPP'               : 'cpp',
             'CXX'               : '%sg++' % prefix,
@@ -853,21 +871,55 @@ class generic:
             'LDSHARED'          : '%sgcc -shared' % prefix,
             'LDFLAGS'           : ' ',
             'CFLAGS'            : ' ',
-            # 'CPPFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
             # 'CXXFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
-            'CPPFLAGS'          : ' ',
             'CXXFLAGS'          : ' ',
-            'CPPCXXFLAGS'       : ' ',
             'PKG_CONFIG_PATH'   : '',
             'LD_LIBRARY_PATH'   : "%s/lib/" % (installDir),
-            'CLICOLOR_FORCE'    : '1',
+            # source: https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Environment-Variables.html#Environment-Variables
+            # The value of LIBRARY_PATH is a colon-separated list of directories,
+            # much like PATH. When configured as a native compiler, GCC tries the
+            # directories thus specified when searching for special linker files,
+            # if it can't find them using GCC_EXEC_PREFIX. Linking using GCC also
+            # uses these directories when searching for ordinary libraries for
+            # the -l option (but directories specified with -L come first).
+            'LIBRARY_PATH'      : "",
+            # Each variable's value is a list of directories separated by a special
+            # character, much like PATH, in which to look for header files.
+            # The special character, PATH_SEPARATOR (:), is target-dependent and
+            # determined at GCC build time.
+            # CPATH specifies a list of directories to be searched as if specified
+            # with -I, but after any paths given with -I options on the command
+            # line. This environment variable is used regardless of which
+            # language is being preprocessed.
+            # ( CPATH searchpath AFTER -I paths!!)
+            'CPATH'             : "",
+            # The remaining environment variables apply only when preprocessing
+            # the particular language indicated. Each specifies a list of
+            # directories to be searched as if specified with -isystem,
+            # but after any paths given with -isystem options on the command line.
+            # ( *_INCLUDE_PATH searchpath BEFORE -I paths and after -isystem!!)
+            'C_INCLUDE_PATH'    : "",
+            'CPLUS_INCLUDE_PATH': "",
+            'OBJC_INCLUDE_PATH' : "",
+            # In all these variables, an empty element instructs the compiler to
+            # search its current working directory. Empty elements can appear at
+            # the beginning or end of a path. For instance, if the value of
+            # CPATH is :/special/include, that has the same
+            # effect as '-I. -I/special/include'.
         })
 
         if not os_environ.has_key('INCLUDE'):
             os_environ['INCLUDE'] = ''
 
-        CFLAGS=['-g -O2 -fPIC -w']
-        LDFLAGS=['-fPIC']
+        C_INCLUDE_PATH=[]
+        CPLUS_INCLUDE_PATH=[]
+        LIBRARY_PATH=[]
+        LD_LIBRARY_PATH=[]
+        PKG_CONFIG_PATH=[]
+        PYTHONPATH=[]
+        PATH=[]
+        CFLAGS=[]
+        LDFLAGS=[]
         gcc={
             'gcc' : 'gcc',
             'g++' : 'g++',
@@ -877,7 +929,7 @@ class generic:
         dependList={}
         sourceList = map(lambda x: os.path.basename(os.path.dirname(os.path.dirname(str(x)))), source)
         for dependOn in self.dependOn:
-            if dependOn and dependOn.name not in dependList:
+            if dependOn and dependOn.name not in dependList and  dependOn.do_not_use==False:
                 # if not in the source list, skip it
                 if dependOn.name not in target and dependOn.name not in self.env['ENVIRON_DEPEND'].split(' '):
                     continue
@@ -917,64 +969,65 @@ class generic:
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_ROOT' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()]
 
-                    # if dependOn.name == 'gcc':
-                    #     print dependOn.name ,dependOn.targetFolder,depend_n
-
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
                     else:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder['noBaseLib'][depend_n])
 
-                    os_environ['PKG_CONFIG_PATH'] = ':'.join([
+                    PKG_CONFIG_PATH += [
                         '%s/lib64/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
                         '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
-                        os_environ['PKG_CONFIG_PATH'],
-                    ])
+                    ]
                     # if dependency in explicit in GCCFLAGS or
                     # if dependency doesn't have a lib/pkconfig/*.pc file,
                     # include the dependency folders into CFLAGS(CPPFLAGS/CXXFLAGS) and LDFLAGS parameters
                     # if dependOn in self.GCCFLAGS or not glob( "%s/lib/pkgconfig/*.pc" % dependOn.targetFolder[p][depend_n] ):
-                    CFLAGS.append("-I%s/include/" % dependOn.targetFolder[p][depend_n])
-                    LDFLAGS.append("-L%s/lib64/" % dependOn.targetFolder[p][depend_n])
-                    LDFLAGS.append("-L%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
-                    LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
-                    LDFLAGS.append("-L%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
+                    # CFLAGS.append("-I%s/include/" % dependOn.targetFolder[p][depend_n])
+                    # LDFLAGS.append("-L%s/lib64/" % dependOn.targetFolder[p][depend_n])
+                    # LDFLAGS.append("-L%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
+                    # LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
+                    # LDFLAGS.append("-L%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
 
-                    os_environ['LD_LIBRARY_PATH'] = ':'.join([
-                        os_environ['LD_LIBRARY_PATH'],
-                        "%s/lib64/" % dependOn.targetFolder[p][depend_n],
-                        "%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
+                    # include dependency search path in LIBRARY_PATH, so we don't
+                    # have to populate LDFLAGS with a bunch of -L<dep path>
+                    # this also has the advantage of not "recording" the build search paths
+                    # on build packages, so cmake won't pick the up later!
+                    LIBRARY_PATH += [
                         "%s/lib/" % dependOn.targetFolder[p][depend_n],
-                        "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
-                    ])
-                    os_environ['INCLUDE'] = ':'.join([
-                        "%s/include/" % dependOn.targetFolder[p][depend_n],
-                        os_environ['INCLUDE'],
-                    ])
+                        "%s/lib64/" % dependOn.targetFolder[p][depend_n],
+                        "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]),
+                        "%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]),
+                    ]
+
+                    # include dependency search path in *_INCLUDE_PATH, so we don't
+                    # have to populate C*FLAGS with a bunch of -I<dep path>
+                    # this also has the advantage of not "recording" the build search paths
+                    # on build packages, so cmake won't pick the up later!
+                    # USD picks up -I<paths> from python, for example, and if we have gcc paths
+                    # from the gcc version used to build python, those will interfere with
+                    # the gcc version used with USD.
+                    C_INCLUDE_PATH += ["%s/include/" % dependOn.targetFolder[p][depend_n]]
+
+                    # add extra folders inside dependency include folders
                     for each in glob("%s/include/*" % dependOn.targetFolder[p][depend_n]):
                         if os.path.isdir(each):
-                            os_environ['INCLUDE'] = ':'.join([
-                                each,
-                                os_environ['INCLUDE'],
-                            ])
-                            CFLAGS.append("-I%s" % each)
+                            C_INCLUDE_PATH += ["%s" % each]
 
-                    os_environ['PYTHONPATH'] = ':'.join([
+                    # set python searchpath for dependencies
+                    PYTHONPATH += [
                         "%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib64/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         '%s/lib64/python%s/lib-dynload/' % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         "%s/lib/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
                         '%s/lib/python%s/lib-dynload/' % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
+                    ]
 
-                        os_environ['PYTHONPATH'],
-                    ])
-                    os_environ['PATH'] = ':'.join([
-                        "%s/bin/" % (dependOn.targetFolder[p][depend_n]),
-                        os_environ['PATH'],
-                    ])
+                    # set PATH searchpath for dependencies binaries
+                    PATH += [ "%s/bin/" % (dependOn.targetFolder[p][depend_n]) ]
 
                     # pull env vars from dependency classes
+                    # we add all searchpaths from dependencies as well.
                     for each in dependOn.environ:
                         sep = ' '
                         if dependOn.environ[each] and type(dependOn.environ[each])==str:
@@ -1018,12 +1071,52 @@ class generic:
                 os_environ[var] = ':'.join(pp)
 
 
-        os_environ['CFLAGS']        += "%s" % ' '.join(CFLAGS+LDFLAGS)
-        os_environ['CPPFLAGS']      += "%s" % ' '.join(CFLAGS+LDFLAGS)
-        os_environ['CXXFLAGS']      += "%s" % ' '.join(CFLAGS+LDFLAGS)
-        os_environ['CPPCXXFLAGS']   += "%s" % ' '.join(CFLAGS+LDFLAGS)
-        os_environ['LDFLAGS']       = "%s -L/usr/lib64 %s" % (' '.join(LDFLAGS), os_environ['LDFLAGS'])
-        os_environ['LLDFLAGS']      = "%s -L/usr/lib64 %s" % (' '.join(LDFLAGS), os_environ['LDFLAGS'])
+        # os_environ['CFLAGS']             += "%s" % ' '.join(CFLAGS+LDFLAGS)
+        # os_environ['CXXFLAGS']           += "%s" % ' '.join(CFLAGS+LDFLAGS)
+        # os_environ['LDFLAGS']             = "%s -L/usr/lib64 %s" % (' '.join(LDFLAGS), os_environ['LDFLAGS'])
+        # os_environ['LLDFLAGS']            = "%s -L/usr/lib64 %s" % (' '.join(LDFLAGS), os_environ['LDFLAGS'])
+
+        # set lastlog filename
+        extraLabel = ''
+        lastlog = self.__lastlog( target, '1.0' )
+        if 'GCC_VERSION' in os_environ:
+            extraLabel = '(gcc %s)' % os_environ['GCC_VERSION']
+        if 'noBaseLib' not in target:
+            extraLabel = '(python %s)' % ( os_environ['PYTHON_VERSION'] )
+            if 'GCC_VERSION' in os_environ:
+                extraLabel = '(gcc %s / python %s)' % (  os_environ['GCC_VERSION'], os_environ['PYTHON_VERSION'] )
+            lastlog = self.__lastlog( target,  os_environ['PYTHON_VERSION_MAJOR'] )
+
+        os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
+        os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
+
+        # create current package bin/libs folders so paths are not
+        # removed from env vars
+        folders = ['bin', 'lib', 'lib64']
+        _p = '.'.join( lastlog.split('.')[-2] )
+        if float(_p) > 1.0:
+            folders += ['lib/python%s/site-packages' % _p]
+        for n in folders:
+            path = '%s/%s' % (os_environ['TARGET_FOLDER'], n )
+            if not os.path.exists( path ):
+                os.makedirs( path )
+
+        # make sure all paths from the dependency loop exist
+        C_INCLUDE_PATH  = [ p for p in set(C_INCLUDE_PATH) if os.path.exists(p) ]
+        LIBRARY_PATH    = [ p for p in set(LIBRARY_PATH) if os.path.exists(p) ]
+        PKG_CONFIG_PATH = [ p for p in set(PKG_CONFIG_PATH) if os.path.exists(p) ]
+        PYTHONPATH      = [ p for p in set(PYTHONPATH) if os.path.exists(p) ]
+        PATH            = [ p for p in set(PATH) if os.path.exists(p) ]
+
+        # transfer all lists to env vars now, removing duplicates
+        os_environ['C_INCLUDE_PATH']     += ':'+':'.join(C_INCLUDE_PATH)
+        os_environ['CPLUS_INCLUDE_PATH'] += os_environ['C_INCLUDE_PATH']
+        os_environ['INCLUDE']            += os_environ['C_INCLUDE_PATH']
+        os_environ['LIBRARY_PATH']       += ':'+':'.join(LIBRARY_PATH)
+        os_environ['LD_LIBRARY_PATH']    += os_environ['LIBRARY_PATH']
+        os_environ['PKG_CONFIG_PATH']    += ':'+':'.join(PKG_CONFIG_PATH)
+        os_environ['PYTHONPATH']         += ':'+':'.join(PYTHONPATH)
+        os_environ['PATH']               += ':'+':'.join(PATH)
 
         if self.travis:
             os_environ['TRAVIS']    = '1'
@@ -1035,9 +1128,6 @@ class generic:
         #     os_environ['LTDL_LIBRARY_PATH'] += ":/usr/lib64"
         #     os_environ['LD_LIBRARY_PATH']   += ":/usr/lib64"+
         #     os_environ['LIB']               += ":/usr/lib64"
-
-        os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
-        os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
 
         # use dependency gcc, if any!
         os_environ['CC']  = "%s %s" % (gcc['gcc'], os_environ['CC'].replace(':',"").replace('gcc',''))
@@ -1070,11 +1160,6 @@ class generic:
         #     pipe.apps.python().path('bin'),
         #     os_environ['PATH'],
         # ])
-
-        # set lastlog filename
-        extraLabel = ''
-        if 'noBaseLib' not in target:
-            extraLabel = '(python %s)' % os_environ['PYTHON_VERSION']
 
         # reset lastlog
         open(lastlog,'w').close()
@@ -1160,7 +1245,11 @@ class generic:
                     os_environ['PATH'],
                 ])
 
-            if 'GCC_TARGET_FOLDER' in os_environ:
+        if 'GCC_TARGET_FOLDER' in os_environ:
+                os_environ['PATH'] = ':'.join([
+                    '%s/bin' % os_environ['GCC_TARGET_FOLDER'],
+                    os_environ['PATH'],
+                ])
 
                 # os_environ['LD_LIBRARY_PATH'] = ':'.join([
                 #     '%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
@@ -1183,7 +1272,6 @@ class generic:
                     '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     os_environ['LDFLAGS']
                 ])
-
                 os_environ['LLDFLAGS']      = ' '.join([
                     '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
@@ -1191,23 +1279,78 @@ class generic:
                     '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                     '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                    os_environ['LLDFLAGS']
+                    os_environ['LDFLAGS']
                 ])
 
+                # we need to set this so compilation finds the includes from our GCC, instead of the system ones!
+                os_environ['C_INCLUDE_PATH'] = ':'.join([
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                    os_environ['C_INCLUDE_PATH'],
+                ])
+                os_environ['CPLUS_INCLUDE_PATH'] = ':'.join([
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                    '$GCC_TARGET_FOLDER//include/c++/$GCC_VERSION/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
+                    os_environ['CPLUS_INCLUDE_PATH'],
+                ])
+                os_environ['CPATH'] = ':'.join([
+                    '$GCC_TARGET_FOLDER/include',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++',
+                ])
+
+                # set gcc
+                os_environ['CC']  = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['CC'].strip())
+                os_environ['CXX'] = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['CXX'].strip())
+                if 'LD' in os_environ and 'g++' in os_environ['LD']:
+                    os_environ['LD'] = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['LD'].strip())
+
+
+        # add  options last, so we can add includes before and after the bunch
+        # https://gcc.gnu.org/onlinedocs/gcc-4.1.2/cpp/Invocation.html#Invocation
+        # -nostdinc     Do not search the standard system directories for header files. Only the directories you have specified with -I options (and the directory of the current file, if appropriate) are searched.
+        # -nostdinc++   Do not search for header files in the C++-specific standard directories, but do still search the other standard directories. (This option is used when building the C++ library.)
+        # -isystem dir  Search dir for header files, after all directories specified by -I but before the standard system directories. Mark it as a system directory, so that it gets the same special treatment as is applied to the standard system directories. See System Headers.
+        os_environ['CFLAGS']   = ' -O2 -fPIC -w -nostdinc  -Wno-error ' + os_environ['CFLAGS']
+        os_environ['CXXFLAGS'] = ' -O2 -fPIC -w -nostdinc++ -Wno-error ' + os_environ['CXXFLAGS']
+        os_environ['LDFLAGS']  = ' -fPIC ' + os_environ['LDFLAGS']
+
+
+        # since we're using -nostdinc, we have to setup the system folders by hand
+        system_includes = [
+            '/usr/include',
+            '/usr/lib64/glib-2.0/include/',
+            '/usr/include/linux/',
+            '/usr/include/glib-2.0/',
+            '/usr/share/systemtap/runtime/',
+            '/usr/local/cuda-10.2/targets/x86_64-linux/include/cuda/std/detail/libcxx/include/',
+            '/usr/local/cuda-10.2/targets/x86_64-linux/include/',
+            '/usr/local/cuda-10.2/extras/Sanitizer/include/',
+            '/usr/local/cuda-10.2/extras/CUPTI/samples/extensions/include/',
+            '/usr/local/cuda-10.2/src/',
+            # '/usr/local/cuda-10.2/samples/common/inc/',
+        ]
+        os_environ['C_INCLUDE_PATH'] = ':'.join([os_environ['C_INCLUDE_PATH']]+system_includes)
+        os_environ['CPLUS_INCLUDE_PATH'] = ':'.join([os_environ['CPLUS_INCLUDE_PATH']]+system_includes)
+        os_environ['LIBRARY_PATH'] = ':'.join([
+            os_environ['LIBRARY_PATH'],
+            '/usr/lib',
+            '/usr/lib64',
+        ])
+
+        # just make CPPFLAGS/CPPCXXFLAGS the same as CXXFLAGS
+        os_environ['CPPFLAGS'] = os_environ['CFLAGS']
+        os_environ['CPPCXXFLAGS'] = os_environ['CXXFLAGS']
+
+        # cleanup empty search paths ('::' and ':' at the beginning and end)
+        for each in [ 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH', 'LIBRARY_PATH', 'PYTHONPATH', 'PATH' ]:
+            os_environ[each] = os_environ[each].strip(':').replace('::',':')
 
         # this helps configure to find the corret python
         os_environ['PYTHON'] = '$PYTHON_TARGET_FOLDER/bin/python'
-
-        # create current package bin/libs folders so paths are not
-        # removed from env vars
-        folders = ['bin', 'lib', 'lib64']
-        _p = '.'.join( lastlog.split('.')[-2] )
-        if float(_p) > 1.0:
-            folders += ['lib/python%s/site-packages' % _p]
-        for n in folders:
-            path = '%s/%s' % (os_environ['TARGET_FOLDER'], n )
-            if not os.path.exists( path ):
-                os.makedirs( path )
 
         # expand variables in os_environ
         for each in os_environ:
@@ -1315,11 +1458,11 @@ class generic:
         return value
 #        return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()
 
-    def downloader( self, env, source, _url=None):
+    def downloader( self, env, _source, _url=None):
         ''' this method is a builder responsible to download the packages to be build '''
         global __pkgInstalled__
         self.error = None
-        source = [source]
+        source = [_source]
         for n in range(len(source)):
             # print __pkgInstalled__[os.path.abspath(source[n])]
             download_path=os.path.dirname(source[n])+'/../.download/'
@@ -1333,7 +1476,7 @@ class generic:
                     downloadList = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)
                     url = downloadList[0]
                 md5 = self.md5(source[n])
-                if md5 != url[3] and not ( '.git' in os.path.splitext(url[0])[-1] and os.path.exists(source[n]) and os.stat(source[n]).st_size > 10 ):
+                if md5 != url[3] and not ( '.git' in os.path.splitext(url[0])[-1] and ( os.path.exists(source[n]) and os.stat(source[n]).st_size > 10 ) ):
                     count = 5
                     while count>0:
                         count -= 1
@@ -1370,24 +1513,28 @@ class generic:
                         # print cmd
                         os.popen(cmd).readlines()
                         # lines = os.system("curl '%s' -o %s 2>&1" % (url[0], source[n]))
-                        if os.stat(source[n]).st_size > 0:
+                        if os.path.exists(download_file) and os.stat(download_file).st_size > 0:
                             break
 
-                    if os.stat(source[n]).st_size == 0:
-                        raise Exception ("error downloading %s" % source[n])
+                        # os.system('ls -lhrt %s' % download_file)
+                        # os.system('hexdump -C %s | less' % download_file)
+
+                    if not os.path.exists(download_file) or os.stat(download_file).st_size == 0:
+                        raise Exception ("error downloading %s" % download_file)
                     if url[3] and not '.git' in os.path.splitext(url[0])[-1]:
-                        md5 = self.md5(source[n])
+                        md5 = self.md5(download_file)
                         if md5 != url[3]:
                             sys.stdout.write( bcolors.WARNING )
                             print "\tmd5 for file:", url[1], md5
                             sys.stdout.write( bcolors.FAIL )
                             sys.stdout.flush()
                             self.error = True
+
             else:
                 if not os.path.exists(download_file):
                     open(download_file, 'a').close()
 
-        return source
+        return _source
 
 
     def uncompressor( self, target, source, env):
@@ -1420,11 +1567,17 @@ class generic:
                     print ": uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], self.__lastlog(__pkgInstalled__[s])
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                     cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
+                    uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
                     if '.zip' in s:
                         cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
                         print cmd
+                    elif '.rpm' in s:
+                        ss = os.path.basename( os.path.dirname( str(target[n]) ) )
+                        ss = uncompressed_folder
+                        cmd = "mkdir -p %s/%s && cd %s/%s && rm -rf  %s.rpm && ln -s %s %s.rpm && rpm2cpio %s.rpm | cpio -idmv  2>&1 && cd .. " % (tmp, ss, tmp, ss, s, s, s, s)
+                        print cmd
 
-                    uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
+
                     cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (uncompressed_folder, os.path.dirname(t), tmp)
                     lines = os.popen( cmd ).readlines()
                     if not os.path.exists(str(target[n])):
@@ -1433,6 +1586,7 @@ class generic:
                             print '\t%s' % l.strip()
                         print str(target[n])
                         print cmd
+                        print uncompressed_folder
                         print '-'*tcols
                         print "str(target[n])",str(target[n])
                         os.system('/bin/bash')
@@ -1447,7 +1601,7 @@ class generic:
                     # f.write(' ')
                     # f.close()
                     if not os.path.exists(os.path.dirname(t)):
-                        os.mkdir(os.path.dirname(t))
+                        os.mkdirs(os.path.dirname(t))
                         open(t, 'a').close()
 
     def fix_uncompressed_path(self, path):
