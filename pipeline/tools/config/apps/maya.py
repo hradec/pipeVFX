@@ -63,8 +63,8 @@ class maya(baseApp):
             self.update( gaffer() )
             self.update( golaem() )
             self.update( shave() )
-            self.update( houdini() )
             self.update( substance() )
+            # self.update( redshift() )
 
             if 'PIPE_MAYA_ZYNC' in os.environ and os.environ['PIPE_MAYA_ZYNC']=='1':
                 self.update( zync() )
@@ -83,6 +83,8 @@ class maya(baseApp):
                     self.update( vray() )
                 if 'PIPE_MAYA_OCTANE' in os.environ and os.environ['PIPE_MAYA_OCTANE']=='1':
                     self.update( octane() )
+                if 'PIPE_MAYA_HOUDINI' in os.environ and os.environ['PIPE_MAYA_HOUDINI']=='1':
+                    self.update( houdini() )
 
 
         # add tools paths

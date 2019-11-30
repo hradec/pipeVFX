@@ -33,8 +33,6 @@ class houdini(baseApp):
             pipe.libs.version.set(  boost = '1.55.0' )
 
     def environ(self):
-        # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
-        self.ignorePipeLib( "freetype" )
 
         self['HFS'] = self.path()
         self['HOUDINI_PYTHON_VERSION'] = '.'.join( pipe.libs.version.get( 'python' ).split('.')[:2] )
@@ -55,6 +53,9 @@ class houdini(baseApp):
 
         # set alembic version since gaffer needs it.
         if self.parent() in ['houdini']:
+            # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
+            self.ignorePipeLib( "freetype" )
+
             self.ignorePipeLib( "zlib" )
             self.ignorePipeLib( "alembic" )
             self['ALEMBIC_VERSION'] = pipe.libs.version.get( 'alembic' )
