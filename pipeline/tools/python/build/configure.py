@@ -91,7 +91,7 @@ class gccBuild(configure):
             # change the target for the gcc 4.1.2 version, since we're using
             # a binary tarball
             tt = '/'.join([os.path.dirname(t),'bin'])
-            print tt
+            # print tt
             configure.uncompressor( self, [tt], source, env)
         else:
             configure.uncompressor( self, target, source, env)
@@ -215,6 +215,8 @@ class gccBuild(configure):
             cmd = ' && '.join([
                 "mkdir -p build",
                 "cd build",
+                "mkdir $TARGET_FOLDER/fake_build/",
+                "touch $TARGET_FOLDER/fake_build/placeholder",
                 # '../configure  --prefix=$TARGET_FOLDER '
                 #     '--mandir=$TARGET_FOLDER/share/man '
                 #     '--libdir=$TARGET_FOLDER/lib '
@@ -363,6 +365,8 @@ class boost(configure):
             cmd = [
                 "export PATH=$(echo $PATH | sed 's/gcc.4.1.2.bin//g')",
             ] + cmd
+
+        cmd = ['export LDFLAGS="$LDFLAGS -L$BZIP2_TARGET_FOLDER/lib/"']+cmd
 
         return ' && '.join(cmd)
 
