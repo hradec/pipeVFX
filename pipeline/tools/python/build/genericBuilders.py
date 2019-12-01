@@ -610,22 +610,13 @@ class generic:
         return cmd
 
     def __lastlog(self, target, pythonVersion=None):
-        lastlogFile = "%s/.%s%s" % ( os.path.dirname(str(target)), os.path.basename(str(target)), crtl_file_lastlog )
-
         # if no pythonVersion specified, see if we can figure it out from target
         if not pythonVersion:
+            pythonVersion = "1.0"
             if len(str(target).split('.python')) > 1:
                 pythonVersion = str(target).split('.python')[-1].split('.done')[0][:3]
-            if os.path.basename(os.path.dirname(os.path.dirname(str(target)))) == 'python':
-                pythonVersion = '.'.join( os.path.basename(os.path.dirname(str(target))).split('.')[:2] )
 
-        if not pythonVersion:
-            pythonVersion = "1.0"
-
-        # if we do have a python version after all, include it in the filename
-        if pythonVersion:
-            lastlogFile = "%s/%s.%s" % (os.path.dirname(str(target)), crtl_file_lastlog, pythonVersion)
-
+        lastlogFile = "%s/%s.%s" % (os.path.dirname(str(target)), crtl_file_lastlog, pythonVersion)
         if self.targetSuffix:
             lastlogFile = '%s.%s' % (lastlogFile, self.targetSuffix)
 
@@ -775,18 +766,21 @@ class generic:
         return depend_n
 
     def __check_target_log__(self,target, install=None):
-        ret=255
+        ret=0
         if os.path.exists(target):
             lines = ''.join( open(target).readlines() )
             if 'ld returned 1' in lines or 'ld: cannot find ' in lines:
                 ret = 1
             elif "@runCMD_ERROR@" in lines:
                 ret = int( lines.split("@runCMD_ERROR@")[-2].strip() )
+        else:
+            ret = 255
 
-        if not self.installer or install:
-            if not glob("%s/*/*" % os.path.dirname(target)):
-                ret = 255
+        # if not self.installer or install:
+        if not glob("%s/*/*" % os.path.dirname(target)):
+            ret = 254
 
+        # print target, ret
         return ret
 
 
@@ -1193,6 +1187,7 @@ class generic:
         print bcolors.BLUE+', DCORES: '+bcolors.WARNING+os.environ['DCORES'],
         print bcolors.BLUE+', HCORES: '+bcolors.WARNING+os.environ['HCORES']
         print bcolors.WARNING+':'
+        print bcolors.WARNING+':\ttarget :  %s%s' % (bcolors.GREEN, target)
         for l in cmd.split('&&'):
             print bcolors.WARNING+':\t%s%s : %s %s  %s ' % ('.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]),extraLabel,bcolors.GREEN,l.strip(),bcolors.END)
         # we need to save the current pythonpath to set it later inside pythons system call
@@ -1300,7 +1295,9 @@ class generic:
                 ])
                 os_environ['CPLUS_INCLUDE_PATH'] = ':'.join([
                     '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                    '$GCC_TARGET_FOLDER//include/c++/$GCC_VERSION/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                    '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
+                    '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/',
                     '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++',
                     '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
                     os_environ['CPLUS_INCLUDE_PATH'],
@@ -1308,8 +1305,9 @@ class generic:
                 os_environ['CPATH'] = ':'.join([
                     '$GCC_TARGET_FOLDER/include',
                     '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
                     '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++',
+
                 ])
 
                 # set gcc
