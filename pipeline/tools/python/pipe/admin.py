@@ -272,7 +272,7 @@ class job(sudo):
             ret = "%s/%s" % (ret, subpath)
         return ret
 
-    def fixPerm(self, path, perms=["u+rwx","g+rx"], recursive=False):
+    def fixPerm(self, path, perms=["u+rwx","a+rx"], recursive=False):
         self.chown( self.__user, path, recursive )
         self.chmod( "a-rwx", path )
         for perm in perms:
@@ -280,7 +280,7 @@ class job(sudo):
         #self.chmodStiky(path)
 
     def cp(self, fromPath, toPath, username='', perm=[]):
-        perms=["u+rwx","g+rx"]
+        perms=["u+rwx","a+rx"]
         perms.extend( perm )
         sudo.cp(self, fromPath, toPath)
         self.fixPerm(toPath, perms)
@@ -288,7 +288,7 @@ class job(sudo):
             self.chown( "%s:artists" % username, toPath )
 
     def mkdir(self, path, username='', perm=[]):
-        perms=["u+rwx","g+rx"]
+        perms=["u+rwx","a+rx"]
         perms.extend( perm )
         sudo.mkdir(self, path)
         self.fixPerm(path, perms)
