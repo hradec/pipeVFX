@@ -462,7 +462,7 @@ class generic:
                         if baselib_gcc_version:
                             if len(baselib_gcc_version[0])>4:
                                 baselib_gcc_version = baselib_gcc_version[0][4][baselib_gcc[0]]
-                                self.dependOn.update( {baselib_gcc[0] :  baselib_gcc_version } )
+                                self.dependOn.update( { baselib_gcc[0] :  baselib_gcc_version } )
 
 
                 # build all versions of the package specified by the download parameter
@@ -707,7 +707,7 @@ class generic:
 
 
 
-    def depend_n(self,dependOn,currVersion, dependencyList=None):
+    def depend_n(self,dependOn, target, dependencyList=None, baseLib=None):
         ''' support function to find the same version of a depency
         # look in the dependency download list if we have
         # the same version number as the current package.
@@ -716,7 +716,6 @@ class generic:
         # released with the same version!
         # also, for packages who need an specific version of a dependency to build, sets it here!
         '''
-
         # by default, use the latest version
         depend_n = -1
         if dependOn.name in ['gcc', 'python']:
@@ -724,19 +723,29 @@ class generic:
             depend_n = 0
 
         # we have to use the same gcc version as the current python build used.
-        if 'PYTHON_VERSION' in self.os_environ:
-            if 'gcc' in dependOn.name:
-                for python in [ x for x in self.dependOn if 'python' in x.name ]:
-                    # find the gcc version used for the current python version
-                    for gcc_version in [ x for x in python.downloadList if x[2] ==  self.os_environ['PYTHON_VERSION'] ]:
-                        # and set it
-                        self.dependOn[ dependOn ] = gcc_version[4][ dependOn ]
-            if 'python' in dependOn.name:
-                self.dependOn[ dependOn ] = self.os_environ['PYTHON_VERSION']
-        else:
-            self.dependOn[ dependOn ] = dependOn.downloadList[depend_n][2]
-            if 'python' in dependOn.name:
-                self.os_environ['PYTHON_VERSION'] = dependOn.downloadList[depend_n][2]
+        currVersion = target
+        if len(target.split('/'))>2:
+            currVersion = target.split('/')[-2]
+
+            if '.python' in os.path.basename(target):
+                # adjust env vars for the current selected python version
+                if len(target.split('.python')) > 1:
+                    pythonVersion = target.split('.python')[-1].split('.done')[0]
+
+                    if 'gcc' in dependOn.name:
+                        for python in [ x for x in self.dependOn if 'python' in x.name ]:
+                            # find the gcc version used for the current python version
+                            for gcc_version in [ x for x in python.downloadList if x[2] ==  pythonVersion ]:
+                                # and set it
+                                self.dependOn[ dependOn ] = gcc_version[4][ dependOn ]
+                                # print  currVersion,dependOn.name,currVersion, pythonVersion, gcc_version[4][ dependOn ]
+                    if 'python' in dependOn.name:
+                        self.dependOn[ dependOn ] = pythonVersion
+
+                else:
+                    self.dependOn[ dependOn ] = dependOn.downloadList[depend_n][2]
+                    if 'python' in dependOn.name:
+                        self.os_environ['PYTHON_VERSION'] = dependOn.downloadList[depend_n][2]
 
 
         dependOnVersion = self.dependOn[dependOn]
@@ -945,7 +954,7 @@ class generic:
                         os_environ['PYTHON_ROOT'] = tmp[0]
 
                 # grab the index for the version needed
-                depend_n = self.depend_n(dependOn, target.split('/')[-2])
+                depend_n = self.depend_n(dependOn, target)
                 k = dependOn.targetFolder.keys()
                 p = pythonVersion
 
@@ -1054,6 +1063,7 @@ class generic:
         if 'PYTHON_VERSION' in os_environ:
             os_environ['PYTHON_VERSION_MAJOR'] = '.'.join(os_environ['PYTHON_VERSION'].split('.')[:2])
             os_environ['PYTHON_ROOT'] = os_environ['PYTHON_TARGET_FOLDER']
+            os_environ['PATH'] = "%s/bin/:%s" % (os_environ['PYTHON_ROOT'], os_environ['PATH'])
             # pythonVersion = os_environ['PYTHON_VERSION']
 
         # fix pythonN.N folders after getting python version
@@ -1556,15 +1566,16 @@ class generic:
                 # print "\tMD5 OK for file ", source[n],
                 # print  "rm -rf %s 2>&1" % os.path.dirname(t)
                 # print self.__lastlog(__pkgInstalled__[s]), s, t
-                python = None
+                python = '1.0'
                 if '.python' in t:
                     python = '.'.join( t.split('.python')[-1].split('.')[:2] )
 
                 # print self.__check_target_log__( self.__lastlog(__pkgInstalled__[s],python) )
 
                 # if not os.path.exists(self.__lastlog(__pkgInstalled__[s],python)):
-                if self.__check_target_log__( self.__lastlog(__pkgInstalled__[s],python) ):
-                    print ": uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], self.__lastlog(__pkgInstalled__[s])
+                lastlog = self.__lastlog(__pkgInstalled__[s],python)
+                if self.__check_target_log__( lastlog ):
+                    print ": uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                     cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
