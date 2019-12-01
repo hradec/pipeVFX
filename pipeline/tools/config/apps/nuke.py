@@ -150,6 +150,8 @@ class nuke(baseApp):
             ('nukex', 'nuke --nukex'        ),
             ('nukea', 'nuke --nukeassist'   ),
             ('nukes', 'nuke --studio'       ),
+            ('hiero', 'nuke --hiero'        ),
+            ('hplayer', 'nuke --player'     ),
         ]
 
     def run(self, app):
