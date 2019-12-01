@@ -282,6 +282,8 @@ class all: # noqa
             cmd = [
                 'make -j $DCORES CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$TARGET_FOLDER',
                 'make -j $DCORES PREFIX=$TARGET_FOLDER install',
+                'make -j $DCORES -f Makefile-libbz2_so CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$TARGET_FOLDER',
+                'cp -rfuv ./libbz2.so.* $TARGET_FOLDER/lib64/'
             ],
             depend = allDepend,
         )
@@ -366,7 +368,7 @@ class all: # noqa
             )],
             # this fixes https not finding certificate in easy_install
             environ = {"PYTHONHTTPSVERIFY" : "0"},
-            depend = allDepend+[readline,bzip2],
+            depend = allDepend+[readline,bzip2,icu],
             pip = [
                 'epydoc',
                 'PyOpenGL',
@@ -846,16 +848,16 @@ class all: # noqa
                 '1.66.0',
                 'd275cd85b00022313c171f602db59fc5',
                 # { gcc : '4.8.5' }
-            ),(
-                # CY2020
-                'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
-                'boost_1_70_0.tar.gz',
-                '1.70.0',
-                'fea771fe8176828fabf9c09242ee8c26',
-                { gcc : '4.8.5' }
+            # ),(
+            #     # CY2020
+            #     'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
+            #     'boost_1_70_0.tar.gz',
+            #     '1.70.0',
+            #     'fea771fe8176828fabf9c09242ee8c26',
+            #     { gcc : '4.8.5' }
             )],
             baseLibs=[python],
-            depend=[python, openssl, bzip2]+allDepend,
+            depend=[python, openssl, bzip2, icu]+allDepend,
         )
         self.boost = boost
         # build.allDepend.append(boost)
@@ -883,19 +885,12 @@ class all: # noqa
                 'b540db502c5fa42078249f43d18a4652',
                 { gcc : '4.1.2', python: '2.7.16' }
             # ),(
-            #     # CY2019
-            #     'https://github.com/openexr/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
+            #     # CY2019 -  *** A compiler with support for C++14 language features is required.
+            #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
             #     'ilmbase-2.3.0.tar.gz',
             #     '2.3.0',
             #     '354bf86de3b930ab87ac63619d60c860',
-            #     { gcc : '4.8.5' }
-            # ),(
-            #     # CY2020
-            #     'https://github.com/openexr/openexr/releases/download/v2.4.0/ilmbase-2.4.0.tar.gz',
-            #     'ilmbase-2.4.0.tar.gz',
-            #     '2.4.0',
-            #     '354bf86de3b930ab87ac63619d60c860',
-            #     { gcc : '4.8.5' }
+            #     { gcc : '4.8.5', python: '2.7.16' }
             )],
             depend=[gcc, python, openssl]+allDepend,
             environ={
@@ -934,18 +929,18 @@ class all: # noqa
                 { gcc : '4.1.2', python: '2.7.16' }
             # ),(
             #     # CY2019
-            #     'https://github.com/openexr/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
+            #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
             #     'openexr-2.3.0.tar.gz',
             #     '2.3.0',
             #     'a157e8a46596bc185f2472a5a4682174',
-            #     { gcc : '4.8.5' }
+            #     { gcc : '4.1.2', python: '2.7.16' }
             # ),(
-            #     # CY2020
-            #     'https://github.com/openexr/openexr/releases/download/v2.4.0/openexr-2.4.0.tar.gz',
+            #     # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
+            #     'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.0.tar.gz',
             #     'openexr-2.4.0.tar.gz',
             #     '2.4.0',
-            #     'a157e8a46596bc185f2472a5a4682174',
-            #     { gcc : '4.8.5' }
+            #     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
+            #     { gcc : '4.1.2', python: '2.7.16' }
             )],
             sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
             depend=[ilmbase, gcc, python, openssl]+allDepend,
@@ -998,10 +993,7 @@ class all: # noqa
         #     ],
         # )
         # self.pyilmbase = pyilmbase
-        # build.allDepend.extend([
-        #     ilmbase,
-        #     openexr,
-        # ])
+        # allDepend += [ pyilmbase ]
 
 
         # Sony Imageworks packages
@@ -1092,6 +1084,12 @@ class all: # noqa
                     ('-fvisibility=hidden', '  '),
                 ],
             },'1.1.0' : {
+                'src/core/Display.h' : [
+                    ('endif','endif\n\n')
+                ],
+                'src/core/Display.cpp' : [
+                    ('OCIO_UNIT_TEST','OCIO_UNIT_TEST\n\n')
+                ],
             }},
             download = [(
                 # CY2015 - CY2018
@@ -1106,7 +1104,7 @@ class all: # noqa
                 'OpenColorIO-1.1.0.tar.gz',
                 '1.1.0',
                 '802d8f5b1d1fe316ec5f76511aa611b8',
-                { gcc : '4.8.5' }
+                { gcc : '4.1.2' }
             ),(
                 # CY2020
                 'https://github.com/imageworks/OpenColorIO/archive/v1.1.1.tar.gz',
