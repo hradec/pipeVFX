@@ -24,29 +24,24 @@
 
 import os
 
-os.environ['PIPE_HIERO_LICENSE_SERVERS']   = '4101@192.168.0.245:4101@192.168.0.246'
-os.environ['PIPE_MODO_LICENSE_SERVERS']    = '4101@192.168.0.245:4101@192.168.0.246'
+os.environ['PIPE_HIERO_LICENSE_SERVERS']      = '5053@192.168.0.247:4101@192.168.0.246:4101@192.168.0.245'
+os.environ['PIPE_MODO_LICENSE_SERVERS']       = '5053@192.168.0.247:4101@192.168.0.246:4101@192.168.0.245'
+os.environ['PIPE_MARI_LICENSE_SERVERS']       = '5053@192.168.0.247:4101@192.168.0.246:4101@192.168.0.245'
+os.environ['PIPE_NUKE_LICENSE_SERVERS']       = '5053@192.168.0.247:4101@192.168.0.246:4101@192.168.0.245'
 
-
-os.environ['PIPE_MARI_LICENSE_SERVERS']    = '4101@192.168.0.246:4101@192.168.0.247'
-
-os.environ['PIPE_NUKE_LICENSE_SERVERS']    = 'LM:@192.168.0.247,4101@192.168.0.247,4102@192.168.0.247'
-
-os.environ['PIPE_DELIGHT_LICENSE_SERVERS'] = '192.168.0.247'
-os.environ['PIPE_HOUDINI_LICENSE_SERVERS'] = '192.168.0.247'
+os.environ['PIPE_DELIGHT_LICENSE_SERVERS']    = '192.168.0.247'
+os.environ['PIPE_HOUDINI_LICENSE_SERVERS']    = '192.168.0.247'
 os.environ['PIPE_HOUDINI_LICENSE_SERVERS_16'] = '192.168.0.17'
 
+os.environ['PIPE_SHAVE_LICENSE']              = '5055@192.168.0.247'
+os.environ['PIPE_GOLAEM_LICENSE']             = '5054@192.168.0.247'
+os.environ['PIPE_GENARTS_LICENSE']            = '2701@192.168.0.247'
+os.environ['PIPE_YETI_LICENSE']               = '8833@192.168.0.2'
+os.environ['PIPE_MAYA_LICENSE']               = '192.168.0.247'
+os.environ['PIPE_REALFLOW_LICENSE']           = '5056@192.168.0.247'
+os.environ['PIPE_REDSHIFT_LICENSE']           = '5053@192.168.0.247'
 
-os.environ['PIPE_SHAVE_LICENSE']    = '5055@192.168.0.247'
-os.environ['PIPE_GOLAEM_LICENSE']   = '5054@192.168.0.247'
-os.environ['PIPE_GENARTS_LICENSE']  = '2701@192.168.0.247'
-os.environ['PIPE_YETI_LICENSE']     = '8833@192.168.0.2'
-os.environ['PIPE_MAYA_LICENSE']     = '192.168.0.247'
-os.environ['PIPE_REALFLOW_LICENSE'] = '5056@192.168.0.247'
-os.environ['PIPE_REDSHIFT_LICENSE'] = '5053@192.168.0.247'
-
-
-os.environ['PIPE_FABRIC_ENGINE_LICENSE'] = '5053@192.168.0.247'
+os.environ['PIPE_FABRIC_ENGINE_LICENSE']      = '5053@192.168.0.247'
 
 # internet proxy setup
 # it's here for now until we figure a better place to put it!
@@ -56,4 +51,4 @@ os.environ['PIPE_FABRIC_ENGINE_LICENSE'] = '5053@192.168.0.247'
 #defaultGateway = os.popen("echo $(route -n | grep UG ) | cut -d' ' -f2").readlines()
 #if not defaultGateway:
 
-os.environ['PIPE_PROXY_SERVER'] = '192.168.0.16:8001'
+os.environ['PIPE_PROXY_SERVER'] = '192.168.0.17:8001'
