@@ -64,7 +64,7 @@ class maya(baseApp):
             self.update( golaem() )
             self.update( shave() )
             self.update( substance() )
-            # self.update( redshift() )
+            self.update( redshift() )
 
             if 'PIPE_MAYA_ZYNC' in os.environ and os.environ['PIPE_MAYA_ZYNC']=='1':
                 self.update( zync() )
@@ -302,7 +302,7 @@ class maya(baseApp):
     #     return False
 
     @staticmethod
-    def addon(caller, plugin="", script="", icon="", renderDesc='', lib='', preset='',module='', shelves=''):
+    def addon(caller, plugin="", script="", icon="", renderDesc='', lib='', preset='',module='', shelves='', templates=''):
         ''' the addon method MUST be implemented for all classes so other apps can set up
         searchpaths for this app. For example, another app which has plugins for this one!'''
         if not pipe.osx:
@@ -318,6 +318,7 @@ class maya(baseApp):
         caller['MAYA_PRESET_PATH']      = preset
         caller['MAYA_MODULE_PATH']      = module
         caller['MAYA_SHELF_PATH']       = shelves
+        caller['MAYA_CUSTOM_TEMPLATE_PATH'] = templates
 
 
     def preRun(self, cmd):

@@ -20,6 +20,28 @@
 
 class redshift(baseApp):
     def environ(self):
+        self['PYTHONPATH'] = self.path("redshift4maya/common/scripts")
+
+        self['REDSHIFT_COREDATAPATH'] = self.path()
+        self['REDSHIFT_PLUG_IN_PATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/$MAYA_VERSION'
+        self['REDSHIFT_SCRIPT_PATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/common/scripts'
+        self['REDSHIFT_XBMLANGPATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/common/icons'
+        self['REDSHIFT_RENDER_DESC_PATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/common/rendererDesc'
+        self['REDSHIFT_CUSTOM_TEMPLATE_PATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/common/scripts/NETemplates'
+        self['REDSHIFT_MAYAEXTENSIONSPATH'] = '$REDSHIFT_PLUG_IN_PATH/extensions'
+        self['REDSHIFT_PROCEDURALSPATH'] = '$REDSHIFT_COREDATAPATH/procedurals'
+        # self['REDSHIFT_DISABLELICENSECHECKOUTONINIT'] = '1'
+
+        # self['REDSHIFT_LOCALDATAPATH'] =
+        # self['REDSHIFT_LICENSERETURNTIMEOUT'] =
+
+        # MAYA_PLUG_IN_PATH = $REDSHIFT_PLUG_IN_PATH
+        # MAYA_SCRIPT_PATH = $REDSHIFT_SCRIPT_PATH
+        # PYTHONPATH = $REDSHIFT_SCRIPT_PATH
+        # XBMLANGPATH = $REDSHIFT_XBMLANGPATH
+        # MAYA_RENDER_DESC_PATH = $REDSHIFT_RENDER_DESC_PATH
+        # MAYA_CUSTOM_TEMPLATE_PATH = $REDSHIFT_CUSTOM_TEMPLATE_PATH
+
         maya.addon(self,
             plugin = self.path("redshift4maya/$MAYA_VERSION"),
             script = self.path("redshift4maya/common/scripts"),
@@ -32,8 +54,9 @@ class redshift(baseApp):
             preset = '',
             module = '',
             shelves = self.path('redshift4maya/common/shelves/$MAYA_VERSION_MAJOR'),
+            templates = self.path('redshift4maya/common/scripts/NETemplates'),
         )
-        self['PYTHONPATH'] = self.path("redshift4maya/common/scripts")
+
 
 
     def bins(self):
@@ -43,27 +66,5 @@ class redshift(baseApp):
         ]
         return ret
 
-    # def license(self):
-    #     # install license for the current machine
-    #     import os
-    #
-    #     dir = '%s/.config/Next Limit Technologies' % os.environ['HOME']
-    #     if not os.path.exists(dir):
-    #         os.makedirs(dir)
-    #     file = '%s/RealFlow2012.conf' % dir
-    #     if os.path.exists(file):
-    #         os.remove(file)
-    #
-    #     self['nextlimit_LICENSE']=os.environ['PIPE_REALFLOW_LICENSE']
-    #     self['NL_LICENSE_MANAGER_ADDRESS']=os.environ['PIPE_REALFLOW_LICENSE'].split('@')[-1]
-    #
-    #
-    # def userSetup(self, jobuser):
-    #     self['RFSCENESPATH'] = jobuser.path('realflow/')
-    #     self['RFOBJECTSPATH'] = jobuser.path('realflow/alembic/')
-    #     # self['RFDEFAULTPROJECT'] = jobuser.path('realflow/default.flw')
-    #     os.chdir( jobuser.path('realflow/')  )
-
-
-#    def bin(self):
-#        return "env LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH  %s" % (self.p.path('lib/python$PYTHON_VERSION_MAJOR/lib-dynload'), self.path('bin') )
+    def license(self):
+        self['redshift_LICENSE'] = os.environ['PIPE_REDSHIFT_LICENSE']
