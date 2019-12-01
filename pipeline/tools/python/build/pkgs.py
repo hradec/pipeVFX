@@ -662,10 +662,15 @@ class all: # noqa
             ARGUMENTS,
             'fontconfig',
             download=[(
-                'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.gz',
-                'fontconfig-2.13.92.tar.gz',
-                '2.13.92',
-                'eda1551685c25c4588da39222142f063'
+            #     'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.gz',
+            #     'fontconfig-2.13.92.tar.gz',
+            #     '2.13.92',
+            #     'eda1551685c25c4588da39222142f063'
+            # ),(
+                'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.12.1.tar.gz',
+                'fontconfig-2.12.1.tar.gz',
+                '2.12.1',
+                'ce55e525c37147eee14cc2de6cc09f6c'
             )],
             depend = allDepend+[gperf],
         )
