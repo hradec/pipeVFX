@@ -158,7 +158,7 @@ else
         -v $CD/.root:/atomo/.root \
         $APPS_MOUNT \
         -e RUN_SHELL=$SHELL \
-        -e EXTRA=\\"$EXTRA\\" \
+        -e EXTRA=\"$EXTRA\" \
         -e DEBUG=\"$DEBUG\" \
         -e TRAVIS=$TRAVIS \
         -e http_proxy='$http_proxy' \

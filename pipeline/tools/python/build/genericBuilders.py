@@ -37,9 +37,29 @@ crtl_file_lastlog = '.lastlog'
 
 _spinnerCount = 0
 
+global buildTotal
+global buildCounter
+global sconsParallel
+buildTotal=0
+buildCounter=0
+sconsParallel='-j' in os.environ['EXTRA']
 
 mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
 memGB = int(mem)/1024/1024
+
+
+def _print(*args):
+    # print args
+    p = True
+    if sconsParallel:
+        p = False
+        if bcolors.WARNING+": "+bcolors.BLUE in args[0] and '(' in args[0] and ')' in args[0]:
+            p = True
+    if p:
+        if args[-1] == '\r':
+            print " ".join([str(x) for x in args]),
+        else:
+            print " ".join([str(x) for x in args])
 
 def expandvars(path, env=os.environ, default=None, skip_escaped=False):
     """Expand environment variables of form $var and ${var}.
@@ -243,6 +263,7 @@ class generic:
 
     def __init__(self, args, name, download, baseLibs=None, env=None, depend=[], GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
         global __pkgInstalled__
+        global buildTotal
 
         download = [ list(x) for x in download ]
 
@@ -382,7 +403,7 @@ class generic:
         for each in ['%s/../.download/config.sub' % buildFolder(self.args), '%s/../.download/config.guess' % buildFolder(self.args)]:
             if not os.path.exists(each) or os.path.getsize(each)==0:
                 if not os.path.exists(each):
-                    print 'Downloading latest %s' % each
+                    _print( 'Downloading latest %s' % each )
                     os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=%s;hb=HEAD" -O %s 2>&1' % (os.path.basename(each),each) ).readlines()
                     os.popen("chmod a+x %s" % each).readlines()
                     os.popen("ln -s ../.download/%s %s/../.build/" % (os.path.basename(each), os.path.dirname(each)) ).readlines()
@@ -410,7 +431,7 @@ class generic:
 
         # check if we're running in TRAVIS-CI
         self.travis=False
-        if 'TRAVIS' in os.environ:
+        if 'TRAVIS' in os.environ or sconsParallel:
             self.travis=False if not os.environ['TRAVIS'].strip() else True
             self.set("TRAVIS", os.environ['TRAVIS'])
 
@@ -499,7 +520,7 @@ class generic:
                         # if not installed, remove build folder!
                         if os.path.exists(self.buildFolder[p][-1]):
                             cmd = "rm -rf "+self.buildFolder[p][-1]
-                            print ": __init__:",cmd
+                            _print( ": __init__:",cmd )
                             os.popen(cmd).readlines()
 
                     if download[n][0]:
@@ -521,6 +542,8 @@ class generic:
                         s = os.path.join(buildFolder(self.args),download[n][1])
                         os.system('touch "%s"' % s)
 
+                    # a counter to display a percentage
+                    buildTotal += 1
 
                     # run the action method of the class
                     # add dependencies as source so dependencies are built
@@ -574,6 +597,8 @@ class generic:
 
     def sconsPrint(self, target, source, env, what=None):
         global _spinnerCount
+        global buildCounter
+
         # if 'install' in  str(what):
         #     print bcolors.WARNING+": "+bcolors.BLUE+what+bcolors.END
         #
@@ -584,21 +609,22 @@ class generic:
             n=' '.join(t.split(os.path.sep)[-3:-1])
             if '.python' in t:
                 n = "%s (py %s)" % (n, t.split('.python')[-1].split('.done')[0])
-            print bcolors.WARNING+':'+'='*tcols
-            print bcolors.WARNING+": "+bcolors.BLUE+"%s( %s )" % (
+            _print( bcolors.WARNING+':'+'='*tcols )
+            _print( bcolors.WARNING+": "+bcolors.BLUE+" % 3d%% %s( %s )" % (
+                int((float(buildCounter)/float(buildTotal))*100.0),
                 self.className,
                 n
-            )
-            print bcolors.WARNING+": "
+            ) )
+            _print( bcolors.WARNING+": " )
             d=map(lambda x: '.'.join(str(x).split(os.path.sep)[-3:-1]), source[1:])
-            print bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0])
+            _print( bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0]) )
             d.sort()
             for n in range(0,len(d),6):
-                print bcolors.WARNING+": "+bcolors.BLUE+"           %s" % ', '.join(d[n:n+6])
-            print bcolors.WARNING+": "+bcolors.END
+                _print( bcolors.WARNING+": "+bcolors.BLUE+"           %s" % ', '.join(d[n:n+6]) )
+            _print( bcolors.WARNING+": "+bcolors.END )
         else:
             sp="/-\|"
-            print bcolors.WARNING,"checking built pkgs"+sp[_spinnerCount],'\r',
+            _print( bcolors.WARNING,"checking built pkgs"+sp[_spinnerCount],'\r', )
             _spinnerCount += 1
             if _spinnerCount >= len(sp):
                 _spinnerCount = 0
@@ -1194,13 +1220,16 @@ class generic:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
 
         cmd = cmd.replace('"','\"') #.replace('$','\$')
-        print bcolors.WARNING+':'+bcolors.BLUE+'\tCORES: '+bcolors.WARNING+os.environ['CORES'],
-        print bcolors.BLUE+', DCORES: '+bcolors.WARNING+os.environ['DCORES'],
-        print bcolors.BLUE+', HCORES: '+bcolors.WARNING+os.environ['HCORES']
-        print bcolors.WARNING+':'
-        print bcolors.WARNING+':\ttarget :  %s%s' % (bcolors.GREEN, target)
+        _print( bcolors.WARNING+':'+bcolors.BLUE+'\tCORES: '+bcolors.WARNING+os.environ['CORES'], \
+                 bcolors.BLUE+', DCORES: '+bcolors.WARNING+os.environ['DCORES'], \
+                 bcolors.BLUE+', HCORES: '+bcolors.WARNING+os.environ['HCORES'] )
+        _print( bcolors.WARNING+':' )
+        _print( bcolors.WARNING+':\ttarget :  %s%s' % (bcolors.GREEN, target) )
         for l in cmd.split('&&'):
-            print bcolors.WARNING+':\t%s%s : %s %s  %s ' % ('.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]),extraLabel,bcolors.GREEN,l.strip(),bcolors.END)
+            _print( bcolors.WARNING+':\t%s%s : %s %s  %s ' % ( \
+                     '.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]), \
+                     extraLabel,bcolors.GREEN,l.strip(),bcolors.END) \
+            )
         # we need to save the current pythonpath to set it later inside pythons system call
         os_environ['BUILD_PYTHONPATH__'] = os_environ['PYTHONPATH']
         # and then we need to setup a clean PYTHONPATH so ppython can find pipe, build and the correct modules
@@ -1414,7 +1443,7 @@ class generic:
         # kill our build!
         if self.travis:
             while proc.poll() is None:
-                print '.',
+                _print( '.', )
                 sys.stdout.flush()
                 time.sleep(60)
         else:
@@ -1437,23 +1466,23 @@ class generic:
 
         # error during build!!
         else:
-            print  '-'*tcols
+            _print(  '-'*tcols )
             if not DEBUG():
                 os.system( 'cat %s.err | source-highlight -f esc -s errors' % lastlog )
             #for each in open("%s.err" % lastlog).readlines() :
             #    print '::\t%s' % each.strip()
-            print ret
+            _print( ret )
             #print '-'*tcols
             #pprint(os_environ)
-            print '-'*tcols
-            print bcolors.FAIL,
-            print traceback.format_exc(), #.print_exc()
-            print bcolors.END
-            print cmd
-            print '-'*tcols
-            print self.travis, self.__class__
+            _print( '-'*tcols )
+            _print( bcolors.FAIL,
+                     traceback.format_exc(), #.print_exc()
+            bcolors.END )
+            _print( cmd )
+            _print( '-'*tcols )
+            _print( self.travis, self.__class__ )
             sys.stdout.flush()
-            if not self.travis:
+            if not self.travis and not sconsParallel:
                 os.chdir(os_environ['SOURCE_FOLDER'])
                 proc=Popen("/bin/sh", bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
                 proc.wait()
@@ -1464,7 +1493,7 @@ class generic:
         if keep_source and keep_source[0][1].strip() != '1':
             os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
 
-        print bcolors.END,
+        _print( bcolors.END, )
 
     def setInstaller(self, method):
         self.installer = method
@@ -1490,24 +1519,28 @@ class generic:
     def _installer_final_check(self, target, source, env={}, ret=''):
         ''' check if something was installed
         this garantees things get installed!'''
+        global buildCounter
+        if ret:
+            buildCounter += 1
+
         TARGET_FOLDER = os.path.dirname(str(target[0]))
 
         if not hasattr(self, 'apps'):
             if not os.path.exists(str(target[0])) or not glob( '%s/*/*' % TARGET_FOLDER ):
                 # if we have a log, show it!
                 if ret:
-                    print bcolors.WARNING, '='*80, bcolors.FAIL
-                    print [ str(x) for x in target ], [ str(x) for x in source ]
-                    print ''.join(ret)
-                    print bcolors.WARNING, '='*80, bcolors.END
+                    _print( bcolors.WARNING, '='*80, bcolors.FAIL )
+                    _print( [ str(x) for x in target ], [ str(x) for x in source ] )
+                    _print( ''.join(ret) )
+                    _print( bcolors.WARNING, '='*80, bcolors.END )
                 # if nothing was installed, cleanup source so we can rebuild it!
                 # if we don't cleanup sources, the build gets stuck!
                 for each in [ str(x) for x in source ]:
                     if os.path.exists(os.path.dirname(each)):
                         cmd = "rm -rf %s" % os.path.dirname(each)
-                        print ": not os.path.exists(%s):" % str(target[0]), not os.path.exists(str(target[0]))
-                        print ": not glob( '%s/*/*' ):" % TARGET_FOLDER, not glob( '%s/*/*' % TARGET_FOLDER )
-                        print ": _installer_final_check: error - ",cmd
+                        _print( ": not os.path.exists(%s):" % str(target[0]), not os.path.exists(str(target[0])) )
+                        _print( ": not glob( '%s/*/*' ):" % TARGET_FOLDER, not glob( '%s/*/*' % TARGET_FOLDER ) )
+                        _print( ": _installer_final_check: error - ",cmd )
                         os.system(cmd)
 
                 if ret:
@@ -1532,7 +1565,7 @@ class generic:
         for each in [ str(x) for x in source if '.build/' in str(x) ]:
             if os.path.exists(os.path.dirname(each)):
                 cmd = "rm -rf %s" % os.path.dirname(each)
-                print ": _installer_final_check: done - ",cmd
+                _print( ": _installer_final_check: done - ",cmd )
                 os.system(cmd)
 
         return True
@@ -1571,9 +1604,8 @@ class generic:
                     count = 5
                     while count>0:
                         count -= 1
-                        print bcolors.GREEN,
-                        print "\tDownloading %s..." % download_file
-                        print bcolors.END,
+                        _print( bcolors.GREEN, "\tDownloading %s..." % download_file )
+                        _print( bcolors.END, )
                         if '.git' in os.path.splitext(url[0])[-1]:
                             # clone a git depot and zip it
                             # we specify a tag as version
@@ -1616,7 +1648,7 @@ class generic:
                         md5 = self.md5(download_file)
                         if md5 != url[3]:
                             sys.stdout.write( bcolors.WARNING )
-                            print "\tmd5 for file:", url[1], md5
+                            _print( "\tmd5 for file:", url[1], md5 )
                             sys.stdout.write( bcolors.FAIL )
                             sys.stdout.flush()
                             self.error = True
@@ -1651,36 +1683,34 @@ class generic:
                 if '.python' in t:
                     python = '.'.join( t.split('.python')[-1].split('.')[:2] )
 
-                # print self.__check_target_log__( self.__lastlog(__pkgInstalled__[s],python) )
-
                 # if not os.path.exists(self.__lastlog(__pkgInstalled__[s],python)):
                 lastlog = self.__lastlog(__pkgInstalled__[s],python)
                 if self.__check_target_log__( lastlog ):
-                    print ": uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog
+                    _print( ": uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                     cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
                     if '.zip' in s:
                         cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
-                        print cmd
+                        _print( cmd )
                     elif '.rpm' in s:
                         ss = os.path.basename( os.path.dirname( str(target[n]) ) )
                         ss = uncompressed_folder
                         cmd = "mkdir -p %s/%s && cd %s/%s && rm -rf  %s.rpm && ln -s %s %s.rpm && rpm2cpio %s.rpm | cpio -idmv  2>&1 && cd .. " % (tmp, ss, tmp, ss, s, s, s, s)
-                        print cmd
+                        _print( cmd )
 
 
                     cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (uncompressed_folder, os.path.dirname(t), tmp)
                     lines = os.popen( cmd ).readlines()
                     if not os.path.exists(str(target[n])):
-                        print '-'*tcols
+                        _print( '-'*tcols )
                         for l in lines:
-                            print '\t%s' % l.strip()
-                        print str(target[n])
-                        print cmd
-                        print uncompressed_folder
-                        print '-'*tcols
-                        print "str(target[n])",str(target[n])
+                            _print( '\t%s' % l.strip() )
+                        _print( str(target[n]) )
+                        _print( cmd )
+                        _print( uncompressed_folder )
+                        _print( '-'*tcols )
+                        _print( "str(target[n])",str(target[n]) )
                         os.system('/bin/bash')
                         raise Exception("Uncompress failed!")
 
@@ -1704,9 +1734,9 @@ class generic:
                 return self.kargs['uncompressed_path'][k[0]]
             else:
                 if len(k)==0:
-                    print "\n\nCouldn't find the uncompressed folder name from the list: %s\n\n" % str(self.kargs['uncompressed_path'])
+                    _print( "\n\nCouldn't find the uncompressed folder name from the list: %s\n\n" % str(self.kargs['uncompressed_path']) )
                 else:
-                    print "\n\nMore than one match for path %s: %s\n\n" % (path, str(k))
+                    _print( "\n\nMore than one match for path %s: %s\n\n" % (path, str(k)) )
         return path
 
 
@@ -1767,7 +1797,6 @@ class generic:
                                     sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
                                     sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
                                 )
-                                # print "\n\n"+cmd+"\n\n"
                                 os.popen(cmd).readlines()
 
                         # if it doesnt exist, create it!!
