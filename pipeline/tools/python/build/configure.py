@@ -38,8 +38,9 @@ class configure(generic):
         'make -j $DCORES install',
     ]
 
+
     def fixCMD(self, cmd):
-        if 'configure' in cmd and '--prefix=' not in cmd:
+        if [x for x in cmd.split('&&') if 'configure' in x and '--prefix=' not in x]:
             cmd = cmd.replace('configure', 'configure --prefix=$TARGET_FOLDER ')
         if 'configure' in cmd and self.name not in ['zlib','binutils','cmake', 'qt']:
             cmd = cmd.replace('configure', 'configure --disable-werror ')
@@ -381,27 +382,39 @@ class python(configure):
         'setup.py' : [("ndbm_libs = \[", "ndbm_libs = \['gdbm', 'gdbm_compat',")],
         'Modules/Setup.dist' : [
             ('#_socket socketmodule.c','_socket socketmodule.c'),
-            ('#SSL','SSL'),
+            ('#SSL=/usr/local/ssl','SSL=$(OPENSSL_TARGET_FOLDER)'),
             ('#_ssl _ssl','_ssl _ssl'),
             ('#	-DUSE_SSL','	-DUSE_SSL'),
             ('#	-L..SSL','	-L$(SSL'),
+            ('#_md5', '_md5'),
+            ('#_sha', '_sha'),
         ],
 
     }}
+    environ = {
+        'CFLAGS'    : "$CFLAGS -I$OPENSSL_TARGET_FOLDER/include -I$OPENSSL_TARGET_FOLDER/include/openssl -I$BZIP2_TARGET_FOLDER/include ",
+        'CXXFLAGS'  : "$CXXFLAGS -I$OPENSSL_TARGET_FOLDER/include -I$OPENSSL_TARGET_FOLDER/include/openssl -I$BZIP2_TARGET_FOLDER/include ",
+    }
     cmd = [
         'env',
-        'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
-        './configure  --enable-shared --enable-unicode=ucs4', # --enable-optimizations',
+        # 'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
+        './configure  --enable-shared --with-lto  --enable-unicode=ucs4 --with-openssl=$OPENSSL_TARGET_FOLDER  --with-bz2', # --enable-optimizations',
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
         'make -j $DCORES',
         'make -j $DCORES install',
-        '( [ ! -e  $TARGET_FOLDER/bin/easy_install ] && $TARGET_FOLDER/bin/python$PYTHON_VERSION_MAJOR ./ez_setup.py || true)',
-        'ln -s python$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/python || true',
-        'ln -s python$PYTHON_VERSION_MAJOR-config  $TARGET_FOLDER/bin/python-config || true',
-        "[ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $TARGET_FOLDER/bin/easy_install hashlib || true",
+        '(ln -s python$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/python || true)',
+        '(ln -s python$PYTHON_VERSION_MAJOR-config  $TARGET_FOLDER/bin/python-config || true)',
+        '( [ ! -e  $TARGET_FOLDER/bin/easy_install ] && '
+            'unzip ../../.download/setuptools-33.1.1.zip && '
+            'cd setuptools-33.1.1 && '
+            '$PYTHON ./setup.py build && '
+            '$PYTHON ./setup.py install --prefix=$TARGET_FOLDER '
+        ')',
+        "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $TARGET_FOLDER/bin/easy_install hashlib || true)",
         '( [ ! -e  $TARGET_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $TARGET_FOLDER/bin/easy_install pip || true)',
-        'ln -s pip$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/pip || true',
+        '(ln -s pip$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/pip || true)',
         "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $TARGET_FOLDER/bin/pip install  readline || true)",
+        '(ln -s python$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/python || true)',
         # '$TARGET_FOLDER/bin/easy_install scons',
     ]
     def fixCMD(self, cmd):

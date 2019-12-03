@@ -143,6 +143,7 @@ class all: # noqa
                 '95dcfd8629937996f826667b9e24f6ff',
             )],
             depend = [gmp, self.gcc_4_1_2],
+            environ= {'LDFLAGS' : ' $LDFLAGS -L$GMP_TARGET_FOLDER/lib '},
         )
         allDepend += [mpfr]
 
@@ -156,6 +157,7 @@ class all: # noqa
                'd6a1d5f8ddea3abd2cc3e98f58352d26',
             )],
             depend = [mpfr, gmp, self.gcc_4_1_2],
+            environ= {'LDFLAGS' : ' $LDFLAGS -L$MPFR_TARGET_FOLDER/lib '},
         )
         allDepend += [mpc]
 
@@ -1464,16 +1466,16 @@ class all: # noqa
             #     '8b15d13c3fa510b421834d32338304c8',
             #     {oiio: "1.6.15", llvm : "3.9.1", gcc: "4.8.5", boost: "1.51.0"},
             )],
-            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, gcc, openssl, bzip2, libraw]+allDepend,
+            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, openssl, bzip2, libraw]+allDepend,
             cmd = [
                 # we have to use the devtoolset-6 gcc
                 # 'source scl_source enable devtoolset-6',
-                'make -j $DCORES '
+                'make '#'-j $DCORES '
                 'USE_CPP11=1 '
                 'INSTALLDIR=$TARGET_FOLDER '
                 'INSTALL_PREFIX=$TARGET_FOLDER '
-                'MY_CMAKE_FLAGS="-DENABLERTTI=0 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=1  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
-                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
+                'MY_CMAKE_FLAGS="-DENABLERTTI=0 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
+                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=0" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                 'BOOST_ROOT=$BOOST_TARGET_FOLDER '
                 'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
@@ -1483,11 +1485,38 @@ class all: # noqa
                 'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
                 'OPENEXR_HOME=$OPENEXR_TARGET_FOLDER '
                 'BOOST_HOME=$BOOST_TARGET_FOLDER '
-                # 'VERBOS=1 '
                 'USE_LIBCPLUSPLUS=0 '
                 'HIDE_SYMBOLS=0 '
                 # 'install '
             ],
+            environ = {
+                # to be able to use gcc and llvm togheter, we have to add
+                # GCC search paths in CC/CXX/LD env vars, since LLVM
+                # search path is added by the system first than GCC.
+                # As we're using -nostdinc, we have to tell GCC where the
+                # correct includes are!
+                # we add the main system one for last!
+                # we also use -isystem so these come before any *_INCLUDE_PATH
+                # env vars searchpath.
+                # We only have to do this with OSL, since it's the only one
+                # that uses gcc and llvm on the same build!
+                'CXX':  'g++'
+                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                            ' -isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+                            ' -isystem /usr/include',
+                'CC' :  'gcc'
+                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -isystem /usr/include',
+                'LD' :  'g++'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/',
+            },
             verbose=1,
         )
         self.osl = osl
@@ -1879,7 +1908,7 @@ class all: # noqa
                 'OpenSubdiv-2_3_3.tar.gz',
                 '2.3.3',
                 'b7312b63bf6dfb38b49b17f15c976849',
-                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
+                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42', tbb: '4.4.6'},
             ),(
                 # CY 2015
                 'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_5_1.tar.gz',
@@ -1920,11 +1949,14 @@ class all: # noqa
             depend=allDepend+[boost, hdf5, glfw, glew, ptex],
             flags=[
                 "-DGLEW_LOCATION=$GLEW_TARGET_FOLDER/",
+                "$CMAKE_VERBOSE",
             ],
             environ = {
-                'CFLAGS'   : ' -fopenmp $CFLAGS',
-                'CXXFLAGS' : ' -fopenmp $CXXFLAGS',
-            }
+                'CFLAGS'    : ' -fopenmp $CFLAGS ',
+                'CXXFLAGS'  : ' -fopenmp $CXXFLAGS ',
+                'LDFLAGS'   : ' -lX11 $LDFLAGS',
+            },
+            verbose=1
         )
         self.opensubdiv = opensubdiv
 

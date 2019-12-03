@@ -61,9 +61,9 @@ class make(generic):
         So here we force some env vars and command line overrides to make sure
         cmake finds pipeVFX packages first!'''
         environ = [
-            'export MAKE_PARALLEL="$(echo %s)"' % self._parallel,
-            'export MAKE_VERBOSE="$(echo %s)"' % self._verbose,
-            'export CMAKE_VERBOSE="$(echo %s)"' % self._verbose_cmake,
+            'export MAKE_PARALLEL="%s"' % self._parallel,
+            'export MAKE_VERBOSE="%s"' % self._verbose,
+            'export CMAKE_VERBOSE="%s"' % self._verbose_cmake,
         ]
         return cmd
 
@@ -80,15 +80,15 @@ class cmake(make):
             '-DUSE_SIMD=0',
             '-DUSE_FFMPEG=0',
             '-DUSE_OPENCV=0',
-#            '-DCMAKE_CC_COMPILER=$CC',
-#            '-DCMAKE_CXX_COMPILER=$CXX',
-#            '-DCMAKE_CPP_COMPILER=$CPP',
-           '-DCMAKE_CC_FLAGS="$CFLAGS"',
-           '-DCMAKE_CXX_FLAGS="$CXXFLAGS"',
-           '-DCMAKE_CPP_FLAGS="$CPPFLAGS"',
-#            '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
-#            '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
-#            '-DCMAKE_LINKER=$LD',
+            # '-DCMAKE_CC_COMPILER=$CC',
+            # '-DCMAKE_CXX_COMPILER=$CXX',
+            # '-DCMAKE_CPP_COMPILER=$CPP',
+            '-DCMAKE_CC_FLAGS="$CFLAGS"',
+            '-DCMAKE_CXX_FLAGS="$CXXFLAGS"',
+            '-DCMAKE_CPP_FLAGS="$CPPFLAGS"',
+            # '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
+            # '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
+            # '-DCMAKE_LINKER=$LD',
             '-DOPENIMAGEIOHOME=$OIIO_TARGET_FOLDER',
             '-DOIIO_INCLUDES=$OIIO_TARGET_FOLDER/include/',
             '-DOIIO_LIBRARIES=$OIIO_TARGET_FOLDER/lib/libOpenImageIO.so',
@@ -96,8 +96,8 @@ class cmake(make):
             '-DBoost_NO_SYSTEM_PATHS=1',
             '-DBoost_DETAILED_FAILURE_MSG=1',
             '-DBoost_USE_STATIC_LIBS=false',
-#            '-DBoost_USE_MULTITHREADED=false',
-#            '-DBoost_USE_STATIC_RUNTIME=false',
+            # '-DBoost_USE_MULTITHREADED=false',
+            # '-DBoost_USE_STATIC_RUNTIME=false',
             '-DLIBPYTHON_VERSION=$PYTHON_VERSION_MAJOR',
             '-DPYTHON_ROOT=$PYTHON_TARGET_FOLDER',
             '-DPYTHON_INCLUDE_DIR=$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/',
@@ -373,10 +373,13 @@ class tbb(make):
         '''we use this method to do a custom tbb install
         by copying files over.'''
         import build
-        path = os.path.abspath( os.path.dirname(str(source[-1])) )
-        target = os.path.abspath( os.path.dirname(str(target[0])) )
-        for n in range(len(self.buildFolder)): #noqa
-            lines = os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (path, target)).readlines()
+        # print str(target[0]), [ str(x) for x in source ]
+        # print self.buildFolder
+        lines = []
+        for each in [ str(x) for x in source if self.src in str(x) ]:
+            path = os.path.abspath( os.path.dirname(each) )
+            target = os.path.abspath( os.path.dirname(str(target[0])) )
+            lines += os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (path, target)).readlines()
             for SHLIBEXT in build.SHLIBEXT:
                 lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
                 lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (path, SHLIBEXT, target) ).readlines()

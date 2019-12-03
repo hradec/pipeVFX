@@ -43,7 +43,8 @@ COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
 # we are adopting this quick and dirty solution, using a pre-compiled binary
 # of gcc 4.1.2, done in an arch linux distro!
 # this binaries work without issue, not complening about -fPIC.
-COPY docker/gcc-bin-4.1.2.tgz /atomo/pipeline/build/.download/4.1.2.tar.gz
+COPY docker/gcc-bin-4.1.2.tgz       /atomo/pipeline/build/.download/4.1.2.tar.gz
+COPY docker/setuptools-33.1.1.zip   /atomo/pipeline/build/.download/setuptools-33.1.1.zip
 
 # download packages so the image contain all tarballs.
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \

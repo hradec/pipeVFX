@@ -2,7 +2,6 @@
 *
 # And then explicitly include just what we want
 !pipeline/build/SConstruct
-pipeline/build/.build
 !pipeline/tools/python
 !pipeline/tools/config
 !docker

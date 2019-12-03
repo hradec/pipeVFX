@@ -23,8 +23,8 @@
 
 class bcolors:
     import os
-    
-    BS = '\033[1D'
+
+    BS = '' #'\033[1D'
     if ('TRAVIS' in os.environ and os.environ['TRAVIS']=='1') or ('ENVIRON_TRAVIS' in os.environ and os.environ['ENVIRON_TRAVIS']=='1'):
         BS = ''
 
