@@ -393,7 +393,7 @@ class generic:
 
         self.targetSuffix=""
         if kargs.has_key('targetSuffix'):
-            self.targetSuffix = kargs['targetSuffix'].replace('.','_')
+            self.targetSuffix = kargs['targetSuffix'] #.replace('.','_')
 
         self.userData = None
         if kargs.has_key('userData'):
@@ -464,6 +464,12 @@ class generic:
             if type(v) not in [int, float, bool, dict]:
                 for n in range(len(v)):
                     self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
+
+
+        # adjust versions according to app used in the build
+        # this will change the version specified in the download[4]
+        # dictionary!
+        self.setAppsInit()
 
         # build all python versions specified
         self.buildFolder = {}
@@ -642,7 +648,7 @@ class generic:
             _print( bcolors.WARNING+": "+bcolors.END )
         else:
             sp="/-\|"
-            _print( bcolors.WARNING,"%s: %s[% 3d%%] %s[%s] %s checking built pkgs:" % (
+            _print( bcolors.WARNING,"%s: %s[% 3d%%] %s[%s] %s processing:" % (
                 bcolors.BS,
                 bcolors.GREEN,
                 int((float(buildCounter)/float(buildTotal))*100.0),
@@ -856,7 +862,7 @@ class generic:
         ''' the main method to run system calls, like configure, make, cmake, etc  '''
         # for each in  source:
         #     print str(each)
-        global buildCounter
+        global buildCounter, _spinnerCount
 
         buildCompiler = int(filter(lambda x: 'BUILD_COMPILER' in x[0], env.items())[0][1])
 
@@ -1130,8 +1136,9 @@ class generic:
         if 'PYTHON_VERSION' in os_environ:
             os_environ['PYTHON_VERSION_MAJOR'] = '.'.join(os_environ['PYTHON_VERSION'].split('.')[:2])
             os_environ['PYTHON_TARGET_FOLDER'] = '/'.join([ os.path.dirname(os_environ['PYTHON_TARGET_FOLDER']), os_environ['PYTHON_VERSION'] ])
-            os_environ['PYTHON_ROOT'] = os_environ['PYTHON_TARGET_FOLDER']
-            PATH += [ "%s/bin/" % os_environ['PYTHON_ROOT'] ]
+            if '/python/' not in target:
+                os_environ['PYTHON_ROOT'] = os_environ['PYTHON_TARGET_FOLDER']
+            PATH += [ "%s/bin/" % os_environ['PYTHON_TARGET_FOLDER'] ]
 
         # set lastlog filename
         extraLabel = ''
@@ -1153,7 +1160,7 @@ class generic:
         # create current package bin/libs folders so paths are not
         # removed from env vars
         folders = ['bin', 'lib', 'lib64']
-        _p = '.'.join( lastlog.split('.')[-2] )
+        _p = '.'.join( os.path.basename(lastlog).split('-')[0].split('.')[-2] )
         if float(_p) > 1.0:
             folders += ['lib/python%s/site-packages' % _p]
 
@@ -1175,6 +1182,7 @@ class generic:
         PYTHONPATH   = [
             '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
             '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages',
+            '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload',
         ] + PYTHONPATH
 
         # make sure all paths from the dependency loop exist and remove duplicates
@@ -1248,9 +1256,14 @@ class generic:
         # run sed inline patch mechanism
         self.runSED(os_environ['SOURCE_FOLDER'])
 
-        # run the command from inside ppython, so all pipe env vars get properly set!
+        # set os_environ in self so overridable funtions can pick it up and change,
+        # since dicts in python behave like pointers!
         self.os_environ = os_environ
+        # if the build has apps setup, add their env vars to the build
+        self.setApps()
+        # run customizable fixCMD() which is used to fix the command line
         cmd = self.fixCMD(cmd)
+
 
         # apply patches, if any!
         if hasattr(self, 'patch'):
@@ -1262,7 +1275,9 @@ class generic:
                  bcolors.BLUE+', DCORES: '+bcolors.WARNING+os.environ['DCORES'], \
                  bcolors.BLUE+', HCORES: '+bcolors.WARNING+os.environ['HCORES'] )
         _print( bcolors.WARNING+':' )
-        _print( bcolors.WARNING+':\ttarget :  %s%s' % (bcolors.GREEN, target) )
+        _print( bcolors.WARNING+':\ttarget : %s%s' % (bcolors.GREEN, target) )
+        _print( bcolors.WARNING+":\tinstall: %s%s" % (bcolors.GREEN, os_environ['INSTALL_FOLDER']) )
+
         for l in cmd.split('&&'):
             _print( bcolors.WARNING+':\t%s%s : %s %s  %s ' % ( \
                      '.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]), \
@@ -1277,7 +1292,7 @@ class generic:
         if DEBUG():
             showLog = ' | tee -a '
         pipeFile = ' 2>&1 \
-            | source-highlight -f esc -s errors \
+            | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors \
             | tee -a  %s %s %s.err ' % (lastlog, showLog, lastlog)
         # cmd = cmd.replace( '&&', ' %s && ' % pipeFile )
 
@@ -1293,36 +1308,37 @@ class generic:
         for each in proxies:
             os_environ[each.lower()] = proxies[each].strip()
 
-        # if building gcc, don't add it to search paths
-        # we need this to force the build to use our gcc
-        # libstdc++.so!!
-        if '/gcc/' not in target:
-            if gcc['gcc'] != 'gcc':
-                tmp = glob('%s/lib/gcc/x86_64-pc-linux-gnu/*' % os_environ['GCC_TARGET_FOLDER'])
-                os_environ['LD_LIBRARY_PATH'] = ':'.join(tmp+[
-                    '%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
-                    '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                    '%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                    os_environ['LD_LIBRARY_PATH']
-                ])
+        # only add gcc search paths if not building GCC.
+        if '/gcc/' not in target and 'GCC_TARGET_FOLDER' in os_environ:
+            # we set LD_LIBRARY_PATH to always use the latest GCC shared libraries.
+            # since GCC shared libraries are backward compatible, we have to use the latest
+            # to avoid "version `GLIBCXX_' not found" like errors
+            # here we set LATESTGCC_* env vars to use for that purpose...
+            versions = pipe.versionSort( [
+                os.path.basename(x.replace('/bin/gcc','')) for x in glob('%s/../*/bin/gcc' % os_environ['GCC_TARGET_FOLDER'])
+            ] )
+            os_environ['LATESTGCC_VERSION'] = versions[0]
+            os_environ['LATESTGCC_TARGET_FOLDER'] = '%s/%s' % (
+                os.path.dirname(os_environ['GCC_TARGET_FOLDER']),
+                os_environ['LATESTGCC_VERSION']
+            )
 
-                os_environ['PATH'] = ':'.join([
-                    '%s/bin' % os_environ['GCC_TARGET_FOLDER'],
-                    os_environ['PATH'],
-                ])
+            # here we set the latest GCC runtime searchpath , no matter what gcc version we use to build.
+            os_environ['LD_LIBRARY_PATH'] = ':'.join([
+                '$LATESTGCC_TARGET_FOLDER/lib64',
+                '$LATESTGCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$LATESTGCC_VERSION/',
+                '$LATESTGCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/',
+                os_environ['LD_LIBRARY_PATH']
+            ]+glob('%s/lib/gcc/x86_64-pc-linux-gnu/*' % os_environ['LATESTGCC_TARGET_FOLDER']))
 
-        # we need GCC search path before anything else
-        if 'GCC_TARGET_FOLDER' in os_environ:
+            # but we set the correct build GCC in the PATH searchpath.
             os_environ['PATH'] = ':'.join([
-                '%s/bin' % os_environ['GCC_TARGET_FOLDER'],
+                '$GCC_TARGET_FOLDER/bin',
                 os_environ['PATH'],
             ])
-            os_environ['LIBRARY_PATH'] = ':'.join([
-                '%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
-                '%s/lib/gcc/x86_64-pc-linux-gnu/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
-                '%s/lib64/:'  % os_environ['GCC_TARGET_FOLDER'],
-                os_environ['LIBRARY_PATH'],
-            ])
+
+            # we link gcc using -L instead of -rpath, since we need to set the latest
+            # gcc shared libraries at runtime!
             os_environ['LDFLAGS']      = ' '.join([
                 '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
@@ -1365,7 +1381,7 @@ class generic:
                 '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++',
             ])
 
-            # set gcc
+            # set gcc exec env vars
             os_environ['CC']  = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['CC'].strip())
             os_environ['CXX'] = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['CXX'].strip())
             if 'LD' in os_environ and 'g++' in os.path.basename(os_environ['LD'].split(' ')[0]):
@@ -1383,6 +1399,8 @@ class generic:
                 '%s/lib/' % os_environ['LLVM_TARGET_FOLDER'],
                 os_environ['LIBRARY_PATH'],
             ])
+            # for LLVM, we use -rpath instead of -L so the search path
+            # gets backed into the compiled file.
             os_environ['LDFLAGS']      = ' '.join([
                 '-Wl,-rpath=%s/lib/' % os_environ['LLVM_TARGET_FOLDER'],
                 os_environ['LDFLAGS'],
@@ -1449,8 +1467,14 @@ class generic:
             os_environ[each] = os_environ[each].strip(':').replace('::',':')
 
         # this helps configure to find the corret python
-        os_environ['PYTHON'] = '$PYTHON_TARGET_FOLDER/bin/python'
-        os_environ['PYTHONHOME'] = '$PYTHON_TARGET_FOLDER'
+        if '/python/' not in target:
+            os_environ['PYTHON'] = '$PYTHON_TARGET_FOLDER/bin/python'
+            os_environ['PYTHONHOME'] = '$PYTHON_TARGET_FOLDER'
+        else:
+            os_environ['PYTHONPATH'] = '$SOURCE_FOLDER/Lib/:'+os_environ['PYTHONPATH']+':'
+            os_environ['LD_LIBRARY_PATH'] = '$SOURCE_FOLDER/:'+os_environ['LD_LIBRARY_PATH']+':'
+            os_environ['PYTHONHOME'] = '$SOURCE_FOLDER'
+            # we do LD_PRELOAD in the command line to prevent error messages on the build
 
         # expand variables in os_environ
         for each in os_environ:
@@ -1484,12 +1508,12 @@ class generic:
 
         # cleanup paths that don't exist from the searchpath env vars!
         # checkPathsExist( os_environ )
-        for var in [ 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH', 'LIBRARY_PATH', 'LD_LIBRARY_PATH', 'PYTHONPATH', 'PATH' ]:
-            _exist = []
-            for each in os_environ[var].split(':'):
-                if each.strip() and os.path.exists(each) and glob( '%s/*' % each ):
-                    _exist += [each]
-            os_environ[var] = ':'.join(_exist)
+        # for var in [ 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH', 'LIBRARY_PATH', 'LD_LIBRARY_PATH', 'PYTHONPATH', 'PATH' ]:
+        #     _exist = []
+        #     for each in os_environ[var].split(':'):
+        #         if each.strip() and os.path.exists(each) and glob( '%s/*' % each ):
+        #             _exist += [each]
+        #     os_environ[var] = ':'.join(_exist)
 
 
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
@@ -1512,7 +1536,28 @@ class generic:
                 sys.stdout.flush()
                 time.sleep(60)
         else:
-            proc.wait()
+            while proc.poll() is None:
+                _elapsed = time.gmtime(time.time()-_start)
+                sys.stdout.write('\033[2K\033[1G')
+                sp="/-\|"
+                _print( bcolors.WARNING,"%s:\tbuilding: %s[%s]%s elapsed:%s %02d:%02d:%02d " % (
+                    bcolors.BS,
+                    bcolors.BLUE,
+                    sp[_spinnerCount],
+                    bcolors.WARNING,
+                    bcolors.BLUE,
+                    _elapsed.tm_hour,
+                    _elapsed.tm_min,
+                    _elapsed.tm_sec
+                ), '\r', )
+                _spinnerCount += 1
+                if _spinnerCount >= len(sp):
+                    _spinnerCount = 0
+
+                sys.stdout.flush()
+                time.sleep(3)
+            sys.stdout.write('\033[2K\033[1G')
+
         ret = self.__check_target_log__(lastlog)
         _elapsed = time.gmtime(time.time()-_start)
         _print( bcolors.WARNING+':\ttotal build time: %s %02d:%02d:%02d' % (
@@ -1521,6 +1566,8 @@ class generic:
             _elapsed.tm_min,
             _elapsed.tm_sec
         ))
+        if _elapsed < 5:
+            ret=666
 
         # finished without errors!!
         if ret == 0:
@@ -1540,7 +1587,7 @@ class generic:
         else:
             _print(  '-'*tcols )
             if not DEBUG():
-                os.system( 'cat %s.err | source-highlight -f esc -s errors' % lastlog )
+                os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors' % lastlog )
             #for each in open("%s.err" % lastlog).readlines() :
             #    print '::\t%s' % each.strip()
             _print( ret )
@@ -1566,6 +1613,100 @@ class generic:
             os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
 
         _print( bcolors.END, )
+
+
+    def setAppsInit(self):
+        '''
+        sets the version of the app as set in the apps parameter.
+        also fix the build dependency versions according to the
+        version defined in the app class for that dependency.
+        for now, only sets the python version.
+        '''
+        if hasattr(self, 'apps') and self.apps:
+            for (app, version) in self.apps:
+                # we extract the class name with this ugly code, just
+                # so we don't execute the app class before setting the version
+                className = str(app).split('.')[-1].split("'")[0]
+                # now set the version of the apps
+                pipe.version.set( {className : version} )
+                # create the app class
+                _app = app()
+                # expand the environment from the app, setting all the correct
+                # versions of everything, so version.get() can retrieve it!
+                _app.fullEnvironment()
+
+                # fix dependency version to the app default version!
+                for lib in ['python']:
+                    # if the dependency is python, and this is a
+                    # build for multiple python versions, skip it
+                    if lib=='python' and 'noBaseLib' not in self.baseLibs:
+                        continue
+
+                    # set the version of the dependency, if it exists as a
+                    # dependency in this build
+                    dependency_class = [ d for d in self.depend if d.name==lib ]
+                    if dependency_class:
+                        for each in self.download:
+                            # item 5 of the download set is the dependency dict
+                            # so we either modify or add the depency version here
+                            each[4][dependency_class[0]] = pipe.libs.version.get(lib)
+
+    def setApps(self):
+        '''
+        update the build environment with all the enviroment variables
+        specified in apps argument!
+        '''
+        if hasattr(self, 'apps'):
+            pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
+            pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
+            for (app, version) in self.apps:
+                className = str(app).split('.')[-1].split("'")[0]
+                pipe.version.set({className:version})
+                _app = app()
+                _app.fullEnvironment()
+                _print( bcolors.WARNING+":"+bcolors.BLUE+"\tapp: ", "%s(%s)" % (
+                    className,
+                    version
+                ),)
+                # get all vars from app class and add to cmd environ
+                for each in _app:
+                    if each not in ['LD_PRELOAD','PYTHON_VERSION','PYTHON_VERSION_MAJOR']:
+                        v = _app[each]
+                        if type(v) == str:
+                            v=[v]
+                        if each not in self.os_environ:
+                            self.os_environ[each] = ''
+                        # if var value is paths
+                        if 'ROOT' in each:
+                            self.os_environ[each] = v[0]
+                        elif '/' in str(v):
+                            self.os_environ[each] = "%s:%s" % (self.os_environ[each], ':'.join(v))
+                        else:
+                            self.os_environ[each] = ' '.join(v)
+
+            # remove python paths that are not the same version, just in case!
+            for each in self.os_environ:
+                if '/' in str(v):
+                    cleanSearchPath = []
+                    for path in self.os_environ[each].split(':'):
+                        if not path.strip():
+                            continue
+                        if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
+                            pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
+                            pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
+                            # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
+                            if pathVersion1:
+                                if pathVersion1 != self.os_environ['PYTHON_VERSION']:
+                                    continue
+                            if pathVersion2:
+                                if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
+                                    continue
+                        cleanSearchPath.append(path)
+                    self.os_environ[each] = ':'.join(cleanSearchPath)
+
+        # self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+        # self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+        #self.os_environ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self.os_environ['LD_LIBRARY_PATH']
 
     def setInstaller(self, method):
         self.installer = method
@@ -1597,6 +1738,7 @@ class generic:
         _TARGET = str(target[0])
         TARGET_FOLDER = os.path.dirname(_TARGET)
         if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
+            # TARGET_FOLDER becomes INSTALL_FOLDER here, if necessary
             TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ]).replace('//','/').rstrip('/')
 
         if not hasattr(self, 'apps'):
@@ -1628,11 +1770,11 @@ class generic:
         # if something is installed,
         # make sure lib and lib64 have the same contents
         for each in glob( '%s/lib/*' % TARGET_FOLDER ):
-            if os.path.exists( '%s/lib64/%s' % (TARGET_FOLDER, os.path.basename(each)) ):
+            if not os.path.exists( '%s/lib64/%s' % (TARGET_FOLDER, os.path.basename(each)) ):
                 os.system( 'ln -s ../lib/%s  %s/lib64/ >/dev/null 2>&1' % (os.path.basename(each), TARGET_FOLDER) )
 
         for each in glob( '%s/lib64/*' % TARGET_FOLDER ):
-            if os.path.exists( '%s/lib/%s' % (TARGET_FOLDER, os.path.basename(each)) ):
+            if not os.path.exists( '%s/lib/%s' % (TARGET_FOLDER, os.path.basename(each)) ):
                 os.system( 'ln -s ../lib64/%s  %s/lib/ >/dev/null 2>&1' % (os.path.basename(each), TARGET_FOLDER) )
 
         # remove build folder now that everything is done!
@@ -1859,7 +2001,7 @@ class generic:
 
                         # sed a file if it exists!
                         if os.path.exists("%s" % f):
-                            _print( bcolors.BLUE+":\t'sed' patching %s %s... %s" % (bcolors.WARNING, f, bcolors.END) )
+                            _print( bcolors.WARNING+":"+bcolors.BLUE+"\t'sed' patching %s %s... %s" % (bcolors.WARNING, f, bcolors.END) )
 
                             # we make a copy of the original file, before running sed
                             # if we already have a copy, we restore it before running sed
@@ -1888,7 +2030,7 @@ class generic:
         # patch all -O3 to -O2 everywhere in the source, since -O3 can create
         # CPU specific code!
         if not [ x for x in ['/gcc', '/4.1.2'] if x in t ]:
-            _print( bcolors.BLUE+":\tpatching %s %s for generic cpu... %s" % (bcolors.WARNING, '/'.join(t.split('/')[-2:]), bcolors.END) )
+            _print(  bcolors.WARNING+":"+bcolors.BLUE+"\tpatching %s %s for generic cpu... %s" % (bcolors.WARNING, '/'.join(t.split('/')[-2:]), bcolors.END) )
             files2patch = {}
             result = os.popen(''' grep -R  '\-O3' %s/* ''' % t).readlines()
             # print result
