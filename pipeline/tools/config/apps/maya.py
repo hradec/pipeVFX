@@ -65,6 +65,7 @@ class maya(baseApp):
             self.update( shave() )
             self.update( substance() )
             self.update( redshift() )
+            self.update( pipe.libs.usd() )
 
             if 'PIPE_MAYA_ZYNC' in os.environ and os.environ['PIPE_MAYA_ZYNC']=='1':
                 self.update( zync() )
