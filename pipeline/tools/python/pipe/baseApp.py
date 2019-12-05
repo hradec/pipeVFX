@@ -169,6 +169,10 @@ class appsDB(dict):
             macfix(ret) # noqa
         return ret
 
+    def parent(self):
+        ''' returns the name of the main class running this instance '''
+        return None
+
     def path(self, subPath='', appName=None):
         '''
         returns the app path. one can specify a subfolder path that will be
@@ -178,24 +182,32 @@ class appsDB(dict):
 
         macfixData = self.__macfix()
 
+        ret = ""
+        if self.app in self:
+            if hasattr(self, "osxPath"):
+                ret =  '%s' % (self.osxPath)
+            else:
+                ret =  '%s' % (self[self.app]['path'])
+                currentVersion = self.version()
+                if currentVersion:
+                    ret =  '%s/%s' % (self[self.app]['path'], currentVersion)
+
         if macfixData['subpath']:
             subPath = '%s/%s' % (macfixData['subpath'],subPath)
+
+        # account for app version builds of a package, if they exist.
+        if self.parent() and self.parent() != self.app:
+            parent_version =  version.get( self.parent() )
+            _subPath = '%s/%s/%s' % ( self.parent(), parent_version, subPath )
+            if os.path.exists( ret+'/'+_subPath ):
+                subPath = _subPath
 
         if subPath:
             subPath = '/%s' % subPath
 
         subPath = subPath.replace('//','/')
 
-        ret = ""
-        if self.app in self:
-            if hasattr(self, "osxPath"):
-                ret =  '%s/%s' % (self.osxPath, subPath)
-            else:
-                ret =  '%s/%s' % (self[self.app]['path'], subPath)
-                currentVersion = self.version()
-                if currentVersion:
-                    ret =  '%s/%s%s' % (self[self.app]['path'], currentVersion , subPath)
-        return ret
+        return ret+subPath
 
     def pythonPath(self, appName=None):
         '''
