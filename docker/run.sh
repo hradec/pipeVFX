@@ -13,7 +13,7 @@ mkdir -p /atomo/pipeline/libs/
 export TERM=xterm-256color
 
 if [ "$RUN_SHELL" == "1" ] ; then
-    bash -i
+    bash --init-file /atomo/pipeline/tools/init/bash -i
 else
-    scons install $EXTRA $DEBUG
+    /usr/bin/nice -n 19 scons install $EXTRA $DEBUG
 fi
