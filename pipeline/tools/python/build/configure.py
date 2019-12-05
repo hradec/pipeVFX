@@ -106,6 +106,9 @@ class gccBuild(configure):
                     'mkdir -p /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/',
                     'rm -rf /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2',
                     'ln -s  $TARGET_FOLDER /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2',
+                    'ln -s  $TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/* $TARGET_FOLDER/lib64/',
+                    'ln -s  $TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/* $TARGET_FOLDER/lib64/',
+
                 ])
             else:
                 cmd = ' && '.join([
@@ -288,7 +291,7 @@ class openssl(configure):
         '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.$3}') { global: *;};" | tee ./openssl.ld''',
         '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.0}') { global: *;};" | tee -a ./openssl.ld''',
         './config shared enable-tlsext --prefix=$INSTALL_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
-        'make && make install',
+        'make -j $DCORES && make install -j $DCORES' ,
     ]
     def installer(self, target, source, env): # noqa
         targetFolder = os.path.dirname(str(target[0]))
@@ -400,10 +403,12 @@ class python(configure):
     cmd = [
         'env',
         # 'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
+        'export LD_PRELOAD=$SOURCE_FOLDER/libpython$PYTHON_VERSION_MAJOR.so.1.0',
         './configure  --enable-shared --with-lto  --enable-unicode=ucs4 --with-openssl=$OPENSSL_TARGET_FOLDER  --with-bz2', # --enable-optimizations',
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
         ' make -j $DCORES',
         ' make -j $DCORES install',
+        'export PYTHONHOME=$INSTALL_FOLDER',
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config || true)',
         '( [ ! -e  $INSTALL_FOLDER/bin/easy_install ] && '
@@ -556,86 +561,86 @@ class cortex(configure):
                     ]
         return noIECoreSED
 
-    def init(self):
-        ''' we make sure to setup the right python version for the app version, according to
-        what pipeVFX tells us, only if building without baseLibs'''
-        if self.baseLibs == None:
-            if self.apps:
-                import build
-                app, version = self.apps
-                className = str(app).split('.')[-1].split("'")[0]
-                # now set the version of the apps
-                pipe.version.set( {className : version} )
-                # and create an app class
-                app = pipe.apps.baseApp(className)
-
-                # fix dependency version to the app default version!
-                for lib in ['python']:
-                    self.download = build.cortex.pkg(self.download, [ d for d in self.depend if d.name==lib ][0], pipe.libs.version.get(lib))
+    # def init(self):
+    #     ''' we make sure to setup the right python version for the app version, according to
+    #     what pipeVFX tells us, only if building without baseLibs'''
+    #     if self.baseLibs == None:
+    #         if self.apps:
+    #             import build
+    #             app, version = self.apps
+    #             className = str(app).split('.')[-1].split("'")[0]
+    #             # now set the version of the apps
+    #             pipe.version.set( {className : version} )
+    #             # and create an app class
+    #             app = pipe.apps.baseApp(className)
+    #
+    #             # fix dependency version to the app default version!
+    #             for lib in ['python']:
+    #                 self.download = build.cortex.pkg(self.download, [ d for d in self.depend if d.name==lib ][0], pipe.libs.version.get(lib))
 
     def fixCMD(self, cmd):
-        # update the buld environment with all the enviroment variables
+        # update the build environment with all the enviroment variables
         # specified in apps argument!
-        pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
-        pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
-        print bcolors.WARNING+": ", bcolors.BLUE+"  apps: ",
-
-        # cleanup any app env var leftover from the build
-        for each in self.os_environ.keys():
-            if True in [ found in each for found in ['MAYA', 'NUKE', 'PRMAN', 'ARNOLD', 'HOUDINI'] ]:
-                del self.os_environ[each]
-
-        # add apps env vars to our build
-        if self.apps:
-            app, version = self.apps
-            className = str(app).split('.')[-1].split("'")[0]
-            # now set the version of the apps
-            pipe.version.set( {className : version} )
-            # and create an app class
-            app = getattr(pipe.apps, className)()
-            # if 'houdini' in className:
-            #     app.fullEnvironment()
-            print "%s(%s)" % (className, pipe.version.get(className)),
-            # get all vars from app class and add to cmd environ
-            for each in app:
-                if each not in ['LD_PRELOAD','PYTHON_VERSION','PYTHON_VERSION_MAJOR']:
-                    v = app[each]
-                    if v:
-                        if type(v) == str:
-                            v=[v]
-                        if each not in self.os_environ:
-                            self.os_environ[each] = ''
-                        # if var value is paths
-                        if '/' in str(v):
-                            self.os_environ[each] = "%s:%s" % (self.os_environ[each], ':'.join(v))
-                        else:
-                            self.os_environ[each] = ' '.join(v)
-
-        # remove python paths that are not the same version!
-        for each in self.os_environ:
-            if '/' in str(self.os_environ[each]):
-                cleanSearchPath = []
-                for path in self.os_environ[each].split(':'):
-                    if not path.strip():
-                        continue
-                    if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
-                        pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
-                        pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
-                        # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
-                        if pathVersion1:
-                            if pathVersion1 != self.os_environ['PYTHON_VERSION']:
-                                continue
-                        if pathVersion2:
-                            if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
-                                continue
-                    cleanSearchPath.append(path)
-                self.os_environ[each] = ':'.join(cleanSearchPath)
-
-        self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-        self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-
-        #self.os_environ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self.os_environ['LD_LIBRARY_PATH']
-        print
+        # pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
+        # pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
+        # print bcolors.WARNING+": ", bcolors.BLUE+"  apps: ",
+        #
+        # # cleanup any app env var leftover from the build
+        # for each in self.os_environ.keys():
+        #     if True in [ found in each for found in ['MAYA', 'NUKE', 'PRMAN', 'ARNOLD', 'HOUDINI'] ]:
+        #         del self.os_environ[each]
+        #
+        # # add apps env vars to our build
+        # if self.apps:
+        #     app, version = self.apps
+        #     className = str(app).split('.')[-1].split("'")[0]
+        #     # now set the version of the apps
+        #     pipe.version.set( {className : version} )
+        #     # and create an app class
+        #     app = getattr(pipe.apps, className)()
+        #     # if 'houdini' in className:
+        #     #     app.fullEnvironment()
+        #     print "%s(%s)" % (className, pipe.version.get(className)),
+        #     # get all vars from app class and add to cmd environ
+        #     for each in app:
+        #         if each not in ['LD_PRELOAD','PYTHON_VERSION','PYTHON_VERSION_MAJOR']:
+        #             v = app[each]
+        #             if v:
+        #                 if type(v) == str:
+        #                     v=[v]
+        #                 if each not in self.os_environ:
+        #                     self.os_environ[each] = ''
+        #                 # if var value is paths
+        #                 if '/' in str(v):
+        #                     self.os_environ[each] = "%s:%s" % (self.os_environ[each], ':'.join(v))
+        #                 else:
+        #                     self.os_environ[each] = ' '.join(v)
+        #
+        # # remove python paths that are not the same version!
+        # for each in self.os_environ:
+        #     if '/' in str(self.os_environ[each]):
+        #         cleanSearchPath = []
+        #         for path in self.os_environ[each].split(':'):
+        #             if not path.strip():
+        #                 continue
+        #             if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
+        #                 pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
+        #                 pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
+        #                 # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
+        #                 if pathVersion1:
+        #                     if pathVersion1 != self.os_environ['PYTHON_VERSION']:
+        #                         continue
+        #                 if pathVersion2:
+        #                     if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
+        #                         continue
+        #             cleanSearchPath.append(path)
+        #         self.os_environ[each] = ':'.join(cleanSearchPath)
+        #
+        # self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+        # self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+        #
+        # #self.os_environ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self.os_environ['LD_LIBRARY_PATH']
+        # print
         return cmd + " " + self.sconsInstall
 
 

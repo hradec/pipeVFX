@@ -230,55 +230,6 @@ class alembic(cmake):
         # specified in apps argument!
         environ = []
 
-        pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
-        pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
-        print bcolors.WARNING+": ", bcolors.BLUE+"  apps: ",
-        if hasattr(self, 'apps'):
-            for (app, version) in self.apps:
-                className = str(app).split('.')[-1].split("'")[0]
-                pipe.version.set({className:version})
-                app = app()
-                app.fullEnvironment()
-                print "%s(%s)" % (className, version),
-                # get all vars from app class and add to cmd environ
-                for each in app:
-                    if each not in ['LD_PRELOAD','PYTHON_VERSION','PYTHON_VERSION_MAJOR']:
-                        v = app[each]
-                        if type(v) == str:
-                            v=[v]
-                        if each not in self.os_environ:
-                            self.os_environ[each] = ''
-                        # if var value is paths
-                        if 'ROOT' in each:
-                            self.os_environ[each] = v[0]
-                        elif '/' in str(v):
-                            self.os_environ[each] = "%s:%s" % (self.os_environ[each], ':'.join(v))
-                        else:
-                            self.os_environ[each] = ' '.join(v)
-
-            # remove python paths that are not the same version!
-            for each in self.os_environ:
-                if '/' in str(v):
-                    cleanSearchPath = []
-                    for path in self.os_environ[each].split(':'):
-                        if not path.strip():
-                            continue
-                        if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
-                            pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
-                            pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
-                            # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
-                            if pathVersion1:
-                                if pathVersion1 != self.os_environ['PYTHON_VERSION']:
-                                    continue
-                            if pathVersion2:
-                                if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
-                                    continue
-                        cleanSearchPath.append(path)
-                    self.os_environ[each] = ':'.join(cleanSearchPath)
-
-        # self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-        # self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-
         self.flags += [
             '-DUSE_PYALEMBIC=0', # disable python bindings
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
