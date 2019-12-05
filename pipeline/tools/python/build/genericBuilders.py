@@ -22,7 +22,7 @@ from  SCons.Environment import *
 from  SCons.Builder import *
 from  SCons.Action import *
 from  SCons.Script import *
-import os, traceback, sys, inspect, re
+import os, traceback, sys, inspect, re, time
 
 
 
@@ -475,7 +475,10 @@ class generic:
                 p = baselib.name
                 if baselibDownloadList:
                     p = "%s%s" % (baselib.name,baselibDownloadList[2])
-                pythonDependency = ".%s-%s" % (p,self.targetSuffix)
+
+                pythonDependency = ".%s" % p
+                if self.targetSuffix.strip():
+                    pythonDependency = ".%s-%s" % (p,self.targetSuffix)
 
                 self._depend[p] = []
                 self.buildFolder[p] = []
@@ -682,7 +685,7 @@ class generic:
                 pythonVersion = str(target).split('.python')[-1].split('.done')[0][:3]
 
         lastlogFile = "%s/%s.%s" % (os.path.dirname(str(target)), crtl_file_lastlog, pythonVersion)
-        if self.targetSuffix:
+        if self.targetSuffix.strip():
             lastlogFile = '%s-%s' % (lastlogFile, self.targetSuffix)
 
         # print lastlogFile
@@ -1144,8 +1147,8 @@ class generic:
         os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
         os_environ['INSTALL_FOLDER'] = os_environ['TARGET_FOLDER']
-        if hasattr(self, 'targetSuffix'):
-            os_environ['INSTALL_FOLDER'] = '/'.join([ os_environ['TARGET_FOLDER'], self.targetSuffix ])
+        if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
+            os_environ['INSTALL_FOLDER'] = '/'.join([ os_environ['TARGET_FOLDER'], self.targetSuffix ]).replace('//','/')
 
         # create current package bin/libs folders so paths are not
         # removed from env vars
@@ -1324,18 +1327,18 @@ class generic:
                 '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
-                '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                # '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 os_environ['LDFLAGS']
             ])
             os_environ['LLDFLAGS']      = ' '.join([
                 '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
-                '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
+                # '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 os_environ['LDFLAGS']
             ])
 
@@ -1499,6 +1502,7 @@ class generic:
 
         # run the build!!
         from subprocess import Popen
+        _start = time.time()
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
         # it's better to keep printing something so travis-ci doesn't
         # kill our build!
@@ -1510,6 +1514,13 @@ class generic:
         else:
             proc.wait()
         ret = self.__check_target_log__(lastlog)
+        _elapsed = time.gmtime(time.time()-_start)
+        _print( bcolors.WARNING+':\ttotal build time: %s %02d:%02d:%02d' % (
+            bcolors.GREEN,
+            _elapsed.tm_hour,
+            _elapsed.tm_min,
+            _elapsed.tm_sec
+        ))
 
         # finished without errors!!
         if ret == 0:
@@ -1585,9 +1596,8 @@ class generic:
         this garantees things get installed!'''
         _TARGET = str(target[0])
         TARGET_FOLDER = os.path.dirname(_TARGET)
-        if hassattr(self, 'targetSuffix'):
-            TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ])
-
+        if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
+            TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ]).replace('//','/').rstrip('/')
 
         if not hasattr(self, 'apps'):
             if not os.path.exists(_TARGET) or not glob( '%s/*/*' % TARGET_FOLDER ):
