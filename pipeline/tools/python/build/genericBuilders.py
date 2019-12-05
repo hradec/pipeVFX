@@ -49,17 +49,20 @@ memGB = int(mem)/1024/1024
 
 
 def _print(*args):
+    global sconsParallel
     # print args
     p = True
     if sconsParallel:
         p = False
-        if bcolors.WARNING+": "+bcolors.BLUE in args[0] and '(' in args[0] and ')' in args[0]:
+        l = ' '.join([ str(x) for x in args])
+        if '[' in l[:15] and ']' in l[:15]:
             p = True
     if p:
         if args[-1] == '\r':
             print " ".join([str(x) for x in args]),
         else:
             print " ".join([str(x) for x in args])
+    sys.stdout.flush()
 
 def expandvars(path, env=os.environ, default=None, skip_escaped=False):
     """Expand environment variables of form $var and ${var}.
@@ -264,6 +267,7 @@ class generic:
     def __init__(self, args, name, download, baseLibs=None, env=None, depend=[], GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
         global __pkgInstalled__
         global buildTotal
+        global sconsParallel
 
         download = [ list(x) for x in download ]
 
@@ -331,6 +335,15 @@ class generic:
                 self.dependOn[d] = None
         self.set( "ENVIRON_DEPEND",  ' '.join([x.name for x in self.dependOn if hasattr(x, 'name')]) )
 
+        # set gcc_version for instalation purposes
+        gcc_version = None
+        for each in self.dependOn:
+            if 'gcc' == each.name:
+                gcc_version = self.dependOn[each]
+        if gcc_version == None:
+            gcc_version='gcc-multi'
+        # print self.name, gcc_version
+
 
         # set the base libraries to build for.
         # we'll repeat this package build for each base library version
@@ -358,8 +371,6 @@ class generic:
             self.sed  = sed
         if environ:
             self.environ  = environ
-
-        self.installPath = installRoot(self.args)
 
         # cmds to build!
         self.kargs = kargs
@@ -432,8 +443,9 @@ class generic:
         # check if we're running in TRAVIS-CI
         self.travis=False
         if 'TRAVIS' in os.environ or sconsParallel:
-            self.travis=False if not os.environ['TRAVIS'].strip() else True
-            self.set("TRAVIS", os.environ['TRAVIS'])
+            if '1' in os.environ['TRAVIS'] or sconsParallel:
+                self.travis=True
+        self.set("TRAVIS", '1' if self.travis else '0')
 
         if 'http_proxy' in os.environ:
             self.set("http_proxy", os.environ['http_proxy'])
@@ -463,7 +475,7 @@ class generic:
                 p = baselib.name
                 if baselibDownloadList:
                     p = "%s%s" % (baselib.name,baselibDownloadList[2])
-                pythonDependency = ".%s%s" % (p,self.targetSuffix)
+                pythonDependency = ".%s-%s" % (p,self.targetSuffix)
 
                 self._depend[p] = []
                 self.buildFolder[p] = []
@@ -490,6 +502,9 @@ class generic:
 
                 # build all versions of the package specified by the download parameter
                 for n in range(len(download)):
+                    # os.environ['GCC_VERSION'] can override the gcc version set in the installRoot
+                    self.installPath = installRoot(self.args)
+
                     targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.tar.gz',pythonDependency))
                     if '.zip' in download[n][1]:
                         targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.zip',pythonDependency))
@@ -541,9 +556,6 @@ class generic:
                         # this accounts for builds like python pip
                         s = os.path.join(buildFolder(self.args),download[n][1])
                         os.system('touch "%s"' % s)
-
-                    # a counter to display a percentage
-                    buildTotal += 1
 
                     # run the action method of the class
                     # add dependencies as source so dependencies are built
@@ -602,6 +614,7 @@ class generic:
         # if 'install' in  str(what):
         #     print bcolors.WARNING+": "+bcolors.BLUE+what+bcolors.END
         #
+        sys.stdout.write('\033[2K\033[1G')
         if 'builder' in  str(what):
             if not self.shouldBuild( target, source ):
                 return
@@ -610,8 +623,10 @@ class generic:
             if '.python' in t:
                 n = "%s (py %s)" % (n, t.split('.python')[-1].split('.done')[0])
             _print( bcolors.WARNING+':'+'='*tcols )
-            _print( bcolors.WARNING+": "+bcolors.BLUE+" % 3d%% %s( %s )" % (
+            _print( bcolors.WARNING+": %s[% 3d%%] %s %s( %s )" % (
+                bcolors.GREEN,
                 int((float(buildCounter)/float(buildTotal))*100.0),
+                bcolors.BLUE,
                 self.className,
                 n
             ) )
@@ -624,7 +639,14 @@ class generic:
             _print( bcolors.WARNING+": "+bcolors.END )
         else:
             sp="/-\|"
-            _print( bcolors.WARNING,"checking built pkgs"+sp[_spinnerCount],'\r', )
+            _print( bcolors.WARNING,"%s: %s[% 3d%%] %s[%s] %s checking built pkgs:" % (
+                bcolors.BS,
+                bcolors.GREEN,
+                int((float(buildCounter)/float(buildTotal))*100.0),
+                bcolors.BLUE,
+                sp[_spinnerCount],
+                bcolors.WARNING,
+            ),'[',str(what).split('(')[0],'] [',str(target[0]),']','\r', )
             _spinnerCount += 1
             if _spinnerCount >= len(sp):
                 _spinnerCount = 0
@@ -643,6 +665,9 @@ class generic:
         ''' action must be implemented by derivated classes. action is called by the python build loop in __init__
         it needs to register a builder method and call it!!
         '''
+        # a counter to display a percentage
+        global buildTotal
+        buildTotal += 1
         return self.registerSconsBuilder(self.builder)( target, source )
 
     def fixCMD(self, cmd):
@@ -658,7 +683,7 @@ class generic:
 
         lastlogFile = "%s/%s.%s" % (os.path.dirname(str(target)), crtl_file_lastlog, pythonVersion)
         if self.targetSuffix:
-            lastlogFile = '%s.%s' % (lastlogFile, self.targetSuffix)
+            lastlogFile = '%s-%s' % (lastlogFile, self.targetSuffix)
 
         # print lastlogFile
         return os.path.abspath( lastlogFile )
@@ -828,6 +853,7 @@ class generic:
         ''' the main method to run system calls, like configure, make, cmake, etc  '''
         # for each in  source:
         #     print str(each)
+        global buildCounter
 
         buildCompiler = int(filter(lambda x: 'BUILD_COMPILER' in x[0], env.items())[0][1])
 
@@ -910,8 +936,9 @@ class generic:
             'CPP'               : 'cpp',
             'CXX'               : '%sg++' % prefix,
             'CXXCPP'            : 'cpp',
-            'LD'                : 'ld',
-            'LDSHARED'          : '%sgcc -shared' % prefix,
+            # 'LD'                : 'ld',
+            'LD'                : '%sg++' % prefix,
+            'LDSHARED'          : '%sg++ -shared' % prefix,
             'LDFLAGS'           : ' ',
             'CFLAGS'            : ' ',
             # 'CXXFLAGS'          : ' -D_GLIBCXX_USE_CXX11_ABI=0 -w ',
@@ -925,6 +952,9 @@ class generic:
             # if it can't find them using GCC_EXEC_PREFIX. Linking using GCC also
             # uses these directories when searching for ordinary libraries for
             # the -l option (but directories specified with -L come first).
+            # LIBRARY_PATH DOES NOT WORK IF LD IS CALLED DIRECTLY, NOT BY GCC/G++
+            # in this cases, we have to specify -L<lib path> in LDFLAGS, or force
+            # a build to use g++ by setting LD=g++
             'LIBRARY_PATH'      : "",
             # Each variable's value is a list of directories separated by a special
             # character, much like PATH, in which to look for header files.
@@ -1036,10 +1066,10 @@ class generic:
                     # this also has the advantage of not "recording" the build search paths
                     # on build packages, so cmake won't pick the up later!
                     LIBRARY_PATH += [
-                        "%s/lib/" % dependOn.targetFolder[p][depend_n],
-                        "%s/lib64/" % dependOn.targetFolder[p][depend_n],
-                        "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]),
-                        "%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]),
+                        "%s/lib/"                               % dependOn.targetFolder[p][depend_n],
+                        "%s/lib64/"                             % dependOn.targetFolder[p][depend_n],
+                        "%s/lib/python$PYTHON_VERSION_MAJOR/"   % dependOn.targetFolder[p][depend_n],
+                        "%s/lib64/python$PYTHON_VERSION_MAJOR/" % dependOn.targetFolder[p][depend_n],
                     ]
 
                     # include dependency search path in *_INCLUDE_PATH, so we don't
@@ -1058,12 +1088,12 @@ class generic:
 
                     # set python searchpath for dependencies
                     PYTHONPATH += [
-                        "%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
-                        "%s/lib64/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
-                        '%s/lib64/python%s/lib-dynload/' % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
-                        "%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
-                        "%s/lib/python%s/site-packages/" % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
-                        '%s/lib/python%s/lib-dynload/' % (dependOn.targetFolder[p][depend_n],pythonVersion[:3]),
+                        "%s/lib64/python$PYTHON_VERSION_MAJOR/"                 % dependOn.targetFolder[p][depend_n],
+                        "%s/lib64/python$PYTHON_VERSION_MAJOR/site-packages/"   % dependOn.targetFolder[p][depend_n],
+                        '%s/lib64/python$PYTHON_VERSION_MAJOR/lib-dynload/'     % dependOn.targetFolder[p][depend_n],
+                        "%s/lib/python$PYTHON_VERSION_MAJOR/"                   % dependOn.targetFolder[p][depend_n],
+                        "%s/lib/python$PYTHON_VERSION_MAJOR/site-packages/"     % dependOn.targetFolder[p][depend_n],
+                        '%s/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'       % dependOn.targetFolder[p][depend_n],
                     ]
 
                     # set PATH searchpath for dependencies binaries
@@ -1071,25 +1101,25 @@ class generic:
 
                     # pull env vars from dependency classes
                     # we add all searchpaths from dependencies as well.
-                    for each in dependOn.environ:
-                        sep = ' '
-                        if dependOn.environ[each] and type(dependOn.environ[each])==str:
-                            if dependOn.environ[each][0] == '/':
-                                sep = ':'
-
-                            cleanV = ' '
-                            for v in dependOn.environ[each].split(' '):
-                                if v.strip()  and v[0] != '$':
-                                    cleanV += v+' '
-
-                            # print dependOn.name, each, cleanV, sep
-                            if each in os_environ:
-                                os_environ[each] = sep.join([
-                                    os_environ[each],
-                                    cleanV
-                                ])
-                            else:
-                                os_environ[each] = cleanV
+                    # for each in dependOn.environ:
+                    #     sep = ' '
+                    #     if dependOn.environ[each] and type(dependOn.environ[each])==str:
+                    #         if dependOn.environ[each][0] == '/':
+                    #             sep = ':'
+                    #
+                    #         cleanV = ' '
+                    #         for v in dependOn.environ[each].split(' '):
+                    #             if v.strip()  and v[0] != '$':
+                    #                 cleanV += v+' '
+                    #
+                    #         # print dependOn.name, each, cleanV, sep
+                    #         if each in os_environ:
+                    #             os_environ[each] = sep.join([
+                    #                 os_environ[each],
+                    #                 cleanV
+                    #             ])
+                    #         else:
+                    #             os_environ[each] = cleanV
 
 
         # fix PYTHON_VERSION_MAJOR based on PYTHON_VERSION
@@ -1113,6 +1143,9 @@ class generic:
 
         os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
+        os_environ['INSTALL_FOLDER'] = os_environ['TARGET_FOLDER']
+        if hasattr(self, 'targetSuffix'):
+            os_environ['INSTALL_FOLDER'] = '/'.join([ os_environ['TARGET_FOLDER'], self.targetSuffix ])
 
         # create current package bin/libs folders so paths are not
         # removed from env vars
@@ -1122,31 +1155,33 @@ class generic:
             folders += ['lib/python%s/site-packages' % _p]
 
         if '/python/' in os_environ['TARGET_FOLDER']:
-            folders += ['lib/python%s/site-packages' % os.path.basename(os_environ['TARGET_FOLDER'])]
+            folders += ['lib/python%s/site-packages' % os.path.basename(os_environ['INSTALL_FOLDER'])]
 
         for n in folders:
-            path = '%s/%s' % (os_environ['TARGET_FOLDER'], n )
+            path = '%s/%s' % (os_environ['INSTALL_FOLDER'], n )
             if not os.path.exists( path ):
                 os.makedirs( path )
 
-        PATH         = ['$TARGET_FOLDER/bin'] + PATH
+        PATH         = ['$INSTALL_FOLDER/bin'] + PATH
         LIBRARY_PATH = [
-            '$TARGET_FOLDER/lib',
-            '$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-            '$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib',
-            '$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload',
+            '$INSTALL_FOLDER/lib',
+            '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+            '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib',
+            '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload',
         ] + LIBRARY_PATH
         PYTHONPATH   = [
-            '$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-            '$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages',
+            '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+            '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages',
         ] + PYTHONPATH
 
         # make sure all paths from the dependency loop exist and remove duplicates
-        C_INCLUDE_PATH  = [ p for p in set(C_INCLUDE_PATH)  if '$' in p or os.path.exists(p) ]
-        LIBRARY_PATH    = [ p for p in set(LIBRARY_PATH)    if '$' in p or os.path.exists(p) ]
-        PKG_CONFIG_PATH = [ p for p in set(PKG_CONFIG_PATH) if '$' in p or os.path.exists(p) ]
-        PYTHONPATH      = [ p for p in set(PYTHONPATH)      if '$' in p or os.path.exists(p) ]
-        PATH            = [ p for p in set(PATH)            if '$' in p or os.path.exists(p) ]
+        # print PYTHONPATH
+        # C_INCLUDE_PATH  = [ p for p in set(C_INCLUDE_PATH)  if '$' in p or os.path.exists(p) ]
+        # LIBRARY_PATH    = [ p for p in set(LIBRARY_PATH)    if '$' in p or os.path.exists(p) ]
+        # PKG_CONFIG_PATH = [ p for p in set(PKG_CONFIG_PATH) if '$' in p or os.path.exists(p) ]
+        # PYTHONPATH      = [ p for p in set(PYTHONPATH)      if '$' in p or os.path.exists(p) ]
+        # PATH            = [ p for p in set(PATH)            if '$' in p or os.path.exists(p) ]
+        # print PYTHONPATH
 
         # transfer all lists to env vars now
         os_environ['C_INCLUDE_PATH']     = ':'.join(C_INCLUDE_PATH+[os_environ['C_INCLUDE_PATH']])
@@ -1317,6 +1352,7 @@ class generic:
                 '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/',
                 '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++',
                 '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
+                '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/backward',
                 os_environ['CPLUS_INCLUDE_PATH'],
             ])
             os_environ['CPATH'] = ':'.join([
@@ -1329,7 +1365,7 @@ class generic:
             # set gcc
             os_environ['CC']  = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['CC'].strip())
             os_environ['CXX'] = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['CXX'].strip())
-            if 'LD' in os_environ and 'g++' in os_environ['LD']:
+            if 'LD' in os_environ and 'g++' in os.path.basename(os_environ['LD'].split(' ')[0]):
                 os_environ['LD'] = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['LD'].strip())
 
 
@@ -1400,13 +1436,6 @@ class generic:
         ]
         os_environ['C_INCLUDE_PATH'] = ':'.join([os_environ['C_INCLUDE_PATH']]+system_includes)
         os_environ['CPLUS_INCLUDE_PATH'] = ':'.join([os_environ['CPLUS_INCLUDE_PATH']]+system_includes)
-        os_environ['LIBRARY_PATH'] = ':'.join([
-            os_environ['LIBRARY_PATH'],
-            '/usr/lib',
-            '/usr/lib64',
-            '/lib',
-            '/lib64',
-        ])
 
         # just make CPPFLAGS/CPPCXXFLAGS the same as CXXFLAGS
         os_environ['CPPFLAGS'] = os_environ['CFLAGS']
@@ -1424,8 +1453,41 @@ class generic:
         for each in os_environ:
             os_environ[each] = expandvars(os_environ[each], env=os_environ)
 
-        # cleanup paths that don't exist from the env vars!
+        # after expanding all env var,
+        # add LIBRARY_PATH to LD, if it's 'ld',
+        # since 'ld' does not use LIBRARY_PATH
+        if 'ld' in os.path.basename(os_environ['LD'].split(' ')[0]):
+            for each in set(os_environ['LIBRARY_PATH'].split(':')):
+                if os.path.exists(each) and glob( '%s/*' % each ):
+                    os_environ['LDFLAGS'] += ' -L%s' % each
+
+            # add system includes for last
+            os_environ['LDFLAGS'] = ' '.join([
+                os_environ['LDFLAGS'],
+                ' -L/usr/lib',
+                ' -L/usr/lib64',
+                ' -L/lib',
+                ' -L/lib64',
+            ])
+
+        # add system includes for last
+        os_environ['LIBRARY_PATH'] = ':'.join([
+            os_environ['LIBRARY_PATH'],
+            '/usr/lib',
+            '/usr/lib64',
+            '/lib',
+            '/lib64',
+        ])
+
+        # cleanup paths that don't exist from the searchpath env vars!
         # checkPathsExist( os_environ )
+        for var in [ 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH', 'LIBRARY_PATH', 'LD_LIBRARY_PATH', 'PYTHONPATH', 'PATH' ]:
+            _exist = []
+            for each in os_environ[var].split(':'):
+                if each.strip() and os.path.exists(each) and glob( '%s/*' % each ):
+                    _exist += [each]
+            os_environ[var] = ':'.join(_exist)
+
 
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
         if '/gcc/' not in target:
@@ -1434,7 +1496,6 @@ class generic:
             os_environ['LTDL_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
             os_environ['LTLD_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
         os_environ['TERM'] = 'xterm-256color'
-
 
         # run the build!!
         from subprocess import Popen
@@ -1505,6 +1566,9 @@ class generic:
     def _installer(self, target, source, env):
         ''' a wrapper class to create target in case installer method is suscessfull!
         we do this so whoever implements a installer don't have to bother!'''
+        global buildCounter
+        buildCounter += 1
+
         from glob import glob
 
         ret = self.installer( target, source, env )
@@ -1516,17 +1580,17 @@ class generic:
         f.close()
         self._installer_final_check(target, source, env, ret)
 
-    def _installer_final_check(self, target, source, env={}, ret=''):
+    def _installer_final_check(self, target, source, env={}, ret=None):
         ''' check if something was installed
         this garantees things get installed!'''
-        global buildCounter
-        if ret:
-            buildCounter += 1
+        _TARGET = str(target[0])
+        TARGET_FOLDER = os.path.dirname(_TARGET)
+        if hassattr(self, 'targetSuffix'):
+            TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ])
 
-        TARGET_FOLDER = os.path.dirname(str(target[0]))
 
         if not hasattr(self, 'apps'):
-            if not os.path.exists(str(target[0])) or not glob( '%s/*/*' % TARGET_FOLDER ):
+            if not os.path.exists(_TARGET) or not glob( '%s/*/*' % TARGET_FOLDER ):
                 # if we have a log, show it!
                 if ret:
                     _print( bcolors.WARNING, '='*80, bcolors.FAIL )
@@ -1538,7 +1602,7 @@ class generic:
                 for each in [ str(x) for x in source ]:
                     if os.path.exists(os.path.dirname(each)):
                         cmd = "rm -rf %s" % os.path.dirname(each)
-                        _print( ": not os.path.exists(%s):" % str(target[0]), not os.path.exists(str(target[0])) )
+                        _print( ": not os.path.exists(%s):" % _TARGET, not os.path.exists(_TARGET) )
                         _print( ": not glob( '%s/*/*' ):" % TARGET_FOLDER, not glob( '%s/*/*' % TARGET_FOLDER ) )
                         _print( ": _installer_final_check: error - ",cmd )
                         os.system(cmd)
@@ -1565,7 +1629,8 @@ class generic:
         for each in [ str(x) for x in source if '.build/' in str(x) ]:
             if os.path.exists(os.path.dirname(each)):
                 cmd = "rm -rf %s" % os.path.dirname(each)
-                _print( ": _installer_final_check: done - ",cmd )
+                # if ret:
+                #     _print( ": _installer_final_check: done - ",cmd )
                 os.system(cmd)
 
         return True
@@ -1686,7 +1751,7 @@ class generic:
                 # if not os.path.exists(self.__lastlog(__pkgInstalled__[s],python)):
                 lastlog = self.__lastlog(__pkgInstalled__[s],python)
                 if self.__check_target_log__( lastlog ):
-                    _print( ": uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
+                    # _print( ": uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                     cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
@@ -1711,7 +1776,8 @@ class generic:
                         _print( uncompressed_folder )
                         _print( '-'*tcols )
                         _print( "str(target[n])",str(target[n]) )
-                        os.system('/bin/bash')
+                        if not self.travis and not sconsParallel:
+                            os.system('/bin/bash')
                         raise Exception("Uncompress failed!")
 
                     for updates in ['config.sub', 'config.guess']:
@@ -1783,6 +1849,7 @@ class generic:
 
                         # sed a file if it exists!
                         if os.path.exists("%s" % f):
+                            _print( bcolors.BLUE+":\t'sed' patching %s %s... %s" % (bcolors.WARNING, f, bcolors.END) )
 
                             # we make a copy of the original file, before running sed
                             # if we already have a copy, we restore it before running sed
@@ -1807,6 +1874,34 @@ class generic:
                             ptr.close()
 
                     break
+
+        # patch all -O3 to -O2 everywhere in the source, since -O3 can create
+        # CPU specific code!
+        if not [ x for x in ['/gcc', '/4.1.2'] if x in t ]:
+            _print( bcolors.BLUE+":\tpatching %s %s for generic cpu... %s" % (bcolors.WARNING, '/'.join(t.split('/')[-2:]), bcolors.END) )
+            files2patch = {}
+            result = os.popen(''' grep -R  '\-O3' %s/* ''' % t).readlines()
+            # print result
+            for each in result:
+                if 'Binary file' not in each:
+                    f = each.split(':')[0]
+                    if f not in files2patch:
+                        files2patch[ f ] = []
+                    files2patch[ f ] += [each]
+
+            for file in files2patch:
+                os.popen('''sed -i.bak -e 's/\-O3/-O2/g' -e 's/\-O4/-O2/g' -e 's/\-O5/-O2/g' %s ''' % file).readlines()
+            # print os.popen(''' grep -R  '\-O3' %s/* ''' % t).readlines()
+
+        # wee need certain aclocal-* versions in case we modify configure base files.
+        # so just symlink the needed versions here.
+        links = {
+            '/usr/bin/aclocal' : '/usr/bin/aclocal-1.15',
+            '/usr/bin/automake': '/usr/bin/automake-1.15'
+        }
+        for each in links:
+            if not os.path.exists(links[each]):
+                os.system( 'ln -s "%s" "%s"' % (each, links[each]) )
 
     def install(self, target, source):
         ret = source

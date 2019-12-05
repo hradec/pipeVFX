@@ -41,7 +41,7 @@ class configure(generic):
 
     def fixCMD(self, cmd):
         if [x for x in cmd.split('&&') if 'configure' in x and '--prefix=' not in x]:
-            cmd = cmd.replace('configure', 'configure --prefix=$TARGET_FOLDER ')
+            cmd = cmd.replace('configure', 'configure --prefix=$INSTALL_FOLDER ')
         if 'configure' in cmd and self.name not in ['zlib','binutils','cmake', 'qt']:
             cmd = cmd.replace('configure', 'configure --disable-werror ')
         if 'parallel' not in self.kargs or self.kargs['parallel'] == 1:
@@ -87,7 +87,7 @@ class gccBuild(configure):
     def uncompressor( self, target, source, env):
         ''' we just need this for the 4.1.2 binary tarball!'''
         t = os.path.abspath(str(target[0]))
-        v = '.'.join(os.path.basename(os.path.dirname(t)).split('-')[-1].split('.')[:2])
+        v = '.'.join(os.path.basename(os.path.dirname(t)).split('.noBaseLib')[-2].split('-')[-1].split('.')[:2])
         if self.use_bin_tarball and float(v) == 4.1:
             # change the target for the gcc 4.1.2 version, since we're using
             # a binary tarball
@@ -101,8 +101,10 @@ class gccBuild(configure):
         if self.versionMajor == 4.1:
             if self.use_bin_tarball:
                 cmd = ';'.join([
+                    # here we have to use $TARGET_FOLDER since version 4.1.2  has a targetSuffix -pre, but we don't want to use it as a subfolder.
                     'cp -ruvf ./* $TARGET_FOLDER/',
                     'mkdir -p /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/',
+                    'rm -rf /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2',
                     'ln -s  $TARGET_FOLDER /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2',
                 ])
             else:
@@ -118,11 +120,11 @@ class gccBuild(configure):
                     'export CC="$CC -fgnu89-inline -fPIC -O2"',
                     'export CXX="$CC -fgnu89-inline -fPIC -O2"',
                     "cd build",
-                    '../configure  --prefix=$TARGET_FOLDER '
-                        '--mandir=$TARGET_FOLDER/share/man '
-                        '--libdir=$TARGET_FOLDER/lib '
-                        '--infodir=$TARGET_FOLDER/share/info '
-                        '--libexecdir=$TARGET_FOLDER/lib '
+                    '../configure  --prefix=$INSTALL_FOLDER '
+                        '--mandir=$INSTALL_FOLDER/share/man '
+                        '--libdir=$INSTALL_FOLDER/lib '
+                        '--infodir=$INSTALL_FOLDER/share/info '
+                        '--libexecdir=$INSTALL_FOLDER/lib '
                         '--enable-languages=c,c++ '
                         '--enable-__cxa_atexit  '
                         '--disable-multilib '
@@ -173,10 +175,10 @@ class gccBuild(configure):
                     '--enable-shared '
                     '--enable-threads=posix '
                     '--enable-version-specific-runtime-libs '
-                    '--infodir="$TARGET_FOLDER/share/info" '
-                    '--libdir="$TARGET_FOLDER/lib" '
-                    '--libexecdir="$TARGET_FOLDER/lib" '
-                    '--mandir=$TARGET_FOLDER/share/man '
+                    '--infodir="$INSTALL_FOLDER/share/info" '
+                    '--libdir="$INSTALL_FOLDER/lib" '
+                    '--libexecdir="$INSTALL_FOLDER/lib" '
+                    '--mandir=$INSTALL_FOLDER/share/man '
                     "--program-suffix=$(basename $TARGET_FOLDER) "
                     "--with-ppl "
                     "--without-system-zlib "
@@ -203,12 +205,12 @@ class gccBuild(configure):
                         '--with-gmp=$GMP_TARGET_FOLDER '
                         '--with-mpfr=$MPFR_TARGET_FOLDER '
                         '--with-mpc=$MPC_TARGET_FOLDER '
-                        '--infodir="$TARGET_FOLDER/share/info" '
-                        '--libdir="$TARGET_FOLDER/lib" '
-                        '--libexecdir="$TARGET_FOLDER/lib" '
-                        '--mandir=$TARGET_FOLDER/share/man '
+                        '--infodir="$INSTALL_FOLDER/share/info" '
+                        '--libdir="$INSTALL_FOLDER/lib" '
+                        '--libexecdir="$INSTALL_FOLDER/lib" '
+                        '--mandir=$INSTALL_FOLDER/share/man '
                         "--program-suffix=$(basename $TARGET_FOLDER) "
-                        "%s --prefix=$TARGET_FOLDER " % distroSpecificConfigure,
+                        "%s --prefix=$INSTALL_FOLDER " % distroSpecificConfigure,
                 'make -j $DCORES',
                 'make install',
             ])
@@ -216,13 +218,13 @@ class gccBuild(configure):
             cmd = ' && '.join([
                 "mkdir -p build",
                 "cd build",
-                "mkdir $TARGET_FOLDER/fake_build/",
-                "touch $TARGET_FOLDER/fake_build/placeholder",
-                # '../configure  --prefix=$TARGET_FOLDER '
-                #     '--mandir=$TARGET_FOLDER/share/man '
-                #     '--libdir=$TARGET_FOLDER/lib '
-                #     '--infodir=$TARGET_FOLDER/share/info '
-                #     '--libexecdir=$TARGET_FOLDER/lib '
+                "mkdir $INSTALL_FOLDER/fake_build/",
+                "touch $INSTALL_FOLDER/fake_build/placeholder",
+                # '../configure  --prefix=$INSTALL_FOLDER '
+                #     '--mandir=$INSTALL_FOLDER/share/man '
+                #     '--libdir=$INSTALL_FOLDER/lib '
+                #     '--infodir=$INSTALL_FOLDER/share/info '
+                #     '--libexecdir=$INSTALL_FOLDER/lib '
                 #     '--enable-languages=c,c++ '
                 #     '--enable-__cxa_atexit  '
                 #     '--disable-multilib '
@@ -246,10 +248,10 @@ class gccBuild(configure):
 
         # make sure we're using the distros GCC to build GCC
         cmd = ' && '.join([
-            'export PATH="$TARGET_FOLDER/../4.1.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/bin"',
+            'export PATH="$INSTALL_FOLDER/../4.1.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/bin"',
             'unset LD_LIBRARY_PATH',
             # set the system crtbegin.o path so the system gcc can build our gcc
-            "export LIBRARY_PATH=$(echo $(find $TARGET_FOLDER/../4.1.2/ -name crtbegin.o -exec dirname {} \;) | sed 's/ /:/g'):$LIBRARY_PATH",
+            "export LIBRARY_PATH=$(echo $(find $INSTALL_FOLDER/../4.1.2/ -name crtbegin.o -exec dirname {} \;) | sed 's/ /:/g'):$LIBRARY_PATH",
             cmd
         ])
         return cmd
@@ -281,11 +283,11 @@ class openssl(configure):
     we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
     src='config'
     cmd=[
-        # './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$TARGET_FOLDER',
+        # './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$INSTALL_FOLDER',
         # 'make depend && make && make install',
         '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.$3}') { global: *;};" | tee ./openssl.ld''',
         '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.0}') { global: *;};" | tee -a ./openssl.ld''',
-        './config shared enable-tlsext --prefix=$TARGET_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
+        './config shared enable-tlsext --prefix=$INSTALL_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
         'make && make install',
     ]
     def installer(self, target, source, env): # noqa
@@ -317,15 +319,15 @@ class boost(configure):
     def fixCMD(self, cmd):
         # generic build command for versions 1.58 and up
         cmd = [
-            './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-            './b2 -j $CORES variant=release cxxflags="-fPIC -fpermissive -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
+            ' ./b2 -j $CORES variant=release cxxflags="-fPIC -fpermissive -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
         ]
         # if version is below 1.58, use this build commands
         if self.versionMajor < 1.58 and  self.versionMajor > 1.55 :
             cmd = [
-                './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER ',
+                ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER ',
                 'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
-                './b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC -fpermissive  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
+                ' ./b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC -fpermissive  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
                 # './b2 -j $DCORES --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS -std=gnu++11" linkflags="$LDFLAGS" -d+2 install',
             ]
 
@@ -339,8 +341,8 @@ class boost(configure):
         if self.versionMajor == 1.55:
             cmd = [
                 "curl -L -s 'http://www.boost.org/patches/1_55_0/001-log_fix_dump_avx2.patch' | sed 's/libs/.\/libs/g'| patch -p1",
-                './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $CORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
+                ' ./b2 -j $CORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if self.versionMajor == 1.54:
@@ -349,14 +351,14 @@ class boost(configure):
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/002-date-time.patch' | sed 's/1_54_0/./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
-                './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
+                ' ./b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if self.versionMajor == 1.51:
             cmd = [
-                './bootstrap.sh --libdir=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$TARGET_FOLDER',
-                './b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
+                ' ./b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
 
@@ -400,39 +402,39 @@ class python(configure):
         # 'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
         './configure  --enable-shared --with-lto  --enable-unicode=ucs4 --with-openssl=$OPENSSL_TARGET_FOLDER  --with-bz2', # --enable-optimizations',
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
-        'make -j $DCORES',
-        'make -j $DCORES install',
-        '(ln -s python$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/python || true)',
-        '(ln -s python$PYTHON_VERSION_MAJOR-config  $TARGET_FOLDER/bin/python-config || true)',
-        '( [ ! -e  $TARGET_FOLDER/bin/easy_install ] && '
+        ' make -j $DCORES',
+        ' make -j $DCORES install',
+        '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
+        '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config || true)',
+        '( [ ! -e  $INSTALL_FOLDER/bin/easy_install ] && '
             'unzip ../../.download/setuptools-33.1.1.zip && '
             'cd setuptools-33.1.1 && '
             '$PYTHON ./setup.py build && '
-            '$PYTHON ./setup.py install --prefix=$TARGET_FOLDER '
+            '$PYTHON ./setup.py install --prefix=$INSTALL_FOLDER '
         ')',
-        "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $TARGET_FOLDER/bin/easy_install hashlib || true)",
-        '( [ ! -e  $TARGET_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $TARGET_FOLDER/bin/easy_install pip || true)',
-        '(ln -s pip$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/pip || true)',
-        "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $TARGET_FOLDER/bin/pip install  readline || true)",
-        '(ln -s python$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/python || true)',
-        # '$TARGET_FOLDER/bin/easy_install scons',
+        "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/easy_install hashlib || true)",
+        '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip || true)',
+        '(ln -s pip$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/pip || true)',
+        "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/pip install  readline || true)",
+        '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
+        # '$INSTALL_FOLDER/bin/easy_install scons',
     ]
     def fixCMD(self, cmd):
         cmd = configure.fixCMD(self,cmd)
         if self.kargs.has_key('easy_install'):
             for each in self.kargs['easy_install']:
-                cmd += ' && $TARGET_FOLDER/bin/easy_install %s ' % each
+                cmd += ' && $INSTALL_FOLDER/bin/easy_install %s ' % each
         if self.kargs.has_key('pip'):
             for each in self.kargs['pip']:
                 if int(pipe.apps.version.get('python').split('.')[0]) < 3 or 'PyOpenGL-accelerate' not in each:
-                    cmd += ' && $TARGET_FOLDER/bin/pip install %s ' % each
+                    cmd += ' && $INSTALL_FOLDER/bin/pip install %s ' % each
         return cmd
 
     # def installer(self, target, source, env): # noqa
     #     ''' create the bin apps without the version numbers '''
     #     ret=[]
     #     for each in ['python', 'pip']:
-    #             ret += os.popen( 'sudo ln -s %s$PYTHON_VERSION_MAJOR  $TARGET_FOLDER/bin/%s' % (each, each) ).readlines()
+    #             ret += os.popen( 'sudo ln -s %s$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/%s' % (each, each) ).readlines()
     #     return ret
 
 
@@ -443,8 +445,8 @@ class cortex(configure):
     environ = {
     }
     cmd=[
-        'scons OPTIONS=%s/cortex.options.py -j $DCORES'         % os.path.abspath( os.path.dirname(__file__)),
-        'scons OPTIONS=%s/cortex.options.py -j $DCORES'         % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/cortex.options.py -j $DCORES'         % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/cortex.options.py -j $DCORES'         % os.path.abspath( os.path.dirname(__file__)),
         # 'scons OPTIONS=%s/cortex.options.py -j $DCORES install' % os.path.abspath( os.path.dirname(__file__)),
     ]
     apps=[]
@@ -645,8 +647,8 @@ class gaffer(cortex):
     environ = {
     }
     cmd=[
-        'scons OPTIONS=%s/gaffer.options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
-        'scons OPTIONS=%s/gaffer.options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/gaffer.options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/gaffer.options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
     ]
     # disable Appleseed build since we don't have it building yet!
     sed={'0.0.0' : {
@@ -663,7 +665,7 @@ class gaffer(cortex):
         app = '%s/%s' % (pipe.roots.apps(), '/'.join(targetFolder.split('/')[-2:]))
         ret = []
         if not os.path.exists( app ):
-            ret += os.popen( 'sudo ln -s $TARGET_FOLDER  %s' % app ).readlines()
+            ret += os.popen( 'sudo ln -s $INSTALL_FOLDER  %s' % app ).readlines()
         # for each in glob("%s/bin/*" % targetFolder):
         #     each = os.path.basename(each)
         #     if 'linux-gnu' not in each:

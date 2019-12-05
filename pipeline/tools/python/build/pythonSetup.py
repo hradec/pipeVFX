@@ -32,7 +32,7 @@ import os,sys
 class pythonSetup(generic):
     src = 'setup.py'
     cmd = [
-        'python setup.py install  --prefix=$TARGET_FOLDER',
+        'python setup.py install  --prefix=$INSTALL_FOLDER',
     ]
 
     # def uncompressor( self, target, source, env):
@@ -50,7 +50,7 @@ class pythonSetup(generic):
     #         configure.uncompressor( self, target, source, env)
 
     def fixCMD(self, cmd):
-        mkdir = 'mkdir -p $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ && export PYTHONPATH=$TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/:$PYTHONPATH'
+        mkdir = 'mkdir -p $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ && export PYTHONPATH=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/:$PYTHONPATH'
         if mkdir.replace(' ','').lower() not in cmd.replace(' ','').lower():
             cmd = "%s && %s" % (mkdir,cmd)
 
@@ -58,7 +58,7 @@ class pythonSetup(generic):
             f = ' '.join(set(self.flags))
             if f not in cmd:
                 cmd += ' ' + f
-                
+
         return cmd
 
 
@@ -82,7 +82,7 @@ class pythonSetup(generic):
 #        self.runCMD(cmd,target,source)
 
 ##        cmd = 'cd "%s"; ppython %s install --prefix=%s' % (os.path.dirname(source), os.path.basename(source), os.path.join(dirLevels,installDir))
-#        cmd = 'mkdir -p $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ &&  python %s install --prefix=$TARGET_FOLDER' % (
+#        cmd = 'mkdir -p $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ &&  python %s install --prefix=$INSTALL_FOLDER' % (
 #            env['CMD'],
 #        )
 #        print bcolors.GREEN+'\tinstalling...'+bcolors.END

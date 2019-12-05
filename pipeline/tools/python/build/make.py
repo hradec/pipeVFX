@@ -32,7 +32,7 @@ import os,sys
 class make(generic):
     ''' a class to handle make installs '''
     src = 'Makefile'
-    cmd = 'make -j $DCORES && make install'
+    cmd = ' make -j $DCORES && make install'
     _parallel=''
     _verbose=''
     _verbose_cmake=''
@@ -51,9 +51,9 @@ class make(generic):
         # verbose=1 show the command lines in cmake
         self._verbose = ''
         self._verbose_cmake = ''
-        if 'verbose' in kargs and kargs['verbose'] == 1:
-            self._verbose = 'VERBOSE=1'
-            self._verbose_cmake = '-DVERBOSE=1'
+        if hasattr(self, 'verbose') and self.verbose>0:
+            self._verbose = ' VERBOSE=1 '
+            self._verbose_cmake = ' -DVERBOSE=1 '
 
     def fixCMD(self, cmd, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
@@ -72,8 +72,8 @@ class cmake(make):
     ''' a class to handle cmake installs '''
     src = 'CMakeLists.txt'
     cmd = [
-        'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER && '
-        'make $MAKE_PARALLEL $MAKE_VERBOSE && make install'
+        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
+        ' make $MAKE_PARALLEL $MAKE_VERBOSE &&  make install'
     ]
     flags = [
             '-Wno-dev',
@@ -159,16 +159,16 @@ class cmake(make):
 class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
-        'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER && '
-        'make $MAKE_PARALLEL $MAKE_VERBOSE  && make install',
+        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
+        ' make $MAKE_PARALLEL $MAKE_VERBOSE  &&  make install',
         '( [ "$(basename $TARGET_FOLDER)" == "1.5.8" ] ',
-        '( mkdir -p $TARGET_FOLDER/bin/',
-        '  mkdir -p $TARGET_FOLDER/include/',
-        '  mkdir -p $TARGET_FOLDER/lib/',
-        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $TARGET_FOLDER/bin/',
-        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $TARGET_FOLDER/include/',
-        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $TARGET_FOLDER/lib/',
-        '  rm -rf $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER) '
+        '( mkdir -p $INSTALL_FOLDER/bin/',
+        '  mkdir -p $INSTALL_FOLDER/include/',
+        '  mkdir -p $INSTALL_FOLDER/lib/',
+        '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $INSTALL_FOLDER/bin/',
+        '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $INSTALL_FOLDER/include/',
+        '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $INSTALL_FOLDER/lib/',
+        '  rm -rf $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER) '
         ') || true )'
     ]
     # alembic has some hard-coded path to find python, and the only
@@ -304,7 +304,7 @@ class download(make):
     the build is just copying over the uncompressed source to the target folder to be used later by other builds
     '''
     src='CMakeLists.txt'
-    cmd=['mkdir -p $TARGET_FOLDER && cp -rfuv $SOURCE_FOLDER/* $TARGET_FOLDER/']
+    cmd=['mkdir -p $INSTALL_FOLDER && cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/']
     # as we want this packages just to be used for building other packages, we don't need a installation target_folder
 #    def installer(self, target, source, env):
 #        os.system("rm -rf %s" % os.path.abspath(os.path.dirname(os.path.dirname(str(target[0])))) )
@@ -318,7 +318,7 @@ class glew(make):
     cmd = ' && '.join([
 #        './cmake-testbuild.sh'
 #        'cd auto && make destroy && make && cd ..',
-        'make CC="$CC" CFLAGS="$CFLAGS -Iinclude" GLEW_DEST=$TARGET_FOLDER install.all',
+        ' make CC="$CC" CFLAGS="$CFLAGS -Iinclude" GLEW_DEST=$INSTALL_FOLDER install.all',
     ])
     sed = {
         '0.0.0' : {
@@ -367,7 +367,7 @@ class tbb(make):
     ''' a make class to exclusively build intels TBB package
     since we need to handle the installation by ourselfs, we override
     installer() method'''
-    cmd = ['make -j $DCORES ']
+    cmd = [' make -j $DCORES ']
 
     def installer(self, target, source, env):
         '''we use this method to do a custom tbb install
