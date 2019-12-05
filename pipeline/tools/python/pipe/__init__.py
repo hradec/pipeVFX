@@ -44,6 +44,15 @@ os.chdir(curdir)
 
 from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name
 
+
+def versionSort(versions):
+    def method(v):
+        v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
+        return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
+    tmp =  sorted( versions, key=method, reverse=True )
+    # print tmp
+    return tmp
+
 # we need this in OSX to force setup brew pythonpath, just in case!
 if osx:
     # we only set brew pythonpath if running system python!

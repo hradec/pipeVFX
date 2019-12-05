@@ -21,6 +21,7 @@
 
 import build, devRoot
 import SCons, os
+from pipe import versionSort
 
 
 mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
@@ -28,13 +29,13 @@ mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").re
 SCons.Script.SetOption('warn', 'no-all')
 #SCons.Script.SetOption('num_jobs', 8)
 
-def versionSort(versions):
-    def method(v):
-        v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
-        return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
-    tmp =  sorted( versions, key=method, reverse=True )
-    # print tmp
-    return tmp
+# def versionSort(versions):
+#     def method(v):
+#         v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
+#         return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
+#     tmp =  sorted( versions, key=method, reverse=True )
+#     # print tmp
+#     return tmp
 
 
 class all: # noqa
@@ -130,6 +131,7 @@ class all: # noqa
             #     '091c56e0e1cca6b09b17b69d47ef18e3'
             )],
             depend = [self.gcc_4_1_2],
+            environ = { 'LD' : 'ld' },
         )
         allDepend += [gmp]
 
@@ -143,7 +145,7 @@ class all: # noqa
                 '95dcfd8629937996f826667b9e24f6ff',
             )],
             depend = [gmp, self.gcc_4_1_2],
-            environ= {'LDFLAGS' : ' $LDFLAGS -L$GMP_TARGET_FOLDER/lib '},
+            environ = { 'LD' : 'ld' },
         )
         allDepend += [mpfr]
 
@@ -157,7 +159,7 @@ class all: # noqa
                'd6a1d5f8ddea3abd2cc3e98f58352d26',
             )],
             depend = [mpfr, gmp, self.gcc_4_1_2],
-            environ= {'LDFLAGS' : ' $LDFLAGS -L$MPFR_TARGET_FOLDER/lib '},
+            environ = { 'LD' : 'ld' },
         )
         allDepend += [mpc]
 
@@ -249,6 +251,7 @@ class all: # noqa
                    { build.override.src: 'gcc.spec' }
                 )],
                 depend = allDepend+[self.gcc_4_1_2],
+                environ = { 'LD' : 'ld' },
         )
         self.gcc = gcc
         # lets use our own latest GCC to build everything!!!
@@ -282,10 +285,10 @@ class all: # noqa
                 { gcc : '4.1.2' }
             )],
             cmd = [
-                'make -j $DCORES CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$TARGET_FOLDER',
-                'make -j $DCORES PREFIX=$TARGET_FOLDER install',
-                'make -j $DCORES -f Makefile-libbz2_so CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$TARGET_FOLDER',
-                'cp -rfuv ./libbz2.so.* $TARGET_FOLDER/lib64/'
+                'make -j $DCORES CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$INSTALL_FOLDER',
+                'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
+                'make -j $DCORES -f Makefile-libbz2_so CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$INSTALL_FOLDER',
+                'cp -rfuv ./libbz2.so.* $INSTALL_FOLDER/lib64/'
             ],
             depend = allDepend,
         )
@@ -310,8 +313,8 @@ class all: # noqa
             )],
             cmd = [
                 './configure ',
-                'make -j $DCORES SHLIB_LIBS="-lncurses" CFLAGS="$CFLAGS -fPIC" PREFIX=$TARGET_FOLDER',
-                'make -j $DCORES PREFIX=$TARGET_FOLDER install',
+                'make -j $DCORES SHLIB_LIBS="-lncurses" CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER',
+                'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
             ],
             depend = allDepend,
         )
@@ -369,7 +372,10 @@ class all: # noqa
                     { gcc : '4.8.5', readline : '7.0.0', openssl : '1.0.2s' },
             )],
             # this fixes https not finding certificate in easy_install
-            environ = {"PYTHONHTTPSVERIFY" : "0"},
+            environ = {
+                "PYTHONHTTPSVERIFY" : "0",
+                'LD' : 'ld',
+            },
             depend = allDepend+[readline,bzip2,icu],
             pip = [
                 'epydoc',
@@ -537,7 +543,7 @@ class all: # noqa
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
             cmd = [
-                './configure --enable-shared --prefix=$TARGET_FOLDER',
+                './configure --enable-shared --prefix=$INSTALL_FOLDER',
                 'make install INSTALL="/usr/bin/install -D"',
             ],
             depend = allDepend,
@@ -574,7 +580,7 @@ class all: # noqa
             depend=[gcc]+allDepend,
             cmd = [
                 './mkdist.sh',
-                './configure --enable-shared --prefix=$TARGET_FOLDER',
+                './configure --enable-shared --prefix=$INSTALL_FOLDER',
                 # it seems there's UTF-8 characters in the source code, so we need to clena it up!
                 'cp src/../internal/libraw_x3f.cpp ./xx',
                 'iconv -f UTF-8 -t ASCII -c ./xx -o src/../internal/libraw_x3f.cpp',
@@ -607,6 +613,7 @@ class all: # noqa
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend=[jpeg, libraw]+allDepend,
+            environ = { 'LD' : 'ld' },
             parallel=0,
         )
         self.tiff = tiff
@@ -623,6 +630,7 @@ class all: # noqa
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend = allDepend,
+            environ = { 'LD' : 'ld' },
         )
         self.libpng = libpng
         allDepend += [libpng]
@@ -644,6 +652,7 @@ class all: # noqa
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend = allDepend,
+            environ = { 'LD' : 'ld' },
         )
         self.freetype = freetype
         allDepend += [freetype]
@@ -677,6 +686,7 @@ class all: # noqa
                 'ce55e525c37147eee14cc2de6cc09f6c'
             )],
             depend = allDepend+[gperf],
+            environ = { 'LD' : 'ld' },
         )
         self.fontconfig = fontconfig
         allDepend += [fontconfig]
@@ -702,6 +712,7 @@ class all: # noqa
             )],
             baseLibs=[python],
             depend=[gcc, python, openssl]+allDepend,
+            environ = { 'LD' : 'ld' },
         )
         self.dbus = dbus
         allDepend += [dbus]
@@ -897,6 +908,7 @@ class all: # noqa
             depend=[gcc, python, openssl]+allDepend,
             environ={
                 'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
+                'LD'      : 'ld',
             },
             cmd = [
                 './configure  --enable-shared ',
@@ -948,6 +960,7 @@ class all: # noqa
             depend=[ilmbase, gcc, python, openssl]+allDepend,
             environ={
                 'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
+                'LD'      : 'ld',
             },
             cmd = [
                 './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
@@ -1046,6 +1059,7 @@ class all: # noqa
                 'make -j $DCORES',
                 'make -j $DCORES install',
             ],
+            environ = {'LD' : 'ld'},
         )
         self.hdf5 = hdf5
 
@@ -1411,7 +1425,7 @@ class all: # noqa
                 '( [ "$(basename $TARGET_FOLDER)" == "4.8.7" ] && '
                     './configure  -opensource -shared --confirm-license  -no-webkit -silent '
                 '|| '
-                    './configure -plugindir $TARGET_FOLDER/qt/plugins -release -opensource --confirm-license '
+                    './configure -plugindir $INSTALL_FOLDER/qt/plugins -release -opensource --confirm-license '
                     '-no-rpath -no-gtkstyle -no-audio-backend -no-dbus '
                     '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
                     '-no-libudev -no-gstreamer -no-icu -qt-pcre -qt-xcb '
@@ -1472,8 +1486,8 @@ class all: # noqa
                 # 'source scl_source enable devtoolset-6',
                 'make '#'-j $DCORES '
                 'USE_CPP11=1 '
-                'INSTALLDIR=$TARGET_FOLDER '
-                'INSTALL_PREFIX=$TARGET_FOLDER '
+                'INSTALLDIR=$INSTALL_FOLDER '
+                'INSTALL_PREFIX=$INSTALL_FOLDER '
                 'MY_CMAKE_FLAGS="-DENABLERTTI=0 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
                 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=0" '
                 'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
@@ -1533,16 +1547,16 @@ class all: # noqa
                 '5c1acbf9bdec2359d414cc7d2a2b6b7f',
             )],
             cmd = [
-                'rm -rf $TARGET_FOLDER/*',
-                'mkdir -p $TARGET_FOLDER/lib/python/site_packages/src',
-                'ln -s python $TARGET_FOLDER/lib/python2.6',
-                'ln -s python $TARGET_FOLDER/lib/python2.7',
-                'ln -s python $TARGET_FOLDER/lib/python3.5',
-                'ln -s python $TARGET_FOLDER/lib/python3.6',
-                'ln -s python $TARGET_FOLDER/lib/python3.7',
-                'ln -s lib $TARGET_FOLDER/lib64',
-                'cp -rf ./Qt.py $TARGET_FOLDER/lib/python/site_packages/',
-                'cp -rf ./* $TARGET_FOLDER/lib/python/site_packages/src/',
+                'rm -rf $INSTALL_FOLDER/*',
+                'mkdir -p $INSTALL_FOLDER/lib/python/site_packages/src',
+                'ln -s python $INSTALL_FOLDER/lib/python2.6',
+                'ln -s python $INSTALL_FOLDER/lib/python2.7',
+                'ln -s python $INSTALL_FOLDER/lib/python3.5',
+                'ln -s python $INSTALL_FOLDER/lib/python3.6',
+                'ln -s python $INSTALL_FOLDER/lib/python3.7',
+                'ln -s lib $INSTALL_FOLDER/lib64',
+                'cp -rf ./Qt.py $INSTALL_FOLDER/lib/python/site_packages/',
+                'cp -rf ./* $INSTALL_FOLDER/lib/python/site_packages/src/',
             ],
             src = 'Qt.py'
         )
@@ -1590,12 +1604,12 @@ class all: # noqa
             baseLibs=[python],
             src = 'configure.py',
             cmd = [
-                # 'python configure.py --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+                # 'python configure.py --sysroot=$INSTALL_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
                 'python configure.py '
-                '-b $TARGET_FOLDER/bin '
-                '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-                '-e $TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
-                '-v $TARGET_FOLDER/share/sip/ '
+                '-b $INSTALL_FOLDER/bin '
+                '-d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+                '-e $INSTALL_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
+                '-v $INSTALL_FOLDER/share/sip/ '
                 'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
                 'make -j $DCORES && make -j $DCORES install',
             ],
@@ -1633,7 +1647,7 @@ class all: # noqa
             src = 'configure.py',
             cmd = [
                 '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
-                        'python configure.py --confirm-license --assume-shared --protected-is-public  --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        'python configure.py --confirm-license --assume-shared --protected-is-public  --sysroot=$INSTALL_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
                         '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
                         '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
                     # =======================================================
@@ -1643,9 +1657,9 @@ class all: # noqa
                     # =======================================================
                     # '|| '
                     #     'python configure.py --confirm-license --verbose --no-designer-plugin -w --protected-is-public '
-                    #     '-b $TARGET_FOLDER/bin '
-                    #     '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-                    #     "-v $TARGET_FOLDER/share/sip/PyQt$(echo $QT_VERSION | awk -F'.' '{print $1}') "
+                    #     '-b $INSTALL_FOLDER/bin '
+                    #     '-d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+                    #     "-v $INSTALL_FOLDER/share/sip/PyQt$(echo $QT_VERSION | awk -F'.' '{print $1}') "
                     #     'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
                     #     '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
                     #     '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
@@ -1722,7 +1736,7 @@ class all: # noqa
                 { gcc : '4.1.2' }
             )],
             depend=[gcc],
-            flags=['-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER '],
+            flags=['-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '],
         )
         self.blosc = blosc
         allDepend += [blosc]
@@ -1766,11 +1780,11 @@ class all: # noqa
                 '( [ "$(basename $TARGET_FOLDER)" == "2.0.42" ] ',
                     'cd src',
                     'make',
-                    'cp -rfuv ../install/* $TARGET_FOLDER/',
-                    'cp $TARGET_FOLDER/lib/* $TARGET_FOLDER/lib64/'
+                    'cp -rfuv ../install/* $INSTALL_FOLDER/',
+                    'cp $INSTALL_FOLDER/lib/* $INSTALL_FOLDER/lib64/'
                 ' ) || ( '+\
                     ' && '.join(build.cmake.cmd).replace('cmake','cmake -DPTEX_VER=$(basename $TARGET_FOLDER)'),
-                    'cp $TARGET_FOLDER/lib64/* $TARGET_FOLDER/lib/'
+                    'cp $INSTALL_FOLDER/lib64/* $INSTALL_FOLDER/lib/'
                 ' )'
             ]
         )
@@ -1792,35 +1806,35 @@ class all: # noqa
                 'openvdb-6.0.0.tar.gz',
                 '6.0.0',
                 '43604208441b1f3625c479ef0a36d7ad',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6' }
             ),(
                 # CY 2018
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
                 'openvdb-5.0.0.tar.gz',
                 '5.0.0',
                 '9ba08c29dda60ec625acb8a5928875e5',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6' }
             ),(
                 # CY 2017
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
                 'openvdb-4.0.0.tar.gz',
                 '4.0.0',
                 'c56d8a1a460f1d3327f2568e3934ca6a',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6' }
             ),(
                 # CY 2015-2016
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
                 'openvdb-3.0.0.tar.gz',
                 '3.0.0',
                 '3ca8f930ddf759763088e265654f4084',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', build.override.src: 'README' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6', build.override.src: 'README' }
             )],
             depend=allDepend+[openexr, ilmbase, glfw],
             src = "README.md",
             cmd = [
             "cd openvdb",
             " make install -j $DCORES"
-			" DESTDIR=$TARGET_FOLDER"
+			" DESTDIR=$INSTALL_FOLDER"
 			" BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include"
 			" BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
 			" BOOST_PYTHON_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
@@ -1839,8 +1853,8 @@ class all: # noqa
 			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
 			" LOG4CPLUS_INCL_DIR="
 			" EPYDOC= ",
-            "cp $TARGET_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $TARGET_FOLDER/python",
-		    "cp $TARGET_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $TARGET_FOLDER/include",
+            "cp $INSTALL_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $INSTALL_FOLDER/python",
+		    "cp $INSTALL_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $INSTALL_FOLDER/include",
             ]
         )
         self.openvdb = openvdb
@@ -1887,6 +1901,10 @@ class all: # noqa
             )],
             # baseLibs=[python],
             depend=allDepend+[hdf5],
+            environ = {
+                'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib $LDFLAGS',
+            },
+
         )
         self.alembic = alembic
 
@@ -1949,14 +1967,14 @@ class all: # noqa
             depend=allDepend+[boost, hdf5, glfw, glew, ptex],
             flags=[
                 "-DGLEW_LOCATION=$GLEW_TARGET_FOLDER/",
-                "$CMAKE_VERBOSE",
+                "-DVERBOSE=1",
             ],
             environ = {
                 'CFLAGS'    : ' -fopenmp $CFLAGS ',
                 'CXXFLAGS'  : ' -fopenmp $CXXFLAGS ',
                 'LDFLAGS'   : ' -lX11 $LDFLAGS',
             },
-            verbose=1
+            verbose=1,
         )
         self.opensubdiv = opensubdiv
 
@@ -1996,8 +2014,8 @@ class all: # noqa
                 "mkdir build",
                 "cd build",
                 "cmake"
-                " -D CMAKE_INSTALL_PREFIX=$TARGET_FOLDER"
-                " -D CMAKE_PREFIX_PATH=$TARGET_FOLDER"
+                " -D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER"
+                " -D CMAKE_PREFIX_PATH=$INSTALL_FOLDER"
                 " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
                 " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
                 " -D Boost_NO_SYSTEM_PATHS=TRUE"
@@ -2029,15 +2047,22 @@ class all: # noqa
                 " -D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER"
                 # " -D PXR_BUILD_EMBREE_PLUGIN=TRUE"
                 # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
-                " --build --target install -j $HCORES ..",
-                "make -j $HCORES",
+                " --build --target install -j $CORES ..",
+                "make -j $CORES",
                 "make install",
-                "mv $TARGET_FOLDER/lib/python/pxr $TARGET_FOLDER/python",
+                "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
             ],
             environ = {
-                'CFLAGS'   : ' -fopenmp -O2 -fPIC -w ',
-                'CXXFLAGS' : ' -fopenmp -O2 -fPIC -w ',
+                'CFLAGS'    : ' -fopenmp -O2 -fPIC -w ',
+                'CXXFLAGS'  : ' -fopenmp -O2 -fPIC -w ',
+                'LD'        : 'ld',
+                'LDFLAGS'   : '$LDFLAGS -lboost_regex-mt',
+                'LD_PRELOAD': ':'.join([
+                    '$GCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                    '$GCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                ]),
             },
+            verbose=1,
         )
         self.usd = usd
 
