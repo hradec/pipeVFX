@@ -39,8 +39,10 @@ _spinnerCount = 0
 
 global buildTotal
 global buildCounter
+global buildStartTime
 buildTotal=0
 buildCounter=0
+buildStartTime=time.time()
 global sconsParallel
 sconsParallel='1' in os.environ['TRAVIS'] or '-j' in os.environ['EXTRA']
 
@@ -653,9 +655,11 @@ class generic:
                 n = "%s (py %s)" % (n, t.split('.python')[-1].split('.done')[0])
             _print( bcolors.WARNING+':'+'='*tcols )
 
-            _print( bcolors.WARNING+": %s[% 3d%%] %s %s( %s )" % (
+            _elapsed = time.gmtime(time.time()-buildStartTime)
+            _print( bcolors.WARNING+": %s[% 3d%%] [%02d:%02d:%02d] %s %s( %s ) " % (
                 bcolors.GREEN,
                 int((float(buildCounter)/float(buildTotal))*100.0),
+                _elapsed.tm_hour, _elapsed.tm_min, _elapsed.tm_sec,
                 bcolors.BLUE,
                 self.className,
                 n
