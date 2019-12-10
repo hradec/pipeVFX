@@ -267,7 +267,7 @@ class all: # noqa
         # everythin will depend on this dummy post-gcc build, so everything
         # will wait for gcc to finish before start.
         # this is essential when building packages in parallel (scons -j)
-        self.gcc_wait = build.wait4dependencies(self.gcc, 'pos')
+        self.gcc_wait = build.wait4dependencies(self.gcc, 'pos', version='4.8.5')
         # lets use our own latest GCC to build everything!!!
         allDepend += [self.gcc_wait]
 
