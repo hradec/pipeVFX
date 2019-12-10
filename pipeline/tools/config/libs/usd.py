@@ -41,5 +41,10 @@ class usd(baseLib):
 
 
         pipe.apps.maya.addon ( self,
-            plugin     = self.path('third_party/maya/plugin'),
+            plugin     = self.path('maya.$MAYA_VERSION/third_party/maya/plugin'),
+            script     = self.path('maya.$MAYA_VERSION/third_party/maya/lib/usd/usdMaya/resources/'),
+            lib        = [
+                self.path('lib'),
+                self.path('maya.$MAYA_VERSION/third_party/maya/lib'),
+            ],
         )
