@@ -36,6 +36,7 @@ class make(generic):
     _parallel=''
     _verbose=''
     _verbose_cmake=''
+    flags=[]
     def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         generic.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
         # some extra parameters to control log output and parallel building
@@ -65,6 +66,10 @@ class make(generic):
             'export MAKE_VERBOSE="%s"' % self._verbose,
             'export CMAKE_VERBOSE="%s"' % self._verbose_cmake,
         ]
+        for each in self.flags:
+            if 'make' in cmd and each.split('=')[0] not in cmd:
+                cmd = cmd.replace('make','make '+each+' ')
+
         return cmd
 
 
@@ -165,9 +170,10 @@ class alembic(cmake):
         '( mkdir -p $INSTALL_FOLDER/bin/',
         '  mkdir -p $INSTALL_FOLDER/include/',
         '  mkdir -p $INSTALL_FOLDER/lib/',
-        '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $INSTALL_FOLDER/bin/',
-        '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $INSTALL_FOLDER/include/',
-        '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $INSTALL_FOLDER/lib/',
+        '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/* $INSTALL_FOLDER/',
+        # '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $INSTALL_FOLDER/bin/',
+        # '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $INSTALL_FOLDER/include/',
+        # '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $INSTALL_FOLDER/lib/',
         '  rm -rf $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER) '
         ') || true )'
     ]
@@ -235,14 +241,20 @@ class alembic(cmake):
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
             '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_TARGET_FOLDER/lib/libpython$PYTHON_VERSION_MAJOR.so',
             '-DALEMBIC_SHARED_LIBS=1',
-            '-DUSE_PRMAN=1',
-            '-DUSE_MAYA=1',
+            # '-DUSE_PRMAN=1',
+            # '-DUSE_MAYA=1',
             '-DBUILD_SHARED_LIBS:BOOL="TRUE"',
             '-DBUILD_STATIC_LIBS:BOOL="FALSE" ',
             "-DUSE_HDF5=ON",
+            '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+            '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
         ]
 
         cmd = cmd.replace('cmake', 'cmake  -DBUILD_SHARED_LIBS:BOOL="TRUE"  -DBUILD_STATIC_LIBS:BOOL="FALSE" ')
+
+        for each in self.flags:
+            if 'cmake' in cmd and each.split('=')[0] not in cmd:
+                cmd = cmd.replace('cmake','cmake '+each+' ')
 
         return cmake.fixCMD(self, cmd, [
             'export PRMAN_ROOT=$PRMAN_ROOT/RenderManProServer-$PRMAN_VERSION'
