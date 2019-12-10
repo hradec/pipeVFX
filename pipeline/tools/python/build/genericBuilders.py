@@ -39,13 +39,16 @@ _spinnerCount = 0
 
 global buildTotal
 global buildCounter
-global sconsParallel
 buildTotal=0
 buildCounter=0
-sconsParallel='-j' in os.environ['EXTRA']
+global sconsParallel
+sconsParallel='1' in os.environ['TRAVIS'] or '-j' in os.environ['EXTRA']
 
 mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
-memGB = int(mem)/1024/1024
+if 'MEMGB' in os.environ:
+    mem = os.environ['MEMGB']
+memGB = float(mem)/1024/1024
+print "Memory: %sGB" % memGB
 
 
 def _print(*args):
@@ -55,9 +58,12 @@ def _print(*args):
     if sconsParallel:
         p = False
         l = ' '.join([ str(x) for x in args])
-        if '[' in l[:15] and ']' in l[:15]:
+        if '[' in l[:20] and ']' in l[:20]:
+            p = True
+        if 'processing' in l or 'building' in l:
             p = True
     if p:
+        sys.stdout.write('\033[2K\033[1G')
         if args[-1] == '\r':
             print " ".join([str(x) for x in args]),
         else:
@@ -135,7 +141,7 @@ os.environ['CORES']  = '%d' % CORES
 os.environ['HCORES'] = '%d' % (CORES/2)
 
 # if we have less than 8GB, use half of the cores to build
-if memGB < 4:
+if memGB < 5:
     os.environ['DCORES'] = '%d' % (CORES/2)
     os.environ['CORES']  = '%d' % (CORES/4)
     os.environ['HCORES'] = '%d' % (CORES/8)
@@ -338,7 +344,7 @@ class generic:
         # set gcc_version for instalation purposes
         gcc_version = None
         for each in self.dependOn:
-            if 'gcc' == each.name:
+            if 'gcc' == each.name and not each.targetSuffix:
                 gcc_version = self.dependOn[each]
         if gcc_version == None:
             gcc_version='gcc-multi'
@@ -347,14 +353,19 @@ class generic:
 
         # set the base libraries to build for.
         # we'll repeat this package build for each base library version
+        class noBaseLibPlaceHolder:
+            name = 'noBaseLib'
+            downloadList = [('','','')]
+
         if type(self.baseLibs) == type(""):
-            class tmp:
-                name = self.baseLibs
-                downloadList = [('','','')]
-            self.baseLibs = tmp
+            self.baseLibs = noBaseLibPlaceHolder
 
         if type(self.baseLibs) != list:
             self.baseLibs = [self.baseLibs] #noqa
+
+        for n in range(len(self.baseLibs)):
+            if not self.baseLibs[n]:
+                self.baseLibs[n] = noBaseLibPlaceHolder
 
 
 
@@ -499,7 +510,7 @@ class generic:
                     self.dependOn.update( {baselib :  baselibDownloadList[2] } )
 
                     # find if baselib has gcc as dependency and add it to the list
-                    baselib_gcc = [ x for x in baselib.dependOn if 'gcc' in x.name ]
+                    baselib_gcc = [ x for x in baselib.dependOn if 'gcc' in x.name and not x.targetSuffix]
                     if baselib_gcc:
                         baselib_version = self.dependOn[baselib]
                         baselib_gcc_version = [ x for x in baselib.downloadList if x[2] == baselib_version ]
@@ -544,7 +555,7 @@ class generic:
                         # if not installed, remove build folder!
                         if os.path.exists(self.buildFolder[p][-1]):
                             cmd = "rm -rf "+self.buildFolder[p][-1]
-                            _print( ": __init__:",cmd )
+                            _print( ": __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
 
                     if download[n][0]:
@@ -563,13 +574,14 @@ class generic:
                         # if we have now download, just create the
                         # source file so we can build!
                         # this accounts for builds like python pip
-                        s = os.path.join(buildFolder(self.args),download[n][1])
-                        os.system('touch "%s"' % s)
+                        s = os.path.join(buildFolder(self.args),download[n][1],self.src)
+                        pkgs = []
+                        os.system( 'mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s),s) )
 
                     # run the action method of the class
                     # add dependencies as source so dependencies are built
                     # first.
-                    source = [s]
+                    source = []
                     for dependOn in self.dependOn:
                         if dependOn:
                             # check if this dependency applies to this version of the package!
@@ -594,6 +606,10 @@ class generic:
                                 if dependOn._depend[kk][depend_n] not in source:
                                     source.append( dependOn._depend[kk][depend_n] )
 
+                    # add dependency to uncompress
+                    self.env.Depends(s, source)
+                    source = [s]+source
+
                     # build
                     b = self.action( build, source )
 
@@ -603,7 +619,8 @@ class generic:
                     self._depend[p].append(t)
                     self.installAll.append(t)
                     self.env.Default(self.env.Alias( 'install', t ))
-                    self.env.Default(self.env.Alias( 'download', pkgs ))
+                    if not pkgs:
+                        self.env.Default(self.env.Alias( 'download', pkgs ))
                     self.env.Alias( 'build-%s' % name, t )
 
 
@@ -628,10 +645,14 @@ class generic:
             if not self.shouldBuild( target, source ):
                 return
             t=str(target[0])
-            n=' '.join(t.split(os.path.sep)[-3:-1])
+            extra = []
+            if self.targetSuffix:
+                extra = ['-',self.targetSuffix]
+            n=' '.join(t.split(os.path.sep)[-3:-1]+extra)
             if '.python' in t:
                 n = "%s (py %s)" % (n, t.split('.python')[-1].split('.done')[0])
             _print( bcolors.WARNING+':'+'='*tcols )
+
             _print( bcolors.WARNING+": %s[% 3d%%] %s %s( %s )" % (
                 bcolors.GREEN,
                 int((float(buildCounter)/float(buildTotal))*100.0),
@@ -700,7 +721,7 @@ class generic:
 
     def shouldBuild(self, target, source, cmd=None):
         lastlogFile = self.__lastlog(target[0])
-        lastlog = self.__check_target_log__( lastlogFile )
+        lastlog = self.__check_target_log__( lastlogFile, stage='pre-build' )
 
         if lastlog==0:
             os.popen("touch %s" % str(target[0])).readlines()
@@ -783,7 +804,7 @@ class generic:
         '''
         # by default, use the latest version
         depend_n = -1
-        if dependOn.name in ['gcc', 'python']:
+        if dependOn.name in ['gcc', 'python'] and not dependOn.targetSuffix:
             # or the oldest if it's gcc or python
             depend_n = 0
 
@@ -797,7 +818,7 @@ class generic:
                 if len(target.split('.python')) > 1:
                     pythonVersion = target.split('.python')[-1].split('.done')[0]
 
-                    if 'gcc' in dependOn.name:
+                    if 'gcc' in dependOn.name  and not dependOn.targetSuffix:
                         for python in [ x for x in self.dependOn if 'python' in x.name ]:
                             # find the gcc version used for the current python version
                             for gcc_version in [ x for x in python.downloadList if x[2] ==  pythonVersion ]:
@@ -839,22 +860,41 @@ class generic:
 
         return depend_n
 
-    def __check_target_log__(self,target, install=None):
+    def __check_target_log__(self,target, install=None, stage=''):
         ret=0
         if os.path.exists(target):
             lines = ''.join( open(target).readlines() )
-            if 'ld returned 1' in lines or 'ld: cannot find ' in lines:
-                ret = 1
-            elif "@runCMD_ERROR@" in lines:
-                ret = int( lines.split("@runCMD_ERROR@")[-2].strip() )
+            # check if ld failed
+            msg="__check_target_log__(%s): " % '/'.join(target.split('/')[-3:])
+            if len(lines) < 35:
+                if 'pre-build' in stage:
+                    _print( msg, 'last build log is empty!' )
+                ret = 999
+            if [ x for x in lines.split('\n') if 'ld returned 1' in x or 'ld: cannot find ' in x ]:
+                if 'pre-build' in stage:
+                    _print( msg, [ x for x in lines.split('\n') if 'ld returned 1' in x or 'ld: cannot find ' in x ] )
+                ret = 100
+            # check if we have a make error message
+            if [ x for x in lines.split('\n') if 'make:' in x and 'Error' in x and 'ignored' not in x ]:
+                if 'pre-build' in stage:
+                    _print( msg, [ x for x in lines.split('\n') if 'make:' in x and 'Error' in x and 'ignored' not in x ] )
+                ret = 101
+            if 'Configuring incomplete, errors occurred' in lines:
+                if 'pre-build' in stage:
+                    _print( msg+"last build failled during cmake!" )
+                ret = 253
+            if "@runCMD_ERROR@" not in lines:
+                if 'pre-build' in stage:
+                    _print( msg+"the build didn't finish suscessfully - rebuilding..." )
+                ret = 254
+            if "@runCMD_ERROR@" in lines:
+                code =  int(lines.split("@runCMD_ERROR@")[-2].strip())
+                if code and 'pre-build' in stage:
+                    _print( msg+"last build finished with error code: %d"  % code )
+                ret = code
         else:
             ret = 255
 
-        # # if not self.installer or install:
-        # if not glob("%s/*/*" % os.path.dirname(target)):
-        #     ret = 254
-
-        # print target, ret
         return ret
 
 
@@ -1016,6 +1056,9 @@ class generic:
                 if dependOn.name not in target and dependOn.name not in self.env['ENVIRON_DEPEND'].split(' '):
                     continue
 
+                if dependOn.name=='gcc'  and dependOn.targetSuffix:
+                    continue
+
                 # deal with python dependency
                 # the noBaseLib key holds all the paths for the python versions being built
                 if 'python' in dependOn.name:
@@ -1038,7 +1081,7 @@ class generic:
                         p = p[0]
                     else:
                         k.sort()
-                        if dependOn.name in ['gcc','python']:
+                        if dependOn.name in ['gcc','python'] and not dependOn.targetSuffix:
                             p = k[0]
                         else:
                             p = k[-1]
@@ -1057,8 +1100,8 @@ class generic:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder['noBaseLib'][depend_n])
 
                     PKG_CONFIG_PATH += [
-                        '%s/lib64/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
-                        '%s/lib/pkgconfig/:' % dependOn.targetFolder[p][depend_n],
+                        '%s/lib64/pkgconfig/:' % os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] ,
+                        '%s/lib/pkgconfig/:' % os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] ,
                     ]
                     # if dependency in explicit in GCCFLAGS or
                     # if dependency doesn't have a lib/pkconfig/*.pc file,
@@ -1075,10 +1118,11 @@ class generic:
                     # this also has the advantage of not "recording" the build search paths
                     # on build packages, so cmake won't pick the up later!
                     LIBRARY_PATH += [
-                        "%s/lib/"                               % dependOn.targetFolder[p][depend_n],
-                        "%s/lib64/"                             % dependOn.targetFolder[p][depend_n],
-                        "%s/lib/python$PYTHON_VERSION_MAJOR/"   % dependOn.targetFolder[p][depend_n],
-                        "%s/lib64/python$PYTHON_VERSION_MAJOR/" % dependOn.targetFolder[p][depend_n],
+                        "$%s_TARGET_FOLDER/lib/"                               % dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib64/"                             % dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"   % dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/" % dependOn.name.upper(),
+                        '$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/lib-dynload/'     %  dependOn.name.upper(),
                     ]
 
                     # include dependency search path in *_INCLUDE_PATH, so we don't
@@ -1088,7 +1132,7 @@ class generic:
                     # USD picks up -I<paths> from python, for example, and if we have gcc paths
                     # from the gcc version used to build python, those will interfere with
                     # the gcc version used with USD.
-                    C_INCLUDE_PATH += ["%s/include/" % dependOn.targetFolder[p][depend_n]]
+                    C_INCLUDE_PATH += ["$%s_TARGET_FOLDER/include/" %  dependOn.name.upper()]
 
                     # add extra folders inside dependency include folders
                     for each in glob("%s/include/*" % dependOn.targetFolder[p][depend_n]):
@@ -1097,12 +1141,12 @@ class generic:
 
                     # set python searchpath for dependencies
                     PYTHONPATH += [
-                        "%s/lib64/python$PYTHON_VERSION_MAJOR/"                 % dependOn.targetFolder[p][depend_n],
-                        "%s/lib64/python$PYTHON_VERSION_MAJOR/site-packages/"   % dependOn.targetFolder[p][depend_n],
-                        '%s/lib64/python$PYTHON_VERSION_MAJOR/lib-dynload/'     % dependOn.targetFolder[p][depend_n],
-                        "%s/lib/python$PYTHON_VERSION_MAJOR/"                   % dependOn.targetFolder[p][depend_n],
-                        "%s/lib/python$PYTHON_VERSION_MAJOR/site-packages/"     % dependOn.targetFolder[p][depend_n],
-                        '%s/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'       % dependOn.targetFolder[p][depend_n],
+                        "$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/"                 %  dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/site-packages/"   %  dependOn.name.upper(),
+                        '$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/lib-dynload/'     %  dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"                   %  dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/"     %  dependOn.name.upper(),
+                        '$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'       %  dependOn.name.upper(),
                     ]
 
                     # set PATH searchpath for dependencies binaries
@@ -1151,21 +1195,20 @@ class generic:
                 extraLabel = '(gcc %s / python %s)' % (  os_environ['GCC_VERSION'], os_environ['PYTHON_VERSION'] )
             lastlog = self.__lastlog( target,  os_environ['PYTHON_VERSION_MAJOR'] )
 
+        # set TARGET_FOLDER and INSTALL_FOLDER
         os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
         os_environ['INSTALL_FOLDER'] = os_environ['TARGET_FOLDER']
-        if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
-            os_environ['INSTALL_FOLDER'] = '/'.join([ os_environ['TARGET_FOLDER'], self.targetSuffix ]).replace('//','/')
+        if not hasattr(self, 'dontUseTargetSuffixForFolders'):
+            if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
+                os_environ['INSTALL_FOLDER'] = '/'.join([ os_environ['TARGET_FOLDER'], self.targetSuffix ]).replace('//','/')
 
         # create current package bin/libs folders so paths are not
         # removed from env vars
         folders = ['bin', 'lib', 'lib64']
-        _p = '.'.join( os.path.basename(lastlog).split('-')[0].split('.')[-2] )
+        _p = '.'.join( os.path.basename(lastlog).split('-')[0].split('.')[-2:] )
         if float(_p) > 1.0:
             folders += ['lib/python%s/site-packages' % _p]
-
-        if '/python/' in os_environ['TARGET_FOLDER']:
-            folders += ['lib/python%s/site-packages' % os.path.basename(os_environ['INSTALL_FOLDER'])]
 
         for n in folders:
             path = '%s/%s' % (os_environ['INSTALL_FOLDER'], n )
@@ -1224,22 +1267,6 @@ class generic:
         # use dependency gcc, if any!
         os_environ['CC']  = "%s %s" % (gcc['gcc'], os_environ['CC'].replace(':',"").replace('gcc',''))
         os_environ['CXX'] = "%s %s" % (gcc['g++'], os_environ['CXX'].replace(':',"").replace('g++',''))
-
-        # set extra env vars that were passed to the builder class in the environ parameter!
-        for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
-            _env = name.split('ENVIRON_')[-1]
-            if _env not in os_environ:
-                os_environ[_env]=''
-
-            # expand variables en v using os_environ
-            v = expandvars( v, env=os_environ )
-
-            # and now replace the variable in os_environ
-            # this way, one can add to the env var by assigning
-            # itself + the extra data. ex: LDFLAGS="$LDFLAGS -lGL"
-            # or can just replace the one created so far.
-            os_environ[_env] = v.strip(':').strip(' ')
-            # print _env
 
         # update LIB and LIBRARY_PATH
         os_environ['LIB'] = os_environ['LD_LIBRARY_PATH']
@@ -1308,8 +1335,14 @@ class generic:
         for each in proxies:
             os_environ[each.lower()] = proxies[each].strip()
 
+        # default to our gcc tarball in case we have none!!
+        # we should avoid using the system gcc at all times!!
+        if 'GCC_TARGET_FOLDER' not in os_environ and '4.1.2' not in os_environ['INSTALL_FOLDER']:
+            os_environ['GCC_VERSION'] = '4.1.2'
+            os_environ['GCC_TARGET_FOLDER'] = '%s/gcc/4.1.2/' % os.path.dirname(os.path.dirname(os_environ['INSTALL_FOLDER']))
+
         # only add gcc search paths if not building GCC.
-        if '/gcc/' not in target and 'GCC_TARGET_FOLDER' in os_environ:
+        if 'GCC_TARGET_FOLDER' in os_environ:
             # we set LD_LIBRARY_PATH to always use the latest GCC shared libraries.
             # since GCC shared libraries are backward compatible, we have to use the latest
             # to avoid "version `GLIBCXX_' not found" like errors
@@ -1483,7 +1516,10 @@ class generic:
         # after expanding all env var,
         # add LIBRARY_PATH to LD, if it's 'ld',
         # since 'ld' does not use LIBRARY_PATH
-        if 'ld' in os.path.basename(os_environ['LD'].split(' ')[0]):
+        LD = os.path.basename(os_environ['LD'].split(' ')[0])
+        if 'ENVIRON_LD' in self.env:
+            LD = self.env['ENVIRON_LD']
+        if 'ld' in LD:
             for each in set(os_environ['LIBRARY_PATH'].split(':')):
                 if os.path.exists(each) and glob( '%s/*' % each ):
                     os_environ['LDFLAGS'] += ' -L%s' % each
@@ -1505,6 +1541,23 @@ class generic:
             '/lib',
             '/lib64',
         ])
+
+        # set extra env vars that were passed to the builder class in the environ parameter!
+        # this must come last, so we can modify the env vars after they are all set!
+        for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
+            _env = name.split('ENVIRON_')[-1]
+            if _env not in os_environ:
+                os_environ[_env]=''
+
+            # expand variables en v using os_environ
+            v = expandvars( v, env=os_environ )
+
+            # and now replace the variable in os_environ
+            # this way, one can add to the env var by assigning
+            # itself + the extra data. ex: LDFLAGS="$LDFLAGS -lGL"
+            # or can just replace the one created so far.
+            os_environ[_env] = v.strip(':').strip(' ')
+            # print _env
 
         # cleanup paths that don't exist from the searchpath env vars!
         # checkPathsExist( os_environ )
@@ -1537,10 +1590,13 @@ class generic:
                 time.sleep(60)
         else:
             while proc.poll() is None:
+                tail = os.popen('tail -n 100 %s | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
+                if not tail:
+                    tail=['']
                 _elapsed = time.gmtime(time.time()-_start)
                 sys.stdout.write('\033[2K\033[1G')
                 sp="/-\|"
-                _print( bcolors.WARNING,"%s:\tbuilding: %s[%s]%s elapsed:%s %02d:%02d:%02d " % (
+                msg = bcolors.WARNING+"%s:\tbuilding: %s[%s]%s elapsed:%s %02d:%02d:%02d %slogtail:%s %s" % (
                     bcolors.BS,
                     bcolors.BLUE,
                     sp[_spinnerCount],
@@ -1548,14 +1604,18 @@ class generic:
                     bcolors.BLUE,
                     _elapsed.tm_hour,
                     _elapsed.tm_min,
-                    _elapsed.tm_sec
-                ), '\r', )
+                    _elapsed.tm_sec,
+                    bcolors.WARNING,
+                    bcolors.END,
+                    tail[0].strip()
+                )
+                _print( msg[:tcols-2], '\r', )
                 _spinnerCount += 1
                 if _spinnerCount >= len(sp):
                     _spinnerCount = 0
 
                 sys.stdout.flush()
-                time.sleep(3)
+                time.sleep(1)
             sys.stdout.write('\033[2K\033[1G')
 
         ret = self.__check_target_log__(lastlog)
@@ -1566,8 +1626,9 @@ class generic:
             _elapsed.tm_min,
             _elapsed.tm_sec
         ))
-        if _elapsed < 5:
-            ret=666
+        if _elapsed.tm_sec < 5 and _elapsed.tm_min+_elapsed.tm_hour==0:
+            if not hasattr(self, 'noMinTime') or not self.noMinTime:
+                ret=666
 
         # finished without errors!!
         if ret == 0:
@@ -1600,6 +1661,8 @@ class generic:
             _print( cmd )
             _print( '-'*tcols )
             _print( self.travis, self.__class__ )
+            if ret==666:
+                _print( bcolors.FAIL+"ERROR - BUILD WAS TOO FAST (%d secs)!!!! IF THIS IS CORRECT, SET noMinTime=True WHEN CREATING THE BUILD CLASS OBJECT!!%s" % (_elapsed.tm_sec,bcolors.END) )
             sys.stdout.flush()
             if not self.travis and not sconsParallel:
                 os.chdir(os_environ['SOURCE_FOLDER'])
@@ -1685,24 +1748,24 @@ class generic:
                             self.os_environ[each] = ' '.join(v)
 
             # remove python paths that are not the same version, just in case!
-            for each in self.os_environ:
-                if '/' in str(v):
-                    cleanSearchPath = []
-                    for path in self.os_environ[each].split(':'):
-                        if not path.strip():
-                            continue
-                        if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
-                            pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
-                            pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
-                            # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
-                            if pathVersion1:
-                                if pathVersion1 != self.os_environ['PYTHON_VERSION']:
-                                    continue
-                            if pathVersion2:
-                                if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
-                                    continue
-                        cleanSearchPath.append(path)
-                    self.os_environ[each] = ':'.join(cleanSearchPath)
+            # for each in self.os_environ:
+            #     if '/' in str(v):
+            #         cleanSearchPath = []
+            #         for path in self.os_environ[each].split(':'):
+            #             if not path.strip():
+            #                 continue
+            #             if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
+            #                 pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
+            #                 pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
+            #                 # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
+            #                 if pathVersion1:
+            #                     if pathVersion1 != self.os_environ['PYTHON_VERSION']:
+            #                         continue
+            #                 if pathVersion2:
+            #                     if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
+            #                         continue
+            #             cleanSearchPath.append(path)
+            #         self.os_environ[each] = ':'.join(cleanSearchPath)
 
         # self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
         # self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
@@ -1737,9 +1800,10 @@ class generic:
         this garantees things get installed!'''
         _TARGET = str(target[0])
         TARGET_FOLDER = os.path.dirname(_TARGET)
-        if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
-            # TARGET_FOLDER becomes INSTALL_FOLDER here, if necessary
-            TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ]).replace('//','/').rstrip('/')
+        if not hasattr(self, 'dontUseTargetSuffixForFolders'):
+            if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
+                # TARGET_FOLDER becomes INSTALL_FOLDER here, if necessary
+                TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ]).replace('//','/').rstrip('/')
 
         if not hasattr(self, 'apps'):
             if not os.path.exists(_TARGET) or not glob( '%s/*/*' % TARGET_FOLDER ):
@@ -1782,7 +1846,7 @@ class generic:
             if os.path.exists(os.path.dirname(each)):
                 cmd = "rm -rf %s" % os.path.dirname(each)
                 # if ret:
-                #     _print( ": _installer_final_check: done - ",cmd )
+                # _print( ": _installer_final_check: done - ",cmd, each )
                 os.system(cmd)
 
         return True
@@ -1934,7 +1998,7 @@ class generic:
 
                     for updates in ['config.sub', 'config.guess']:
                         for file2update in os.popen('find %s -name %s 2>&1' % (os.path.dirname(t), updates) ).readlines():
-                            os.popen( "cp %s/%s %s"   % (os.path.dirname(s), updates, file2update) )
+                            os.popen( "cp %s/../.download/%s %s"   % (os.path.dirname(s), updates, file2update) )
                 else:
                     # os.mkdir(os.path.dirname(s))
                     # f=open(s, 'w')
@@ -1990,6 +2054,8 @@ class generic:
         tmp = os.path.basename(t).split('.python')[0]
         if '.noBaseLib' in t:
             tmp = os.path.basename(t).split('.noBaseLib')[0]
+        if self.do_not_use:
+            return
         url = filter(lambda x: tmp in x[1], self.downloadList)[0]
         for version in ids:
             v  = map(lambda x: int(x), version.split('.')[:3])
@@ -2114,21 +2180,20 @@ class generic:
         return ';'.join(ret)
 
 
-    @staticmethod
-    def pkg(download, pkg, version=None):
-        ''' # a function to manipulate the download list so we can switch dependency versions
-        on all download versions and delete pkg dependency from all versions
-        This method is specially usefull when we need to build the same pkg multiple times,
-        with different pkg depency versions. (like cortex that need to be build against all boost versions)
-        '''
-        # allways make a copy fo the original download, so we can
-        # change the dependency as we see fit!
-        hdownload = []
-        for n in range(len(download)):
-            hdownload.append( [ download[n][0], download[n][1], download[n][2], download[n][3], {} ] )
-            for i in download[n][4]:
-                if i != pkg:
-                    hdownload[n][4][i] = download[n][4][i]
-                if version != None:
-                    hdownload[n][4][pkg] = version
-        return hdownload
+def pkg(download, pkg, version=None):
+    ''' # a function to manipulate the download list so we can switch dependency versions
+    on all download versions and delete pkg dependency from all versions
+    This method is specially usefull when we need to build the same pkg multiple times,
+    with different pkg depency versions. (like cortex that need to be build against all boost versions)
+    '''
+    # allways make a copy fo the original download, so we can
+    # change the dependency as we see fit!
+    hdownload = []
+    for n in range(len(download)):
+        hdownload.append( [ download[n][0], download[n][1], download[n][2], download[n][3], {} ] )
+        for i in download[n][4]:
+            if i != pkg:
+                hdownload[n][4][i] = download[n][4][i]
+            if version != None:
+                hdownload[n][4][pkg] = version
+    return hdownload

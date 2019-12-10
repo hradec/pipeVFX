@@ -81,9 +81,12 @@ class all: # noqa
                     '4.1.2',
                     '094fa468653d11cf65df94cc41fb257c',
                 )],
+                # we need this since gcc 4.1.2 is binary and its just copied over
+                # without it the build would fail due to being less than 5 secs
+                noMinTime=True,
+                dontUseTargetSuffixForFolders = 1,
         )
         self.gcc_4_1_2 = gcc
-
 
         # zlib = build.configure(
         #     ARGUMENTS,
@@ -173,6 +176,7 @@ class all: # noqa
                 'e133e9ead8ec0a58d81166b461244fde'
             )],
             depend = [mpc, mpfr, gmp, self.gcc_4_1_2],
+            environ = { 'LD' : 'ld' },
         )
         self.flex = flex
         allDepend += [flex]
@@ -252,11 +256,20 @@ class all: # noqa
                 )],
                 depend = allDepend+[self.gcc_4_1_2],
                 environ = { 'LD' : 'ld' },
+                # we need this since we're not building GCC 6.3.0
+                # without it the build would fail due to being less than 5 secs
+                noMinTime=True,
         )
         self.gcc = gcc
-        # lets use our own latest GCC to build everything!!!
-        allDepend += [gcc]
+        allDepend = [self.gcc]+allDepend
 
+        # a dummy build that stalls until the passed build is done!
+        # everythin will depend on this dummy post-gcc build, so everything
+        # will wait for gcc to finish before start.
+        # this is essential when building packages in parallel (scons -j)
+        self.gcc_wait = build.wait4dependencies(self.gcc, 'pos')
+        # lets use our own latest GCC to build everything!!!
+        allDepend += [self.gcc_wait]
 
         icu = build.configure(
             ARGUMENTS,
@@ -271,6 +284,12 @@ class all: # noqa
             src = 'icu4c.css',
             cmd = ['cd ./source/'] + build.configure.cmd,
             depend = allDepend,
+            environ = {
+                'LD_PRELOAD': ':'.join([
+                    '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                    '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                ]),
+            },
         )
         self.icu = icu
 
@@ -291,6 +310,8 @@ class all: # noqa
                 'cp -rfuv ./libbz2.so.* $INSTALL_FOLDER/lib64/'
             ],
             depend = allDepend,
+            # bzip2 builds real fast!!
+            noMinTime=True,
         )
         self.bzip2 = bzip2
         allDepend += [bzip2]
@@ -520,6 +541,7 @@ class all: # noqa
             )],
             environ = {
                 'LDFLAGS' : '$LDFLAGS -lm -lGL ',
+                'LD' : 'ld',
             },
             depend = allDepend,
         )
@@ -547,9 +569,12 @@ class all: # noqa
                 'make install INSTALL="/usr/bin/install -D"',
             ],
             depend = allDepend,
+            environ = { 'LD' : 'ld' },
+            noMinTime=True,
         )
         self.jpeg = jpeg
         allDepend += [jpeg]
+
 
         jasper = build.configure(
             ARGUMENTS,
@@ -562,6 +587,7 @@ class all: # noqa
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend = allDepend,
+            environ = { 'LD' : 'ld' , 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/' },
         )
         self.jasper = jasper
         allDepend += [jasper]
@@ -585,7 +611,8 @@ class all: # noqa
                 'cp src/../internal/libraw_x3f.cpp ./xx',
                 'iconv -f UTF-8 -t ASCII -c ./xx -o src/../internal/libraw_x3f.cpp',
                 'make install INSTALL="/usr/bin/install -D"',
-            ]
+            ],
+            environ = { 'LD' : 'ld' },
         )
         # build.allDepend.append(libraw)
         self.libraw = libraw
@@ -613,7 +640,7 @@ class all: # noqa
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend=[jpeg, libraw]+allDepend,
-            environ = { 'LD' : 'ld' },
+            environ = { 'LD' : 'ld', 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/'  },
             parallel=0,
         )
         self.tiff = tiff
@@ -667,6 +694,7 @@ class all: # noqa
                 '9e251c0a618ad0824b51117d5d9db87e'
             )],
             depend = allDepend,
+            environ = { 'LD' : 'ld' },
         )
         self.gperf = gperf
         # allDepend += [gperf]
@@ -1024,6 +1052,7 @@ class all: # noqa
                 { gcc : '4.1.2', python : '2.7.16'}
             )],
             depend = allDepend,
+            environ = { 'LD' : 'ld' },
         )
         self.yasm = yasm
         allDepend += [yasm]
@@ -1168,13 +1197,19 @@ class all: # noqa
                 '3fe2cef4fb5f7bc78b136d2837e1062f',
                 { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16' }
             ),(
+                'https://github.com/OpenImageIO/oiio/archive/Release-1.8.10.tar.gz',
+                'oiio-Release-1.8.10.tar.gz',
+                '1.8.10',
+                'a129a4caa39d7ad79aa1a3dc60cb0418',
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+            ),(
                 'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                 'oiio-Release-2.0.11.tar.gz',
                 '2.0.11',
                 '4fa0ce4538fb2d7eb72f54f4036972d5',
-                { gcc : '4.8.5', boost : "1.56.0", python: '2.7.16' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
             )],
-            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2, libraw]+allDepend,
+            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2, libraw, libpng]+allDepend,
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
             flags = [
                 '-DUSE_PYTHON=0',
@@ -1186,10 +1221,29 @@ class all: # noqa
                     '$JPEG_TARGET_FOLDER',
                     '$LIBRAW_TARGET_FOLDER',
                     '$LIBPNG_TARGET_FOLDER',
+                    '$LIBTIFF_TARGET_FOLDER',
                 ])
             ]+build.cmake.flags,
+            environ = {
+                'LDFLAGS' : ' $LDFLAGS -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join([
+                    '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+                    '$TIFF_TARGET_FOLDER/lib/',
+                    '$JPEG_TARGET_FOLDER/lib/',
+                    '$LIBPNG_TARGET_FOLDER/lib/',
+                    '$LIBRAW_TARGET_FOLDER/lib/',
+                ])
+                +' -Wl,-rpath,'+' -Wl,-rpath,'.join([
+                    '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+                    '$TIFF_TARGET_FOLDER/lib/',
+                    '$JPEG_TARGET_FOLDER/lib/',
+                    '$LIBPNG_TARGET_FOLDER/lib/',
+                    '$LIBRAW_TARGET_FOLDER/lib/',
+                ])
+            }
         )
         self.oiio = oiio
+
+
 
         # use the download action as we only need this package to build llvm!
         # download action will avoid installing this package!
@@ -1252,7 +1306,6 @@ class all: # noqa
                 },
             },
             depend=[python, boost, clang]+allDepend,
-            parallel=1,
             cmd = [
                 # mv clang to the tools folder so LLVM can automatically build it!
                 'mkdir -p $SOURCE_FOLDER/tools/clang/',
@@ -1304,6 +1357,7 @@ class all: # noqa
                 { gcc : '4.8.5', python: '2.7.16' },
             )],
             depend = allDepend,
+            environ = { 'LD' : 'ld' },
         )
         self.pugixml = pugixml
 
@@ -1376,6 +1430,7 @@ class all: # noqa
                 '-DMATERIALX_BUILD_PYTHON=1',
                 '-DMATERIALX_BUILD_VIEWER=1',
             ],
+            environ = { 'LD' : 'ld' },
         )
         self.materialx = materialx
 
@@ -1413,6 +1468,7 @@ class all: # noqa
                 'CC' : '$CC -fPIC',
                 'CXX' : '$CXX -fPIC',
                 'LD_LIBRARY_PATH' : '$SOURCE_FOLDER/lib/:$LD_LIBRARY_PATH',
+                'LDFLAGS' : '$LDFLAGS -ljpeg'
             },
             cmd = [
                 # if building 5.6.1, we have to use autodesk qt patches to be
@@ -1439,6 +1495,9 @@ class all: # noqa
                 # qtMaya, qtMayaDeclarative, qtMayaX11Extras,
             ]+[ x for x in allDepend if python != x ],
             verbose=1,
+            # we need this since we're not building QT 5.6.1 yet.
+            # without it the build would fail due to being less than 5 secs
+            noMinTime=True,
         )
         self.qt = qt
         # allDepend += [qt]
@@ -1557,9 +1616,12 @@ class all: # noqa
                 'ln -s lib $INSTALL_FOLDER/lib64',
                 'cp -rf ./Qt.py $INSTALL_FOLDER/lib/python/site_packages/',
                 'cp -rf ./* $INSTALL_FOLDER/lib/python/site_packages/src/',
+                'echo "This build was done suscessfully!!"',
             ],
-            src = 'Qt.py'
+            src = 'Qt.py',
+            noMinTime=True,
         )
+        self.qtpy = qtpy
 
         sip = build.pythonSetup(
             ARGUMENTS,
@@ -1647,8 +1709,10 @@ class all: # noqa
             src = 'configure.py',
             cmd = [
                 '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
-                        'python configure.py --confirm-license --assume-shared --protected-is-public  --sysroot=$INSTALL_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
-                        '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        'python configure.py --confirm-license --assume-shared --protected-is-public  CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        '&& make -j $DCORES '
+                            'CFLAGS="$CFLAGS -DPYTHON_LIB=\\\\\\\"libpython$PYTHON_VERSION_MAJOR.so\\\\\\\"" '
+                            'CXXFLAGS="$CXXFLAGS -DPYTHON_LIB=\\\\\\\"libpython$PYTHON_VERSION_MAJOR.so\\\\\\\"" '
                         '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
                     # =======================================================
                     # TODO: PyQt5 is failing to build, not sure why.
@@ -1656,7 +1720,7 @@ class all: # noqa
                     # since it build without problems!
                     # =======================================================
                     # '|| '
-                    #     'python configure.py --confirm-license --verbose --no-designer-plugin -w --protected-is-public '
+                    #     'python configure.py --confirm-license --verbose --no-designer-plugin -w --protected-is-public  --sysroot=$INSTALL_FOLDER '
                     #     '-b $INSTALL_FOLDER/bin '
                     #     '-d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
                     #     "-v $INSTALL_FOLDER/share/sip/PyQt$(echo $QT_VERSION | awk -F'.' '{print $1}') "
@@ -1668,6 +1732,7 @@ class all: # noqa
                 # the pkgs to keep then around, but not build then.
                 ' || echo -e "\n\n NOT BUILDING PYQT5 FOR NOW! (more info in pkgs.py)\n\n"'
             ],
+            noMinTime=True,
         )
         self.pyqt = pyqt
         # allDepend += [pyqt]
@@ -1705,7 +1770,14 @@ class all: # noqa
             },
             # baseLibs=[python],
             depend=[qt, gcc]+allDepend,
-            flags = ['--jobs $HCORES'],
+            cmd = [
+                build.pythonSetup.cmd[0]+' --jobs=$DCORES',
+                # create symbolic links of the libraries in the correct place,
+                # so pipeVFX can find it - this is needed when building maya related
+                # code to avoid picking up maya version of those libraries.
+                'ln -s $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/PySide2/lib* '
+                      '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/'
+            ]
         )
         self.pyside = pyside
         # allDepend += [pyside]
@@ -1735,8 +1807,9 @@ class all: # noqa
                 'ff2f5a0fe5c7a8a9e2eb0c6f224e2823',
                 { gcc : '4.1.2' }
             )],
-            depend=[gcc],
+            depend=[gcc]+allDepend,
             flags=['-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '],
+            environ = { 'LD' : 'ld', 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/:$LD_LIBRARY_PATH'  },
         )
         self.blosc = blosc
         allDepend += [blosc]
@@ -1908,6 +1981,28 @@ class all: # noqa
         )
         self.alembic = alembic
 
+
+        clew = build.cmake(
+            ARGUMENTS,
+            'clew',
+            download=[(
+                'https://github.com/hradec/clew.git',
+                'clew-0.10.2016.zip',
+                '0.10.2016',
+                None,
+                {gcc: '4.8.5'},
+            )],
+            depend=allDepend+[boost, glfw, glew],
+            verbose=1,
+            environ = { 'LD' : 'ld' },
+            flags = [
+                # '-DBUILD_SHARED_LIBRARY=1',
+                '-DINSTALL_CL_HEADER=1',
+            ]
+        )
+        self.clew = clew
+        allDepend += [clew]
+
         # build alembic without apps plugins
         opensubdiv = build.cmake(
             ARGUMENTS,
@@ -1992,7 +2087,7 @@ class all: # noqa
                 'USD-18.09.tar.gz',
                 '18.9.0',
                 '10a06767c6a9c69733bb5f9fbadcb52a',
-                {boost: "1.56.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
+                {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
                 opensubdiv: '3.4.0', alembic: '1.7.1', hdf5: '1.8.11', cmake: '3.8.2',
                 oiio: '1.6.15', tbb: '4.4.6'},
             ),(
@@ -2001,15 +2096,15 @@ class all: # noqa
                 'USD-19.07.tar.gz',
                 '19.7.0',
                 '8d274089364cfed23004ae52fa3d258f',
-                {boost: "1.56.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
+                {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
                 opensubdiv: '3.4.0', alembic: '1.7.1', hdf5: '1.8.11', cmake: '3.8.2',
                 oiio: '1.6.15', tbb: '4.4.6'},
             )],
             # baseLibs=[python],
-            depend=allDepend+[
-                alembic, openexr, ilmbase, opensubdiv, materialx, oiio, ocio,
-                openvdb, osl, boost, hdf5, glfw, glew, ptex, pyside, qt, python
-            ],
+            depend=[
+                boost, alembic, openexr, ilmbase, opensubdiv, materialx, oiio, ocio, icu,
+                openvdb, osl, hdf5, glfw, glew, ptex, pyside, qt, python
+            ]+allDepend,
             cmd = [
                 "mkdir build",
                 "cd build",
@@ -2018,48 +2113,50 @@ class all: # noqa
                 " -D CMAKE_PREFIX_PATH=$INSTALL_FOLDER"
                 " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
                 " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
-                " -D Boost_NO_SYSTEM_PATHS=TRUE"
-                " -D Boost_NO_BOOST_CMAKE=TRUE"
-                " -D PXR_BUILD_ALEMBIC_PLUGIN=TRUE"
+                " -D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+                " -D Boost_NO_SYSTEM_PATHS=ON"
+                " -D Boost_NO_BOOST_CMAKE=ON"
                 " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER"
-                " -D PXR_ENABLE_HDF5_SUPPORT=TRUE"
                 " -D HDF5_LOCATION=$HDF5_TARGET_FOLDER"
-                " -D PXR_BUILD_IMAGING=TRUE"
-                " -D PXR_BUILD_OPENIMAGEIO_PLUGIN=TRUE"
-                " -D PXR_BUILD_OPENCOLORIO_PLUGIN=TRUE"
                 " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
                 " -D GLEW_LOCATION=$GLEW_TARGET_FOLDER/"
                 " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
                 " -D OIIO_LOCATION=$OIIO_TARGET_FOLDER"
-                " -D PXR_BUILD_TESTS=FALSE"
-                # " -D PXR_BUILD_MAYA_PLUGIN=TRUE"
-                # " -D MAYA_LOCATION=$MAYA_ROOT"
-                # " -D PXR_BUILD_HOUDINI_PLUGIN=TRUE"
-                # " -D HOUDINI_ROOT=$HOUDINIT_ROOT"
-                # " -D PXR_BUILD_PRMAN_PLUGIN=TRUE"
-                # " -D RENDERMAN_LOCATION=$PRMAN_ROOT"
-                # " -D PXR_BUILD_KATANA_PLUGIN=TRUE"
-                # " -D KATANA_API_LOCATION=$KATANA_ROOT"
-                " -D PXR_ENABLE_OSL_SUPPORT=TRUE"
                 " -D OSL_LOCATION=$OSL_TARGET_FOLDER"
-                " -D PXR_ENABLE_PTEX_SUPPORT=TRUE"
                 " -D PTEX_LOCATION=$PTEX_TARGET_FOLDER"
                 " -D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER"
-                # " -D PXR_BUILD_EMBREE_PLUGIN=TRUE"
+                " -D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/"
+                " -D PXR_BUILD_TESTS=OFF"
+                # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
                 # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
                 " --build --target install -j $CORES ..",
                 "make -j $CORES",
                 "make install",
                 "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
             ],
+            flags=[
+                # enable plugins
+                "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
+                "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
+                "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
+                "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
+                "-D PXR_BUILD_IMAGING=ON",
+                "-D PXR_BUILD_USD_IMAGING=ON"
+
+                # enable support to different components.
+                " -D PXR_ENABLE_HDF5_SUPPORT=ON"
+                " -D PXR_ENABLE_OSL_SUPPORT=ON"
+                " -D PXR_ENABLE_PTEX_SUPPORT=ON"
+            ],
             environ = {
-                'CFLAGS'    : ' -fopenmp -O2 -fPIC -w ',
-                'CXXFLAGS'  : ' -fopenmp -O2 -fPIC -w ',
+                # we need boost first of everything else since icu also has regex.h
+                'CFLAGS'    : ' -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost ',
+                'CXXFLAGS'  : ' -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost ',
                 'LD'        : 'ld',
-                'LDFLAGS'   : '$LDFLAGS -lboost_regex-mt',
+                'LDFLAGS'   : '$LDFLAGS -lboost_regex',
                 'LD_PRELOAD': ':'.join([
-                    '$GCC_TARGET_FOLDER/lib64/libstdc++.so.6',
-                    '$GCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                    '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                    '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
                 ]),
             },
             verbose=1,

@@ -19,6 +19,21 @@
 # =================================================================================
 
 import os, sys, pipe
+from glob import glob
+
+
+def expandvars(path, env=os.environ, default=None, skip_escaped=False):
+    """Expand environment variables of form $var and ${var}.
+       If parameter 'skip_escaped' is True, all escaped variable references
+       (i.e. preceded by backslashes) are skipped.
+       Unknown variables are set to 'default'. If 'default' is None,
+       they are left unchanged.
+    """
+    import re
+    def replace_var(m):
+        return env.get(m.group(2) or m.group(1), m.group(0) if default is None else default)
+    reVar = (r'(?<!\\)' if skip_escaped else '') + r'\$(\w+|\{([^}]*)\})'
+    return re.sub(reVar, replace_var, path)
 
 
 # just a couple of methods to dump out what this
@@ -84,7 +99,7 @@ popPrint('Versions being used to build cortex...')
 # python
 # =============================================================================================================================================================
 PYTHON_ROOT 		    = os.environ['PYTHON_TARGET_FOLDER']
-PYTHON 			        = 'env LD_LIBRARY_PATH=%s/lib:./lib:$LD_LIBRARY_PATH %s/bin/python' % (PYTHON_ROOT,PYTHON_ROOT)
+PYTHON 			        = 'python'
 PYTHON_CONFIG 		    = '%s %s/bin/python-config' % (PYTHON, PYTHON_ROOT)
 PYTHON_INCLUDE_PATH 	= os.popen( '%s --includes' % PYTHON_CONFIG ).readlines()[0].strip().split(' ')[0][2:]
 PYTHON_LINK_FLAGS 	    = os.popen( '%s --ldflags' % PYTHON_CONFIG ).readlines()[0].strip()
@@ -97,11 +112,12 @@ except:
     PYTHON_LIB_PATH = '%s/lib' % PYTHON_ROOT
     PYTHON_LINK_FLAGS = '-L%s %s' % (PYTHON_LIB_PATH, PYTHON_LINK_FLAGS)
 
+PYTHON_MAJOR_VERSION=os.environ['PYTHON_VERSION_MAJOR']
+
 # =============================================================================================================================================================
 WITH_GL                 = 1
 WITH_MANTRA             = True
 WITH_MAYA_PLUGIN_LOADER = 1
-ENV_VARS_TO_IMPORT      = "PATH PYTHONPATH"
 
 
 INSTALL_IECORE_OPS      = [
@@ -151,26 +167,11 @@ INSTALL_IECORE_OPS      = [
 
 
 
-GLEW_INCLUDE_PATH       = "%s/include/GL" % os.environ['GLEW_TARGET_FOLDER']
-GLEW_LIB_PATH           = "%s/lib"        % os.environ['GLEW_TARGET_FOLDER']
-
-GLUT_INCLUDE_PATH       = "%s/include/"   % os.environ['FREEGLUT_TARGET_FOLDER']
-GLUT_LIB_PATH           = "%s/lib/"       % os.environ['FREEGLUT_TARGET_FOLDER']
-
 TIFF_INCLUDE_PATH       = "%s/include" % os.environ['TIFF_TARGET_FOLDER']
 TIFF_LIB_PATH           = "%s/lib"     % os.environ['TIFF_TARGET_FOLDER']
 
-PNG_INCLUDE_PATH        = "%s/include" % os.environ['LIBPNG_TARGET_FOLDER']
-PNG_LIB_PATH            = "%s/lib"     % os.environ['LIBPNG_TARGET_FOLDER']
-
 JPEG_INCLUDE_PATH       = "%s/include" % os.environ['JPEG_TARGET_FOLDER']
 JPEG_LIB_PATH           = "%s/lib"     % os.environ['JPEG_TARGET_FOLDER']
-
-BOOST_INCLUDE_PATH      = "%s/include" % os.environ['BOOST_TARGET_FOLDER']
-BOOST_LIB_PATH          = "%s/lib/python%s/"  % (os.environ['BOOST_TARGET_FOLDER'], PYTHON_MAJOR_VERSION)
-BOOST_LIB_SUFFIX        = ""
-if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the last version that uses -mt as suffix.
-    BOOST_LIB_SUFFIX        = "-mt"
 
 TBB_INCLUDE_PATH        = "%s/include" % os.environ['TBB_TARGET_FOLDER']
 TBB_LIB_PATH 	        = "%s/lib"     % os.environ['TBB_TARGET_FOLDER']
@@ -181,18 +182,62 @@ OPENEXR_LIB_PATH 	    = "%s/lib"     % os.environ['OPENEXR_TARGET_FOLDER']
 ILMBASE_INCLUDE_PATH    = "%s/include" % os.environ['ILMBASE_TARGET_FOLDER']
 ILMBASE_LIB_PATH        = "%s/lib"     % os.environ['ILMBASE_TARGET_FOLDER']
 
-FREETYPE_INCLUDE_PATH   = "%s/include/freetype/" % os.environ['FREETYPE_TARGET_FOLDER']
-FREETYPE_LIB_PATH 	    = "%s/lib"     % os.environ['FREETYPE_TARGET_FOLDER']
-
 HDF5_INCLUDE_PATH       = "%s/include" % os.environ['HDF5_TARGET_FOLDER']
 HDF5_LIB_PATH           = "%s/lib"     % os.environ['HDF5_TARGET_FOLDER']
 HDF5_LIB_SUFFIX         = ''
 
-if 'ALEMBIC_TARGET_FOLDER' in os.environ:
-    ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
-    ALEMBIC_LIB_PATH        = "%s/lib/python%s" % ( os.environ['ALEMBIC_TARGET_FOLDER'], PYTHON_MAJOR_VERSION)
-    ALEMBIC_LIB_SUFFIX      = ''
+# create options automatically based on added dependencies
+for each in [ x for x in os.environ.keys() if '_TARGET_FOLDER' in x ]:
+    name = each.split('_')[0]
+    exec( '%s_INCLUDE_PATH="%s/include"' % (name, os.environ[each]) )
+    exec( '%s_LIB_PATH = "%s/lib"' % (name, os.environ[each]) )
 
+# specific cases which the name doesn't match or the path is not the default
+PNG_INCLUDE_PATH        = "%s/include" % os.environ['LIBPNG_TARGET_FOLDER']
+PNG_LIB_PATH            = "%s/lib"     % os.environ['LIBPNG_TARGET_FOLDER']
+
+GLEW_INCLUDE_PATH       = "%s/include/GL" % os.environ['GLEW_TARGET_FOLDER']
+GLEW_LIB_PATH           = "%s/lib"        % os.environ['GLEW_TARGET_FOLDER']
+
+GLUT_INCLUDE_PATH       = "%s/include/"   % os.environ['FREEGLUT_TARGET_FOLDER']
+GLUT_LIB_PATH           = "%s/lib/"       % os.environ['FREEGLUT_TARGET_FOLDER']
+
+FREETYPE_INCLUDE_PATH   = "%s/include/freetype/" % os.environ['FREETYPE_TARGET_FOLDER']
+FREETYPE_LIB_PATH 	    = "%s/lib"     % os.environ['FREETYPE_TARGET_FOLDER']
+
+BOOST_INCLUDE_PATH      = "%s/include" % os.environ['BOOST_TARGET_FOLDER']
+BOOST_LIB_PATH          = "%s/lib/python%s/"  % (os.environ['BOOST_TARGET_FOLDER'], os.environ['PYTHON_VERSION_MAJOR'])
+BOOST_LIB_SUFFIX        = ""
+if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the last version that uses -mt as suffix.
+    BOOST_LIB_SUFFIX        = "-mt"
+
+
+ALEMBIC_LIB_SUFFIX      = ''
+# if 'ALEMBIC_TARGET_FOLDER' in os.environ:
+#     ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
+#     ALEMBIC_LIB_PATH        = "%s/lib" % os.environ['ALEMBIC_TARGET_FOLDER']
+    
+
+for each in glob( '%s/../*' % os.environ['BOOST_TARGET_FOLDER'] ):
+    os.environ['LIBRARY_PATH'] += ':%s/lib/python%s' % (each, os.environ['PYTHON_VERSION_MAJOR'])
+    os.environ['LDFLAGS'] += ' -L%s/lib/python%s' % (each, os.environ['PYTHON_VERSION_MAJOR'])
+
+
+
+ENV_VARS_TO_IMPORT      = " ".join([ x for x in os.environ.keys() if
+    'TARGET' in x or
+    'LIB' in x or
+    'INCLUDE' in x or
+    'ROOT' in x or
+    'PYTHON' in x or
+    'PATH' in x or
+    'FLAGS' in x or
+    'VERSION' in x or
+    'CORE' in x
+])
+
+LINKFLAGS = os.environ['LDFLAGS'].split(' ')
+LINKFLAGS += '-ltiff -lpng -ljpeg -lraw_r -lraw -lboost_filesystem -lboost_system -lboost_thread -lboost_regex'.split(' ')
 
 
 # app paths
@@ -221,6 +266,7 @@ extraInstallPath   = '/boost%s' % os.environ['BOOST_VERSION']
 # install prefixes with per package version numbers!
 # =============================================================================================================================================================
 INSTALL_PREFIX                  = os.environ['TARGET_FOLDER']
+os.environ['INSTALL_PREFIX']    = os.environ['TARGET_FOLDER']
 
 # if houdini != '0.0.0':
 #     # if we're installing houdini, make installPrefix be the houdini folder+version
@@ -258,6 +304,12 @@ INSTALL_MTOAEXTENSION_NAME      = "$INSTALL_PREFIX%s/mtoaExtensions/%s/$IECORE_N
 INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/lib/$IECORE_NAME" % abc
 INSTALL_ALEMBICPYTHON_DIR       = "$INSTALL_PREFIX/alembic/%s/lib/python%s/site-packages" % (abc, PYTHON_MAJOR_VERSION)
 
+INSTALL_VDBLIB_NAME             = "$INSTALL_PREFIX/openvdb/%s/lib/$IECORE_NAME" % os.environ['OPENVDB_VERSION']
+INSTALL_VDBPYTHON_DIR           = "$INSTALL_PREFIX/openvdb/%s/lib/python%s/site-packages" % (os.environ['OPENVDB_VERSION'], PYTHON_MAJOR_VERSION)
+
+INSTALL_USDLIB_NAME             = "$INSTALL_PREFIX/usd/%s/lib/$IECORE_NAME" % os.environ['USD_VERSION']
+INSTALL_USDPYTHON_DIR           = "$INSTALL_PREFIX/usd/%s/lib/python%s/site-packages" % (os.environ['USD_VERSION'], PYTHON_MAJOR_VERSION)
+
 INSTALL_HOUDINILIB_NAME         = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootHoudini
 INSTALL_HOUDINIOTL_DIR          = "$INSTALL_PREFIX%s/otls/" % installRootHoudini
 INSTALL_HOUDINIICON_DIR         = "$INSTALL_PREFIX%s/icons" % installRootHoudini
@@ -269,7 +321,14 @@ INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % install
 INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX%s/dso/mantra/$IECORE_NAME" % installRootHoudini
 INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX%s/dso/" % installRootHoudini
 
-os.environ['PYTHONPATH'] = INSTALL_PYTHON_DIR
+os.environ['PYTHONPATH'] = ':'.join([
+    INSTALL_PYTHON_DIR,
+    INSTALL_ALEMBICPYTHON_DIR,
+    INSTALL_VDBPYTHON_DIR,
+    INSTALL_USDPYTHON_DIR,
+    INSTALL_RMANPYTHON_DIR,
+    os.environ['PYTHONPATH']
+])
 
 # build flags
 # =============================================================================================================================================================
@@ -300,8 +359,8 @@ if houdini != '0.0.0':
     os.environ['HOUDINI_LINK_FLAGS'] += ' '+' '.join([
         '-Wl,-rpath,%s/dsolib/' % HOUDINI_ROOT,
         '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
-        '-Wl,-rpath,%s' % os.path.dirname(INSTALL_LIB_NAME),
-        '-Wl,-rpath,%s' % os.path.dirname(INSTALL_PYTHONLIB_NAME),
+        '-Wl,-rpath,%s' % os.path.dirname(expandvars(INSTALL_LIB_NAME, os.environ)),
+        '-Wl,-rpath,%s' % os.path.dirname(expandvars(INSTALL_PYTHONLIB_NAME, os.environ)),
     ])
 
     if boost == '1.51.0':
@@ -336,7 +395,7 @@ if 'GCC_VERSION' in os.environ:
         "%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
     ]
 
-    LINKFLAGS = [
+    LINKFLAGS += [
         "-Wl,-rpath,%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
         "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
     ]
@@ -346,16 +405,16 @@ LIBPATH += [
     "%s/lib/" % os.environ['ICU_TARGET_FOLDER']
 ]
 LINKFLAGS += [
-    '-L%s' % FREETYPE_LIB_PATH, # we do this or else cortex will use maya's!!!
-    '-L%s' % TBB_LIB_PATH,      # we do this or else cortex will use maya's!!!
+    '-L%s' % expandvars(FREETYPE_LIB_PATH, os.environ), # we do this or else cortex will use maya's!!!
+    '-L%s' % expandvars(TBB_LIB_PATH, os.environ),      # we do this or else cortex will use maya's!!!
     "-Wl,-rpath,%s/lib/"  % os.environ['ICU_TARGET_FOLDER'],
-    '-Wl,-rpath,%s' % BOOST_LIB_PATH,
+    '-Wl,-rpath,%s' % expandvars(BOOST_LIB_PATH, os.environ),
     # '-Wl,-rpath,%s' % PYTHON_LIB_PATH,
     # '-Wl,-rpath,%s' % PNG_LIB_PATH,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/zlib/1.2.3/lib/"  % GCC,
     # "-Wl,-rpath,/atomo/pipeline/libs/linux/x86_64/gcc-%s/jpeg/6b/lib/"  % GCC,
-    '-Wl,-rpath,%s' % OPENEXR_LIB_PATH,
-    '-Wl,-rpath,%s' % ILMBASE_LIB_PATH,
+    '-Wl,-rpath,%s' % expandvars(OPENEXR_LIB_PATH, os.environ),
+    '-Wl,-rpath,%s' % expandvars(ILMBASE_LIB_PATH, os.environ),
     # '-Wl,-rpath,%s' % GLEW_LIB_PATH,
     # '-Wl,-rpath,%s' % TIFF_LIB_PATH,
     # '-Wl,-rpath,%s/lib' % RMAN_ROOT, # IECoreMaya links against libprman, so we can't make its path static! :(
@@ -372,17 +431,18 @@ LINKFLAGS += [
 #LINKFLAGS.append('-Wl,-rpath %s/lib' % MAYA_ROOT)
 
 
-LINKFLAGS.append("-L%s" % os.path.dirname(INSTALL_LIB_NAME) )
-LINKFLAGS.append("-L%s" % os.path.dirname(INSTALL_PYTHONLIB_NAME) )
-LINKFLAGS.append('-L%s' % NUKE_ROOT)
-LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_NUKELIB_NAME))
-LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_RMANLIB_NAME))
-LINKFLAGS.append('-L%s/lib' % MAYA_ROOT)
-LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_MAYALIB_NAME))
-LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_HOUDINILIB_NAME))
-LINKFLAGS.append('-L%s/bin' % ARNOLD_ROOT)
-LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_ARNOLDLIB_NAME))
-LINKFLAGS.append('-L%s' % os.path.dirname(INSTALL_ALEMBICLIB_NAME))
+LINKFLAGS.append("-L%s" % os.path.dirname( expandvars(INSTALL_LIB_NAME, os.environ) ) )
+LINKFLAGS.append("-L%s" % os.path.dirname(expandvars(INSTALL_PYTHONLIB_NAME, os.environ) ) )
+LINKFLAGS.append('-L%s' % expandvars(NUKE_ROOT, os.environ) )
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_NUKELIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_RMANLIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s/lib' % expandvars(MAYA_ROOT, os.environ) )
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_MAYALIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_HOUDINILIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s/bin' % expandvars(ARNOLD_ROOT, os.environ) )
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_ARNOLDLIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_ALEMBICLIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s' % os.environ['SOURCE_FOLDER'] )
 
 # CC = os.environ['CC']
 # CPP = os.environ['CPP']
