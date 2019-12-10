@@ -107,14 +107,9 @@ class maya(baseApp):
             self['PYTHONPATH'] = '%s/maya/plugins' % each
             self['PYTHONPATH'] = '%s/maya/scripts' % each
 
+        # pipeline alembic plugins!
+        self.update( pipe.libs.alembic() )
         try:
-            # pipeline alembic plugins!
-            alembic = pipe.libs.alembic()
-            maya.addon( self,
-                plugin = alembic.path('maya/$MAYA_VERSION/plugins/'),
-                lib = alembic.path('lib/python%s/' % pipe.version.get('python')),
-            )
-
             # pipeline openvdb plugins!
             if float(pipe.version.get('prman')) < 21.0:
                 # pipe.libs.version.set( openvdb = '3.2.0' )
