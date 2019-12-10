@@ -171,7 +171,10 @@ class appsDB(dict):
 
     def parent(self):
         ''' returns the name of the main class running this instance '''
-        return None
+        ret = ''
+        if 'PARENT_BASE_CLASS' in os.environ:
+            ret = os.environ['PARENT_BASE_CLASS']
+        return ret
 
     def path(self, subPath='', appName=None):
         '''
@@ -198,7 +201,7 @@ class appsDB(dict):
         # account for app version builds of a package, if they exist.
         if self.parent() and self.parent() != self.app:
             parent_version =  version.get( self.parent() )
-            _subPath = '%s/%s/%s' % ( self.parent(), parent_version, subPath )
+            _subPath = '%s.%s/%s' % ( self.parent(), parent_version, subPath )
             if os.path.exists( ret+'/'+_subPath ):
                 subPath = _subPath
 
@@ -237,17 +240,24 @@ class appsDB(dict):
 
         return pythonPath
 
+    def appFolder(self, appName):
+        self.setApp(appName)
+        appVersion=version.get(appName)
+        appFolder = "%s.%s" % (appName, appVersion)
+
     def lib(self, appName=None):
         '''
         returns a default lib path for the current app.
         '''
         self.setApp(appName)
-        return [
+
+        ret =  [
             self.path(subPath='lib'),
             self.path(subPath='lib/python$PYTHON_VERSION_MAJOR'),
             self.path(subPath='lib/boost$BOOST_VERSION'),
             self.path(subPath='lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR'),
         ]
+        return ret
 
     def bin(self, appName=None):
         '''
@@ -747,11 +757,11 @@ class baseApp(_environ):
                         for each in allLibs.updatedClasses[lib].keys():
                             allLibs[each] = allLibs.updatedClasses[lib][each]
                             extraUpdates[each] = 1
-                    else:
+
                     # if not, just grab what we need!!
-                        allLibs['LD_LIBRARY_PATH'] = allLibs.updatedClasses[lib]['LD_LIBRARY_PATH']
-                        allLibs['PYTHONPATH'] = allLibs.updatedClasses[lib]['PYTHONPATH']
-                        allLibs['INCLUDE'] = allLibs.updatedClasses[lib]['INCLUDE']
+                    allLibs['LD_LIBRARY_PATH'] = allLibs.updatedClasses[lib]['LD_LIBRARY_PATH']
+                    allLibs['PYTHONPATH'] = allLibs.updatedClasses[lib]['PYTHONPATH']
+                    allLibs['INCLUDE'] = allLibs.updatedClasses[lib]['INCLUDE']
 
                 # set lib versions no matter what!!
                 for each in [ x for x in allLibs.updatedClasses[lib] if 'VERSION' in x ]:
