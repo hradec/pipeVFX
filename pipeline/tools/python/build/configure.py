@@ -51,6 +51,24 @@ class configure(generic):
                     # cmd = cmd.replace('make', "make CC=$CC CXX=$CXX CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' ")
         return cmd
 
+class wait4dependencies(configure):
+    cmd = ["echo Done!!!!!"]
+    noMinTime=True
+    dontUseTargetSuffixForFolders = 1
+    do_not_use=True
+    def __init__(self, wait4, msg, version=None):
+        self.wait4 = wait4
+        d = self.wait4.download
+        if version:
+            d = [ x for x in wait4.download if x[2] == version ]
+
+        download = [ (None,"wait4.%s.%s.%s" % (self.wait4.name,msg,x[2]),x[2],None,{self.wait4: x[2]}) for x in d ]
+        for d in download:
+            os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
+
+        configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure' )
+
+
 
 class gccBuild(configure):
     ''' build class designed to build differente versions of GCC '''
@@ -99,16 +117,15 @@ class gccBuild(configure):
 
     def fixCMD(self, cmd):
         if self.versionMajor == 4.1:
+            if self.targetSuffix == 'pos':
+                return cmd
             if self.use_bin_tarball:
                 cmd = ';'.join([
                     # here we have to use $TARGET_FOLDER since version 4.1.2  has a targetSuffix -pre, but we don't want to use it as a subfolder.
                     'cp -ruvf ./* $TARGET_FOLDER/',
                     'mkdir -p /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/',
                     'rm -rf /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2',
-                    'ln -s  $TARGET_FOLDER /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2',
-                    'ln -s  $TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/* $TARGET_FOLDER/lib64/',
-                    'ln -s  $TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/* $TARGET_FOLDER/lib64/',
-
+                    "echo 'output something so we dont trigger a no-log error!!'",
                 ])
             else:
                 cmd = ' && '.join([
@@ -221,8 +238,9 @@ class gccBuild(configure):
             cmd = ' && '.join([
                 "mkdir -p build",
                 "cd build",
-                "mkdir $INSTALL_FOLDER/fake_build/",
+                "mkdir -p $INSTALL_FOLDER/fake_build/",
                 "touch $INSTALL_FOLDER/fake_build/placeholder",
+                "echo 'output something so we dont trigger a no-log error!!'",
                 # '../configure  --prefix=$INSTALL_FOLDER '
                 #     '--mandir=$INSTALL_FOLDER/share/man '
                 #     '--libdir=$INSTALL_FOLDER/lib '
@@ -250,13 +268,22 @@ class gccBuild(configure):
             ])
 
         # make sure we're using the distros GCC to build GCC
+        symlinks =  [
+            'ln -s  $TARGET_FOLDER /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2 || true',
+            "find   $TARGET_FOLDER/ -name 'libstd*.so*' -exec ln -s {}  $TARGET_FOLDER/lib/ \;",
+            "find   $TARGET_FOLDER/ -name 'libgcc_s*.so*' -exec ln -s {}  $TARGET_FOLDER/lib/ \;",
+            'ln -s  $TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$VERSION/* $TARGET_FOLDER/lib64/ || true',
+            'ln -s  $TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/* $TARGET_FOLDER/lib64/ || true',
+            'ln -s  $TARGET_FOLDER/lib/* $TARGET_FOLDER/lib64/ || true',
+            'ln -s  $TARGET_FOLDER/lib64/* $TARGET_FOLDER/lib/ || true',
+        ]
         cmd = ' && '.join([
             'export PATH="$INSTALL_FOLDER/../4.1.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/bin"',
             'unset LD_LIBRARY_PATH',
             # set the system crtbegin.o path so the system gcc can build our gcc
             "export LIBRARY_PATH=$(echo $(find $INSTALL_FOLDER/../4.1.2/ -name crtbegin.o -exec dirname {} \;) | sed 's/ /:/g'):$LIBRARY_PATH",
             cmd
-        ])
+        ]+symlinks)
         return cmd
 
     def installer(self, target, source, env): # noqa
@@ -450,8 +477,8 @@ class cortex(configure):
     environ = {
     }
     cmd=[
-        ' scons OPTIONS=%s/cortex.options.py -j $DCORES'         % os.path.abspath( os.path.dirname(__file__)),
-        ' scons OPTIONS=%s/cortex.options.py -j $DCORES'         % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/cortex.options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/cortex.options.py -j $DCORES '         % os.path.abspath( os.path.dirname(__file__)),
         # 'scons OPTIONS=%s/cortex.options.py -j $DCORES install' % os.path.abspath( os.path.dirname(__file__)),
     ]
     apps=[]
@@ -480,6 +507,7 @@ class cortex(configure):
             ('houdiniEnv.Prepend( SHLINKFLAGS = "$HOUDINI_LINK_FLAGS" )', 'houdiniEnv.Prepend( SHLINKFLAGS = ["$HOUDINI_LINK_FLAGS"] )'),
             ('CPPFLAGS = "-DIECOREALEMBIC_WITH_OGAWA"', 'CPPFLAGS = ["-DIECOREALEMBIC_WITH_OGAWA"]'),
             ('testEnv.Prepend( CXXFLAGS = " ".join( dependencyIncludes ) )', 'testEnv.Prepend( CXXFLAGS = dependencyIncludes )'),
+            ('"lib/"','""'),
             # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
             # ('glTestEnv.Depends( glTest, corePythonModule )',''),
             # ('mayaPluginEnv.Depends( mayaPlugin, corePythonModule )',''),
@@ -520,9 +548,92 @@ class cortex(configure):
                 meval('RiProcedural "DynamicLoad" "iePython" %f %f %f %f %f %f "%s";'  % (bb.min[0], bb.max[0], bb.min[1], bb.max[1], bb.min[2], bb.max[2], pythonString ))
             ''')
         ],
+    },
+    "10.0.0" : {
+       # patch IECoreRI to build with prman 20!
+       # 'src/IECoreRI/RendererImplementation.cpp' : [
+       #     ('RiProceduralV( data, riBound, procSubdivide, procFree, 1, tokens, values );','''
+       #         // prman 20.2 doesn't have RiProceduralV, only RiProcedural2V. So for now, just revert to RiProcedural as workaroud
+       #         #ifdef RiProceduralV
+       #                         RiProceduralV( data, riBound, procSubdivide, procFree, 1, tokens, values );
+       #         #else
+       #                         RiProcedural( data, riBound, procSubdivide, procFree );
+       #         #endif'''
+       #     ),('// RiProcDelayedReadArchive','''
+       #         // prman 20.2 doesn't have RiProcFree anymore, so just use c++ free in its place
+       #         #ifndef RiProcFree
+       #                         #define RiProcFree free
+       #         #endif
+       #         // RiProcDelayedReadArchive'''
+       #     ),
+       # ],
+       # fixes to option vars being treated as strings or lists.
+       'SConstruct' : [
+           ('houdiniEnv.Prepend( SHLINKFLAGS = "$HOUDINI_LINK_FLAGS" )', 'houdiniEnv.Prepend( SHLINKFLAGS = ["$HOUDINI_LINK_FLAGS"] )'),
+           ('CPPFLAGS = "-DIECOREALEMBIC_WITH_OGAWA"', 'CPPFLAGS = ["-DIECOREALEMBIC_WITH_OGAWA"]'),
+           ('testEnv.Prepend( CXXFLAGS = " ".join( dependencyIncludes ) )', 'testEnv.Prepend( CXXFLAGS = dependencyIncludes )'),
+           ('vdbEnv.subst( "$INSTALL_LIB_NAME" )','vdbEnv.subst( "$INSTALL_VDBLIB_NAME" )'),
+           ('usdEnv.subst( "$INSTALL_ALEMBICLIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
+           ('usdEnv.subst( "$INSTALL_LIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
+           ('INSTALL_PYTHON_DIR/IECoreUSD', 'INSTALL_USDPYTHON_DIR/IECoreUSD'),
+           ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
+           ('INSTALL_PYTHON_DIR/IECoreVDB', 'INSTALL_VDBPYTHON_DIR/IECoreVDB'),
+           ('Documentation options', '\n\n'
+               'o.Add("INSTALL_VDBLIB_NAME")\n'
+               'o.Add("INSTALL_VDBPYTHON_DIR")\n'
+               'o.Add("INSTALL_USDLIB_NAME")\n'
+               'o.Add("INSTALL_USDPYTHON_DIR")\n'
+               'o.Add("INSTALL_ALEMBICPYTHON_DIR")\n'
+            ),
+            ('vdbPythonModuleEnv.Alias( "installScene", vdbPythonModuleInstall )',
+                'vdbPythonModuleEnv.Alias( "installScene", vdbPythonModuleInstall )\n'
+                '\t\tvdbPythonModuleEnv.Alias( "installVDB", vdbPythonModuleInstall )'
+            ),
+            ('"lib/"','""'),
+           # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
+           # ('glTestEnv.Depends( glTest, corePythonModule )',''),
+           # ('mayaPluginEnv.Depends( mayaPlugin, corePythonModule )',''),
+           # ('nukePythonModuleEnv.Depends( nukePythonModule, corePythonModule )',''),
+           # ('houdiniPluginEnv.Depends( houdiniPlugin, corePythonModule )',''),
+           # ('truelightPythonModuleEnv.Depends( truelightPythonModule, corePythonModule )',''),
+           # ('truelightEnv.Depends( truelightLibrary, coreLibrary )',''),
+           # ('corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest','riPythonProceduralForTest + riDisplayDriverForTest'),
+           # ('Default(', '#Default('),
+       ],
+
+       # ===============================================================================
+       # extra code that adds support to render procedurals in renderman from maya.
+       # ===============================================================================
+       'mel/IECoreMaya/ieProceduralHolder.mel' : [
+           ('return $node;','''
+               addAttr -ln "rman__torattr___preShapeScript"  -dt "string"  $node;
+               setAttr -e-keyable true ($node+".rman__torattr___preShapeScript");
+               setAttr -type "string" ($node+".rman__torattr___preShapeScript") "python(\\"import IECoreMaya;IECoreMaya.ieExportPythonProcedural()\\")";
+
+               return $node;
+           ''')
+       ],
+       'python/IECoreMaya/__init__.py' : [
+           ('from FnSceneShape import FnSceneShape','''from FnSceneShape import FnSceneShape;from ieRMS import *''')
+       ],
+       'python/IECoreMaya/ieRMS.py' : [
+           ('','''def ieExportPythonProcedural():
+               import IECore
+               import IECoreRI
+               import IECoreMaya
+               import maya.cmds as m
+               from maya.mel import eval as meval
+               import os
 
 
-
+               bb = IECore.Box3f( IECore.V3f( 999999 ), IECore.V3f( 999999 ) )
+               converter = IECoreMaya.FromMayaDagNodeConverter.create('genericShape')
+               proc = converter.convert()
+               serialize = IECore.ParameterParser().serialise(proc.parameters(), proc.parameters().getValue())
+               pythonString = "IECoreRI.executeProcedural( '%s', %s, %s )" % (proc.path, proc.version, serialize)
+               meval('RiProcedural "DynamicLoad" "iePython" %f %f %f %f %f %f "%s";'  % (bb.min[0], bb.max[0], bb.min[1], bb.max[1], bb.min[2], bb.max[2], pythonString ))
+           ''')
+       ],
     }}
 
 
@@ -538,10 +649,10 @@ class cortex(configure):
                 noIECoreSED[v][each].extend( self.sed[v][each] )
                 if each == 'SConstruct':
                     noIECoreSED[v][each] += [
-                        ('coreLibrary = ','coreLibrary = "" #'),
-                        ('corePythonLibrary = ','corePythonLibrary = "" #'),
+                        ('coreLibrary = ','coreLibrary = [] #'),
+                        ('corePythonLibrary = ','corePythonLibrary = [] #'),
                         ('corePythonModule = ','corePythonModule = [] #'),
-                        ('glLibrary = ','glLibrary = "" #'),
+                        ('glLibrary = ','glLibrary = [] #'),
                         ('glPythonModule = ','glPythonModule = [] #'),
                         ('Default. coreLibrary','#Default( coreLibrary'),
                         ('Default. . glLibrary','#Default( [ glLibrary'),
@@ -561,86 +672,35 @@ class cortex(configure):
                     ]
         return noIECoreSED
 
-    # def init(self):
-    #     ''' we make sure to setup the right python version for the app version, according to
-    #     what pipeVFX tells us, only if building without baseLibs'''
-    #     if self.baseLibs == None:
-    #         if self.apps:
-    #             import build
-    #             app, version = self.apps
-    #             className = str(app).split('.')[-1].split("'")[0]
-    #             # now set the version of the apps
-    #             pipe.version.set( {className : version} )
-    #             # and create an app class
-    #             app = pipe.apps.baseApp(className)
-    #
-    #             # fix dependency version to the app default version!
-    #             for lib in ['python']:
-    #                 self.download = build.cortex.pkg(self.download, [ d for d in self.depend if d.name==lib ][0], pipe.libs.version.get(lib))
+    @staticmethod
+    def onlyIECoreSED():
+        self = cortex
+        # noIECoreSED adds some extra patches to SConstruct to avoid re-building IECore, IECorePython, IECoreGL
+        noIECoreSED = {}
+        for v in self.sed:
+            noIECoreSED[v] = self.sed[v].copy()
+            for each in self.sed[v]:
+                noIECoreSED[v][each] = []
+                noIECoreSED[v][each].extend( self.sed[v][each] )
+                if each == 'SConstruct':
+                    noIECoreSED[v][each] += [
+                        ('usdLibrary = ','usdLibrary = [] #'),
+                        ('usdPythonModule = ','usdPythonModule = [] #'),
+                        ('alembicLibrary = ','alembicLibrary = [] #'),
+                        ('alembicPythonModule = ','alembicPythonModule = [] #'),
+                        ('vdbLibrary = ','vdbLibrary = [] #'),
+                        ('vdbPythonModule = ','vdbPythonModule = [] #'),
+                        ('Default. . usdLibrary','#Default( [ usdLibrary'),
+                        ('Default. . alembicLibrary,','#Default( [ alembicLibrary,'),
+                        ('Default. vdbLibrary','#Default( vdbLibrary'),
+                    ]
+        return noIECoreSED
 
     def fixCMD(self, cmd):
-        # update the build environment with all the enviroment variables
-        # specified in apps argument!
-        # pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
-        # pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
-        # print bcolors.WARNING+": ", bcolors.BLUE+"  apps: ",
-        #
-        # # cleanup any app env var leftover from the build
-        # for each in self.os_environ.keys():
-        #     if True in [ found in each for found in ['MAYA', 'NUKE', 'PRMAN', 'ARNOLD', 'HOUDINI'] ]:
-        #         del self.os_environ[each]
-        #
-        # # add apps env vars to our build
-        # if self.apps:
-        #     app, version = self.apps
-        #     className = str(app).split('.')[-1].split("'")[0]
-        #     # now set the version of the apps
-        #     pipe.version.set( {className : version} )
-        #     # and create an app class
-        #     app = getattr(pipe.apps, className)()
-        #     # if 'houdini' in className:
-        #     #     app.fullEnvironment()
-        #     print "%s(%s)" % (className, pipe.version.get(className)),
-        #     # get all vars from app class and add to cmd environ
-        #     for each in app:
-        #         if each not in ['LD_PRELOAD','PYTHON_VERSION','PYTHON_VERSION_MAJOR']:
-        #             v = app[each]
-        #             if v:
-        #                 if type(v) == str:
-        #                     v=[v]
-        #                 if each not in self.os_environ:
-        #                     self.os_environ[each] = ''
-        #                 # if var value is paths
-        #                 if '/' in str(v):
-        #                     self.os_environ[each] = "%s:%s" % (self.os_environ[each], ':'.join(v))
-        #                 else:
-        #                     self.os_environ[each] = ' '.join(v)
-        #
-        # # remove python paths that are not the same version!
-        # for each in self.os_environ:
-        #     if '/' in str(self.os_environ[each]):
-        #         cleanSearchPath = []
-        #         for path in self.os_environ[each].split(':'):
-        #             if not path.strip():
-        #                 continue
-        #             if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
-        #                 pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
-        #                 pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
-        #                 # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
-        #                 if pathVersion1:
-        #                     if pathVersion1 != self.os_environ['PYTHON_VERSION']:
-        #                         continue
-        #                 if pathVersion2:
-        #                     if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
-        #                         continue
-        #             cleanSearchPath.append(path)
-        #         self.os_environ[each] = ':'.join(cleanSearchPath)
-        #
-        # self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-        # self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-        #
-        # #self.os_environ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self.os_environ['LD_LIBRARY_PATH']
-        # print
+        # add current folder to lib search paths
+        self.os_environ['LD_LIBRARY_PATH'] += ':'
+        self.os_environ['LIBRARY_PATH'] += ':'
+
         return cmd + " " + self.sconsInstall
 
 
