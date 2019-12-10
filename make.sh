@@ -50,6 +50,9 @@ else
     if [ -e /atomo/apps ] ; then
         APPS_MOUNT=" -v /atomo/apps:/atomo/apps "
     fi
+    if [ -e /atomo/jobs ] ; then
+        APPS_MOUNT=" $APPS_MOUNT -v /atomo/jobs:/atomo/jobs "
+    fi
 
     latest_tag=$(echo $base_image | awk -F':' '{print $1}'):$(
         wget -q \
@@ -144,7 +147,7 @@ else
 
     X11=""
     if [ "$SHELL" == "1" ] ; then
-        X11=" -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix  --runtime 'nvidia' "
+        X11=" -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix  " #--runtime 'nvidia' "
     fi
 
     # create lib folder
@@ -166,8 +169,9 @@ else
         -e EXTRA=\"$EXTRA\" \
         -e DEBUG=\"$DEBUG\" \
         -e TRAVIS=\"$TRAVIS\" \
-        -e http_proxy='$http_proxy' \
-        -e https_proxy='$https_proxy' \
+        -e http_proxy=\"$http_proxy\" \
+        -e https_proxy=\"$https_proxy\" \
+        -e MEMGB=\"$(grep MemTotal /proc/meminfo | awk '{print $(NF-1)}')\" \
         $X11 \
         --privileged \
         $build_image"
