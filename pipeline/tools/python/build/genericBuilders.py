@@ -66,8 +66,10 @@ def _print(*args):
         l = ' '.join([ str(x) for x in args])
         if '[' in l[:20] and ']' in l[:20]:
             p = True
-        if 'processing' in l or 'building' in l or 'Download' in l or 'md5' in l:
+        if [ x for x in ['processing', 'building', 'Download', 'md5'] if x in l ]:
             p = True
+        if 'touch' in l[:15]:
+            p = False
     if p:
         sys.stdout.write('\033[2K\033[1G')
         if args[-1] == '\r':
@@ -562,7 +564,7 @@ class generic:
                     if not self._installer_final_check( [install], [build] ):
                         # if not installed, remove build folder!
                         if os.path.exists(self.buildFolder[p][-1]):
-                            cmd = "rm -rf "+self.buildFolder[p][-1]
+                            cmd = "rm -rf "+self.buildFolder[p][-1]+" 2>/dev/null"
                             _print( ": __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
 
@@ -851,6 +853,16 @@ class generic:
             if len(download)>4: # 5th element is a dependency list with version
                 if dependOn in download[4]:
                     dependOnVersion = download[4][dependOn]
+
+        # set version dependency to be the same as the current package version
+        # for openexr/ilmbase
+        for each in range(len(dependOn.downloadList)):
+            if dependOnVersion:
+                if dependOn.downloadList[each][2] == dependOnVersion:
+                    # we have the version specified in the download
+                    # print "download version",dependOn.name,self.dependOn[dependOn], currVersion, dependOnVersion
+                    depend_n = each
+                    break
 
         return depend_n
 
@@ -1812,7 +1824,7 @@ class generic:
                 # if we don't cleanup sources, the build gets stuck!
                 for each in [ str(x) for x in source ]:
                     if os.path.exists(os.path.dirname(each)):
-                        cmd = "rm -rf %s" % os.path.dirname(each)
+                        cmd = "rm -rf %s 2>/dev/null" % os.path.dirname(each)
                         _print( ": not os.path.exists(%s):" % _TARGET, not os.path.exists(_TARGET) )
                         _print( ": not glob( '%s/*/*' ):" % TARGET_FOLDER, not glob( '%s/*/*' % TARGET_FOLDER ) )
                         _print( ": _installer_final_check: error - ",cmd )
@@ -1839,7 +1851,7 @@ class generic:
         # remove build folder now that everything is done!
         for each in [ str(x) for x in source if '.build/' in str(x) ]:
             if os.path.exists(os.path.dirname(each)):
-                cmd = "rm -rf %s" % os.path.dirname(each)
+                cmd = "rm -rf %s 2>/dev/null" % os.path.dirname(each)
                 # if ret:
                 # _print( ": _installer_final_check: done - ",cmd, each )
                 os.system(cmd)
@@ -1868,7 +1880,7 @@ class generic:
             download_path=os.path.dirname(source[n])+'/../.download/'
             download_file=os.path.dirname(source[n])+'/../.download/'+os.path.basename(source[n])
             os.system('mkdir -p "%s"' % download_path)
-            os.system('rm -rf "%s" ' % (source[n]) )
+            os.system('rm -rf "%s" 2>/dev/null ' % (source[n]) )
             os.system('ln -s "../.download/%s" "%s"' % (os.path.basename(source[n]), source[n] ) )
             if not os.path.exists(__pkgInstalled__[os.path.abspath(source[n])]):
                 url=_url
