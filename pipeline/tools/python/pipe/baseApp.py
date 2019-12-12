@@ -1344,6 +1344,8 @@ class baseApp(_environ):
         if hasattr( self, 'preRun'):
             cmd = self.preRun(cmd)
 
+        # only preload if exists!
+        _preload = []
         # workaround for centos 6.5
         if os.path.exists('/etc/centos-release'):
             _preload = [
@@ -1351,18 +1353,20 @@ class baseApp(_environ):
                 "/opt/centos7/usr/lib64/libXft.so.2",
             ]
 
-            if 'LD_PRELOAD' in os.environ.keys():
-                _preload += os.environ['LD_PRELOAD'].split(':')
+        if 'LD_PRELOAD' in os.environ.keys():
+            _preload += os.environ['LD_PRELOAD'].split(':')
 
-            # only preloads if they exist!
-            preload = []
-            for each in _preload:
-                if os.path.exists( each ):
-                    preload += [ each ]
-                else:
-                    print ("pipevfx dev warning: can't preload %s since it doesn't exist." % each)
+        # only preloads if they exist!
+        preload=[]
+        for each in _preload:
+            if os.path.exists( each ):
+                preload += [ each ]
+            else:
+                log.debug("pipevfx dev warning: can't preload %s since it doesn't exist." % each)
 
-            os.environ['LD_PRELOAD']=":".join(preload)
+        os.environ['LD_PRELOAD']=":".join(preload)
+
+
 
         log.debug(cmd)
 
