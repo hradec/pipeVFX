@@ -435,7 +435,7 @@ class all: # noqa
                 'https://github.com/intel/tbb/archive/4.4.6.tar.gz',
                 'tbb-4.4.6.tar.gz',
                 '4.4.6',
-                None,
+                '20e15206f70c2651bfc964e451a443a0',
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
                 # CY2018
@@ -1631,31 +1631,31 @@ class all: # noqa
                 'sip-4.15.5.tar.gz',
                 '4.15.5',
                 '4c95447c7b0391b7f183cf9f92ae9bc6',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', qt : '4.8.7' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
                 'sip-4.16.7.tar.gz',
                 '4.16.7',
                 '32abc003980599d33ffd789734de4c36',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', qt : '4.8.7' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.4/sip-4.16.4.tar.gz',
                 'sip-4.16.4.tar.gz',
                 '4.16.4',
                 'a9840670a064dbf8f63a8f653776fec9',
-                { gcc : '4.1.2' }
+                { gcc : '4.1.2', qt : '4.8.7' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18/sip-4.18.tar.gz',
                 'sip-4.18.tar.gz',
                 '4.18.0',
                 '78724bf2a79878201c3bc81a1d8248ea',
-                { gcc : '4.1.2' }
+                { gcc : '4.8.5', qt : '5.6.0' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18.1/sip-4.18.1.tar.gz',
                 'sip-4.18.1.tar.gz',
                 '4.18.1',
                 '9d664c33e8d0eabf1238a7ff44a399e9',
-                { gcc : '4.1.2' }
+                { gcc : '4.8.5', qt : '5.12.0' }
             # ),(
             #     'https://sourceforge.net/project/pyqt/files/sip/sip-4.19.13/sip-4.19.13.tar.gz',
             #     'sip-4.19.13.tar.gz',
@@ -1667,15 +1667,19 @@ class all: # noqa
             src = 'configure.py',
             cmd = [
                 # 'python configure.py --sysroot=$INSTALL_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+                # '( [ "$(basename $TARGET_FOLDER)" == "4.16.7" ]',
                 'python configure.py '
                 '-b $INSTALL_FOLDER/bin '
                 '-d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
                 '-e $INSTALL_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
                 '-v $INSTALL_FOLDER/share/sip/ '
                 'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
-                'make -j $DCORES && make -j $DCORES install',
+                'mv specs specs__ ',
+                'make -j $DCORES && make -j $DCORES install'
+                # ' ) || echo -e "\n\nnot building sip for qt 5 for now!!\n\n" ',
             ],
-            depend = allDepend,
+            depend = allDepend+[qt],
+            noMinTime=True,
         )
         self.sip = sip
 
@@ -1702,10 +1706,10 @@ class all: # noqa
                 'PyQt5_gpl-5.12.tar.gz',
                 '5.12.0',
                 '0d839c6218a4287d51bf79d6195016f0',
-                { qt:'5.12.0', sip: '4.18.0', gcc : '4.8.5' },
+                { qt:'5.12.0', sip: '4.18.1', gcc : '4.8.5' },
             )],
             baseLibs=[python],
-            depend=[sip,qt, gcc]+allDepend,
+            depend=[sip, qt, gcc]+allDepend,
             src = 'configure.py',
             cmd = [
                 '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
@@ -1744,6 +1748,7 @@ class all: # noqa
             # this patch fixes that, and USD can be built now!
             sed = { '2.0.18' : { './setup.py' : [
                 ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2'\]'''),
+                ('OPTION_VERSION = ','OPTION_VERSION = False #'),
             # ]}, '2.0.19' : { './setup.py' : [
             #     ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2', 'pyside2uic.port_v3'\]'''),
             ]}},
@@ -1996,9 +2001,10 @@ class all: # noqa
             verbose=1,
             environ = { 'LD' : 'ld' },
             flags = [
-                # '-DBUILD_SHARED_LIBRARY=1',
+                '-DBUILD_SHARED_LIBRARY=1',
                 '-DINSTALL_CL_HEADER=1',
-            ]
+            ],
+            noMinTime=True,
         )
         self.clew = clew
         allDepend += [clew]
@@ -2067,7 +2073,7 @@ class all: # noqa
             environ = {
                 'CFLAGS'    : ' -fopenmp $CFLAGS ',
                 'CXXFLAGS'  : ' -fopenmp $CXXFLAGS ',
-                'LDFLAGS'   : ' -lX11 $LDFLAGS',
+                'LDFLAGS'   : ' -lX11 -lclew $LDFLAGS',
             },
             verbose=1,
         )
