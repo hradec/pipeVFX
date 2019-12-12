@@ -31,14 +31,9 @@ class usd(baseLib):
         self['PYTHONPATH'] = self.path('lib/python')
 
         if self.parent() in ['usd']:
-            self['LD_PRELOAD'] = ':'.join([
-                # '%s/gcc/4.8.5/lib64/libstdc++.so.6' % pipe.build.install(),
-                # '%s/gcc/4.8.5/lib64/libgcc_s.so.1' % pipe.build.install(),
-                '/usr/lib/libstdc++.so.6', '/usr/lib/libgcc_s.so.1'
-            ])
+            self.update( pipe.libs.pyside() )
             self.update( pipe.libs.oiio() )
             self.update( pipe.libs.ptex() )
-
 
         pipe.apps.maya.addon ( self,
             plugin     = self.path('maya.$MAYA_VERSION/third_party/maya/plugin'),
