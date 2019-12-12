@@ -672,7 +672,7 @@ class generic:
                 n
             ) )
             _print( bcolors.WARNING+": " )
-            d=map(lambda x: '.'.join(str(x).split(os.path.sep)[-3:-1]), source[1:])
+            d=[ '.'.join(str(x).split(os.path.sep)[-3:-1]) for x in source[1:] if '-' not in str(x).split(os.path.sep)[-1] ]
             _print( bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0]) )
             d.sort()
             for n in range(0,len(d),6):
@@ -851,23 +851,6 @@ class generic:
             if len(download)>4: # 5th element is a dependency list with version
                 if dependOn in download[4]:
                     dependOnVersion = download[4][dependOn]
-
-        # set version dependency to be the same as the current package version
-        # for openexr/ilmbase
-        for each in range(len(dependOn.downloadList)):
-            if dependOnVersion:
-                if dependOn.downloadList[each][2] == dependOnVersion:
-                    # we have the version specified in the download
-                    # print "download version",dependOn.name,self.dependOn[dependOn], currVersion, dependOnVersion
-                    depend_n = each
-                    break
-
-            # if the version in the download is the same as the current
-            # pkg version, use it..
-            if dependOn.downloadList[each][2] == currVersion:
-                # print "match match",dependOn.name,self.dependOn[dependOn], dependOn.downloadList[each][2], currVersion
-                depend_n = each
-                break
 
         return depend_n
 
@@ -1223,8 +1206,7 @@ class generic:
 
         for n in folders:
             path = '%s/%s' % (os_environ['INSTALL_FOLDER'], n )
-            if not os.path.exists( path ):
-                os.makedirs( path )
+            os.system( 'mkdir -p "%s"' % path )
 
         PATH         = ['$INSTALL_FOLDER/bin'] + PATH
         LIBRARY_PATH = [
@@ -1654,29 +1636,34 @@ class generic:
 
         # error during build!!
         else:
-            _print(  '-'*tcols )
-            if not DEBUG():
-                os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors' % lastlog )
-            #for each in open("%s.err" % lastlog).readlines() :
-            #    print '::\t%s' % each.strip()
-            _print( ret )
-            #print '-'*tcols
-            #pprint(os_environ)
-            _print( '-'*tcols )
-            _print( bcolors.FAIL,
-                     traceback.format_exc(), #.print_exc()
-            bcolors.END )
-            _print( cmd )
-            _print( '-'*tcols )
-            _print( self.travis, self.__class__ )
-            if ret==666:
-                _print( bcolors.FAIL+"ERROR - BUILD WAS TOO FAST (%d secs)!!!! IF THIS IS CORRECT, SET noMinTime=True WHEN CREATING THE BUILD CLASS OBJECT!!%s" % (_elapsed.tm_sec,bcolors.END) )
-            sys.stdout.flush()
             if not self.travis and not sconsParallel:
+                _print(  '-'*tcols )
+                if not DEBUG():
+                    os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors' % lastlog )
+                #for each in open("%s.err" % lastlog).readlines() :
+                #    print '::\t%s' % each.strip()
+                _print( ret )
+                #print '-'*tcols
+                #pprint(os_environ)
+                _print( '-'*tcols )
+                _print( bcolors.FAIL,
+                         traceback.format_exc(), #.print_exc()
+                bcolors.END )
+                _print( cmd )
+                _print( '-'*tcols )
+                _print( self.travis, self.__class__ )
+                if ret==666:
+                    _print( bcolors.FAIL+"ERROR - BUILD WAS TOO FAST (%d secs)!!!! IF THIS IS CORRECT, SET noMinTime=True WHEN CREATING THE BUILD CLASS OBJECT!!%s" % (_elapsed.tm_sec,bcolors.END) )
+                sys.stdout.flush()
                 os.chdir(os_environ['SOURCE_FOLDER'])
                 proc=Popen("/bin/sh", bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
                 proc.wait()
-            raise Exception('Error!')
+            else:
+                if ret==666:
+                    f = open( lastlog, 'a' )
+                    f.write( bcolors.FAIL+"\n\nERROR - BUILD WAS TOO FAST (%d secs)!!!! IF THIS IS CORRECT, SET noMinTime=True WHEN CREATING THE BUILD CLASS OBJECT!!%s\n\n" % (_elapsed.tm_sec,bcolors.END) )
+                    f.close()
+            raise Exception(bcolors.FAIL+': Error [%d] during build of package %s.%s - check log file: %s' % (ret, pkgName, pkgVersion, lastlog) )
 
         # cleanup so we have space to build.
         keep_source = filter(lambda x: 'KEEP_SOURCE_FOLDER' in x[0], env.items())
@@ -2127,7 +2114,7 @@ class generic:
         }
         for each in links:
             if not os.path.exists(links[each]):
-                os.system( 'ln -s "%s" "%s"' % (each, links[each]) )
+                os.system( 'ln -s "%s" "%s" 2>/dev/null' % (each, links[each]) )
 
     def install(self, target, source):
         ret = source

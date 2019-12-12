@@ -955,20 +955,20 @@ class all: # noqa
                 'openexr-2.0.0.tar.gz',
                 '2.0.0',
                 '0820e1a8665236cb9e728534ebf8df18',
-                { gcc : '4.1.2', python: '2.7.16' }
+                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.0.0' }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
                 'openexr-2.1.0.tar.gz',
                 '2.1.0',
                 '33735d37d2ee01c6d8fbd0df94fb8b43',
-                { gcc : '4.1.2', python: '2.7.16' }
+                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.1.0' }
             ),(
                 # CY2016 - CY2018
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
                 'openexr-2.2.0.tar.gz',
                 '2.2.0',
                 'b64e931c82aa3790329c21418373db4e',
-                { gcc : '4.1.2', python: '2.7.16' }
+                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.2.0' }
             # ),(
             #     # CY2019
             #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
