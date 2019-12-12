@@ -439,7 +439,6 @@ if canBuildCortexNow:
         _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
 
         # set the version of openvdb for all versions of cortex.
-        _download = []+download
         for n in range(len(_download)):
             _download[n][4] = _download[n][4].copy()
             _download[n][4][pkgs.openvdb] = openvdb_version
