@@ -209,15 +209,17 @@ if canBuildCortexNow:
                 'CFLAGS' : ' -std=c++11 $CFLAGS ',
                 'CXXFLAGS' : ' -std=c++11 $CXXFLAGS ',
             })
-            for each in pkgs.alembic.download:
-                each[4][pkgs.gcc] = '4.8.5'
+            _download = []+pkgs.alembic.download
+            for n in range(len(_download)):
+                _download[n][4] = pkgs.alembic.download[n][4].copy()
+                _download[n][4][pkgs.gcc] = '4.8.5'
             pkgs.maya_alembic.update({ targetSuffix : build.alembic(
                 ARGUMENTS,
                 'alembic',
                 targetSuffix = targetSuffix,
                 sed = pkgs.alembic.sed,
                 baseLibs = pkgs.alembic.baseLibs,
-                download = pkgs.alembic.download,
+                download = _download,
                 depend = pkgs.alembic.depend,
                 cmd = pkgs.alembic.cmd,
                 apps = [ (pipe.apps.maya, str(version)) ],
@@ -368,13 +370,18 @@ if canBuildCortexNow:
         #     continue
 
         sufix = "core.alembic.%s" % alembic_version
-        # set the version of alembic for all versions of cortex.
+
+        # cortex 9 is only compatible with alembic below 1.6
         _download = []+download
+        if build.versionMajor(alembic_version) > 1.5:
+            _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
+
+        # now set the alembic version for all cortex versions
         for n in range(len(_download)):
             _download[n][4] = _download[n][4].copy()
             _download[n][4][pkgs.alembic] = alembic_version
 
-        # now build the version of cortex with the alembic version
+        # and build cortex
         cortex[sufix] = build.cortex(
             ARGUMENTS, # noqa
             'cortex',
@@ -388,12 +395,6 @@ if canBuildCortexNow:
             cmd = [build.cortex.cmd[0]+"installAlembic"],
             environ = {
                 'LD' : 'ld',
-                # we need this for alembic
-                'CFLAGS' : ' -isystem $BOOST_TARGET_FOLDER/include/boost/ -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/c++/tr1/  $CFLAGS  ',
-                'CXXFLAGS' : ' -isystem $BOOST_TARGET_FOLDER/include/boost/ -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/c++/tr1/  $CXXFLAGS',
-                # 'CPATH' : '$BOOST_TARGET_FOLDER/include/boost/:$CXXFLAGS -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/c++/tr1/',
-                # 'CFLAGS' : ' $CFLAGS ',
-                # 'CXXFLAGS' : ' $CXXFLAGS ',
             }
         )
 
