@@ -241,6 +241,7 @@ class alembic(cmake):
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
             '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_TARGET_FOLDER/lib/libpython$PYTHON_VERSION_MAJOR.so',
             '-DALEMBIC_SHARED_LIBS=1',
+            '-DALEMBIC_LIB_USES_BOOST=1',
             # '-DUSE_PRMAN=1',
             # '-DUSE_MAYA=1',
             '-DBUILD_SHARED_LIBS:BOOL="TRUE"',
