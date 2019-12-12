@@ -102,6 +102,9 @@ COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download/*
 # add strace
 RUN yum -y install strace
 
+# we need this for alembic opengl with maya
+RUN yum -y install libXmu-devel
+
 # to avoid clashing in osl
 RUN yum -y remove boost
 
