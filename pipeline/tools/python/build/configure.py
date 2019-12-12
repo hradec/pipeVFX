@@ -477,6 +477,7 @@ class cortex(configure):
     environ = {
     }
     cmd=[
+        # '''export LDFLAGS=$(ls $ALEMBIC_TARGET_FOLDER/lib/ | sed -e 's/lib//g' -e 's/.so//g' |  awk '{print "-l"$1}') ; '''
         ' scons OPTIONS=%s/cortex.options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
         ' scons OPTIONS=%s/cortex.options.py -j $DCORES '         % os.path.abspath( os.path.dirname(__file__)),
         # 'scons OPTIONS=%s/cortex.options.py -j $DCORES install' % os.path.abspath( os.path.dirname(__file__)),
@@ -508,6 +509,16 @@ class cortex(configure):
             ('CPPFLAGS = "-DIECOREALEMBIC_WITH_OGAWA"', 'CPPFLAGS = ["-DIECOREALEMBIC_WITH_OGAWA"]'),
             ('testEnv.Prepend( CXXFLAGS = " ".join( dependencyIncludes ) )', 'testEnv.Prepend( CXXFLAGS = dependencyIncludes )'),
             ('"lib/"','""'),
+
+
+            # alembic fix for multiple libs... Cortex doesn't detect all the libraries we have built for alembic 1.5.8
+            # we need it on pre and pos version 10
+            ('.hdf5.HDF5_LIB_SUFFIX..','"hdf5$HDF5_LIB_SUFFIX",]+env["ALEMBIC_EXTRA_LIBS"].split(" ")+['),
+            ('Documentation options', '\n\n'
+                'o.Add("ALEMBIC_EXTRA_LIBS")\n'
+                'o.Add("INSTALL_ALEMBICPYTHON_DIR")\n'
+             ),
+
             # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
             # ('glTestEnv.Depends( glTest, corePythonModule )',''),
             # ('mayaPluginEnv.Depends( mayaPlugin, corePythonModule )',''),
@@ -578,7 +589,13 @@ class cortex(configure):
            ('INSTALL_PYTHON_DIR/IECoreUSD', 'INSTALL_USDPYTHON_DIR/IECoreUSD'),
            ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
            ('INSTALL_PYTHON_DIR/IECoreVDB', 'INSTALL_VDBPYTHON_DIR/IECoreVDB'),
+
+           # alembic fix for multiple libs... Cortex doesn't detect all the libraries we have built for alembic 1.5.8
+           # we need it on pre and pos version 10
+           ('.hdf5.HDF5_LIB_SUFFIX..','"hdf5$HDF5_LIB_SUFFIX",]+env["ALEMBIC_EXTRA_LIBS"].split(" ")+['),
+           
            ('Documentation options', '\n\n'
+               'o.Add("ALEMBIC_EXTRA_LIBS")\n'
                'o.Add("INSTALL_VDBLIB_NAME")\n'
                'o.Add("INSTALL_VDBPYTHON_DIR")\n'
                'o.Add("INSTALL_USDLIB_NAME")\n'
@@ -619,8 +636,6 @@ class cortex(configure):
             ('usdPythonModuleSources )'      , 'usdPythonModuleSources       )\n\t\tusdPythonModuleEnv.Depends(       usdPythonModule,       [corePythonLibraryInstall,corePythonModuleInstall] )'),
             ('alembicPythonModuleSources )'  , 'alembicPythonModuleSources   )\n\t\talembicPythonModuleEnv.Depends(   alembicPythonModule,   [corePythonLibraryInstall,corePythonModuleInstall] )'),
             ('appleseedPythonModuleSources )', 'appleseedPythonModuleSources )\n\t\tappleseedPythonModuleEnv.Depends( appleseedPythonModule, [corePythonLibraryInstall,corePythonModuleInstall] )'),
-
-
 
            # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
            # ('glTestEnv.Depends( glTest, corePythonModule )',''),
@@ -686,8 +701,17 @@ class cortex(configure):
                         ('corePythonModule = ','corePythonModule = [] #'),
                         ('glLibrary = ','glLibrary = [] #'),
                         ('glPythonModule = ','glPythonModule = [] #'),
+                        ('sceneLibrary = ','sceneLibrary = [] #'),
+                        ('scenePythonModule = ','scenePythonModule = [] #'),
+                        ('imageLibrary = ','imageLibrary = [] #'),
+                        ('imagePythonModule = ','imagePythonModule = [] #'),
+                        ('vdbLibrary = ','vdbLibrary = [] #'),
+                        ('vdbPythonModule = ','vdbPythonModule = [] #'),
                         ('Default. coreLibrary','#Default( coreLibrary'),
                         ('Default. . glLibrary','#Default( [ glLibrary'),
+                        ('Default. sceneLibrary','#Default( sceneLibrary'),
+                        ('Default. . imageLibrary','#Default( [ imageLibrary'),
+                        ('Default. vdbLibrary','#Default( vdbLibrary'),
                         ('INSTALL_PYTHON_DIR/IECoreMaya',    'INSTALL_MAYAPYTHON_DIR/IECoreMaya'),
                         ('INSTALL_PYTHON_DIR/IECoreHoudini', 'INSTALL_HOUDINIPYTHON_DIR/IECoreHoudini'),
                         ('INSTALL_PYTHON_DIR/IECoreMantra',  'INSTALL_HOUDINIPYTHON_DIR/IECoreMantra'),
@@ -697,10 +721,11 @@ class cortex(configure):
                             'o.Add("INSTALL_MAYAPYTHON_DIR","","")\n'
                             'o.Add("INSTALL_HOUDINIPYTHON_DIR","","")\n'
                             'o.Add("INSTALL_PRMANPYTHON_DIR","","")\n'
+                            'o.Add("ALEMBIC_EXTRA_LIBS")\n'
                             'o.Add("INSTALL_ALEMBICPYTHON_DIR","","")\n'
                             'o.Add("INSTALL_RMANPYTHON_DIR","","")\n'
                             '# Documentation options'
-                        )
+                        ),
                     ]
         return noIECoreSED
 

@@ -22,6 +22,9 @@ import os, sys, pipe
 from glob import glob
 
 
+def versionMajor(versionString):
+    return float('.'.join(versionString.split('.')[:2]))
+
 def expandvars(path, env=os.environ, default=None, skip_escaped=False):
     """Expand environment variables of form $var and ${var}.
        If parameter 'skip_escaped' is True, all escaped variable references
@@ -213,10 +216,17 @@ if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the last version 
 
 
 ALEMBIC_LIB_SUFFIX      = ''
+ALEMBIC_EXTRA_LIBS      = []
+if versionMajor(os.environ['ALEMBIC_VERSION']) < 1.6:
+    for x in glob( "%s/lib/*.so" % os.environ['ALEMBIC_TARGET_FOLDER'] ):
+        ALEMBIC_EXTRA_LIBS += [ os.path.basename(x.replace('lib','').replace('.so','')) ]
+
+ALEMBIC_EXTRA_LIBS = ' '.join(ALEMBIC_EXTRA_LIBS)
+
 # if 'ALEMBIC_TARGET_FOLDER' in os.environ:
 #     ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
 #     ALEMBIC_LIB_PATH        = "%s/lib" % os.environ['ALEMBIC_TARGET_FOLDER']
-    
+
 
 for each in glob( '%s/../*' % os.environ['BOOST_TARGET_FOLDER'] ):
     os.environ['LIBRARY_PATH'] += ':%s/lib/python%s' % (each, os.environ['PYTHON_VERSION_MAJOR'])
@@ -431,18 +441,25 @@ LINKFLAGS += [
 #LINKFLAGS.append('-Wl,-rpath %s/lib' % MAYA_ROOT)
 
 
-LINKFLAGS.append("-L%s" % os.path.dirname( expandvars(INSTALL_LIB_NAME, os.environ) ) )
-LINKFLAGS.append("-L%s" % os.path.dirname(expandvars(INSTALL_PYTHONLIB_NAME, os.environ) ) )
+LINKFLAGS.append("-L%s" % os.path.dirname( expandvars(os.path.dirname(INSTALL_LIB_NAME), os.environ) ) )
+LINKFLAGS.append("-L%s" % os.path.dirname(expandvars(os.path.dirname(INSTALL_PYTHONLIB_NAME), os.environ) ) )
 LINKFLAGS.append('-L%s' % expandvars(NUKE_ROOT, os.environ) )
-LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_NUKELIB_NAME, os.environ) ))
-LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_RMANLIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(os.path.dirname(INSTALL_NUKELIB_NAME), os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(os.path.dirname(INSTALL_RMANLIB_NAME), os.environ) ))
 LINKFLAGS.append('-L%s/lib' % expandvars(MAYA_ROOT, os.environ) )
-LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_MAYALIB_NAME, os.environ) ))
-LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_HOUDINILIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(os.path.dirname(INSTALL_MAYALIB_NAME), os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(os.path.dirname(INSTALL_HOUDINILIB_NAME), os.environ) ))
 LINKFLAGS.append('-L%s/bin' % expandvars(ARNOLD_ROOT, os.environ) )
-LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_ARNOLDLIB_NAME, os.environ) ))
-LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(INSTALL_ALEMBICLIB_NAME, os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(os.path.dirname(INSTALL_ARNOLDLIB_NAME), os.environ) ))
+LINKFLAGS.append('-L%s' % os.path.dirname(expandvars(os.path.dirname(INSTALL_ALEMBICLIB_NAME), os.environ) ))
 LINKFLAGS.append('-L%s' % os.environ['SOURCE_FOLDER'] )
+
+# we add the installation path to the library search path since we run the cortex build multiple times to build
+# different components, and we patch it to NOT waste time rebuilding what's already done!
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost%s' % os.environ['BOOST_VERSION'] ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost%s/python%s' % (os.environ['BOOST_VERSION'],os.environ['PYTHON_VERSION_MAJOR']) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'alembic/%s/lib' % os.environ['ALEMBIC_VERSION'] ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'openvdb/%s/lib' % os.environ['OPENVDB_VERSION'] ]) )
 
 # CC = os.environ['CC']
 # CPP = os.environ['CPP']
