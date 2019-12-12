@@ -196,6 +196,7 @@ class alembic(cmake):
             ],
             'CMakeLists.txt' : [
                 ('/alembic-${VERSION}',' '),
+                ('.std.c..11',''),
             ],
             'maya/AbcImport/CMakeLists.txt' : [
                 ('maya/plug-ins', 'maya/$ENV{MAYA_VERSION}/plugins'),

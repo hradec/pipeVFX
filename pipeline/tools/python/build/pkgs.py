@@ -1945,7 +1945,11 @@ class all: # noqa
             sed = {'1.5.8' : {
                 'lib/AbcOpenGL/Foundation.h' : [
                     ('.include .GL.glext.h.',''),
-                ]
+                ],
+                'CMakeLists.txt' : [
+                    ('/alembic-${VERSION}',' '),
+                    ('.std.c..11',''),
+                ],
             },'1.7.0' : {}
             },
             download=[(
