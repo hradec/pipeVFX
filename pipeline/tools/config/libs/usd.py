@@ -20,26 +20,26 @@
 
 
 
+class usd(baseLib):
+    def versions(self):
+        if self.parent() in ['usd']:
+            pipe.libs.version.set( oiio='1.6.15' )
+            pipe.libs.version.set( opensubdiv='3.4.0' )
+            pipe.libs.version.set( ptex='2.0.42' )
 
-class bcolors:
-    import os
+    def environ(self):
+        self['PYTHONPATH'] = self.path('lib/python')
 
-    BS = '\033[1D'
-    if ('TRAVIS' in os.environ and os.environ['TRAVIS']=='1') or ('ENVIRON_TRAVIS' in os.environ and os.environ['ENVIRON_TRAVIS']=='1'):
-        BS = ''
+        if self.parent() in ['usd']:
+            self.update( pipe.libs.pyside() )
+            self.update( pipe.libs.oiio() )
+            self.update( pipe.libs.ptex() )
 
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    END = '\033[0m'
-
-
-    def disable(self):
-        self.HEADER = ''
-        self.OKBLUE = ''
-        self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
-        self.END = ''
+        pipe.apps.maya.addon ( self,
+            plugin     = self.path('maya.$MAYA_VERSION/third_party/maya/plugin'),
+            script     = self.path('maya.$MAYA_VERSION/third_party/maya/lib/usd/usdMaya/resources/'),
+            lib        = [
+                self.path('lib'),
+                self.path('maya.$MAYA_VERSION/third_party/maya/lib'),
+            ],
+        )

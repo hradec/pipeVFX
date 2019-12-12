@@ -169,6 +169,13 @@ class appsDB(dict):
             macfix(ret) # noqa
         return ret
 
+    def parent(self):
+        ''' returns the name of the main class running this instance '''
+        ret = ''
+        if 'PARENT_BASE_CLASS' in os.environ:
+            ret = os.environ['PARENT_BASE_CLASS']
+        return ret
+
     def path(self, subPath='', appName=None):
         '''
         returns the app path. one can specify a subfolder path that will be
@@ -178,24 +185,32 @@ class appsDB(dict):
 
         macfixData = self.__macfix()
 
+        ret = ""
+        if self.app in self:
+            if hasattr(self, "osxPath"):
+                ret =  '%s' % (self.osxPath)
+            else:
+                ret =  '%s' % (self[self.app]['path'])
+                currentVersion = self.version()
+                if currentVersion:
+                    ret =  '%s/%s' % (self[self.app]['path'], currentVersion)
+
         if macfixData['subpath']:
             subPath = '%s/%s' % (macfixData['subpath'],subPath)
+
+        # account for app version builds of a package, if they exist.
+        if self.parent() and self.parent() != self.app:
+            parent_version =  version.get( self.parent() )
+            _subPath = '%s.%s/%s' % ( self.parent(), parent_version, subPath )
+            if os.path.exists( ret+'/'+_subPath ):
+                subPath = _subPath
 
         if subPath:
             subPath = '/%s' % subPath
 
         subPath = subPath.replace('//','/')
 
-        ret = ""
-        if self.app in self:
-            if hasattr(self, "osxPath"):
-                ret =  '%s/%s' % (self.osxPath, subPath)
-            else:
-                ret =  '%s/%s' % (self[self.app]['path'], subPath)
-                currentVersion = self.version()
-                if currentVersion:
-                    ret =  '%s/%s%s' % (self[self.app]['path'], currentVersion , subPath)
-        return ret
+        return ret+subPath
 
     def pythonPath(self, appName=None):
         '''
@@ -225,17 +240,24 @@ class appsDB(dict):
 
         return pythonPath
 
+    def appFolder(self, appName):
+        self.setApp(appName)
+        appVersion=version.get(appName)
+        appFolder = "%s.%s" % (appName, appVersion)
+
     def lib(self, appName=None):
         '''
         returns a default lib path for the current app.
         '''
         self.setApp(appName)
-        return [
+
+        ret =  [
             self.path(subPath='lib'),
             self.path(subPath='lib/python$PYTHON_VERSION_MAJOR'),
             self.path(subPath='lib/boost$BOOST_VERSION'),
             self.path(subPath='lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR'),
         ]
+        return ret
 
     def bin(self, appName=None):
         '''
@@ -735,11 +757,11 @@ class baseApp(_environ):
                         for each in allLibs.updatedClasses[lib].keys():
                             allLibs[each] = allLibs.updatedClasses[lib][each]
                             extraUpdates[each] = 1
-                    else:
+
                     # if not, just grab what we need!!
-                        allLibs['LD_LIBRARY_PATH'] = allLibs.updatedClasses[lib]['LD_LIBRARY_PATH']
-                        allLibs['PYTHONPATH'] = allLibs.updatedClasses[lib]['PYTHONPATH']
-                        allLibs['INCLUDE'] = allLibs.updatedClasses[lib]['INCLUDE']
+                    allLibs['LD_LIBRARY_PATH'] = allLibs.updatedClasses[lib]['LD_LIBRARY_PATH']
+                    allLibs['PYTHONPATH'] = allLibs.updatedClasses[lib]['PYTHONPATH']
+                    allLibs['INCLUDE'] = allLibs.updatedClasses[lib]['INCLUDE']
 
                 # set lib versions no matter what!!
                 for each in [ x for x in allLibs.updatedClasses[lib] if 'VERSION' in x ]:
@@ -1322,6 +1344,8 @@ class baseApp(_environ):
         if hasattr( self, 'preRun'):
             cmd = self.preRun(cmd)
 
+        # only preload if exists!
+        _preload = []
         # workaround for centos 6.5
         if os.path.exists('/etc/centos-release'):
             _preload = [
@@ -1329,18 +1353,20 @@ class baseApp(_environ):
                 "/opt/centos7/usr/lib64/libXft.so.2",
             ]
 
-            if 'LD_PRELOAD' in os.environ.keys():
-                _preload += os.environ['LD_PRELOAD'].split(':')
+        if 'LD_PRELOAD' in os.environ.keys():
+            _preload += os.environ['LD_PRELOAD'].split(':')
 
-            # only preloads if they exist!
-            preload = []
-            for each in _preload:
-                if os.path.exists( each ):
-                    preload += [ each ]
-                else:
-                    print ("pipevfx dev warning: can't preload %s since it doesn't exist." % each)
+        # only preloads if they exist!
+        preload=[]
+        for each in _preload:
+            if os.path.exists( each ):
+                preload += [ each ]
+            else:
+                log.debug("pipevfx dev warning: can't preload %s since it doesn't exist." % each)
 
-            os.environ['LD_PRELOAD']=":".join(preload)
+        os.environ['LD_PRELOAD']=":".join(preload)
+
+
 
         log.debug(cmd)
 

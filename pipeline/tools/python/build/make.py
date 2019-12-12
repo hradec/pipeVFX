@@ -32,10 +32,11 @@ import os,sys
 class make(generic):
     ''' a class to handle make installs '''
     src = 'Makefile'
-    cmd = 'make -j $DCORES && make install'
+    cmd = ' make -j $DCORES && make install'
     _parallel=''
     _verbose=''
     _verbose_cmake=''
+    flags=[]
     def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         generic.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
         # some extra parameters to control log output and parallel building
@@ -51,11 +52,11 @@ class make(generic):
         # verbose=1 show the command lines in cmake
         self._verbose = ''
         self._verbose_cmake = ''
-        if 'verbose' in kargs and kargs['verbose'] == 1:
-            self._verbose = 'VERBOSE=1'
-            self._verbose_cmake = '-DVERBOSE=1'
+        if hasattr(self, 'verbose') and self.verbose>0:
+            self._verbose = ' VERBOSE=1 '
+            self._verbose_cmake = ' -DVERBOSE=1 '
 
-    def fixCMD(self, cmd, environ=[]):
+    def fixCMD(self, cmd, os_environ, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
@@ -65,6 +66,10 @@ class make(generic):
             'export MAKE_VERBOSE="%s"' % self._verbose,
             'export CMAKE_VERBOSE="%s"' % self._verbose_cmake,
         ]
+        for each in self.flags:
+            if 'make' in cmd and each.split('=')[0] not in cmd:
+                cmd = cmd.replace('make','make '+each+' ')
+
         return cmd
 
 
@@ -72,8 +77,8 @@ class cmake(make):
     ''' a class to handle cmake installs '''
     src = 'CMakeLists.txt'
     cmd = [
-        'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER && '
-        'make $MAKE_PARALLEL $MAKE_VERBOSE && make install'
+        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
+        ' make $MAKE_PARALLEL $MAKE_VERBOSE &&  make install'
     ]
     flags = [
             '-Wno-dev',
@@ -128,7 +133,7 @@ class cmake(make):
     def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         make.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
 
-    def fixCMD(self, cmd, environ=[]):
+    def fixCMD(self, cmd, os_environ, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
@@ -159,16 +164,17 @@ class cmake(make):
 class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
-        'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER && '
-        'make $MAKE_PARALLEL $MAKE_VERBOSE  && make install',
+        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
+        ' make $MAKE_PARALLEL $MAKE_VERBOSE  &&  make install',
         '( [ "$(basename $TARGET_FOLDER)" == "1.5.8" ] ',
-        '( mkdir -p $TARGET_FOLDER/bin/',
-        '  mkdir -p $TARGET_FOLDER/include/',
-        '  mkdir -p $TARGET_FOLDER/lib/',
-        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $TARGET_FOLDER/bin/',
-        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $TARGET_FOLDER/include/',
-        '  mv -v $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $TARGET_FOLDER/lib/',
-        '  rm -rf $TARGET_FOLDER/alembic-$(basename $TARGET_FOLDER) '
+        '( mkdir -p $INSTALL_FOLDER/bin/',
+        '  mkdir -p $INSTALL_FOLDER/include/',
+        '  mkdir -p $INSTALL_FOLDER/lib/',
+        '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/* $INSTALL_FOLDER/',
+        # '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/bin/* $INSTALL_FOLDER/bin/',
+        # '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/include/* $INSTALL_FOLDER/include/',
+        # '  mv -v $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER)/lib/* $INSTALL_FOLDER/lib/',
+        '  rm -rf $INSTALL_FOLDER/alembic-$(basename $TARGET_FOLDER) '
         ') || true )'
     ]
     # alembic has some hard-coded path to find python, and the only
@@ -190,6 +196,7 @@ class alembic(cmake):
             ],
             'CMakeLists.txt' : [
                 ('/alembic-${VERSION}',' '),
+                ('.std.c..11',''),
             ],
             'maya/AbcImport/CMakeLists.txt' : [
                 ('maya/plug-ins', 'maya/$ENV{MAYA_VERSION}/plugins'),
@@ -218,82 +225,40 @@ class alembic(cmake):
         },
     }
 
-    def preSED(self, pkgVersion, lastlog):
+    def preSED(self, pkgVersion, lastlog, os_environ):
         if float( '.'.join(pkgVersion.split('.')[:2]) ) < 1.60:
             from subprocess import Popen
             cmd = 'python ./build/bootstrap/alembic_bootstrap.py . > %s 2>&1' % lastlog
-            proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=self.os_environ, close_fds=True)
+            proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
             proc.wait()
 
-    def fixCMD(self, cmd):
+    def fixCMD(self, cmd, os_environ):
         # update the buld environment with all the enviroment variables
         # specified in apps argument!
         environ = []
 
-        pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
-        pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
-        print bcolors.WARNING+": ", bcolors.BLUE+"  apps: ",
-        if hasattr(self, 'apps'):
-            for (app, version) in self.apps:
-                className = str(app).split('.')[-1].split("'")[0]
-                pipe.version.set({className:version})
-                app = app()
-                app.fullEnvironment()
-                print "%s(%s)" % (className, version),
-                # get all vars from app class and add to cmd environ
-                for each in app:
-                    if each not in ['LD_PRELOAD','PYTHON_VERSION','PYTHON_VERSION_MAJOR']:
-                        v = app[each]
-                        if type(v) == str:
-                            v=[v]
-                        if each not in self.os_environ:
-                            self.os_environ[each] = ''
-                        # if var value is paths
-                        if 'ROOT' in each:
-                            self.os_environ[each] = v[0]
-                        elif '/' in str(v):
-                            self.os_environ[each] = "%s:%s" % (self.os_environ[each], ':'.join(v))
-                        else:
-                            self.os_environ[each] = ' '.join(v)
-
-            # remove python paths that are not the same version!
-            for each in self.os_environ:
-                if '/' in str(v):
-                    cleanSearchPath = []
-                    for path in self.os_environ[each].split(':'):
-                        if not path.strip():
-                            continue
-                        if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
-                            pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
-                            pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
-                            # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
-                            if pathVersion1:
-                                if pathVersion1 != self.os_environ['PYTHON_VERSION']:
-                                    continue
-                            if pathVersion2:
-                                if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
-                                    continue
-                        cleanSearchPath.append(path)
-                    self.os_environ[each] = ':'.join(cleanSearchPath)
-
-        # self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-        # self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-
-        self.flags += [
+        extra_flags = [
             '-DUSE_PYALEMBIC=0', # disable python bindings
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
             '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_TARGET_FOLDER/lib/libpython$PYTHON_VERSION_MAJOR.so',
             '-DALEMBIC_SHARED_LIBS=1',
-            '-DUSE_PRMAN=1',
-            '-DUSE_MAYA=1',
+            '-DALEMBIC_LIB_USES_BOOST=1',
+            # '-DUSE_PRMAN=1',
+            # '-DUSE_MAYA=1',
             '-DBUILD_SHARED_LIBS:BOOL="TRUE"',
             '-DBUILD_STATIC_LIBS:BOOL="FALSE" ',
             "-DUSE_HDF5=ON",
+            '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
+            '-DOPENEXR_ROOT=$OPENEXR_TARGET_FOLDER',
         ]
 
         cmd = cmd.replace('cmake', 'cmake  -DBUILD_SHARED_LIBS:BOOL="TRUE"  -DBUILD_STATIC_LIBS:BOOL="FALSE" ')
 
-        return cmake.fixCMD(self, cmd, [
+        for each in self.flags+extra_flags:
+            if 'cmake' in cmd and each.split('=')[0] not in cmd:
+                cmd = cmd.replace('cmake','cmake '+each+' ')
+
+        return cmake.fixCMD(self, cmd, os_environ, [
             'export PRMAN_ROOT=$PRMAN_ROOT/RenderManProServer-$PRMAN_VERSION'
         ])
 
@@ -304,7 +269,12 @@ class download(make):
     the build is just copying over the uncompressed source to the target folder to be used later by other builds
     '''
     src='CMakeLists.txt'
-    cmd=['mkdir -p $TARGET_FOLDER && cp -rfuv $SOURCE_FOLDER/* $TARGET_FOLDER/']
+    cmd=[
+        'mkdir -p $INSTALL_FOLDER',
+        'cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/',
+        'echo "Done!!!!!"',
+    ]
+    noMinTime=True
     # as we want this packages just to be used for building other packages, we don't need a installation target_folder
 #    def installer(self, target, source, env):
 #        os.system("rm -rf %s" % os.path.abspath(os.path.dirname(os.path.dirname(str(target[0])))) )
@@ -318,7 +288,7 @@ class glew(make):
     cmd = ' && '.join([
 #        './cmake-testbuild.sh'
 #        'cd auto && make destroy && make && cd ..',
-        'make CC="$CC" CFLAGS="$CFLAGS -Iinclude" GLEW_DEST=$TARGET_FOLDER install.all',
+        ' make CC="$CC" CFLAGS="$CFLAGS -Iinclude" GLEW_DEST=$INSTALL_FOLDER install.all',
     ])
     sed = {
         '0.0.0' : {
@@ -367,7 +337,7 @@ class tbb(make):
     ''' a make class to exclusively build intels TBB package
     since we need to handle the installation by ourselfs, we override
     installer() method'''
-    cmd = ['make -j $DCORES ']
+    cmd = [' make -j $DCORES ']
 
     def installer(self, target, source, env):
         '''we use this method to do a custom tbb install

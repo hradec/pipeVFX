@@ -81,14 +81,14 @@ RUN yum -y install opencl-headers ocl-icd-devel
 
 # cuda
 # this package won't install from yum for some reason
-RUN yumPlugin=$(curl https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/ | grep yum-plugin | awk -F"'" '{print $4}' | sort  | tail -1) && \
-    curl -L https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/$yumPlugin -O && \
-    rpm -i $yumPlugin && \
-    rm -rf $yumPlugin
-
-RUN yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo && \
-    yum clean all && \
-    yum -y install nvidia-driver-latest-dkms cuda cuda-drivers
+# RUN yumPlugin=$(curl https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/ | grep yum-plugin | awk -F"'" '{print $4}' | sort  | tail -1) && \
+#     curl -L https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/$yumPlugin -O && \
+#     rpm -i $yumPlugin && \
+#     rm -rf $yumPlugin
+#
+# RUN yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo && \
+#     yum clean all && \
+#     yum -y install nvidia-driver-latest-dkms cuda cuda-drivers
 
 # to get colors in the build log.
 RUN yum -y install source-highlight
@@ -101,6 +101,9 @@ COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download/*
 
 # add strace
 RUN yum -y install strace
+
+# we need this for alembic opengl with maya
+RUN yum -y install libXmu-devel
 
 # to avoid clashing in osl
 RUN yum -y remove boost

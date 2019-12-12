@@ -20,26 +20,17 @@
 
 
 
+class alembic(baseLib):
+    def versions(self):
+        pipe.libs.version.set( hdf5='1.8.11' )
 
-class bcolors:
-    import os
+    def environ(self):
+        # we don't need to care about the maya version, since
+        # the lib class will set the correct maya.<version>
+        # subfolder automatically based on self.parent()
+        # self.update( pipe.libs.hdf5() )
 
-    BS = '\033[1D'
-    if ('TRAVIS' in os.environ and os.environ['TRAVIS']=='1') or ('ENVIRON_TRAVIS' in os.environ and os.environ['ENVIRON_TRAVIS']=='1'):
-        BS = ''
-
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    END = '\033[0m'
-
-
-    def disable(self):
-        self.HEADER = ''
-        self.OKBLUE = ''
-        self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
-        self.END = ''
+        pipe.apps.maya.addon ( self,
+            plugin = self.path('maya/plug-ins/'),
+            lib = self.path('lib'),
+        )
