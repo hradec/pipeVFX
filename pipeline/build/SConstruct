@@ -240,29 +240,29 @@ if canBuildCortexNow:
     # ===========================================================================================
     # PRMAN
     # ===========================================================================================
-    pkgs.prman_usd = {}
-    pkgs.prman_alembic = {}
-    for n in range(len(pv)):
-        version = 0
-        if pv:
-            version = pv[0] if len(pv)<=n else pv[n]
-            pipe.version.set( prman  = version )
-
-        if version:
-            targetSuffix = "prman.%s" % str(version)
-            pkgs.prman_usd[targetSuffix] = build.cmake(
-                ARGUMENTS,
-                'usd',
-                sed = pkgs.usd.sed,
-                targetSuffix = targetSuffix,
-                download = pkgs.usd.download,
-                depend = pkgs.usd.depend+[pkgs.usd],
-                cmd = pkgs.usd.cmd,
-                apps = [ (pipe.apps.prman, str(version)) ],
-                environ = pkgs.usd.environ,
-                flags=pkgs.usd.flags+[ '-D PXR_BUILD_PRMAN_PLUGIN=1' ],
-            )
-            # pkgs.prman_alembic += [build.alembic(
+    # pkgs.prman_usd = {}
+    # pkgs.prman_alembic = {}
+    # for n in range(len(pv)):
+    #     version = 0
+    #     if pv:
+    #         version = pv[0] if len(pv)<=n else pv[n]
+    #         pipe.version.set( prman  = version )
+    #
+    #     if version:
+    #         targetSuffix = "prman.%s" % str(version)
+    #         pkgs.prman_usd[targetSuffix] = build.cmake(
+    #             ARGUMENTS,
+    #             'usd',
+    #             sed = pkgs.usd.sed,
+    #             targetSuffix = targetSuffix,
+    #             download = pkgs.usd.download,
+    #             depend = pkgs.usd.depend+[pkgs.usd],
+    #             cmd = pkgs.usd.cmd,
+    #             apps = [ (pipe.apps.prman, str(version)) ],
+    #             environ = pkgs.usd.environ,
+    #             flags=pkgs.usd.flags+[ '-D PXR_BUILD_PRMAN_PLUGIN=1' ],
+    #         )
+    #         # pkgs.prman_alembic += [build.alembic(
             #     ARGUMENTS,
             #     'alembic',
             #     targetSuffix = "prman%s" % str(version),
@@ -356,7 +356,7 @@ if canBuildCortexNow:
                 cmd = [
                     build.cortex.cmd[0]+"installLib",
                     build.cortex.cmd[0]+"installCore",
-                    build.cortex.cmd[0]+"installGL installStubs"+extraInstall,
+                    build.cortex.cmd[0]+extraInstall+"installGL installStubs",
                 ]
             )
 
@@ -389,8 +389,11 @@ if canBuildCortexNow:
             environ = {
                 'LD' : 'ld',
                 # we need this for alembic
-                'CFLAGS' : '$CFLAGS -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/c++/tr1/',
-                'CXXFLAGS' : '$CXXFLAGS -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/c++/tr1/',
+                'CFLAGS' : ' -isystem $BOOST_TARGET_FOLDER/include/boost/ -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/c++/tr1/  $CFLAGS  ',
+                'CXXFLAGS' : ' -isystem $BOOST_TARGET_FOLDER/include/boost/ -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/c++/tr1/  $CXXFLAGS',
+                # 'CPATH' : '$BOOST_TARGET_FOLDER/include/boost/:$CXXFLAGS -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/c++/tr1/',
+                # 'CFLAGS' : ' $CFLAGS ',
+                # 'CXXFLAGS' : ' $CXXFLAGS ',
             }
         )
 
