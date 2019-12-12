@@ -56,7 +56,7 @@ class make(generic):
             self._verbose = ' VERBOSE=1 '
             self._verbose_cmake = ' -DVERBOSE=1 '
 
-    def fixCMD(self, cmd, environ=[]):
+    def fixCMD(self, cmd, os_environ, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
@@ -133,7 +133,7 @@ class cmake(make):
     def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         make.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
 
-    def fixCMD(self, cmd, environ=[]):
+    def fixCMD(self, cmd, os_environ, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
         variables override to force it to find packages in non-usual places.
         So here we force some env vars and command line overrides to make sure
@@ -224,19 +224,19 @@ class alembic(cmake):
         },
     }
 
-    def preSED(self, pkgVersion, lastlog):
+    def preSED(self, pkgVersion, lastlog, os_environ):
         if float( '.'.join(pkgVersion.split('.')[:2]) ) < 1.60:
             from subprocess import Popen
             cmd = 'python ./build/bootstrap/alembic_bootstrap.py . > %s 2>&1' % lastlog
-            proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=self.os_environ, close_fds=True)
+            proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
             proc.wait()
 
-    def fixCMD(self, cmd):
+    def fixCMD(self, cmd, os_environ):
         # update the buld environment with all the enviroment variables
         # specified in apps argument!
         environ = []
 
-        self.flags += [
+        extra_flags = [
             '-DUSE_PYALEMBIC=0', # disable python bindings
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
             '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_TARGET_FOLDER/lib/libpython$PYTHON_VERSION_MAJOR.so',
@@ -252,11 +252,11 @@ class alembic(cmake):
 
         cmd = cmd.replace('cmake', 'cmake  -DBUILD_SHARED_LIBS:BOOL="TRUE"  -DBUILD_STATIC_LIBS:BOOL="FALSE" ')
 
-        for each in self.flags:
+        for each in self.flags+extra_flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
                 cmd = cmd.replace('cmake','cmake '+each+' ')
 
-        return cmake.fixCMD(self, cmd, [
+        return cmake.fixCMD(self, cmd, os_environ, [
             'export PRMAN_ROOT=$PRMAN_ROOT/RenderManProServer-$PRMAN_VERSION'
         ])
 
@@ -267,7 +267,12 @@ class download(make):
     the build is just copying over the uncompressed source to the target folder to be used later by other builds
     '''
     src='CMakeLists.txt'
-    cmd=['mkdir -p $INSTALL_FOLDER && cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/']
+    cmd=[
+        'mkdir -p $INSTALL_FOLDER',
+        'cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/',
+        'echo "Done!!!!!"',
+    ]
+    noMinTime=True
     # as we want this packages just to be used for building other packages, we don't need a installation target_folder
 #    def installer(self, target, source, env):
 #        os.system("rm -rf %s" % os.path.abspath(os.path.dirname(os.path.dirname(str(target[0])))) )

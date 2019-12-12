@@ -39,7 +39,7 @@ class configure(generic):
     ]
 
 
-    def fixCMD(self, cmd):
+    def fixCMD(self, cmd, os_environ):
         if [x for x in cmd.split('&&') if 'configure' in x and '--prefix=' not in x]:
             cmd = cmd.replace('configure', 'configure --prefix=$INSTALL_FOLDER ')
         if 'configure' in cmd and self.name not in ['zlib','binutils','cmake', 'qt']:
@@ -115,8 +115,8 @@ class gccBuild(configure):
         else:
             configure.uncompressor( self, target, source, env)
 
-    def fixCMD(self, cmd):
-        if self.versionMajor == 4.1:
+    def fixCMD(self, cmd, os_environ):
+        if float(os_environ['VERSION_MAJOR']) == 4.1:
             if self.targetSuffix == 'pos':
                 return cmd
             if self.use_bin_tarball:
@@ -160,7 +160,7 @@ class gccBuild(configure):
                     'make install',
                 ])
 
-        elif self.versionMajor == 4.8:
+        elif float(os_environ['VERSION_MAJOR']) == 4.8:
             # extract from https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=gcc48
             distroSpecific = []
             distroSpecificConfigure = ''
@@ -346,14 +346,14 @@ class boost(configure):
     the patch links can be found at: http://www.boost.org/patches/
     '''
     src = './bootstrap.sh'
-    def fixCMD(self, cmd):
+    def fixCMD(self, cmd, os_environ):
         # generic build command for versions 1.58 and up
         cmd = [
             ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
             ' ./b2 -j $CORES variant=release cxxflags="-fPIC -fpermissive -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
         ]
         # if version is below 1.58, use this build commands
-        if self.versionMajor < 1.58 and  self.versionMajor > 1.55 :
+        if float(os_environ['VERSION_MAJOR']) < 1.58 and  float(os_environ['VERSION_MAJOR']) > 1.55 :
             cmd = [
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER ',
                 'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
@@ -362,20 +362,20 @@ class boost(configure):
             ]
 
 
-        if self.versionMajor == 1.58:
+        if float(os_environ['VERSION_MAJOR']) == 1.58:
             cmd = [
                 "curl -L -s 'http://www.boost.org/patches/1_58_0/0001-Fix-exec_file-for-Python-3-3.4.patch'            | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_58_0/0002-Fix-a-regression-with-non-constexpr-types.patch' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
             ] + cmd
 
-        if self.versionMajor == 1.55:
+        if float(os_environ['VERSION_MAJOR']) == 1.55:
             cmd = [
                 "curl -L -s 'http://www.boost.org/patches/1_55_0/001-log_fix_dump_avx2.patch' | sed 's/libs/.\/libs/g'| patch -p1",
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
                 ' ./b2 -j $CORES  --without-log  threading=multi  variant=release  cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
-        if self.versionMajor == 1.54:
+        if float(os_environ['VERSION_MAJOR']) == 1.54:
             cmd = [
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/001-coroutine.patch' | sed 's/1_54_0/./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/002-date-time.patch' | sed 's/1_54_0/./g' | patch -p1",
@@ -385,7 +385,7 @@ class boost(configure):
                 ' ./b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
-        if self.versionMajor == 1.51:
+        if float(os_environ['VERSION_MAJOR']) == 1.51:
             cmd = [
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
                 ' ./b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
@@ -394,7 +394,7 @@ class boost(configure):
 
 
         # if we need to build with system gcc
-        if self.versionMajor in []:
+        if float(os_environ['VERSION_MAJOR']) in []:
             cmd = [
                 "export PATH=$(echo $PATH | sed 's/gcc.4.1.2.bin//g')",
             ] + cmd
@@ -451,8 +451,8 @@ class python(configure):
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         # '$INSTALL_FOLDER/bin/easy_install scons',
     ]
-    def fixCMD(self, cmd):
-        cmd = configure.fixCMD(self,cmd)
+    def fixCMD(self, cmd, os_environ):
+        cmd = configure.fixCMD(self,cmd, os_environ)
         if self.kargs.has_key('easy_install'):
             for each in self.kargs['easy_install']:
                 cmd += ' && $INSTALL_FOLDER/bin/easy_install %s ' % each
@@ -590,6 +590,38 @@ class cortex(configure):
                 '\t\tvdbPythonModuleEnv.Alias( "installVDB", vdbPythonModuleInstall )'
             ),
             ('"lib/"','""'),
+
+            # add the proper dependency to the libraries, so libraries get installed before continue building
+            # Theres a bug in cortex scons where libraries are added to the searchpath, but there's no dependency
+            # from the build to those libraries. So the build fails since there's no assurance the libraries where
+            # installed when another library starts linking.
+            (', imageSources )'    , ', imageSources     )\n\t\timageEnv.Depends(     imageLibrary,     [coreLibraryInstall] )'),
+            (', sceneSources )'    , ', sceneSources     )\n\tsceneEnv.Depends(       sceneLibrary,     [coreLibraryInstall] )'),
+            (', vdbSources )'      , ', vdbSources       )\n\t\tvdbEnv.Depends(       vdbLibrary,       [coreLibraryInstall,sceneLibraryInstall] )'),
+            (', glSources )'       , ', glSources        )\n\t\tglEnv.Depends(        glLibrary,        [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall] )'),
+            (', mayaSources )'     , ', mayaSources      )\n\t\tmayaEnv.Depends(      mayaLibrary,      [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
+            (', nukeSources )'     , ', nukeSources      )\n\t\t\t\tnukeEnv.Depends(  nukeLibrary,      [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
+            (', houdiniSources )'  , ', houdiniSources   )\n\t\thoudiniEnv.Depends(   houdiniLibrary,   [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
+            (', arnoldSources )'   , ', arnoldSources    )\n\t\tarnoldEnv.Depends(    arnoldLibrary,    [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
+            (', usdSources )'      , ', usdSources       )\n\t\tusdEnv.Depends(       usdLibrary,       [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
+            (', alembicSources )'  , ', alembicSources   )\n\t\talembicEnv.Depends(   alembicLibrary,   [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
+            (', appleseedSources )', ', appleseedSources )\n\t\tappleseedEnv.Depends( applessedLibrary, [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall,alembicLibrary] )'),
+
+
+            ('+ imagePythonModuleSources )'  , '+ imagePythonModuleSources   )\n\t\timagePythonModuleEnv.Depends(     imagePythonModule,     [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('+ scenePythonModuleSources )'  , '+ scenePythonModuleSources   )\n\t\tscenePythonModuleEnv.Depends(     scenePythonModule,     [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('vdbPythonModuleSources )'      , 'vdbPythonModuleSources       )\n\t\tvdbPythonModuleEnv.Depends(       vdbPythonModule,       [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('glPythonModuleSources )'       , 'glPythonModuleSources        )\n\t\tglPythonModuleEnv.Depends(        glPythonModule,        [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('mayaPythonModuleSources )'     , 'mayaPythonModuleSources      )\n\t\tmayaPythonModuleEnv.Depends(      mayaPythonModule,      [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('nukePythonModuleSources )'     , 'nukePythonModuleSources      )\n\t\tnukePythonModuleEnv.Depends(      nukePythonModule,      [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('houdiniPythonModuleSources )'  , 'houdiniPythonModuleSources   )\n\t\thoudiniPythonModuleEnv.Depends(   houdiniPythonModule,   [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('arnoldPythonModuleSources )'   , 'arnoldPythonModuleSources    )\n\t\tarnoldPythonModuleEnv.Depends(    arnoldPythonModule,    [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('usdPythonModuleSources )'      , 'usdPythonModuleSources       )\n\t\tusdPythonModuleEnv.Depends(       usdPythonModule,       [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('alembicPythonModuleSources )'  , 'alembicPythonModuleSources   )\n\t\talembicPythonModuleEnv.Depends(   alembicPythonModule,   [corePythonLibraryInstall,corePythonModuleInstall] )'),
+            ('appleseedPythonModuleSources )', 'appleseedPythonModuleSources )\n\t\tappleseedPythonModuleEnv.Depends( appleseedPythonModule, [corePythonLibraryInstall,corePythonModuleInstall] )'),
+
+
+
            # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
            # ('glTestEnv.Depends( glTest, corePythonModule )',''),
            # ('mayaPluginEnv.Depends( mayaPlugin, corePythonModule )',''),
@@ -696,12 +728,8 @@ class cortex(configure):
                     ]
         return noIECoreSED
 
-    def fixCMD(self, cmd):
-        # add current folder to lib search paths
-        self.os_environ['LD_LIBRARY_PATH'] += ':'
-        self.os_environ['LIBRARY_PATH'] += ':'
-
-        return cmd + " " + self.sconsInstall
+    def fixCMD(self, cmd, os_environ):
+            return cmd + " " + self.sconsInstall
 
 
 

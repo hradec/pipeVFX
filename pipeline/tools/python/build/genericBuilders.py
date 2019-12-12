@@ -44,7 +44,11 @@ buildTotal=0
 buildCounter=0
 buildStartTime=time.time()
 global sconsParallel
-sconsParallel='1' in os.environ['TRAVIS'] or '-j' in os.environ['EXTRA']
+sconsParallel='0'
+if 'TRAVIS' in os.environ:
+    sconsParallel='1' in os.environ['TRAVIS']
+if 'EXTRA' in os.environ and '-j' in os.environ['EXTRA']:
+    sconsParallel='1'
 
 mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
 if 'MEMGB' in os.environ:
@@ -62,7 +66,7 @@ def _print(*args):
         l = ' '.join([ str(x) for x in args])
         if '[' in l[:20] and ']' in l[:20]:
             p = True
-        if 'processing' in l or 'building' in l:
+        if 'processing' in l or 'building' in l or 'Download' in l or 'md5' in l:
             p = True
     if p:
         sys.stdout.write('\033[2K\033[1G')
@@ -455,9 +459,11 @@ class generic:
 
         # check if we're running in TRAVIS-CI
         self.travis=False
-        if 'TRAVIS' in os.environ or sconsParallel:
-            if '1' in os.environ['TRAVIS'] or sconsParallel:
+        if 'TRAVIS' in os.environ:
+            if '1' in os.environ['TRAVIS']:
                 self.travis=True
+        if  sconsParallel:
+            self.travis=True
         self.set("TRAVIS", '1' if self.travis else '0')
 
         if 'http_proxy' in os.environ:
@@ -560,6 +566,7 @@ class generic:
                             _print( ": __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
 
+                    pkgs = []
                     if download[n][0]:
                         # file to be download
                         archive = os.path.join(buildFolder(self.args),download[n][1])
@@ -577,7 +584,6 @@ class generic:
                         # source file so we can build!
                         # this accounts for builds like python pip
                         s = os.path.join(buildFolder(self.args),download[n][1],self.src)
-                        pkgs = []
                         os.system( 'mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s),s) )
 
                     # run the action method of the class
@@ -621,7 +627,8 @@ class generic:
                     self._depend[p].append(t)
                     self.installAll.append(t)
                     self.env.Default(self.env.Alias( 'install', t ))
-                    if not pkgs:
+                    if pkgs:
+                        # print pkgs
                         self.env.Default(self.env.Alias( 'download', pkgs ))
                     self.env.Alias( 'build-%s' % name, t )
 
@@ -873,29 +880,29 @@ class generic:
             if len(lines) < 35:
                 if 'pre-build' in stage:
                     _print( msg, 'last build log is empty!' )
-                ret = 999
+                return 999
             if [ x for x in lines.split('\n') if 'ld returned 1' in x or 'ld: cannot find ' in x ]:
                 if 'pre-build' in stage:
                     _print( msg, [ x for x in lines.split('\n') if 'ld returned 1' in x or 'ld: cannot find ' in x ] )
-                ret = 100
+                return  100
             # check if we have a make error message
             if [ x for x in lines.split('\n') if 'make:' in x and 'Error' in x and 'ignored' not in x ]:
                 if 'pre-build' in stage:
                     _print( msg, [ x for x in lines.split('\n') if 'make:' in x and 'Error' in x and 'ignored' not in x ] )
-                ret = 101
+                return  101
             if 'Configuring incomplete, errors occurred' in lines:
                 if 'pre-build' in stage:
                     _print( msg+"last build failled during cmake!" )
-                ret = 253
+                return  253
             if "@runCMD_ERROR@" not in lines:
                 if 'pre-build' in stage:
                     _print( msg+"the build didn't finish suscessfully - rebuilding..." )
-                ret = 254
+                return  254
             if "@runCMD_ERROR@" in lines:
                 code =  int(lines.split("@runCMD_ERROR@")[-2].strip())
                 if code and 'pre-build' in stage:
                     _print( msg+"last build finished with error code: %d"  % code )
-                ret = code
+                return  code
         else:
             ret = 255
 
@@ -928,8 +935,8 @@ class generic:
         pkgVersion = os.path.basename(os.path.dirname(target))
         pkgName    = os.path.basename(os.path.dirname(os.path.dirname(target)))
         installDir = os.path.abspath(os.path.dirname(target))
-        self.version = pkgVersion
-        self.versionMajor = float(''.join([ c for c in '.'.join(pkgVersion.split('.')[:2]) if c.isdigit() or c=='.']))
+        os_environ['VERSION'] = pkgVersion
+        os_environ['VERSION_MAJOR'] = ''.join([ c for c in '.'.join(pkgVersion.split('.')[:2]) if c.isdigit() or c=='.'])
 
 
         # set a python version if none is set
@@ -1282,7 +1289,7 @@ class generic:
         # reset lastlog
         open(lastlog,'w').close()
         if hasattr(self, 'preSED'):
-            self.preSED(pkgVersion, lastlog)
+            self.preSED(pkgVersion, lastlog, os_environ)
 
         # run sed inline patch mechanism
         self.runSED(os_environ['SOURCE_FOLDER'])
@@ -1293,7 +1300,7 @@ class generic:
         # if the build has apps setup, add their env vars to the build
         self.setApps()
         # run customizable fixCMD() which is used to fix the command line
-        cmd = self.fixCMD(cmd)
+        cmd = self.fixCMD(cmd, os_environ)
 
 
         # apply patches, if any!
@@ -1485,11 +1492,17 @@ class generic:
             '/usr/include/linux/',
             '/usr/include/glib-2.0/',
             '/usr/share/systemtap/runtime/',
-            '/usr/local/cuda-10.2/targets/x86_64-linux/include/cuda/std/detail/libcxx/include/',
-            '/usr/local/cuda-10.2/targets/x86_64-linux/include/',
-            '/usr/local/cuda-10.2/extras/Sanitizer/include/',
-            '/usr/local/cuda-10.2/extras/CUPTI/samples/extensions/include/',
-            '/usr/local/cuda-10.2/src/',
+
+            # ========================================================================
+            # we can't have cuda in the generic search path since it overrides
+            # some of GCC headers. We have to trust whatever package who needs it,
+            # will have to find it by itself!!
+            # ========================================================================
+            # '/usr/local/cuda-10.2/targets/x86_64-linux/include/cuda/std/detail/libcxx/include/',
+            # '/usr/local/cuda-10.2/targets/x86_64-linux/include/',
+            # '/usr/local/cuda-10.2/extras/Sanitizer/include/',
+            # '/usr/local/cuda-10.2/extras/CUPTI/samples/extensions/include/',
+            # '/usr/local/cuda-10.2/src/',
             # '/usr/local/cuda-10.2/samples/common/inc/',
         ]
         os_environ['C_INCLUDE_PATH'] = ':'.join([os_environ['C_INCLUDE_PATH']]+system_includes)
@@ -1509,13 +1522,26 @@ class generic:
             os_environ['PYTHONHOME'] = '$PYTHON_TARGET_FOLDER'
         else:
             os_environ['PYTHONPATH'] = '$SOURCE_FOLDER/Lib/:'+os_environ['PYTHONPATH']+':'
-            os_environ['LD_LIBRARY_PATH'] = '$SOURCE_FOLDER/:'+os_environ['LD_LIBRARY_PATH']+':'
             os_environ['PYTHONHOME'] = '$SOURCE_FOLDER'
-            # we do LD_PRELOAD in the command line to prevent error messages on the build
+            # we do LD_PRELOAD in the command line to prevent error messages on the build            os_environ['LD_LIBRARY_PATH'] = '$SOURCE_FOLDER/:'+os_environ['LD_LIBRARY_PATH']+':'
+
+        # cortex rely on finding the libraries on the current folder.
+        if '/gcc/' not in target:
+            os_environ['LD_LIBRARY_PATH'] = '$SOURCE_FOLDER/:'+os_environ['LD_LIBRARY_PATH']+':.'
+            os_environ['LIBRARY_PATH'] = '$SOURCE_FOLDER/:'+os_environ['LIBRARY_PATH']+':.'
 
         # expand variables in os_environ
         for each in os_environ:
             os_environ[each] = expandvars(os_environ[each], env=os_environ)
+
+        # add system includes for last
+        os_environ['LIBRARY_PATH'] = ':'.join([
+            os_environ['LIBRARY_PATH'],
+            '/usr/lib',
+            '/usr/lib64',
+            '/lib',
+            '/lib64',
+        ])
 
         # after expanding all env var,
         # add LIBRARY_PATH to LD, if it's 'ld',
@@ -1526,25 +1552,7 @@ class generic:
         if 'ld' in LD:
             for each in set(os_environ['LIBRARY_PATH'].split(':')):
                 if os.path.exists(each) and glob( '%s/*' % each ):
-                    os_environ['LDFLAGS'] += ' -L%s' % each
-
-            # add system includes for last
-            os_environ['LDFLAGS'] = ' '.join([
-                os_environ['LDFLAGS'],
-                ' -L/usr/lib',
-                ' -L/usr/lib64',
-                ' -L/lib',
-                ' -L/lib64',
-            ])
-
-        # add system includes for last
-        os_environ['LIBRARY_PATH'] = ':'.join([
-            os_environ['LIBRARY_PATH'],
-            '/usr/lib',
-            '/usr/lib64',
-            '/lib',
-            '/lib64',
-        ])
+                    os_environ['LDFLAGS'] += ' -L%s' % os.path.abspath(each)
 
         # set extra env vars that were passed to the builder class in the environ parameter!
         # this must come last, so we can modify the env vars after they are all set!
@@ -1585,42 +1593,38 @@ class generic:
         from subprocess import Popen
         _start = time.time()
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
-        # it's better to keep printing something so travis-ci doesn't
-        # kill our build!
-        if self.travis:
-            while proc.poll() is None:
-                _print( '.', )
-                sys.stdout.flush()
-                time.sleep(60)
-        else:
-            while proc.poll() is None:
-                tail = os.popen('tail -n 100 %s | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
-                if not tail:
-                    tail=['']
-                _elapsed = time.gmtime(time.time()-_start)
-                sys.stdout.write('\033[2K\033[1G')
-                sp="/-\|"
-                msg = bcolors.WARNING+"%s:\tbuilding: %s[%s]%s elapsed:%s %02d:%02d:%02d %slogtail:%s %s" % (
-                    bcolors.BS,
-                    bcolors.BLUE,
-                    sp[_spinnerCount],
-                    bcolors.WARNING,
-                    bcolors.BLUE,
-                    _elapsed.tm_hour,
-                    _elapsed.tm_min,
-                    _elapsed.tm_sec,
-                    bcolors.WARNING,
-                    bcolors.END,
-                    tail[0].strip()
-                )
-                _print( msg[:tcols-2], '\r', )
-                _spinnerCount += 1
-                if _spinnerCount >= len(sp):
-                    _spinnerCount = 0
 
-                sys.stdout.flush()
-                time.sleep(1)
+        # keep giving feedback about the build.
+        while proc.poll() is None:
+            tail = os.popen('tail -n 100 %s | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
+            if not tail:
+                tail=['']
+            _elapsed = time.gmtime(time.time()-_start)
             sys.stdout.write('\033[2K\033[1G')
+            sp="/-\|"
+            msg = bcolors.WARNING+"%s: building: %s[%s] [%s.%s]%s elapsed:%s %02d:%02d:%02d %slogtail:%s %s" % (
+                bcolors.BS,
+                bcolors.BLUE,
+                sp[_spinnerCount],
+                pkgName,
+                pkgVersion,
+                bcolors.WARNING,
+                bcolors.BLUE,
+                _elapsed.tm_hour,
+                _elapsed.tm_min,
+                _elapsed.tm_sec,
+                bcolors.WARNING,
+                bcolors.END,
+                tail[0].strip()
+            )
+            _print( msg[:tcols-2], '\r', )
+            _spinnerCount += 1
+            if _spinnerCount >= len(sp):
+                _spinnerCount = 0
+
+            sys.stdout.flush()
+            time.sleep(1)
+        sys.stdout.write('\033[2K\033[1G')
 
         ret = self.__check_target_log__(lastlog)
         _elapsed = time.gmtime(time.time()-_start)

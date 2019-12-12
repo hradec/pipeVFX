@@ -49,7 +49,7 @@ class pythonSetup(generic):
     #     else:
     #         configure.uncompressor( self, target, source, env)
 
-    def fixCMD(self, cmd):
+    def fixCMD(self, cmd, os_environ):
         mkdir = 'mkdir -p $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ && export PYTHONPATH=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/:$PYTHONPATH'
         if mkdir.replace(' ','').lower() not in cmd.replace(' ','').lower():
             cmd = "%s && %s" % (mkdir,cmd)
