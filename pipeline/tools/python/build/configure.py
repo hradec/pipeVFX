@@ -517,7 +517,17 @@ class cortex(configure):
             ('Documentation options', '\n\n'
                 'o.Add("ALEMBIC_EXTRA_LIBS")\n'
                 'o.Add("INSTALL_ALEMBICPYTHON_DIR")\n'
-             ),
+            ),
+
+
+            ('mayaPlugin. corePythonModule','mayaPlugin, [corePythonModule, mayaLibrary]'),
+            ('mayaPluginInstall . mayaPluginEnv.Install', 'mayaPluginEnv.Depends( mayaPlugin, mayaLibrary)\n\t\tmayaPluginInstall = mayaPluginEnv.Install'),
+            ('mayaPluginLoaderSources. SHLIBPREFIX... .','mayaPluginLoaderSources, SHLIBPREFIX="" )\n\t\t\tmayaPluginEnv.Depends( mayaPluginLoader, mayaLibrary)'),
+
+            ('riSources )','riSources )\n\t\triEnv.Depends(riLibrary, coreLibraryInstall)'),
+            ('rmanProcedurals.python.Procedural.cpp. )','rmanProcedurals/python/Procedural.cpp" )\n\t\triPythonProceduralEnv.Depends(riPythonProcedural, riLibrary)'),
+            ('rmanDisplays.ieDisplay.IEDisplay.cpp. )','rmanDisplays/ieDisplay/IEDisplay.cpp" )\n\t\triDisplayDriverEnv.Depends(riDisplayDriver, riLibrary)'),
+
 
             # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
             # ('glTestEnv.Depends( glTest, corePythonModule )',''),
@@ -593,7 +603,7 @@ class cortex(configure):
            # alembic fix for multiple libs... Cortex doesn't detect all the libraries we have built for alembic 1.5.8
            # we need it on pre and pos version 10
            ('.hdf5.HDF5_LIB_SUFFIX..','"hdf5$HDF5_LIB_SUFFIX",]+env["ALEMBIC_EXTRA_LIBS"].split(" ")+['),
-           
+
            ('Documentation options', '\n\n'
                'o.Add("ALEMBIC_EXTRA_LIBS")\n'
                'o.Add("INSTALL_VDBLIB_NAME")\n'
@@ -636,6 +646,16 @@ class cortex(configure):
             ('usdPythonModuleSources )'      , 'usdPythonModuleSources       )\n\t\tusdPythonModuleEnv.Depends(       usdPythonModule,       [corePythonLibraryInstall,corePythonModuleInstall] )'),
             ('alembicPythonModuleSources )'  , 'alembicPythonModuleSources   )\n\t\talembicPythonModuleEnv.Depends(   alembicPythonModule,   [corePythonLibraryInstall,corePythonModuleInstall] )'),
             ('appleseedPythonModuleSources )', 'appleseedPythonModuleSources )\n\t\tappleseedPythonModuleEnv.Depends( appleseedPythonModule, [corePythonLibraryInstall,corePythonModuleInstall] )'),
+
+            ('mayaPlugin. corePythonModule','mayaPlugin, [corePythonModule, mayaLibrary]'),
+            ('mayaPluginInstall . mayaPluginEnv.Install', 'mayaPluginEnv.Depends( mayaPlugin, mayaLibrary)\n\t\tmayaPluginInstall = mayaPluginEnv.Install'),
+            ('mayaPluginLoaderSources. SHLIBPREFIX... .','mayaPluginLoaderSources, SHLIBPREFIX="" )\n\t\t\tmayaPluginEnv.Depends( mayaPluginLoader, mayaLibrary)'),
+
+
+            ('riSources )','riSources )\n\t\triEnv.Depends(riLibrary, coreLibraryInstall)'),
+            ('rmanProcedurals.python.Procedural.cpp. )','rmanProcedurals/python/Procedural.cpp" )\n\t\triPythonProceduralEnv.Depends(riPythonProcedural, riLibrary)'),
+            # ('rmanDisplays.ieDisplay.IEDisplay.cpp. )','rmanDisplays/ieDisplay/IEDisplay.cpp" )\n\t\triDisplayDriverEnv.Depends(riDisplayDriver, riLibrary)'),
+
 
            # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
            # ('glTestEnv.Depends( glTest, corePythonModule )',''),
