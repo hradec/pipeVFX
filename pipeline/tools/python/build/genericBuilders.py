@@ -47,6 +47,9 @@ global sconsParallel
 sconsParallel='0'
 if 'TRAVIS' in os.environ:
     sconsParallel='1' in os.environ['TRAVIS']
+else:
+    os.environ['TRAVIS']='0'
+
 if 'EXTRA' in os.environ and '-j' in os.environ['EXTRA']:
     sconsParallel='1'
 
@@ -66,8 +69,9 @@ def _print(*args):
         l = ' '.join([ str(x) for x in args])
         if '[' in l[:20] and ']' in l[:20]:
             p = True
-        if [ x for x in ['processing', 'building', 'Download', 'md5'] if x in l ]:
-            p = True
+        if os.environ['TRAVIS']=='0' or not os.environ['TRAVIS'].strip():
+            if [ x for x in ['processing', 'building', 'Download', 'md5'] if x in l ]:
+                p = True
         if 'touch' in l[:15]:
             p = False
     if p:
@@ -1954,7 +1958,8 @@ class generic:
         if self.error:
             raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
-        self.shouldBuild( target, source )
+        if not self.shouldBuild( target, source ):
+            return
         for n in range(len(source)):
             url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
             # print source[n]
