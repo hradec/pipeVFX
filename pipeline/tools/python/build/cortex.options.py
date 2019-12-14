@@ -253,10 +253,15 @@ LINKFLAGS += '-ltiff -lpng -ljpeg -lraw_r -lraw -lboost_filesystem -lboost_syste
 # app paths
 # =============================================================================================================================================================
 apps                    = pipe.roots().apps()
-MAYA_ROOT               = apps+"/maya/%s/"   % maya
-RMAN_ROOT               = apps+"/%s/%s/RenderManProServer-%s"  % (prmanName, prman, prman)
-NUKE_ROOT		        = apps+"/nuke/%s/"   % nuke
-HOUDINI_ROOT	        = apps+"/houdini/%s/" % houdini
+if "MAYA_ROOT" in os.environ:
+    MAYA_ROOT               = apps+"/maya/%s/"   % maya
+    CXXSTD = 'c++11'
+if "PRMAN_ROOT" in os.environ:
+    RMAN_ROOT               = "%s/RenderManProServer-%s"  % (os.environ["PRMAN_ROOT"], os.environ["PRMAN_VERSION"])
+if "NUKE_ROOT" in os.environ:
+    NUKE_ROOT		        = os.environ["NUKE_ROOT"]
+if "HOUDINI_ROOT" in os.environ:
+    HOUDINI_ROOT	        = os.environ["HOUDINI_ROOT"]
 # ARNOLD_ROOT             = apps+"/arnold/%s/" % arnold
 # MTOA_ROOT               = ARNOLD_ROOT+"/mtoadeploy/%s/" % maya
 # MTOA_SOURCE_ROOT        = ARNOLD_ROOT+"/mtoadeploy/%s/scripts/mtoa/" % maya
