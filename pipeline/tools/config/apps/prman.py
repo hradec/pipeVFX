@@ -136,6 +136,8 @@ class prman(baseApp):
         self['RMS_SCRIPT_PATHS']      = '%s/prman/etc/'     % pipe.roots().tools()
         self['RDIR'] 		          = '%s/prman/etc/%s'   % (pipe.roots().tools(), self.version())
         self['RDIR'] 		          = '%s/prman/etc/'     % pipe.roots().tools()
+        self['RMAN_CONFIG_OVERRIDE']  = '%s/prman/etc/%s'   % (pipe.roots().tools(), self.version())
+        self['RMAN_CONFIG_OVERRIDE']  = '%s/prman/etc/'     % pipe.roots().tools()
         for each in self.toolsPaths():
             prman.addon(self,
                 python = '%s/prman/python'      % each,
