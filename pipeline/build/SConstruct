@@ -646,6 +646,11 @@ if canBuildCortexNow:
             sufix = 'prman.'+ version
             apps = [( pipe.apps.prman, version )]
 
+        _download = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
+        cortex9version = _download[-1][2]
+        _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
+        cortex10version = _download[-1][2]
+
         pkgs.gaffer[sufix] = build.gaffer(
             ARGUMENTS, # noqa
             'gaffer',
@@ -656,24 +661,54 @@ if canBuildCortexNow:
                 '0.32.0.0',
                 '2ae5c942f79dff458abda6bfb4c081f2',
                 {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8",
-                pkgs.gcc : '4.1.2', cortex['core.boost.1.51.0'] : '9.18.0'}
+                pkgs.oiio: '1.6.15', pkgs.ocio: '1.0.9',
+                pkgs.pyside: None, pkgs.pyqt: '4.8.7',
+                pkgs.gcc : '4.1.2', cortex['core.boost.1.51.0'] : cortex9version}
             ],[
                 'https://github.com/GafferHQ/gaffer/archive/0.55.0.0.tar.gz',
                 'gaffer-0.55.0.0.tar.gz',
                 '0.55.0.0',
                 '876127bfe6fd62ab9d6a8a9e6da2f75f',
                 {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.7.11",
-                pkgs.gcc : '4.8.5',  cortex['core.boost.%s' % boostMasterVersion] : '10.0.0.a65'}
+                pkgs.oiio: '1.6.15', pkgs.ocio: '1.0.9',
+                pkgs.pyside: '2.0.18',  pkgs.pyqt: None,
+                pkgs.gcc : '4.8.5',  cortex['core.boost.%s' % boostMasterVersion] : cortex10version}
             ]],
             # baseLibs = [pkgs.python],
             depend =  depend + [
-                pkgs.qt, pkgs.pyqt, pkgs.osl,
+                pkgs.qt, pkgs.qtpy, pkgs.osl,
                 pkgs.oiio, pkgs.ocio, pkgs.llvm,
-                pkgs.python
+                pkgs.python, pkgs.usd,
             ],
             apps = apps,
             sconsInstall = "install",
             dontUseTargetSuffixForFolders = 1,
+            environ = {
+                'C_INCLUDE_PATH' : ':'.join([
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
+                    '$C_INCLUDE_PATH',
+                ]),
+                'CPLUS_INCLUDE_PATH' : ':'.join([
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
+                    '$CPLUS_INCLUDE_PATH',
+                ]),
+                'CXXFLAGS' : ' '.join([
+                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
+                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
+                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
+                    '-I$FREETYPE_TARGET_FOLDER/include/freetype2/'
+                    '$CXXFLAGS',
+                ]),
+                'LD' : 'ld'
+            }
         )
 
 

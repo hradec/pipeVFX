@@ -252,6 +252,10 @@ LINKFLAGS += '-ltiff -lpng -ljpeg -lraw_r -lraw -lboost_filesystem -lboost_syste
 
 # app paths
 # =============================================================================================================================================================
+MAYA_ROOT = ''
+NUKE_ROOT = ''
+RMAN_ROOT = ''
+HOUDINI_ROOT = ''
 apps                    = pipe.roots().apps()
 if "MAYA_ROOT" in os.environ:
     MAYA_ROOT               = apps+"/maya/%s/"   % maya
