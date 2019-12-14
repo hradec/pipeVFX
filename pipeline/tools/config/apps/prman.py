@@ -66,6 +66,8 @@ class prman(baseApp):
 
         # setup main renderman env vars!
         rmstree = self.path('%s-$PRMAN_VERSION-maya$MAYA_VERSION' % self.RMAN_MAYA_NAME())
+        if not os.path.exists(rmstree):
+            rmstree = self.path('%s-$PRMAN_VERSION' % self.RMAN_MAYA_NAME())
         if self.parent() not in ['houdini']:
             folders.append(rmstree)
             self['RMSTREE']  = rmstree
@@ -136,6 +138,8 @@ class prman(baseApp):
         self['RMS_SCRIPT_PATHS']      = '%s/prman/etc/'     % pipe.roots().tools()
         self['RDIR'] 		          = '%s/prman/etc/%s'   % (pipe.roots().tools(), self.version())
         self['RDIR'] 		          = '%s/prman/etc/'     % pipe.roots().tools()
+        self['RMAN_CONFIG_OVERRIDE']  = '%s/prman/etc/%s'   % (pipe.roots().tools(), self.version())
+        self['RMAN_CONFIG_OVERRIDE']  = '%s/prman/etc/'     % pipe.roots().tools()
         for each in self.toolsPaths():
             prman.addon(self,
                 python = '%s/prman/python'      % each,
@@ -218,7 +222,10 @@ class prman(baseApp):
         import socket
         pv = float( pipe.version.get('prman') )
         if pv > 20.0:
-            self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license.r%s' % (pipe.roots().tools(), int(pv))
+            license = '%s/licenses/prman/generic.license.r%s' % (pipe.roots().tools(), int(pv))
+            if not os.path.exists(self['PIXAR_LICENSE_FILE']):
+                license = '%s/licenses/prman/generic.license.r%s' % (pipe.roots().tools(), pv)
+            self['PIXAR_LICENSE_FILE'] = license
         else:
             self['PIXAR_LICENSE_FILE'] = '%s/licenses/prman/generic.license' % pipe.roots().tools()
 

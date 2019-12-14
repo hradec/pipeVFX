@@ -47,7 +47,7 @@ if [ "$HELP" != "" ] ; then
 else
     # use real apps folder if we have one!
     APPS_MOUNT=" -v $CD/apps:/atomo/apps"
-    if [ -e /atomo/apps ] ; then
+    if [ -e /atomo/apps ] && [ "$TRAVIS" == "" ] ; then
         APPS_MOUNT=" -v /atomo/apps:/atomo/apps "
     fi
     if [ -e /atomo/jobs ] ; then
