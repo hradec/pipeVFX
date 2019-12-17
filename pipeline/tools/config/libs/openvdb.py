@@ -22,3 +22,4 @@
 class openvdb(baseLib):
     def environ(self):
         self['LD_PRELOAD'] = "%s/lib/liblog4cplus-1.2.so.5" % pipe.libs.log4cplus().path()
+        self['PYTHONPATH'] = self.path('python')
