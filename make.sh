@@ -147,7 +147,16 @@ else
 
     X11=""
     if [ "$SHELL" == "1" ] ; then
-        X11=" -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix  " #--runtime 'nvidia' "
+        X11=" -v /tmp/.X0-lock:/tmp/.X0-lock:rw -v /tmp/.X11-unix:/tmp/.X11-unix:rw -e QT_X11_NO_MITSHM=1 -e DISPLAY -e XAUTHORITY  "
+        # X11="$X11 -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -v /etc/shadow:/etc/shadow:ro -v /etc/sudoers.d:/etc/sudoers.d:ro --user=$USER "
+        if [ "$(which nvidia-smi)" != "" ] ; then
+            # X11="$X11 --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all "
+            extra_libs1=$(ldconfig -p | grep libGL | grep -v GLU |  grep x86 | awk  '{print $NF}' | while read p ; do [ "$p" != "" ] && pp=$(readlink -f $p) && echo -v $pp:/lib64/$(basename $p):ro ; done)
+            extra_libs2=$(ldconfig -p | grep libnvidia | grep 440.36 | grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
+            # extra_libs3=$(ldconfig -p | grep libstdc++ |grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
+            # extra_libs4=$(ldconfig -p | grep libgcc_s |grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
+            X11=" $X11 $extra_libs1 $extra_libs2 $extra_libs3 $extra_libs4 "
+        fi
     fi
 
     # create lib folder
@@ -173,6 +182,7 @@ else
         -e https_proxy=\"$https_proxy\" \
         -e MEMGB=\"$(grep MemTotal /proc/meminfo | awk '{print $(NF-1)}')\" \
         $X11 \
+        --network=host \
         --privileged \
         $build_image"
 
