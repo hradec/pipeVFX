@@ -46,14 +46,16 @@ download = [[
     '9.18.0',
     'b3c55cc5e0e95668208713a01a145869',
     {pkgs.boost : "1.51.0", pkgs.alembic : "1.7.11",
-     pkgs.gcc : '4.1.2', pkgs.oiio: '1.6.15', pkgs.tbb: '4.4.6'}
+     pkgs.gcc : '4.1.2', pkgs.oiio: '1.6.15',
+     pkgs.ocio: '1.0.9', pkgs.tbb: '4.4.6'}
 ],[
     'https://github.com/ImageEngine/cortex/archive/10.0.0-a68.tar.gz',
     'cortex-10.0.0-a68.tar.gz',
     '10.0.0.a68',
     'e506ed51b6e94f729925d5a6742c75c2',
     {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.7.11",
-     pkgs.gcc : '4.8.5', pkgs.oiio: '1.8.10', pkgs.tbb: '4.4.6'}
+     pkgs.gcc : '4.8.5', pkgs.oiio: '1.8.10',
+     pkgs.ocio: '1.0.9', pkgs.tbb: '4.4.6'}
 ]]
 
 # cortex dependency
@@ -81,24 +83,27 @@ for boost_version in pkgs.boost.versions:
     _download = []
     extraInstall = ""
     # build versions that match boost 1.51 and the masterVersion of boost.
-    if boost_version in ['1.51.0',boostMasterVersion]:
-        _download = [ x for x in download if x[4][pkgs.boost]==boost_version ]
+    if build.versionMajor(boost_version) < 1.55:
+        # _download = [ x for x in download if x[4][pkgs.boost]==boost_version ]
+        _download = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
 
     # build all versions newer than 10.0 with boost 1.55 and up.
     elif build.versionMajor(boost_version) >= 1.55:
         # this forces to build only versions 10.0 and up!
         # so versions below 10.0 will only build for boost versions below 1.
         _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
-        for n in range(len(_download)):
-            _download[n][4] = _download[n][4].copy()
-            _download[n][4][pkgs.boost] = boost_version
-
         if _download:
             # if we have cortex >= 10 to build, add some installs!
             extraInstall += " installImage installScene "
             # skip boost versions that don't build with cortex 10 at the moment
             if boost_version in ['1.66.0']:
                 continue
+
+    # set the boost version of all downloads.
+    for n in range(len(_download)):
+        _download[n][4] = _download[n][4].copy()
+        _download[n][4][pkgs.boost] = boost_version
+
 
     if _download:
         # build cortex core libraries only
@@ -113,7 +118,7 @@ for boost_version in pkgs.boost.versions:
             depend = depend+[pkgs.python],
             patch = devPatch,
             dontUseTargetSuffixForFolders = 1,
-            environ = { 'LD' : 'ld' },
+            # environ = { 'LD' : 'ld' },
             cmd = [
                 build.cortex.cmd[0]+"installLib",
                 build.cortex.cmd[0]+"installCore",
@@ -155,9 +160,7 @@ for alembic_version in pkgs.alembic.versions:
         patch = devPatch,
         dontUseTargetSuffixForFolders = 1,
         cmd = [build.cortex.cmd[0]+"installAlembic"],
-        environ = {
-            'LD' : 'ld',
-        }
+        # environ = { 'LD' : 'ld' },
     )
 
 # ===========================================================================================
@@ -190,7 +193,7 @@ for usd_version in pkgs.usd.versions:
         patch = devPatch,
         dontUseTargetSuffixForFolders = 1,
         cmd = [build.cortex.cmd[0]+"installUSD"],
-        environ = { 'LD' : 'ld' },
+        # environ = { 'LD' : 'ld' },
     )
 
 # ===========================================================================================
@@ -230,7 +233,84 @@ for openvdb_version in pkgs.openvdb.versions:
     )
 
 
+# ===========================================================================================
+# GAFFER
+# ===========================================================================================
+def buildGaffer(apps=[]):
+    sufix = ''
+    version=0
+    if apps:
+        version = apps[0][1]
+        suffix = "%s.%s" % (str(apps[0][0]).split("'")[1].split(".")[-1], version)
 
+    boostVersion = '1.61.0'
+    _downloadCortex9 = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
+    cortex9version = _downloadCortex9[-1][2]
+    _downloadCortex10 = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
+    cortex10version = _downloadCortex10[-1][2]
+
+    return build.gaffer(
+        ARGUMENTS, # noqa
+        'gaffer',
+        targetSuffix = sufix,
+        download = [[
+        #     'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
+        #     'gaffer-0.32.0.0.tar.gz',
+        #     '0.32.0.0',
+        #     '2ae5c942f79dff458abda6bfb4c081f2',
+        #     {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8",
+        #     pkgs.oiio: '1.6.15', pkgs.ocio: '1.0.9',
+        #     pkgs.pyside: None, pkgs.pyqt: '4.8.7',
+        #     pkgs.gcc : '4.1.2', cortex['core.boost.1.51.0'] : cortex9version}
+        # ],[
+            'https://github.com/GafferHQ/gaffer/archive/0.55.0.0.tar.gz',
+            'gaffer-0.55.0.0.tar.gz',
+            '0.55.0.0',
+            '876127bfe6fd62ab9d6a8a9e6da2f75f',
+            {pkgs.boost : '1.61.0', pkgs.alembic : "1.7.11",
+            pkgs.oiio: '1.8.10', pkgs.ocio: '1.0.9',
+            pkgs.pyside: '2.0.18',  pkgs.pyqt: None,
+            pkgs.llvm: '7.1.0', pkgs.gcc : '4.8.5',
+            pkgs.openvdb: '6.0.0', pkgs.tbb: '4.4.6',
+            cortex['core.boost.%s' % boostVersion] : cortex10version}
+        ]],
+        # baseLibs = [pkgs.python],
+        depend =  depend + [
+            pkgs.qt, pkgs.qtpy, pkgs.osl, pkgs.qt,
+            pkgs.oiio, pkgs.ocio, pkgs.llvm,
+            pkgs.python, pkgs.usd,
+        ],
+        apps = apps,
+        cmd = build.gaffer.cmd[0]+'install',
+        dontUseTargetSuffixForFolders = 1,
+        dontAddLLVMtoEnviron = 1,
+        environ = {
+            'CXXFLAGS' : ' '.join([
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
+                '-isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
+                '-isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/',
+                '-I$FREETYPE_TARGET_FOLDER/include/freetype2/',
+                '-fno-strict-aliasing',
+                '-D_GLIBCXX_USE_CXX11_ABI=0',
+                '$CXXFLAGS',
+            ]),
+            # 'LD' : 'ld'
+        }
+    )
+# build gaffer without any app support first!
+pkgs.gaffer = {}
+gaffer = buildGaffer()
+pkgs.gaffer[ gaffer.targetSuffix ] = gaffer
+
+
+
+# ===========================================================================================
+# FROM HERE, WE DEAL WITH THIRDY-PARTIE APPS
+# ===========================================================================================
 # we need libraries built to detect installed apps, so if we don't have then yet,
 # we cant build app dependent packages.
 canBuildCortexNow = False
@@ -629,87 +709,14 @@ if canBuildCortexNow:
     #                 )
     # buildCortexApps(download)
 
+
     # ===========================================================================================
-    # GAFFER
+    # GAFFER PRMAN
     # ===========================================================================================
-    pkgs.gaffer = {}
-    # set first version to 0, so we build gaffer without any app support.
-    gaffer_versions = ['0']
-    # now, add prman versions to build gaffer against
-    gaffer_versions += pv
-
-    # so now we can build!
-    for version in gaffer_versions:
-        sufix = ''
-        apps = []
-        if float(version) > 0:
-            sufix = 'prman.'+ version
-            apps = [( pipe.apps.prman, version )]
-
-        _download = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
-        cortex9version = _download[-1][2]
-        _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
-        cortex10version = _download[-1][2]
-
-        pkgs.gaffer[sufix] = build.gaffer(
-            ARGUMENTS, # noqa
-            'gaffer',
-            targetSuffix = sufix,
-            download = [[
-                'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
-                'gaffer-0.32.0.0.tar.gz',
-                '0.32.0.0',
-                '2ae5c942f79dff458abda6bfb4c081f2',
-                {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8",
-                pkgs.oiio: '1.6.15', pkgs.ocio: '1.0.9',
-                pkgs.pyside: None, pkgs.pyqt: '4.8.7',
-                pkgs.gcc : '4.1.2', cortex['core.boost.1.51.0'] : cortex9version}
-            ],[
-                'https://github.com/GafferHQ/gaffer/archive/0.55.0.0.tar.gz',
-                'gaffer-0.55.0.0.tar.gz',
-                '0.55.0.0',
-                '876127bfe6fd62ab9d6a8a9e6da2f75f',
-                {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.7.11",
-                pkgs.oiio: '1.6.15', pkgs.ocio: '1.0.9',
-                pkgs.pyside: '2.0.18',  pkgs.pyqt: None,
-                pkgs.gcc : '4.8.5',  cortex['core.boost.%s' % boostMasterVersion] : cortex10version}
-            ]],
-            # baseLibs = [pkgs.python],
-            depend =  depend + [
-                pkgs.qt, pkgs.qtpy, pkgs.osl,
-                pkgs.oiio, pkgs.ocio, pkgs.llvm,
-                pkgs.python, pkgs.usd,
-            ],
-            apps = apps,
-            sconsInstall = "install",
-            dontUseTargetSuffixForFolders = 1,
-            environ = {
-                'C_INCLUDE_PATH' : ':'.join([
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
-                    '$C_INCLUDE_PATH',
-                ]),
-                'CPLUS_INCLUDE_PATH' : ':'.join([
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
-                    '$CPLUS_INCLUDE_PATH',
-                ]),
-                'CXXFLAGS' : ' '.join([
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
-                    '-I$FREETYPE_TARGET_FOLDER/include/freetype2/'
-                    '$CXXFLAGS',
-                ]),
-                'LD' : 'ld'
-            }
-        )
+    # now use prman versions to build gaffer against
+    for version in pv:
+        gaffer = buildGaffer( [(pipe.apps.prman, version)] )
+        pkgs.gaffer[ gaffer.targetSuffix ] = gaffer
 
 
 
