@@ -45,11 +45,14 @@ os.chdir(curdir)
 from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name
 
 
+def versionMajor(versionString):
+    return float('.'.join(versionString.split('.')[:2]))
+
 def findLibrary(libname):
     import os
     # '%s/gcc/4.8.5/lib64/libstdc++.so.6' % pipe.build.install(),
     # '%s/gcc/4.8.5/lib64/libgcc_s.so.1' % pipe.build.install(),
-    return ''.join(os.popen( 'ldconfig -p | grep %s' % libname ).readlines()).strip().split(' ')[-1]
+    return ''.join(os.popen( "ldconfig -p | grep %s | grep $(uname -m | sed 's/_/-/g')" % libname ).readlines()).strip().split(' ')[-1]
 
 
 
