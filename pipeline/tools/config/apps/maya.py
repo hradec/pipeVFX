@@ -222,6 +222,7 @@ class maya(baseApp):
             self.insert('PYTHONPATH',0, self.path('lib/python%s/site-packages/' % pythonVer))
             self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
             self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
+
             self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
 
             if mv > 2017:
@@ -259,6 +260,8 @@ class maya(baseApp):
         if '--debug' in sys.argv:
             self['MAYA_DEBUG_NO_SIGNAL_HANDLERS'] = '1'
 
+        pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
+        self.insert('LD_LIBRARY_PATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
         cmd = app.split(' ')
 
         if 'Render' not in app and 'mayapy' not in app and os.path.exists(m):
