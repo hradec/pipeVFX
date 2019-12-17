@@ -66,8 +66,8 @@ class buildStuff(baseApp):
 class wxpython(baseApp):
     def pythonPath(self):
         p = self.appFromDB.pythonPath()
-        for each in p:
-            p[each] = filter( lambda x: 'wxpython' in x.lower(), glob.glob(p[each]+'/*') )[0]
+        # for each in p:
+        #     p[each] = [ x for x in glob.glob(p[each]+'/*')  if 'wxpython' in x.lower() ]
         return p
 
 
