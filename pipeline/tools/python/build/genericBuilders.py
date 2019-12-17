@@ -69,7 +69,7 @@ def _print(*args):
         l = ' '.join([ str(x) for x in args])
         if '[' in l[:20] and ']' in l[:20]:
             p = True
-        if os.environ['TRAVIS']=='0' or not os.environ['TRAVIS'].strip():
+        if os.environ['TRAVIS']!='1':
             if [ x for x in ['processing', 'building', 'Download', 'md5'] if x in l ]:
                 p = True
         if 'touch' in l[:15]:
@@ -1432,7 +1432,7 @@ class generic:
 
         # we need LLVM search path before anything else, since
         # there are name clash of headers between LLVM and GCC
-        if 'LLVM_TARGET_FOLDER' in os_environ:
+        if 'LLVM_TARGET_FOLDER' in os_environ and not hasattr(self, 'dontAddLLVMtoEnviron'):
             os_environ['PATH'] = ':'.join([
                 '%s/bin/' % os_environ['LLVM_TARGET_FOLDER'],
                 os_environ['PATH'],

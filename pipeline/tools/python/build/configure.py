@@ -349,11 +349,13 @@ class boost(configure):
     def fixCMD(self, cmd, os_environ):
         # generic build command for versions 1.58 and up
         cmd = [
-            ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
-            ' ./b2 -j $CORES variant=release cxxflags="-fPIC -fpermissive -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            # ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
+            # ' ./b2 -j $CORES variant=release cxxflags="-fPIC -fpermissive -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            ' ./bootstrap.sh --prefix=$INSTALL_FOLDER --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER --without-libraries=log --without-icu',
+            ' ./bjam -j $CORES --disable-icu cxxflags="-fPIC -fpermissive " variant=release linkflags="$LDFLAGS" link=shared threading=multi  -d+2  install',
         ]
         # if version is below 1.58, use this build commands
-        if float(os_environ['VERSION_MAJOR']) < 1.58 and  float(os_environ['VERSION_MAJOR']) > 1.55 :
+        if float(os_environ['VERSION_MAJOR']) > 1.55 and  float(os_environ['VERSION_MAJOR']) < 1.58 :
             cmd = [
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER ',
                 'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
@@ -382,7 +384,7 @@ class boost(configure):
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
-                ' ./b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                ' ./b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC -fpermissive threading=multi -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
         if float(os_environ['VERSION_MAJOR']) == 1.51:
@@ -391,6 +393,12 @@ class boost(configure):
                 ' ./b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
+        if float(os_environ['VERSION_MAJOR']) >= 1.61:
+            cmd = [
+                ' ./bootstrap.sh --prefix=$INSTALL_FOLDER --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER --without-libraries=log --without-icu',
+                ' ./bjam -j $CORES --disable-icu cxxflags="-fPIC -fpermissive -std=c++11" variant=release linkflags="$LDFLAGS" link=shared threading=multi  -d+2  install',
+                # ' ./b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            ]
 
 
         # if we need to build with system gcc
@@ -478,9 +486,9 @@ class cortex(configure):
     }
     cmd=[
         # '''export LDFLAGS=$(ls $ALEMBIC_TARGET_FOLDER/lib/ | sed -e 's/lib//g' -e 's/.so//g' |  awk '{print "-l"$1}') ; '''
-        ' scons OPTIONS=%s/cortex.options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
-        ' scons OPTIONS=%s/cortex.options.py -j $DCORES '         % os.path.abspath( os.path.dirname(__file__)),
-        # 'scons OPTIONS=%s/cortex.options.py -j $DCORES install' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/cortex_options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/cortex_options.py -j $DCORES '         % os.path.abspath( os.path.dirname(__file__)),
+        # 'scons OPTIONS=%s/cortex_options.py -j $DCORES install' % os.path.abspath( os.path.dirname(__file__)),
     ]
     apps=[]
     sconsInstall=""
@@ -725,13 +733,10 @@ class cortex(configure):
                         ('scenePythonModule = ','scenePythonModule = [] #'),
                         ('imageLibrary = ','imageLibrary = [] #'),
                         ('imagePythonModule = ','imagePythonModule = [] #'),
-                        ('vdbLibrary = ','vdbLibrary = [] #'),
-                        ('vdbPythonModule = ','vdbPythonModule = [] #'),
                         ('Default. coreLibrary','#Default( coreLibrary'),
                         ('Default. . glLibrary','#Default( [ glLibrary'),
                         ('Default. sceneLibrary','#Default( sceneLibrary'),
                         ('Default. . imageLibrary','#Default( [ imageLibrary'),
-                        ('Default. vdbLibrary','#Default( vdbLibrary'),
                         ('INSTALL_PYTHON_DIR/IECoreMaya',    'INSTALL_MAYAPYTHON_DIR/IECoreMaya'),
                         ('INSTALL_PYTHON_DIR/IECoreHoudini', 'INSTALL_HOUDINIPYTHON_DIR/IECoreHoudini'),
                         ('INSTALL_PYTHON_DIR/IECoreMantra',  'INSTALL_HOUDINIPYTHON_DIR/IECoreMantra'),
@@ -785,37 +790,50 @@ class gaffer(cortex):
     environ = {
     }
     cmd=[
-        ' scons OPTIONS=%s/gaffer.options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
-        ' scons OPTIONS=%s/gaffer.options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/gaffer_options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
+        # ' scons OPTIONS=%s/gaffer_options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
     ]
     # disable Appleseed build since we don't have it building yet!
     sed={'0.0.0' : {
         'SConstruct' : [
             ('if not haveRequiredOptions ', 'if not haveRequiredOptions or "applesed" in libraryName.lower() '),
             ('"GafferAppleseed" : {',"''' "),
-            ('"GafferAppleseedUITest',"''' #")
+            ('"GafferAppleseedUITest',"''' #"),
+            ('LOCATE_DEPENDENCY_PYTHONPATH"] ) ','LOCATE_DEPENDENCY_PYTHONPATH"] ) + os.environ["PYTHONPATH"].split(":")'),
+            ('LOCATE_DEPENDENCY_LIBPATH"] )', 'LOCATE_DEPENDENCY_LIBPATH"] ) + os.environ["LD_LIBRARY_PATH"].split(":")'),
         ]
     }}
-    def installer(self, target, source, env): # noqa
-        ''' we create/update the /atomo/app/.../gaffer folder since gaffer is also an app! '''
-        targetFolder = os.path.dirname(str(target[0]))
-        versionMajor = float( '.'.join( os.path.basename(targetFolder).split('.')[:2] ) )
-        app = '%s/%s' % (pipe.roots.apps(), '/'.join(targetFolder.split('/')[-2:]))
-        ret = []
-        if not os.path.exists( app ):
-            ret += os.popen( 'sudo ln -s $INSTALL_FOLDER  %s' % app ).readlines()
-        # for each in glob("%s/bin/*" % targetFolder):
-        #     each = os.path.basename(each)
-        #     if 'linux-gnu' not in each:
-        #         if versionMajor == 4.1:
-        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
-        #         if versionMajor == 4.8:
-        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
-        #         else:
-        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
-        #
-        #     # we add a couple of wrappers to ar and ranlib, so we don't have to build then.
-        #     # the wrapper make sure they can load the correct libstdc++ from system
-        #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ar \\$@" > %s/bin/ar ; chmod a+x %s/bin/ar' % (targetFolder,targetFolder) ).readlines()
-        #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ranlib \\$@" > %s/bin/ranlib ; chmod a+x %s/bin/ranlib' % (targetFolder,targetFolder) ).readlines()
-        return ret
+
+    def fixCMD(self, cmd, os_environ):
+        # add all boost library versions to searchpath
+        os_environ['LD_LIBRARY_PATH'] += ':'.join([os_environ['LD_LIBRARY_PATH']]+
+            glob( '%s/../*/lib/python%s' % (os_environ['BOOST_TARGET_FOLDER'], os_environ['PYTHON_VERSION_MAJOR']) )
+        )
+        os_environ['LD_LIBRARY_PATH'] += ':'.join([os_environ['LD_LIBRARY_PATH']]+
+            glob( '%s/../*/lib/' % (os_environ['OIIO_TARGET_FOLDER']) )
+        )
+        return cmd
+
+    # def installer(self, target, source, env): # noqa
+    #     ''' we create/update the /atomo/app/.../gaffer folder since gaffer is also an app! '''
+    #     targetFolder = os.path.dirname(str(target[0]))
+    #     versionMajor = float( '.'.join( os.path.basename(targetFolder).split('.')[:2] ) )
+    #     app = '%s/%s' % (pipe.roots.apps(), '/'.join(targetFolder.split('/')[-2:]))
+    #     ret = []
+    #     if not os.path.exists( app ):
+    #         ret += os.popen( 'sudo ln -s $INSTALL_FOLDER  %s' % app ).readlines()
+    #     # for each in glob("%s/bin/*" % targetFolder):
+    #     #     each = os.path.basename(each)
+    #     #     if 'linux-gnu' not in each:
+    #     #         if versionMajor == 4.1:
+    #     #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+    #     #         if versionMajor == 4.8:
+    #     #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
+    #     #         else:
+    #     #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+    #     #
+    #     #     # we add a couple of wrappers to ar and ranlib, so we don't have to build then.
+    #     #     # the wrapper make sure they can load the correct libstdc++ from system
+    #     #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ar \\$@" > %s/bin/ar ; chmod a+x %s/bin/ar' % (targetFolder,targetFolder) ).readlines()
+    #     #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ranlib \\$@" > %s/bin/ranlib ; chmod a+x %s/bin/ranlib' % (targetFolder,targetFolder) ).readlines()
+    #     return ret
