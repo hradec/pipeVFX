@@ -776,9 +776,14 @@ class baseApp(_environ):
             self['LD_LIBRARY_PATH']=self.path('lib/python$PYTHON_VERSION_MAJOR')
             self['LD_LIBRARY_PATH']=self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')
 
-            # add all boost lib versions to search path, since boost is version controlled in its name
-            for each in glob( "%s/boost/*/lib/python%s/" % (roots.libs(), '.'.join(versionLib.get('python').split('.')[:2]))):
-                self['LD_LIBRARY_PATH'] = each
+            for lib in ['boost', 'tiff', 'jpeg', 'libpng', 'libraw']:
+                # add all boost lib versions to search path, since boost is version controlled in its name
+                for each in glob( "%s/%s/*/lib/python%s/" % (roots.libs(), lib, '.'.join(versionLib.get('python').split('.')[:2]))):
+                    self['LD_LIBRARY_PATH'] = each
+
+                for each in glob( "%s/%s/*/lib/" % (roots.libs(), lib)):
+                    self['LD_LIBRARY_PATH'] = each
+
 
             self['BOOST_VERSION'] = versionLib.get('boost')
             # if we have extra variables, just update itself with it!
