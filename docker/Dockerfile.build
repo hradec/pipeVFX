@@ -8,7 +8,9 @@ ARG BASE_IMAGE
 ARG http
 ARG https
 
-FROM $BASE_IMAGE
+#FROM $BASE_IMAGE
+FROM centos:7.6.1810
+
 
 ENV http_proxy=$http
 ENV https_proxy=$https
@@ -106,7 +108,10 @@ RUN yum -y install strace
 RUN yum -y install libXmu-devel
 
 # we need inkscape for gaffer
-RUN yum -y install inkscape
+RUN yum -y install inkscape python2-scons wget git zip
+
+# we need pulseaudio to run maya
+RUN yum install pulseaudio
 
 
 # to avoid clashing in osl
