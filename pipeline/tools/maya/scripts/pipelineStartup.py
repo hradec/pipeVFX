@@ -20,6 +20,8 @@
 
 import os, sys
 sys.path.insert( 0, "%s/lib/python%s.zip" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
+sys.path.insert( 0, "%s/lib/python%s/lib-dynload" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
+
 
 import maya
 import maya.cmds as m
@@ -393,8 +395,8 @@ if m.about(batch=1):
     RMS_setup()
 else:
     def __runAll__():
-        if float(os.environ["MAYA_VERSION"]) < 2018:
-            import genericAsset
+        # if float(os.environ["MAYA_VERSION"]) < 2018:
+        import genericAsset
         pb = genericAsset.progressBar(3,"Finishing maya startup... ")
         pb.step()
         pipeIdleStartup()
