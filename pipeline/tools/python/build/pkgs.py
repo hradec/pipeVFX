@@ -431,13 +431,6 @@ class all: # noqa
                 '6309541504a819dabe352130f27e57d5',
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
-                # USD
-                'https://github.com/intel/tbb/archive/4.4.6.tar.gz',
-                'tbb-4.4.6.tar.gz',
-                '4.4.6',
-                '20e15206f70c2651bfc964e451a443a0',
-                { gcc : '4.1.2', python: '2.7.16' }
-            ),(
                 # CY2018
                 'https://github.com/intel/tbb.git',
                 'tbb-2017_U6.zip',
@@ -464,6 +457,13 @@ class all: # noqa
                 'tbb-2019_U9.zip',
                 '2019_U9',
                 None,
+                { gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                # USD / maya 2018
+                'https://github.com/intel/tbb/archive/4.4.6.tar.gz',
+                'tbb-4.4.6.tar.gz',
+                '4.4.6',
+                '20e15206f70c2651bfc964e451a443a0',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
             depend = allDepend,
@@ -881,14 +881,14 @@ class all: # noqa
                 'boost_1_61_0.tar.gz',
                 '1.61.0',
                 '874805ba2e2ee415b1877ef3297bf8ad',
-                # { gcc : '4.8.5' }
+                { gcc : '4.8.5' }
             ),(
                 # CY2019
                 'http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.gz',
                 'boost_1_66_0.tar.gz',
                 '1.66.0',
                 'd275cd85b00022313c171f602db59fc5',
-                # { gcc : '4.8.5' }
+                { gcc : '4.8.5' }
             # ),(
             #     # CY2020
             #     'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
@@ -911,20 +911,20 @@ class all: # noqa
                 'ilmbase-2.0.0.tar.gz',
                 '2.0.0',
                 '70f1413840c2a228783d1332b8b168e6',
-                { gcc : '4.1.2', python: '2.7.16' }
+                { gcc : '4.1.2', python: '2.7.16', boost: "1.55.0" }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
                 'ilmbase-2.1.0.tar.gz',
                 '2.1.0',
                 '8ba2f608191ad020e50277d8a3ba0850',
-                { gcc : '4.1.2', python: '2.7.16' }
+                { gcc : '4.1.2', python: '2.7.16', boost: "1.55.0" }
             ),(
                 # CY2016 - CY2018
                 'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
                 'ilmbase-2.2.0.tar.gz',
                 '2.2.0',
                 'b540db502c5fa42078249f43d18a4652',
-                { gcc : '4.1.2', python: '2.7.16' }
+                { gcc : '4.1.2', python: '2.7.16', boost: "1.55.0" }
             # ),(
             #     # CY2019 -  *** A compiler with support for C++14 language features is required.
             #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
@@ -955,20 +955,20 @@ class all: # noqa
                 'openexr-2.0.0.tar.gz',
                 '2.0.0',
                 '0820e1a8665236cb9e728534ebf8df18',
-                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.0.0' }
+                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.0.0', boost: "1.55.0" }
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
                 'openexr-2.1.0.tar.gz',
                 '2.1.0',
                 '33735d37d2ee01c6d8fbd0df94fb8b43',
-                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.1.0' }
+                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.1.0', boost: "1.55.0" }
             ),(
                 # CY2016 - CY2018
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
                 'openexr-2.2.0.tar.gz',
                 '2.2.0',
                 'b64e931c82aa3790329c21418373db4e',
-                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.2.0' }
+                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.2.0', boost: "1.55.0" }
             # ),(
             #     # CY2019
             #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
@@ -998,44 +998,46 @@ class all: # noqa
         )
         self.openexr = openexr
 
-        # pyilmbase = build.configure(
-        #     ARGUMENTS,
-        #     'pyilmbase',
-        #     download=[(
-        #         'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.0.0.tar.gz',
-        #         'pyilmbase-2.0.0.tar.gz',
-        #         '2.0.0',
-        #         '4585eba94a82f0b0916445990a47d143',
-        #         { gcc : '4.1.2', python: '2.7.16' }
-        #     ),(
-        #         'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
-        #         'pyilmbase-2.1.0.tar.gz',
-        #         '2.1.0',
-        #         'af1115f4d759c574ce84efcde9845d29',
-        #         { gcc : '4.1.2', python: '2.7.16' }
-        #     ),(
-        #         'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
-        #         'pyilmbase-2.2.0.tar.gz',
-        #         '2.2.0',
-        #         'e84a6a4462f90b5e14d83d67253d8e5a',
-        #         { gcc : '4.1.2', python: '2.7.16' }
-        #     ),(
-        #         'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
-        #         'pyilmbase-2.3.0.tar.gz',
-        #         '2.3.0',
-        #         'e84a6a4462f90b5e14d83d67253d8e5a',
-        #         { gcc : '4.1.2', python: '2.7.16' }
-        #     )],
-        #     baseLibs=[python],
-        #     depend=[ilmbase,openexr,boost,python,numpy,gcc],
-        #     environ={'DCORES' : 1, 'CORES' : 1},
-        #     cmd = [
-        #         'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
-        #         'make -j $DCORES',
-        #         'make -j $DCORES install',
-        #     ],
-        # )
-        # self.pyilmbase = pyilmbase
+        pyilmbase = build.configure(
+            ARGUMENTS,
+            'pyilmbase',
+            download=[(
+                'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.0.0.tar.gz',
+                'pyilmbase-2.0.0.tar.gz',
+                '2.0.0',
+                '4585eba94a82f0b0916445990a47d143',
+                { gcc : '4.8.5', python: '2.7.16', ilmbase: '2.0.0', openexr: '2.0.0', boost: "1.55.0" }
+            ),(
+                'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
+                'pyilmbase-2.1.0.tar.gz',
+                '2.1.0',
+                'af1115f4d759c574ce84efcde9845d29',
+                { gcc : '4.8.5', python: '2.7.16', ilmbase: '2.1.0', openexr: '2.1.0', boost: "1.55.0" }
+            ),(
+                'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
+                'pyilmbase-2.2.0.tar.gz',
+                '2.2.0',
+                'e84a6a4462f90b5e14d83d67253d8e5a',
+                { gcc : '4.8.5', python: '2.7.16', ilmbase: '2.2.0', openexr: '2.2.0', boost: "1.55.0" }
+            # ),(
+            #     'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
+            #     'pyilmbase-2.3.0.tar.gz',
+            #     '2.3.0',
+            #     'e84a6a4462f90b5e14d83d67253d8e5a',
+            #     { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
+            )],
+            # baseLibs=[python],
+            depend=[ilmbase,openexr,boost,python,gcc, python],
+            environ={
+                'LD' : 'ld',
+                'LDFLAGS' : '$LDFLAGS -L$TARGET_FOLDER/lib/'
+            },
+            cmd = [
+                'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
+                'make -j $DCORES ; make install',
+            ],
+        )
+        self.pyilmbase = pyilmbase
         # allDepend += [ pyilmbase ]
 
 
@@ -1201,13 +1203,13 @@ class all: # noqa
                 'oiio-Release-1.8.10.tar.gz',
                 '1.8.10',
                 'a129a4caa39d7ad79aa1a3dc60cb0418',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+                { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16' }
             ),(
                 'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                 'oiio-Release-2.0.11.tar.gz',
                 '2.0.11',
                 '4fa0ce4538fb2d7eb72f54f4036972d5',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16' }
+                { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16' }
             )],
             depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2, libraw, libpng]+allDepend,
             cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
@@ -1525,13 +1527,14 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.10.7.tar.gz',
                 '1.10.7',
                 '53f66e12c3e29c62dc51b070f027a0ad',
-                {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.56.0"},
+                {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.55.0"},
+                # {oiio: "1.8.10", llvm : "7.1.0", gcc: "4.8.5", boost: "1.55.0"},
             # ),(
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.9.9.tar.gz',
             #     'OpenShadingLanguage-Release-1.9.9.tar.gz',
             #     '1.9.9',
             #     '53f66e12c3e29c62dc51b070f027a0ad',
-            #     {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.56.0"},
+            #     {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.55.0"},
             # ),(
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
             #     'OpenShadingLanguage-Release-1.7.5.tar.gz',
@@ -2108,7 +2111,7 @@ class all: # noqa
                 '8d274089364cfed23004ae52fa3d258f',
                 {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
                 opensubdiv: '3.4.0', alembic: '1.7.1', hdf5: '1.8.11', cmake: '3.8.2',
-                oiio: '1.6.15', tbb: '4.4.6'},
+                oiio: '1.8.10', tbb: '4.4.6'},
             )],
             # baseLibs=[python],
             depend=[
