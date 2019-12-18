@@ -1717,6 +1717,8 @@ class all: # noqa
             cmd = [
                 '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
                         'python configure.py --confirm-license --assume-shared --protected-is-public  CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        '-b $INSTALL_FOLDER/bin -d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages '
+                        '-p $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/plugins '
                         '&& make -j $DCORES '
                             'CFLAGS="$CFLAGS -DPYTHON_LIB=\\\\\\\"libpython$PYTHON_VERSION_MAJOR.so\\\\\\\"" '
                             'CXXFLAGS="$CXXFLAGS -DPYTHON_LIB=\\\\\\\"libpython$PYTHON_VERSION_MAJOR.so\\\\\\\"" '
@@ -1779,7 +1781,7 @@ class all: # noqa
             # baseLibs=[python],
             depend=[qt, gcc]+allDepend,
             cmd = [
-                build.pythonSetup.cmd[0]+' --jobs=$DCORES',
+                build.pythonSetup.cmd[0]+' --jobs=$DCORES  --prefix=$INSTALL_FOLDER',
                 # create symbolic links of the libraries in the correct place,
                 # so pipeVFX can find it - this is needed when building maya related
                 # code to avoid picking up maya version of those libraries.
