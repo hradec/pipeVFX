@@ -122,7 +122,7 @@ class maya(baseApp):
                         openvdb.path('maya/lib'),
                     ],
                 )
-            else:
+            elif float(pipe.version.get('prman')) < 22.0:
                 self.ignorePipeLib( "openvdb" )
         except:
             pass
