@@ -3,11 +3,58 @@
 
 import IECore
 import Gaffer
-import GafferCortex
 import GafferUI
 import Asset
 import pipe
 import os
+try:
+    import GafferCortex
+    GafferCortex_ClassLoaderPath = GafferCortex.ClassLoaderPath
+except:
+    class GafferCortex_ClassLoaderPath( Gaffer.Path ) :
+    	def __init__( self, classLoader, path, root="/", filter=None ) :
+    		Gaffer.Path.__init__( self, path, root, filter )
+    		self.__classLoader = classLoader
+    	def isValid( self ) :
+    		if not len( self ) :
+    			# root is always valid
+    			return True
+    		p = str( self )[1:] # remove leading slash
+    		if p in self.__classLoader.classNames() :
+    			return True
+    		elif self.__classLoader.classNames( p + "/*" ) :
+    			return True
+    		return False
+    	def isLeaf( self ) :
+    		return str( self )[1:] in self.__classLoader.classNames()
+    	def propertyNames( self ) :
+    		return Gaffer.Path.propertyNames( self ) + [ "classLoader:versions" ]
+    	def property( self, name ) :
+    		if name == "classLoader:versions" :
+    			if not self.isLeaf() :
+    				return None
+    			return IECore.IntVectorData( self.__classLoader.versions( str( self )[1:] ) )
+    		return Gaffer.Path.property( self, name )
+    	def copy( self ) :
+    		return ClassLoaderPath( self.__classLoader, self[:], self.root(), self.getFilter() )
+    	def classLoader( self ) :
+    		return self.__classLoader
+    	def load( self, version=None ) :
+    		return self.__classLoader.load( str( self )[1:], version )
+    	def _children( self ) :
+    		result = []
+    		added = set()
+    		matcher = "/".join( self[:] ) + "/*" if len( self ) else "*"
+    		for n in self.__classLoader.classNames( matcher) :
+    			child = ClassLoaderPath( self.__classLoader, self.root() + n, filter=self.getFilter() )
+    			while len( child ) > len( self ) + 1 :
+    				del child[-1]
+    			if str( child ) not in added :
+    				result.append( child )
+    				added.add( str( child ) )
+    		return result
+    IECore.registerRunTimeTyped( GafferCortex_ClassLoaderPath, typeName = "GafferCortex::ClassLoaderPath" )
+
 
 if 'OCIO' in os.environ and not os.path.exists(os.environ['OCIO']):
     del os.environ['OCIO']
@@ -198,7 +245,7 @@ def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnl
 
 
 
-__publishOP__ = GafferCortex.ClassLoaderPath( IECore.ClassLoader.defaultOpLoader(), "/asset/publish" ).load()
+__publishOP__ = GafferCortex_ClassLoaderPath( IECore.ClassLoader.defaultOpLoader(), "/asset/publish" ).load()
 def loadAssetOP( path, newVersion=1, data=None ) :
     classType = '/'.join(path.split('/')[0:2])
 

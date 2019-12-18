@@ -55,10 +55,7 @@ reload(assetUtils)
 # import samEditor
 # import timelineImage
 
-
-QtGui = GafferUI._qtImport( "QtGui" )
-QtCore = GafferUI._qtImport( "QtCore" )
-
+QtCore, QtGui = pipe.importQt()
 
 
 class bundleListWidget( GafferUI.EditorWidget ):

@@ -54,9 +54,7 @@ if assetUtils.m:
 # import samEditor
 # import timelineImage
 
-
-QtGui = GafferUI._qtImport( "QtGui" )
-QtCore = GafferUI._qtImport( "QtCore" )
+QtCore, QtGui = pipe.importQt()
 
 
 # from PyQt4 import QtCore, QtGui
@@ -203,8 +201,7 @@ class test( Gaffer.Application ) :
         # have a clipboard anyway - it seems like a violation of separation between the gui and non-gui libraries.
         # Perhaps we should abolish the ApplicationRoot clipboard and the ScriptNode cut/copy/paste routines, relegating
         # them all to GafferUI functionality?
-
-        QtGui = GafferUI._qtImport( "QtGui" )
+        QtCore, QtGui = pipe.importQt()
 
         self.__clipboardContentsChangedConnection = self.root().clipboardContentsChangedSignal().connect( Gaffer.WeakMethod( self.__clipboardContentsChanged ) )
         QtGui.QApplication.clipboard().dataChanged.connect( Gaffer.WeakMethod( self.__qtClipboardContentsChanged ) )
@@ -216,7 +213,7 @@ class test( Gaffer.Application ) :
 
         data = applicationRoot.getClipboardContents()
 
-        QtGui = GafferUI._qtImport( "QtGui" )
+        QtCore, QtGui = pipe.importQt()
         clipboard = QtGui.QApplication.clipboard()
         try :
             self.__ignoreQtClipboardContentsChanged = True # avoid triggering an unecessary copy back in __qtClipboardContentsChanged
@@ -229,7 +226,7 @@ class test( Gaffer.Application ) :
         if self.__ignoreQtClipboardContentsChanged :
             return
 
-        QtGui = GafferUI._qtImport( "QtGui" )
+        QtCore, QtGui = pipe.importQt()
 
         text = str( QtGui.QApplication.clipboard().text() )
         if text :

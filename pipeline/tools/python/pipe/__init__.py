@@ -23,6 +23,42 @@ import os, glob, sys
 # avoid creating .pyc since it can cause trouble between Intel and AMD
 sys.dont_write_bytecode = True
 
+global _Qt
+global _QtCore
+global _QtGui
+global _QtWidgets
+
+def importQt():
+    global _Qt
+    global _QtCore
+    global _QtGui
+    global _QtWidgets
+    try:
+        import Qt
+        from Qt import QtCore, QtGui, QtWidgets
+        for c in [ x for x in dir(QtWidgets) if x[0]=='Q' ]:
+            exec( 'QtGui.%s = QtWidgets.%s' % (c, c) )
+        QtCore.SIGNAL = QtCore.Signal
+        _Qt        = Qt
+        _QtCore    = QtCore
+        _QtGui     = QtGui
+        _QtWidgets = QtWidgets
+    except:
+        import GafferUI
+        QtGui = GafferUI._qtImport( "QtGui" )
+        QtCore = GafferUI._qtImport( "QtCore" )
+        _Qt        = None
+        _QtCore    = QtCore
+        _QtGui     = QtGui
+        _QtWidgets = None
+
+    return QtCore, QtGui
+
+def whatQt():
+    if _Qt:
+        return "pyside"
+    return "pyqt"
+
 
 if not hasattr(sys,'argv'):
     sys.argv = []

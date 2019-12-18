@@ -52,8 +52,7 @@ import subprocess, psutil, select
 
 from pipe.bcolors import bcolors as colors
 
-QtCore = GafferUI._qtImport( "QtCore" )
-QtGui = GafferUI._qtImport( "QtGui" )
+QtCore, QtGui = pipe.importQt()
 
 sys._stdout = sys.stdout
 

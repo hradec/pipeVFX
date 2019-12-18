@@ -46,8 +46,7 @@ import GafferDispatch
 import GafferScene
 import GafferSceneUI
 
-QtCore = GafferUI._qtImport( "QtCore" )
-QtGui = GafferUI._qtImport( "QtGui" )
+QtCore, QtGui = pipe.importQt()
 
 sys._stdout = sys.stdout
 

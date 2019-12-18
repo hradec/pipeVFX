@@ -30,10 +30,10 @@ from functools import wraps
 try:
     from pymel import core as pm
     import maya.cmds as m
-    from maya.mel import eval as meval
-    import IECoreMaya
-    reload(assetUtils)
     _m = m
+    from maya.mel import eval as meval
+    reload(assetUtils)
+    import IECoreMaya
     # hostApp('maya')
     import maya.utils as mu
 except:

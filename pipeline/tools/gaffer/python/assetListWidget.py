@@ -41,6 +41,12 @@ import pipe
 import assetUtils
 import genericAsset
 
+# backward compatibility
+import imath
+for c in [ x for x in dir(imath) if 'V' in x[0] or 'C' in x[0] ]:
+    exec( 'IECore.%s=imath.%s' % (c,c) )
+
+
 if assetUtils.m:
     reload(assetUtils)
     reload(genericAsset)
@@ -58,20 +64,28 @@ import bundleListWidget
 # import samEditor
 # import timelineImage
 
+QtCore, QtGui = pipe.importQt()
 
-QtGui = GafferUI._qtImport( "QtGui" )
-QtCore = GafferUI._qtImport( "QtCore" )
 
 
 _search = IECore.SearchPath(os.environ['GAFFERUI_IMAGE_PATHS'], ':')
 
 def getMayaWindow():
+    """
+    Get the main Maya window as a QtGui.QMainWindow instance
+    @return: QtGui.QMainWindow instance of the top level Maya windows
+    """
     if assetUtils.m:
-        import sip
-        import maya.OpenMayaUI as mui
-        import maya.cmds as cmds
-        ptr = mui.MQtUtil.mainWindow()
-        return sip.wrapinstance(long(ptr), QtCore.QObject)
+        if 'pyside' in pipe.whatQt():
+            import shiboken2
+            import maya.OpenMayaUI as apiUI
+            ptr = apiUI.MQtUtil.mainWindow()
+            return shiboken2.wrapInstance(long(ptr), QtGui.QMainWindow)
+        else:
+            import sip
+            import maya.OpenMayaUI as mui
+            ptr = mui.MQtUtil.mainWindow()
+            return sip.wrapinstance(long(ptr), QtCore.QObject)
     return None
 
 def toQtObject(mayaName):
@@ -81,15 +95,26 @@ def toQtObject(mayaName):
     If the object does not exist, returns None
     '''
     if assetUtils.m:
-        import sip
-        import maya.OpenMayaUI as apiUI
-        ptr = apiUI.MQtUtil.findControl(mayaName)
-        if ptr is None:
-            ptr = apiUI.MQtUtil.findLayout(mayaName)
-        if ptr is None:
-            ptr = apiUI.MQtUtil.findMenuItem(mayaName)
-        if ptr is not None:
-            return sip.wrapinstance(long(ptr), QtCore.QObject)
+        if 'pyside' in pipe.whatQt():
+            import shiboken2
+            import maya.OpenMayaUI as apiUI
+            ptr = apiUI.MQtUtil.findControl(mayaName)
+            if ptr is None:
+                ptr = apiUI.MQtUtil.findLayout(mayaName)
+            if ptr is None:
+                ptr = apiUI.MQtUtil.findMenuItem(mayaName)
+            if ptr is not None:
+                return shiboken2.wrapInstance(long(ptr), QtGui.QMainWindow)
+        else:
+            import sip
+            import maya.OpenMayaUI as apiUI
+            ptr = apiUI.MQtUtil.findControl(mayaName)
+            if ptr is None:
+                ptr = apiUI.MQtUtil.findLayout(mayaName)
+            if ptr is None:
+                ptr = apiUI.MQtUtil.findMenuItem(mayaName)
+            if ptr is not None:
+                return sip.wrapinstance(long(ptr), QtCore.QObject)
     return None
 
 
@@ -383,7 +408,8 @@ class assetListWidget( GafferUI.EditorWidget ):
         self._qtWidget().setUniformRowHeights( True )
         self._qtWidget().setEditTriggers( QtGui.QTreeView.NoEditTriggers )
         self._qtWidget().activated.connect( Gaffer.WeakMethod( self.__activated ) )
-        self._qtWidget().header().setMovable( False )
+        if 'pyqt' in pipe.whatQt():
+            self._qtWidget().header().setMovable( False )
         self._qtWidget().header().setSortIndicator( 0, QtCore.Qt.AscendingOrder )
         self._qtWidget().setSortingEnabled( True )
         self._qtWidget().setExpandsOnDoubleClick( False )
@@ -423,8 +449,8 @@ class assetListWidget( GafferUI.EditorWidget ):
             self.timer.singleShot( 60*1000,forceRefresh)
 
         # self.timer.singleShot( 60*1000,forceRefresh)
-
-        self._qtWidget().connect(self._qtWidget(), QtCore.SIGNAL("selectionChangedSignal(PyQt_PyObject)"), self.handleValue)
+        if 'pyqt' in pipe.whatQt():
+            self._qtWidget().connect(self._qtWidget(), QtCore.SIGNAL("selectionChangedSignal(PyQt_PyObject)"), self.handleValue)
         # bundleListWidget.bundleListWidget._selectionChangedSignal().connect( Gaffer.WeakMethod( self.handleValue ) )
 
         # genericAsset.updateCurrentLoadedAssets(True)
@@ -460,8 +486,8 @@ class assetListWidget( GafferUI.EditorWidget ):
 
     def handleValue(self, kk):
         pass
-        # print kk
-        # sys.stdout.flush()
+        print kk
+        sys.stdout.flush()
 
 
     def refresh( self , lastLS=None):
@@ -1279,6 +1305,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         def compIcons(img, img2=_search.find('check_box32.png'), height=10, width=10, x=0, y=0, scale2=1):
             image = QtGui.QImage(img).scaledToHeight(height)
             imag2 = QtGui.QImage(img2).scaledToHeight(height*scale2)
+
             painter = QtGui.QPainter()
             painter.begin(image)
             painter.drawImage(x, y, imag2)
@@ -1286,7 +1313,10 @@ class TreeModel(QtCore.QAbstractItemModel):
             return QtGui.QPixmap.fromImage( image )
 
         for each in data.keys():
-            typeIcon = QtGui.QPixmap(_search.find('assets/%s-15.png' % each))
+            if 'pyqt' in pipe.whatQt():
+                typeIcon = QtGui.QPixmap(_search.find('assets/%s-15.png' % each))
+            else:
+                typeIcon = QtGui.QImageReader(_search.find('assets/%s-15.png' % each)).read()
             x, y = 5,5
             self.assetMainTypes[each] = {
                 'plain' : typeIcon,
@@ -1296,7 +1326,10 @@ class TreeModel(QtCore.QAbstractItemModel):
                 'edit'  : compIcons( typeIcon, _search.find('edit-alpha-20.png')    , 15, 30, x, y, 0.75),
             }
             for each2 in data[each].keys():
-                subTypeIcon = QtGui.QPixmap(_search.find('assets/%s.png' % each2)).scaledToHeight(14)
+                if 'pyqt' in pipe.whatQt():
+                    subTypeIcon = QtGui.QPixmap(_search.find('assets/%s.png' % each2)).scaledToHeight(14)
+                else:
+                    subTypeIcon = QtGui.QImageReader(_search.find('assets/%s.png' % each2)).read().scaledToHeight(14)
                 self.assetTypes[each2] = {
                     'plain' : subTypeIcon,
                     'green' : compIcons( subTypeIcon, _search.find('greenlight_alpha.png') , 14, 30, x, y, 0.75),

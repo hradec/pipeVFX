@@ -42,9 +42,7 @@ import samEditor
 import timelineImage
 import genericAsset
 
-
-QtGui = GafferUI._qtImport( "QtGui" )
-QtCore = GafferUI._qtImport( "QtCore" )
+QtCore, QtGui = pipe.importQt()
 
 
 try:
