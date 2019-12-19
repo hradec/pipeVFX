@@ -792,6 +792,63 @@ class all: # noqa
         # self.numpy = numpy
         # build.allDepend.append(numpy)
 
+        # build pycairo beforehand since pygobject depends on it
+        pycairo = build.pythonSetup(
+            ARGUMENTS,
+            'pycairo',
+            download=[(
+                'https://files.pythonhosted.org/packages/3c/1a/c0478ecab31baae50fda9956547788afbd0ca563adc52c9b03cab30f17eb/pycairo-1.18.2.tar.gz',
+                'pycairo-1.18.2.tar.gz',
+                '1.18.2',
+                'be2ba51f234270dec340f28f1695a95e'
+            )],
+            baseLibs=[python],
+            depend=[python]+allDepend,
+            noMinTime=True,
+        )
+        build.allDepend += [pycairo]
+        pygobject = build.pythonSetup(
+            ARGUMENTS,
+            'pygobject',
+            download=[(
+                'https://files.pythonhosted.org/packages/46/8a/b183f3edc812d4d28c8b671a922b5bc2863be5d38c56b3ad9155815e78dd/PyGObject-3.34.0.tar.gz',
+                'PyGObject-3.34.0.tar.gz',
+                '3.34.0',
+                '1860bdb63c8db0826fb310444271e9b0'
+            )],
+            baseLibs=[python],
+            depend=[python]+allDepend,
+            environ={
+                # not sure why python is not importing cairo from it's egg, but
+                # adding the egg to PYTHONPATH seems to fix it.
+                'PYTHONPATH' : [
+                    '$PYTHONPATH',
+                    '$PYCAIRO_TARGET_FOLDER/lib/python2.7/site-packages/pycairo-$PYCAIRO_VERSION-py$PYTHON_VERSION_MAJOR-linux-x86_64.egg/',
+                    '$PYCAIRO_TARGET_FOLDER/lib/python2.7/site-packages/pycairo-$PYCAIRO_VERSION-py$PYTHON_VERSION_MAJOR-linux-x86_64.egg/cairo/',
+                ]
+            },
+            noMinTime=True,
+        )
+        build.allDepend += [pygobject]
+
+        pythonldap = build.pythonSetup(
+            ARGUMENTS,
+            'pythonldap',
+            download=[(
+                # this version only builds for python 2.7
+                'https://pypi.python.org/packages/source/p/python-ldap/python-ldap-2.4.19.tar.gz#md5=b941bf31d09739492aa19ef679e94ae3',
+                'python-ldap-2.4.19.tar.gz',
+                '2.4.19',
+                'b941bf31d09739492aa19ef679e94ae3',
+                { python: '2.7.6' }
+            )],
+            # baseLibs=[python],
+            depend=[python]+allDepend,
+            noMinTime=True,
+        )
+        build.allDepend += [pythonldap]
+
+
         # build all simple python modules here.
         # since its just a matter of running setup.py (hence "simple"),
         # we put all name/version/download infor in a dict for easy maintainance,
@@ -804,18 +861,6 @@ class all: # noqa
                 '6.2.1',
                 '14711cb3ff6bbd9634aad3bbcb2d935d',
             )],
-            # 'pythonldap' : [(
-            #     'https://pypi.python.org/packages/source/p/python-ldap/python-ldap-2.4.19.tar.gz#md5=b941bf31d09739492aa19ef679e94ae3',
-            #     'python-ldap-2.4.19.tar.gz',
-            #     '2.4.19',
-            #     'b941bf31d09739492aa19ef679e94ae3'
-            # )],
-            # 'pygobject' : [(
-            #     'https://pypi.python.org/packages/source/P/PyGObject/pygobject-2.28.3.tar.bz2#md5=aa64900b274c4661a5c32e52922977f9',
-            #     'pygobject-2.28.3.tar.gz',
-            #     '2.28.3',
-            #     'aa64900b274c4661a5c32e52922977f9'
-            # )],
             # 'wxpython' : [(
             #     'https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.1.0.tar.gz#md5=0de021941018d46d91e5a8c11c071693',
             #     'PyOpenGL-3.1.0.tar.gz',
@@ -833,13 +878,13 @@ class all: # noqa
                     module,
                     download=simpleModules[module],
                     baseLibs=[python],
-                    depend=[python]+allDepend,
+                    depend=[python,pycairo]+allDepend,
                 )
             )
         # add all builders to the global dependency at once here
         # so they can all be built in parallel by scons, since theres no
         # dependency between then.
-        build.allDepend.extend( simpleModulesBuilders )
+        build.allDepend += simpleModulesBuilders
         # ============================================================================================================================================
 
         boost = build.boost(
@@ -1431,6 +1476,8 @@ class all: # noqa
             flags = [
                 '-DMATERIALX_BUILD_PYTHON=1',
                 '-DMATERIALX_BUILD_VIEWER=1',
+                # Material X needs this to be compatible with gaffer strings
+                # '-D_GLIBCXX_USE_CXX11_ABI=0',
             ],
             environ = { 'LD' : 'ld' },
         )

@@ -111,7 +111,14 @@ RUN yum -y install libXmu-devel
 RUN yum -y install inkscape python2-scons wget git zip
 
 # we need pulseaudio to run maya
-RUN yum install pulseaudio
+RUN yum -y install pulseaudio
+
+# we need this for pygobject
+RUN yum -y install cairo-devel \
+    gobject-introspection-devel cairo-gobject-devel
+
+# we need this to build pythonldap
+RUN yum -y install openldap-devel
 
 
 # to avoid clashing in osl
