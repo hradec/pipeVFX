@@ -123,6 +123,7 @@ LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['OSL_TARG
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include/OSL'      % ( os.environ['OSL_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['OSL_TARGET_FOLDER'] ) )
 
+GAFFERCORTEX = True
 
 popPrint('All Gaffer Paths...')
 

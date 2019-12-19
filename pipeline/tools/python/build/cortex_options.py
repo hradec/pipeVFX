@@ -264,13 +264,13 @@ apps                    = pipe.roots().apps()
 if "MAYA_ROOT" in os.environ:
     MAYA_ROOT               = apps+"/maya/%s/"   % maya
     CXXSTD = 'c++11'
-if "PRMAN_ROOT" in os.environ:
+elif "PRMAN_ROOT" in os.environ:
     RMAN_ROOT               = "%s/RenderManProServer-%s"  % (os.environ["PRMAN_ROOT"], os.environ["PRMAN_VERSION"])
-if "NUKE_ROOT" in os.environ:
+elif "NUKE_ROOT" in os.environ:
     NUKE_ROOT		        = os.environ["NUKE_ROOT"]
-if "HOUDINI_ROOT" in os.environ:
+elif "HOUDINI_ROOT" in os.environ:
     HOUDINI_ROOT	        = os.environ["HOUDINI_ROOT"]
-if "ARNOLD_ROOT" in os.environ:
+elif "ARNOLD_ROOT" in os.environ:
     ARNOLD_ROOT	        = os.environ["ARNOLD_ROOT"]
     MTOA_ROOT               = ARNOLD_ROOT+"/mtoadeploy/%s/" % maya
     MTOA_SOURCE_ROOT        = ARNOLD_ROOT+"/mtoadeploy/%s/scripts/mtoa/" % maya
@@ -373,43 +373,44 @@ os.environ['PYTHONPATH'] = ':'.join([
 
 LIBPATH = []
 if houdini != '0.0.0':
+    hcustom_c = os.popen('HFS=$HOUDINI_ROOT hcustom -c' ).readlines()
+    if hcustom_c:
+        os.environ['HOUDINI_CXX_FLAGS']  = [ l for l in hcustom_c if '-DVERSION' in l ][0].replace('pipeLog: ','').replace('-std=c++0x','').strip()
+        os.environ['HOUDINI_LINK_FLAGS'] = [ l for l in os.popen('HFS=$HOUDINI_ROOT hcustom -m' ).readlines() if '-L' in l ][0].replace('pipeLog: ','').strip()
 
-    os.environ['HOUDINI_CXX_FLAGS']  = [ l for l in os.popen('HFS=$HOUDINI_ROOT hcustom -c' ).readlines() if '-DVERSION' in l ][0].replace('pipeLog: ','').replace('-std=c++0x','').strip()
-    os.environ['HOUDINI_LINK_FLAGS'] = [ l for l in os.popen('HFS=$HOUDINI_ROOT hcustom -m' ).readlines() if '-L' in l ][0].replace('pipeLog: ','').strip()
+        print os.environ['HOUDINI_CXX_FLAGS']
 
-    print os.environ['HOUDINI_CXX_FLAGS']
+        if 'GCC_VERSION' in os.environ:
+            if os.environ['GCC_VERSION'] == '4.1.2':
+                os.environ['HOUDINI_CXX_FLAGS'] += " -isystem %s/lib/gcc/x86_64-pc-linux-gnu/%s/include/c++/tr1/" % (os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION'])
+                os.environ['HOUDINI_CXX_FLAGS'] = os.environ['HOUDINI_CXX_FLAGS'].replace('-Wno-unused-local-typedefs','')
+            elif os.environ['GCC_VERSION'] == '4.8.5':
+                os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++11 -fexceptions "
 
-    if 'GCC_VERSION' in os.environ:
-        if os.environ['GCC_VERSION'] == '4.1.2':
-            os.environ['HOUDINI_CXX_FLAGS'] += " -isystem %s/lib/gcc/x86_64-pc-linux-gnu/%s/include/c++/tr1/" % (os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION'])
-            os.environ['HOUDINI_CXX_FLAGS'] = os.environ['HOUDINI_CXX_FLAGS'].replace('-Wno-unused-local-typedefs','')
-        elif os.environ['GCC_VERSION'] == '4.8.5':
-            os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++11 -fexceptions "
-
-    os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
-    os.environ['HOUDINI_LINK_FLAGS'] += ' '+' '.join([
-        '-Wl,-rpath,%s/dsolib/' % HOUDINI_ROOT,
-        '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
-        '-Wl,-rpath,%s' % os.path.dirname(expandvars(INSTALL_LIB_NAME, os.environ)),
-        '-Wl,-rpath,%s' % os.path.dirname(expandvars(INSTALL_PYTHONLIB_NAME, os.environ)),
-    ])
-
-    if boost == '1.51.0':
-        os.environ['HOUDINI_CXX_FLAGS'] += " -D__GLIBC_HAVE_LONG_LONG"
-
-
-    HOUDINI_CXX_FLAGS = os.environ['HOUDINI_CXX_FLAGS']
-    HOUDINI_LINK_FLAGS = os.environ['HOUDINI_LINK_FLAGS']
-
-
-    if 'GCC_VERSION' in os.environ:
-        HOUDINI_LINK_FLAGS = " ".join([
-            os.environ['HOUDINI_LINK_FLAGS'],
-            "-Wl,-rpath,%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
-            "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
+        os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
+        os.environ['HOUDINI_LINK_FLAGS'] += ' '+' '.join([
+            '-Wl,-rpath,%s/dsolib/' % HOUDINI_ROOT,
+            '-Wl,-rpath,%s/python/lib/' % HOUDINI_ROOT,
+            '-Wl,-rpath,%s' % os.path.dirname(expandvars(INSTALL_LIB_NAME, os.environ)),
+            '-Wl,-rpath,%s' % os.path.dirname(expandvars(INSTALL_PYTHONLIB_NAME, os.environ)),
         ])
 
-    PYTHON_LINK_FLAGS += ' '+HOUDINI_LINK_FLAGS
+        if boost == '1.51.0':
+            os.environ['HOUDINI_CXX_FLAGS'] += " -D__GLIBC_HAVE_LONG_LONG"
+
+
+        HOUDINI_CXX_FLAGS = os.environ['HOUDINI_CXX_FLAGS']
+        HOUDINI_LINK_FLAGS = os.environ['HOUDINI_LINK_FLAGS']
+
+
+        if 'GCC_VERSION' in os.environ:
+            HOUDINI_LINK_FLAGS = " ".join([
+                os.environ['HOUDINI_LINK_FLAGS'],
+                "-Wl,-rpath,%s/lib/gcc/x86_64-pc-linux-gnu/%s/"  % ( os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION']),
+                "-Wl,-rpath,%s/lib/"  % os.environ['GCC_TARGET_FOLDER'],
+            ])
+
+        PYTHON_LINK_FLAGS += ' '+HOUDINI_LINK_FLAGS
 
 
 # if 'GCC_VERSION' in os.environ:

@@ -733,6 +733,7 @@ class cortex(configure):
                         ('scenePythonModule = ','scenePythonModule = [] #'),
                         ('imageLibrary = ','imageLibrary = [] #'),
                         ('imagePythonModule = ','imagePythonModule = [] #'),
+                        ('vdbLibrary = ','vdbLibrary = [] #'),
                         ('Default. coreLibrary','#Default( coreLibrary'),
                         ('Default. . glLibrary','#Default( [ glLibrary'),
                         ('Default. sceneLibrary','#Default( sceneLibrary'),
