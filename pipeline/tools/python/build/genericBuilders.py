@@ -1874,6 +1874,7 @@ class generic:
         return value
 #        return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()
 
+    download_cmd = "wget --timeout=15 '$url' -O $save >$log.log 2>&1"
     def downloader( self, env, _source, _url=None):
         ''' this method is a builder responsible to download the packages to be build '''
         global __pkgInstalled__
@@ -1923,7 +1924,7 @@ class generic:
                                 source[n],
                             )
                         else:
-                            cmd = "wget --timeout=15 '%s' -O %s >%s.log 2>&1" % (url[0], download_file, source[n])
+                            cmd = self.download_cmd.replace('$url', url[0]).replace('$save', download_file).replace('$log', source[n])
 
                         # print cmd
                         os.popen(cmd).readlines()
