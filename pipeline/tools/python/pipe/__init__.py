@@ -28,7 +28,7 @@ global _QtCore
 global _QtGui
 global _QtWidgets
 
-def importQt():
+def importQt(ret=None):
     global _Qt
     global _QtCore
     global _QtGui
@@ -52,7 +52,12 @@ def importQt():
         _QtGui     = QtGui
         _QtWidgets = None
 
+    if ret:
+        if 'QtWidgets' in ret:
+            return _QtWidgets
+
     return QtCore, QtGui
+
 
 def whatQt():
     if _Qt:
