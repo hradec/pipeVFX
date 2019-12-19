@@ -24,6 +24,7 @@ import IECore
 import Gaffer
 import GafferUI
 import pipe
+from opDialogue import OpDialogue
 
 # find images using GAFFERUI_IMAGE_PATHS search path for our
 # dialogs
@@ -140,9 +141,9 @@ class OpaMode( GafferUI.BrowserEditor.Mode ) :
 #GafferUI.BrowserEditor.OpaMode = OpaMode
 
 # patch op dialog!
-class OpaDialogue(GafferUI.OpDialogue):
+class OpaDialogue(OpDialogue):
     def __init__( self, opInstance, title=None, opName="", sizeMode=GafferUI.Window.SizeMode.Manual, **kw ) :
-        GafferUI.OpDialogue.__init__( self, opInstance, title, sizeMode, **kw )
+        OpDialogue.__init__( self, opInstance, title, sizeMode, **kw )
         layout = self._getWidget().parent()
         layout.insert(0,
             pipeImage(opName)

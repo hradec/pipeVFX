@@ -31,7 +31,7 @@ os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 # ===================================================================
 pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
 pipe.version.set( maya      = '2018' )
-pipe.version.set( maya      = '2016.5' )
+# pipe.version.set( maya      = '2016.5' )
 pipe.version.set( nuke      = '12.0v1' )
 pipe.version.set( houdini   = 'hfs16.0.557' )
 pipe.version.set( delight   = '11.0.12' )
@@ -39,7 +39,7 @@ pipe.version.set( mari      = '2.0v1' )
 pipe.version.set( xpra      = '0.15.svn9672' )
 pipe.version.set( arnold    = '5.1.0.1' )
 pipe.version.set( realflow  = '10.1' )
-pipe.version.set( prman     = '22.6' )
+pipe.version.set( prman     = '23.0' )
 pipe.version.set( unreal    = '4.22.0.opengl' )
 
 
@@ -49,7 +49,7 @@ if float(pipe.version.get('maya')) <= 2014:
     # maximum versions for maya 2014
     pipe.version.set( prman     = '20.11' )
 
-if float(pipe.version.get('maya')) <= 2018:
+if float(pipe.version.get('maya')) < 2018:
     # maximum versions for maya 2018
     pipe.version.set( prman     = '21.7' )
 
@@ -60,11 +60,13 @@ if 'GCC_VERSION' in os.environ:
     pipe.version.set( python        = '2.7' )
     pipe.libs.version.set( python   = '2.7' )
     pipe.libs.version.set( freetype = '2.4.0' )
-    pipe.libs.version.set( alembic  = '1.5.8' )
-    pipe.libs.version.set( boost    = '1.51.0' )
+    # pipe.libs.version.set( alembic  = '1.5.8' )
+    pipe.libs.version.set( cortex   = '10.0' )
+    pipe.libs.version.set( boost    = '1.61' )
+    pipe.libs.version.set( oiio     = '1.8' )
     pipe.libs.version.set( openexr  = '2.2.0' )
     pipe.libs.version.set( ilmbase  = '2.2.0' )
-    pipe.libs.version.set( tbb      = '4.3.6' )
+    pipe.libs.version.set( tbb      = '4.4.6' )
     pipe.libs.version.set( pyqt     = '4.11.4' )
     pipe.libs.version.set( readline = '99.99.99' )
 else:
@@ -81,7 +83,8 @@ else:
 if 'GCC_VERSION' in os.environ:
     pipe.version.set( gaffer      = '0.32' )
     pipe.libs.version.set( gaffer = '0.32' )
-    pipe.libs.version.set( cortex = '9.13' )
+    # pipe.libs.version.set( cortex = '9.13' )
+    pipe.libs.version.set( cortex = '10.0' )
 else:
     pipe.version.set( gaffer      = '2.0.0' )
     pipe.libs.version.set( cortex = '9.0.0.git_Oct_10_2014' )

@@ -159,6 +159,9 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
     def __init__( self, browser ) :
         GafferUI.BrowserEditor.Mode.__init__( self, browser )
         self.__classLoader = IECore.ClassLoader.defaultOpLoader()
+        self.__browser = weakref.ref(  browser )
+        self._Mode__browser = weakref.ref( browser )
+
 
     def connect( self ) :
         GafferUI.BrowserEditor.Mode.connect( self )
@@ -167,7 +170,7 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
             Gaffer.WeakMethod( self.__pathSelected )
         )
         self.__contextMenuConnection  = self.browser().pathChooser().pathListingWidget().contextMenuSignal().connect(
-            Gaffer.WeakMethod( self.__menu )
+            Gaffer.WeakMethod( self._menu )
         )
 
     def disconnect( self ) :
@@ -183,16 +186,16 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
 
     def __pathSelected( self, pathListing ) :
         selectedPaths = pathListing.getSelectedPaths()
+        print selectedPaths[0]
         if not len( selectedPaths ) :
             return
 
-        print selectedPaths[0]
 #        op = selectedPaths[0].classLoader().load( str( selectedPaths[0] )[1:] )()
 #        opaDialogue = opaClasses.OpaDialogue( op )
 #        pathListing.ancestor( GafferUI.Window ).addChildWindow( opaDialogue )
 #        opaDialogue.setVisible( True )
 
-    def __menu( self, pathListing ) :
+    def _menu( self, pathListing ) :
         print "XXXX:%s" % str(pathListing)
         menuDefinition = IECore.MenuDefinition()
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
@@ -205,7 +208,7 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
             parameterValue = selectedPaths[0]
         else :
             parameterValue = selectedPaths
-        menuDefinition.append( "/Actions", { "subMenu" : IECore.curry( Gaffer.WeakMethod( self.__actionsSubMenu ), parameterValue ) } )
+        # menuDefinition.append( "/Actions", { "subMenu" : IECore.curry( Gaffer.WeakMethod( self.__actionsSubMenu ), parameterValue ) } )
 
 #        else :
 #            menuDefinition.append( "/Loading actions...", { "active" : False } )
@@ -219,7 +222,7 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
 
 
     def _initialPath( self ) :
-        return Gaffer.DictPath( populateJobs(), "" )
+        return Gaffer.DictPath( populateJobs(), "/" )
 
 #    def _initialColumns( self ) :
 #        return ['Job Name']

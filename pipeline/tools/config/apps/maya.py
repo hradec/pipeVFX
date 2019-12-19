@@ -109,23 +109,13 @@ class maya(baseApp):
 
         # pipeline alembic plugins!
         self.update( pipe.libs.alembic() )
-        try:
-            # pipeline openvdb plugins!
-            if float(pipe.version.get('prman')) < 21.0:
-                # pipe.libs.version.set( openvdb = '3.2.0' )
-                openvdb = pipe.libs.openvdb()
-                maya.addon( self,
-                    plugin = openvdb.path('maya/$MAYA_VERSION/plugins'),
-                    script = openvdb.path('maya/$MAYA_VERSION/scripts'),
-                    icon   = openvdb.path('maya/$MAYA_VERSION/icons'),
-                    lib = [
-                        openvdb.path('maya/lib'),
-                    ],
-                )
-            elif float(pipe.version.get('prman')) < 22.0:
-                self.ignorePipeLib( "openvdb" )
-        except:
-            pass
+
+        # don't use pipe openvdb since prman 21 comes with its own.
+        prman_version = float(pipe.version.get('prman'))
+        if prman_version >= 21.0 and prman_version < 22.0:
+            self.ignorePipeLib( "openvdb" )
+        else:
+            self.update(pipe.libs.openvdb())
 
 
         # add this only to the global one (last)

@@ -27,7 +27,7 @@ class gaffer(baseLib):
             if float(pipe.libs.version.get('gaffer')[:4]) >= 0.55:
                 pipe.libs.version.set( cortex='10.0' )
                 pipe.libs.version.set( boost='1.61.0' )
-                pipe.libs.version.set( oiio='2.0' )
+                pipe.libs.version.set( oiio='2.0.11' )
                 pipe.libs.version.set( tbb='2019_U9' )
             # if float(pipe.version.get('gaffer')[:3]) >= 2.0:
             #     pipe.libs.version.set( cortex='9.0.0.git_Oct_10_2014' )
@@ -66,20 +66,20 @@ class gaffer(baseLib):
             if self.parent() in ["gaffer", 'maya', 'houdini']:
                 self['OCIO'] = '/atomo/pipeline/tools/ocio/config.ocio'
 
-        self.update( openvdb() )
-        self.update( qtpy() )
+        self.update( pipe.libs.openvdb() )
+        self.update( pipe.libs.qtpy() )
 
         # add all versions of OIIO libraries to search path
-        for each in glob.glob( "%s/*" % os.path.dirname(oiio().path()) ):
+        for each in glob.glob( "%s/*" % os.path.dirname(pipe.libs.oiio().path()) ):
             # print each
             self['LD_LIBRARY_PATH'] = '%s/lib/' % each
 
         if self.parent() in ['gaffer']:
             # self.update( pyilmbase() )
-            self.update( python() )
+            self.update( pipe.libs.python() )
             # self.update( maya() )
             self.update( pipe.apps.prman() )
-            self.update( cortex() )
+            self.update( pipe.libs.cortex() )
             # hack to enable renderman in gaffer!
             self['DELIGHT'] = '1'
             # self.update( maya() )

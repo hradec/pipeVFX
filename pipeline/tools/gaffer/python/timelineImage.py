@@ -39,6 +39,7 @@ import IECore
 
 import Gaffer
 import GafferUI
+import pipe
 import math
 
 QtCore, QtGui = pipe.importQt()

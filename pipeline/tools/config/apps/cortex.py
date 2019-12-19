@@ -18,6 +18,6 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-
-class cortex(pipe.libs.cortex):
-    pass
+if hasattr(pipe.libs, 'cortex'):
+    class cortex(pipe.libs.cortex):
+        pass

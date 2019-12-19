@@ -486,8 +486,8 @@ class assetListWidget( GafferUI.EditorWidget ):
 
     def handleValue(self, kk):
         pass
-        print kk
-        sys.stdout.flush()
+        # print kk
+        # sys.stdout.flush()
 
 
     def refresh( self , lastLS=None):

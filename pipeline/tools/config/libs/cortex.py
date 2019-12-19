@@ -29,7 +29,6 @@ class cortex(baseLib):
             if float(pipe.libs.version.get('boost')[:4]) < 1.55:
                 pipe.libs.version.set( boost='1.55')
 
-        pipe.libs.version.set( boost='1.55.0')
 
     #     if self.parent() in 'gaffer':
     #         if float(pipe.version.get('gaffer')[:3]) < 2.0  and float(pipe.version.get('gaffer')[:3])!=0.30:

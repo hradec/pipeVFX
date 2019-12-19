@@ -18,7 +18,6 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-
-
-class gaffer(pipe.libs.gaffer):
-    pass
+if hasattr(pipe.libs, 'gaffer'):
+    class gaffer(pipe.libs.gaffer):
+        pass

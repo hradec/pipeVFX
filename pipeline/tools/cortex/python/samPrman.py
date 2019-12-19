@@ -7,7 +7,10 @@ import os
 
 
 def stopIPR():
-    meval('source "renderManNodes";stopIprRendering (`rmanGetRenderWindowPanel`);')
+    try:
+        meval('source "renderManNodes";stopIprRendering (`rmanGetRenderWindowPanel`);')
+    except:
+        pass
 
 def setupRISGlobals():
     meval('source "renderManNodes";rmanCreateGlobals')
