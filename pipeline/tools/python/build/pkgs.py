@@ -24,6 +24,7 @@ import SCons, os
 from pipe import versionSort
 
 
+
 mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
 
 SCons.Script.SetOption('warn', 'no-all')
@@ -821,11 +822,11 @@ class all: # noqa
             environ={
                 # not sure why python is not importing cairo from it's egg, but
                 # adding the egg to PYTHONPATH seems to fix it.
-                'PYTHONPATH' : [
+                'PYTHONPATH' : ':'.join([
                     '$PYTHONPATH',
-                    '$PYCAIRO_TARGET_FOLDER/lib/python2.7/site-packages/pycairo-$PYCAIRO_VERSION-py$PYTHON_VERSION_MAJOR-linux-x86_64.egg/',
-                    '$PYCAIRO_TARGET_FOLDER/lib/python2.7/site-packages/pycairo-$PYCAIRO_VERSION-py$PYTHON_VERSION_MAJOR-linux-x86_64.egg/cairo/',
-                ]
+                    '$PYCAIRO_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/pycairo-$PYCAIRO_VERSION-py$PYTHON_VERSION_MAJOR-linux-x86_64.egg/',
+                    '$PYCAIRO_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/pycairo-$PYCAIRO_VERSION-py$PYTHON_VERSION_MAJOR-linux-x86_64.egg/cairo/',
+                ])
             },
             noMinTime=True,
         )
@@ -887,6 +888,9 @@ class all: # noqa
         build.allDepend += simpleModulesBuilders
         # ============================================================================================================================================
 
+
+        # ============================================================================================================================================
+        # boost build - this one is very important since there are multiple builds of other packages built for each version of boost.
         boost = build.boost(
             ARGUMENTS,
             'boost',
@@ -948,142 +952,153 @@ class all: # noqa
         self.boost = boost
         # build.allDepend.append(boost)
 
-        ilmbase = build.configure(
-            ARGUMENTS,
-            'ilmbase',
-            download=[(
-                'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.0.0.tar.gz',
-                'ilmbase-2.0.0.tar.gz',
-                '2.0.0',
-                '70f1413840c2a228783d1332b8b168e6',
-                { gcc : '4.1.2', python: '2.7.16', boost: "1.55.0" }
-            ),(
-                'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
-                'ilmbase-2.1.0.tar.gz',
-                '2.1.0',
-                '8ba2f608191ad020e50277d8a3ba0850',
-                { gcc : '4.1.2', python: '2.7.16', boost: "1.55.0" }
-            ),(
-                # CY2016 - CY2018
-                'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
-                'ilmbase-2.2.0.tar.gz',
-                '2.2.0',
-                'b540db502c5fa42078249f43d18a4652',
-                { gcc : '4.1.2', python: '2.7.16', boost: "1.55.0" }
-            # ),(
-            #     # CY2019 -  *** A compiler with support for C++14 language features is required.
-            #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
-            #     'ilmbase-2.3.0.tar.gz',
-            #     '2.3.0',
-            #     '354bf86de3b930ab87ac63619d60c860',
-            #     { gcc : '4.8.5', python: '2.7.16' }
-            )],
-            depend=[gcc, python, openssl]+allDepend,
-            environ={
-                'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
-                'LD'      : 'ld',
-            },
-            cmd = [
-                './configure  --enable-shared ',
-                'make -j $DCORES',
-                'make -j $DCORES install',
-            ],
-        )
-        self.ilmbase = ilmbase
+
+        # ============================================================================================================================================
+        # build ilmbase/openexr/pyilmbase for each version of boost.
+        self.openexr ={}
+        self.ilmbase = {}
+        self.pyilmbase = {}
+        for boost_version in self.boost.versions:
+            sufix = "boost.%s" % boost_version
+            ilmbase = build.configure(
+                ARGUMENTS,
+                'ilmbase',
+                targetSuffix=sufix,
+                download=[(
+                    'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.0.0.tar.gz',
+                    'ilmbase-2.0.0.tar.gz',
+                    '2.0.0',
+                    '70f1413840c2a228783d1332b8b168e6',
+                    { gcc : '4.1.2', python: '2.7.16', boost: boost_version }
+                ),(
+                    'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
+                    'ilmbase-2.1.0.tar.gz',
+                    '2.1.0',
+                    '8ba2f608191ad020e50277d8a3ba0850',
+                    { gcc : '4.1.2', python: '2.7.16', boost: boost_version }
+                ),(
+                    # CY2016 - CY2018
+                    'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
+                    'ilmbase-2.2.0.tar.gz',
+                    '2.2.0',
+                    'b540db502c5fa42078249f43d18a4652',
+                    { gcc : '4.1.2', python: '2.7.16', boost: boost_version }
+                # ),(
+                #     # CY2019 -  *** A compiler with support for C++14 language features is required.
+                #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
+                #     'ilmbase-2.3.0.tar.gz',
+                #     '2.3.0',
+                #     '354bf86de3b930ab87ac63619d60c860',
+                #     { gcc : '4.8.5', python: '2.7.16' }
+                )],
+                depend=[gcc, python, openssl]+allDepend,
+                environ={
+                    'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
+                    'LD'      : 'ld',
+                },
+                cmd = [
+                    './configure  --enable-shared ',
+                    'make -j $DCORES',
+                    'make -j $DCORES install',
+                ],
+            )
+            self.ilmbase[sufix] = ilmbase
 
 
-        openexr = build.configure(
-            ARGUMENTS,
-            'openexr',
-            download=[(
-                'http://download.savannah.nongnu.org/releases/openexr/openexr-2.0.0.tar.gz',
-                'openexr-2.0.0.tar.gz',
-                '2.0.0',
-                '0820e1a8665236cb9e728534ebf8df18',
-                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.0.0', boost: "1.55.0" }
-            ),(
-                'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
-                'openexr-2.1.0.tar.gz',
-                '2.1.0',
-                '33735d37d2ee01c6d8fbd0df94fb8b43',
-                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.1.0', boost: "1.55.0" }
-            ),(
-                # CY2016 - CY2018
-                'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
-                'openexr-2.2.0.tar.gz',
-                '2.2.0',
-                'b64e931c82aa3790329c21418373db4e',
-                { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.2.0', boost: "1.55.0" }
-            # ),(
-            #     # CY2019
-            #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
-            #     'openexr-2.3.0.tar.gz',
-            #     '2.3.0',
-            #     'a157e8a46596bc185f2472a5a4682174',
-            #     { gcc : '4.1.2', python: '2.7.16' }
-            # ),(
-            #     # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
-            #     'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.0.tar.gz',
-            #     'openexr-2.4.0.tar.gz',
-            #     '2.4.0',
-            #     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
-            #     { gcc : '4.1.2', python: '2.7.16' }
-            )],
-            sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
-            depend=[ilmbase, gcc, python, openssl]+allDepend,
-            environ={
-                'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
-                'LD'      : 'ld',
-            },
-            cmd = [
-                './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
-                'make -j $DCORES',
-                'make -j $DCORES install',
-            ],
-        )
-        self.openexr = openexr
+            openexr = build.configure(
+                ARGUMENTS,
+                'openexr',
+                targetSuffix=sufix,
+                download=[(
+                    'http://download.savannah.nongnu.org/releases/openexr/openexr-2.0.0.tar.gz',
+                    'openexr-2.0.0.tar.gz',
+                    '2.0.0',
+                    '0820e1a8665236cb9e728534ebf8df18',
+                    { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.0.0', boost: boost_version }
+                ),(
+                    'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
+                    'openexr-2.1.0.tar.gz',
+                    '2.1.0',
+                    '33735d37d2ee01c6d8fbd0df94fb8b43',
+                    { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.1.0', boost: boost_version }
+                ),(
+                    # CY2016 - CY2018
+                    'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
+                    'openexr-2.2.0.tar.gz',
+                    '2.2.0',
+                    'b64e931c82aa3790329c21418373db4e',
+                    { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.2.0', boost: boost_version }
+                # ),(
+                #     # CY2019
+                #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
+                #     'openexr-2.3.0.tar.gz',
+                #     '2.3.0',
+                #     'a157e8a46596bc185f2472a5a4682174',
+                #     { gcc : '4.1.2', python: '2.7.16' }
+                # ),(
+                #     # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
+                #     'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.0.tar.gz',
+                #     'openexr-2.4.0.tar.gz',
+                #     '2.4.0',
+                #     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
+                #     { gcc : '4.1.2', python: '2.7.16' }
+                )],
+                sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
+                depend=[gcc, python, openssl]+allDepend,
+                environ={
+                    'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/",
+                    'LD'      : 'ld',
+                },
+                cmd = [
+                    './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
+                    'make -j $DCORES',
+                    'make -j $DCORES install',
+                ],
+            )
+            self.openexr[sufix] = openexr
 
-        pyilmbase = build.configure(
-            ARGUMENTS,
-            'pyilmbase',
-            download=[(
-                'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.0.0.tar.gz',
-                'pyilmbase-2.0.0.tar.gz',
-                '2.0.0',
-                '4585eba94a82f0b0916445990a47d143',
-                { gcc : '4.8.5', python: '2.7.16', ilmbase: '2.0.0', openexr: '2.0.0', boost: "1.55.0" }
-            ),(
-                'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
-                'pyilmbase-2.1.0.tar.gz',
-                '2.1.0',
-                'af1115f4d759c574ce84efcde9845d29',
-                { gcc : '4.8.5', python: '2.7.16', ilmbase: '2.1.0', openexr: '2.1.0', boost: "1.55.0" }
-            ),(
-                'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
-                'pyilmbase-2.2.0.tar.gz',
-                '2.2.0',
-                'e84a6a4462f90b5e14d83d67253d8e5a',
-                { gcc : '4.8.5', python: '2.7.16', ilmbase: '2.2.0', openexr: '2.2.0', boost: "1.55.0" }
-            # ),(
-            #     'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
-            #     'pyilmbase-2.3.0.tar.gz',
-            #     '2.3.0',
-            #     'e84a6a4462f90b5e14d83d67253d8e5a',
-            #     { gcc : '4.1.2', python: '2.7.16', ilmbase: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
-            )],
-            # baseLibs=[python],
-            depend=[ilmbase,openexr,boost,python,gcc, python],
-            environ={
-                'LD' : 'ld',
-                'LDFLAGS' : '$LDFLAGS -L$TARGET_FOLDER/lib/'
-            },
-            cmd = [
-                'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
-                'make -j $DCORES ; make install',
-            ],
-        )
-        self.pyilmbase = pyilmbase
-        # allDepend += [ pyilmbase ]
+            pyilmbase = build.configure(
+                ARGUMENTS,
+                'pyilmbase',
+                targetSuffix=sufix,
+                download=[(
+                    'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.0.0.tar.gz',
+                    'pyilmbase-2.0.0.tar.gz',
+                    '2.0.0',
+                    '4585eba94a82f0b0916445990a47d143',
+                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.0.0', openexr: '2.0.0', boost: boost_version }
+                ),(
+                    'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
+                    'pyilmbase-2.1.0.tar.gz',
+                    '2.1.0',
+                    'af1115f4d759c574ce84efcde9845d29',
+                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.1.0', openexr: '2.1.0', boost: boost_version }
+                ),(
+                    'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
+                    'pyilmbase-2.2.0.tar.gz',
+                    '2.2.0',
+                    'e84a6a4462f90b5e14d83d67253d8e5a',
+                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.2.0', openexr: '2.2.0', boost: boost_version }
+                # ),(
+                #     'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
+                #     'pyilmbase-2.3.0.tar.gz',
+                #     '2.3.0',
+                #     'e84a6a4462f90b5e14d83d67253d8e5a',
+                #     { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
+                )],
+                # baseLibs=[python],
+                depend=[openexr,boost,python,gcc, python],
+                environ={
+                    'LD' : 'ld',
+                    'LDFLAGS' : '$LDFLAGS -L$TARGET_FOLDER/lib/'
+                },
+                cmd = [
+                    'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
+                    'make -j $DCORES ; make install',
+                ],
+            )
+            self.pyilmbase[sufix] = pyilmbase
+            # allDepend += [ pyilmbase ]
 
 
         # Sony Imageworks packages
@@ -1211,84 +1226,108 @@ class all: # noqa
         )
         self.ocio = ocio
 
-        oiio = build.cmake(
-            ARGUMENTS,
-            'oiio',
-            # oiio has some hard-coded path to find python, and the only
-            # way to make it respect the PYTHON related environment variables,
-            # is to patch some files to force it!
-            sed = {
-                '0.0.0' : {
-                    'src/python/CMakeLists.txt' : [
-                        ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
-                        ('unset.*PYTHON_INCLUDE','#unset( PYTHON_INCLUDE'),
-                        ('unset.*PYTHON_LIBRARY','#unset( PYTHON_LIBRARY'),
-                        ('/usr/include/python','${PYTHON_ROOT}/include/python'),
-                    ],
-                    'CMakeLists.txt' : [
-                        ('lib/python/site-packages','lib/python${PYTHON_VERSION_MAJOR}/site-packages'),
-                        ('-std=c++11',''), # we need this to build with gcc 4.1.2
-                    ],
+        # =============================================================================================================================================
+        # build one OIIO version for each boost version.
+        self.oiio = {}
+        exr_version = '2.2.0'
+        for boost_version in self.boost.versions:
+            sufix = "boost.%s" % boost_version
+
+            # here we select the versions of OIIO to build for each boost.
+            # not all versions build against all boost versions.
+            download=[]
+            if build.versionMajor(boost_version) <= 1.54:
+                download += [[
+                    'https://github.com/OpenImageIO/oiio/archive/Release-1.5.24.tar.gz',
+                    'oiio-Release-1.5.24.tar.gz',
+                    '1.5.24',
+                    '8c1f9a0ec5b55a18eeea76d33ca7a02c',
+                    { gcc : '4.1.2',  boost : "1.51.0", python: '2.7.16', }
+                ]]
+            if build.versionMajor(boost_version) >= 1.51:
+                download += [[
+                        'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
+                        'oiio-Release-1.6.15.tar.gz',
+                        '1.6.15',
+                        '3fe2cef4fb5f7bc78b136d2837e1062f',
+                        { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16',}
+                    ],[
+                        'https://github.com/OpenImageIO/oiio/archive/Release-1.8.10.tar.gz',
+                        'oiio-Release-1.8.10.tar.gz',
+                        '1.8.10',
+                        'a129a4caa39d7ad79aa1a3dc60cb0418',
+                        { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16',}
+                    ],[
+                        'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
+                        'oiio-Release-2.0.11.tar.gz',
+                        '2.0.11',
+                        '4fa0ce4538fb2d7eb72f54f4036972d5',
+                        { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16',}
+                ]]
+
+            # add the version of exr pkgs (build for the current boost) to all versions
+            _download = []+download
+            for n in range(len(_download)):
+                _download[n][4] = _download[n][4].copy()
+                _download[n][4][ self.ilmbase['boost.%s' % boost_version]] = exr_version
+                _download[n][4][ self.pyilmbase['boost.%s' % boost_version]] = exr_version
+                _download[n][4][ self.openexr['boost.%s' % boost_version]] = exr_version
+
+            oiio = build.cmake(
+                ARGUMENTS,
+                'oiio',
+                targetSuffix=sufix,
+                # oiio has some hard-coded path to find python, and the only
+                # way to make it respect the PYTHON related environment variables,
+                # is to patch some files to force it!
+                sed = {
+                    '0.0.0' : {
+                        'src/python/CMakeLists.txt' : [
+                            ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+                            ('unset.*PYTHON_INCLUDE','#unset( PYTHON_INCLUDE'),
+                            ('unset.*PYTHON_LIBRARY','#unset( PYTHON_LIBRARY'),
+                            ('/usr/include/python','${PYTHON_ROOT}/include/python'),
+                        ],
+                        'CMakeLists.txt' : [
+                            ('lib/python/site-packages','lib/python${PYTHON_VERSION_MAJOR}/site-packages'),
+                            ('-std=c++11',''), # we need this to build with gcc 4.1.2
+                        ],
+                    },
                 },
-            },
-            download=[(
-                'https://github.com/OpenImageIO/oiio/archive/Release-1.5.24.tar.gz',
-                'oiio-Release-1.5.24.tar.gz',
-                '1.5.24',
-                '8c1f9a0ec5b55a18eeea76d33ca7a02c',
-                { gcc : '4.1.2',  boost : "1.51.0", python: '2.7.16' }
-            ),(
-                'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
-                'oiio-Release-1.6.15.tar.gz',
-                '1.6.15',
-                '3fe2cef4fb5f7bc78b136d2837e1062f',
-                { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16' }
-            ),(
-                'https://github.com/OpenImageIO/oiio/archive/Release-1.8.10.tar.gz',
-                'oiio-Release-1.8.10.tar.gz',
-                '1.8.10',
-                'a129a4caa39d7ad79aa1a3dc60cb0418',
-                { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16' }
-            ),(
-                'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
-                'oiio-Release-2.0.11.tar.gz',
-                '2.0.11',
-                '4fa0ce4538fb2d7eb72f54f4036972d5',
-                { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16' }
-            )],
-            depend=[ocio, python, boost, freetype, openexr, ilmbase, gcc, icu, cmake, openssl, bzip2, libraw, libpng]+allDepend,
-            cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
-            flags = [
-                '-DUSE_PYTHON=0',
-                '-DUSE_PTEX=0',
-                '-DUSE_OCIO=0',
-                '-DCMAKE_PREFIX_PATH='+"';'".join([
-                    '$OPENEXR_TARGET_FOLDER',
-                    '$ILMBASE_TARGET_FOLDER',
-                    '$JPEG_TARGET_FOLDER',
-                    '$LIBRAW_TARGET_FOLDER',
-                    '$LIBPNG_TARGET_FOLDER',
-                    '$LIBTIFF_TARGET_FOLDER',
-                ])
-            ]+build.cmake.flags,
-            environ = {
-                'LDFLAGS' : ' $LDFLAGS -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join([
-                    '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-                    '$TIFF_TARGET_FOLDER/lib/',
-                    '$JPEG_TARGET_FOLDER/lib/',
-                    '$LIBPNG_TARGET_FOLDER/lib/',
-                    '$LIBRAW_TARGET_FOLDER/lib/',
-                ])
-                +' -Wl,-rpath,'+' -Wl,-rpath,'.join([
-                    '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-                    '$TIFF_TARGET_FOLDER/lib/',
-                    '$JPEG_TARGET_FOLDER/lib/',
-                    '$LIBPNG_TARGET_FOLDER/lib/',
-                    '$LIBRAW_TARGET_FOLDER/lib/',
-                ])
-            }
-        )
-        self.oiio = oiio
+                download = _download,
+                depend=[ocio, python, boost, freetype, gcc, icu, cmake, openssl, bzip2, libraw, libpng]+allDepend,
+                cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
+                flags = [
+                    '-DUSE_PYTHON=0',
+                    '-DUSE_PTEX=0',
+                    '-DUSE_OCIO=0',
+                    '-DCMAKE_PREFIX_PATH='+"';'".join([
+                        '$OPENEXR_TARGET_FOLDER',
+                        '$ILMBASE_TARGET_FOLDER',
+                        '$JPEG_TARGET_FOLDER',
+                        '$LIBRAW_TARGET_FOLDER',
+                        '$LIBPNG_TARGET_FOLDER',
+                        '$LIBTIFF_TARGET_FOLDER',
+                    ])
+                ]+build.cmake.flags,
+                environ = {
+                    'LDFLAGS' : ' $LDFLAGS -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join([
+                        '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+                        '$TIFF_TARGET_FOLDER/lib/',
+                        '$JPEG_TARGET_FOLDER/lib/',
+                        '$LIBPNG_TARGET_FOLDER/lib/',
+                        '$LIBRAW_TARGET_FOLDER/lib/',
+                    ])
+                    +' -Wl,-rpath,'+' -Wl,-rpath,'.join([
+                        '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+                        '$TIFF_TARGET_FOLDER/lib/',
+                        '$JPEG_TARGET_FOLDER/lib/',
+                        '$LIBPNG_TARGET_FOLDER/lib/',
+                        '$LIBRAW_TARGET_FOLDER/lib/',
+                    ])
+                }
+            )
+            self.oiio[sufix] = oiio
 
 
 
@@ -1574,8 +1613,11 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.10.7.tar.gz',
                 '1.10.7',
                 '53f66e12c3e29c62dc51b070f027a0ad',
-                {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.55.0"},
-                # {oiio: "1.8.10", llvm : "7.1.0", gcc: "4.8.5", boost: "1.55.0"},
+                {llvm : "7.1.0", gcc: "4.8.5",
+                boost: "1.55.0",
+                self.ilmbase['boost.1.55.0']: '2.2.0',
+                self.openexr['boost.1.55.0']: '2.2.0',
+                self.oiio['boost.1.55.0']: "2.0.11", }
             # ),(
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.9.9.tar.gz',
             #     'OpenShadingLanguage-Release-1.9.9.tar.gz',
@@ -1589,7 +1631,7 @@ class all: # noqa
             #     '8b15d13c3fa510b421834d32338304c8',
             #     {oiio: "1.6.15", llvm : "3.9.1", gcc: "4.8.5", boost: "1.51.0"},
             )],
-            depend=[llvm, oiio, boost, ilmbase, openexr, icu, cmake, pugixml, freetype, openssl, bzip2, libraw]+allDepend,
+            depend=[llvm, boost, icu, cmake, pugixml, freetype, openssl, bzip2, libraw]+allDepend,
             cmd = [
                 # we have to use the devtoolset-6 gcc
                 # 'source scl_source enable devtoolset-6',
@@ -1936,30 +1978,34 @@ class all: # noqa
                 'openvdb-6.0.0.tar.gz',
                 '6.0.0',
                 '43604208441b1f3625c479ef0a36d7ad',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6',
+                self.ilmbase['boost.1.55.0']: '2.2.0', self.openexr['boost.1.55.0']: '2.2.0', }
             ),(
                 # CY 2018
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
                 'openvdb-5.0.0.tar.gz',
                 '5.0.0',
                 '9ba08c29dda60ec625acb8a5928875e5',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6',
+                self.ilmbase['boost.1.55.0']: '2.2.0', self.openexr['boost.1.55.0']: '2.2.0', }
             ),(
                 # CY 2017
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
                 'openvdb-4.0.0.tar.gz',
                 '4.0.0',
                 'c56d8a1a460f1d3327f2568e3934ca6a',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6',
+                self.ilmbase['boost.1.55.0']: '2.2.0', self.openexr['boost.1.55.0']: '2.2.0', }
             ),(
                 # CY 2015-2016
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
                 'openvdb-3.0.0.tar.gz',
                 '3.0.0',
                 '3ca8f930ddf759763088e265654f4084',
-                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6', build.override.src: 'README' }
+                { gcc : '4.8.5', boost : "1.55.0", python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
+                self.ilmbase['boost.1.55.0']: '2.2.0', self.openexr['boost.1.55.0']: '2.2.0', }
             )],
-            depend=allDepend+[openexr, ilmbase, glfw],
+            depend=allDepend+[glfw],
             src = "README.md",
             cmd = [
             "cd openvdb",
@@ -2010,28 +2056,32 @@ class all: # noqa
                 'alembic-1.5.8.tar.gz',
                 '1.5.8',
                 'a70ba5f2e80b47d346d15d797c28731a',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.1.2', boost: '1.51.0', hdf5: '1.8.11'},
+                {gcc: '4.1.2', boost: '1.51.0', hdf5: '1.8.11',
+                self.ilmbase['boost.1.51.0']: '2.2.0', self.openexr['boost.1.51.0']: '2.2.0' },
             ),(
                 # CY2017
                 'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
                 'alembic-1.6.1.tar.gz',
                 '1.6.1',
                 'e1f9f2cbe1899d3d55b58708b9307482',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11'},
+                {gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11',
+                self.ilmbase['boost.1.51.0']: '2.2.0', self.openexr['boost.1.51.0']: '2.2.0' },
             ),(
                 # CY2018 - CY2020
                 'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
                 'alembic-1.7.11.tar.gz',
                 '1.7.11',
                 'e156568a8d8b48c4da4fe2496386243d',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11'},
+                {gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11',
+                self.ilmbase['boost.1.51.0']: '2.2.0', self.openexr['boost.1.51.0']: '2.2.0' },
             ),(
                 # CY2018 - CY2020 (USD Version)
                 'https://github.com/alembic/alembic/archive/1.7.1.tar.gz',
                 'alembic-1.7.1.tar.gz',
                 '1.7.1',
                 'c8e2c8f951af09cfdacb2ca1fd5823a5',
-                {ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11'},
+                {gcc: '4.8.5', boost: '1.51.0', hdf5: '1.8.11',
+                self.ilmbase['boost.1.51.0']: '2.2.0', self.openexr['boost.1.51.0']: '2.2.0' },
             )],
             # baseLibs=[python],
             depend=allDepend+[hdf5],
@@ -2149,22 +2199,28 @@ class all: # noqa
                 'USD-18.09.tar.gz',
                 '18.9.0',
                 '10a06767c6a9c69733bb5f9fbadcb52a',
-                {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
-                opensubdiv: '3.4.0', alembic: '1.7.1', hdf5: '1.8.11', cmake: '3.8.2',
-                oiio: '1.6.15', tbb: '4.4.6'},
+                {gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.1',
+                hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
+                boost: "1.55.0",
+                self.ilmbase['boost.1.55.0']: '2.2.0',
+                self.openexr['boost.1.55.0']: '2.2.0',
+                self.oiio['boost.1.55.0']: '1.6.15' },
             ),(
                 # this is the latest for now - nov/2019
                 'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
                 'USD-19.07.tar.gz',
                 '19.7.0',
                 '8d274089364cfed23004ae52fa3d258f',
-                {boost: "1.55.0", ilmbase: "2.2.0", openexr: "2.2.0", gcc: '4.8.5',
-                opensubdiv: '3.4.0', alembic: '1.7.1', hdf5: '1.8.11', cmake: '3.8.2',
-                oiio: '1.8.10', tbb: '4.4.6'},
+                {gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.1', hdf5: '1.8.11',
+                cmake: '3.8.2', tbb: '4.4.6',
+                boost: "1.61.0",
+                self.ilmbase['boost.1.61.0']: '2.2.0',
+                self.openexr['boost.1.61.0']: '2.2.0',
+                self.oiio['boost.1.61.0']: '1.8.10'},
             )],
             # baseLibs=[python],
             depend=[
-                boost, alembic, openexr, ilmbase, opensubdiv, materialx, oiio, ocio, icu,
+                boost, alembic, openexr, ilmbase, opensubdiv, materialx, ocio, icu,
                 openvdb, osl, hdf5, glfw, glew, ptex, pyside, qt, python
             ]+allDepend,
             cmd = [
@@ -2241,12 +2297,12 @@ class all: # noqa
         # =============================================================================================================================================
 
         # if all build is done correctly, make install folder ready!
-        SCons.Script.Alias( 'install',
-            SCons.Script.Command(
-                target = os.path.join( devRoot.installRoot(ARGUMENTS), '.done'),
-                source = self.qt.installAll + self.osl.installAll + self.boost.installAll + self.ilmbase.installAll + self.openexr.installAll,
-                action = "touch $TARGET"
-            )
-        )
+        # SCons.Script.Alias( 'install',
+        #     SCons.Script.Command(
+        #         target = os.path.join( devRoot.installRoot(ARGUMENTS), '.done'),
+        #         source = self.qt.installAll + self.osl.installAll + self.boost.installAll ,
+        #         action = "touch $TARGET"
+        #     )
+        # )
 
         self.allDepend = allDepend

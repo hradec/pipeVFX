@@ -198,12 +198,17 @@ class appsDB(dict):
         if macfixData['subpath']:
             subPath = '%s/%s' % (macfixData['subpath'],subPath)
 
-        # account for app version builds of a package, if they exist.
-        if self.parent() and self.parent() != self.app:
-            parent_version =  version.get( self.parent() )
-            _subPath = '%s.%s/%s' % ( self.parent(), parent_version, subPath )
-            if os.path.exists( ret+'/'+_subPath ):
-                subPath = _subPath
+        # account for targetSuffix version builds of a package, if they exist.
+        for targetSuffix in  [self.parent(), 'boost']:
+            if targetSuffix and targetSuffix != self.app:
+                parent_version =  version.get( targetSuffix )
+                if not parent_version:
+                    parent_version =  versionLib.get( targetSuffix )
+                _subPath = '%s.%s/%s' % ( targetSuffix, parent_version, subPath )
+                # use glob instead of os.path.exists, since glob will
+                # resolve wildcards!
+                if glob( ret+'/'+_subPath ):
+                    subPath = _subPath
 
         if subPath:
             subPath = '/%s' % subPath
@@ -776,16 +781,37 @@ class baseApp(_environ):
             self['LD_LIBRARY_PATH']=self.path('lib/python$PYTHON_VERSION_MAJOR')
             self['LD_LIBRARY_PATH']=self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')
 
+            self['BOOST_VERSION'] = versionLib.get('boost')
+
+            def addTargetSuffix(lib, _suffix=['*/boost.*']):
+                # now account for targetSuffix folders (boost for now!)
+                pv='.'.join(versionLib.get('python').split('.')[:2])
+                for suffix in _suffix:
+                    for suffix_version in  glob( "%s/%s/%s" % (roots.libs(), lib, suffix) ):
+                        for each in glob( "%s/lib/python%s/" % (suffix_version, pv)):
+                            self['LD_LIBRARY_PATH'] = each
+
+                        for each in glob( "%s/lib/" % (suffix_version, lib)):
+                            self['LD_LIBRARY_PATH'] = each
+
+            # # add targetSuffix folders!
+            # for lib in ['boost', 'tiff', 'jpeg', 'libpng', 'libraw']:
+            #     addTargetSuffix(lib, ['*/boost.*'])
+
+            # account for all versions of theses packages!
             for lib in ['boost', 'tiff', 'jpeg', 'libpng', 'libraw']:
-                # add all boost lib versions to search path, since boost is version controlled in its name
-                for each in glob( "%s/%s/*/lib/python%s/" % (roots.libs(), lib, '.'.join(versionLib.get('python').split('.')[:2]))):
+                pv='.'.join(versionLib.get('python').split('.')[:2])
+                # add all lib versions to search path, since they are version controlled in their name
+                for each in glob( "%s/%s/*/lib/python%s/" % (roots.libs(), lib, pv)):
                     self['LD_LIBRARY_PATH'] = each
 
                 for each in glob( "%s/%s/*/lib/" % (roots.libs(), lib)):
                     self['LD_LIBRARY_PATH'] = each
 
+                # add all targetSuffix version
+                addTargetSuffix(lib, ['*/boost.*'])
 
-            self['BOOST_VERSION'] = versionLib.get('boost')
+
             # if we have extra variables, just update itself with it!
             for each in extraUpdates:
                 self[each] = allLibs[each]

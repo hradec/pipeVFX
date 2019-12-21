@@ -1104,6 +1104,13 @@ class generic:
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_ROOT' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()]
 
+                    if not hasattr(self, 'dontUseTargetSuffixForFolders'):
+                        if dependOn.targetSuffix:
+                            os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = '/'.join([
+                                os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].rstrip('/'),
+                                dependOn.targetSuffix
+                            ])
+
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
                     else:
@@ -1686,8 +1693,15 @@ class generic:
         if keep_source and keep_source[0][1].strip() != '1':
             os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
 
+        self.installer(target, source, os_environ)
+
         _print( bcolors.END, )
 
+    def installer(self, target, source, os_environ): # noqa
+        ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.
+        this method is called after the build (not at install), since we want to provide the os_environ env var to run shell commands
+        in the same environment as the build'''
+        pass
 
     def setAppsInit(self):
         '''
@@ -1785,10 +1799,6 @@ class generic:
     def setInstaller(self, method):
         self.installer = method
 
-    def installer(self, target, source, env): # noqa
-        ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.'''
-        pass
-
     def _installer(self, target, source, env):
         ''' a wrapper class to create target in case installer method is suscessfull!
         we do this so whoever implements a installer don't have to bother!'''
@@ -1797,7 +1807,8 @@ class generic:
 
         from glob import glob
 
-        ret = self.installer( target, source, env )
+        ret = None
+        # ret = self.installer( target, source, env )
         f=open(str(target[0]),'w')
         if ret:
             f.write(''.join(ret))
