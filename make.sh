@@ -86,31 +86,33 @@ else
     #     BUILD=1
     # fi
 
+    if [ "$PKGS" == "1" ] ; then
+        echo -e "\n\nusing base_image:$previous_tag \nto build new_tag:$latest_tag\n"
+        # packages download
+        docker build \
+            -f $CD/docker/Dockerfile.pkgs \
+            $CD/ \
+            -t $latest_tag \
+            --pull \
+            --compress \
+            --rm \
+            --build-arg http="$http_proxy" \
+            --build-arg https="$https_proxy" \
+            # --build-arg BASE_IMAGE="$previous_tag"
+
+        if [ $? -ne 0 ] ; then
+            echo ERROR!!
+            exit -1
+        fi
+        docker image tag $latest_tag $pkg_image_tag
+        docker push $latest_tag
+        docker push $pkg_image_tag
+        exit 0
+    fi
+
     # if no image in docker hub or we used -b to force a build, build it
     # and push it to docker hub!
     if [ "$BUILD" == "1" ] ; then
-        if [ "$PKGS" == "1" ] ; then
-            echo -e "\n\nusing base_image:$previous_tag \nto build new_tag:$latest_tag\n"
-            # packages download
-            docker build \
-                -f $CD/docker/Dockerfile.pkgs \
-                $CD/ \
-                -t $latest_tag \
-                --pull \
-                --compress \
-                --rm \
-                --build-arg http="$http_proxy" \
-                --build-arg https="$https_proxy" \
-                --build-arg BASE_IMAGE="$previous_tag"
-
-            if [ $? -ne 0 ] ; then
-                echo ERROR!!
-                exit -1
-            fi
-            docker image tag $latest_tag $pkg_image_tag
-            docker push $latest_tag
-            docker push $pkg_image_tag
-        fi
 
         # build image!
         echo -e "\nusing base_image:$base_image\npackage image:$latest_tag\n\n"
@@ -123,16 +125,14 @@ else
             --rm \
             --build-arg http="$http_proxy" \
             --build-arg https="$https_proxy" \
-            --build-arg PACKAGES="$latest_tag" \
-            --build-arg BASE_IMAGE="$base_image"
+            # --build-arg PACKAGES="$latest_tag" \
+            # --build-arg BASE_IMAGE="$base_image"
 
         if [ $? -ne 0 ] ; then
             echo ERROR!!
             exit -1
         fi
         docker push $build_image
-    else
-        docker pull $build_image
     fi
 
     # use wget proxy setup if it exists
@@ -156,6 +156,7 @@ else
             # extra_libs3=$(ldconfig -p | grep libstdc++ |grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
             # extra_libs4=$(ldconfig -p | grep libgcc_s |grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
             X11=" $X11 $extra_libs1 $extra_libs2 $extra_libs3 $extra_libs4 "
+            # X11=" $X11 --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket "
         fi
     fi
 
