@@ -286,9 +286,9 @@ class gccBuild(configure):
         ]+symlinks)
         return cmd
 
-    def installer(self, target, source, env): # noqa
-        targetFolder = os.path.dirname(str(target[0]))
-        versionMajor = float( '.'.join( os.path.basename(targetFolder).split('.')[:2] ) )
+    def installer(self, target, source, os_environ): # noqa
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
         ret = []
         for each in glob("%s/bin/*" % targetFolder):
             each = os.path.basename(each)
@@ -320,8 +320,10 @@ class openssl(configure):
         './config shared enable-tlsext --prefix=$INSTALL_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
         'make -j $DCORES && make install -j $DCORES' ,
     ]
-    def installer(self, target, source, env): # noqa
-        targetFolder = os.path.dirname(str(target[0]))
+    def installer(self, target, source, os_environ): # noqa
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
+
         ret = ''
         # ret = os.popen("ln -s libssl.so %s/lib/libssl.so.10" % targetFolder).readlines()
         # ret += os.popen("ln -s libcrypto.so %s/lib/libcrypto.so.10" % targetFolder).readlines()
@@ -331,9 +333,10 @@ class openssl(configure):
 class freetype(configure):
     ''' a make class to exclusively build freetype package
     we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
-    def installer(self, target, source, env): # noqa
+    def installer(self, target, source, os_environ): # noqa
         ret = []
-        t = os.path.dirname(str(target[0]))
+        t = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
         if os.path.exists( "%s/include/freetype2" % t):
             if not os.path.exists( "%s/include/freetype" % t):
                 ret = os.popen("ln -s freetype2 %s/include/freetype" % t).readlines()
@@ -368,7 +371,9 @@ class boost(configure):
             cmd = [
                 "curl -L -s 'http://www.boost.org/patches/1_58_0/0001-Fix-exec_file-for-Python-3-3.4.patch'            | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_58_0/0002-Fix-a-regression-with-non-constexpr-types.patch' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
-            ] + cmd
+            ] + cmd + [
+                # "ls  $BOOST_TARGET_FOLDER/lib/python2.7/*-mt* | while read p ; do bp=$(basename $p) ; np=$( echo $bp | sed 's/-mt//') ; ln -s $bp  $(dirname $p)/$np ; done"
+            ]
 
         if float(os_environ['VERSION_MAJOR']) == 1.55:
             cmd = [
@@ -411,8 +416,18 @@ class boost(configure):
 
         return ' && '.join(cmd)
 
-#    def installer(self, target, source, env):
-#        os.popen("rm -rf %s/lib/python*/*.a" % env['TARGET_FOLDER']).readlines()
+    def installer(self, target, source, os_environ):
+        ''' in case boost was build with -mt sufix, create link without it so everything works as it should'''
+        from subprocess import Popen
+        cmd=' ; '.join([
+            'for p in $(ls  $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/*-mt* 2>&1) ; do '
+                'bp=$(basename $p)',
+                'np=$( echo $bp | sed "s/-mt//")',
+                'ln -s $bp  $(dirname $p)/$np',
+            'done'
+        ])
+        proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
+        proc.wait()
 
 
 

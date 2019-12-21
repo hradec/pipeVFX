@@ -272,12 +272,10 @@ class download(make):
     cmd=[
         'mkdir -p $INSTALL_FOLDER',
         'cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/',
-        'echo "Done!!!!!"',
+        'echo "Done"'
     ]
     noMinTime=True
     # as we want this packages just to be used for building other packages, we don't need a installation target_folder
-#    def installer(self, target, source, env):
-#        os.system("rm -rf %s" % os.path.abspath(os.path.dirname(os.path.dirname(str(target[0])))) )
 
 
 class glew(make):
@@ -297,12 +295,13 @@ class glew(make):
             ],
         },
     }
-    def installer(self, target, source, env):
+    def installer(self, target, source, os_environ):
         ''' just a small installation patch to link lib64 to lib, which is the
         expected shared library folder name, since pipeVFX organize packages in
         arch specific hierarchy - linux/x86_64/package '''
         ret = []
-        targetFolder = os.path.dirname(str(target[0]))
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
         if not os.path.exists("%s/lib" % targetFolder):
             if os.path.exists("%s/lib64" % targetFolder):
                 ret = os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
@@ -319,12 +318,13 @@ class glfw(cmake):
     #         ],
     #     },
     # }
-    def installer(self, target, source, env):
+    def installer(self, target, source, os_environ):
         ''' just a small installation patch to link lib64 to lib, which is the
         expected shared library folder name, since pipeVFX organize packages in
         arch specific hierarchy - linux/x86_64/package '''
         ret = []
-        targetFolder = os.path.dirname(str(target[0]))
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
         if os.path.exists("%s/lib" % targetFolder):
             if os.path.exists("%s/lib64" % targetFolder):
                 ret = os.popen("rm -rf  %s/lib" % targetFolder).readlines()
@@ -339,18 +339,16 @@ class tbb(make):
     installer() method'''
     cmd = [' make -j $DCORES ']
 
-    def installer(self, target, source, env):
+    def installer(self, target, source, os_environ):
         '''we use this method to do a custom tbb install
         by copying files over.'''
         import build
-        # print str(target[0]), [ str(x) for x in source ]
-        # print self.buildFolder
         lines = []
-        for each in [ str(x) for x in source if self.src in str(x) ]:
-            path = os.path.abspath( os.path.dirname(each) )
-            target = os.path.abspath( os.path.dirname(str(target[0])) )
-            lines += os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (path, target)).readlines()
-            for SHLIBEXT in build.SHLIBEXT:
-                lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
-                lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
+        sourceFolder = os_environ['SOURCE_FOLDER']
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
+        lines += os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (sourceFolder, targetFolder)).readlines()
+        for SHLIBEXT in build.SHLIBEXT:
+            lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (sourceFolder, SHLIBEXT, targetFolder) ).readlines()
+            lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (sourceFolder, SHLIBEXT, targetFolder) ).readlines()
         return lines
