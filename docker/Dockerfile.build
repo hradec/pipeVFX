@@ -120,11 +120,17 @@ RUN yum -y install cairo-devel \
 # we need this to build pythonldap
 RUN yum -y install openldap-devel
 
+# maya needs this to run with audio
+RUN yum -y install audiofile-devel
+
+
+
 
 # to avoid clashing in osl
 RUN yum -y remove boost
 
 # cleanup
+RUN yum -y install sudo
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
 ENV TERM=xterm
