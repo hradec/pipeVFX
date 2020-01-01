@@ -688,8 +688,9 @@ class generic:
                 n
             ) )
             _print( bcolors.WARNING+": " )
-            d=[ '.'.join(str(x).split(os.path.sep)[-3:-1]) for x in source[1:] if '-' not in str(x).split(os.path.sep)[-1] ]
+            d=[ '.'.join(str(x).split(os.path.sep)[-3:-1]) for x in source[1:] ]
             _print( bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0]) )
+            d=list(set(d))
             d.sort()
             for n in range(0,len(d),6):
                 _print( bcolors.WARNING+": "+bcolors.BLUE+"           %s" % ', '.join(d[n:n+6]) )
