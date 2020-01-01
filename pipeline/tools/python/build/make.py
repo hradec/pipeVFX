@@ -164,7 +164,8 @@ class cmake(make):
 class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
-        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
+        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
+        ' && '
         ' make $MAKE_PARALLEL $MAKE_VERBOSE  &&  make install',
         '( [ "$(basename $TARGET_FOLDER)" == "1.5.8" ] ',
         '( mkdir -p $INSTALL_FOLDER/bin/',
@@ -213,12 +214,12 @@ class alembic(cmake):
 
         },
         '1.6.0' : {
-            'python/PyAlembic/CMakeLists.txt' : [
-                ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
-                ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
-                ('/usr/include/python','${PYTHON_TARGET_FOLDER}/include/python'),
-                ('/lib/libpython','${PYTHON_TARGET_FOLDER}/lib/libpython'),
-            ],
+            # 'python/PyAlembic/CMakeLists.txt' : [
+            #     ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+            #     ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
+            #     ('/usr/include/python','${PYTHON_TARGET_FOLDER}/include/python'),
+            #     ('/lib/libpython','${PYTHON_TARGET_FOLDER}/lib/libpython'),
+            # ],
             'CMakeLists.txt' : [
                 ('/alembic-${VERSION}',' '),
             ],
@@ -238,7 +239,10 @@ class alembic(cmake):
         environ = []
 
         extra_flags = [
-            '-DUSE_PYALEMBIC=0', # disable python bindings
+            # '-DUSE_PYALEMBIC=0', # disable python bindings
+            '-DUSE_PYALEMBIC=1',
+            '-DALEMBIC_PYIMATH_MODULE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
+            '-DALEMBIC_PYILMBASE_INCLUDE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/include/OpenEXR/',
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
             '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_TARGET_FOLDER/lib/libpython$PYTHON_VERSION_MAJOR.so',
             '-DALEMBIC_SHARED_LIBS=1',
@@ -269,13 +273,19 @@ class download(make):
     the build is just copying over the uncompressed source to the target folder to be used later by other builds
     '''
     src='CMakeLists.txt'
-    cmd=[
-        'mkdir -p $INSTALL_FOLDER',
-        'cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/',
-        'echo "Done"'
-    ]
+    cmd=['mkdir -p $INSTALL_FOLDER ; cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/ && echo $? && echo Done']
+    # this package will finih pretty fast!
     noMinTime=True
-    # as we want this packages just to be used for building other packages, we don't need a installation target_folder
+
+class displayDB(make):
+    '''
+    a simple class to display the DB after all builds
+    '''
+    src='CMakeLists.txt'
+    cmd=['mkdir -p $INSTALL_FOLDER ; cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/ && echo $? && echo Done']
+    # this package will finih pretty fast!
+    noMinTime=True
+
 
 
 class glew(make):

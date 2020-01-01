@@ -362,7 +362,7 @@ class boost(configure):
             cmd = [
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER ',
                 'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
-                ' ./b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC -fpermissive  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
+                ' ./b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC -fpermissive  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 -q  install',
                 # './b2 -j $DCORES --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS -std=gnu++11" linkflags="$LDFLAGS" -d+2 install',
             ]
 
@@ -407,27 +407,39 @@ class boost(configure):
 
 
         # if we need to build with system gcc
-        if float(os_environ['VERSION_MAJOR']) in []:
-            cmd = [
-                "export PATH=$(echo $PATH | sed 's/gcc.4.1.2.bin//g')",
-            ] + cmd
+        # if float(os_environ['VERSION_MAJOR']) in []:
+        #     cmd = [
+        #         "export PATH=$(echo $PATH | sed 's/gcc.4.1.2.bin//g')",
+        #     ] + cmd
 
         cmd = ['export LDFLAGS="$LDFLAGS -L$BZIP2_TARGET_FOLDER/lib/"']+cmd
 
-        return ' && '.join(cmd)
-
-    def installer(self, target, source, os_environ):
-        ''' in case boost was build with -mt sufix, create link without it so everything works as it should'''
-        from subprocess import Popen
-        cmd=' ; '.join([
-            'for p in $(ls  $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/*-mt* 2>&1) ; do '
-                'bp=$(basename $p)',
-                'np=$( echo $bp | sed "s/-mt//")',
-                'ln -s $bp  $(dirname $p)/$np',
-            'done'
+        return ' && '.join(cmd+[
+            'list=$(ls  $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/*-mt* 2>/dev/null) && '
+            '[ "$list" != ""  ] && ('
+                'for p in $list ; do '
+                    'bp=$(basename $p) ; '
+                    'np=$( echo $bp | sed "s/-mt//") ; '
+                    'ln -s $bp  $(dirname $p)/$np ; '
+                'done'
+            ') || true'
         ])
-        proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
-        proc.wait()
+
+    # def installer(self, target, source, os_environ):
+    #     ''' in case boost was build with -mt sufix, create link without it so everything works as it should'''
+    #     from subprocess import Popen
+    #     cmd=[
+    #         'list=$(ls  $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/*-mt* 2>/dev/null) && '
+    #         '[ "$list" != ""  ] && ('
+    #             'for p in $list ; do '
+    #                 'bp=$(basename $p) ; '
+    #                 'np=$( echo $bp | sed "s/-mt//") ; '
+    #                 'ln -s $bp  $(dirname $p)/$np ; '
+    #             'done'
+    #         ')'
+    #     ][0]
+    #     proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
+    #     proc.wait()
 
 
 
@@ -613,32 +625,35 @@ class cortex(configure):
        # ],
        # fixes to option vars being treated as strings or lists.
        'SConstruct' : [
-           ('houdiniEnv.Prepend( SHLINKFLAGS = "$HOUDINI_LINK_FLAGS" )', 'houdiniEnv.Prepend( SHLINKFLAGS = ["$HOUDINI_LINK_FLAGS"] )'),
-           ('CPPFLAGS = "-DIECOREALEMBIC_WITH_OGAWA"', 'CPPFLAGS = ["-DIECOREALEMBIC_WITH_OGAWA"]'),
-           ('testEnv.Prepend( CXXFLAGS = " ".join( dependencyIncludes ) )', 'testEnv.Prepend( CXXFLAGS = dependencyIncludes )'),
-           ('vdbEnv.subst( "$INSTALL_LIB_NAME" )','vdbEnv.subst( "$INSTALL_VDBLIB_NAME" )'),
-           ('usdEnv.subst( "$INSTALL_ALEMBICLIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
-           ('usdEnv.subst( "$INSTALL_LIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
-           ('INSTALL_PYTHON_DIR/IECoreUSD', 'INSTALL_USDPYTHON_DIR/IECoreUSD'),
-           ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
-           ('INSTALL_PYTHON_DIR/IECoreVDB', 'INSTALL_VDBPYTHON_DIR/IECoreVDB'),
+            ('houdiniEnv.Prepend( SHLINKFLAGS = "$HOUDINI_LINK_FLAGS" )', 'houdiniEnv.Prepend( SHLINKFLAGS = ["$HOUDINI_LINK_FLAGS"] )'),
+            ('CPPFLAGS = "-DIECOREALEMBIC_WITH_OGAWA"', 'CPPFLAGS = ["-DIECOREALEMBIC_WITH_OGAWA"]'),
+            ('testEnv.Prepend( CXXFLAGS = " ".join( dependencyIncludes ) )', 'testEnv.Prepend( CXXFLAGS = dependencyIncludes )'),
 
-           # alembic fix for multiple libs... Cortex doesn't detect all the libraries we have built for alembic 1.5.8
-           # we need it on pre and pos version 10
-           ('.hdf5.HDF5_LIB_SUFFIX..','"hdf5$HDF5_LIB_SUFFIX",]+env["ALEMBIC_EXTRA_LIBS"].split(" ")+['),
+            # alembic fix for multiple libs... Cortex doesn't detect all the libraries we have built for alembic 1.5.8
+            # we need it on pre and pos version 10
+            ('.hdf5.HDF5_LIB_SUFFIX..','"hdf5$HDF5_LIB_SUFFIX",]+env["ALEMBIC_EXTRA_LIBS"].split(" ")+['),
 
-           ('Documentation options', '\n\n'
+            ('# Documentation options', '\n\n'
                'o.Add("ALEMBIC_EXTRA_LIBS")\n'
                'o.Add("INSTALL_VDBLIB_NAME")\n'
                'o.Add("INSTALL_VDBPYTHON_DIR")\n'
                'o.Add("INSTALL_USDLIB_NAME")\n'
                'o.Add("INSTALL_USDPYTHON_DIR")\n'
                'o.Add("INSTALL_ALEMBICPYTHON_DIR")\n'
+               'o.Add("INSTALL_APPLESEEDPYTHON_DIR")\n'
+               '# Documentation options\n'
             ),
             ('vdbPythonModuleEnv.Alias( "installScene", vdbPythonModuleInstall )',
                 'vdbPythonModuleEnv.Alias( "installScene", vdbPythonModuleInstall )\n'
                 '\t\tvdbPythonModuleEnv.Alias( "installVDB", vdbPythonModuleInstall )'
             ),
+            ('vdbEnv.subst( "$INSTALL_LIB_NAME" )','vdbEnv.subst( "$INSTALL_VDBLIB_NAME" )'),
+            ('usdEnv.subst( "$INSTALL_ALEMBICLIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
+            ('usdEnv.subst( "$INSTALL_LIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
+            ('INSTALL_PYTHON_DIR/IECoreUSD', 'INSTALL_USDPYTHON_DIR/IECoreUSD'),
+            ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
+            ('INSTALL_PYTHON_DIR/IECoreVDB', 'INSTALL_VDBPYTHON_DIR/IECoreVDB'),
+
             ('"lib/"','""'),
 
             # add the proper dependency to the libraries, so libraries get installed before continue building
@@ -655,7 +670,7 @@ class cortex(configure):
             (', arnoldSources )'   , ', arnoldSources    )\n\t\tarnoldEnv.Depends(    arnoldLibrary,    [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
             (', usdSources )'      , ', usdSources       )\n\t\tusdEnv.Depends(       usdLibrary,       [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
             (', alembicSources )'  , ', alembicSources   )\n\t\talembicEnv.Depends(   alembicLibrary,   [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
-            (', appleseedSources )', ', appleseedSources )\n\t\tappleseedEnv.Depends( applessedLibrary, [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall,alembicLibrary] )'),
+            (', appleseedSources )', ', appleseedSources )\n\t\tappleseedEnv.Depends( appleseedLibrary, [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall,alembicLibrary] )'),
 
 
             ('+ imagePythonModuleSources )'  , '+ imagePythonModuleSources   )\n\t\timagePythonModuleEnv.Depends(     imagePythonModule,     [corePythonLibraryInstall,corePythonModuleInstall] )'),
@@ -677,7 +692,11 @@ class cortex(configure):
 
             ('riSources )','riSources )\n\t\triEnv.Depends(riLibrary, coreLibraryInstall)'),
             ('rmanProcedurals.python.Procedural.cpp. )','rmanProcedurals/python/Procedural.cpp" )\n\t\triPythonProceduralEnv.Depends(riPythonProcedural, riLibrary)'),
+
             # ('rmanDisplays.ieDisplay.IEDisplay.cpp. )','rmanDisplays/ieDisplay/IEDisplay.cpp" )\n\t\triDisplayDriverEnv.Depends(riDisplayDriver, riLibrary)'),
+
+            ('appleseedDriverInstall = ','appleseedDriverEnv.Depends(appleseedDriver, appleseedLibrary)\n\t\tappleseedDriverInstall = '),
+            ('INSTALL_PYTHON_DIR/IECoreAppleseed',    'INSTALL_APPLESEEDPYTHON_DIR/IECoreAppleseed'),
 
 
            # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
@@ -749,6 +768,11 @@ class cortex(configure):
                         ('imageLibrary = ','imageLibrary = [] #'),
                         ('imagePythonModule = ','imagePythonModule = [] #'),
                         ('vdbLibrary = ','vdbLibrary = [] #'),
+                        ('vdbPythonModule = ','vdbPythonModule = [] #'),
+                        ('usdLibrary = ','usdLibrary = [] #'),
+                        ('usdPythonModule = ','usdPythonModule = [] #'),
+                        ('alembicLibrary = ','alembicLibrary = [] #'),
+                        ('alembicPythonModule = ','alembicPythonModule = [] #'),
                         ('Default. coreLibrary','#Default( coreLibrary'),
                         ('Default. . glLibrary','#Default( [ glLibrary'),
                         ('Default. sceneLibrary','#Default( sceneLibrary'),
@@ -758,6 +782,7 @@ class cortex(configure):
                         ('INSTALL_PYTHON_DIR/IECoreMantra',  'INSTALL_HOUDINIPYTHON_DIR/IECoreMantra'),
                         ('INSTALL_PYTHON_DIR/IECoreRI',      'INSTALL_RMANPYTHON_DIR/IECoreRI'),
                         ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
+                        ('INSTALL_PYTHON_DIR/IECoreAppleseed', 'INSTALL_APPLESEEDPYTHON_DIR/IECoreAppleseed'),
                         ('# Documentation options',
                             'o.Add("INSTALL_MAYAPYTHON_DIR","","")\n'
                             'o.Add("INSTALL_HOUDINIPYTHON_DIR","","")\n'
@@ -765,6 +790,7 @@ class cortex(configure):
                             'o.Add("ALEMBIC_EXTRA_LIBS")\n'
                             'o.Add("INSTALL_ALEMBICPYTHON_DIR","","")\n'
                             'o.Add("INSTALL_RMANPYTHON_DIR","","")\n'
+                            'o.Add("INSTALL_APPLESEEDPYTHON_DIR","","")\n'
                             '# Documentation options'
                         ),
                     ]
@@ -794,6 +820,40 @@ class cortex(configure):
                     ]
         return noIECoreSED
 
+    @staticmethod
+    def onlyIECoreExtraSED():
+        self = cortex
+        # noIECoreSED adds some extra patches to SConstruct to avoid re-building IECore, IECorePython, IECoreGL
+        noIECoreSED = {}
+        for v in self.sed:
+            noIECoreSED[v] = self.sed[v].copy()
+            for each in self.sed[v]:
+                noIECoreSED[v][each] = []
+                noIECoreSED[v][each].extend( self.sed[v][each] )
+                if each == 'SConstruct':
+                    noIECoreSED[v][each] += [
+                    ('coreLibrary = ','coreLibrary = [] #'),
+                    ('corePythonLibrary = ','corePythonLibrary = [] #'),
+                    ('corePythonModule = ','corePythonModule = [] #'),
+                    ('glLibrary = ','glLibrary = [] #'),
+                    ('glPythonModule = ','glPythonModule = [] #'),
+                    ('sceneLibrary = ','sceneLibrary = [] #'),
+                    ('scenePythonModule = ','scenePythonModule = [] #'),
+                    ('imageLibrary = ','imageLibrary = [] #'),
+                    ('imagePythonModule = ','imagePythonModule = [] #'),
+                    ('Default. coreLibrary','#Default( coreLibrary'),
+                    ('Default. . glLibrary','#Default( [ glLibrary'),
+                    ('Default. sceneLibrary','#Default( sceneLibrary'),
+                    ('Default. . imageLibrary','#Default( [ imageLibrary'),
+                    ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
+                    ('# Documentation options',
+                        'o.Add("ALEMBIC_EXTRA_LIBS")\n'
+                        'o.Add("INSTALL_ALEMBICPYTHON_DIR","","")\n'
+                        '# Documentation options'
+                    )]
+        return noIECoreSED
+
+
     def fixCMD(self, cmd, os_environ):
             return cmd + " " + self.sconsInstall
 
@@ -811,13 +871,13 @@ class gaffer(cortex):
     ]
     # disable Appleseed build since we don't have it building yet!
     sed={'0.0.0' : {
-        'SConstruct' : [
-            ('if not haveRequiredOptions ', 'if not haveRequiredOptions or "applesed" in libraryName.lower() '),
-            ('"GafferAppleseed" : {',"''' "),
-            ('"GafferAppleseedUITest',"''' #"),
-            ('LOCATE_DEPENDENCY_PYTHONPATH"] ) ','LOCATE_DEPENDENCY_PYTHONPATH"] ) + os.environ["PYTHONPATH"].split(":")'),
-            ('LOCATE_DEPENDENCY_LIBPATH"] )', 'LOCATE_DEPENDENCY_LIBPATH"] ) + os.environ["LD_LIBRARY_PATH"].split(":")'),
-        ]
+        # 'SConstruct' : [
+        #     ('if not haveRequiredOptions ', 'if not haveRequiredOptions or "applesed" in libraryName.lower() '),
+        #     ('"GafferAppleseed" : {',"''' "),
+        #     ('"GafferAppleseedUITest',"''' #"),
+        #     ('LOCATE_DEPENDENCY_PYTHONPATH"] ) ','LOCATE_DEPENDENCY_PYTHONPATH"] ) + os.environ["PYTHONPATH"].split(":")'),
+        #     ('LOCATE_DEPENDENCY_LIBPATH"] )', 'LOCATE_DEPENDENCY_LIBPATH"] ) + os.environ["LD_LIBRARY_PATH"].split(":")'),
+        # ]
     }}
 
     def fixCMD(self, cmd, os_environ):
@@ -826,7 +886,7 @@ class gaffer(cortex):
             glob( '%s/../*/lib/python%s' % (os_environ['BOOST_TARGET_FOLDER'], os_environ['PYTHON_VERSION_MAJOR']) )
         )
         os_environ['LD_LIBRARY_PATH'] += ':'.join([os_environ['LD_LIBRARY_PATH']]+
-            glob( '%s/../*/lib/' % (os_environ['OIIO_TARGET_FOLDER']) )
+            [os.path.abspath(x) for x in glob( '%s/../../*/%s/lib/' % ( os_environ['OIIO_TARGET_FOLDER'], os.path.basename(os_environ['OIIO_TARGET_FOLDER']) ) )]
         )
         return cmd
 

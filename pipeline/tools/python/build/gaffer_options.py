@@ -92,14 +92,19 @@ LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'      % ( RMAN_ROOT ) )
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'                  % ( os.environ['CORTEX_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib/boost%s'              % ( os.environ['CORTEX_TARGET_FOLDER'], boost ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib/boost%s/python%s'     % ( os.environ['CORTEX_TARGET_FOLDER'], boost, '.'.join(python.split('.')[:2]) ) )
-LOCATE_DEPENDENCY_LIBPATH.append( '%s/alembic/%s/lib'           % ( os.environ['CORTEX_TARGET_FOLDER'], abc ) )
-LOCATE_DEPENDENCY_LIBPATH.append( '%s/alembic/%s/lib/python%s'  % ( os.environ['CORTEX_TARGET_FOLDER'], abc, '.'.join(python.split('.')[:2]) ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/maya/%s/lib'              % ( os.environ['CORTEX_TARGET_FOLDER'], maya ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/nuke/%s/lib'              % ( os.environ['CORTEX_TARGET_FOLDER'], nuke ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/prman/%s/lib'             % ( os.environ['CORTEX_TARGET_FOLDER'], prman ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/houdini/%s/lib'           % ( os.environ['CORTEX_TARGET_FOLDER'], houdini ) )
-LOCATE_DEPENDENCY_LIBPATH.append( '%s/openvdb/%s/lib'           % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['OPENVDB_VERSION'] ) )
-LOCATE_DEPENDENCY_LIBPATH.append( '%s/openvdb/%s/lib/python%s'  % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['OPENVDB_VERSION'],  '.'.join(python.split('.')[:2]) ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/alembic/%s/lib/boost%s'           % ( os.environ['CORTEX_TARGET_FOLDER'], abc, boost ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/alembic/%s/lib/boost%s/python%s'  % ( os.environ['CORTEX_TARGET_FOLDER'], abc, boost, '.'.join(python.split('.')[:2]) ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/usd/%s/lib/boost%s'               % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['USD_VERSION'], boost ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/usd/%s/lib/boost%s/python%s'      % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['USD_VERSION'], boost, '.'.join(python.split('.')[:2]) ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/openvdb/%s/lib/boost%s'           % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['OPENVDB_VERSION'], boost ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/openvdb/%s/lib/boost%s/python%s'  % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['OPENVDB_VERSION'], boost,  '.'.join(python.split('.')[:2]) ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/appleseed/%s/lib/'          % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['APPLESEED_VERSION'] ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/appleseed/%s/lib/python%s'  % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['APPLESEED_VERSION'],  '.'.join(python.split('.')[:2]) ) )
+
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['QT_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['QT_TARGET_FOLDER'] ) )
@@ -122,6 +127,15 @@ LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['LLVM_TAR
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['OSL_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include/OSL'      % ( os.environ['OSL_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['OSL_TARGET_FOLDER'] ) )
+
+if 'APPLESEED_ROOT' in os.environ:
+    LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['APPLESEED_TARGET_FOLDER'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['APPLESEED_TARGET_FOLDER'] ) )
+
+if 'PRMAN_ROOT' in os.environ:
+    LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['PRMAN_ROOT'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['PRMAN_ROOT'] ) )
+
 
 GAFFERCORTEX = True
 

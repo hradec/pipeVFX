@@ -16,20 +16,24 @@
 #
 #    You should have received a copy of the GNU Lesser General Public License
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
-# =================================================================================
+# ===============================
 
 from  SCons.Environment import *
 from  SCons.Builder import *
 from  SCons.Action import *
 from  SCons.Script import *
 import os, traceback, sys, inspect, re, time
-
-
-
 from devRoot import *
 import pipe
 from pipe.bcolors import bcolors
 from glob import glob
+
+
+DB={}
+def spitDBout( target, source, env ):
+    from pprint import pprint
+    pprint(DB)
+finish_command = Command( 'finish', [], spitDBout )
 
 crtl_file_build   = '.build'
 crtl_file_install = '.install'
@@ -295,6 +299,8 @@ class generic:
         self.gcc_system = gcc.system
 
         self.spinnerCount = 0
+
+        DB[name] = {}
 
         self.args     = args
         self.name     = name
@@ -630,6 +636,7 @@ class generic:
                     # call the install builder, in case a class need to do custom installation
                     t = self.install( install, [b,source[0]] )
 
+
                     self._depend[p].append(t)
                     self.installAll.append(t)
                     self.env.Default(self.env.Alias( 'install', t ))
@@ -637,6 +644,9 @@ class generic:
                         # print pkgs
                         self.env.Default(self.env.Alias( 'download', pkgs ))
                     self.env.Alias( 'build-%s' % name, t )
+
+                    self.env.Depends( finish_command, t )
+                    self.env.Default( finish_command )
 
 
     def registerSconsBuilder(self, *args):
@@ -739,6 +749,7 @@ class generic:
     def shouldBuild(self, target, source, cmd=None):
         lastlogFile = self.__lastlog(target[0])
         lastlog = self.__check_target_log__( lastlogFile, stage='pre-build' )
+        # _print( '=====>',target[0], lastlogFile,  lastlog)
 
         if lastlog==0:
             os.popen("touch %s" % str(target[0])).readlines()
@@ -873,7 +884,7 @@ class generic:
     def __check_target_log__(self,target, install=None, stage=''):
         ret=0
         if os.path.exists(target):
-            lines = ''.join( open(target).readlines() )
+            lines = ''.join( [ x for x in open(target).readlines() if '@runCMD_ERROR@ $?' not in x ] )
             # check if ld failed
             msg="__check_target_log__(%s): " % '/'.join(target.split('/')[-3:])
             if len(lines) < 35:
@@ -898,7 +909,8 @@ class generic:
                     _print( msg+"the build didn't finish suscessfully - rebuilding..." )
                 return  254
             if "@runCMD_ERROR@" in lines:
-                code =  int(lines.split("@runCMD_ERROR@")[-2].strip())
+                code = lines.split("@runCMD_ERROR@")[1].strip()
+                code = int(code)
                 if code and 'pre-build' in stage:
                     _print( msg+"last build finished with error code: %d"  % code )
                 return  code
@@ -1104,7 +1116,11 @@ class generic:
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_ROOT' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()]
 
-                    if not hasattr(self, 'dontUseTargetSuffixForFolders'):
+                    if os_environ['VERSION'] not in DB[self.name]:
+                        DB[self.name][os_environ['VERSION']] = {}
+                    DB[self.name][os_environ['VERSION']][dependOn.name] = os_environ['%s_VERSION' % dependOn.name.upper()]
+
+                    if not hasattr(dependOn, 'dontUseTargetSuffixForFolders'):
                         if dependOn.targetSuffix:
                             os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = '/'.join([
                                 os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].rstrip('/'),
@@ -1643,6 +1659,10 @@ class generic:
             if not hasattr(self, 'noMinTime') or not self.noMinTime:
                 ret=666
 
+        f = open(lastlog,'a')
+        f.write("\n\n"+cmd+"\n\n")
+        f.close()
+
         # finished without errors!!
         if ret == 0:
             f = open(target,'a')
@@ -1885,7 +1905,6 @@ class generic:
         return value
 #        return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()
 
-    download_cmd = "wget --timeout=15 '$url' -O $save >$log.log 2>&1"
     def downloader( self, env, _source, _url=None):
         ''' this method is a builder responsible to download the packages to be build '''
         global __pkgInstalled__
@@ -1935,7 +1954,8 @@ class generic:
                                 source[n],
                             )
                         else:
-                            cmd = self.download_cmd.replace('$url', url[0]).replace('$save', download_file).replace('$log', source[n])
+                            _download_cmd = "wget --timeout=15 '$url' -O $save >$log.log 2>&1"
+                            cmd = _download_cmd.replace('$url', url[0]).replace('$save', download_file).replace('$log', source[n])
 
                         # print cmd
                         os.popen(cmd).readlines()
