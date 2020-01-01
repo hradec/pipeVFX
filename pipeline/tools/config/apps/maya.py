@@ -28,6 +28,8 @@ class maya(baseApp):
             self['PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/plug-ins/translators/'
+
+
         # maya needs csh, libXp6 and libtiff3 installed to run!
         mv = float(self.version().split('.')[0])
         if mv <= 2016:
@@ -153,7 +155,6 @@ class maya(baseApp):
                 if self.parent() in ['maya']:
                     self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
 
-
         # set the proper sip/pyqt so gaffer works
         if mv > 2015:
             pipe.libs.version.set( sip  = '4.16.7.maya%s' % self.version() )
@@ -218,6 +219,24 @@ class maya(baseApp):
             if mv > 2017:
                 self['PYTHONHOME'] = self.path()
 
+
+        # we run this to make sure Asset module works when importing IECore
+        # for maya 2018 and up, since it comes with pyilmbase, which doens't match
+        # the version we use in pipeVFX.
+        if mv >= 2018:
+            # as maya comes with pyilmbase, we want to force it to load ours instead, so IECore works,
+            # as well alembic and pyalembic latest versions.
+            from sys import path as pythonpath
+            os.environ['PYTHON_VERSION_MAJOR'] = pythonVer
+            os.environ['BOOST_VERSION'] = pipe.libs.version.get( 'boost' )
+            os.environ['LD_LIBRARY_PATH'] = ''
+            for p in [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]:
+                pythonpath.insert(0, p)
+            for p in [ os.path.expandvars(x) for x in pipe.libs.boost()['LD_LIBRARY_PATH'] ]:
+                pythonpath.insert(0, p)
+                os.environ['LD_LIBRARY_PATH'] += ':'+p
+            del os.environ['PYTHON_VERSION_MAJOR']
+            del os.environ['BOOST_VERSION']
 
         self['EDITOR'] = 'atom'
 
@@ -314,10 +333,17 @@ class maya(baseApp):
         if self.parent() in ['maya','arnold']:
             mv = float(self.version().split('.')[0])
             if mv >= 2018:
-                # or else we see a error on os module were it can't find urandom!!
-                # we need this to force maya to read its own python distribution files
+                # as maya comes with pyilmbase, we want to force it to load ours instead, so IECore works,
+                # as well alembic and pyalembic latest versions.
+                pyilmbase = []
+                # pyilmbase = [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]
                 pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
-                os.environ['PYTHONPATH'] = self.path('lib/python%s.zip:' % pythonVer.replace('.','')) + os.environ['PYTHONPATH']
+                os.environ['PYTHONPATH'] = ':'.join(pyilmbase+[
+                    # we need this to force maya to read its own python distribution files
+                    # or else we see a error on os module were it can't find urandom!!
+                    self.path('lib/python%s.zip:' % pythonVer.replace('.','')),
+                    os.environ['PYTHONPATH']
+                ])
 
         return cmd
 
@@ -325,6 +351,7 @@ class maya(baseApp):
     def postRun(self, cmd, returnCode, returnLog=""):
         ''' this is called after a binary of this class has exited.
         it's the perfect method to do post render frame checks, for example!'''
+
         error = returnCode!=0
         extensions = [
             '.exr',

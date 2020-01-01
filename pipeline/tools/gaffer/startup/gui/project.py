@@ -19,14 +19,12 @@
 # =================================================================================
 
 
+import pipe
 
-class qtpy(baseLib):
-    def environ(self):
-        self['PYTHONPATH2'] = self.path('lib/python$PYTHON_VERSION_MAJOR_qt$QT_VERSION')
+# ========================================================================
+# setup project root path!
+# ========================================================================
+def __setupPipeVFX( container, script ) :
+	script["variables"]["projectRootDirectory"]['value'].setValue( "%s/gaffer/" % pipe.admin.job.shot.user().path() )
 
-        self.update(qt())
-        self.update(pyqt())
-        self.update(pyside())
-        self['PYTHONPATH'] = self.path('lib/python/site_packages/')
-
-        self['QT_QPA_PLATFORM_PLUGIN_PATH'] = self.path("qt/plugins")
+application.root()["scripts"].childAddedSignal().connect( __setupPipeVFX, scoped = False )

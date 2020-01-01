@@ -60,15 +60,13 @@ if 'GCC_VERSION' in os.environ:
     pipe.version.set( python        = '2.7' )
     pipe.libs.version.set( python   = '2.7' )
     pipe.libs.version.set( freetype = '2.4.0' )
-    # pipe.libs.version.set( alembic  = '1.5.8' )
-    pipe.libs.version.set( cortex   = '10.0' )
     pipe.libs.version.set( boost    = '1.61' )
+    pipe.libs.version.set( openexr  = '2.0.0' )
+    pipe.libs.version.set( ilmbase  = '2.0.0' )
+    pipe.libs.version.set( pyilmbase= '2.0.0' )
     pipe.libs.version.set( oiio     = '1.8' )
-    pipe.libs.version.set( openexr  = '2.2.0' )
-    pipe.libs.version.set( ilmbase  = '2.2.0' )
     pipe.libs.version.set( tbb      = '4.4.6' )
     pipe.libs.version.set( pyqt     = '4.11.4' )
-    pipe.libs.version.set( readline = '99.99.99' )
 else:
     pipe.version.set( python        = '2.6.8' )
     pipe.libs.version.set( alembic  = '1.1.1' )
@@ -81,21 +79,11 @@ else:
 # gaffer and cortex version need to be tested toguether!
 # ===================================================================
 if 'GCC_VERSION' in os.environ:
-    pipe.version.set( gaffer      = '0.32' )
-    pipe.libs.version.set( gaffer = '0.32' )
-    # pipe.libs.version.set( cortex = '9.13' )
-    pipe.libs.version.set( cortex = '10.0' )
+    pipe.version.set( gaffer        = '0.55' )
+    pipe.libs.version.set( gaffer   = '0.55' )
+    pipe.libs.version.set( cortex   = '10.0' )
+    pipe.libs.version.set( appleseed= '2.0.5.beta' )
 else:
     pipe.version.set( gaffer      = '2.0.0' )
     pipe.libs.version.set( cortex = '9.0.0.git_Oct_10_2014' )
-    pipe.libs.version.set(  tbb = '2.2.004' )
-
-
-
-# pipe.version.set( gaffer    = '0.75.0' )
-#pipe.libs.version.set( cortex = '8.0.0.git_Aug_20_2013' )
-#pipe.version.set( gaffer    = '0.95.0' )
-#pipe.libs.version.set( cortex = '8.4.7' )
-# pipe.version.set( gaffer    = '0.95.0' )
-#pipe.libs.version.set( cortex = '9.0.0' )
-# pipe.libs.version.set( cortex = '9.8.0' )
+    pipe.libs.version.set(  tbb   = '2.2.004' )

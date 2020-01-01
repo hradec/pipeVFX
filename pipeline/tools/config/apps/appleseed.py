@@ -18,15 +18,6 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-
-
-class qtpy(baseLib):
-    def environ(self):
-        self['PYTHONPATH2'] = self.path('lib/python$PYTHON_VERSION_MAJOR_qt$QT_VERSION')
-
-        self.update(qt())
-        self.update(pyqt())
-        self.update(pyside())
-        self['PYTHONPATH'] = self.path('lib/python/site_packages/')
-
-        self['QT_QPA_PLATFORM_PLUGIN_PATH'] = self.path("qt/plugins")
+if hasattr(pipe.libs, 'appleseed'):
+    class appleseed(pipe.libs.appleseed):
+        pass

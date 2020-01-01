@@ -34,3 +34,5 @@ class alembic(baseLib):
             plugin = self.path('maya/plug-ins/'),
             lib = self.path('lib'),
         )
+
+        self['HDF5_DISABLE_VERSION_CHECK'] = '1'

@@ -75,11 +75,13 @@ class gaffer(baseLib):
             self['LD_LIBRARY_PATH'] = '%s/lib/' % each
 
         if self.parent() in ['gaffer']:
-            # self.update( pyilmbase() )
             self.update( pipe.libs.python() )
-            # self.update( maya() )
             self.update( pipe.apps.prman() )
             self.update( pipe.libs.cortex() )
+            self.update( pipe.libs.appleseed() )
+            self.update( pipe.libs.alembic() )
+            # self.update( maya() )
+
             # hack to enable renderman in gaffer!
             self['DELIGHT'] = '1'
             # self.update( maya() )
@@ -93,6 +95,7 @@ class gaffer(baseLib):
 
         self['GAFFERUI_IMAGECACHE_MEMORY'] = '2000'
         # self['GAFFERUI_QT_BINDINGS'] = 'PyQt4'
+
 
         if self.parent() in ['maya']:
             if int(pipe.apps.version.get('maya').split('.')[0]) < 2014:
@@ -142,6 +145,7 @@ class gaffer(baseLib):
                 shaders = [
                     "%s/gaffer/shaders/" % os.environ['HOME'],
                     self.path('shaders'),
+                    self.path('shaders/'),
                 ],
         )
 
@@ -156,6 +160,8 @@ class gaffer(baseLib):
         	procedurals = self.path( "renderMan/procedurals" ),
             shader = self.path( "shaders" ),
         )
+
+        self['OSLHOME'] = self.path()
 
     # def runUserSetup(self, bin):
     #     ''' only create a user folder structure if it's the main gaffer app.'''

@@ -20,13 +20,17 @@
 
 
 
-class qtpy(baseLib):
+class appleseed(baseLib):
+
     def environ(self):
-        self['PYTHONPATH2'] = self.path('lib/python$PYTHON_VERSION_MAJOR_qt$QT_VERSION')
+        self['PYTHONHOME'] = pipe.libs.python().path()
+        self['PYTHONPATH'] = '%s/lib/python$PYTHON_VERSION_MAJOR' % self.path()
 
-        self.update(qt())
-        self.update(pyqt())
-        self.update(pyside())
-        self['PYTHONPATH'] = self.path('lib/python/site_packages/')
+        self['APPLESEED'] = self.path()
+        self['OSL_SHADER_PATHS'] = self.path('shaders/appleseed')
+        self['APPLESEED_SEARCHPATH'] = self.path('shaders/appleseed')
 
-        self['QT_QPA_PLATFORM_PLUGIN_PATH'] = self.path("qt/plugins")
+    @staticmethod
+    def addon(caller, shaders="", display=""):
+        caller['APPLESEED_SEARCHPATH'] = display
+        caller['APPLESEED_SEARCHPATH'] = shaders

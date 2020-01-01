@@ -21,9 +21,9 @@
 
 class cortex(baseLib):
     def versions(self):
-        if float(pipe.libs.version.get('openexr')[:3]) < 2.2:
-            pipe.libs.version.set( openexr='2.2')
-            pipe.libs.version.set( ilmbase='2.2')
+        # if float(pipe.libs.version.get('openexr')[:3]) < 2.2:
+        #     pipe.libs.version.set( openexr='2.2')
+        #     pipe.libs.version.set( ilmbase='2.2')
 
         if float(pipe.libs.version.get('cortex')[:4]) >= 10.0:
             if float(pipe.libs.version.get('boost')[:4]) < 1.55:
@@ -67,7 +67,7 @@ class cortex(baseLib):
             self['PYTHONPATH'].insert( 0, self.path('maya/$MAYA_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages') )
 
         # configure delight - crashes maya if no arnold in the searchpath!!
-        if parent in ['delight', 'maya', 'gaffer', 'python'] and os.path.exists(self.path( 'delight/%s' % pipe.apps.version.get('delight') )):
+        if parent in ['delight', 'maya', 'python'] and os.path.exists(self.path( 'delight/%s' % pipe.apps.version.get('delight') )):
             pipe.apps.delight.addon( self,
                 shader=self.path('delight/$DELIGHT_VERSION/rsl'),
                 rsl=self.path('delight/$DELIGHT_VERSION/rsl'),
@@ -162,21 +162,26 @@ class cortex(baseLib):
                 self.path('lib/boost$BOOST_VERSION'),
                 self.path('lib/python$PYTHON_VERSION_MAJOR'),
                 self.path('lib'),
-                self.path('alembic/$ALEMBIC_VERSION/lib'),
+                self.path('alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/'),
                 self.path('alembic/$ALEMBIC_VERSION'),
-                self.path('openvdb/$OPENVDB_VERSION/lib'),
+                self.path('openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/'),
                 self.path('openvdb/$OPENVDB_VERSION'),
-                self.path('usd/$USD_VERSION/lib'),
+                self.path('usd/$USD_VERSION/lib/boost$BOOST_VERSION/'),
                 self.path('usd/$USD_VERSION'),
+                self.path('appleseed/$APPLESEED_VERSION/lib/'),
+                self.path('appleseed/$APPLESEED_VERSION'),
             ],
             scripts = [
                 self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
-                self.path('alembic/$ALEMBIC_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages'),
-                self.path('openvdb/$OPENVDB_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages'),
-                self.path('usd/$USD_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('usd/$USD_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('appleseed/$APPLESEED_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages'),
             ],
         )
+        appleseed.addon( self, display=self.path('appleseed/$APPLESEED_VERSION/displays/') )
+
 
         #add tools paths
         for each in self.toolsPaths():
@@ -203,12 +208,14 @@ class cortex(baseLib):
         self['IECORE_OP_PRESET_PATHS'] = '%s/.config/cortex/preset' % os.environ['HOME']
         self['IECORE_PROCEDURAL_PRESET_PATHS'] = '%s/.config/cortex/preset' % os.environ['HOME']
 
+        self.update( pipe.libs.pyilmbase() )
+
     def bins(self):
         return [('cpython', 'cpython')]
 
 
     @staticmethod
-    def addon(caller, ops="", procedurals="", scripts="", glsl="", glslInclude="", glslTextures="", glFonts="", lib=""):
+    def addon(caller, ops="", procedurals="", scripts="", glsl="", glslInclude="", glslTextures="", glFonts="", lib="", display=""):
         caller['IECORE_PROCEDURAL_PATHS'] = procedurals
         caller['IECORE_OP_PATHS']  = ops
         caller['PYTHONPATH']  = scripts
@@ -217,3 +224,4 @@ class cortex(baseLib):
         caller['IECOREGL_TEXTURE_PATHS'] = glslTextures
         caller['IECORE_FONT_PATHS'] = glFonts
         caller['LD_LIBRARY_PATH'] = lib
+        caller['DISPLAY'] = display
