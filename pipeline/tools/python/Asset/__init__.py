@@ -19,13 +19,19 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import os
+import os, sys
 from glob import glob
 import pipe
 
 try:
     from IECore import *
     import IECore
+    if not hasattr(IECore, 'V3i'):
+        from imath import *
+        IECore.V2f = V2f
+        IECore.V2i = V2i
+        IECore.V3f = V3f
+        IECore.V3i = V3i
 except:
     CompoundParameter = object
     CompoundObject = {}
@@ -37,13 +43,6 @@ try:
 except:
     m = None
 
-
-if not hasattr(IECore, 'V3i'):
-    from imath import *
-    IECore.V2f = V2f
-    IECore.V2i = V2i
-    IECore.V3f = V3f
-    IECore.V3i = V3i
 
 GafferUI = None
 if 'DISPLAY' in os.environ and os.environ['DISPLAY'].strip():

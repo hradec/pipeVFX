@@ -4,9 +4,26 @@ import maya.cmds as m
 from maya.mel import eval as meval
 import glob,os
 import pipe
-import rfm.rlf2maya as rlf2maya
 from os import stat
 from pwd import getpwuid
+try:
+    import rfm.rlf2maya as rlf2maya
+except:
+    # backwards compatibility
+    class rlf2maya:
+        def GetActiveScope(self, **kargs):
+            return ""
+        def SetActiveScope(self, **kargs):
+            pass
+
+try:
+    import rfm.rlf as rlf
+except:
+    # backwards compatibility
+    class rlf:
+        def RLFScope(self, **kargs):
+            return ""
+
 
 __menuline__ = u'▬'*40
 
@@ -241,8 +258,8 @@ def cleanupRulesGarbage(mtor="mtorPartition"):
         After cleaning, it fills the globalScope with the correct data from the specified scopes
     '''
     import maya.cmds as m
-    import rfm.rlf2maya as rlf2maya
-    import rfm.rlf as rlf
+    # import rfm.rlf2maya as rlf2maya
+    # import rfm.rlf as rlf
     import xmltodict
 
 

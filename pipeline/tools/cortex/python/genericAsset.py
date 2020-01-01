@@ -638,7 +638,9 @@ class maya( _genericAssetClass ) :
                 self.s = self.rlf2maya.GetActiveScope()
 
         def isEmpty(self):
-            return self.s.GetRules() == []
+            if self.rlf2maya:
+                return self.s.GetRules() == []
+            return True
 
         def payload(self, sg):
             if self.rlf2maya:
@@ -661,15 +663,16 @@ class maya( _genericAssetClass ) :
                 return p
 
         def addRule(self, name, sg, node=''):
-            if name and name in self.cache.keys():
-                if sg != self.cache[name]:
-                    if not node:
-                        node=name
-                    print self.cache.keys()
-                    raise Exception("ERROR: there are 2 shape nodes named %s(sg:%s) and %s(sg:%s) with different shadingGroups! Please rename one!!" % (node, sg, name, self.cache[name]))
-                else:
-                    return
             if self.rlf2maya:
+                if name and name in self.cache.keys():
+                    if sg != self.cache[name]:
+                        if not node:
+                            node=name
+                        print self.cache.keys()
+                        raise Exception("ERROR: there are 2 shape nodes named %s(sg:%s) and %s(sg:%s) with different shadingGroups! Please rename one!!" % (node, sg, name, self.cache[name]))
+                    else:
+                        return
+
                 self.cache[name] = sg
                 r=self.rlf.RLFRule()
                 p=self.payload(sg)

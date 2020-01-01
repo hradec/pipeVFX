@@ -20,12 +20,16 @@
 
 import os, sys
 sys.path.insert( 0, "%s/lib/python%s.zip" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
-sys.path.insert( 0, "%s/lib/python%s/lib-dynload" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
+sys.path.insert( 0, "%s/lib/python%s/lib-dynload" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
+sys.path.insert( 0, "%s/lib/python%s/site-packages/" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
 
+# import alembic here to prevent problems when prman import it
+import alembic
 
 import maya
 import maya.cmds as m
 from maya.mel import eval as meval
+
 
 # fix the F key, just in case!
 meval('optionVar  -fv "defaultFitFactor" 0.99')
@@ -75,12 +79,12 @@ def pipeIdleStartup():
     # force auto-load of these plugins at startup!
     plugs=[
         # 'slumMayaPlugin.py',
-        'ieCore',
-        'RenderMan_for_Maya',
         'OpenVDB',
         'AbcImport',
         'AbcExport',
         'gpuCache',
+        'RenderMan_for_Maya',
+        'ieCore',
         'houdiniEngine',
 #        '3delight_for_maya%s' % os.environ['MAYA_VERSION_MAJOR'],
     ]
@@ -122,12 +126,13 @@ def pipeIdleStartup():
             return menu
 
         menu = IECore.MenuDefinition()
-        menu.append(
-            "/Create Procedural",
-            {
-                "subMenu" : IECoreMaya.Menus.proceduralCreationMenuDefinition,
-            }
-        )
+        if hasattr(IECoreMaya.Menus, 'proceduralCreationMenuDefinition'):
+            menu.append(
+                "/Create Procedural",
+                {
+                    "subMenu" : IECoreMaya.Menus.proceduralCreationMenuDefinition,
+                }
+            )
 
         menu.append(
             "/Create Op",
@@ -144,7 +149,10 @@ def pipeIdleStartup():
 
             #create our custom one!
             global __cortexMenu
-            __cortexMenu = IECoreMaya.createMenu( menu, "MayaWindow", "Cortex" )
+            try:
+                __cortexMenu = IECoreMaya.createMenu( menu, "MayaWindow", "Cortex" )
+            except:
+                __cortexMenu = IECoreMaya.Menus.createMenu( "Cortex", menu, "MayaWindow" )
 
 
     # force unload of Alembic plugins!!
@@ -329,10 +337,14 @@ def loadAssetManager():
 
 
             #create our custom one!
-            global __cortexMenu
-            __cortexMenu = IECoreMaya.createMenu( menu, "MayaWindow", "SAM" )
+            global __cortexMenuSAM
+            try:
+                __cortexMenuSAM = IECoreMaya.createMenu( menu, "MayaWindow", "SAM" )
+            except:
+                __cortexMenuSAM = IECoreMaya.Menus.createMenu( "SAM", menu, "MayaWindow" )
 
-    if float(os.environ["MAYA_VERSION"]) < 2018:
+
+    if float(os.environ["MAYA_VERSION"]) <= 2020:
         import atomoShelfs
         if not m.about(batch=1):
             atomoShelfs.buildShelf()

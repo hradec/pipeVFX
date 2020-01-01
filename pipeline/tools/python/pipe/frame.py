@@ -20,7 +20,7 @@
 
 import pipe
 import os,sys, time
-import tempfile
+import tempfile, filecmp
 
 PIPE_DISABLE_THREADS=1
 if 'PIPE_DISABLE_THREADS' in os.environ:
@@ -357,8 +357,7 @@ def publish(frames, assetPath):
 
 
 def publishLog(log, assetPath, className):
-    import Asset, pipe, filecmp
-    import tempfile
+    import Asset
     asset = Asset.AssetParameter(assetPath)
     # if we have asset data, means this maya scene is an asset, so
     # we move the images to its folder

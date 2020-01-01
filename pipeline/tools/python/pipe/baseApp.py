@@ -30,6 +30,18 @@ from multiprocessing import cpu_count
 
 from bcolors import bcolors
 
+libraries_with_versioned_names = [
+    'boost',
+    'tiff',
+    'jpeg',
+    'libpng',
+    'libraw',
+    'oiio',
+    'openvdb',
+    'alembic',
+]
+
+
 def wacom():
     ''' check if wacon is attached '''
     return map( lambda x: x.strip(), os.popen('xsetwacom --list').readlines() )
@@ -784,33 +796,21 @@ class baseApp(_environ):
             self['BOOST_VERSION'] = versionLib.get('boost')
 
             def addTargetSuffix(lib, _suffix=['*/boost.*']):
-                # now account for targetSuffix folders (boost for now!)
+                # account for targetSuffix folders (boost for now!)
                 pv='.'.join(versionLib.get('python').split('.')[:2])
                 for suffix in _suffix:
-                    for suffix_version in  glob( "%s/%s/%s" % (roots.libs(), lib, suffix) ):
-                        for each in glob( "%s/lib/python%s/" % (suffix_version, pv)):
-                            self['LD_LIBRARY_PATH'] = each
-
-                        for each in glob( "%s/lib/" % (suffix_version, lib)):
-                            self['LD_LIBRARY_PATH'] = each
-
-            # # add targetSuffix folders!
-            # for lib in ['boost', 'tiff', 'jpeg', 'libpng', 'libraw']:
-            #     addTargetSuffix(lib, ['*/boost.*'])
+                    for each in glob( "%s/%s/%s/lib/python%s" % (roots.libs(), lib, suffix, pv) ):
+                        self['LD_LIBRARY_PATH'] = each
+                    for each in glob( "%s/%s/%s/lib" % (roots.libs(), lib, suffix) ):
+                        self['LD_LIBRARY_PATH'] = each
 
             # account for all versions of theses packages!
-            for lib in ['boost', 'tiff', 'jpeg', 'libpng', 'libraw']:
-                pv='.'.join(versionLib.get('python').split('.')[:2])
-                # add all lib versions to search path, since they are version controlled in their name
-                for each in glob( "%s/%s/*/lib/python%s/" % (roots.libs(), lib, pv)):
-                    self['LD_LIBRARY_PATH'] = each
-
-                for each in glob( "%s/%s/*/lib/" % (roots.libs(), lib)):
-                    self['LD_LIBRARY_PATH'] = each
-
+            for lib in libraries_with_versioned_names:
                 # add all targetSuffix version
-                addTargetSuffix(lib, ['*/boost.*'])
-
+                addTargetSuffix(lib, [
+                    '*',
+                    '*/boost.*'
+                ])
 
             # if we have extra variables, just update itself with it!
             for each in extraUpdates:
@@ -1189,15 +1189,9 @@ class baseApp(_environ):
 
 
         # only run if enviroment is set and not root!
-        if os.getuid()>0:
+        if os.getuid()>0 or 'RUN_SHELL' in os.environ:
             # here is were we actually update self with all updated
             # classes - the ones we do 'self.update(classApp())' in environ method!
-            # for className in  self.updatedClasses.keys():
-            #     self.updatedClasses[className].evaluate()
-            #     # first, run license method for all added classes
-            #     self.updatedClasses[className]._license(binName)
-            #     # then, update self with the class!
-            #     _environ.update(self, self.updatedClasses[className])
             self.fullEnvironment(binName)
 
 
