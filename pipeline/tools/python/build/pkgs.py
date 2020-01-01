@@ -707,6 +707,7 @@ class all: # noqa
                 '9e251c0a618ad0824b51117d5d9db87e'
             )],
             depend = allDepend,
+            noMinTime=True,
             environ = { 'LD' : 'ld' },
         )
         self.gperf = gperf
@@ -1246,7 +1247,6 @@ class all: # noqa
         # =============================================================================================================================================
         # build one OIIO version for each boost version.
         self.oiio = {}
-        exr_version = '2.2.0'
         for boost_version in self.boost.versions:
             sufix = "boost.%s" % boost_version
 
@@ -1283,12 +1283,13 @@ class all: # noqa
                 ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
+            exr_version = '2.0.0'
             _download = []+download
             for n in range(len(_download)):
                 _download[n][4] = _download[n][4].copy()
-                _download[n][4][ self.ilmbase['boost.%s' % boost_version]] = exr_version
-                _download[n][4][ self.pyilmbase['boost.%s' % boost_version]] = exr_version
-                _download[n][4][ self.openexr['boost.%s' % boost_version]] = exr_version
+                _download[n][4][ self.ilmbase  ['boost.%s' % boost_version] ] = exr_version
+                _download[n][4][ self.pyilmbase['boost.%s' % boost_version] ] = exr_version
+                _download[n][4][ self.openexr  ['boost.%s' % boost_version] ] = exr_version
 
             oiio = build.cmake(
                 ARGUMENTS,
@@ -1334,6 +1335,8 @@ class all: # noqa
                         '$JPEG_TARGET_FOLDER/lib/',
                         '$LIBPNG_TARGET_FOLDER/lib/',
                         '$LIBRAW_TARGET_FOLDER/lib/',
+                        '$OPENEXR_TARGET_FOLDER/lib',
+                        '$ILMBASE_TARGET_FOLDER/lib',
                     ])
                     +' -Wl,-rpath,'+' -Wl,-rpath,'.join([
                         '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
@@ -1341,7 +1344,12 @@ class all: # noqa
                         '$JPEG_TARGET_FOLDER/lib/',
                         '$LIBPNG_TARGET_FOLDER/lib/',
                         '$LIBRAW_TARGET_FOLDER/lib/',
-                    ])
+                        '$OPENEXR_TARGET_FOLDER/lib',
+                        '$ILMBASE_TARGET_FOLDER/lib',
+                    ]),
+                    # we need this to build with exr version below 2.2.0
+                    'CPLUS_INCLUDE_PATH' : '$OPENEXR_TARGET_FOLDER/include/OpenEXR/:$CPLUS_INCLUDE_PATH',
+                    'C_INCLUDE_PATH' : '$OPENEXR_TARGET_FOLDER/include/OpenEXR/:$C_INCLUDE_PATH',
                 }
             )
             self.oiio[sufix] = oiio
@@ -1632,9 +1640,9 @@ class all: # noqa
                 '1.10.7',
                 '53f66e12c3e29c62dc51b070f027a0ad',
                 {llvm : "7.1.0", gcc: "4.8.5", boost: bv,
-                self.ilmbase['boost.%s' % bv]: '2.2.0',
-                self.openexr['boost.%s' % bv]: '2.2.0',
-                self.oiio['boost.%s' % bv]: "1.8.10", }
+                self.ilmbase['boost.%s' % bv]: '2.0.0',
+                self.openexr['boost.%s' % bv]: '2.0.0',
+                self.oiio   ['boost.%s' % bv]: "1.8.10", }
             # ),(
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.9.9.tar.gz',
             #     'OpenShadingLanguage-Release-1.9.9.tar.gz',
@@ -2247,7 +2255,7 @@ class all: # noqa
                 boost: '1.61.0',
                 self.ilmbase['boost.1.61.0']: '2.0.0',
                 self.openexr['boost.1.61.0']: '2.0.0',
-                self.oiio['boost.1.61.0']: '1.8.10'},
+                self.oiio   ['boost.1.61.0']: '1.8.10'},
             )],
             # baseLibs=[python],
             depend=[
@@ -2431,8 +2439,8 @@ class all: # noqa
             #     { gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11',
             #     hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '5.6.1',
             #     self.boost: '1.61.0', embree: '3.6.1',
-            #     self.ilmbase['boost.1.61.0']: '2.2.0',
-            #     self.openexr['boost.1.61.0']: '2.2.0',
+            #     self.ilmbase['boost.1.61.0']: '2.0.0',
+            #     self.openexr['boost.1.61.0']: '2.0.0',
             #     self.oiio['boost.1.61.0']: '1.8.10' },
             # ),(
                 'https://github.com/appleseedhq/appleseed/archive/2.0.5-beta.tar.gz',
@@ -2442,9 +2450,9 @@ class all: # noqa
                 { gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11',
                 hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '4.8.7',
                 self.boost: '1.61.0', embree: '3.5.2',
-                self.ilmbase['boost.1.61.0']: '2.2.0',
-                self.openexr['boost.1.61.0']: '2.2.0',
-                self.oiio['boost.1.61.0']: '1.8.10' },
+                self.ilmbase['boost.1.61.0']: '2.0.0',
+                self.openexr['boost.1.61.0']: '2.0.0',
+                self.oiio   ['boost.1.61.0']: '1.8.10' },
             )],
             depend=allDepend+[usd, seexpr, lz4, osl, xerces, python,  ocio],
             flags = [
