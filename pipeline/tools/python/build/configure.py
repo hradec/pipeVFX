@@ -670,7 +670,7 @@ class cortex(configure):
             (', arnoldSources )'   , ', arnoldSources    )\n\t\tarnoldEnv.Depends(    arnoldLibrary,    [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
             (', usdSources )'      , ', usdSources       )\n\t\tusdEnv.Depends(       usdLibrary,       [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
             (', alembicSources )'  , ', alembicSources   )\n\t\talembicEnv.Depends(   alembicLibrary,   [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
-            (', appleseedSources )', ', appleseedSources )\n\t\tappleseedEnv.Depends( appleseedLibrary, [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall,alembicLibrary] )'),
+            (', appleseedSources )', ', appleseedSources )\n\t\tappleseedEnv.Depends( appleseedLibrary, [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
 
 
             ('+ imagePythonModuleSources )'  , '+ imagePythonModuleSources   )\n\t\timagePythonModuleEnv.Depends(     imagePythonModule,     [corePythonLibraryInstall,corePythonModuleInstall] )'),

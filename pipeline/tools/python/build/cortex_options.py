@@ -211,8 +211,8 @@ FREETYPE_LIB_PATH 	    = "%s/lib"     % os.environ['FREETYPE_TARGET_FOLDER']
 BOOST_INCLUDE_PATH      = "%s/include" % os.environ['BOOST_TARGET_FOLDER']
 BOOST_LIB_PATH          = "%s/lib/python%s/"  % (os.environ['BOOST_TARGET_FOLDER'], os.environ['PYTHON_VERSION_MAJOR'])
 BOOST_LIB_SUFFIX        = ""
-if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the only version that uses -mt as suffix.
-    BOOST_LIB_SUFFIX        = "-mt"
+# if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the only version that uses -mt as suffix.
+#     BOOST_LIB_SUFFIX        = "-mt"
 
 
 ALEMBIC_LIB_SUFFIX      = ''

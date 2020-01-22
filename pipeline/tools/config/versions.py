@@ -58,12 +58,14 @@ if float(pipe.version.get('maya')) < 2018:
 # ===================================================================
 if 'GCC_VERSION' in os.environ:
     pipe.version.set( python        = '2.7' )
+    exr='2.0.0'
+    # exr='2.2.0'
     pipe.libs.version.set( python   = '2.7' )
     pipe.libs.version.set( freetype = '2.4.0' )
     pipe.libs.version.set( boost    = '1.61' )
-    pipe.libs.version.set( openexr  = '2.0.0' )
-    pipe.libs.version.set( ilmbase  = '2.0.0' )
-    pipe.libs.version.set( pyilmbase= '2.0.0' )
+    pipe.libs.version.set( openexr  = exr )
+    pipe.libs.version.set( ilmbase  = exr )
+    pipe.libs.version.set( pyilmbase= exr )
     pipe.libs.version.set( oiio     = '1.8' )
     pipe.libs.version.set( tbb      = '4.4.6' )
     pipe.libs.version.set( pyqt     = '4.11.4' )

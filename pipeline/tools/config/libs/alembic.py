@@ -21,8 +21,8 @@
 
 
 class alembic(baseLib):
-    # def versions(self):
-    #     pipe.libs.version.set( hdf5='1.8.11' )
+    def versions(self):
+        pipe.libs.version.set( hdf5='1.8.11' )
 
     def environ(self):
         # we don't need to care about the maya version, since

@@ -94,7 +94,12 @@ class gaffer(baseLib):
 
 
         self['GAFFERUI_IMAGECACHE_MEMORY'] = '2000'
-        # self['GAFFERUI_QT_BINDINGS'] = 'PyQt4'
+        if pipe.versionMajor(self.version())>0.5 and pipe.versionMajor(self.version())<2.0:
+            # gaffer 0.55 and up is using PySide2, because Maya2018
+            self['GAFFERUI_QT_BINDINGS'] = 'PySide2'
+        else:
+            # any other version (old gaffer), uses PyQt4
+            self['GAFFERUI_QT_BINDINGS'] = 'PyQt4'
 
 
         if self.parent() in ['maya']:

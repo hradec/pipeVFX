@@ -22,6 +22,7 @@ class redshift(baseApp):
     def environ(self):
         self['PYTHONPATH'] = self.path("redshift4maya/common/scripts")
 
+
         self['REDSHIFT_COREDATAPATH'] = self.path()
         self['REDSHIFT_PLUG_IN_PATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/$MAYA_VERSION'
         self['REDSHIFT_SCRIPT_PATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/common/scripts'
@@ -63,8 +64,9 @@ class redshift(baseApp):
         ret = [
             ('redshiftCmdLine', 'redshiftCmdLine'),
             ('redshiftTextureProcessor', 'redshiftTextureProcessor'),
+            ('redshiftLicensingTool', 'redshiftLicensingTool'),
         ]
         return ret
 
-    def license(self):
-        self['redshift_LICENSE'] = os.environ['PIPE_REDSHIFT_LICENSE']
+    # def license(self):
+    #     self['redshift_LICENSE'] = os.environ['PIPE_REDSHIFT_LICENSE']

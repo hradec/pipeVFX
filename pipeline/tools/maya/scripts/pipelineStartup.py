@@ -19,12 +19,32 @@
 # =================================================================================
 
 import os, sys
+
+print "Loading Pipeline Startup from %s" % __file__
+
+
+# import alembic here to prevent problems when prman import it
+# we add alembic/imath pythonpath to the top of sys.path here so maya will use
+# our version!
+import pipe
+libs = [
+    pipe.libs.alembic(),
+    pipe.libs.pyilmbase(),
+    pipe.libs.openvdb(),
+    pipe.libs.usd(),
+]
+for lib in libs:
+    p = lib['PYTHONPATH']
+    if type(p) == type(""):
+        p = [p]
+    for x in p:
+        sys.path.insert( 0, os.path.expandvars(x) )
+import imath, alembic
+
+# now we add maya pythonpath to the top!
 sys.path.insert( 0, "%s/lib/python%s.zip" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
 sys.path.insert( 0, "%s/lib/python%s/lib-dynload" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
 sys.path.insert( 0, "%s/lib/python%s/site-packages/" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
-
-# import alembic here to prevent problems when prman import it
-import alembic
 
 import maya
 import maya.cmds as m
@@ -83,8 +103,8 @@ def pipeIdleStartup():
         'AbcImport',
         'AbcExport',
         'gpuCache',
-        'RenderMan_for_Maya',
         'ieCore',
+        'RenderMan_for_Maya',
         'houdiniEngine',
 #        '3delight_for_maya%s' % os.environ['MAYA_VERSION_MAJOR'],
     ]
@@ -106,6 +126,7 @@ def pipeIdleStartup():
     except:
         IECore=None
         IECoreMaya=None
+
 
     if IECore:
         def __createOp( className ) :
@@ -408,15 +429,15 @@ if m.about(batch=1):
 else:
     def __runAll__():
         # if float(os.environ["MAYA_VERSION"]) < 2018:
-        import genericAsset
-        pb = genericAsset.progressBar(3,"Finishing maya startup... ")
-        pb.step()
-        pipeIdleStartup()
-        pb.step()
-        loadAssetManager()
-        pb.step()
-        if float(os.environ["MAYA_VERSION"]) < 2018:
-            RMS_setup()
-        pb.close()
+            import genericAsset
+            pb = genericAsset.progressBar(3,"Finishing maya startup... ")
+            pb.step()
+            loadAssetManager()
+            pb.step()
+            pipeIdleStartup()
+            pb.step()
+            if float(os.environ["MAYA_VERSION"]) < 2018:
+                RMS_setup()
+            pb.close()
     __runAll__()
     # m.scriptJob( runOnce=True,  idleEvent=__runAll__ )

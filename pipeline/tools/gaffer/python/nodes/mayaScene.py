@@ -50,6 +50,7 @@ import utils
 
 import subprocess, psutil, select
 
+import pipe
 from pipe.bcolors import bcolors as colors
 
 QtCore, QtGui = pipe.importQt()

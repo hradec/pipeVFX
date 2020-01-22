@@ -275,19 +275,19 @@ class maya(baseApp):
 
         if 'Render' not in app and 'mayapy' not in app and os.path.exists(m):
             baseApp.run( self, os.path.basename(m) + '  ' + ' '.join(cmd[1:]) )
-        # elif 'mayapy' in app:
-        #     # it seems these are no set by default when running in mayapy
-        #     for p in glob.glob( self.path('plug-ins/*') ):
-        #         maya.addon(self
-        #             plugin = "%s/plug-ins" % p,
-        #             script = "%s/scripts" % p,
-        #             lib = "%s/lib" % p,
-        #             preset = "%s/presets" % p,
-        #             icon = "%s/icons" % p,
-        #         )
-        #         self['PATH'] = "%s/bin" % p
-        #         self['PYTHONPATH'] = "%s/scripts" % p
-        #     baseApp.run( self, app )
+        elif 'mayapy' in app:
+            # it seems these are no set by default when running in mayapy
+            for p in glob.glob( self.path('plug-ins/*') ):
+                maya.addon(self,
+                    plugin = "%s/plug-ins" % p,
+                    script = "%s/scripts" % p,
+                    lib = "%s/lib" % p,
+                    preset = "%s/presets" % p,
+                    icon = "%s/icons" % p,
+                )
+                self['PATH'] = "%s/bin" % p
+                self['PYTHONPATH'] = "%s/scripts" % p
+            baseApp.run( self, app )
         else:
             baseApp.run( self, app )
 
@@ -333,12 +333,14 @@ class maya(baseApp):
         if self.parent() in ['maya','arnold']:
             mv = float(self.version().split('.')[0])
             if mv >= 2018:
-                # as maya comes with pyilmbase, we want to force it to load ours instead, so IECore works,
+                top = []
+                # as maya comes with pyilmbase and alembic python, we want to
+                # force it to load ours instead, so IECore and renderman works,
                 # as well alembic and pyalembic latest versions.
-                pyilmbase = []
-                # pyilmbase = [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]
+                top += [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]
+                top += [ os.path.expandvars(x) for x in pipe.libs.alembic()['PYTHONPATH'] ]
                 pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
-                os.environ['PYTHONPATH'] = ':'.join(pyilmbase+[
+                os.environ['PYTHONPATH'] = ':'.join(top+[
                     # we need this to force maya to read its own python distribution files
                     # or else we see a error on os module were it can't find urandom!!
                     self.path('lib/python%s.zip:' % pythonVer.replace('.','')),

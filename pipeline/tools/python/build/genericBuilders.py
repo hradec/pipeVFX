@@ -29,6 +29,9 @@ from pipe.bcolors import bcolors
 from glob import glob
 
 
+def versionMajor(versionString):
+    return float('.'.join(versionString.split('.')[:2]))
+
 DB={}
 def spitDBout( target, source, env ):
     from pprint import pprint
@@ -550,6 +553,7 @@ class generic:
                         targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.zip',pythonDependency))
                     if '.rpm' in download[n][1]:
                         targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.rpm',pythonDependency))
+
                     installpath = os.path.join( self.installPath,  self.name, download[n][2] )
                     # print "%s/install.*.done" % installpath, glob( "%s/install.*.done" % installpath )
 
@@ -646,7 +650,7 @@ class generic:
                     self.env.Alias( 'build-%s' % name, t )
 
                     self.env.Depends( finish_command, t )
-                    self.env.Default( finish_command )
+                    self.env.Default( self.env.Alias( 'install', finish_command ) )
 
 
     def registerSconsBuilder(self, *args):
@@ -780,10 +784,6 @@ class generic:
         ''' the generic builder method, used by all classes
         it simple executes all commands specified by self.cmd list '''
 
-        # here we check if the last build was finished suscessfully
-        if not self.shouldBuild( target, source ):
-            return
-
         # put all CMD vars into a dict
         # filter only the ones that belong to this class type!
         v = {}
@@ -802,6 +802,10 @@ class generic:
 
         if cmdz:
             self.runCMD(' && '.join(cmdz), target, source, env)
+
+        # here we check if the last build was finished suscessfully
+        if not self.shouldBuild( target, source ):
+            return
 
         # if building for multiple python versions
         if len(str(target[0]).split('.python')) > 1:
@@ -854,6 +858,7 @@ class generic:
                                 # and set it
                                 self.dependOn[ dependOn ] = gcc_version[4][ dependOn ]
                                 # print  currVersion,dependOn.name,currVersion, pythonVersion, gcc_version[4][ dependOn ]
+
                     if 'python' in dependOn.name:
                         self.dependOn[ dependOn ] = pythonVersion
 
@@ -865,15 +870,15 @@ class generic:
 
         dependOnVersion = self.dependOn[dependOn]
         # grab dependency version from download list
-        for download in filter(lambda x: x[2] == currVersion, self.downloadList):
+        for download in self.downloadVersion(currVersion):
+            # print download
             if len(download)>4: # 5th element is a dependency list with version
                 if dependOn in download[4]:
                     dependOnVersion = download[4][dependOn]
 
-        # set version dependency to be the same as the current package version
-        # for openexr/ilmbase
-        for each in range(len(dependOn.downloadList)):
-            if dependOnVersion:
+        # find the index of the dependency download version and return it!
+        if dependOnVersion:
+            for each in range(len(dependOn.downloadList)):
                 if dependOn.downloadList[each][2] == dependOnVersion:
                     # we have the version specified in the download
                     # print "download version",dependOn.name,self.dependOn[dependOn], currVersion, dependOnVersion
@@ -923,6 +928,11 @@ class generic:
 
     def runCMD(self, cmd , target, source, env):
         ''' the main method to run system calls, like configure, make, cmake, etc  '''
+
+        # here we check if the last build was finished suscessfully
+        __shouldBuild__ =  self.shouldBuild( target, source )
+
+
         # for each in  source:
         #     print str(each)
         global buildCounter, _spinnerCount
@@ -1208,6 +1218,10 @@ class generic:
                     #         else:
                     #             os_environ[each] = cleanV
 
+
+        # here we check if the last build was finished suscessfully
+        if not __shouldBuild__:
+            return
 
         # fix PYTHON_VERSION_MAJOR based on PYTHON_VERSION
         # from dependent classes
@@ -2064,6 +2078,9 @@ class generic:
                     _print( "\n\nCouldn't find the uncompressed folder name from the list: %s\n\n" % str(self.kargs['uncompressed_path']) )
                 else:
                     _print( "\n\nMore than one match for path %s: %s\n\n" % (path, str(k)) )
+
+        # if hasattr(self, 'targetSuffix'):
+        #     path = os.path.join(path, self.targetSuffix)
         return path
 
 
@@ -2223,6 +2240,24 @@ class generic:
             f.close()
             ret.append('cat %s | patch -p1 ; echo %s' % (patchName, patchName))
         return ';'.join(ret)
+
+    def downloadVersion(self, v, compare = '=='):
+        ''' return the download array with just download packages for
+        the specified version.
+        if v is a string, it will return just one version matching the exact version in the strings.
+        if v is float, it will return all versions matching the versionMajor specified in the float.
+        compare is the logical operation to do between versionMajor and v. ex '==','>','<=', etc
+        '''
+        # print type(v), v, self.download
+        _download=[]
+        if type(v)==type(""):
+            _download = [ x for x in self.download if x[2] == v ]
+        elif type(v)==type(float):
+            _download = [ x for x in self.download if eval('versionMajor(x[2]) %s v' % compare) ]
+        else:
+            raise exception("Error returning the download (%s) for the version specied - %s" % (self.name,v))
+        return []+_download
+
 
 
 def pkg(download, pkg, version=None):

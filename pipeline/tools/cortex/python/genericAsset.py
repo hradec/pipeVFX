@@ -631,7 +631,7 @@ class maya( _genericAssetClass ) :
                 self.cache = {}
             except:
                 print "WARNING: No prman python module to set dynamic rules for shaders."
-                rlf2maya = rlf = None
+                self.rlf2maya = self.rlf = None
 
         def fromScene(self):
             if self.rlf2maya:

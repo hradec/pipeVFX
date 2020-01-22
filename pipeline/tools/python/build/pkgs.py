@@ -1079,24 +1079,27 @@ class all: # noqa
                 ARGUMENTS,
                 'pyilmbase',
                 targetSuffix=sufix,
+                sed={ '0.0.0' : { 'PyImath/PyImathFixedArray.h' : [
+                    ('return _indices;','return _indices!=NULL;')
+                ]}},
                 download=[(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.0.0.tar.gz',
                     'pyilmbase-2.0.0.tar.gz',
                     '2.0.0',
                     '4585eba94a82f0b0916445990a47d143',
-                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.0.0', openexr: '2.0.0', boost: boost_version }
+                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.0.0', self.openexr[sufix]: '2.0.0', boost: boost_version }
                 ),(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
                     'pyilmbase-2.1.0.tar.gz',
                     '2.1.0',
                     'af1115f4d759c574ce84efcde9845d29',
-                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.1.0', openexr: '2.1.0', boost: boost_version }
+                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.1.0', self.openexr[sufix]: '2.1.0', boost: boost_version }
                 ),(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
                     'pyilmbase-2.2.0.tar.gz',
                     '2.2.0',
                     'e84a6a4462f90b5e14d83d67253d8e5a',
-                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.2.0', openexr: '2.2.0', boost: boost_version }
+                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0', boost: boost_version }
                 # ),(
                 #     'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
                 #     'pyilmbase-2.3.0.tar.gz',
@@ -1105,10 +1108,12 @@ class all: # noqa
                 #     { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
                 )],
                 # baseLibs=[python],
-                depend=[openexr,boost,python,gcc, python],
+                depend=[python, gcc, python],
                 environ={
-                    'LD' : 'ld',
-                    'LDFLAGS' : '$LDFLAGS -L$TARGET_FOLDER/lib/ -Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ',
+                    'CFLAGS'    : ' -std=c++11 $CFLAGS ',
+                    'CXXFLAGS'  : ' -std=c++11 $CXXFLAGS ',
+                    'LD'        : 'ld',
+                    'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ',
                 },
                 cmd = [
                     'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
@@ -1283,7 +1288,7 @@ class all: # noqa
                 ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
-            exr_version = '2.0.0'
+            exr_version = '2.2.0'
             _download = []+download
             for n in range(len(_download)):
                 _download[n][4] = _download[n][4].copy()
@@ -1640,8 +1645,8 @@ class all: # noqa
                 '1.10.7',
                 '53f66e12c3e29c62dc51b070f027a0ad',
                 {llvm : "7.1.0", gcc: "4.8.5", boost: bv,
-                self.ilmbase['boost.%s' % bv]: '2.0.0',
-                self.openexr['boost.%s' % bv]: '2.0.0',
+                self.ilmbase['boost.%s' % bv]: exr_version,
+                self.openexr['boost.%s' % bv]: exr_version,
                 self.oiio   ['boost.%s' % bv]: "1.8.10", }
             # ),(
             #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.9.9.tar.gz',
@@ -1999,7 +2004,7 @@ class all: # noqa
             #     '7.0.0',
             #     'd409eecde96f89517bc271b1d4909bc5',
             #     { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
-            #     self.ilmbase['boost.1.61.0']: '2.2.0', self.openexr['boost.1.61.0']: '2.2.0', }
+            #     self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version, }
             # ),(
                 # CY 2019
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v6.0.0.tar.gz',
@@ -2007,7 +2012,7 @@ class all: # noqa
                 '6.0.0',
                 '43604208441b1f3625c479ef0a36d7ad',
                 { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
-                self.ilmbase['boost.1.61.0']: '2.2.0', self.openexr['boost.1.61.0']: '2.2.0', }
+                self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
             ),(
                 # CY 2018
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
@@ -2015,7 +2020,7 @@ class all: # noqa
                 '5.0.0',
                 '9ba08c29dda60ec625acb8a5928875e5',
                 { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
-                self.ilmbase['boost.1.61.0']: '2.2.0', self.openexr['boost.1.61.0']: '2.2.0', }
+                self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
             ),(
                 # CY 2017
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
@@ -2023,7 +2028,7 @@ class all: # noqa
                 '4.0.0',
                 'c56d8a1a460f1d3327f2568e3934ca6a',
                 { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
-                self.ilmbase['boost.1.61.0']: '2.2.0', self.openexr['boost.1.61.0']: '2.2.0', }
+                self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
             ),(
                 # CY 2015-2016
                 'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
@@ -2031,7 +2036,7 @@ class all: # noqa
                 '3.0.0',
                 '3ca8f930ddf759763088e265654f4084',
                 { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
-                self.ilmbase['boost.1.61.0']: '2.2.0', self.openexr['boost.1.61.0']: '2.2.0', }
+                self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version, self.pyilmbase['boost.1.61.0']: exr_version, }
             )],
             depend=allDepend+[glfw],
             src = "README.md",
@@ -2080,6 +2085,9 @@ class all: # noqa
                     ('/alembic-${VERSION}',' '),
                     ('.std.c..11',''),
                 ],
+                'build/AlembicBoost.cmake' : [
+                    ('SET. Boost_USE_STATIC_LIBS ', '#SET. Boost_USE_STATIC_LIBS '),
+                ]
             },'1.7.0' : {}
             },
             download=[(
@@ -2089,8 +2097,9 @@ class all: # noqa
                 '1.5.8',
                 'a70ba5f2e80b47d346d15d797c28731a',
                 {gcc: '4.1.2', boost: '1.51.0', hdf5: '1.8.11',
-                self.ilmbase['boost.1.51.0']: '2.0.0', self.openexr['boost.1.51.0']: '2.0.0',
-                self.pyilmbase['boost.1.55.0']: '2.0.0' },
+                self.ilmbase  ['boost.1.51.0']: exr_version,
+                self.openexr  ['boost.1.51.0']: exr_version,
+                self.pyilmbase['boost.1.51.0']: exr_version },
             ),(
                 # CY2017
                 'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
@@ -2098,8 +2107,9 @@ class all: # noqa
                 '1.6.1',
                 'e1f9f2cbe1899d3d55b58708b9307482',
                 {gcc: '4.8.5', boost: '1.55.0', hdf5: '1.8.11',
-                self.ilmbase['boost.1.55.0']: '2.0.0', self.openexr['boost.1.55.0']: '2.0.0',
-                self.pyilmbase['boost.1.55.0']: '2.0.0' },
+                self.ilmbase  ['boost.1.55.0']: exr_version,
+                self.openexr  ['boost.1.55.0']: exr_version,
+                self.pyilmbase['boost.1.55.0']: exr_version },
             ),(
                 # CY2018 - CY2020
                 'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
@@ -2107,8 +2117,9 @@ class all: # noqa
                 '1.7.11',
                 'e156568a8d8b48c4da4fe2496386243d',
                 {gcc: '4.8.5', boost: '1.61.0', hdf5: '1.8.11',
-                self.ilmbase['boost.1.61.0']: '2.0.0', self.openexr['boost.1.61.0']: '2.0.0',
-                self.pyilmbase['boost.1.61.0']: '2.0.0' },
+                self.ilmbase  ['boost.1.61.0']: exr_version,
+                self.openexr  ['boost.1.61.0']: exr_version,
+                self.pyilmbase['boost.1.61.0']: exr_version },
             ),(
                 # CY2018 - CY2020 (USD Version)
                 'https://github.com/alembic/alembic/archive/1.7.1.tar.gz',
@@ -2116,12 +2127,14 @@ class all: # noqa
                 '1.7.1',
                 'c8e2c8f951af09cfdacb2ca1fd5823a5',
                 {gcc: '4.8.5', boost: '1.61.0', hdf5: '1.8.11',
-                self.ilmbase['boost.1.61.0']: '2.0.0', self.openexr['boost.1.61.0']: '2.0.0',
-                self.pyilmbase['boost.1.61.0']: '2.0.0' },
+                self.ilmbase  ['boost.1.61.0']: exr_version,
+                self.openexr  ['boost.1.61.0']: exr_version,
+                self.pyilmbase['boost.1.61.0']: exr_version },
             )],
             # baseLibs=[python],
             depend=allDepend+[hdf5],
             environ = {
+                # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
                 'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib $LDFLAGS',
                 'LD_PRELOAD': ':'.join([
                     '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
@@ -2241,8 +2254,8 @@ class all: # noqa
             #     {gcc: '4.8.5', opensubdiv: '3.3.3', alembic: '1.6.1',
             #     hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
             #     boost: '1.55.0',
-            #     self.ilmbase['boost.1.55.0']: '2.0.0',
-            #     self.openexr['boost.1.55.0']: '2.0.0',
+            #     self.ilmbase['boost.1.55.0']: exr_version,
+            #     self.openexr['boost.1.55.0']: exr_version,
             #     self.oiio['boost.1.55.0']: '1.6.15' },
             # ),(
                 # this is the latest for now - nov/2019
@@ -2253,8 +2266,8 @@ class all: # noqa
                 {gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
                 cmake: '3.8.2', tbb: '4.4.6',
                 boost: '1.61.0',
-                self.ilmbase['boost.1.61.0']: '2.0.0',
-                self.openexr['boost.1.61.0']: '2.0.0',
+                self.ilmbase['boost.1.61.0']: exr_version,
+                self.openexr['boost.1.61.0']: exr_version,
                 self.oiio   ['boost.1.61.0']: '1.8.10'},
             )],
             # baseLibs=[python],
@@ -2439,8 +2452,8 @@ class all: # noqa
             #     { gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11',
             #     hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '5.6.1',
             #     self.boost: '1.61.0', embree: '3.6.1',
-            #     self.ilmbase['boost.1.61.0']: '2.0.0',
-            #     self.openexr['boost.1.61.0']: '2.0.0',
+            #     self.ilmbase['boost.1.61.0']: exr_version,
+            #     self.openexr['boost.1.61.0']: exr_version,
             #     self.oiio['boost.1.61.0']: '1.8.10' },
             # ),(
                 'https://github.com/appleseedhq/appleseed/archive/2.0.5-beta.tar.gz',
@@ -2450,8 +2463,8 @@ class all: # noqa
                 { gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11',
                 hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '4.8.7',
                 self.boost: '1.61.0', embree: '3.5.2',
-                self.ilmbase['boost.1.61.0']: '2.0.0',
-                self.openexr['boost.1.61.0']: '2.0.0',
+                self.ilmbase['boost.1.61.0']: exr_version,
+                self.openexr['boost.1.61.0']: exr_version,
                 self.oiio   ['boost.1.61.0']: '1.8.10' },
             )],
             depend=allDepend+[usd, seexpr, lz4, osl, xerces, python,  ocio],
