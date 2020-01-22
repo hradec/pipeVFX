@@ -160,7 +160,13 @@ else
         # need more testing on other distros/video board setups.
         # this mode only works if we run the docker container with --privileged!
         extra_libs1=$(ldconfig -p | grep libGL | grep -v GLU |  grep x86 | awk  '{print $NF}' | while read p ; do [ "$p" != "" ] && pp=$(readlink -f $p) && echo -v $pp:/lib64/$(basename $p):ro ; done)
-        extra_libs2=$(ldconfig -p | grep libnvidia | grep 440.36 | grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
+        if [ "$(which nvidia-smi 2>/dev/null)" != "" ] ; then
+            extra_libs2=$(ldconfig -p | grep libnvidia | grep $(nvidia-smi | grep SMI | awk '{print $6}') | grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
+            if [ -e /opt/cuda ] ; then
+                extra_libs3=$(ldconfig -p | grep cuda | grep -v opt | grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
+                extra_libs4=" -v /opt/cuda:/opt/cuda "
+            fi
+        fi
         X11=" $X11 $extra_libs1 $extra_libs2 $extra_libs3 $extra_libs4 "
         # X11=" $X11 --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket "
 
@@ -205,6 +211,6 @@ else
         --privileged \
         $build_image"
 
-    # echo $cmd
+    echo $cmd
     eval $cmd
 fi
