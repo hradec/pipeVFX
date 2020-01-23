@@ -21,8 +21,6 @@
 class redshift(baseApp):
     def environ(self):
         self['PYTHONPATH'] = self.path("redshift4maya/common/scripts")
-
-
         self['REDSHIFT_COREDATAPATH'] = self.path()
         self['REDSHIFT_PLUG_IN_PATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/$MAYA_VERSION'
         self['REDSHIFT_SCRIPT_PATH'] = '$REDSHIFT_COREDATAPATH/redshift4maya/common/scripts'
@@ -68,5 +66,18 @@ class redshift(baseApp):
         ]
         return ret
 
-    # def license(self):
-    #     self['redshift_LICENSE'] = os.environ['PIPE_REDSHIFT_LICENSE']
+    def run(self, app):
+        import os, sys, glob
+
+
+        if 'redshiftLicensingTool' in app:
+            #proxy for redshift licenseManager
+            self['http_proxy'] = 'http://192.168.0.17:8001'
+
+        baseApp.run( self, app )
+
+    def license(self):
+        # self['redshift_LICENSE'] = os.environ['PIPE_REDSHIFT_LICENSE']
+        # this damn thing needs internet!!
+        self['http_proxy'] = 'http://192.168.0.17:8001'
+        self['https_proxy'] = 'http://192.168.0.17:8001'
