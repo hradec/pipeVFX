@@ -77,7 +77,10 @@ class redshift(baseApp):
         baseApp.run( self, app )
 
     def license(self):
+        # setup for floating licenses - no internet needed!!
         # self['redshift_LICENSE'] = os.environ['PIPE_REDSHIFT_LICENSE']
-        # this damn thing needs internet!!
-        self['http_proxy'] = 'http://192.168.0.17:8001'
-        self['https_proxy'] = 'http://192.168.0.17:8001'
+        # self['RLM_LICENSE_PASSWORD'] = '1'
+
+        # locked node license - this damn thing needs internet to run in locked node!!
+        self['http_proxy']  = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
+        self['https_proxy'] = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
