@@ -60,7 +60,7 @@ class all: # noqa
 
         # we start by uncompressing a binary tarball of gcc 4.1.2, to use
         # as cold start compiler to build other gcc's
-        gcc = build.gccBuild(
+        gcc_4_1_2 = build.gccBuild(
                 ARGUMENTS,
                 'gcc',
                 targetSuffix = "pre",
@@ -87,7 +87,7 @@ class all: # noqa
                 noMinTime=True,
                 dontUseTargetSuffixForFolders = 1,
         )
-        self.gcc_4_1_2 = gcc
+        self.gcc_4_1_2 = gcc_4_1_2
 
         # zlib = build.configure(
         #     ARGUMENTS,
@@ -361,7 +361,7 @@ class all: # noqa
             parallel = 0,
         )
         self.openssl = openssl
-        allDepend += [openssl]
+        # allDepend += [openssl]
 
         python = build.python(
             ARGUMENTS,
@@ -511,8 +511,11 @@ class all: # noqa
                     ('/* If running inside emacs the terminal is not VT100.  Some emacs','return 1;'),
                 ],
             }},
-            depend=[gcc, openssl]+allDepend,
-        )
+            depend=[gcc]+allDepend,
+            environ={
+                'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,/usr/lib64/ -Wl,-rpath,/usr/lib64/",
+                'LD'      : 'ld',
+            },        )
         self.cmake = cmake
         allDepend += [cmake]
 
@@ -974,6 +977,7 @@ class all: # noqa
         self.ilmbase = {}
         self.pyilmbase = {}
         for boost_version in self.boost.versions:
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
             sufix = "boost.%s" % boost_version
             ilmbase = build.configure(
                 ARGUMENTS,
@@ -1020,6 +1024,7 @@ class all: # noqa
             self.ilmbase[sufix] = ilmbase
 
         for boost_version in self.boost.versions:
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
             sufix = "boost.%s" % boost_version
             openexr = build.configure(
                 ARGUMENTS,
@@ -1074,6 +1079,7 @@ class all: # noqa
             self.openexr[sufix] = openexr
 
         for boost_version in self.boost.versions:
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
             sufix = "boost.%s" % boost_version
             pyilmbase = build.configure(
                 ARGUMENTS,
@@ -1251,9 +1257,73 @@ class all: # noqa
 
         # =============================================================================================================================================
         # build one OIIO version for each boost version.
+        exr_version = '2.2.0'
         self.oiio = {}
+        self.field3d = {}
         for boost_version in self.boost.versions:
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
             sufix = "boost.%s" % boost_version
+
+            # build flags used to build OIIO and field3d
+            environ = {
+                'LDFLAGS' : ' $LDFLAGS -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join([
+                    '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+                    '$TIFF_TARGET_FOLDER/lib/',
+                    '$JPEG_TARGET_FOLDER/lib/',
+                    '$LIBPNG_TARGET_FOLDER/lib/',
+                    '$LIBRAW_TARGET_FOLDER/lib/',
+                    '$OPENEXR_TARGET_FOLDER/lib',
+                    '$ILMBASE_TARGET_FOLDER/lib',
+                    '$HDF5_TARGET_FOLDER/lib',
+                ])
+                +' -Wl,-rpath,'+' -Wl,-rpath,'.join([
+                    '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+                    '$TIFF_TARGET_FOLDER/lib/',
+                    '$JPEG_TARGET_FOLDER/lib/',
+                    '$LIBPNG_TARGET_FOLDER/lib/',
+                    '$LIBRAW_TARGET_FOLDER/lib/',
+                    '$OPENEXR_TARGET_FOLDER/lib',
+                    '$ILMBASE_TARGET_FOLDER/lib',
+                    '$HDF5_TARGET_FOLDER/lib',
+                ]),
+                # we need this to build with exr version below 2.2.0
+                'CPLUS_INCLUDE_PATH' : ':'.join([
+                    '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
+                    '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                    '$CPLUS_INCLUDE_PATH'
+                ]),
+                'C_INCLUDE_PATH' : ':'.join([
+                    '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
+                    '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                    '$CPLUS_INCLUDE_PATH'
+                ]),
+            }
+
+            # build sony field3d used by oiio 2.x
+            field3d_dependency_versions = {
+                hdf5 : '1.8.11',
+                boost : boost_version,
+                gcc: gcc_version,
+                self.ilmbase  [sufix] : exr_version,
+                self.pyilmbase[sufix] : exr_version,
+                self.openexr  [sufix] : exr_version,
+            }
+            field3d = build.cmake(
+                ARGUMENTS,
+                'field3d',
+                targetSuffix=sufix,
+                download=[(
+                    'https://github.com/imageworks/Field3D/archive/v1.7.2.tar.gz',
+                    'Field3D-1.7.2.tar.gz',
+                    '1.7.2',
+                    '61660c2400213ca9adbb3e17782cccfb',
+                    field3d_dependency_versions,
+                )],
+                depend   = [boost,ilmbase,hdf5,icu]+allDepend,
+                environ = environ,
+            )
+            self.field3d[sufix] = field3d
+
 
             # here we select the versions of OIIO to build for each boost.
             # not all versions build against all boost versions.
@@ -1279,7 +1349,9 @@ class all: # noqa
                         '1.8.10',
                         'a129a4caa39d7ad79aa1a3dc60cb0418',
                         { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16',}
-                    ],[
+                ]]
+            if build.versionMajor(boost_version) > 1.51:
+                download += [[
                         'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                         'oiio-Release-2.0.11.tar.gz',
                         '2.0.11',
@@ -1288,13 +1360,19 @@ class all: # noqa
                 ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
-            exr_version = '2.2.0'
+            # we also need to set the current boost version to all versions since we're building
+            # one for each boost.
             _download = []+download
             for n in range(len(_download)):
+
                 _download[n][4] = _download[n][4].copy()
-                _download[n][4][ self.ilmbase  ['boost.%s' % boost_version] ] = exr_version
-                _download[n][4][ self.pyilmbase['boost.%s' % boost_version] ] = exr_version
-                _download[n][4][ self.openexr  ['boost.%s' % boost_version] ] = exr_version
+                _download[n][4][ boost ] = boost_version
+                _download[n][4][ gcc ] = gcc_version
+                _download[n][4][ self.ilmbase  [sufix] ] = exr_version
+                _download[n][4][ self.pyilmbase[sufix] ] = exr_version
+                _download[n][4][ self.openexr  [sufix] ] = exr_version
+                _download[n][4][ self.field3d  [sufix] ] = '1.7.2'
+
 
             oiio = build.cmake(
                 ARGUMENTS,
@@ -1318,7 +1396,7 @@ class all: # noqa
                     },
                 },
                 download = _download,
-                depend=[ocio, python, boost, freetype, gcc, icu, cmake, openssl, bzip2, libraw, libpng]+allDepend,
+                depend=[ocio, python, boost, freetype, gcc, icu, cmake, openssl, bzip2, libraw, libpng, tbb]+allDepend,
                 cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
                 flags = [
                     '-DUSE_PYTHON=0',
@@ -1333,29 +1411,7 @@ class all: # noqa
                         '$LIBTIFF_TARGET_FOLDER',
                     ])
                 ]+build.cmake.flags,
-                environ = {
-                    'LDFLAGS' : ' $LDFLAGS -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join([
-                        '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-                        '$TIFF_TARGET_FOLDER/lib/',
-                        '$JPEG_TARGET_FOLDER/lib/',
-                        '$LIBPNG_TARGET_FOLDER/lib/',
-                        '$LIBRAW_TARGET_FOLDER/lib/',
-                        '$OPENEXR_TARGET_FOLDER/lib',
-                        '$ILMBASE_TARGET_FOLDER/lib',
-                    ])
-                    +' -Wl,-rpath,'+' -Wl,-rpath,'.join([
-                        '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-                        '$TIFF_TARGET_FOLDER/lib/',
-                        '$JPEG_TARGET_FOLDER/lib/',
-                        '$LIBPNG_TARGET_FOLDER/lib/',
-                        '$LIBRAW_TARGET_FOLDER/lib/',
-                        '$OPENEXR_TARGET_FOLDER/lib',
-                        '$ILMBASE_TARGET_FOLDER/lib',
-                    ]),
-                    # we need this to build with exr version below 2.2.0
-                    'CPLUS_INCLUDE_PATH' : '$OPENEXR_TARGET_FOLDER/include/OpenEXR/:$CPLUS_INCLUDE_PATH',
-                    'C_INCLUDE_PATH' : '$OPENEXR_TARGET_FOLDER/include/OpenEXR/:$C_INCLUDE_PATH',
-                }
+                environ = environ,
             )
             self.oiio[sufix] = oiio
 
@@ -2407,10 +2463,10 @@ class all: # noqa
             ARGUMENTS,
             'xerces',
             download=[(
-                'https://github.com/apache/xerces-c/archive/Xerces-C_3_2_2.tar.gz',
-                'xerces-c-Xerces-C_3_2_2.tar.gz',
+                'https://github.com/apache/xerces-c/archive/v3.2.2.tar.gz',
+                'xerces-c-3.2.2.tar.gz',
                 '3.2.2',
-                'a740c381ebcd9c4079a749433c55a1a6',
+                'bd91a5583212e77035a5d524eda17555',
                 { gcc: '4.8.5', cmake: '3.9.0', tbb: '4.4.6',
                 qt: '5.6.1', boost: '1.61.0', },
             )],
