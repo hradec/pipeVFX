@@ -315,8 +315,12 @@ class openssl(configure):
     cmd=[
         # './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$INSTALL_FOLDER',
         # 'make depend && make && make install',
+        # setup version list needed in the library!
         '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.$3}') { global: *;};" | tee ./openssl.ld''',
         '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.0}') { global: *;};" | tee -a ./openssl.ld''',
+        '''echo "OPENSSL_1.0.1 { global: *;};" | tee -a ./openssl.ld''',
+        '''echo "OPENSSL_1.0.1_EC { global: *;};" | tee -a ./openssl.ld''',
+        '''echo "libcrypto.so.10 { global: *;};" | tee -a ./openssl.ld''',
         './config shared enable-tlsext --prefix=$INSTALL_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
         'make -j $DCORES && make install -j $DCORES' ,
     ]
