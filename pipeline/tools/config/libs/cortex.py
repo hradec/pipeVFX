@@ -113,7 +113,7 @@ class cortex(baseLib):
 
         # configure nuke
         if parent == 'nuke':
-            nuke.addon( self,
+            pipe.apps.nuke.addon( self,
                 nukepath = self.path('nuke/$NUKE_VERSION/plugins'),
                 lib = [
                     self.path('nuke/$NUKE_VERSION/lib/python$PYTHON_VERSION_MAJOR'),
