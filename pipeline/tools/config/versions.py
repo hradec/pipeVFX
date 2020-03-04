@@ -38,7 +38,7 @@ pipe.version.set( delight   = '11.0.12' )
 pipe.version.set( mari      = '2.0v1' )
 pipe.version.set( xpra      = '0.15.svn9672' )
 pipe.version.set( arnold    = '5.1.0.1' )
-pipe.version.set( realflow  = '10.1' )
+pipe.version.set( realflow  = '10.5.3.0189' )
 pipe.version.set( prman     = '22.6' )
 pipe.version.set( unreal    = '4.22.0.opengl' )
 
