@@ -310,14 +310,15 @@ class maya(baseApp):
                 icon = map( lambda x: x+"/%B", icon )
             else:
                 icon = icon+"/%B"
-        caller['MAYA_PLUG_IN_PATH']     = plugin
-        caller['MAYA_SCRIPT_PATH']      = script
-        caller['XBMLANGPATH']           = icon
-        caller['MAYA_RENDER_DESC_PATH'] = renderDesc
-        caller['LD_LIBRARY_PATH']       = lib
-        caller['MAYA_PRESET_PATH']      = preset
-        caller['MAYA_MODULE_PATH']      = module
-        caller['MAYA_SHELF_PATH']       = shelves
+        caller['MAYA_PLUG_IN_PATH']         = plugin
+        caller['MAYA_SCRIPT_PATH']          = script
+        caller['PYTHONPATH']                = script
+        caller['XBMLANGPATH']               = icon
+        caller['MAYA_RENDER_DESC_PATH']     = renderDesc
+        caller['LD_LIBRARY_PATH']           = lib
+        caller['MAYA_PRESET_PATH']          = preset
+        caller['MAYA_MODULE_PATH']          = module
+        caller['MAYA_SHELF_PATH']           = shelves
         caller['MAYA_CUSTOM_TEMPLATE_PATH'] = templates
 
 
