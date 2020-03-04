@@ -32,8 +32,10 @@ while getopts hdsbpe: option ; do
         b) BUILD=1;;
         p) PKGS=1;;
         e) EXTRA="${OPTARG}";;
+        # v) EXTRA_VARS="${OPTARG}";;
     esac
 done
+
 
 
 if [ "$HELP" != "" ] ; then
@@ -41,6 +43,7 @@ if [ "$HELP" != "" ] ; then
     echo -e "\t-h   : show this help"
     echo -e "\t-d   : run the build in debug mode (show the build log)"
     echo -e "\t-e   : add extra attributes which will be passed to scons"
+    echo -e "\t-v   : add extra environment variable which will be passed to the docker container that runs scons"
     echo -e "\t-s   : run a interactive shell in the docker build container"
     echo -e "\t-b   : build and upload the docker image"
     echo ''
@@ -52,6 +55,12 @@ else
     fi
     if [ -e /atomo/jobs ] ; then
         APPS_MOUNT=" $APPS_MOUNT -v /atomo/jobs:/atomo/jobs "
+    fi
+
+    if [ "$EXTRA_VARS" != "" ] ; then
+        for e in $EXTRA_VARS ; do
+            EXTRA_ENVS=" $EXTRA_ENVS -e $e "
+        done
     fi
 
     latest_tag=$(echo $base_image | awk -F':' '{print $1}'):$(
@@ -205,6 +214,7 @@ else
         -e TRAVIS=\"$TRAVIS\" \
         -e http_proxy=\"$http_proxy\" \
         -e https_proxy=\"$https_proxy\" \
+        $EXTRA_ENVS \
         -e MEMGB=\"$(grep MemTotal /proc/meminfo | awk '{print $(NF-1)}')\" \
         $X11 \
         --network=host \
