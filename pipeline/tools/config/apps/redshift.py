@@ -72,7 +72,7 @@ class redshift(baseApp):
 
         if 'redshiftLicensingTool' in app:
             #proxy for redshift licenseManager
-            self['http_proxy'] = 'http://192.168.0.17:8001'
+            self['http_proxy'] = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
 
         baseApp.run( self, app )
 
