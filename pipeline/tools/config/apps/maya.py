@@ -203,10 +203,10 @@ class maya(baseApp):
 </AdlmSettings>\n''' % mv )
             Adlm.close()
 
+        pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
         if self.parent() in ['maya','arnold']:
             # or else we see a error on os module were it can't find urandom!!
             # we need this to force maya to read its own python distribution files
-            pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
 
             self.insert('PYTHONPATH',0, self.path('support/python/2.7.11/'))
             self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
@@ -271,6 +271,7 @@ class maya(baseApp):
 
         pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
         self.insert('LD_LIBRARY_PATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
+        self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer))
         cmd = app.split(' ')
 
         if 'Render' not in app and 'mayapy' not in app and os.path.exists(m):
