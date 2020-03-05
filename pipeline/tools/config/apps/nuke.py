@@ -77,6 +77,7 @@ class nuke(baseApp):
             self.update( genarts_monsters_gt_ofx() )
 
         self.update( keentools() )
+        self.update( neat() )
 
 
         # rvNuke plugin needs this to find rv wrapper!

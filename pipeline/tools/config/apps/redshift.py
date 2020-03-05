@@ -56,6 +56,9 @@ class redshift(baseApp):
             templates = self.path('redshift4maya/common/scripts/NETemplates'),
         )
 
+        # add ranch renderfarm to redshift setup!
+        self.update( ranch() )
+
 
 
     def bins(self):
