@@ -87,6 +87,8 @@ from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, 
 
 
 def versionMajor(versionString):
+    if not versionString:
+        return 0.0
     return float('.'.join(versionString.split('.')[:2]))
 
 def findLibrary(libname):
