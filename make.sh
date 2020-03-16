@@ -46,6 +46,7 @@ if [ "$HELP" != "" ] ; then
     echo -e "\t-v   : add extra environment variable which will be passed to the docker container that runs scons"
     echo -e "\t-s   : run a interactive shell in the docker build container"
     echo -e "\t-b   : build and upload the docker image"
+    echo -e "\t-p   : build the package cache image and upload to docker hub"
     echo ''
 else
     # use real apps folder if we have one!
