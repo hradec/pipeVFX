@@ -166,7 +166,7 @@ class job(baseFarmJobClass):
         return self._renderNodeOperation(name, 'delete')
 
     def _renderEjectAll(self, name=''):
-        ''' delete a render node '''
+        ''' eject all tasks in a render node '''
         return self._renderNodeOperation(name, 'eject_tasks')
 
 
@@ -244,6 +244,10 @@ class job(baseFarmJobClass):
                 # print( json )
                 self._runJSON(json)
 #{"action":{"user_name":"coord","host_name":"pc","type":"renders","ids":[21],"params":{"capacity":1200}}}
+#{"action":{"user_name":"coord","host_name":"pc","type":"renders","ids":[8],"params":{"NIMBY":true}}}
+
+    def _renderNodeNIMBY(self, name, bool=''):
+        self._renderNodeSetParameter(name, 'NIMBY', bool)
 
     def _renderNodeDelete(self, name):
         #{"action":{"user_name":"coord","host_name":"pc","type":"renders","ids":[29],"operation":{"type":"delete"}}}
