@@ -32,14 +32,14 @@ os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
 pipe.version.set( maya      = '2018' )
 # pipe.version.set( maya      = '2016.5' )
-pipe.version.set( nuke      = '12.0v4' )
-pipe.version.set( houdini   = 'hfs16.0.557' )
+pipe.version.set( nuke      = '12.1v1' )
+pipe.version.set( houdini   = 'hfs17.5.173' )
 pipe.version.set( delight   = '11.0.12' )
 pipe.version.set( mari      = '2.0v1' )
 pipe.version.set( xpra      = '0.15.svn9672' )
 pipe.version.set( arnold    = '5.1.0.1' )
 pipe.version.set( realflow  = '10.5.3.0189' )
-pipe.version.set( prman     = '23.0' )
+pipe.version.set( prman     = '23.2' )
 pipe.version.set( unreal    = '4.22.0.opengl' )
 
 
