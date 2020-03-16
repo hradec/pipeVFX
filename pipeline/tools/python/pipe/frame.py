@@ -193,7 +193,7 @@ def publish(frames, assetPath):
                             basename = p.split('/')[-1]
 
                 # publish the file!!
-                target = "%s%s" % (imagePath, basename)
+                target = "%s%s" % (imagePath, basename.lstrip('_'))
                 published_images[ basename ] = target
                 print( "\n@IMAGE!@\"%s\"" % target )
                 print( "\n@IMAGE@\"%s\""  % target )
