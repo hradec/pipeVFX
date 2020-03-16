@@ -47,8 +47,9 @@ if [ "$RUN_SHELL" == "1" ] ; then
 else
     env | egrep 'http|TRAVIS'
     # if we have more than 30GB on the machine, use tmpfs (ramdisk)
-    # as the .build folder to speed up the build!
-    if [ $(( $MEMGB / 1024 / 1024 )) -gt 28 ] ; then
+    # as the .build folder to speed up the build! (and if not running in parallel)
+    if [ $(( $MEMGB / 1024 / 1024 )) -gt 28 ] && [ "$(echo $EXTRA | grep '\-j ')" == "" ] ; then
+        echo "Building in ramdisk!!! $EXTRA"
         mount -t tmpfs tmpfs /atomo/pipeline/build/.build
     fi
 
