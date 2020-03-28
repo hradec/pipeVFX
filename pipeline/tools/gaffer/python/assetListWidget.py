@@ -47,6 +47,18 @@ if assetUtils.m:
 
 import bundleListWidget
 
+# add a custom folder to search path, so we can add custom functionality
+tools = [ '%s/config/assets/' % x for x in pipe.apps.gaffer().toolsPaths() ]
+tools.reverse()
+for tool in tools:
+    sys.path.insert(0,tool)
+try:
+    import custom
+    reload(custom)
+except:
+    class custom:
+        pass
+
 # import GafferSceneUI # for alembic previews
 # import GafferCortexUI # for alembic previews
 # import GafferCortex
@@ -583,8 +595,12 @@ class assetListWidget( GafferUI.EditorWidget ):
                     menuDefinition.append( "/publish new asset of type %s" % t.replace('/','_'), { "command" : IECore.curry(createNewAsset, selectedPaths, t) } )
 
 
+
         menuDefinition.append( "/ " , { } )
         menuDefinition.append( "/update all assets", { "command" :  IECore.curry( self.updateAllAssetsInScene) } )
+
+        if hasattr( custom, 'assetListRightClickMenu' ):
+            menuDefinition = custom.assetListRightClickMenu( self, pathListing, menuDefinition )
 
     	self.__menu = GafferUI.Menu( menuDefinition )
     	if len( menuDefinition.items() ) :
