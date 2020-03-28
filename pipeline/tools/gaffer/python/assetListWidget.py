@@ -51,13 +51,16 @@ import bundleListWidget
 tools = [ '%s/config/assets/' % x for x in pipe.apps.gaffer().toolsPaths() ]
 tools.reverse()
 for tool in tools:
-    sys.path.insert(0,tool)
+    if tool not in sys.path:
+        sys.path.insert(0,tool)
+
 try:
     import custom
     reload(custom)
 except:
     class custom:
         pass
+
 
 # import GafferSceneUI # for alembic previews
 # import GafferCortexUI # for alembic previews
@@ -596,11 +599,13 @@ class assetListWidget( GafferUI.EditorWidget ):
 
 
 
-        menuDefinition.append( "/ " , { } )
-        menuDefinition.append( "/update all assets", { "command" :  IECore.curry( self.updateAllAssetsInScene) } )
 
         if hasattr( custom, 'assetListRightClickMenu' ):
             menuDefinition = custom.assetListRightClickMenu( self, pathListing, menuDefinition )
+
+
+        menuDefinition.append( "/     " , { } )
+        menuDefinition.append( "/update all assets", { "command" :  IECore.curry( self.updateAllAssetsInScene) } )
 
     	self.__menu = GafferUI.Menu( menuDefinition )
     	if len( menuDefinition.items() ) :
