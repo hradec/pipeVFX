@@ -25,17 +25,17 @@ import genericAsset
 reload(genericAsset)
 
 class alembic( genericAsset.alembic ) :
-    _color = IECore.Color3f( 0.0, 0.35, 0.65 ) 
+    _color = IECore.Color3f( 0.0, 0.35, 0.65 )
     def __init__( self ) :
         genericAsset.alembic.__init__(self, 'alembic' ,nameGroup='Mesh', animation=False)
         self.setSubDivMeshesMask(None)
-        # self.setImportAsGPU(True)
 
     def doImportMaya(self, filename, nodeName ):
         if genericAsset.m:
             # cleanup shading leftovers
             genericAsset.maya.cleanUnusedShadingNodes()
 
+        # self.setImportAsGPU(True)
         return genericAsset.alembic.doImportMaya(self, filename, nodeName )
 
 IECore.registerRunTimeTyped( alembic )
