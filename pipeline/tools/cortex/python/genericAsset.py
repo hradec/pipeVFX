@@ -577,9 +577,34 @@ class _genericAssetClass( IECore.Op ) :
             if not canPublish:
                 raise Exception("Can't import asset when running from shell!!")
 
+            self.fixRIGMeshCTRLS()
+
             updateCurrentLoadedAssets()
 
             pop(stack)
+
+    @staticmethod
+    def fixRIGMeshCTRLS(grp='|CTRLS|'):
+        if m:
+            attrs=[
+                'castsShadows',
+                'receiveShadows',
+                'holdOut',
+                'motionBlur',
+                'primaryVisibility',
+                'smoothShading',
+                'visibleInReflections',
+                'visibleInRefractions',
+                'doubleSided',
+                'opposite',
+            ]
+            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x ]:
+                for a in attrs:
+                    m.setAttr( '%s.%s' % (n,a), 0 )
+
+            # for node in m.ls(geometry=1,l=1):
+            #     if grp in node:
+            #         m.delete(node)
 
 
 
@@ -661,16 +686,18 @@ class maya( _genericAssetClass ) :
                 return p
 
         def addRule(self, name, sg, node=''):
-            if name and name in self.cache.keys():
-                if sg != self.cache[name]:
-                    if not node:
-                        node=name
-                    print self.cache.keys()
-                    raise Exception("ERROR: there are 2 shape nodes named %s(sg:%s) and %s(sg:%s) with different shadingGroups! Please rename one!!" % (node, sg, name, self.cache[name]))
-                else:
-                    return
             if self.rlf2maya:
-                self.cache[name] = sg
+                if name and name in self.cache.keys():
+                    if sg != self.cache[name]:
+                        print self.cache.keys()
+                        raise Exception("ERROR: there are 2 shape nodes named \n%s(sg:%s)\n and \n%s(sg:%s) \nwith different shadingGroups! Please rename one!!" % (node, sg, name, self.cache[name]))
+                    else:
+                        return
+
+                if not node:
+                    node=name
+
+                self.cache[node] = sg
                 r=self.rlf.RLFRule()
                 p=self.payload(sg)
                 if p:
@@ -699,8 +726,8 @@ class maya( _genericAssetClass ) :
 
     @staticmethod
     def node2rule(nodeName):
-        if 'SAM_' in nodeName:
-            return ''
+        # if 'SAM_' in nodeName:
+        #     return ''
         #*[starts-with(name(),'paperclip')]
         print nodeName
         paths = []
@@ -774,7 +801,11 @@ class maya( _genericAssetClass ) :
         # remove duplicates
         nodes = list(set(nodes+extra))
         for shader in nodes:
-            # pb.step()
+            # ignore geo that shouldn't be exported
+            if '|CTRLS|' in shader:
+                continue
+            if 'Orig' in shader[-8:]:
+                continue
 
             # atach to nodes matching naming map
             n = m.ls(shader, dag=1, visible=1, ni=1, l=1, type='shape')
@@ -1091,6 +1122,14 @@ class alembic(  _genericAssetClass ) :
         self.setSubDivMeshesMask(None)
         self.__setImportAsGPU = False
 
+    @staticmethod
+    def fixRIGMeshCTRLS(grp='|CTRLS|'):
+        _genericAssetClass.fixRIGMeshCTRLS(grp)
+        # we delete whatever is in the RibControl group, since alembic doesn't need it!
+        if m:
+            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x ]:
+                m.delete(n)
+
     def meshOnly(self):
         # publish renderable geo only, with UV map
         self.setAbcExtra( '-renderableOnly -uvWrite -writeUVSets' )
@@ -1401,9 +1440,11 @@ class alembic(  _genericAssetClass ) :
         pb.close()
 
 
-    def doImportMaya(self, filename, nodeName ):
+    def doImportMaya(self, filename, nodeName, gpucache=False ):
         if m:
-            node = alembic.importAlembic( filename, nodeName, self.__setImportAsGPU, self.data )
+            print self.__setImportAsGPU
+            print gpucache
+            node = alembic.importAlembic( filename, nodeName, self.__setImportAsGPU or gpucache, self.data )
 
             if 'shadingMap' in self.data:
                 m.addAttr( node, ln="SAM_SHADINGMAP", dt="string" )
