@@ -35,7 +35,6 @@ class realflow(baseApp):
 
         self['MAXWELL4_ROOT'] = self.path('maxwell')
 
-
     def bins(self):
         ret = [('realflow', 'realflow.bin')]
         if not os.path.exists( self.path('bin/realflow.bin') ) :
@@ -56,6 +55,9 @@ class realflow(baseApp):
         self['nextlimit_LICENSE']=os.environ['PIPE_REALFLOW_LICENSE']
         self['NL_LICENSE_MANAGER_ADDRESS']=os.environ['PIPE_REALFLOW_LICENSE'].split('@')[-1]
 
+        # need this to use eval!
+        self['http_proxy']  = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
+        self['https_proxy'] = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
 
     def userSetup(self, jobuser):
         self['RFSCENESPATH'] = jobuser.path('realflow/')

@@ -135,7 +135,10 @@ for boost_version in pkgs.boost.versions:
                 build.cortex.cmd[0]+"installLib",
                 build.cortex.cmd[0]+"installCore",
                 build.cortex.cmd[0]+extraInstall+"installGL installStubs",
-            ]
+            ],
+            environ = {
+                'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+            },
         )
 
         # ===========================================================================================
@@ -177,6 +180,9 @@ for boost_version in pkgs.boost.versions:
                     patch = devPatch,
                     dontUseTargetSuffixForFolders = 1,
                     cmd = [build.cortex.cmd[0]+"installAlembic"],
+                    environ = {
+                        'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+                    },
                     # environ = { 'LD' : 'ld' },
                 )
 
@@ -215,6 +221,9 @@ for boost_version in pkgs.boost.versions:
                     patch = devPatch,
                     dontUseTargetSuffixForFolders = 1,
                     cmd = [build.cortex.cmd[0]+"installUSD"],
+                    environ = {
+                        'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+                    },
                     # environ = { 'LD' : 'ld' },
                 )
 
@@ -255,7 +264,10 @@ for boost_version in pkgs.boost.versions:
                     dontUseTargetSuffixForFolders = 1,
                     cmd = [
                         build.cortex.cmd[0]+"installVDB",
-                    ]
+                    ],
+                    environ = {
+                        'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+                    },
                 )
 
         # ===========================================================================================
@@ -299,7 +311,10 @@ for boost_version in pkgs.boost.versions:
                     dontUseTargetSuffixForFolders = 1,
                     cmd = [
                         build.cortex.cmd[0]+"installAppleseed",
-                    ]
+                    ],
+                    environ = {
+                        'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+                    },
                 )
 
 
@@ -400,8 +415,10 @@ def buildGaffer(apps=[], boost='1.61.0', __download__=None):
             'LD_PRELOAD': ':'.join([
                 '/lib64/libexpat.so.1',
             ]),
+            'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+            'DCORES' : '1',
             # 'LD' : 'ld'
-        }
+        },
     )
 # build gaffer without any app support first!
 gaffer = buildGaffer()
@@ -548,6 +565,7 @@ if canBuildCortexNow:
                 'MAYA_EXECUTABLE' : pipe.apps.maya().path('bin/maya.bin'),
                 'MAYA_LOCATION' : pipe.apps.maya().path(),
                 'MAYA_ROOT' : pipe.apps.maya().path(),
+                'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
             })
             pkgs.maya_usd.update({ targetSuffix : build.cmake(
                 ARGUMENTS,
@@ -596,6 +614,7 @@ if canBuildCortexNow:
                 maya_environ.update({
                     'CFLAGS'    : ' -std=c++11 $CFLAGS ',
                     'CXXFLAGS'  : ' -DALEMBIC_LIB_USES_BOOST=1 -std=c++11 $CXXFLAGS ',
+                    'LDFLAGS'   : '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
                     # 'LDFLAGS'   : ' $LDFLAGS -lpthread'
                 })
                 # _download = []+[ x for x in pkgs.alembic.download if x[2] == alembic_version ]
@@ -613,7 +632,7 @@ if canBuildCortexNow:
                     sed = pkgs.alembic.sed,
                     baseLibs = pkgs.alembic.baseLibs,
                     download = _download,
-                    depend = pkgs.alembic.depend,
+                    depend = pkgs.alembic.depend + [pkgs.openssl],
                     cmd = pkgs.alembic.cmd,
                     apps = [ (pipe.apps.maya, str(version)) ],
                     environ = maya_environ,
@@ -732,7 +751,10 @@ if canBuildCortexNow:
             apps = [ (pipe.apps.maya, str(version)) ],
             cmd = [
                 build.cortex.cmd[0]+"install installMaya",
-            ]
+            ],
+            environ = {
+                'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+            },
         )
 
     # ===========================================================================================
@@ -787,7 +809,10 @@ if canBuildCortexNow:
             apps = [( pipe.apps.prman, version )],
             cmd = [
                 build.cortex.cmd[0]+"installRI",
-            ]
+            ],
+            environ = {
+                'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+            },
         )
 
     # ===========================================================================================

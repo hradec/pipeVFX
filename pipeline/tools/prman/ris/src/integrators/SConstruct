@@ -1,11 +1,7 @@
-import pipe, os
+import pipe, os, glob
 
 
-src = [
-    'AtomoAOV.cpp',
-    'AtomoOcc.cpp',
-#    'AtomoOcclusion.cpp',
-]
+src = glob.glob( "*.cpp")
 
 def versionSort(versions):
     def method(v):
@@ -18,16 +14,17 @@ def versionSort(versions):
 prman = pipe.apps.prman()
 
 for pv in versionSort(prman.versionList()):
-  ipv = int(pv.split('.')[0])
-  if ipv > 20 and ipv < 22:
+  ipv = float('.'.join(pv.split('.')[:2]))
+  if ipv == 21.7: # > 20 and ipv < 22:
     env = Environment()
     pipe.apps.version.set(prman = pv)
 
     env['SHLIBPREFIX']  = ''
     env['CC']           = 'g++'
-    env['LD']           = '$(CC) -shared'
-    env['CCFLAGS']      = '-Wno-deprecated -fPIC -I%s' % pipe.apps.prman().path('RenderManProServer-%s/include' % pv)
-    env['CCFLAGS']     += ' -I%s' % pipe.apps.prman().path('RenderManProServer-%s/lib/examples/RIS/plugins/bxdf/' % pv)
+    env['LD']           = '$(CC) -shared '
+    env['CCFLAGS']      = '-Wno-deprecated -fPIC -I%s ' % pipe.apps.prman().path('RenderManProServer-%s/include' % pv)
+    env['CCFLAGS']     += '-I. -I%s ' % pipe.apps.prman().path('RenderManProServer-%s/lib/examples/RIS/plugins/bxdf/' % pv)
+    env['CCFLAGS']     += '-Wno-narrowing '
 
     for s in src:
         build = env.Command( 'build/%s/%s' % (pv,s), s, [
@@ -36,5 +33,5 @@ for pv in versionSort(prman.versionList()):
             Copy("build/%s/" % pv, "$SOURCE"),
         ])
         shared = env.SharedLibrary( 'build/%s/%s' % (pv, os.path.splitext(s)[0]), build )
-        env.Alias('install', env.Install( '%s/prman/ris/%s/pattern/' % (pipe.roots().tools(), pv), shared ))
-        env.Alias('install', env.Install( '%s/prman/ris/%s/pattern/' % (pipe.roots().tools(), pv), s.replace('cpp','args') ))
+        env.Alias('install', env.Install( '%s/prman/ris/%s/integrator/' % (pipe.roots().tools(), pv), shared ))
+#        env.Alias('install', env.Install( '%s/prman/ris/%s/integrator/' % (pipe.roots().tools(), pv), s.replace('cpp','args') ))

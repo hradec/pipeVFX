@@ -692,6 +692,7 @@ class generic:
                 n
             ) )
             _print( bcolors.WARNING+": " )
+            # print '===================>',  [ '.'.join(os.path.dirname(str(x)).split('/')[-2:]) for x in source ]
             d=[ '.'.join(str(x).split(os.path.sep)[-3:-1]) for x in source[1:] ]
             _print( bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0]) )
             d=list(set(d))
@@ -826,7 +827,7 @@ class generic:
 
 
 
-    def depend_n(self,dependOn, target, dependencyList=None, baseLib=None):
+    def depend_n(self,dependOn, target, dependencyList=None, baseLib=None, debug=False):
         ''' support function to find the same version of a depency
         # look in the dependency download list if we have
         # the same version number as the current package.
@@ -837,13 +838,19 @@ class generic:
         '''
         # by default, use the latest version
         depend_n = -1
+        if debug:
+            print '\t',target, dependOn.name, self.dependOn[ dependOn ]
         if dependOn.name in ['gcc', 'python'] and not dependOn.targetSuffix:
             # or the oldest if it's gcc or python
             depend_n = 0
 
-        # we have to use the same gcc version as the current python build used.
+        # target can be version or target path...
+        # (called when constructing nodes to build)
         currVersion = target
+        # in case it's a target path, we figure out the version from it.
+        # (called at runtime!!)
         if len(target.split('/'))>2:
+            # we have to use the same gcc version as the current python build used.
             currVersion = target.split('/')[-2]
 
             if '.python' in os.path.basename(target):
@@ -869,14 +876,15 @@ class generic:
 
 
         dependOnVersion = self.dependOn[dependOn]
-        # grab dependency version from download list
+        # grab dependency version override from download list, if any!
         for download in self.downloadVersion(currVersion):
-            # print download
             if len(download)>4: # 5th element is a dependency list with version
-                if dependOn in download[4]:
-                    dependOnVersion = download[4][dependOn]
+                override = [ x for x in download[4].keys() if dependOn.name == x.name ]
+                if override:
+                    dependOnVersion = download[4][override[0]]
 
-        # find the index of the dependency download version and return it!
+        # find the index of the dependency download version in the dependency
+        # download list, and return it!
         if dependOnVersion:
             for each in range(len(dependOn.downloadList)):
                 if dependOn.downloadList[each][2] == dependOnVersion:
@@ -1103,7 +1111,11 @@ class generic:
                         os_environ['PYTHON_ROOT'] = tmp[0]
 
                 # grab the index for the version needed
-                depend_n = self.depend_n(dependOn, target)
+                debug=0
+                # if 'oiio' in target:
+                #     print pkgVersion.replace('.','_')
+                #     debug=1
+                depend_n = self.depend_n(dependOn, target, debug=debug)
                 k = dependOn.targetFolder.keys()
                 p = pythonVersion
 

@@ -612,6 +612,8 @@ class assetListWidget( GafferUI.EditorWidget ):
         menuDefinition.append( "/ " , { } )
         menuDefinition.append( "/update all assets", { "command" :  IECore.curry( self.updateAllAssetsInScene) } )
 
+        menuDefinition.append( "/--- " , { } )
+
     	self.__menu = GafferUI.Menu( menuDefinition )
     	if len( menuDefinition.items() ) :
     		self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )

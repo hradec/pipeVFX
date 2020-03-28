@@ -183,39 +183,39 @@ class all: # noqa
         allDepend += [flex]
 
 
-        # binutils = build.configure(
-        #     ARGUMENTS,
-        #     'binutils',
-        #     sed = { '0.0.0' : {
-        #         'gprof/Makefile.in' : [
-        #             ('SUFFIXES = .m','SUFFIXES ='),
-        #             ('.SUFFIXES: .m ','.SUFFIXES: '),
-        #         ],
-        #     }},
-        #     # binutils-2.17 is the best for gcc 4.1.2
-        #     # but it doesn't work with shared libs in centos 7.
-        #     download=[(
-        #     #     'https://mirror.its.dal.ca/gnu/binutils/binutils-2.17a.tar.bz2',
-        #     #     'binutils-2.17.tar.gz',
-        #     #     '2.17.1',
-        #     #     '1d81edd0569de4d84091526fd578dd7b'
-        #     # ),(
-        #     # so we're defaulting to 2.22.0 for now.
-        #         'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
-        #         'binutils-2.22.tar.gz',
-        #         '2.22.0',
-        #         '8b3ad7090e3989810943aa19103fdb83'
-        #     ),(
-        #     # so we're defaulting to 2.22.0 for now.
-        #         'https://mirror.its.dal.ca/gnu/binutils/binutils-2.33.1.tar.gz',
-        #         'binutils-2.33.1.tar.gz',
-        #         '2.33.1',
-        #         '1a6b16bcc926e312633fcc3fae14ba0a'
-        #
-        #     )],
-        #     depend = allDepend+[self.gcc_4_1_2],
-        # )
-        # self.binutils = binutils
+        binutils = build.configure(
+            ARGUMENTS,
+            'binutils',
+            sed = { '0.0.0' : {
+                'gprof/Makefile.in' : [
+                    ('SUFFIXES = .m','SUFFIXES ='),
+                    ('.SUFFIXES: .m ','.SUFFIXES: '),
+                ],
+            }},
+            # binutils-2.17 is the best for gcc 4.1.2
+            # but it doesn't work with shared libs in centos 7.
+            download=[(
+            #     'https://mirror.its.dal.ca/gnu/binutils/binutils-2.17a.tar.bz2',
+            #     'binutils-2.17.tar.gz',
+            #     '2.17.1',
+            #     '1d81edd0569de4d84091526fd578dd7b'
+            # ),(
+            # so we're defaulting to 2.22.0 for now.
+            #     'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
+            #     'binutils-2.22.tar.gz',
+            #     '2.22.0',
+            #     '8b3ad7090e3989810943aa19103fdb83'
+            # ),(
+            # so we're defaulting to 2.22.0 for now.
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.33.1.tar.gz',
+                'binutils-2.33.1.tar.gz',
+                '2.33.1',
+                '1a6b16bcc926e312633fcc3fae14ba0a'
+
+            )],
+            depend = allDepend+[self.gcc_4_1_2],
+        )
+        self.binutils = binutils
         # # allDepend += [binutils]
 
 
@@ -1250,8 +1250,14 @@ class all: # noqa
                 { gcc : '4.8.5' }
             )],
             baseLibs = [python],
-            depend   = [yasm,boost,gcc,python]+allDepend,
-            flags    = build.cmake.flags+['-DOCIO_BUILD_APPS=0','-D OCIO_USE_BOOST_PTR=1', 'OCIO_BUILD_TRUELIGHT=OFF', 'OCIO_BUILD_NUKE=OFF'] # -DUSE_EXTERNAL_TINYXML=1  -DUSE_EXTERNAL_YAML=1']
+            depend   = [yasm,boost,gcc,python,self.binutils]+allDepend,
+            flags    = build.cmake.flags+[
+                '-DOCIO_BUILD_APPS=0',
+                '-D OCIO_USE_BOOST_PTR=1',
+                'OCIO_BUILD_TRUELIGHT=OFF',
+                'OCIO_BUILD_NUKE=OFF',
+                'CMAKE_AR=$BINUTILS_TARGET_FOLDER/bin/ar'
+            ] # -DUSE_EXTERNAL_TINYXML=1  -DUSE_EXTERNAL_YAML=1']
         )
         self.ocio = ocio
 
@@ -1260,44 +1266,47 @@ class all: # noqa
         exr_version = '2.2.0'
         self.oiio = {}
         self.field3d = {}
+
+        # build flags used to build OIIO and field3d
+        self.rpath = [
+            '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+            '$TIFF_TARGET_FOLDER/lib/',
+            '$JPEG_TARGET_FOLDER/lib/',
+            '$LIBPNG_TARGET_FOLDER/lib/',
+            '$LIBRAW_TARGET_FOLDER/lib/',
+            '$OPENEXR_TARGET_FOLDER/lib/',
+            '$ILMBASE_TARGET_FOLDER/lib/',
+            '$HDF5_TARGET_FOLDER/lib/',
+            '$GLFW_TARGET_FOLDER/lib/',
+            '$ALEMBIC_TARGET_FOLDER/lib/',
+            '$USD_TARGET_FOLDER/lib/',
+            '$OPENVDB_TARGET_FOLDER/lib/',
+            '$OSL_TARGET_FOLDER/lib/',
+            '$OPENSUBDIV_TARGET_FOLDER/lib/',
+            '$APPLESEED_TARGET_FOLDER/lib/',
+            '$INSTALL_FOLDER/lib/',
+        ]
+
+        self.exr_rpath_environ = {
+            'LDFLAGS' : ' $LDFLAGS -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(self.rpath)
+            +' -Wl,-rpath,'+' -Wl,-rpath,'.join(self.rpath),
+            # we need this to build with exr version below 2.2.0
+            'CPLUS_INCLUDE_PATH' : ':'.join([
+                '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
+                '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                '$CPLUS_INCLUDE_PATH'
+            ]),
+            'C_INCLUDE_PATH' : ':'.join([
+                '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
+                '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                '$C_INCLUDE_PATH'
+            ]),
+        }
+        environ = self.exr_rpath_environ
+
         for boost_version in self.boost.versions:
             gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
             sufix = "boost.%s" % boost_version
-
-            # build flags used to build OIIO and field3d
-            environ = {
-                'LDFLAGS' : ' $LDFLAGS -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join([
-                    '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-                    '$TIFF_TARGET_FOLDER/lib/',
-                    '$JPEG_TARGET_FOLDER/lib/',
-                    '$LIBPNG_TARGET_FOLDER/lib/',
-                    '$LIBRAW_TARGET_FOLDER/lib/',
-                    '$OPENEXR_TARGET_FOLDER/lib',
-                    '$ILMBASE_TARGET_FOLDER/lib',
-                    '$HDF5_TARGET_FOLDER/lib',
-                ])
-                +' -Wl,-rpath,'+' -Wl,-rpath,'.join([
-                    '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-                    '$TIFF_TARGET_FOLDER/lib/',
-                    '$JPEG_TARGET_FOLDER/lib/',
-                    '$LIBPNG_TARGET_FOLDER/lib/',
-                    '$LIBRAW_TARGET_FOLDER/lib/',
-                    '$OPENEXR_TARGET_FOLDER/lib',
-                    '$ILMBASE_TARGET_FOLDER/lib',
-                    '$HDF5_TARGET_FOLDER/lib',
-                ]),
-                # we need this to build with exr version below 2.2.0
-                'CPLUS_INCLUDE_PATH' : ':'.join([
-                    '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
-                    '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
-                    '$CPLUS_INCLUDE_PATH'
-                ]),
-                'C_INCLUDE_PATH' : ':'.join([
-                    '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
-                    '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
-                    '$CPLUS_INCLUDE_PATH'
-                ]),
-            }
 
             # build sony field3d used by oiio 2.x
             field3d_dependency_versions = {
@@ -1324,6 +1333,10 @@ class all: # noqa
             )
             self.field3d[sufix] = field3d
 
+        # repeat the same loop, so we build all field3d first
+        for boost_version in self.boost.versions:
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
+            sufix = "boost.%s" % boost_version
 
             # here we select the versions of OIIO to build for each boost.
             # not all versions build against all boost versions.
@@ -1343,15 +1356,15 @@ class all: # noqa
                         '1.6.15',
                         '3fe2cef4fb5f7bc78b136d2837e1062f',
                         { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16',}
-                    ],[
+                ]]
+            if build.versionMajor(boost_version) > 1.53:
+                download += [[
                         'https://github.com/OpenImageIO/oiio/archive/Release-1.8.10.tar.gz',
                         'oiio-Release-1.8.10.tar.gz',
                         '1.8.10',
                         'a129a4caa39d7ad79aa1a3dc60cb0418',
                         { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16',}
-                ]]
-            if build.versionMajor(boost_version) > 1.51:
-                download += [[
+                    ],[
                         'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                         'oiio-Release-2.0.11.tar.gz',
                         '2.0.11',
@@ -1367,12 +1380,12 @@ class all: # noqa
 
                 _download[n][4] = _download[n][4].copy()
                 _download[n][4][ boost ] = boost_version
-                _download[n][4][ gcc ] = gcc_version
+                if build.versionMajor( _download[n][4][ gcc ] ) < 4.8:
+                    _download[n][4][ gcc ] = gcc_version
                 _download[n][4][ self.ilmbase  [sufix] ] = exr_version
                 _download[n][4][ self.pyilmbase[sufix] ] = exr_version
                 _download[n][4][ self.openexr  [sufix] ] = exr_version
                 _download[n][4][ self.field3d  [sufix] ] = '1.7.2'
-
 
             oiio = build.cmake(
                 ARGUMENTS,
@@ -1766,7 +1779,7 @@ class all: # noqa
                 'LD' :  'g++ '
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/',
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ' + self.exr_rpath_environ['LDFLAGS'],
             },
             verbose=1,
         )
@@ -2035,6 +2048,11 @@ class all: # noqa
             )],
             depend=allDepend,
             src = 'README',
+            environ={
+                'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                'CPLUS_INCLUDE_PATH' : '$CPLUS_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                'LDFLAGS'            : '$LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
+            },
             cmd = [
                 '( [ "$(basename $TARGET_FOLDER)" == "2.0.42" ] ',
                     'cd src',
@@ -2099,6 +2117,8 @@ class all: # noqa
             environ={
                 'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
                 'CPLUS_INCLUDE_PATH' : '$CPLUS_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                'LDFLAGS'            : '$LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
+                # 'LD'                 : '$LD '+self.exr_rpath_environ['LDFLAGS'],
             },
             cmd = [
             "cd openvdb",
@@ -2191,7 +2211,7 @@ class all: # noqa
             depend=allDepend+[hdf5],
             environ = {
                 # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
-                'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib $LDFLAGS',
+                'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
                 'LD_PRELOAD': ':'.join([
                     '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
                     '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
@@ -2287,7 +2307,7 @@ class all: # noqa
             environ = {
                 'CFLAGS'    : ' -fopenmp $CFLAGS ',
                 'CXXFLAGS'  : ' -fopenmp $CXXFLAGS ',
-                'LDFLAGS'   : ' -lX11 -lclew $LDFLAGS',
+                'LDFLAGS'   : ' -lX11 -lclew $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'] ,
             },
             verbose=1,
         )
@@ -2379,7 +2399,7 @@ class all: # noqa
                 'CFLAGS'    : ' -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost ',
                 'CXXFLAGS'  : ' -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost ',
                 'LD'        : 'ld',
-                'LDFLAGS'   : '$LDFLAGS -lboost_regex',
+                'LDFLAGS'   : '$LDFLAGS -lboost_regex ' + self.exr_rpath_environ['LDFLAGS'],
                 'LD_PRELOAD': ':'.join([
                     '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
                     '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
@@ -2597,8 +2617,8 @@ class all: # noqa
                 # so the linker uses embree's one instead of pipeVFX one.
                 # we need to see if things will work OK with this.
                 'LIBRARY_PATH' : '$EMBREE_TARGET_FOLDER/lib:$LIBRARY_PATH',
-                'LDFLAGS' : ' -lembree3 -lSeExpr -ltbb ',
-                'LDSHAREDFLAGS' : ' -lembree3 -lSeExpr -ltbb ',
+                'LDFLAGS' : ' -lembree3 -lSeExpr -ltbb '+self.exr_rpath_environ['LDFLAGS'],
+                'LDSHAREDFLAGS' : ' -lembree3 -lSeExpr -ltbb '+self.exr_rpath_environ['LDFLAGS'],
             },
         )
         self.appleseed = appleseed
