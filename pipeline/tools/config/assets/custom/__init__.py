@@ -1,8 +1,9 @@
 
 
-import os
+import os, sys
 import IECore
 import GafferUI
+import nodeMD5
 
 try:
     import maya.cmds as m
@@ -20,8 +21,11 @@ def assetListRightClickMenu( self, pathListing, menuDefinition ):
     print "XXXXXXXXXXXXXXXXXX"
     if len(selectedPaths)>=1:
         if 'rigging/' in selectedPaths[0]:
-            menuDefinition.insertAfter( "/import selected and apply animation from a maya scene, using rig controls", { "command" :  IECore.curry( checkoutRigAndApplyAnimation, self ) }, "/Import selected" )
-            menuDefinition.insertAfter( "/       ", { }, "/Import selected" )
+            try:
+                menuDefinition.insertAfter( "/import selected and apply animation from a maya scene, using rig controls", { "command" :  IECore.curry( checkoutRigAndApplyAnimation, self ) }, "/Import selected" )
+                menuDefinition.insertAfter( "/       ", { }, "/Import selected" )
+            except:
+                pass
     return menuDefinition
 
 
@@ -50,8 +54,8 @@ def checkoutRigAndApplyAnimation(self, paths = None):
                 path_anim_scene[path] = file
 
             # remove old tmp groups!
-            if m.ls('|%s*' % GRP):
-                m.delete('|%s*' % GRP)
+            # if m.ls('|%s*' % GRP):
+            #     m.delete('|%s*' % GRP)
 
             # now we import the file, asset and attach the controls.
             for path in paths:
@@ -80,16 +84,29 @@ def checkoutRigAndApplyAnimation(self, paths = None):
                 asset_nodes = list(set(asset_nodes))
                 # now go over the animated crtl nodes and attach then to
                 # the asset rig crtl nodes!
+                md5 = nodeMD5.nodeMD5()
                 for node in CTRLS_MESHES:
                     anim = node.split(ROOT)[-1]
 
+                    # use the embbed md5 on the animation to find the nodes we
+                    # have to attach to!
+                    nodemd5 = md5.getNodeMD5(node)
+                    if nodemd5:
+                        nodes_original_rig = [ x for x in md5.getNodeByMD5( nodemd5 ) if x != node and asset_maya_name in x ]
+                    else:
+                        nodes_original_rig = [ x for x in asset_nodes if anim in x ]
+
+                    nodes_original_rig.sort()
+                    nodes_original_rig = list(set(nodes_original_rig))
                     # only select the asset rig crtl nodes that match the
                     # current animated one!
-                    for rig in [ x for x in asset_nodes if anim in x ]:
+                    for rig in nodes_original_rig:
                         tnode = m.listRelatives(node, p=1, f=1)[0]
                         trig  = m.listRelatives(rig, p=1, f=1)[0]
+                        # print asset_maya_name
                         # print tnode
                         # print trig
+                        # sys.stdout.flush()
                         if m.nodeType( node ) == 'mesh':
                             m.connectAttr( tnode+".translate", trig+".translate", f=1 )
                             m.connectAttr( tnode+".rotate", trig+".rotate", f=1 )

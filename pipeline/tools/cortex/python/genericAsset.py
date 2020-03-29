@@ -26,6 +26,8 @@ import os, datetime, sys
 import assetUtils
 import traceback
 from functools import wraps
+import nodeMD5
+reload(nodeMD5)
 
 try:
     from pymel import core as pm
@@ -483,9 +485,13 @@ class _genericAssetClass( IECore.Op ) :
         self.data['meshPrimitives'] = meshPrimitives
         self.data['multipleFiles'] = [  x.replace('|','_') for x in self.data['meshPrimitives'] ]
 
-
         if not self.canPublish:
             raise Exception("ERROR: You need to save the scene before publishing it, so SAM can keep track of what created the asset!")
+
+        # create a md5 attr with the md5 of the original
+        # name, so we can find geometry if the host screw up the
+        # original published names.
+        nodeMD5.nodeMD5().bakeAllMD5()
 
         canPublish = 0
         if hasattr(self, 'doPublishMaya') and 'maya' in self._host:
