@@ -95,6 +95,7 @@ def checkoutRigAndApplyAnimation(self, paths = None):
                 md5 = nodeMD5.nodeMD5()
                 for node in CTRLS_MESHES:
                     pb2.step()
+                    tnode = m.listRelatives(node, p=1, f=1)[0]
                     anim = node.split(ROOT)[-1]
 
                     # use the embbed md5 on the animation to find the nodes we
@@ -110,7 +111,6 @@ def checkoutRigAndApplyAnimation(self, paths = None):
                     # only select the asset rig crtl nodes that match the
                     # current animated one!
                     for rig in nodes_original_rig:
-                        tnode = m.listRelatives(node, p=1, f=1)[0]
                         trig  = m.listRelatives(rig, p=1, f=1)[0]
                         # print asset_maya_name
                         # print tnode

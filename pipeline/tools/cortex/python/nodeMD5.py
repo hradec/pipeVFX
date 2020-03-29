@@ -13,6 +13,7 @@ class nodeMD5:
             m = None
         self.m = m
         self.md5 = md5
+        self.indexMD5()
 
 
     def nodeMD5(self, name):
@@ -55,25 +56,18 @@ class nodeMD5:
     def indexMD5(self):
         ''' create an cache index of all md5s for all nodes, so we can find
         the node names for a given md5 '''
-        res = {}
+        self.__indexMD5 = {}
         if self.m:
-            # if len(self.__indexMD5) != len(allNodes):
-            # allNodes = self.m.ls(geometry=1, transforms=1, l=1)
-            #     del self.__indexMD5
-            if not hasattr( self, '__indexMD5'):
-                allNodes = self.m.ls(geometry=1, transforms=1, l=1)
-                self.__indexMD5 = {}
-                for n in allNodes:
-                    h = self.getNodeMD5(n)
-                    if h not in self.__indexMD5:
-                        self.__indexMD5[h] = []
-                    self.__indexMD5[h] += [n]
-            res = self.__indexMD5
-        return res
+            allNodes = self.m.ls(geometry=1, transforms=1, l=1)
+            for n in allNodes:
+                h = self.getNodeMD5(n)
+                if h not in self.__indexMD5:
+                    self.__indexMD5[h] = []
+                self.__indexMD5[h] += [n]
 
     def getNodeByMD5(self, h):
         ''' return the node names that contain the given md5 hash '''
-        z = self.indexMD5()
+        z = self.__indexMD5
         if z and h:
             return z[h]
         return ''
