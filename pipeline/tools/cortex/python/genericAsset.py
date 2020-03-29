@@ -215,7 +215,8 @@ class progressBar():
     def step(self):
         if self.w:
             self.pb.setProgress( self.pb.getProgress()+1 )
-            # mu.processIdleEvents()
+            if m:
+                mu.processIdleEvents()
     def close(self):
         if self.w:
             del self.w

@@ -4,6 +4,7 @@ import os, sys
 import IECore
 import GafferUI
 import nodeMD5
+import genericAsset
 
 try:
     import maya.cmds as m
@@ -58,13 +59,17 @@ def checkoutRigAndApplyAnimation(self, paths = None):
             #     m.delete('|%s*' % GRP)
 
             # now we import the file, asset and attach the controls.
+            pb1 = genericAsset.progressBar(len(paths)*3+1, 'importing assets and animation from maya scene file...')
+            pb1.step()
             for path in paths:
+                pb1.step()
                 asset = self.checkout([path])
                 asset_maya_name = os.path.dirname(path).replace('/','_')
                 file_maya_name = os.path.basename(path_anim_scene[path]).replace('/','_').replace('.','_').replace(' ','_')
                 GRP_asset_maya_name = GRP+file_maya_name
 
                 # open maya scene inside a group, if not already opened!
+                pb1.step()
                 if not m.objExists(GRP_asset_maya_name):
                     m.file( path_anim_scene[path], i=1, gr=1, ignoreVersion=1, gn=GRP_asset_maya_name )
 
@@ -72,6 +77,7 @@ def checkoutRigAndApplyAnimation(self, paths = None):
 
                 # leave only the controls from the imported scene
                 # and gather their names into a list
+                pb1.step()
                 m.delete([ x for x in m.ls('%s|*' % GRP_asset_maya_name, dag=1, l=1, type='mesh') if CTRLS not in x ])
                 CTRLS_MESHES = [ x for x in m.ls('%s|*' % GRP_asset_maya_name, dag=1, l=1, type='mesh') if CTRLS in x ]
                 CTRLS_MESHES.sort()
@@ -84,8 +90,11 @@ def checkoutRigAndApplyAnimation(self, paths = None):
                 asset_nodes = list(set(asset_nodes))
                 # now go over the animated crtl nodes and attach then to
                 # the asset rig crtl nodes!
+                pb2 = genericAsset.progressBar(len(CTRLS_MESHES)+1, 'Attaching animation controls to imported rig assets...')
+                pb2.step()
                 md5 = nodeMD5.nodeMD5()
                 for node in CTRLS_MESHES:
+                    pb2.step()
                     anim = node.split(ROOT)[-1]
 
                     # use the embbed md5 on the animation to find the nodes we
@@ -111,3 +120,6 @@ def checkoutRigAndApplyAnimation(self, paths = None):
                             m.connectAttr( tnode+".translate", trig+".translate", f=1 )
                             m.connectAttr( tnode+".rotate", trig+".rotate", f=1 )
                             m.connectAttr( tnode+".scale", trig+".scale", f=1 )
+
+                pb2.close()
+            pb1.close()
