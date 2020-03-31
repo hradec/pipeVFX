@@ -215,8 +215,12 @@ class progressBar():
     def step(self):
         if self.w:
             self.pb.setProgress( self.pb.getProgress()+1 )
-            if m:
-                mu.processIdleEvents()
+            # WARNING: processIdleEvents() crashes maya when called here since
+            #          this method can be called when inside a idle event already!
+            #          we can only enable it, if we find a way to detect when
+            #          inside an idle event!
+            # if m:
+            #     mu.processIdleEvents()
     def close(self):
         if self.w:
             del self.w
@@ -1162,7 +1166,7 @@ class alembic(  _genericAssetClass ) :
         conection = {}
         selectedShave  = m.ls(selection,dag=1,type='shaveHair')
         selectedShave += list(set(m.listConnections(m.ls(selection, dag=1, type='mesh'), type='shaveHair', sh=1)))
-        selectedShave = list(set(selectedShave))
+        selectedShave  = list(set(selectedShave))
         # selectedShave = [ str(x) for x in selectedShave ]
         globals()['self'].pb.step()
         print '*'*200
