@@ -75,12 +75,12 @@ class shave(ParameterisedProcedural) :
         rootWidth = IECore.FloatParameter(
 			name = "rootWidth",
 			description = "size of each hair at root.",
-			defaultValue = 0.8,
+			defaultValue = 0.01,
 		)
         tipWidth = IECore.FloatParameter(
 			name = "tipWidth",
 			description = "size of each hair at tip.",
-		    defaultValue = 0.02,
+		    defaultValue = 0.001,
 		)
         mblur = FloatParameter("motionBlurMult", "Multiply the motion vector to attenuate or exagerate final motion blur.",1.0)
         dice  = BoolParameter("diceAsHair", "Denpending on the shader used, this can improve the quality of the hair/fur",True)
@@ -557,6 +557,7 @@ class shave(ParameterisedProcedural) :
                     p['tip']   = PrimitiveVariable( PrimitiveVariable.Interpolation.Uniform, DataConvertOp()( data = geo['tipColor'].data, targetType = Color3fVectorData.staticTypeId() ) )
                 if 'rootColor' in geo.keys():
                     p['root']  = PrimitiveVariable( PrimitiveVariable.Interpolation.Uniform, DataConvertOp()( data = geo['rootColor'].data, targetType = Color3fVectorData.staticTypeId() ) )
+
 
                 p['hide'] = self._hide(p, args)
                 p[ args["IDPrimvarName"].value ] = PrimitiveVariable( PrimitiveVariable.Interpolation.Constant, FloatData( 1.0 ) )

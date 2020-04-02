@@ -26,8 +26,12 @@ import os, datetime, sys
 import assetUtils
 import traceback
 from functools import wraps
+
 import nodeMD5
 reload(nodeMD5)
+
+import samXgen
+reload(samXgen)
 
 try:
     from pymel import core as pm
@@ -88,7 +92,7 @@ def cleanAllShapeName():
                     l = len(last)
 
         each = '|'.join(each.split('|')[:-1]+[last])
-        print each
+        # print each
 
 
 
@@ -121,7 +125,7 @@ def pop(attrPOP):
                         if type(v) in [ str ]:
                             m.setAttr( attrName, v, type='string')
                     except:
-                        print attrName
+                        print "pop(attrPOP) Exception: "+str(attrName)
 
 
 
@@ -377,7 +381,7 @@ class _genericAssetClass( IECore.Op ) :
             parameter.parameterChanged( parameter )
 
         if parameter.name == 'enableAnimation':
-            print dir(parameter)
+            # print dir(parameter)
             self.animation = bool(parameter.getValue())
             self.parameters()["FrameRange"].userData()["UI"]["visible"] = IECore.BoolData(bool(parameter.getValue()))
             self.updateFromHost()
@@ -392,7 +396,7 @@ class _genericAssetClass( IECore.Op ) :
         '''
         if hostApp()=='maya' and m:
             for each in { ':%s' % ':'.join(x.split(':')[:-1]) : x.split(':')[-1] for x in  m.ls("*:*")}:
-                print each
+                # print each
                 m.namespace( removeNamespace = each, mergeNamespaceWithParent = True)
 
     @staticmethod
@@ -700,7 +704,7 @@ class maya( _genericAssetClass ) :
             if self.rlf2maya:
                 if name and name in self.cache.keys():
                     if sg != self.cache[name]:
-                        print self.cache.keys()
+                        # print self.cache.keys()
                         raise Exception("ERROR: there are 2 shape nodes named \n%s(sg:%s)\n and \n%s(sg:%s) \nwith different shadingGroups! Please rename one!!" % (node, sg, name, self.cache[name]))
                     else:
                         return
@@ -740,7 +744,7 @@ class maya( _genericAssetClass ) :
         # if 'SAM_' in nodeName:
         #     return ''
         #*[starts-with(name(),'paperclip')]
-        print nodeName
+        # print nodeName
         paths = []
         # for path in nodeName.split('|'):
         for path in [nodeName.split('|')[-1]]:
@@ -1162,7 +1166,11 @@ class alembic(  _genericAssetClass ) :
 
     @staticmethod
     def shaveRibExport( frame=1, outRIB = '/tmp/shave.%04d.rib', selection=[] ):
+        ''' per frame callback to export shave as cob files'''
         import time
+        # if we don't have shave loaded, don't do anything!
+        if 'shaveHair' not in m.ls(nodeTypes=1):
+            return
         conection = {}
         selectedShave  = m.ls(selection,dag=1,type='shaveHair')
         selectedShave += list(set(m.listConnections(m.ls(selection, dag=1, type='mesh'), type='shaveHair', sh=1)))
@@ -1245,10 +1253,33 @@ class alembic(  _genericAssetClass ) :
 
         print '*'*200
 
-    @staticmethod
-    def perFrameCallback(frame, outRIB, sl):
-        alembic.shaveRibExport( frame, outRIB, sl )
 
+    @staticmethod
+    def _perFrameCallback(frame, outRIB, selection, tmpfile=None):
+        ''' wrapper function just to take care of passing data back to asset '''
+        data = alembic.perFrameCallback(frame, outRIB, selection)
+
+        # write the collected data to tempfile
+        if tmpfile:
+            f = open(tmpfile,'a')
+            f.write( "%d %s\n" % (frame, str(data)) )
+            f.close()
+
+    @staticmethod
+    def perFrameCallback(frame, outRIB, selection):
+        ''' a frame callback function to execute extra exporting
+        during alembic export '''
+        data = {}
+
+        # xgen ribarchive!
+        data['shave'] = alembic.shaveRibExport( frame, outRIB, selection )
+
+        # xgen export!
+        data['xgen'] = samXgen.xgen_export_for_ribbox( selection, frame )
+
+        data['extraFiles'] = [ x[0] for x in data['xgen'] ]
+
+        return data
         # Special callback information:
         # On the callbacks, special tokens are replaced with other data, these tokens
         # and what they are replaced with are as follows:
@@ -1263,12 +1294,11 @@ class alembic(  _genericAssetClass ) :
         # array form.
         # In Mel: {minX, minY, minZ, maxX, maxY, maxZ}
         # In Python: [minX, minY, minZ, maxX, maxY, maxZ]
-        #
-        pass
 
     @viewportOff
     def AbcExport(self, mfile, start, end, sl, extra='-renderableOnly -uvWrite -writeUVSets', shaveTmp='/tmp/shave.%04d.cob'):
         if m:
+            import tempfile
             m.select( sl )
             slall = m.ls(sl=1,dag=1)
             cleanup = []
@@ -1346,18 +1376,46 @@ class alembic(  _genericAssetClass ) :
 
             className = str(self.__class__).split('.')[-1]
             root = ' '.join([ '-root '+x for x in sl ])
+
+            # create a temp file so frameCallback can generate data to input
+            # into asset data file. The temp file will contain a str(dict) so
+            # we can just read it and eval() the content of the file.
+            ftmp = tempfile.mkstemp()
+            os.close( ftmp[0] )
+            ftmp = ftmp[1]
+
             abcJob = "%s %s  -step %s -wv -fr %s %s %s -file %s" % (
                 extra,
-                '''-pythonPerFrameCallback "print globals().keys();import genericAsset;genericAsset.alembic.perFrameCallback(#FRAME#, '%s', %s )"''' % (shaveTmp,sl),
+                '''-pythonPerFrameCallback "import genericAsset;reload(genericAsset);genericAsset.alembic._perFrameCallback(#FRAME#, '%s', %s, '%s' )"''' % (shaveTmp,sl,ftmp),
                 1.0,
                 start,
                 end,
                 root,
                 mfile,
             )
-
-            print "m.AbcExport( j=abcJob) : ", abcJob ; sys.stdout.flush()
+            # print "m.AbcExport( j=abcJob) : ", abcJob ; sys.stdout.flush()
             m.AbcExport( j=abcJob)
+
+            # retrieve temp file data and pipe into asset data file.
+            if 'frameCallback' not in self.data:
+                self.data['frameCallback'] = {}
+            if 'extraFiles' not in self.data:
+                self.data['extraFiles'] = []
+
+            f = open(ftmp,'r')
+            for line in f.readlines():
+                # for each line, theres a frame, and the dict for that frame!
+                l = line.split(' ')
+                frame = int(l[0])
+                data = eval(' '.join(l[1:]))
+                # store it in the asset data
+                self.data['frameCallback'][frame] = data
+                self.data['extraFiles'] += data['extraFiles']
+
+            f.close()
+            os.remove(ftmp)
+
+            # finishing touch!
             maya.cleanNodes(cleanup)
 
     def doPublishMaya( self, operands ):
@@ -1572,6 +1630,24 @@ class alembic(  _genericAssetClass ) :
                                             m.setAttr( attrPar, data['shave'][cobIndex][attr], type="string" )
                                         else:
                                             m.setAttr( attrPar, data['shave'][cobIndex][attr] )
+
+                    print data
+                    if 'frameCallback' in data:
+                        frames = data['frameCallback'].keys()
+                        if 'xgen' in data['frameCallback'][frames[0]]:
+                            for c in data['frameCallback'][frames[0]]['xgen']:
+                                abc = filename
+                                xgen_path = data['publishPath']
+                                collection = c[1]
+                                description = c[2]
+                                patch_name = c[3]
+                                samXgen.xgen_create_ribbox(collection, description, abc, patch_name, xgen_path)
+                                print "11111111111111111"
+                                print collection, description, patch_name
+                                print "11111111111111111"
+
+
+
             else:
                 ribNode = m.createNode('RenderManArchive')
                 ribNode = m.rename( m.listRelatives(ribNode, p=1), nodeName+'_rib')
