@@ -1,0 +1,36 @@
+import pipe, os
+
+
+src = [
+    'PxrPathTracer.cpp',
+]
+
+def versionSort(versions):
+    def method(v):
+        v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
+        return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
+    tmp =  sorted( versions, key=method, reverse=True )
+    # print tmp
+    return tmp
+
+prman = pipe.apps.prman()
+
+for pv in [ x for x in versionSort(prman.versionList()) if float('.'.join(x.split('.')[0:2])) == 21.7]:
+    env = Environment()
+    pipe.apps.version.set(prman = pv)
+
+    env['SHLIBPREFIX']  = ''
+    env['CC']           = 'g++'
+    env['LD']           = '$(CC) -shared'
+    env['CCFLAGS']      = '-Wno-narrowing -Wno-deprecated -fPIC -I%s' % pipe.apps.prman().path('RenderManProServer-%s/include' % pv)
+    env['CCFLAGS']     += ' -I%s' % pipe.apps.prman().path('/examples/plugins/integrator/')
+
+    for s in src:
+        build = env.Command( 'build/%s/%s' % (pv,s), s, [
+            Delete("build/%s/" % pv),
+            Mkdir("build/%s/" % pv),
+            Copy("build/%s/" % pv, "$SOURCE"),
+        ])
+        shared = env.SharedLibrary( 'build/%s/%s' % (pv, os.path.splitext(s)[0]), build )
+        env.Alias('install', env.Install( '%s/prman/ris/%s/integrator/' % (pipe.roots().tools(), pv), shared ))
+#        env.Alias('install', env.Install( '%s/prman/ris/%s/integrator/' % (pipe.roots().tools(), pv), s.replace('cpp','args') ))

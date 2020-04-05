@@ -1,0 +1,57 @@
+<args format="1.0">
+    <shaderType>
+        <tag value="pattern"/>
+    </shaderType>
+    <help>A checker pattern</help>
+
+    <param name="colorA"
+        label="Color A"
+        type="color"
+        default="1.0 1.0 1.0"
+        widget="color">
+    </param>
+
+    <param name="colorB"
+        label="Color B"
+        type="color"
+        default="0.0 0.0 0.0"
+        widget="color">
+    </param>
+
+    <param name="manifold"
+        label="Manifold"
+        type="struct"
+        default=""
+        widget="default">
+        <tags>
+            <tag value="struct"/>
+            <tag value="manifold"/>
+        </tags>
+    </param>
+
+    <output name="resultRGB">
+        <tags>
+            <tag value ="color"/>
+            <tag value ="vector"/>
+            <tag value ="normal"/>
+            <tag value ="point"/>
+        </tags>
+    </output>
+    <output name="resultR">
+        <tags>
+            <tag value ="float"/>
+        </tags>
+    </output>
+    <output name="resultG">
+        <tags>
+            <tag value ="float"/>
+        </tags>
+    </output>
+    <output name="resultB">
+        <tags>
+            <tag value ="float"/>
+        </tags>
+    </output>
+
+    <rfmdata nodeid="20000033" classification="rendernode/RenderMan/pattern"/>
+</args>

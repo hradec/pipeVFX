@@ -5,6 +5,9 @@ src = [
     'AtomoAOV.cpp',
     'AtomoOcc.cpp',
 #    'AtomoOcclusion.cpp',
+    # 'PxrBakeSampleFilter.cpp',
+    'atomoPTCbake.cpp',
+    'atomoPTC.cpp',
 ]
 
 def versionSort(versions):
@@ -17,15 +20,46 @@ def versionSort(versions):
 
 prman = pipe.apps.prman()
 
-for pv in versionSort(prman.versionList())[:2]:
+for pv in [ x for x in versionSort(prman.versionList()) if float('.'.join(x.split('.')[0:2])) >= 21 and float('.'.join(x.split('.')[0:2])) < 22 ]:
     env = Environment()
     pipe.apps.version.set(prman = pv)
 
     env['SHLIBPREFIX']  = ''
     env['CC']           = 'g++'
     env['LD']           = '$(CC) -shared'
-    env['CCFLAGS']      = '-Wno-deprecated -fPIC -I%s' % pipe.apps.prman().path('RenderManProServer-%s/include' % pv)
+    env['CCFLAGS']      = '-Wno-deprecated -pipe -DNDEBUG  -DBOOST_DISABLE_ASSERTS -fpermissive -DAtUInt=AtUInt32 -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC -I%s' % pipe.apps.prman().path('RenderManProServer-%s/include' % pv)
     env['CCFLAGS']     += ' -I%s' % pipe.apps.prman().path('RenderManProServer-%s/lib/examples/RIS/plugins/bxdf/' % pv)
+    env['CCFLAGS']     += ' -I%s' % pipe.apps.prman().path('RenderManProServer-%s/include/' % pv)
+    env['CCFLAGS']     += ' -I%s' % pipe.apps.prman().path('/examples/plugins/integrator/')
+    env['CCFLAGS']     += ' -I%s' % pipe.apps.prman().path('/examples/plugins/sample/')
+
+    env['CCFLAGS']     += ' -I%s' % pipe.libs.cortex().path('/include/')
+    env['CCFLAGS']     += ' -I%s' % pipe.libs.cortex().path('/include/IECore/')
+    env['CCFLAGS']     += ' -I%s' % pipe.libs.ilmbase().path('/include/')
+    env['CCFLAGS']     += ' -I%s' % pipe.libs.ilmbase().path('/include/OpenEXR/')
+    env['CCFLAGS']     += ' -I%s' % pipe.libs.openexr().path('/include/')
+    env['CCFLAGS']     += ' -I%s' % pipe.libs.openexr().path('/include/OpenEXR/')
+
+    env['SHCCFLAGS'] = env['CCFLAGS']
+    env['SHCXXFLAGS'] = env['CCFLAGS']
+
+
+    env['LIBS']     = [
+        'IECore',
+        'Imath',
+    ]
+
+    env['RPATH'] = [
+        pipe.libs.cortex().path('/lib/boost%s/' % pipe.libs.boost().version()),
+        pipe.libs.ilmbase().path('/lib/'),
+        pipe.libs.openexr().path('/lib/'),
+    ]
+    env['LIBPATH'] = [
+        pipe.libs.cortex().path('/lib/boost%s/' % pipe.libs.boost().version()),
+        pipe.libs.ilmbase().path('/lib/'),
+        pipe.libs.openexr().path('/lib/'),
+    ]
+
 
     for s in src:
         build = env.Command( 'build/%s/%s' % (pv,s), s, [
