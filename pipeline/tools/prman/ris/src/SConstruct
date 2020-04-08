@@ -63,10 +63,10 @@ for pv in [ x for x in versionSort(prman.versionList()) if float('.'.join(x.spli
 
     for s in src:
         build = env.Command( 'build/%s/%s' % (pv,s), s, [
-            Delete("build/%s/" % pv),
+            # Delete("build/%s/" % pv),
             Mkdir("build/%s/" % pv),
             Copy("build/%s/" % pv, "$SOURCE"),
         ])
         shared = env.SharedLibrary( 'build/%s/%s' % (pv, os.path.splitext(s)[0]), build )
-        env.Alias('install', env.Install( '%s/prman/ris/%s/pattern/' % (pipe.roots().tools(), pv), shared ))
-        env.Alias('install', env.Install( '%s/prman/ris/%s/pattern/' % (pipe.roots().tools(), pv), s.replace('cpp','args') ))
+        env.Alias('install', env.Install( '%s/prman/ris/%s/pattern/' % (pipe.roots().tools(), pv), shared+[s.replace('cpp','args')] ))
+        # env.Alias('install', env.Install( '%s/prman/ris/%s/pattern/' % (pipe.roots().tools(), pv), s.replace('cpp','args') ))
