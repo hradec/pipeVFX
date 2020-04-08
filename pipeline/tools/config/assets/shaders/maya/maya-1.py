@@ -42,7 +42,7 @@ class maya( genericAsset.maya ) :
         import samPrman
         samPrman.setRenderScripts()
         m.setAttr( "defaultRenderGlobals.preMel", "python(\"import genericAsset;genericAsset.maya._attachShaders()\")", type="string" )
-        genericAsset.maya.cleanUnusedShadingNodes()
+        # genericAsset.maya.cleanUnusedShadingNodes()
         genericAsset.maya.attachShadersLazy()
 
     def publishMayaShadersAndTextures(self, shadingFile,  operands):
