@@ -24,7 +24,8 @@
 ############################################################################
 
 
-
+# TODO: Add a vertical toolbar with custom buttons for generic tools and
+#       project specific tools.
 
 import os
 import sys
@@ -443,6 +444,7 @@ class assetListWidget( GafferUI.EditorWidget ):
         # bundleListWidget.bundleListWidget._selectionChangedSignal().connect( Gaffer.WeakMethod( self.handleValue ) )
 
         # genericAsset.updateCurrentLoadedAssets(True)
+        genericAsset.updateCurrentLoadedAssets()
 
     def __buttonDoubleClick(self, *args):
         # import time
