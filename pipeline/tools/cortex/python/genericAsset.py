@@ -175,6 +175,7 @@ def updateCurrentLoadedAssets(forceRefresh=False):
         if 'off' not in ''.join(m.evaluationManager( q=1, mode=1 )):
             m.evaluationManager( mode="off" )
 
+        maya.shaveCleanup()
         maya.applyCustomRules()
 
         types = assetUtils.types(forceRefresh)
@@ -188,7 +189,7 @@ def updateCurrentLoadedAssets(forceRefresh=False):
             #     _updateCurrentLoadedAssets__[t] = None
 
             op = types.op(t)
-            # print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
+            print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
             if hasattr(op.op, 'typeOP') and hasattr(op.op.typeOP, 'onRefreshCallback'):
                 canRefresh = True
                 if m and not m.ls('|%s*_??_??_??_*' % nodeNamePrefix):
@@ -455,7 +456,7 @@ class _genericAssetClass( IECore.Op ) :
             maya.cleanNodes( self.doesAssetExists(nodeName) )
 
             # cleanup shader leftovers
-            maya.cleanUnusedShadingNodes()
+            # maya.cleanUnusedShadingNodes()
 
             maya.cleanNodes( m.ls("SAMIMPORT*") )
 
@@ -633,11 +634,8 @@ class maya( _genericAssetClass ) :
         _genericAssetClass.__init__( self, prefix, animation=animation, mayaNodeTypes=mayaNodeTypes )
         self.__mayaScenePublishType = mayaScenePublishType
 
-
     def setMayaSceneType(self, st):
         self.__mayaScenePublishType = st
-
-
 
     @staticmethod
     def applyCustomRules():
@@ -656,6 +654,28 @@ class maya( _genericAssetClass ) :
         # if customRules:
         #     maya.createDinamicRules(customRules)
         maya.createDinamicRules()
+
+
+    @staticmethod
+    def shaveCleanup():
+        if m:
+            print "Shave Cleanup!"
+            # shave cleanup
+            attrs_to_clean = [
+                "renderManRISGlobals.rman__torattr___preRenderScript",
+                "renderManRISGlobals.rman__torattr___postRenderScript",
+                "renderManRISGlobals.rman__torattr___postTransformScript",
+                "renderManRISGlobals.rman__torattr___renderBeginScript",
+                "defaultRenderGlobals.preRenderMel",
+            ]
+            for attr in attrs_to_clean:
+                if m.objExists(attr):
+                    tmp = m.getAttr( attr );
+                    if tmp:
+                        tmp = ';'.join([ x for x in tmp.split(';') if  x.strip() and 'shave' not in x.lower() ])
+                        print attr, tmp
+                        m.setAttr( attr , tmp, type="string" );
+
 
     @staticmethod
     class prmanDinamicRules():
@@ -723,7 +743,6 @@ class maya( _genericAssetClass ) :
             if self.rlf2maya:
                 self.rlf2maya.SetActiveScope(self.s)
 
-
     @staticmethod
     def attachShadersLazy():
         maya.attachShaders( lazyRefresh=True )
@@ -736,8 +755,6 @@ class maya( _genericAssetClass ) :
             assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__attachShaders )
         else:
             assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._attachShaders )
-
-
 
     @staticmethod
     def node2rule(nodeName):
@@ -788,72 +805,74 @@ class maya( _genericAssetClass ) :
 
         return rule
 
-
     @staticmethod
     def rule2node(rule):
         return rule.lstrip('/').replace('/','|')
 
     @staticmethod
     def createDinamicRules(nodes=[], message='Attaching shaders...'):
-        import maya.cmds as m
-        dr = maya.prmanDinamicRules()
-        # dr.fromScene()
-        # pb = progressBar(len(nodes), message)
+        try:
+            import maya.cmds as m
+        except:
+            m = None
+        if m:
+            dr = maya.prmanDinamicRules()
+            # dr.fromScene()
+            # pb = progressBar(len(nodes), message)
 
-        # add extra node which have SAM_DR attributes to create dinamic rules
-        extra = []
-        for each in m.ls("|*", type='transform'):
-            attrList = m.listAttr(each, ud=1)
-            if attrList and [ a for a in attrList if 'SAM_D' in a ]:
-                extra += [each]
-            meshs = m.listRelatives(each,c=1,f=1, type='mesh')
-            if meshs:
-                for mesh in meshs:
-                    attrList = m.listAttr(mesh, ud=1)
-                    if attrList and [ a for a in attrList if 'SAM_D' in a ]:
-                        extra += [mesh]
+            # add extra node which have SAM_DR attributes to create dinamic rules
+            extra = []
+            for each in m.ls("|*", type='transform'):
+                attrList = m.listAttr(each, ud=1)
+                if attrList and [ a for a in attrList if 'SAM_D' in a ]:
+                    extra += [each]
+                meshs = m.listRelatives(each,c=1,f=1, type='mesh')
+                if meshs:
+                    for mesh in meshs:
+                        attrList = m.listAttr(mesh, ud=1)
+                        if attrList and [ a for a in attrList if 'SAM_D' in a ]:
+                            extra += [mesh]
 
-        # remove duplicates
-        nodes = list(set(nodes+extra))
-        for shader in nodes:
-            # ignore geo that shouldn't be exported
-            if '|CTRLS|' in shader:
-                continue
-            if 'Orig' in shader[-8:]:
-                continue
+            # remove duplicates
+            nodes = list(set(nodes+extra))
+            for shader in nodes:
+                # ignore geo that shouldn't be exported
+                if '|CTRLS|' in shader:
+                    continue
+                if 'Orig' in shader[-8:]:
+                    continue
 
-            # atach to nodes matching naming map
-            n = m.ls(shader, dag=1, visible=1, ni=1, l=1, type='shape')
-            connections = m.listConnections(n,  type="shadingEngine")
-            if connections:
-                cleanup = {}
-                for x in connections:
-                    cleanup[x] = 1
-                for sg in cleanup.keys():
-                    if m.objExists( shader + '.SAM_ORIGINAL_NODE' ):
-                        try:
-                            nodeToAttach = m.getAttr( shader + '.SAM_ORIGINAL_NODE' ).split('|')[-1]
-                            # m.sets( m.ls("*"+nodeToAttach), e=True, forceElement=sg )
-                            dr.addRule(nodeToAttach, sg)
-                        except:
-                            sys.stderr.write( "SAM WARNIG: can't attach shadingGroup %s to node %s\n" % ( sg, nodeToAttach ) )
-                            # traceback.print_last()
-                    else:
-                        # print nodes, connections
-                        # dr.addRule(n[0].split('|')[-1], sg)
-                        for node in n:
-                            rule = node
-                            if m.objExists('%s.SAM_DINAMIC_RULE' % node):
-                                rule = m.getAttr('%s.SAM_DINAMIC_RULE' % node).strip('/')
-                            elif m.objExists('%s.SAM_DYNAMIC_RULE' % node):
-                                rule = m.getAttr('%s.SAM_DYNAMIC_RULE' % node).strip('/')
-                            elif m.objExists('%s.SAM_DR' % node):
-                                rule = m.getAttr('%s.SAM_DR' % node).strip('/')
-                            if rule.strip():
-                                dr.addRule( maya.node2rule( rule ), sg, node )
-        dr.toScene()
-        # pb.close()
-
+                # atach to nodes matching naming map
+                n = m.ls(shader, dag=1, visible=1, ni=1, l=1, type='shape')
+                connections = m.listConnections(n,  type="shadingEngine")
+                if connections:
+                    cleanup = {}
+                    for x in connections:
+                        cleanup[x] = 1
+                    for sg in cleanup.keys():
+                        if m.objExists( shader + '.SAM_ORIGINAL_NODE' ):
+                            try:
+                                nodeToAttach = m.getAttr( shader + '.SAM_ORIGINAL_NODE' ).split('|')[-1]
+                                # m.sets( m.ls("*"+nodeToAttach), e=True, forceElement=sg )
+                                dr.addRule(nodeToAttach, sg)
+                            except:
+                                sys.stderr.write( "SAM WARNIG: can't attach shadingGroup %s to node %s\n" % ( sg, nodeToAttach ) )
+                                # traceback.print_last()
+                        else:
+                            # print nodes, connections
+                            # dr.addRule(n[0].split('|')[-1], sg)
+                            for node in n:
+                                rule = node
+                                if m.objExists('%s.SAM_DINAMIC_RULE' % node):
+                                    rule = m.getAttr('%s.SAM_DINAMIC_RULE' % node).strip('/')
+                                elif m.objExists('%s.SAM_DYNAMIC_RULE' % node):
+                                    rule = m.getAttr('%s.SAM_DYNAMIC_RULE' % node).strip('/')
+                                elif m.objExists('%s.SAM_DR' % node):
+                                    rule = m.getAttr('%s.SAM_DR' % node).strip('/')
+                                if rule.strip():
+                                    dr.addRule( maya.node2rule( rule ), sg, node )
+            dr.toScene()
+            # pb.close()
 
     @staticmethod
     def _attachShaders(lazyRefresh=False):
@@ -872,8 +891,6 @@ class maya( _genericAssetClass ) :
             maya.applyCustomRules()
             nodes = m.ls("SAM_SHADER_*", type='transform')
             maya.createDinamicRules(nodes)
-
-
 
     @staticmethod
     def _cleanUnusedShadingNodes(force=False):
@@ -1054,15 +1071,22 @@ class maya( _genericAssetClass ) :
         return shadingMap, shadingGroups, shadingNodes, displacementNodes, textures
 
 
-    def _extraFiles( self ):
-        if 'extraFiles' not in self.data:
-            self.data['extraFiles'] = []
-        for node in self.data['meshPrimitives']:
+    @staticmethod
+    def extraFiles( data, filename='' ):
+        if 'extraFiles' not in data:
+            data['extraFiles'] = []
+        for node in data['meshPrimitives']:
             for n in m.ls(node, dag=1):
+                # find all extra filenames that needed to be published with the maya asset
                 for attr in [ (n+'.'+a, str(m.getAttr(n+'.'+a)).strip()) for a in  m.listAttr(n, w=1, se=1, usedAsFilename=1) if m.getAttr(n+'.'+a) ]:
                     if attr[1]:
-                        self.data['extraFiles'] += [attr[1]]
-                        m.setAttr( attr[0],  "%s/%s" % ( self.data['publishPath'], os.path.basename( attr[1] ) ), type='string' )
+                        data['extraFiles'] += [attr[1]]
+                        m.setAttr( attr[0],  "%s/%s" % ( data['publishPath'], os.path.basename( attr[1] ) ), type='string' )
+
+        maya.exportXgen(data, filename)
+
+    def _extraFiles( self, filename='' ):
+        maya.extraFiles( self.data, filename )
 
     def doPublishMayaExport(self, fileName, operands):
         '''
@@ -1091,11 +1115,11 @@ class maya( _genericAssetClass ) :
             self.data['assetPath'] = "%s/data/%%s" % m.workspace(q=1, rd=1) + mayaExt
             self.data['multipleFiles'] = ['asset']
 
-            self._extraFiles()
 
             for each in self.data['multipleFiles']:
                 scene = self.data['assetPath'] % each
 
+                self._extraFiles(scene)
                 self.doPublishMayaExport(scene, operands)
 
             m.file(s=1)
@@ -1103,10 +1127,83 @@ class maya( _genericAssetClass ) :
             return True
         return False
 
+    @staticmethod
+    def exportXgen(data, filename=''):
+        for node in data['meshPrimitives']:
+            # XGEN
+            # find all extra xgen files to publish
+            data['xgenNodes'] = {}
+            for n in m.ls(node, type='xgmPalette', dag=1, l=0):
+                xgen_file_base = "%s__%s.xgen" % (os.path.splitext(os.path.basename(m.file(q=1,sn=1)))[0], n)
+                xgen_file_node = str(m.workspace(q=True, dir=True, rd=True )+'/scenes/'+m.getAttr(n+'.xgFileName')).strip()
+                xgen_file = str(m.workspace(q=True, dir=True, rd=True )+'/scenes/'+xgen_file_base)
+                if not os.path.exists( xgen_file_node ):
+                    print "XGEN PUBLISH ERROR: Can't find xgen collention file %s for node %s! Can't publish xgen." % (xgen_file_node, n)
+                else:
+                    if xgen_file_node != xgen_file:
+                        os.system( 'cp -rf "%s" "%s"' % (xgen_file_node, xgen_file) )
+                    m.setAttr(n+'.xgFileName', xgen_file_base, type='string')
+                    new_xgen_file = ''
+                    xgProjectPath = ''
+                    xgDataPath = []
+                    for line in open(xgen_file,'r'):
+                        if 'xgDataPath' in line:
+                            xgDataPath += [line.split('xgDataPath')[-1].strip()]
+
+                        if 'xgProjectPath' in line:
+                            xgProjectPath = line.split('xgProjectPath')[-1].strip()
+                            new_xgen_file += "\txgProjectPath\t<SAM_PROJECT>\n"
+                        else:
+                            new_xgen_file += line
+
+                    if not xgProjectPath:
+                        print "XGEN PUBLISH ERROR: Can't find project path in xgen file %s!" % xgen_file
+                    else:
+                        # expand xgDataPath paths and add to extraFiles to be published!
+                        for each in xgDataPath:
+                                data['extraFiles'] += [each.replace('${PROJECT}', '%s/' % xgProjectPath)]
+
+                    data['xgenNodes'][n]  = (filename+'.xgen', xgen_file)
+                    f = open(data['xgenNodes'][n][0],'w')
+                    f.write(new_xgen_file)
+                    f.close()
+
+                    data['extraFiles'] += data['xgenNodes'][n]
+
+                # now we need to find all extra data that needs to be published as well.
+
+    @staticmethod
+    def importXgen(data):
+        if 'extraFiles' in data:
+            for each in data['extraFiles']:
+                if 'xgen' in each:
+                    samFile  = os.path.dirname(data['publishFile'])+'/'+os.path.basename(each)
+                    userFile = m.workspace(q=True, dir=True, rd=True)+'/'.join(each.split('maya')[1:])
+                    # xgen files need to be copied to the user maya folder and adjusted before importing the scene
+                    if os.path.splitext(each)[-1] in ['.xgen']:
+                        for node in [ x for x in data['xgenNodes'] if os.path.basename(each) in data['xgenNodes'][x][1] ]:
+                            xgen_metadata = str(m.workspace(q=True, dir=True, rd=True)+'/scenes/'+os.path.basename(data['xgenNodes'][node][1]))
+                            print xgen_metadata
+                            w=open(xgen_metadata,'w')
+                            r=open(samFile,'r')
+                            for line in r:
+                                if 'xgProjectPath' in line:
+                                    line = '\txgProjectPath\t%s\n' % str(m.workspace(q=True, dir=True, rd=True)+'/')
+                                w.write(line)
+                            w.close()
+                    else:
+                        cmd = 'mkdir -p "%s" ; cp -rvf "%s" "%s"' % ( os.path.dirname(userFile), samFile, userFile )
+                        if os.path.isdir(samFile):
+                            cmd = 'mkdir -p "%s" ; cp -rvf %s/* "%s"' % ( os.path.dirname(userFile), samFile, userFile )
+                        print each, cmd
+                        os.system( cmd  )
+
 
     def doImportMaya( self, filename, nodeName ):
         # maya import code!
         if m:
+            self.importXgen(self.data)
+
             old_groups = m.ls('|*', type='transform')
             m.file(filename, i=1, gr=1 )
             for groups in [ g for g in m.ls('|*', type='transform') if g not in old_groups ]:
@@ -1116,6 +1213,7 @@ class maya( _genericAssetClass ) :
 
             maya.attachShaders()
             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya.attachShaders )
+
 
             return True
         return False
@@ -1377,6 +1475,12 @@ class alembic(  _genericAssetClass ) :
             className = str(self.__class__).split('.')[-1]
             root = ' '.join([ '-root '+x for x in sl ])
 
+            # just make sure we have the extra keys we need.
+            if 'frameCallback' not in self.data:
+                self.data['frameCallback'] = {}
+            if 'extraFiles' not in self.data:
+                self.data['extraFiles'] = []
+
             # create a temp file so frameCallback can generate data to input
             # into asset data file. The temp file will contain a str(dict) so
             # we can just read it and eval() the content of the file.
@@ -1393,15 +1497,13 @@ class alembic(  _genericAssetClass ) :
                 root,
                 mfile,
             )
+            # we have to call the callback here since it seems it won't call if just one frame is being exported
+            if start==end:
+                alembic._perFrameCallback(start, shaveTmp, sl, ftmp )
             # print "m.AbcExport( j=abcJob) : ", abcJob ; sys.stdout.flush()
             m.AbcExport( j=abcJob)
 
             # retrieve temp file data and pipe into asset data file.
-            if 'frameCallback' not in self.data:
-                self.data['frameCallback'] = {}
-            if 'extraFiles' not in self.data:
-                self.data['extraFiles'] = []
-
             f = open(ftmp,'r')
             for line in f.readlines():
                 # for each line, theres a frame, and the dict for that frame!
@@ -1464,8 +1566,10 @@ class alembic(  _genericAssetClass ) :
             #     ))
 
 
+            maya.extraFiles(self.data, self.data['assetPath'] % "asset")
             m.file(s=1)
             self.pb.close()
+
 
             return True
         return False
@@ -1631,10 +1735,10 @@ class alembic(  _genericAssetClass ) :
                                         else:
                                             m.setAttr( attrPar, data['shave'][cobIndex][attr] )
 
-                    print data
+                    # print data
                     if 'frameCallback' in data:
                         frames = data['frameCallback'].keys()
-                        if 'xgen' in data['frameCallback'][frames[0]]:
+                        if frames and 'xgen' in data['frameCallback'][frames[0]]:
                             for c in data['frameCallback'][frames[0]]['xgen']:
                                 abc = filename
                                 xgen_path = data['publishPath']
@@ -1745,7 +1849,7 @@ class gaffer( _genericAssetClass ):
             maya.cleanNodes( nodes+self.childrenNodes(nodes) )
 
             # cleanup shader leftovers
-            maya.cleanUnusedShadingNodes()
+            # maya.cleanUnusedShadingNodes()
 
             maya.cleanNodes( m.ls("SAMIMPORT*") )
 

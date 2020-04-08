@@ -536,6 +536,7 @@ class assetOP(object):
         # other assets
         from pprint import pprint
         import os, pipe
+        import genericAsset
 
         if app == None:
             app = pipe.apps.maya
@@ -576,6 +577,10 @@ class assetOP(object):
                         app()._userSetup()
                     os.system('cp "%s" "%s"' % (scene, sceneUser) )
                 scene = sceneUser
+
+            # use the importXgen static function from genericAsset.maya class to
+            # import the data needed by xgen. (the same function used in import!)
+            genericAsset.maya.importXgen( self.data )
 
         if type( cmd ) != str:
             cmd(scene)

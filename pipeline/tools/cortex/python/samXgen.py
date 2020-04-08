@@ -234,6 +234,7 @@ def xgen_create_ribbox(collection='collection8', descriptions=['tranca_1_', 'tra
              select -r -ne $sg;
              $attr=($sg+"."+$attrName);
         ''')
+        
         value = '''[mel "python(\\"import sys;sys.path.insert(0,'%s');import %s;reload(%s);%s.xgen_ribbox('%s','%s','%s','%s','%s')\\")"]''' % (
             pythonpath,
             thisModule, thisModule, thisModule,
