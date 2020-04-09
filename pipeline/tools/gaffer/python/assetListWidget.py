@@ -500,7 +500,8 @@ class assetListWidget( GafferUI.EditorWidget ):
              def __SAM_assetList_mayaNodeDeleted_IDLE__():
                 genericAsset.updateCurrentLoadedAssets()
                 self._mayaNodeDeleted(forceRefresh)
-             assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_mayaNodeDeleted_IDLE__ )
+             __SAM_assetList_mayaNodeDeleted_IDLE__()
+             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_mayaNodeDeleted_IDLE__ )
 
         assetUtils.mayaLazyScriptJob( runOnce=False,  deleteEvent=__SAM_assetList_mayaNodeDeleted__ )
         assetUtils.mayaLazyScriptJob( runOnce=False,  event=['deleteAll',lambda: __SAM_assetList_mayaNodeDeleted__(True)] )
