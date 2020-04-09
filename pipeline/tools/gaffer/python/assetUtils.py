@@ -473,7 +473,8 @@ class assetOP(object):
             m.file(f=1, new=1)
             m.file('%s' % file, f=1, o=1)
             samPrman.setupRISGlobals()
-        mayaLazyScriptJob( runOnce=True,  idleEvent=__openScene)
+        __openScene()
+        # mayaLazyScriptJob( runOnce=True,  idleEvent=__openScene)
 
     def mayaImportDependency(self):
         self.__data()
@@ -521,6 +522,7 @@ class assetOP(object):
         self._openDependency( __runGaffer, copyToFolder=pipe.admin.job.shot.user().path('gaffer/'), app=pipe.apps.gaffer )
 
 
+
     def _openDependency( self, cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', copyToFolder=None, app=None ):
         '''
         Open Button main function - its actually a generic button which can be configured by button attributes:
@@ -537,6 +539,7 @@ class assetOP(object):
         from pprint import pprint
         import os, pipe
         import genericAsset
+        reload(genericAsset)
 
         if app == None:
             app = pipe.apps.maya
