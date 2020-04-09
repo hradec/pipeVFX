@@ -68,6 +68,10 @@ def viewportOff( func ):
         try:
             return func( *args, **kwargs )
         except Exception:
+            print "Exception in user code (from inside viewportOff(%s)):" % func
+            print '-'*60
+            traceback.print_exc(file=sys.stdout)
+            print '-'*60
             raise # will raise original error
         finally:
             meval("paneLayout -e -manage true $gMainPane")
@@ -164,7 +168,7 @@ def _nodeName(data=None):
         pass
     return ret
 
-
+# @viewportOff
 def updateCurrentLoadedAssets(forceRefresh=False):
     # if forceRefresh or '_updateCurrentLoadedAssets__' not in globals():
     #     globals()['_updateCurrentLoadedAssets__'] = {}
@@ -749,12 +753,13 @@ class maya( _genericAssetClass ) :
 
     @staticmethod
     def attachShaders(lazyRefresh=False):
-        if lazyRefresh:
-            def __attachShaders():
-                maya._attachShaders(True)
-            assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__attachShaders )
-        else:
-            assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._attachShaders )
+        maya._attachShaders(True)
+        # if lazyRefresh:
+        #     def __attachShaders():
+        #         maya._attachShaders(True)
+        #     assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__attachShaders )
+        # else:
+        #     assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._attachShaders )
 
     @staticmethod
     def node2rule(nodeName):
@@ -936,12 +941,13 @@ class maya( _genericAssetClass ) :
 
     @staticmethod
     def cleanUnusedShadingNodes(force=False):
-        if force:
-            def __cleanUnusedShadingNodesForce():
-                maya._cleanUnusedShadingNodes(True)
-                assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__cleanUnusedShadingNodesForce )
-        else:
-            assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._cleanUnusedShadingNodes )
+        maya._cleanUnusedShadingNodes(True)
+        # if force:
+        #     def __cleanUnusedShadingNodesForce():
+        #         maya._cleanUnusedShadingNodes(True)
+        #         assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__cleanUnusedShadingNodesForce )
+        # else:
+        #     assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._cleanUnusedShadingNodes )
 
     @staticmethod
     def cleanNodes(nodes, msg='Cleaning up nodes...'):
@@ -1240,7 +1246,7 @@ class alembic(  _genericAssetClass ) :
         _genericAssetClass.fixRIGMeshCTRLS(grp)
         # we delete whatever is in the RibControl group, since alembic doesn't need it!
         if m:
-            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x ]:
+            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x and '|SAM' in x and '_alembic_' in x ]:
                 m.delete(n)
 
     def meshOnly(self):
@@ -1271,7 +1277,8 @@ class alembic(  _genericAssetClass ) :
             return
         conection = {}
         selectedShave  = m.ls(selection,dag=1,type='shaveHair')
-        selectedShave += list(set(m.listConnections(m.ls(selection, dag=1, type='mesh'), type='shaveHair', sh=1)))
+        connectedShaveNodes = m.listConnections(m.ls(selection, dag=1, type='mesh'), type='shaveHair', sh=1)
+        selectedShave += list(set(connectedShaveNodes if connectedShaveNodes!=None else []))
         selectedShave  = list(set(selectedShave))
         # selectedShave = [ str(x) for x in selectedShave ]
         globals()['self'].pb.step()
@@ -1615,8 +1622,8 @@ class alembic(  _genericAssetClass ) :
 
     def doImportMaya(self, filename, nodeName, gpucache=False ):
         if m:
-            print self.__setImportAsGPU
-            print gpucache
+            # print self.__setImportAsGPU
+            # print gpucache
             node = alembic.importAlembic( filename, nodeName, self.__setImportAsGPU or gpucache, self.data )
 
             if 'shadingMap' in self.data:
