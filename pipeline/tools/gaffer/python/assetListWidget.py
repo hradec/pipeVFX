@@ -628,9 +628,13 @@ class assetListWidget( GafferUI.EditorWidget ):
                     # print path
                     op = assetUtils.assetOP( path , self.hostApp() )
                     op.doImport( )
+
                 pb.step()
                 pb.close()
                 self._mayaNodeDeleted()
+
+                if hasattr( custom, 'assetListAssetImport' ):
+                    custom.assetListAssetImport( self )
                 # print op, path
             __SAM_assetList_doImport__()
             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_doImport__)
@@ -643,9 +647,14 @@ class assetListWidget( GafferUI.EditorWidget ):
                 pb.step()
                 if not checkIfNodeIsUpToDate(n):
                     n = n.split('_')
-                    op = assetUtils.assetOP( '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4])), self.hostApp() )
+                    path = '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4]))
+                    op = assetUtils.assetOP( path, self.hostApp() )
                     print '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4])), op.path, op.data
                     op.doImport()
+                    # run custom code, if any!
+
+            if hasattr( custom, 'assetListAssetImport' ):
+                custom.assetListAssetImport( self )
             pb.step()
             pb.close()
 
