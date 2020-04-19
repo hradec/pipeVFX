@@ -107,6 +107,7 @@ class houdini(baseApp):
            script      = '%s/engine/maya/maya$MAYA_VERSION_MAJOR/scripts/' % self.path(),
         )
 
+        self['HOUDINI_DISABLE_SSE'] = '1'
 
 
     def bins(self):
