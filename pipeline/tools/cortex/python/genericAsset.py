@@ -769,39 +769,48 @@ class maya( _genericAssetClass ) :
         # print nodeName
         paths = []
         # for path in nodeName.split('|'):
-        for path in [nodeName.split('|')[-1]]:
-            if path:
-                path = path.split(':')[-1]
-                # remove Shape from name
-                l = 0
-                for x in path.split('Shape'):
-                    if len(x) > l:
-                        path = x
-                        l = len(path)
-
-                for n in range(10):
-                    # path = path.replace(str(n),'')
-                    # split node name and gather the longest string!
+        nodeNames = [ x for x in nodeName.split('|') if x.strip() and 'SAM' not in x and 'group' not in x ]
+        if len(nodeNames) > 1:
+            for path in [nodeNames[0],nodeNames[-1]]:
+                if path.strip():
+                    path = path.split(':')[-1]
+                    # remove Shape from name
                     l = 0
-                    for x in path.split(str(n)):
+                    for x in path.split('Shape'):
                         if len(x) > l:
                             path = x
                             l = len(path)
 
-                paths += [path]
+                    for n in range(10):
+                        # path = path.replace(str(n),'')
+                        # split node name by number and gather the longest string!
+                        l = 0
+                        for x in path.split(str(n)):
+                            if len(x) > l:
+                                path = x
+                                l = len(path)
 
-        if paths:
-            p = ''
-            # paths.reverse()
-            for ps in paths:
-                if not p:
-                    p = "*[starts-with(name(),'%s')]" % ps
-                else:
-                    p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
-            rule = p
+                    paths += [path]
 
-            rule = '/'.join( [ "*[contains(name(),'%s')]" % ps for ps in paths ] ).strip('|').replace('|','/')
+            # print paths
+            rule = "//%s//*[contains(name(),'%s')]" % (paths[0], paths[-1])
         else:
+            paths = nodeName.split('|')[-1]
+            rule = '/'.join( [ "*[contains(name(),'%s')]" % ps for ps in paths ] ).strip('|').replace('|','/')
+
+        # if paths:
+        #     p = ''
+        #     # paths.reverse()
+        #     for ps in paths:
+        #         if not p:
+        #             # p = "*[starts-with(name(),'%s')]" % ps
+        #         else:
+        #             p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
+        #     rule = p
+        # else:
+        
+        # not sure we need this now...
+        if not paths:
             path = nodeName.split('|')[-1]
             path = path.split(':')[-1]
             p = "*[starts-with(name(),'%s')]" % path
@@ -1349,6 +1358,13 @@ class alembic(  _genericAssetClass ) :
                     globals()['self'].data['extraFilesDelete'] = []
                 globals()['self'].data['extraFilesDelete'] += [outCOB]
 
+                if 'shaveNodes' not in globals()['self'].data:
+                    globals()['self'].data['shaveNodes'] = {}
+                if each not in globals()['self'].data['shaveNodes']:
+                     globals()['self'].data['shaveNodes'][each] = []
+                if outCOB not in globals()['self'].data['shaveNodes'][each]:
+                    globals()['self'].data['shaveNodes'][each] += [outCOB]
+
             for each in conection:
                 m.setAttr( each + '.active', 0 )
                 try:
@@ -1451,21 +1467,26 @@ class alembic(  _genericAssetClass ) :
                 extra = ''
             else:
                 if not self.__anyNode:
-                    meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
+                    meshes = m.ls( sl=1, dag=1, visible=1, ni=1, type='mesh' )
                     # convert rman attributos to a cleaner version
-                    attrs = [ a for a in attributesToExport if 'rman__torattr___' in a ]
+                    attrs  = [ a for a in attributesToExport if 'rman__torattr___' in a ]
                     pb = progressBar(len(attrs)*len(meshes)+1, 'setting up geometry for export...')
                     pb.step()
-                    for attr in attrs:
+                    for n in meshes:
                         pb.step()
-                        for n in meshes:
+                        for attr in attrs:
                             pb.step()
                             if m.objExists( '%s.%s' % (n, attr) ):
                                 cleanAttr = attr.replace('rman__torattr___','')
                                 if not m.objExists( '%s.%s' % (n, cleanAttr) ):
                                     m.addAttr( n, ln=cleanAttr, at="long" )
                                 m.setAttr( '%s.%s' % (n, cleanAttr), m.getAttr( '%s.%s' % (n, attr) ) )
-                                attributesToExport.append(cleanAttr)
+                                if cleanAttr not in attributesToExport:
+                                    attributesToExport.append(cleanAttr)
+
+                        for attr in [ a for a in m.listAttr(n) if 'rman_' in a ]:
+                            if attr not in attributesToExport:
+                                attributesToExport += [attr]
 
                     pb.close()
 
@@ -1507,7 +1528,7 @@ class alembic(  _genericAssetClass ) :
             # we have to call the callback here since it seems it won't call if just one frame is being exported
             if start==end:
                 alembic._perFrameCallback(start, shaveTmp, sl, ftmp )
-            # print "m.AbcExport( j=abcJob) : ", abcJob ; sys.stdout.flush()
+            print "m.AbcExport( j=abcJob) : ", abcJob ; sys.stdout.flush()
             m.AbcExport( j=abcJob)
 
             # retrieve temp file data and pipe into asset data file.
@@ -1648,6 +1669,7 @@ class alembic(  _genericAssetClass ) :
                     nodes = m.ls(node,  dag=1, visible=1, ni=1, type='mesh' )
                     pb = progressBar(len(nodes)+1, 'Updating subdiv prman attributes...')
                     for n in nodes:
+                        pb.step()
                         if m.objExists( '%s.subdivScheme' % n ):
                             if not m.objExists(n + '.rman__torattr___subdivScheme'):
                                 m.addAttr( n, ln="rman__torattr___subdivScheme", at="long" )
@@ -1657,6 +1679,8 @@ class alembic(  _genericAssetClass ) :
                             if not m.objExists(n + '.rman__torattr___subdivFacevaryingInterp'):
                                 m.addAttr( n, ln="rman__torattr___subdivFacevaryingInterp", at="long" )
                             m.setAttr( n + '.rman__torattr___subdivFacevaryingInterp',  m.getAttr( '%s.subdivFacevaryingInterp' % n )  )
+
+                    pb.close()
 
 
             # m.scriptJob( runOnce=True,  idleEvent=idleSetup )
@@ -1679,12 +1703,16 @@ class alembic(  _genericAssetClass ) :
                 if data:
                     # gather all shave caches in this asset, if any!
                     cobs = {}
-                    for each in data['extraFiles']:
-                        if 'shave.' in each:
-                            nodeName = '.'.join( each.split('.')[:-2] )
-                            if nodeName not in cobs:
-                                cobs[ nodeName ] = []
-                            cobs[ nodeName ] += [each]
+                    has_shaveNodes = 'shaveNodes' in data
+                    if not has_shaveNodes:
+                        for each in data['extraFiles']:
+                            if 'shave.' in each:
+                                nodeName = '.'.join( each.split('.')[:-2] )
+                                if nodeName not in cobs:
+                                    cobs[ nodeName ] = []
+                                cobs[ nodeName ] += [each]
+                    else:
+                        cobs = data['shaveNodes']
 
                     for shave in cobs:
                         import IECore, IECoreMaya
@@ -1703,27 +1731,36 @@ class alembic(  _genericAssetClass ) :
                         m.select(cl=1)
 
 
-                        shaveCache = os.path.splitext(os.path.splitext(cobs[shave][0])[0])[0]+'.####.cob'
+                        shaveCache = os.path.splitext( os.path.splitext( cobs[shave][0] )[0] )[0]+'.####.cob'
                         shaveCache = '%s/%s' % (data['publishPath'], os.path.basename(shaveCache))
                         m.setAttr( fileAttr, shaveCache, type='string' )
 
                         m.setAttr("%s.visibleInReflections" % fnPH.name(), 1)
                         m.setAttr("%s.visibleInRefractions" % fnPH.name(), 1)
 
-                        name = 'shaveShape'
+                        if has_shaveNodes:
+                            name = shave
+                            new_transform = shave.replace("Shape", "")
+                            idpassName = shave.split("Shape")[0]
+                        else:
+                            name = 'shaveShape'
+                            new_transform = data['assetName']+'_shave'
+                            idpassName = shaveCache.split('/shave.')[1].split('.')[0]
                         count=1
                         while m.objExists('|%s|%s' % (transform, name)):
                             name = name.split('_')[0]+'_'+str(count)
                             count+=1
 
                         m.rename( '|%s|%s' % (transform, fnPH.name()), name)
-                        transform = m.rename( transform, data['assetName']+'_shave')
+                        transform = m.rename( transform, new_transform)
                         m.parent( transform, node )
 
                         # set the IDPrimvarName to the shaveNode name used in the cob sequence name
                         try:
+                            attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["shaveName"] )
+                            m.setAttr( attrName, idpassName, type='string' )
+
                             attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["IDPrimvarName"] )
-                            idpassName = shaveCache.split('/shave.')[1].split('.')[0]
                             m.setAttr( attrName, idpassName, type='string' )
                         except:
                             pass
