@@ -23,6 +23,13 @@ import IECore
 from IECore import *
 import Asset
 import os, time, sys
+try:
+    import maya.cmds as m
+    from  maya.mel import eval as meval
+    m.loadPlugin("shaveCortexWriter")
+except:
+    m=None
+
 
 class shave4lookdev(ParameterisedProcedural) :
 
@@ -150,16 +157,9 @@ class shave4lookdev(ParameterisedProcedural) :
         ])
 
     def _exportCob(self, path):
-        try:
-            import maya.cmds as m
-            from  maya.mel import eval as meval
-            m.loadPlugin("shaveCortexWriter")
-        except:
-            m=None
-
-        print m
         if m:
-            meval('shaveCortexWriter -e "%s"' % (path))
+            for node in m.ls(type='shaveHair'):
+                meval('shaveCortexWriter -e "%s" "%s"' % (path+".%s.cob" % node,node))
 
 
     def _file(self, args, frame=None):
@@ -192,17 +192,34 @@ class shave4lookdev(ParameterisedProcedural) :
         fp = self._file(args, int(args['dataFromHostApp']['frame'].value)-1)
         if f:
             # print f
-            cf = Reader.create( f ).read()
-            cf.shutter = self.shutter(renderer)
-            if os.path.exists(fp) and ( cf.shutter or args["viewportDisplay"]["velocity"].value ) and fp!=f:
-                t=time.time()
-                print "Calculating velocity vector using previous frame..."
-                pf = Reader.create( fp ).read()
-                v = [ cf['P'].data[n] - pf['P'].data[n] for n in range(len(cf['P'].data)) ]
-                print "Calculating velocity vector using previous frame took: %.02f secs" % float(time.time()-t)
-                cf['velocity'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V3fVectorData(v) )
+            if m:
+                g = Group()
+                for node in m.ls(type='shaveHair'):
+                    cf = Reader.create( f+".%s.cob" % node ).read()
+                    cf.shutter = self.shutter(renderer)
+                    if os.path.exists(fp) and ( cf.shutter or args["viewportDisplay"]["velocity"].value ) and fp!=f:
+                        t=time.time()
+                        print "Calculating velocity vector using previous frame..."
+                        pf = Reader.create( fp ).read()
+                        v = [ cf['P'].data[n] - pf['P'].data[n] for n in range(len(cf['P'].data)) ]
+                        print "Calculating velocity vector using previous frame took: %.02f secs" % float(time.time()-t)
+                        cf['velocity'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V3fVectorData(v) )
 
-            cf.name = os.path.basename(fp)
+                    cf.name = os.path.basename(fp+node)
+                    g.addChild(cf)
+                return g
+            else:
+                cf = Reader.create( f ).read()
+                cf.shutter = self.shutter(renderer)
+                if os.path.exists(fp) and ( cf.shutter or args["viewportDisplay"]["velocity"].value ) and fp!=f:
+                    t=time.time()
+                    print "Calculating velocity vector using previous frame..."
+                    pf = Reader.create( fp ).read()
+                    v = [ cf['P'].data[n] - pf['P'].data[n] for n in range(len(cf['P'].data)) ]
+                    print "Calculating velocity vector using previous frame took: %.02f secs" % float(time.time()-t)
+                    cf['velocity'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V3fVectorData(v) )
+
+                cf.name = os.path.basename(fp)
         print cf
         return cf
 
@@ -223,7 +240,13 @@ class shave4lookdev(ParameterisedProcedural) :
         f = self._file(args)
         if f:
             self._exportCob(f)
-            geo = Reader.create( f ).read()
+            if m:
+                geo = Group()
+                for node in m.ls(type='shaveHair'):
+                    cf = Reader.create( f+".%s.cob" % node ).read()
+                    geo.addChild(cf)
+            else:
+                geo = Reader.create( f ).read()
             return geo.bound()
         else:
             return Box3f(V3f(1,1,1), V3f(-1,-1,-1))
@@ -571,6 +594,7 @@ class shave4lookdev(ParameterisedProcedural) :
             		)
             geo.shutter = 0
 
+
         # geo['width'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Constant, FloatData(args['setupParticles']['width'].value) )
         # print geo.cubicRibbonsGeometrySource()
         debugRender = float(args["meshCutoutList"]["debugRender"].value)
@@ -583,38 +607,45 @@ class shave4lookdev(ParameterisedProcedural) :
                 #     uv += [ V3f(x*stepUV) for x in range( c ) ]
                 # geo['uv'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V3fVectorData( uv ) )
                 # print "CORTEX PROCEDURAL: took %.02f secs to create curves uv data" % (time.time()-t)
-
-                p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.linear())
-                p.name          = geo.name
-                # p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.bSpline())
-                p['P']          = geo['P']
-
-                if args["viewportDisplay"]["displayHairColors"].value:
-                    p['rootColor']  = geo['rootColor']
-                    p['tipColor']   = geo['tipColor']
-
-
-                if 'U' in geo.keys():
-                    p['U']          = geo['U']
-
-                if 'uv' in geo.keys():
-                    p['uv']          = geo['uv']
-
-                if 'velocity' in geo.keys():
-                    p['velocity']    = geo['velocity']
-
-
-                if int(args["viewportDisplay"]["debugCutoutGeometry"].value) > 0:
-                    p['hide'] = self._hide(p, args)
-                # p = pp
-
+                _group = geo
+                n=0
                 group = Group()
-                group.addChild( p )
+                for geo in _group.children():
+                    # p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.linear())
+                    p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.bSpline())
+                    group.addChild( p )
+
+                    p['P']          = geo['P']
+                    print p
+
+                    if args["viewportDisplay"]["displayHairColors"].value:
+                        p['rootColor']  = geo['rootColor']
+                        p['tipColor']   = geo['tipColor']
+
+
+                    if 'U' in geo.keys():
+                        p['U']          = geo['U']
+
+                    if 'uv' in geo.keys():
+                        p['uv']          = geo['uv']
+
+                    if 'velocity' in geo.keys():
+                        p['velocity']    = geo['velocity']
+
+
+                    if int(args["viewportDisplay"]["debugCutoutGeometry"].value) > 0:
+                        p['hide'] = self._hide(p, args)
+                    # p = pp
+
+
                 # Set up how our hair will render
                 self.__setupGLRenderer( renderer )
 
                 # Set up our shading
-                numcv = len(geo['P'].data)
+                numcv = 0
+                for geo in group.children():
+                    numcv += len(geo['P'].data)
+
                 perc = float(args["viewportDisplay"]["displayPercentage"].value) / 100.0
                 shader = self.__setupGLShader( args, 'U' in p.keys() )
                 group.addState( shader )

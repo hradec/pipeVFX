@@ -689,7 +689,7 @@ class shave(ParameterisedProcedural) :
                 g.addChild(p)
 
                 if not debugRender:
-                    _g.render( renderer )
+                    g.render( renderer )
                 else:
                     rib = '''
                         Pattern "PxrVariable" "primvar" "string variable" [""] "string name" ["hide"] "string type" ["float"] "string coordsys" [""]
