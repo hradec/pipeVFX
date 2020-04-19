@@ -43,6 +43,7 @@
 #include "IECore.h"
 #include "PointsPrimitive.h"
 #include "PointsPrimitiveEvaluator.h"
+#include "InverseDistanceWeightedInterpolation.h"
 
 class PxrChecker : public RixPattern
 {
@@ -54,6 +55,7 @@ class PxrChecker : public RixPattern
         k_resultG,
         k_resultB,
         /* inputs */
+        k_ptc,
         k_colorA,
         k_colorB,
         k_manifold,
@@ -80,43 +82,9 @@ public:
 int
 PxrChecker::Init(RixContext &ctx, char const *pluginPath)
 {
-
-	// get points
-    IECore::FloatVectorData *zr  = new IECore::FloatVectorData();
-    IECore::FloatVectorData *zid = new IECore::FloatVectorData();
-    IECore::V3fVectorData   * p  = new IECore::V3fVectorData();
-    IECore::V3fVectorData   * n  = new IECore::V3fVectorData();
-    IECore::V3fVectorData   * c  = new IECore::V3fVectorData();
-    FILE *f = fopen("/tmp/zz.ptc", "r");
-    char line[512];
-    float r, px, py, pz, nx,ny,nz, cr,cg,cb, id;
-    while( ! feof(f) ){
-        // fgets(line, 256, f);
-
-        int ret = fscanf(f, "[%g,[%g,%g,%g],[%g,%g,%g,],[%g,%g,%g],%g]\n", &r, &px, &py, &pz, &nx,&ny,&nz, &cr,&cg,&cb, &id);
-        if(ret>0){
-            p->writable().push_back( Imath::V3f( px, py, pz) );
-            n->writable().push_back( Imath::V3f( nx, ny, nz) );
-            c->writable().push_back( Imath::V3f( cr, cg, cb) );
-            zr->writable().push_back( r );
-            zid->writable().push_back( id );
-        }
-
-
-    }
-
-
-	// if( const DD::Image::PointList *pl = m_geo->point_list() )
-	// {
-	// 	p->writable().resize( pl->size() );
-	// 	std::transform( pl->begin(), pl->end(), p->writable().begin(), IECore::convert<Imath::V3f, DD::Image::Vector3> );
-	// }
-    ptc = new IECore::PointsPrimitive( p );
-    ptc->variables["N"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, n->copy() );
-    ptc->variables["Cs"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, c->copy() );
-    ptc->variables["width"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zr->copy() );
-    ptc->variables["id"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zid->copy() );
-
+    // RtConstString const *ptc_name;
+    // sCtx->EvalParam(k_ptc, -1, &ptc_name);
+    // ptc = IECore::Reader::create("/tmp/ptc.cob")->read()
     return 0;
 }
 
@@ -136,6 +104,7 @@ PxrChecker::GetParamTable()
         RixSCParamInfo("resultG", k_RixSCFloat, k_RixSCOutput),
         RixSCParamInfo("resultB", k_RixSCFloat, k_RixSCOutput),
         /* inputs */
+        RixSCParamInfo("ptc", k_RixSCString),
         RixSCParamInfo("colorA", k_RixSCColor),
         RixSCParamInfo("colorB", k_RixSCColor),
         RixSCParamInfo("PxrManifold", "manifold", k_RixSCStructBegin),
@@ -162,37 +131,40 @@ PxrChecker::ComputeOutputParams(RixShadingContext const *sCtx,
     RixSCType type;
     RixSCConnectionInfo cinfo;
     RixSCParamInfo const* paramTable = GetParamTable();
+
+    // ===================================================================
+    // setup output
+    // ===================================================================
+    // count how many output parameters we have!
     int numOutputs = -1;
     while (paramTable[++numOutputs].access == k_RixSCOutput) {}
-
+    // and allocate memory for the amount of outputs
     RixShadingContext::Allocator pool(sCtx);
     OutputSpec *out = *outputs = pool.AllocForPattern<OutputSpec>(numOutputs);
     *nOutputs = numOutputs;
-
-    // looping through the different output ids
-    for (int i = 0; i < numOutputs; ++i)
-    {
+    // looping through the different output to set then up
+    // as all outputs are at the begining of our eval,
+    // we can start at 0
+    for (int i = 0; i < numOutputs; ++i){
         out[i].paramId = i;
         out[i].detail = k_RixSCInvalidDetail;
         out[i].value = NULL;
         type = paramTable[i].type;    // we know this
 
         sCtx->GetParamInfo(i, &type, &cinfo);
-        if(cinfo == k_RixSCNetworkValue)
-        {
-            if( type == k_RixSCColor )
-            {
+        if(cinfo == k_RixSCNetworkValue){
+            if( type == k_RixSCColor ){
                 out[i].detail = k_RixSCVarying;
                 out[i].value = pool.AllocForPattern<RtColorRGB>(sCtx->numPts);
             }
-            else if( type == k_RixSCFloat )
-            {
+            else if( type == k_RixSCFloat ){
                 out[i].detail = k_RixSCVarying;
                 out[i].value = pool.AllocForPattern<float>(sCtx->numPts);
             }
         }
     }
-
+    // now setup simple RtColorRGB variables so we can work with then in the
+    // actual code.
     RtColorRGB *resultRGB = (RtColorRGB*) out[k_resultRGB].value;
     // make sure the resultRGB space is allocated because it
     // will store the composite color results.
@@ -200,8 +172,11 @@ PxrChecker::ComputeOutputParams(RixShadingContext const *sCtx,
     float *resultR = (float*) out[k_resultR].value;
     float *resultG = (float*) out[k_resultG].value;
     float *resultB = (float*) out[k_resultB].value;
-
+    // ===================================================================
+    // retrieve S/T, and transform it to the manifold space
+    // ===================================================================
     // Allocate space for our remapped s,t
+    // stOut[i] is our s/t
     RtFloat2 *stOut = pool.AllocForPattern<RtFloat2>(sCtx->numPts);
     float const *stRadius;
 
@@ -211,8 +186,7 @@ PxrChecker::ComputeOutputParams(RixShadingContext const *sCtx,
         RtFloat2 const *stIn;
         RtFloat2 const defaultST(0.0f, 0.0f);
         sCtx->GetPrimVar("st", defaultST, &stIn, &stRadius);
-        for (int i = 0; i < sCtx->numPts; ++i)
-        {
+        for (int i = 0; i < sCtx->numPts; ++i){
             stOut[i].x = stIn[i].x;
             stOut[i].y = stIn[i].y;
         }
@@ -220,30 +194,49 @@ PxrChecker::ComputeOutputParams(RixShadingContext const *sCtx,
         RtPoint3 const *Q;
         sCtx->EvalParam(k_manifoldQ, -1, &Q);
         sCtx->EvalParam(k_manifoldQradius, -1, &stRadius);
-        for (int i = 0; i < sCtx->numPts; ++i)
-        {
+        for (int i = 0; i < sCtx->numPts; ++i){
             stOut[i].x = Q[i].x;
             stOut[i].y = Q[i].y;
         }
     }
-
+    // ===================================================================
+    // retrieve input colors
+    // ===================================================================
+    // evaluate input colors to gather whatever color is connect to it, if any
     RtColorRGB const *colorA, *colorB;
     sCtx->EvalParam(k_colorA, -1, &colorA, &RixConstants::k_OneRGB, true);
     sCtx->EvalParam(k_colorB, -1, &colorB, &RixConstants::k_ZeroRGB, true);
 
-    for (int i = 0; i < sCtx->numPts; ++i)
-    {
-        float const smod = stOut[i].x - floorf(stOut[i].x);
-        float const tmod = stOut[i].y - floorf(stOut[i].y);
-        float srad = 0.25f - fabs(fabs(smod - 0.5f) - 0.25f);
-        float trad = 0.25f - fabs(fabs(tmod - 0.5f) - 0.25f);
-        float rad = min(srad, trad) / stRadius[i];
-        float step = RixSmoothStep(-1.0f, 1.0f, rad);
-        if ((smod < 0.5f) == (tmod < 0.5f)) {
-            resultRGB[i] = RixLerpRGB(colorA[i], colorB[i], step);
-        } else {
-            resultRGB[i] = RixLerpRGB(colorB[i], colorA[i], step);
-        }
+
+    // ===================================================================
+    // Finally, we can compute something!
+    // ===================================================================
+    // now we loop over the pixels we need to calculate!
+    const RtFloat3 *P;
+    sCtx->GetBuiltinVar(RixShadingContext::k_P, &P);
+    const RtFloat3 *N;
+    sCtx->GetBuiltinVar(RixShadingContext::k_Nn, &N);
+    for (int i = 0; i < sCtx->numPts; ++i){
+        // for( typename Tree::Iterator it=m_points.begin(); it!=m_points.end(); it++ )
+    	// {
+    	// 	// The nearest neighbour to me should be myself!
+    	// 	BOOST_CHECK( m_tree->nearestNeighbour( *it )==it );
+    	// }
+        // IECore::InverseDistanceWeightedInterpolation(
+		// 	PointIterator firstPoint,
+		// 	PointIterator lastPoint,
+		// 	ValueIterator firstValue,
+		// 	ValueIterator lastValue,
+		// 	unsigned int numNeighbours,
+		// 	int maxLeafSize=4
+		// );
+
+        // float step = RixSmoothStep(-1.0f, 1.0f, rad);
+        // if ((smod < 0.5f) == (tmod < 0.5f)) {
+        //     resultRGB[i] = RixLerpRGB(colorA[i], colorB[i], step);
+        // } else {
+        //     resultRGB[i] = RixLerpRGB(colorB[i], colorA[i], step);
+        // }
         if (resultR) resultR[i] = resultRGB[i].r;
         if (resultG) resultG[i] = resultRGB[i].g;
         if (resultB) resultB[i] = resultRGB[i].b;

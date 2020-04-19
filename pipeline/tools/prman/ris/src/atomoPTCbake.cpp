@@ -34,6 +34,7 @@
 # ------------------------------------------------------------------------------
 */
 
+#define MAX_THREADS 16
 
 /*
 We need this in the rib to render everything when baking
@@ -55,6 +56,14 @@ We need this in the rib to render everything when baking
 #include "Writer.h"
 #include "PointsPrimitive.h"
 #include "PointsPrimitiveEvaluator.h"
+#include "KDTree.h"
+#include "InverseDistanceWeightedInterpolation.h"
+
+#include <thread>
+
+
+// #define BRICK2
+// #define BRICK
 
 
 class PxrBakeSampleFilter : public RixSampleFilter
@@ -74,6 +83,8 @@ public:
     virtual void Filter(RixSampleFilterContext &fCtx,
                         RtConstPointer instance);
 
+
+
     struct sampleParams
     {
         RtColorRGB blackPoint;
@@ -89,6 +100,8 @@ public:
         RixChannelId channelId;
         RixChannelId channelId2;
         RixChannelId channelId3;
+        RixChannelId channelId4;
+        RixChannelId channelId5;
     };
 
     PtcPointCloud outptc = NULL;
@@ -101,6 +114,7 @@ public:
     char *inname, *outname;
 
     RixMutex       *m_allWorkersMutex;
+    RixMutex       *m_allWorkersMutex2;
     RixTransform   *_RixTransform;
 
     FILE *_f;
@@ -114,6 +128,22 @@ public:
     float r, px, py, pz, nx,ny,nz, cr,cg,cb, id;
     unsigned long nsamples;
     unsigned long nsamples_old;
+
+    float volumeSize;
+
+
+    virtual Imath::Box3f octreeInit( );
+    virtual void octree( Imath::Box3f bbox, unsigned long numberSlices, unsigned long depth=0 );
+    IECore::FloatVectorData *__zr  ;
+    IECore::FloatVectorData *__zid ;
+    IECore::V3fVectorData *__p     ;
+    IECore::V3fVectorData *__n     ;
+    IECore::V3fVectorData *__c     ;
+    IECore::V3fTree *kdtree        ;
+    IECore::PointsPrimitive * __ptc;
+
+    int threadLimit;
+    unsigned long npoint_in_grids;
 
 
     // outptc = PtcCreatePointCloudFile(outname, nvars, vartypes, varnames, w2e, w2n, format);
@@ -137,8 +167,11 @@ int PxrBakeSampleFilter::Init(RixContext &ctx, char const *pluginPath)
     //_rixContext = &ctx;
     _RixTransform = (RixTransform *)ctx.GetRixInterface(RixInterfaceId::k_RixTransform);
     m_allWorkersMutex=0;
+    m_allWorkersMutex2=0;
     nsamples=0;
     nsamples_old=0;
+    _f = fopen("/tmp/zz.ptc","w");
+    fclose(_f);
     return 0;
 }
 
@@ -157,6 +190,8 @@ enum paramIds
     k_aov,
     k_aov2,
     k_aov3,
+    k_aov4,
+    k_aov5,
     k_numParams
 };
 
@@ -178,6 +213,8 @@ PxrBakeSampleFilter::GetParamTable()
         RixSCParamInfo("aov", k_RixSCString),
         RixSCParamInfo("aov2", k_RixSCString),
         RixSCParamInfo("aov3", k_RixSCString),
+        RixSCParamInfo("aov4", k_RixSCString),
+        RixSCParamInfo("aov5", k_RixSCString),
         RixSCParamInfo()
     };
     return &s_ptable[0];
@@ -187,14 +224,186 @@ void PxrBakeSampleFilter::Finalize(RixContext &ctx)
 {
     PtcFinishPointCloudFile(outptc);
     // fprintf(_f, "]\n");
-    fclose(_f);
-    IECore::PointsPrimitive * __ptc = new IECore::PointsPrimitive( p->copy() );
-    __ptc->variables["N"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, n->copy() );
-    __ptc->variables["Cs"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, c->copy() );
-    __ptc->variables["width"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zr->copy() );
-    __ptc->variables["id"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zid->copy() );
 
-    IECore::Writer::create( __ptc, "/tmp/ptc.cob")->write();
+        fclose(_f);
+        IECore::PointsPrimitive * __ptc = new IECore::PointsPrimitive( p->copy() );
+        __ptc->variables["N"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, n->copy() );
+        __ptc->variables["Cs"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, c->copy() );
+        __ptc->variables["width"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zr->copy() );
+        __ptc->variables["id"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zid->copy() );
+
+        IECore::Writer::create( __ptc, "/tmp/ptc.cob")->write();
+
+        std::cout << "Writing final ptc.cob" << std::endl; std::cout.flush();
+
+        std::cout << "Filtering ptc to ptc2.cob - " << p->readable().size() << " points to filter..." << std::endl; std::cout.flush();
+        octree( octreeInit(), 2);
+}
+
+Imath::Box3f PxrBakeSampleFilter::octreeInit()
+{
+        // ======================================================================================
+        volumeSize=0.1;
+        // IECore::InverseDistanceWeightedInterpolationV3fV3f closestPointsAverageColor = IECore::InverseDistanceWeightedInterpolationV3fV3f(
+        //     p->readable().begin(),
+        //     p->readable().end(),
+        //     c->readable().begin(),
+        //     c->readable().end(),
+        //     20,
+        //     20
+        // );
+
+        __ptc = new IECore::PointsPrimitive( p->copy() );
+        std::cout << "1 "  << std::endl; std::cout.flush();
+
+        kdtree = new IECore::V3fTree(
+            p->readable().begin(),
+            p->readable().end(),
+            200
+        );
+        __zr  = new IECore::FloatVectorData();
+        __zid = new IECore::FloatVectorData();
+        __p   = new IECore::V3fVectorData();
+        __n   = new IECore::V3fVectorData();
+        __c   = new IECore::V3fVectorData();
+
+        Imath::Box3f bbox = __ptc->bound();
+        threadLimit=0;
+        npoint_in_grids = 0;
+        return bbox;
+}
+
+void PxrBakeSampleFilter::octree( Imath::Box3f _bbox, unsigned long numberSlices, unsigned long depth ){
+    // std::cout << "2 "  << std::endl; std::cout.flush();
+
+    // if (m_allWorkersMutex){
+    //     m_allWorkersMutex->Lock();
+        // std::cout <<  bbox.size().x << " - " <<  bbox.size().y << " - " <<  bbox.size().z << " - "  << std::endl; std::cout.flush();
+        float volumeSizeX = _bbox.size().x/numberSlices;
+        float volumeSizeY = _bbox.size().y/numberSlices;
+        float volumeSizeZ = _bbox.size().z/numberSlices;
+        unsigned long slices_counter = 0;
+        unsigned long slices_total = pow(numberSlices,3);
+        int old_perc = 0;
+        int perc = 0;
+        for( float sliceX = 0 ; sliceX < numberSlices ; sliceX++ ){
+            for( float sliceY = 0 ; sliceY < numberSlices ; sliceY++ ){
+                for( float sliceZ = 0 ; sliceZ < numberSlices ; sliceZ++ ){
+                    // int perc = int(float(slices_counter++) / slices_total) * 100;
+                    // if ( perc != old_perc )
+                    //     std::cout <<  perc << "%"  << std::endl; std::cout.flush();
+                    // std::cout <<  perc << "%"  << std::endl; std::cout.flush();
+                    // old_perc = perc;
+
+                    Imath::V3f gridPmin = Imath::V3f(
+                        _bbox.min.x+sliceX*volumeSizeX,
+                        _bbox.min.y+sliceY*volumeSizeY,
+                        _bbox.min.z+sliceZ*volumeSizeZ
+                    );
+                    Imath::V3f gridPmax = Imath::V3f(
+                        _bbox.min.x+(sliceX+1)*volumeSizeX,
+                        _bbox.min.y+(sliceY+1)*volumeSizeY,
+                        _bbox.min.z+(sliceZ+1)*volumeSizeZ
+                    );
+                    Imath::Box3f gridBox = Imath::Box3f(gridPmin, gridPmax);
+                    Imath::V3f gridCenter = gridBox.center();
+
+                    // find all points inside the gridBox
+                    // IECore::V3fTree::Iterator pointsInsideGridBox;
+                    std::vector<std::vector<Imath::V3f>::const_iterator> pointsInsideGridBox;
+                    float gridSize = (gridCenter-gridPmax).length();
+                    // kdtree.enclosedPoints(gridBox, pointsInsideGridBox);
+                    unsigned long numPoints = kdtree->nearestNeighbours( gridCenter, gridSize, pointsInsideGridBox );
+                    // unsigned long numPoints = kdtree->nearestNeighbours( gridCenter, gridBox.size().length()/4, pointsInsideGridBox );
+                    npoint_in_grids += numPoints;
+
+                    // if (depth<=1)
+                        std::cout << "depth:" << depth << " X: " << sliceX << " Y: " << sliceY << " Z: " << sliceZ  << " -> "<< numPoints << " - " << gridSize << " ";
+                        std::cout << " bbcenter.x:" <<  gridCenter.x;
+                        std::cout << " bbcenter.y:" <<  gridCenter.y;
+                        std::cout << " bbcenter.z:" <<  gridCenter.z;
+                        std::cout << " bbmin.x:" <<  gridBox.min.x;
+                        std::cout << " bbmin.y:" <<  gridBox.min.y;
+                        std::cout << " bbmin.z:" <<  gridBox.min.z;
+                        std::cout << " bbmax.x:" <<  gridBox.max.x;
+                        std::cout << " bbmax.y:" <<  gridBox.max.y;
+                        std::cout << " bbmax.z:" <<  gridBox.max.z;
+                        std::cout << std::endl; std::cout.flush();
+                    if ( numPoints > 0 ) {
+                        if ( numPoints > 100 && gridSize > 0.0001) {
+                            // while (threadLimit>=MAX_THREADS){
+                            //     sleep(1);
+                            // }
+                            // if (depth < 2){
+                            //     threadLimit++;
+                            //     // std::cout << "depth:" << depth << " X: " << sliceX << " Y: " << sliceY << " Z: " << sliceZ  << " -> "<< numPoints << std::endl; std::cout.flush();
+                            //     std::thread *dive = new std::thread(&PxrBakeSampleFilter::octree, this, gridBox, numberSlices, depth+1);
+                            //     threadLimit--;
+                            // }else{
+                                octree(gridBox, numberSlices, depth+1);
+                            // }
+                        }else{
+                            // std::cout << "depth:" << depth << " sliceX: " << sliceX << " sliceY: " << sliceY << " sliceZ: " << sliceZ  << " -> "<< numPoints << std::endl; std::cout.flush();
+                            Imath::V3f resultC = Imath::V3f(0,0,0);
+                            Imath::V3f resultN = Imath::V3f(0,0,0);
+                            float resultR = 0;
+                            float resultID = 0;
+                            long counter=0;
+                            unsigned long long index=0;
+                            for( unsigned long _i=0; _i < numPoints ; _i++ ){
+                                // std::cout << "pre-distance: " <<  index << std::endl; std::cout.flush();
+                                index = std::distance( p->readable().begin(), pointsInsideGridBox[_i] );
+                                // std::cout  << index << "\n" << p->readable().size() << std::endl; std::cout.flush();
+
+                                float distance = (gridCenter - p->readable()[index]).length() / gridSize;
+                                distance = 1.0-pow(distance,2);
+                                resultC  += c->readable()[index] * distance;
+                                resultN  += n->readable()[index] * distance;
+                                resultR  += zr->readable()[index] * distance;
+                                resultID += zid->readable()[index] * distance;
+                                counter++;
+                                // pointsInsideGridBox++;
+                            }
+                            if ( counter > 0 ){
+                                if (m_allWorkersMutex){
+                                    m_allWorkersMutex->Lock();
+
+                                    resultC /= counter;
+                                    resultN /= counter;
+                                    resultR /= counter;
+                                    resultID /= counter;
+
+                                    __p->writable().push_back( gridCenter );
+                                    __c->writable().push_back( resultC );
+                                    __n->writable().push_back( resultN );
+                                    __zr->writable().push_back( resultR );
+                                    __zid->writable().push_back( resultID );
+
+                                    m_allWorkersMutex->Unlock();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // after creating the filtered PTC, save it!
+        if ( depth == 0 ){
+            std::cout << "writing filtered ptc... filtered " << npoint_in_grids << " points generating " << __p->readable().size() << " filtered points."; std::cout.flush();
+            IECore::PointsPrimitive * ____ptc = new IECore::PointsPrimitive( __p->copy() );
+            ____ptc->variables["N"]           =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, __n->copy() );
+            ____ptc->variables["Cs"]          =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, __c->copy() );
+            ____ptc->variables["width"]       =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, __zr->copy() );
+            ____ptc->variables["id"]          =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, __zid->copy() );
+            IECore::Writer::create( ____ptc, "/tmp/ptc2.cob")->write();
+            std::cout << "done" << std::endl; std::cout.flush();
+            std::cout << "Finalize!!!!" << std::endl; std::cout.flush();
+        }
+
+    //     m_allWorkersMutex->Unlock();
+    // }
+
 }
 
 int PxrBakeSampleFilter::CreateInstanceData(RixContext &ctx,
@@ -221,6 +430,8 @@ int PxrBakeSampleFilter::CreateInstanceData(RixContext &ctx,
     RtConstString aov = "Ci";
     RtConstString aov2 = "P";
     RtConstString aov3 = "id";
+    RtConstString aov4 = "PRadius";
+    RtConstString aov5 = "Nn";
 
     parms->EvalParam( k_blackPoint, 0, &pp->blackPoint);
     parms->EvalParam( k_whitePoint, 0, &pp->whitePoint);
@@ -267,6 +478,21 @@ int PxrBakeSampleFilter::CreateInstanceData(RixContext &ctx,
     }
     pp->channelId3 = channel->id;
 
+    if (!(channel = iEnv->GetDisplayChannel(aov4)))
+    {
+        msg->Warning( "PxrBakeSampleFilter '%s' did not find a "
+                      "display for AOV '%s'", handle, aov );
+        return -1;
+    }
+    pp->channelId4 = channel->id;
+
+    if (!(channel = iEnv->GetDisplayChannel(aov5)))
+    {
+        msg->Warning( "PxrBakeSampleFilter '%s' did not find a "
+                      "display for AOV '%s'", handle, aov );
+        return -1;
+    }
+    pp->channelId5 = channel->id;
 
     nvars=1;
     char *_vartypes[1] = {(char *)"color"};
@@ -322,15 +548,21 @@ void PxrBakeSampleFilter::Filter(RixSampleFilterContext &fCtx,
     // std::cout << "\nBUMMMM 3\n" << std::endl; std::cout.flush();
 
     float data[3];
+    float _P[3];
+    float _N[3];
+    float id=0;
     RtColorRGB result;
     result.r = result.g = result.b = 0;
     long nn=0;
     RtColorRGB closer_result;
-    float id=0;
     float oldid=0;
     float anti_alias_pixel = 0;
     closer_result.r = closer_result.g = closer_result.b = 0;
     double lastZ = 9999999999999;
+
+
+#if defined(BRICK) || defined(BRICK2)
+#else
     for (int i=0 ; i < fCtx.numSamples; ++i) {
         RtColorRGB origPixel;
         RtColorRGB Ppixel;
@@ -352,15 +584,64 @@ void PxrBakeSampleFilter::Filter(RixSampleFilterContext &fCtx,
         fCtx.Write(pp->channelId, i, origPixel);
     }
     result /=nn;
+#endif
 
-    if ( anti_alias_pixel <= 1){
+#ifdef BRICK2
+    IECore::FloatVectorData *____zr  = new IECore::FloatVectorData();
+    IECore::FloatVectorData *____zid = new IECore::FloatVectorData();
+    IECore::V3fVectorData *____p   = new IECore::V3fVectorData();
+    IECore::V3fVectorData *____n   = new IECore::V3fVectorData();
+    IECore::V3fVectorData *____c   = new IECore::V3fVectorData();
+#endif
 
+#if defined(BRICK) || defined(BRICK2)
+#else
+    if ( anti_alias_pixel <= 1)
+#endif
+    {
         if (m_allWorkersMutex){
             m_allWorkersMutex->Lock();
             if ( fCtx.shadeCtxs[0] && fCtx.numGrps > 0){
+
+#if defined(BRICK) || defined(BRICK2)
                 // if ( fCtx.shadeCtxs[i]->numPts )
+                float oldid=0;
+                float anti_alias_pixel = 0;
+
+                float data[3];
+                float _P[3];
+                float _N[3];
+                float id=0;
+                for (int i=0 ; i < fCtx.numSamples; ++i)
                 {
                     // gather stats first
+                    RtColorRGB origPixel;
+                    fCtx.Read(pp->channelId, i, origPixel);
+                    RtColorRGB Ppixel;
+                    fCtx.Read(pp->channelId2, i, Ppixel);
+                    float _id;
+                    fCtx.Read(pp->channelId3, i, _id);
+                    float _radius;
+                    fCtx.Read(pp->channelId4, i, _radius);
+                    RtColorRGB Nn;
+                    fCtx.Read(pp->channelId2, i, Nn);
+
+                    if (_id != oldid){
+                        anti_alias_pixel++;
+                    }
+                    oldid = _id;
+
+                    data[0] = origPixel.r;
+                    data[1] = origPixel.g;
+                    data[2] = origPixel.b;
+                    _P[0] = Ppixel.r; _P[1] = Ppixel.g; _P[2] = Ppixel.b;
+                    _N[0] = Nn.r; _N[1] = Nn.g; _N[2] = Nn.b;
+#else
+                    float data[3];
+                    float _P[3];
+                    float _N[3];
+                    float _radius;
+                    float _id;
 
                     const RtFloat3 *P;
                     fCtx.shadeCtxs[0]->GetBuiltinVar(RixShadingContext::k_P, &P);
@@ -369,61 +650,180 @@ void PxrBakeSampleFilter::Filter(RixSampleFilterContext &fCtx,
                     const RtFloat3 *N;
                     fCtx.shadeCtxs[0]->GetBuiltinVar(RixShadingContext::k_Nn, &N);
 
-
-                    float _P[3]; _P[0] = P->x; _P[1] = P->y; _P[2] = P->z;
-                    float _N[3]; _N[0] = N->x; _N[1] = N->y; _N[2] = N->z;
+                    _P[0] = P->x; _P[1] = P->y; _P[2] = P->z;
+                    _N[0] = N->x; _N[1] = N->y; _N[2] = N->z;
                     data[1] = result.g;
                     data[0] = result.r;
                     data[2] = result.b;
+                    _radius = radius[0];
+                    _id=0;
+#endif
 
-                    // std::cout << _P[0] << ", ";
-                    // std::cout << _P[1] << ", ";
-                    // std::cout << _P[2] << "\n" << std::endl;
-                    // std::cout.flush();
-
-                    // FILE *f = fopen("/tmp/zz.ptc","a");
+                    _RixTransform->TransformPoints(const_cast<char*>("camera"), const_cast<char*>("world"), 1, &_N, 0);
                     _RixTransform->TransformPoints(const_cast<char*>("camera"), const_cast<char*>("world"), 1, &_P, 0);
 
-                    // std::cout << _P[0] << ", ";
-                    // std::cout << _P[1] << ", ";
-                    // std::cout << _P[2] << "\n\n\n" << std::endl;
-                    // std::cout.flush();
+                    p->writable().push_back( Imath::V3f( _P[0], _P[1], _P[2]) );
+                    n->writable().push_back( Imath::V3f( _N[0], _N[1], _N[2]) );
+                    c->writable().push_back( Imath::V3f( data[0], data[1], data[2]) );
+                    zr->writable().push_back( _radius );
+                    zid->writable().push_back( _id );
 
-                    if ( result.r + result.g + result.b > 0 ){
+                    fprintf(_f, "[%g,[%g,%g,%g],[%g,%g,%g,],[%g,%g,%g],%g] \n", _radius, _P[0], _P[1], _P[2], _N[0], _N[1], _N[2], data[0], data[1], data[2], _id );
+                    fflush(_f);
+
+                    nsamples++;
+#ifdef BRICK2
+                    ____p->writable().push_back( Imath::V3f( _P[0], _P[1], _P[2]) );
+                    ____n->writable().push_back( Imath::V3f( _N[0], _N[1], _N[2]) );
+                    ____c->writable().push_back( Imath::V3f( data[0], data[1], data[2]) );
+                    ____zr->writable().push_back( _radius );
+                    ____zid->writable().push_back( _id );
+#else
+                    // if ( result.r + result.g + result.b > 0 )
+                    {
                         // std::cout << "\nBUMMMM 4 - " << i << " - " << fCtx.numGrps << " - " << fCtx.shadeCtxs[0] << " - " << fCtx.shadeCtxs[0]->shadingCtxId.IsValid() << "\n" << std::endl; std::cout.flush();
-                        // FILE *f = fopen("/tmp/zz.ptc","a");
-                        fprintf(_f, "[%g,[%g,%g,%g],[%g,%g,%g,],[%g,%g,%g],%g]\n", radius[0], _P[0], _P[1], _P[2], _N[0], _N[1], _N[2], result.r, result.g, result.b, id );
-                        fflush(_f);
-                        // fclose(f);
 
-                        PtcWriteDataPoint(outptc, _P, _N, radius[0], data);
+                        // PtcWriteDataPoint(outptc, _P, _N, _radius, data);
                         // std::cout << "\nBUMMMM 5\n" << std::endl; std::cout.flush();
 
 
-                        p->writable().push_back( Imath::V3f( _P[0], _P[1], _P[2]) );
-                        n->writable().push_back( Imath::V3f( _N[0], _N[1], _N[2]) );
-                        c->writable().push_back( Imath::V3f( result.r, result.g, result.b) );
-                        zr->writable().push_back( radius[0] );
-                        zid->writable().push_back( id );
+ #ifdef BRICK
+                            if( nsamples/100000 != nsamples_old){
+                                nsamples_old = nsamples/100000;
+                                // IECore::FloatVectorData *__zr  = new IECore::FloatVectorData();
+                                // IECore::FloatVectorData *__zid = new IECore::FloatVectorData();
+                                // IECore::V3fVectorData *__p   = new IECore::V3fVectorData();
+                                // IECore::V3fVectorData *__n   = new IECore::V3fVectorData();
+                                // IECore::V3fVectorData *__c   = new IECore::V3fVectorData();
+                                //
+                                // IECore::PointsPrimitive * tmp = new IECore::PointsPrimitive( p->copy() );
+                                //
+                                // // for( typename Tree::Iterator it=m_points.begin(); it!=m_points.end(); it++ )
+                                // // {
+                                // // 	// The nearest neighbour to me should be myself!
+                                // // 	BOOST_CHECK( m_tree->nearestNeighbour( *it )==it );
+                                // // }
+                                //
+                                // IECore::InverseDistanceWeightedInterpolationV3fV3f kdtreeC = IECore::InverseDistanceWeightedInterpolationV3fV3f(
+                                //     p->readable().begin(),
+                                //     p->readable().end(),
+                                //     c->readable().begin(),
+                                //     c->readable().end(),
+                                //     20,
+                                //     20
+                                // );
+                                //
+                                // IECore::V3fTree kdtree = IECore::V3fTree(
+                                //     p->readable().begin(),
+                                //     p->readable().end(),
+                                //     4
+                                // );
+                                //
+                                // // create a grid using the bounding box of the collected samples so far,
+                                // // with volumeSize voxels.
+                                // Imath::Box3f bbox = tmp->bound();
+                                // for( float sliceX = 0 ; sliceX < bbox.size().x/volumeSize ; sliceX++ ){
+                                //     for( float sliceY = 0 ; sliceY < bbox.size().y/volumeSize ; sliceY++ ){
+                                //         for( float sliceZ = 0 ; sliceZ < bbox.size().z/volumeSize ; sliceZ++ ){
+                                //             Imath::V3f gridP = Imath::V3f(
+                                //                 bbox.min.x+sliceX*volumeSize,
+                                //                 bbox.min.y+sliceY*volumeSize,
+                                //                 bbox.min.z+sliceZ*volumeSize
+                                //             );
+                                //             // IMath::PointIterator nearest = kdtree.nearestNNeighbours(gridP);
+                                //             IECore::V3fTree::Iterator it = kdtree.nearestNeighbour(gridP);
+                                //             if (  (p->readable()[it - p->readable().begin()] - gridP).length() < volumeSize ){
+                                //                     __p->writable().push_back( gridP );
+                                //                     Imath::V3f gridC = kdtreeC(gridP);
+                                //                     __c->writable().push_back( gridC );
+                                //                     // std::cout << gridC.x << " " << gridC.y << " " << gridC.z << "\n" << std::endl; std::cout.flush();
+                                //             }
+                                //         }
+                                //     }
+                                // }
+                                IECore::PointsPrimitive * __ptc = new IECore::PointsPrimitive( p->copy() );
+                                // p =  new IECore::V3fVectorData(__p->readable());
+                                // c =  new IECore::V3fVectorData(__c->readable());
 
+                                __ptc->variables["N"]     =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, n->copy() );
+                                __ptc->variables["Cs"]    =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, c->copy() );
+                                __ptc->variables["width"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zr->copy() );
+                                __ptc->variables["id"]    =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zid->copy() );
+ #else
+                            if( nsamples/1000 != nsamples_old){
+                                nsamples_old = nsamples/1000;
+                                IECore::PointsPrimitive * __ptc = new IECore::PointsPrimitive( p->copy() );
+                                __ptc->variables["N"]           =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, n->copy() );
+                                __ptc->variables["Cs"]          =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, c->copy() );
+                                __ptc->variables["width"]       =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zr->copy() );
+                                __ptc->variables["id"]          =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zid->copy() );
+ #endif
+                                std::cout << "writing ptc...\n" << std::endl; std::cout.flush();
+                                IECore::Writer::create( __ptc, "/tmp/ptc.cob")->write();
+                            }
+                    }
+#endif
+#if defined(BRICK) || defined(BRICK2)
+                }
+#endif
+            }
+#ifdef BRICK2
+            // if( nsamples/1000000 != nsamples_old){
+            //     nsamples_old = nsamples/1000000;
+                IECore::InverseDistanceWeightedInterpolationV3fV3f closestPointsAverageColor = IECore::InverseDistanceWeightedInterpolationV3fV3f(
+                    ____p->readable().begin(),
+                    ____p->readable().end(),
+                    ____c->readable().begin(),
+                    ____c->readable().end(),
+                    20,
+                    20
+                );
 
-                        nsamples++;
-                        if( nsamples/1000 != nsamples_old){
-                            IECore::PointsPrimitive * __ptc = new IECore::PointsPrimitive( p->copy() );
-                            __ptc->variables["N"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, n->copy() );
-                            __ptc->variables["Cs"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, c->copy() );
-                            __ptc->variables["width"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zr->copy() );
-                            __ptc->variables["id"] =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, zid->copy() );
+                // IECore::V3fTree kdtree = IECore::V3fTree(
+                //     ____p->readable().begin(),
+                //     ____p->readable().end(),
+                //     4
+                // );
+                IECore::FloatVectorData *__zr  = new IECore::FloatVectorData();
+                IECore::FloatVectorData *__zid = new IECore::FloatVectorData();
+                IECore::V3fVectorData *__p   = new IECore::V3fVectorData();
+                IECore::V3fVectorData *__n   = new IECore::V3fVectorData();
+                IECore::V3fVectorData *__c   = new IECore::V3fVectorData();
 
-                            IECore::Writer::create( __ptc, "/tmp/ptc.cob")->write();
-                            nsamples_old = nsamples/1000;
-
+                // create a grid using the bounding box of the collected samples so far,
+                // with volumeSize voxels.
+                Imath::Box3f samplebbox = IECore::PointsPrimitive( ____p ).bound();
+                Imath::Box3f bbox = IECore::PointsPrimitive( p ).bound();
+                for( float sliceX = 0 ; sliceX < bbox.size().x/volumeSize ; sliceX++ ){
+                    for( float sliceY = 0 ; sliceY < bbox.size().y/volumeSize ; sliceY++ ){
+                        for( float sliceZ = 0 ; sliceZ < bbox.size().z/volumeSize ; sliceZ++ ){
+                            Imath::V3f gridP = Imath::V3f(
+                                bbox.min.x+sliceX*volumeSize,
+                                bbox.min.y+sliceY*volumeSize,
+                                bbox.min.z+sliceZ*volumeSize
+                            );
+                            if ( samplebbox.intersects(gridP) ){
+                                Imath::V3f gridC = closestPointsAverageColor(gridP);
+                                __p->writable().push_back( gridP );
+                                __c->writable().push_back( gridC );
+                                __n->writable().push_back( gridP );
+                                __zr->writable().push_back( 0.001 );
+                                __zid->writable().push_back( 1.0 );
+                                std::cout << sliceX << " " << sliceY << " " << sliceZ <<  std::endl; std::cout.flush();
+                            }
                         }
-
-
                     }
                 }
-            }
+                std::cout << "writing ptc..."; std::cout.flush();
+                IECore::PointsPrimitive * ____ptc = new IECore::PointsPrimitive( __p->copy() );
+                ____ptc->variables["N"]           =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, __n->copy() );
+                ____ptc->variables["Cs"]          =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, __c->copy() );
+                ____ptc->variables["width"]       =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, __zr->copy() );
+                ____ptc->variables["id"]          =  IECore::PrimitiveVariable( IECore::PrimitiveVariable::Varying, __zid->copy() );
+                IECore::Writer::create( ____ptc, "/tmp/ptc.cob")->write();
+                std::cout << "done" << std::endl; std::cout.flush();
+            // }
+#endif
             m_allWorkersMutex->Unlock();
         }
 
