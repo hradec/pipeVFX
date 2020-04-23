@@ -42,6 +42,7 @@ try:
     _m = m
     # hostApp('maya')
     import maya.utils as mu
+    import pymel.core as pm
 except:
     m = None
 
@@ -808,7 +809,7 @@ class maya( _genericAssetClass ) :
         #             p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
         #     rule = p
         # else:
-        
+
         # not sure we need this now...
         if not paths:
             path = nodeName.split('|')[-1]
@@ -1103,6 +1104,15 @@ class maya( _genericAssetClass ) :
     def _extraFiles( self, filename='' ):
         maya.extraFiles( self.data, filename )
 
+        # backup the shading groups orignal names, so we can put then back if
+        # they are tracesets in renderman
+        for n in pm.ls(type='shadingEngine'):
+            if n.hasAttr("rman__torattr___traceSet"):
+                if not n.hasAttr("SAM_ORIGINAL_NODE_NAME"):
+                    n.addAttr( "SAM_ORIGINAL_NODE_NAME",dt="string")
+                if not n.getAttr("SAM_ORIGINAL_NODE_NAME"):
+                    n.setAttr( "SAM_ORIGINAL_NODE_NAME", str(n.name()), type="string" )
+
     def doPublishMayaExport(self, fileName, operands):
         '''
         This function is called by doPublishMaya() after the basic generic export setup has being done.
@@ -1225,6 +1235,14 @@ class maya( _genericAssetClass ) :
                 if m.objExists(groups):
                     newNodeName = m.rename( groups, nodeName)
                     # m.lockNode(newNodeName, l=1)
+
+            # restore shadingGroup names if they are tracesets!
+            for n in pm.ls(type='shadingEngine'):
+                if n.hasAttr("rman__torattr___traceSet"):
+                    if n.hasAttr("SAM_ORIGINAL_NODE_NAME"):
+                        name = n.getAttr("SAM_ORIGINAL_NODE_NAME")
+                        if name:
+                            n.rename( name )
 
             maya.attachShaders()
             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya.attachShaders )
