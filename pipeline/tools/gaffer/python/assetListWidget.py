@@ -549,7 +549,8 @@ class assetListWidget( GafferUI.EditorWidget ):
             # if selection is "importable" in the current app
             selected_canImport  = True #if [ x for x in selectedPathsOP if x.canImport() ] else False
 
-            canImport = not selectedPathsEditable and selected_canImport #selected_source_exists_in_host and selected_canImport
+            # canImport = not selectedPathsEditable and selected_canImport #selected_source_exists_in_host and selected_canImport
+            canImport = True
 
             # renderSettings can ALLWAYS be imported, even if they are publishable as well!
             if len(selectedPaths)==1:
