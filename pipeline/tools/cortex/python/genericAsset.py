@@ -19,6 +19,10 @@
 # =================================================================================
 
 
+# import maya.app
+# maya.app.general.fileTexturePathResolver.findAllFilesForPattern("/BTRFS10TB/atomo/jobs/0704.hi_chew/assets/sala/users/iinaja/maya/sourceimages/personagem_maca/textura/corpo/Base_maca_Color_<UDIM>.png",0)
+
+
 import IECore, Gaffer, GafferUI, pipe, tempfile
 import Asset
 from glob import glob
@@ -43,6 +47,7 @@ try:
     # hostApp('maya')
     import maya.utils as mu
     import pymel.core as pm
+    import maya.app as ma
 except:
     m = None
 
@@ -1012,7 +1017,15 @@ class maya( _genericAssetClass ) :
             textureNode = m.getAttr('%s.filename' % node)
         if m.objExists('%s.file' % node):
             textureNode = m.getAttr('%s.file' % node)
-        return str(textureNode)
+
+        tmp = ma.general.fileTexturePathResolver.findAllFilesForPattern(textureNode,0)
+        for each in range(1001,1020):
+            tmp += ma.general.fileTexturePathResolver.findAllFilesForPattern(textureNode.replace(str(each),'<UDIM>'),0)
+
+        tmp.sort()
+        textureNode = list(set(tmp))
+
+        return textureNode
 
 
     @staticmethod
@@ -1732,70 +1745,73 @@ class alembic(  _genericAssetClass ) :
                     else:
                         cobs = data['shaveNodes']
 
-                    for shave in cobs:
-                        import IECore, IECoreMaya
-                        # c = IECore.ClassLoader.defaultLoader( "IECORE_PROCEDURAL_PATHS" )
-                        # c.refresh()
-                        # shaveNode = m.createNode( "ieProceduralHolder" )
-                        # fnPH = IECoreMaya.FnProceduralHolder( shaveNode )
-                        # fnPH.setParameterised( c.load('shave')(), 1 )
-                        fnPH = IECoreMaya.FnProceduralHolder.create( "__shave__", "shave" )
-                        fileAttr = fnPH.parameterPlugPath( fnPH.getProcedural()["path"] )
-                        shaveNode = fnPH.name()
-                        transform = m.listRelatives(shaveNode,p=1)[0]
+                    if cobs:
+                        nodeHair = m.createNode( "transform", n='HAIR')
+                        nodeHair = m.parent( nodeHair, node )
+                        for shave in cobs:
+                            import IECore, IECoreMaya
+                            # c = IECore.ClassLoader.defaultLoader( "IECORE_PROCEDURAL_PATHS" )
+                            # c.refresh()
+                            # shaveNode = m.createNode( "ieProceduralHolder" )
+                            # fnPH = IECoreMaya.FnProceduralHolder( shaveNode )
+                            # fnPH.setParameterised( c.load('shave')(), 1 )
+                            fnPH = IECoreMaya.FnProceduralHolder.create( "__shave__", "shave" )
+                            fileAttr = fnPH.parameterPlugPath( fnPH.getProcedural()["path"] )
+                            shaveNode = fnPH.name()
+                            transform = m.listRelatives(shaveNode,p=1)[0]
 
-                        m.select(shaveNode)
-                        m.sets( e=1, forceElement='initialShadingGroup' )
-                        m.select(cl=1)
+                            m.select(shaveNode)
+                            m.sets( e=1, forceElement='initialShadingGroup' )
+                            m.select(cl=1)
 
 
-                        shaveCache = os.path.splitext( os.path.splitext( cobs[shave][0] )[0] )[0]+'.####.cob'
-                        shaveCache = '%s/%s' % (data['publishPath'], os.path.basename(shaveCache))
-                        m.setAttr( fileAttr, shaveCache, type='string' )
+                            shaveCache = os.path.splitext( os.path.splitext( cobs[shave][0] )[0] )[0]+'.####.cob'
+                            shaveCache = '%s/%s' % (data['publishPath'], os.path.basename(shaveCache))
+                            m.setAttr( fileAttr, shaveCache, type='string' )
 
-                        m.setAttr("%s.visibleInReflections" % fnPH.name(), 1)
-                        m.setAttr("%s.visibleInRefractions" % fnPH.name(), 1)
+                            m.setAttr("%s.visibleInReflections" % fnPH.name(), 1)
+                            m.setAttr("%s.visibleInRefractions" % fnPH.name(), 1)
 
-                        if has_shaveNodes:
-                            name = shave
-                            new_transform = shave.replace("Shape", "")
-                            idpassName = shave.split("Shape")[0]
-                        else:
-                            name = 'shaveShape'
-                            new_transform = data['assetName']+'_shave'
-                            idpassName = shaveCache.split('/shave.')[1].split('.')[0]
-                        count=1
-                        while m.objExists('|%s|%s' % (transform, name)):
-                            name = name.split('_')[0]+'_'+str(count)
-                            count+=1
+                            if has_shaveNodes:
+                                name = shave
+                                new_transform = shave.replace("Shape", "")
+                                idpassName = shave.split("Shape")[0]
+                            else:
+                                name = 'shaveShape'
+                                new_transform = data['assetName']+'_shave'
+                                idpassName = shaveCache.split('/shave.')[1].split('.')[0]
+                            count=1
+                            while m.objExists('|%s|%s' % (transform, name)):
+                                name = name.split('_')[0]+'_'+str(count)
+                                count+=1
 
-                        m.rename( '|%s|%s' % (transform, fnPH.name()), name)
-                        transform = m.rename( transform, new_transform)
-                        m.parent( transform, node )
+                            m.rename( '|%s|%s' % (transform, fnPH.name()), name)
+                            transform = m.rename( transform, new_transform)
+                            m.parent( transform, nodeHair )
 
-                        # set the IDPrimvarName to the shaveNode name used in the cob sequence name
-                        try:
-                            attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["shaveName"] )
-                            m.setAttr( attrName, idpassName, type='string' )
+                            # set the IDPrimvarName to the shaveNode name used in the cob sequence name
+                            try:
+                                attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["shaveName"] )
+                                m.setAttr( attrName, idpassName, type='string' )
 
-                            attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["IDPrimvarName"] )
-                            m.setAttr( attrName, idpassName, type='string' )
-                        except:
-                            pass
+                                attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["IDPrimvarName"] )
+                                m.setAttr( attrName, idpassName, type='string' )
+                            except:
+                                pass
 
-                        # if we have attributes for this cache, apply it
-                        if 'shave' in data:
-                            cobIndex = shave.split('shave.')[-1].split('.')[0]
-                            if cobIndex in data['shave']:
-                                for attr in data['shave'][cobIndex]:
-                                    try: attrPar = fnPH.parameterPlugPath( fnPH.getProcedural()[attr] )
-                                    except: attrPar = None
-                                    if attrPar:
-                                        print data['shave'][cobIndex][attr], type(data['shave'][cobIndex][attr])
-                                        if type(data['shave'][cobIndex][attr]) in [str, unicode]:
-                                            m.setAttr( attrPar, data['shave'][cobIndex][attr], type="string" )
-                                        else:
-                                            m.setAttr( attrPar, data['shave'][cobIndex][attr] )
+                            # if we have attributes for this cache, apply it
+                            if 'shave' in data:
+                                cobIndex = shave.split('shave.')[-1].split('.')[0]
+                                if cobIndex in data['shave']:
+                                    for attr in data['shave'][cobIndex]:
+                                        try: attrPar = fnPH.parameterPlugPath( fnPH.getProcedural()[attr] )
+                                        except: attrPar = None
+                                        if attrPar:
+                                            print data['shave'][cobIndex][attr], type(data['shave'][cobIndex][attr])
+                                            if type(data['shave'][cobIndex][attr]) in [str, unicode]:
+                                                m.setAttr( attrPar, data['shave'][cobIndex][attr], type="string" )
+                                            else:
+                                                m.setAttr( attrPar, data['shave'][cobIndex][attr] )
 
                     # print data
                     if 'frameCallback' in data:
