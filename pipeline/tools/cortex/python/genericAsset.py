@@ -48,6 +48,7 @@ try:
     import maya.utils as mu
     import pymel.core as pm
     import maya.app as ma
+    from maya.app.general import fileTexturePathResolver
 except:
     m = None
 
@@ -1073,8 +1074,10 @@ class maya( _genericAssetClass ) :
             import pymel.core as pm
             __files={}
             for ntype in nodeTypes:
-                for node in pm.listHistory(node, type=ntype):
-                    each = node.nodeName()
+                print ntype, node
+                for n in pm.listHistory(node, type=ntype):
+                    each = n.nodeName()
+                    print "\t\t", each
                     __files[each] = maya.getFileTexture(each)
             return __files
 

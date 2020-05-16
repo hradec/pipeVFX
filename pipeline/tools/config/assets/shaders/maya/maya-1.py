@@ -104,21 +104,25 @@ class maya( genericAsset.maya ) :
                     ext = os.path.splitext( t )[-1].lower()
                     if 1: #'/sam/' not in t or ext != '.tex':
                         publishedText = "%s/%s" % ( self.data['publishPath'], os.path.basename( t ) )
-                        tex = '%s.tex' % os.path.basename( cleanFileName(t) )
 
                         # by adding to extraFiles, the texture will be published to the asset folder
-                        self.data['extraFiles'].append( t )
+                        if ext != '.tex':
+                            tex = '%s.tex' % os.path.basename( cleanFileName(t) )
+                            self.data['extraFiles'].append( t )
+                        else:
+                            tex = os.path.basename( cleanFileName(t) )
 
                         # convert to tex file
-                        # if m.nodeType(node) in ['file', 'PxrTexture']:
-                        if ext != '.tex':
-                            cmd ='LD_LIBRARY_PATH=$RMANTREE/lib/ $RMANTREE/bin/txmake -newer -resize down -t:%s -mode periodic "%s" %s/%s' % ( cores, t, tmpFolder, tex )
-                            print cmd
-                            os.popen( cmd ).readlines()
-                            self.data['extraFiles'].append( '%s/%s' % (tmpFolder, tex) )
-                            publishedText = "%s/%s" % ( self.data['publishPath'], tex )
-                        else:
-                            self.data['extraFiles'].append( t )
+                        # if ext == '.tex':
+                        #     self.data['extraFiles'].append( t )
+                        # else:
+                        cmd  = "mkdir -p %s/ ;" % ( tmpFolder )
+                        cmd += "rm -rf %s/%s ;" % ( tmpFolder, tex )
+                        cmd +='LD_LIBRARY_PATH=$RMANTREE/lib/ $RMANTREE/bin/txmake -resize down -t:%s -mode periodic "%s" %s/%s' % ( cores, t, tmpFolder, tex )
+                        print cmd
+                        os.popen( cmd ).readlines()
+                        self.data['extraFiles'].append( '%s/%s' % (tmpFolder, tex) )
+                        publishedText = "%s/%s" % ( self.data['publishPath'], tex )
 
                         self.data['publishedTextures'][node] = publishedText
 
@@ -136,10 +140,15 @@ class maya( genericAsset.maya ) :
         # progress bar
         pb = genericAsset.progressBar( len(self.data['textures'].keys())+int(math.ceil(cores))+1, "Pre-converting textures for publishing...")
 
-        for n in range( int(math.ceil(cores)) ):
-            n *= batches+1
+        # for n in range( int(math.ceil(cores)) ):
+        #     n *= batches+1
+        #     # print n, n+batches
+        #     threads.append(  Thread( target=processTextures, args=(n,n+batches,cores,pb,tmpFolder,) ) )
+        #     threads[-1].start()
+
+        for n in range( len( self.data['textures'].keys() ) ):
             # print n, n+batches
-            threads.append(  Thread( target=processTextures, args=(n,n+batches,cores,pb,tmpFolder,) ) )
+            threads.append(  Thread( target=processTextures, args=(n,n,cores,pb,tmpFolder,) ) )
             threads[-1].start()
 
         # wait for the convertion to finish
