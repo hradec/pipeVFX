@@ -64,7 +64,9 @@ class maya(baseApp):
             self.update( golaem() )
             self.update( shave() )
             self.update( substance() )
-            self.update( redshift() )
+
+            if 'PIPE_REDSHIFT' in os.environ and os.environ['PIPE_REDSHIFT']=='1':
+                self.update( redshift() )
 
             if 'PIPE_MAYA_ZYNC' in os.environ and os.environ['PIPE_MAYA_ZYNC']=='1':
                 self.update( zync() )
