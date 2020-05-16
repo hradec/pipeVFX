@@ -175,7 +175,9 @@ def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnl
             if _jobs:
                 jobs =  [ str(x).strip().split(':') for x in _jobs if deleteEvent.func_name in x ]
                 for job in jobs:
-                    m.scriptJob( kill=int(job[0]), force=True )
+                    try:
+                        m.scriptJob( kill=int(job[0]), force=True )
+                    except: pass
             __scriptJob( runOnce=runOnce,  ct=["delete", deleteEvent ] )
             # print [ str(x).strip().split(':') for x in m.scriptJob(listJobs=True) if deleteEvent.func_name in x ]
         if idleEvent:
