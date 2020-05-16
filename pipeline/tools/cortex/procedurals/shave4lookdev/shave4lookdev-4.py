@@ -23,6 +23,7 @@ import IECore
 from IECore import *
 import Asset
 import os, time, sys
+from glob import glob
 try:
     import maya.cmds as m
     from  maya.mel import eval as meval
@@ -209,17 +210,35 @@ class shave4lookdev(ParameterisedProcedural) :
                     g.addChild(cf)
                 return g
             else:
-                cf = Reader.create( f ).read()
-                cf.shutter = self.shutter(renderer)
-                if os.path.exists(fp) and ( cf.shutter or args["viewportDisplay"]["velocity"].value ) and fp!=f:
-                    t=time.time()
-                    print "Calculating velocity vector using previous frame..."
-                    pf = Reader.create( fp ).read()
-                    v = [ cf['P'].data[n] - pf['P'].data[n] for n in range(len(cf['P'].data)) ]
-                    print "Calculating velocity vector using previous frame took: %.02f secs" % float(time.time()-t)
-                    cf['velocity'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V3fVectorData(v) )
+                if not os.path.exists( f ):
+                    g = Group()
+                    for file in glob(f+".*.cob"):
+                        cf = Reader.create( file ).read()
+                        cf.shutter = self.shutter(renderer)
+                        if os.path.exists(fp) and ( cf.shutter or args["viewportDisplay"]["velocity"].value ) and fp!=f:
+                            t=time.time()
+                            print "Calculating velocity vector using previous frame..."
+                            pf = Reader.create( fp ).read()
+                            v = [ cf['P'].data[n] - pf['P'].data[n] for n in range(len(cf['P'].data)) ]
+                            print "Calculating velocity vector using previous frame took: %.02f secs" % float(time.time()-t)
+                            cf['velocity'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V3fVectorData(v) )
 
-                cf.name = os.path.basename(fp)
+                        cf.name = os.path.basename(os.path.basename(file))
+                        g.addChild(cf)
+                    cf = g
+                else:
+                    cf = Reader.create( f ).read()
+
+                    cf.shutter = self.shutter(renderer)
+                    if os.path.exists(fp) and ( cf.shutter or args["viewportDisplay"]["velocity"].value ) and fp!=f:
+                        t=time.time()
+                        print "Calculating velocity vector using previous frame..."
+                        pf = Reader.create( fp ).read()
+                        v = [ cf['P'].data[n] - pf['P'].data[n] for n in range(len(cf['P'].data)) ]
+                        print "Calculating velocity vector using previous frame took: %.02f secs" % float(time.time()-t)
+                        cf['velocity'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V3fVectorData(v) )
+
+                    cf.name = os.path.basename(fp)
         print cf
         return cf
 
@@ -246,7 +265,13 @@ class shave4lookdev(ParameterisedProcedural) :
                     cf = Reader.create( f+".%s.cob" % node ).read()
                     geo.addChild(cf)
             else:
-                geo = Reader.create( f ).read()
+                if not os.path.exists( f ):
+                    geo = Group()
+                    for file in glob(f+".*.cob"):
+                        cf = Reader.create( file ).read()
+                        geo.addChild(cf)
+                else:
+                    geo = Reader.create( f ).read()
             return geo.bound()
         else:
             return Box3f(V3f(1,1,1), V3f(-1,-1,-1))
@@ -255,7 +280,7 @@ class shave4lookdev(ParameterisedProcedural) :
         pass
 
     def _log( self, geo, msg ):
-        print "CORTEX SHAVE PROCEDURAL: %s - %s" % (geo.name, msg)
+        print "CORTEX SHAVE PROCEDURAL: %s" % (msg)
         sys.stdout.flush()
 
     def fillMeshWithParticles( self,  mesh, numParticles ) :
@@ -674,66 +699,70 @@ class shave4lookdev(ParameterisedProcedural) :
                 tip = args['tipWidth'].value
                 adjust = 0
 
-                if args['curvesType'].value == 0:
-                    p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.linear())
-                    adjust = 2
-                elif args['curvesType'].value == 1:
-                    p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.bSpline())
-                elif args['curvesType'].value == 2:
-                    p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.bezier())
-                elif args['curvesType'].value == 3:
-                    p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.catmullRom())
-
-                p.name          = geo.name
-                p['P']          = geo['P']
-                if 'tipColor' in geo.keys():
-                    p['tip']   = PrimitiveVariable( PrimitiveVariable.Interpolation.Uniform, DataConvertOp()( data = geo['tipColor'].data, targetType = Color3fVectorData.staticTypeId() ) )
-                if 'rootColor' in geo.keys():
-                    p['root']  = PrimitiveVariable( PrimitiveVariable.Interpolation.Uniform, DataConvertOp()( data = geo['rootColor'].data, targetType = Color3fVectorData.staticTypeId() ) )
-
-
-                p['hide'] = self._hide(p, args)
-                p[ args["IDPrimvarName"].value ] = PrimitiveVariable( PrimitiveVariable.Interpolation.Constant, FloatData( 1.0 ) )
-
-                size = root - tip
-                vpc = p.verticesPerCurve()
-                w=[]
-                # uv=[]
-
-                for n in range(p.numCurves()):
-                    visible = 0 if p['hide'].data[n] < 0.1 else ((1-debugRender)*root)
-                    step = float(size) / (p.numSegments(n) - adjust)
-                    w += [ max(root - x*step - visible, 0) for x in range( vpc[n] ) ]
-                    # stepUV = 1.0 / (c-1)
-                    # uv += [ V2f(x*stepUV) for x in range( c ) ]
-                # geo['width'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, FloatVectorData( w ) )
-                # geo['uv'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V2fVectorData( uv ) )
-
-                p['width']      = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, FloatVectorData( w ) )
-                # p['constantwidth'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Uniform, FloatData( 0.1 ) )
-
-                self._log( p, "time to setup curves width: %.02f secs" % (time.time()-t) )
-
-                groups =  args['shaveName'].value.split('/')
-
                 _g = Group()
                 g = _g
-                for group in groups:
-                    ng = Group()
-                    g.addChild( ng )
-                    g = ng
-                    g.setAttribute( "ri:identifier:name", StringData( group ) )
+                _group = geo
+                n=0
+                group = Group()
+                for geo in _group.children():
+                    if args['curvesType'].value == 0:
+                        p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.linear())
+                        adjust = 2
+                    elif args['curvesType'].value == 1:
+                        p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.bSpline())
+                    elif args['curvesType'].value == 2:
+                        p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.bezier())
+                    elif args['curvesType'].value == 3:
+                        p=IECore.CurvesPrimitive(geo.verticesPerCurve(), IECore.CubicBasisf.catmullRom())
 
-                g.setAttribute( "ri:dice:hair", FloatData( args['diceAsHair'].value ) )
-                g.setAttribute( "ri:dice:roundcurve", FloatData( args['curvesAsTubes'].value ) )
-                g.setAttribute( "ri:visibility:camera", FloatData( args['visibilityCamera'].value ) )
-                g.setAttribute( "ri:visibility:indirect", FloatData( args['visibilityIndirect'].value ) )
-                g.setAttribute( "ri:visibility:transmission", FloatData( args['visibilityTransmission'].value ) )
-                g.setAttribute( "ri:trace:maxdiffusedepth", FloatData( args['maxDiffuseDepth'].value ) )
-                g.setAttribute( "ri:trace:maxspeculardepth", FloatData( args['maxSpecularDepth'].value ) )
-                g.setAttribute( "ri:shade:transmissionhitmode", 'shader' )
-                g.setAttribute( "ri:grouping:membership", StringData( args['traceset'].value ) )
-                g.addChild(p)
+                    # p.name          = geo.name
+                    p['P']          = geo['P']
+                    if 'tipColor' in geo.keys():
+                        p['tip']   = PrimitiveVariable( PrimitiveVariable.Interpolation.Uniform, DataConvertOp()( data = geo['tipColor'].data, targetType = Color3fVectorData.staticTypeId() ) )
+                    if 'rootColor' in geo.keys():
+                        p['root']  = PrimitiveVariable( PrimitiveVariable.Interpolation.Uniform, DataConvertOp()( data = geo['rootColor'].data, targetType = Color3fVectorData.staticTypeId() ) )
+
+
+                    p['hide'] = self._hide(p, args)
+                    p[ args["IDPrimvarName"].value ] = PrimitiveVariable( PrimitiveVariable.Interpolation.Constant, FloatData( 1.0 ) )
+
+                    size = root - tip
+                    vpc = p.verticesPerCurve()
+                    w=[]
+                    # uv=[]
+
+                    for n in range(p.numCurves()):
+                        visible = 0 if p['hide'].data[n] < 0.1 else ((1-debugRender)*root)
+                        step = float(size) / (p.numSegments(n) - adjust)
+                        w += [ max(root - x*step - visible, 0) for x in range( vpc[n] ) ]
+                        # stepUV = 1.0 / (c-1)
+                        # uv += [ V2f(x*stepUV) for x in range( c ) ]
+                    # geo['width'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, FloatVectorData( w ) )
+                    # geo['uv'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, V2fVectorData( uv ) )
+
+                    p['width']      = PrimitiveVariable( PrimitiveVariable.Interpolation.Vertex, FloatVectorData( w ) )
+                    # p['constantwidth'] = PrimitiveVariable( PrimitiveVariable.Interpolation.Uniform, FloatData( 0.1 ) )
+
+                    self._log( p, "time to setup curves width: %.02f secs" % (time.time()-t) )
+
+                    groups =  args['shaveName'].value.split('/')
+
+                    for group in groups:
+                        ng = Group()
+                        g.addChild( ng )
+                        g = ng
+                        g.setAttribute( "ri:identifier:name", StringData( group ) )
+
+                    g.setAttribute( "ri:dice:hair", FloatData( args['diceAsHair'].value ) )
+                    g.setAttribute( "ri:dice:roundcurve", FloatData( args['curvesAsTubes'].value ) )
+                    g.setAttribute( "ri:visibility:camera", FloatData( args['visibilityCamera'].value ) )
+                    g.setAttribute( "ri:visibility:indirect", FloatData( args['visibilityIndirect'].value ) )
+                    g.setAttribute( "ri:visibility:transmission", FloatData( args['visibilityTransmission'].value ) )
+                    g.setAttribute( "ri:trace:maxdiffusedepth", FloatData( args['maxDiffuseDepth'].value ) )
+                    g.setAttribute( "ri:trace:maxspeculardepth", FloatData( args['maxSpecularDepth'].value ) )
+                    g.setAttribute( "ri:shade:transmissionhitmode", 'shader' )
+                    g.setAttribute( "ri:grouping:membership", StringData( args['traceset'].value ) )
+                    g.addChild(p)
 
                 if not debugRender:
                     _g.render( renderer )
