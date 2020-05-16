@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+file="$(echo "$@" | awk '{print $(NF)}' | sed 's/@@@@/%04d/g')"
+echo ffplay -loop 0 "$file" > /tmp/fcheck.log 2>&1
+ffplay -loop 0 "$file" >> /tmp/fcheck.log 2>&1 &
+
+echo ffmpeg -i $file -vcodec h264  /tmp/last_playblast.mp4  >> /tmp/fcheck.log 2>&1
+rm ~/Desktop/last_playblast.mp4
+ffmpeg -i $file -vcodec h264 -vf 'scale=-2:min(1080\,if(mod(ih\,2)\,ih-1\,ih))' ~/Desktop/last_playblast.mp4 >> /tmp/fcheck.log 2>&1
+
