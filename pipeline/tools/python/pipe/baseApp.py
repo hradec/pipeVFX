@@ -938,7 +938,7 @@ class baseApp(_environ):
             if os.path.exists( license_script ):
                 try:
                     exec( ''.join(open(license_script).readlines()),globals(),locals() )
-                    print( license_script )
+                    # print( license_script )
                     break
                 except:
                     print( bcolors.FAIL+'='*80 )
