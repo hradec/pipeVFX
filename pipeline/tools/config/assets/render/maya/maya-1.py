@@ -279,8 +279,13 @@ class maya( render ) :
             self.msetAttr("renderManRISGlobals.rman__toropt___shaderCleanupJob", 0)
 
             # if denoise not set, set it to frame!
-            self.msetAttr("renderManRISGlobals.rman__torattr___denoise", 1)
-            self.msetAttr("renderManRISGlobals.rman__torattr___denoiseFilter", "default.filter.json")
+            if 'playblast' in self.data['assetName']:
+                self.msetAttr("renderManRISGlobals.rman__torattr___denoise", 0)
+            else:
+                self.msetAttr("renderManRISGlobals.rman__torattr___denoise", 1)
+                self.msetAttr("renderManRISGlobals.rman__torattr___denoiseFilter", "default.filter.json")
+                # add cryptomatte by default
+            genericAsset.maya.setupCryptomatte()
 
             # make prman very verbose
             self.msetAttr("renderManRISGlobals.rman__riopt__statistics_level", 3)
