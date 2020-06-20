@@ -17,3 +17,4 @@ pipeline/build/.build
 pipeline/build/.download
 pipeline/tools/prman/ris/src/build
 pipeline/tools/prman/ris/*.*
+*.out
