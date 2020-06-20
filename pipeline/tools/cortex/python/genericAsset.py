@@ -26,7 +26,7 @@
 import IECore, Gaffer, GafferUI, pipe, tempfile
 import Asset
 from glob import glob
-import os, datetime, sys
+import os, datetime, sys, math
 import assetUtils
 import traceback
 from functools import wraps
@@ -41,16 +41,22 @@ try:
     from pymel import core as pm
     import maya.cmds as m
     from maya.mel import eval as meval
-    import IECoreMaya
-    reload(assetUtils)
     _m = m
     # hostApp('maya')
     import maya.utils as mu
     import pymel.core as pm
     import maya.app as ma
-    from maya.app.general import fileTexturePathResolver
 except:
+    # print traceback.print_exc()
     m = None
+
+if m:
+    try:
+        from maya.app.general import fileTexturePathResolver
+        import IECoreMaya
+        reload(assetUtils)
+    except:
+        print traceback.print_exc()
 
 
 # -----------------------------------------------------------------------------
@@ -146,9 +152,12 @@ def hostApp(app=None):
     if app:
         globals()['_hostApp_'] = app
 
-    if globals()['_hostApp_']=='maya':
-        globals()['m']=globals()['_m']
-    else:
+    try:
+        if globals()['_hostApp_']=='maya':
+            globals()['m']=globals()['_m']
+        else:
+            raise
+    except:
         globals()['m']=None
     # print app, globals()['m'], globals().keys()
     return globals()['_hostApp_']
@@ -162,6 +171,16 @@ def _nodeNameTemplate(prefix=False):
 
 def _nodeName(data=None):
     ret = 'SAM_none_none_none_none'
+    ret =  _nodeNameTemplate() % (
+        data['assetType'].replace('/','_'),
+        data['assetName'].replace('.','_'), #split('.')[-1],
+        data['assetInfo']['version'].value.x,
+        data['assetInfo']['version'].value.y,
+        data['assetInfo']['version'].value.z,
+        ''
+    )
+
+
     try:
         ret =  _nodeNameTemplate() % (
             data['assetType'].replace('/','_'),
@@ -188,6 +207,20 @@ def updateCurrentLoadedAssets(forceRefresh=False):
 
         maya.shaveCleanup()
         maya.applyCustomRules()
+
+        # fix alembicNode starting on negative frames, since it can break rendering in the farm!
+        if m:
+            for each in pm.ls(type="AlembicNode"):
+                start = float(each.getAttr('startFrame'))
+                print start
+                if start < 0:
+                    if not each.hasAttr('originalStart'):
+                        print each.name()
+                        each.addAttr('originalStart', at='double')
+                    each.setAttr('originalStart', start)
+                    each.setAttr('startFrame', 0)
+
+
 
         types = assetUtils.types(forceRefresh)
         for t in types.keys():
@@ -406,10 +439,11 @@ class _genericAssetClass( IECore.Op ) :
         '''
             Delete namespaces in a scene!
         '''
-        if hostApp()=='maya' and m:
-            for each in { ':%s' % ':'.join(x.split(':')[:-1]) : x.split(':')[-1] for x in  m.ls("*:*")}:
-                # print each
-                m.namespace( removeNamespace = each, mergeNamespaceWithParent = True)
+        _genericAssetClass.removeNamespaces()
+        #     for each in { ':%s' % ':'.join(x.split(':')[:-1]) : x.split(':')[-1] for x in  m.ls("*:*")}:
+        #         # print each
+        #         m.namespace( removeNamespace = each, mergeNamespaceWithRoot = True)
+
 
     @staticmethod
     def doPublishPreview(data={}):
@@ -422,21 +456,22 @@ class _genericAssetClass( IECore.Op ) :
             data['extraFiles'] = []
 
         if hostApp() == 'maya' and m:
-            import maya.OpenMaya as api
-            import maya.OpenMayaUI as apiUI
-            data['extraFiles'] += [ '%s/data/preview.jpg' % m.workspace(q=1, rd=1) ]
+            if not m.about(batch=1):
+                import maya.OpenMaya as api
+                import maya.OpenMayaUI as apiUI
+                data['extraFiles'] += [ '%s/data/preview.jpg' % m.workspace(q=1, rd=1) ]
 
-            sl = m.ls(sl=1)
-            m.select(cl=1)
+                sl = m.ls(sl=1)
+                m.select(cl=1)
 
-            #Grab the last active 3d viewport
-            view = apiUI.M3dView.active3dView()
+                #Grab the last active 3d viewport
+                view = apiUI.M3dView.active3dView()
 
-            #read the color buffer from the view, and save the MImage to disk
-            image = api.MImage()
-            view.readColorBuffer(image, True)
-            image.writeToFile(data['extraFiles'][-1], 'jpg')
-            m.select(sl)
+                #read the color buffer from the view, and save the MImage to disk
+                image = api.MImage()
+                view.readColorBuffer(image, True)
+                image.writeToFile(data['extraFiles'][-1], 'jpg')
+                m.select(sl)
 
         elif hostApp() == 'gaffer':
             data['extraFiles'] += [ '%s/data/preview.jpg' % m.workspace(q=1, rd=1) ]
@@ -611,6 +646,18 @@ class _genericAssetClass( IECore.Op ) :
             pop(stack)
 
     @staticmethod
+    def removeNamespaces():
+        if m:
+            defaults = ['UI', 'shared']
+            namespaces = 1
+            while namespaces:
+                namespaces = [ns for ns in pm.namespaceInfo(lon=True) if ns not in defaults]
+                for ns in namespaces:
+                    print ns
+                    m.namespace( removeNamespace = ns, mergeNamespaceWithRoot = True)
+
+
+    @staticmethod
     def fixRIGMeshCTRLS(grp='|CTRLS|'):
         if m:
             attrs=[
@@ -647,6 +694,8 @@ class maya( _genericAssetClass ) :
 
     def setMayaSceneType(self, st):
         self.__mayaScenePublishType = st
+
+
 
     @staticmethod
     def applyCustomRules():
@@ -1103,6 +1152,128 @@ class maya( _genericAssetClass ) :
         return shadingMap, shadingGroups, shadingNodes, displacementNodes, textures
 
 
+
+    @staticmethod
+    def setOneNucleus(start=None):
+        ''' make sure all ncloth/nrigid are using just one solver! '''
+        nObjs = m.ls(type='nCloth', dag=1, l=1)+m.ls(type='nRigid', dag=1, l=1)
+        if nObjs:
+            n = m.ls(type='nucleus', dag=1, l=1)
+            if not n:
+                # if no nucleus, create one!
+                m.select(nObjs)
+                n += [m.createNode('nucleus')]
+                # set a high colision interactions just to be on the safe side!
+                m.setAttr("%s.subSteps" % n[0], 4)
+                m.setAttr("%s.maxCollisionIterations" % n[0], 100)
+
+            # set the initial frame on the simulation to the timeslider start range frame!
+            startFrame = start
+            if startFrame:
+                m.playbackOptions( e=1, minTime=startFrame )
+            else:
+                startFrame = float(m.playbackOptions( q=1, minTime=1 ))
+            for _n in n:
+                m.setAttr("%s.startFrame" % _n, startFrame)
+            m.select(nObjs)
+            try:
+                meval('assignNSolver "%s"' % n[0])
+            except:
+                pass
+            # if len(n)>1:
+            #     m.delete(n[1:])
+
+    @staticmethod
+    def getAnimLength(node):
+        '''return the minimum and maximum keyframe of the animation in a node'''
+        # A set is like a list but can't hold duplicates (Pyhton set, not Maya set)
+        keyframeSet=set()
+        # Loop through all keyframe time values from control points on anim curves
+        k = m.keyframe(node, query=True, controlPoints=True)
+        if k:
+            for keyTimeValue in k:
+                keyframeSet.add(keyTimeValue)
+
+            # Return result
+            return min(keyframeSet), max(keyframeSet)
+        return None
+
+    @staticmethod
+    def getAllNodesMinMax( fatherNodes, filter='' ):
+        ''' check animation on all nodes children of fatherNode that match the
+        filter and return then min/max keyframes.'''
+        _min=[]
+        _max=[]
+        if type(fatherNodes) != type([]):
+            fatherNode = [fatherNodes]
+        for fatherNode in fatherNodes:
+            for each in m.ls(fatherNode+'*', dag=1, l=1):
+                # if filter in each:
+                    animLength =  maya.getAnimLength(each)
+                    # print each, animLength
+                    if animLength:
+                        _min += [animLength[0]]
+                        _max += [animLength[1]]
+
+        if len(_min)<1:
+            print fatherNodes, _min, _max
+            # print m.ls(fatherNode[:-2]+'*', dag=1, l=1)
+            # print m.ls(fatherNode+'*',  l=1)
+            return None
+        return min(_min), max(_max)
+
+    @staticmethod
+    def setTimeSliderRangeToAvailableAnim(node=""):
+        # set the time slider to the range in the alembic nodes!!
+        start=[]
+        end=[]
+        se = maya.getAllNodesMinMax(node)
+        if se:
+            start += [se[0]]
+            end += [se[1]]
+        for c in m.ls(dag=1,l=1,type='AlembicNode'):
+            if 'AlembicNode' in m.nodeType(c):
+                s = float(m.getAttr(c+'.startFrame'))
+                e = float(m.getAttr(c+'.endFrame'))
+                if s+e != 0:
+                    start += [s]
+                    end += [e]
+
+        if start:
+            print "playbackOptions", min(start), max(end)
+            m.playbackOptions( e=1, minTime=min(start), maxTime=max(end) )
+
+        # set nucleus after correcting time range, so we can pick up the start from from the range!
+        maya.setOneNucleus()
+
+    @staticmethod
+    def frameRange(V3f=False, V3fData=False):
+        range = (0,0,0)
+        if m:
+            startFrame = math.floor(float(m.playbackOptions( q=1, minTime=1 )))
+            endFrame = math.ceil(float(m.playbackOptions( q=1, maxTime=1 )))+1
+            by = float(m.playbackOptions(by=1))
+            range = (startFrame, endFrame, by)
+
+        elif Gaffer:
+            range = (0,0,0)
+
+        if V3fData or V3f:
+            range = IECore.V3f( range[0], range[1], range[2] )
+            if V3fData:
+                range = IECore.V3fData( range )
+
+        return range
+
+    @staticmethod
+    def setupCryptomatte():
+        for each in pm.ls(type="PxrCryptomatte"):
+            pm.delete(each)
+        node = pm.shadingNode("PxrCryptomatte",asTexture=1)
+        m.connectAttr(node.name()+".message", "renderManRISGlobals.rman__samplefilters[0]", f=1)
+        node.setAttr('filename', 'cryptomatte.${F4}.exr')
+
+
     @staticmethod
     def extraFiles( data, filename='' ):
         if 'extraFiles' not in data:
@@ -1215,6 +1386,7 @@ class maya( _genericAssetClass ) :
 
     @staticmethod
     def importXgen(data):
+        ''' copy the xgen files from the publish directory to the user project '''
         if 'extraFiles' in data:
             for each in data['extraFiles']:
                 if 'xgen' in each:
@@ -1262,6 +1434,10 @@ class maya( _genericAssetClass ) :
 
             maya.attachShaders()
             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya.attachShaders )
+
+            # set the timeslider range to the start/end of available keyframes and alembic range.
+            maya.setTimeSliderRangeToAvailableAnim()
+
 
 
             return True
@@ -1312,99 +1488,106 @@ class alembic(  _genericAssetClass ) :
         return file
 
     @staticmethod
-    def shaveRibExport( frame=1, outRIB = '/tmp/shave.%04d.rib', selection=[] ):
+    def shaveRibExport( frame=1, outRIB = '/tmp/shave.%04d.rib', selection=[], END=False ):
         ''' per frame callback to export shave as cob files'''
         import time
-        # if we don't have shave loaded, don't do anything!
-        if 'shaveHair' not in m.ls(nodeTypes=1):
-            return
-        conection = {}
-        selectedShave  = m.ls(selection,dag=1,type='shaveHair')
-        connectedShaveNodes = m.listConnections(m.ls(selection, dag=1, type='mesh'), type='shaveHair', sh=1)
-        selectedShave += list(set(connectedShaveNodes if connectedShaveNodes!=None else []))
-        selectedShave  = list(set(selectedShave))
-        # selectedShave = [ str(x) for x in selectedShave ]
-        globals()['self'].pb.step()
-        print '*'*200
-        print 'Shave exporting', selectedShave
-        print '*'*200
-        if not m.pluginInfo('shaveCortexWriter', q=1, l=1):
-            m.loadPlugin('shaveCortexWriter')
+        if not END:
+            # if we don't have shave loaded, don't do anything!
+            if 'shaveHair' not in m.ls(nodeTypes=1):
+                return
 
-        for each in m.ls(dag=1,type='shaveHair'):
-            if m.getAttr( each + '.active', l=1 ):
-                m.setAttr( each + '.active', l=0 )
-            conection[each] = m.listConnections( "%s.active" % each , p=1, c=1 )
-            if conection[each]:
-                m.disconnectAttr(conection[each][1],conection[each][0])
+            selectedShave  = m.ls(selection,dag=1,type='shaveHair')
+            connectedShaveNodes = m.listConnections(m.ls(selection, dag=1, type='mesh'), type='shaveHair', sh=1)
+            selectedShave += list(set(connectedShaveNodes if connectedShaveNodes!=None else []))
+            selectedShave  = list(set(selectedShave))
+            # selectedShave = [ str(x) for x in selectedShave ]
+            globals()['self'].pb.step()
+            print '*'*200
+            print 'Shave exporting', selectedShave
+            print '*'*200
+            if not hasattr(globals()['self'], 'conection'):
+                globals()['self'].conection = {}
+                if not m.pluginInfo('shaveCortexWriter', q=1, l=1):
+                    m.loadPlugin('shaveCortexWriter')
+
+                for each in m.ls(dag=1,type='shaveHair'):
+                    if m.getAttr( each + '.active', l=1 ):
+                        m.setAttr( each + '.active', l=0 )
+                    globals()['self'].conection[each] = m.listConnections( "%s.active" % each , p=1, c=1 )
+                    if globals()['self'].conection[each]:
+                        m.disconnectAttr(globals()['self'].conection[each][1],globals()['self'].conection[each][0])
+                    else:
+                        del globals()['self'].conection[each]
+                    # print '='*200
+                    # print each + '.active', each in selectedShave
+                    # print '='*200
+                    m.setAttr( each + '.active', each in selectedShave )
+
+                    # export all extra attributes in the shavenode, if any exists!
+                    if each in selectedShave:
+                        if 'shave' not in globals()['self'].data:
+                            globals()['self'].data['shave'] = {}
+
+                        cobIndex = each.replace('|','')
+                        if cobIndex not in globals()['self'].data:
+                            globals()['self'].data['shave'][cobIndex] = {}
+
+                        listAttrs = m.listAttr(each, ud=1)
+                        if listAttrs:
+                            for attr in listAttrs:
+                                if 'SAM_' in attr:
+                                    globals()['self'].data['shave'][cobIndex][attr.replace('SAM_','')] = m.getAttr("%s.%s" % (each, attr))
+
+            for each in selectedShave:
+                each = str(each)
+                outCOB = os.path.splitext( os.path.abspath(outRIB % frame) )[0]
+                outCOBPrefix = '%s.%s' % ( os.path.splitext(outCOB)[0], each.replace('|','') )
+                outCOB = "%s%s.cob" % ( outCOBPrefix, os.path.splitext(outCOB)[1] )
+                # outDRA = outRIB.replace('.rib', '.dra')
+                tmpRIB = '%s.cob' % tempfile.mkstemp()[1]
+                t=time.time()
+                #meval('shaveWriteRib("%s")' % tmpRIB )
+                # if os.path.exists(tmpRIB):
+                #     t=time.time()
+                #     f = open(outRIB, 'w')
+                #     removeHeader = True
+                #     for line in open(tmpRIB, 'r').readlines():
+                #         if removeHeader and 'TransformBegin' not in line:
+                #             continue
+                #         removeHeader = False
+                #         f.write(line)
+                #     print 'filtered rib in %d seconds...' % (time.time()-t)
+                #     f.close()
+                print 'shaveCortexWriter -e "%s" "%s"' % (outCOB, each)
+                # m.shaveCortexWriter(outCOB, each, e=1)
+                meval('shaveCortexWriter -e "%s" "%s"' % (outCOB, each) )
+                print pipe.bcolors.bcolors.GREEN+'shave rib gen took %d seconds to export...' % (time.time()-t) +pipe.bcolors.bcolors.END
+
+                if os.path.exists(outCOB):
+                    if 'extraFiles' not in globals()['self'].data:
+                        globals()['self'].data['extraFiles'] = []
+                    globals()['self'].data['extraFiles'] += [outCOB]
+
+                    if 'extraFilesDelete' not in globals()['self'].data:
+                        globals()['self'].data['extraFilesDelete'] = []
+                    globals()['self'].data['extraFilesDelete'] += [outCOB]
+
+                    if 'shaveNodes' not in globals()['self'].data:
+                        globals()['self'].data['shaveNodes'] = {}
+                    if each not in globals()['self'].data['shaveNodes']:
+                         globals()['self'].data['shaveNodes'][each] = []
+                    if outCOB not in globals()['self'].data['shaveNodes'][each]:
+                        globals()['self'].data['shaveNodes'][each] += [outCOB]
+                else:
+                    print pipe.bcolors.bcolors.RED+'%s (%s) failed to export!!!' % (outCOB,each) +pipe.bcolors.bcolors.END
+
             else:
-                del conection[each]
-            print '='*200
-            print each + '.active', each in selectedShave
-            print '='*200
-            m.setAttr( each + '.active', each in selectedShave )
-
-            # export all extra attributes in the shavenode, if any exists!
-            if each in selectedShave:
-                if 'shave' not in globals()['self'].data:
-                    globals()['self'].data['shave'] = {}
-
-                cobIndex = each.replace('|','')
-                if cobIndex not in globals()['self'].data:
-                    globals()['self'].data['shave'][cobIndex] = {}
-
-                listAttrs = m.listAttr(each, ud=1)
-                if listAttrs:
-                    for attr in listAttrs:
-                        if 'SAM_' in attr:
-                            globals()['self'].data['shave'][cobIndex][attr.replace('SAM_','')] = m.getAttr("%s.%s" % (each, attr))
-
-        for each in selectedShave:
-            each = str(each)
-            outCOB = os.path.splitext( os.path.abspath(outRIB % frame) )[0]
-            outCOBPrefix = '%s.%s' % ( os.path.splitext(outCOB)[0], each.replace('|','') )
-            outCOB = "%s%s.cob" % ( outCOBPrefix, os.path.splitext(outCOB)[1] )
-            # outDRA = outRIB.replace('.rib', '.dra')
-            tmpRIB = '%s.cob' % tempfile.mkstemp()[1]
-            t=time.time()
-            #meval('shaveWriteRib("%s")' % tmpRIB )
-            # if os.path.exists(tmpRIB):
-            #     t=time.time()
-            #     f = open(outRIB, 'w')
-            #     removeHeader = True
-            #     for line in open(tmpRIB, 'r').readlines():
-            #         if removeHeader and 'TransformBegin' not in line:
-            #             continue
-            #         removeHeader = False
-            #         f.write(line)
-            #     print 'filtered rib in %d seconds...' % (time.time()-t)
-            #     f.close()
-            print outCOB
-            meval('shaveCortexWriter -e "%s" "%s"' % (outCOB, each) )
-            print pipe.bcolors.bcolors.GREEN+'shave rib gen took %d seconds to export...' % (time.time()-t) +pipe.bcolors.bcolors.END
-
-            if os.path.exists(outCOB):
-                if 'extraFiles' not in globals()['self'].data:
-                    globals()['self'].data['extraFiles'] = []
-                globals()['self'].data['extraFiles'] += [outCOB]
-
-                if 'extraFilesDelete' not in globals()['self'].data:
-                    globals()['self'].data['extraFilesDelete'] = []
-                globals()['self'].data['extraFilesDelete'] += [outCOB]
-
-                if 'shaveNodes' not in globals()['self'].data:
-                    globals()['self'].data['shaveNodes'] = {}
-                if each not in globals()['self'].data['shaveNodes']:
-                     globals()['self'].data['shaveNodes'][each] = []
-                if outCOB not in globals()['self'].data['shaveNodes'][each]:
-                    globals()['self'].data['shaveNodes'][each] += [outCOB]
-
-            for each in conection:
-                m.setAttr( each + '.active', 0 )
-                try:
-                    m.connectAttr(conection[each][1],conection[each][0])
-                except:
-                    print pipe.bcolors.bcolors.WARNING, 'WARNING (SAM SHAVE EXPORT): Cant restore connection from %s to %s!' % (conection[each][1],conection[each][0]), pipe.bcolors.bcolors.END
+                for each in globals()['self'].conection:
+                    m.setAttr( each + '.active', 0 )
+                    try:
+                        m.connectAttr(globals()['self'].conection[each][1],globals()['self'].conection[each][0])
+                    except:
+                        print pipe.bcolors.bcolors.WARNING, 'WARNING (SAM SHAVE EXPORT): Cant restore connection from %s to %s!' % (globals()['self'].conection[each][1],globals()['self'].conection[each][0]), pipe.bcolors.bcolors.END
 
         print '*'*200
 
@@ -1552,7 +1735,7 @@ class alembic(  _genericAssetClass ) :
 
             abcJob = "%s %s  -step %s -wv -fr %s %s %s -file %s" % (
                 extra,
-                '''-pythonPerFrameCallback "import genericAsset;reload(genericAsset);genericAsset.alembic._perFrameCallback(#FRAME#, '%s', %s, '%s' )"''' % (shaveTmp,sl,ftmp),
+                '''-pythonPerFrameCallback "import genericAsset;genericAsset.alembic._perFrameCallback(#FRAME#, '%s', %s, '%s' )"''' % (shaveTmp,sl,ftmp),
                 1.0,
                 start,
                 end,
@@ -1579,6 +1762,8 @@ class alembic(  _genericAssetClass ) :
             f.close()
             os.remove(ftmp)
 
+            alembic.shaveRibExport(END=True)
+
             # finishing touch!
             maya.cleanNodes(cleanup)
 
@@ -1591,10 +1776,9 @@ class alembic(  _genericAssetClass ) :
             self.pb = progressBar(3 + (int(frameRange[1])-int(frameRange[0])), 'Publishing alebic geometry...')
             self.pb.step()
 
-            shaveTmp = '%s/data/shave.%%04d.cob'  % m.workspace(q=1, rd=1)
-
-            os.system('mkdir -p /usr/tmp/%s_cob/' % os.environ['USER'])
-            shaveTmp = '/usr/tmp/%s_cob/shave.%%04d.cob'  % os.environ['USER']
+            tmp = '%s/data/sam_tmp/'  % m.workspace(q=1, rd=1)
+            os.system('mkdir -p %s/%s_cob/' % (tmp, os.environ['USER']))
+            shaveTmp = '%s/%s_cob/shave.%%04d.cob'  % (tmp, os.environ['USER'])
 
             self.data['assetPath'] = "%s/data/%%s.abc" % m.workspace(q=1, rd=1)
             self.AbcExport(
@@ -1718,9 +1902,10 @@ class alembic(  _genericAssetClass ) :
 
 
             # m.scriptJob( runOnce=True,  idleEvent=idleSetup )
+            # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=alembic.fixDefaultUVSet() )
             maya.attachShadersLazy()
             alembic.fixDefaultUVSet()
-            # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=alembic.fixDefaultUVSet() )
+            maya.setTimeSliderRangeToAvailableAnim()
 
             idleSetup()
             return True
@@ -1848,6 +2033,8 @@ class alembic(  _genericAssetClass ) :
                 node = gpu
 
             return node
+
+
 
 
 
