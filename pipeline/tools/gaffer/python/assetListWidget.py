@@ -226,6 +226,7 @@ class assetListWidget( GafferUI.EditorWidget ):
     __expansionChangedSignal = GafferUI.WidgetSignal()
     __filter = ''
 
+
     def assetFilter(self, textWidget):
         self.__filter =  textWidget.getText()
         self.refresh()
@@ -276,6 +277,9 @@ class assetListWidget( GafferUI.EditorWidget ):
 
     def __init__(self, scriptNode=None, hostApp='gaffer', **kw):
         from GafferUI.PathListingWidget import _TreeView
+
+        if not scriptNode:
+            scriptNode = Gaffer.ScriptNode()
 
         __toolTip__maya__=''
         if assetUtils.m:
@@ -635,7 +639,7 @@ class assetListWidget( GafferUI.EditorWidget ):
                 self._mayaNodeDeleted()
 
                 if hasattr( custom, 'assetListAssetImport' ):
-                    custom.assetListAssetImport( self )
+                    custom.assetListAssetImport(  )
                 # print op, path
             __SAM_assetList_doImport__()
             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_doImport__)
@@ -655,7 +659,7 @@ class assetListWidget( GafferUI.EditorWidget ):
                     # run custom code, if any!
 
             if hasattr( custom, 'assetListAssetImport' ):
-                custom.assetListAssetImport( self )
+                custom.assetListAssetImport(  )
             pb.step()
             pb.close()
 
