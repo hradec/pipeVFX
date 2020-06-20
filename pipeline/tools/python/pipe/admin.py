@@ -250,7 +250,22 @@ def username():
         user = os.environ['PIPE_FARM_USER']
     return user
 
+
+def go(job,shot):
+    pass
+
+
+def jobs():
+    return { os.path.basename(x):x for x in glob.glob("%s/*" % roots.jobs()) }
+
 class job(sudo):
+
+    def shots(self):
+        return { os.path.basename(x):x for x in glob.glob("%s/shots/*" % self.path()) }
+
+    def assets(self):
+        return { os.path.basename(x):x for x in glob.glob("%s/assets/*" % self.path()) }
+
     def __init__(self, projectID=None, projectName=None, adminUser=":artists"):
         if not projectID:
             if 'PIPE_JOB' in os.environ:
@@ -260,11 +275,20 @@ class job(sudo):
             else:
                 raise Exception("ERROR: No Job Set!!")
 
+        if type(projectID) == type(""):
+            job = [ x for x in jobs() if projectID in x ]
+            if job and len(job[0].split('.'))>1:
+                projectID, projectName = job[0].split('.')
+                projectID = int(projectID)
+
         sudo.__init__(self)
         self.root = roots.jobs()
         self.proj = "%04d.%s" % (int(projectID), projectName.lower())
         self.__user = adminUser
         self.projPath = "%s/%s" % (self.root, self.proj)
+
+        self.shot.job = self
+        self.asset.job = self
 
     def path(self, subpath=''):
         ret = "%s/%s" % (self.root, self.proj)
@@ -314,8 +338,6 @@ class job(sudo):
             tags.sort(key=StrictVersion)
             print tags
             self.symlink( '%s/%s' % (roots.tags(), tags[-1]), path )
-
-
 
     def mkpublished(self, path):
 #        self.mkdir( self.path("%s/published" % path) )
@@ -519,9 +541,6 @@ class job(sudo):
                 path = path+'/'+p
                 self.mkdir( self.path(path), perm=["a+rwx"] )
 
-
-
-
     def mkuser(self, path, subpath="", user=None):
         if not user:
             user = username()
@@ -570,6 +589,9 @@ class job(sudo):
     def create(self):
         return self.run()
 
+    def name(self):
+        return self.proj
+
     @staticmethod
     def current():
         ret = None
@@ -579,7 +601,11 @@ class job(sudo):
             return ret
 
     class shot():
-        def __init__(self):
+        job=None
+        def __init__(self, shot=None):
+            if not self.job:
+                self.job = job()
+            self.user._shot = self
             import os
             if 'PIPE_SHOT' in os.environ:
                 values = os.environ['PIPE_SHOT']
@@ -588,6 +614,23 @@ class job(sudo):
                 self.shot = values[1]
             else:
                  raise Exception("ERROR: No Shot Set!")
+
+            if shot:
+                shot = str(shot)
+                self.basePath = str(self).split(' ')[0].split('.')[-1]
+                self.shot = shot
+                shots = eval('self.job.%ss()' % self.basePath).keys()
+                shots.sort()
+                s = [ x for x in shots if shot in x ]
+                if s:
+                    self.shot = s[0]
+                else:
+                    raise Exception("%s %s doesn't exist in job %s" % (self.basePath, shot, self.job.name()))
+
+
+        def apply(self):
+            os.environ['PIPE_JOB'] = self.job.name()
+            os.environ['PIPE_SHOT'] = "%s@%s" % (self.basePath, self.name())
 
         @staticmethod
         def current():
@@ -598,15 +641,22 @@ class job(sudo):
                 return ret
 
         def path(self, subpath=''):
-            ret = "%s/%ss/%s" % (job().path(), self.basePath, self.shot)
+            ret = "%s/%ss/%s" % (self.job.path(), self.basePath, self.shot)
             if subpath:
                 ret = "%s/%s" % (ret, subpath)
             return ret
 
+        def name(self):
+            return self.shot
+
         class user():
+            shot=None
             def __init__(self):
-                self.job = job()
-                self.shot = job.shot()
+                self.job = self._shot.job
+                if not self.job:
+                    self.job = job()
+                if not self.shot:
+                    self.shot = self.job.shot()
 
             def path(self, subpath=''):
                 ret = "%s/users/%s" % (self.shot.path(), username())
@@ -633,6 +683,9 @@ class job(sudo):
 
             def create(self):
                 self.job.create()
+
+    class asset(shot):
+        pass
 
     @staticmethod
     def currentJob(job=None):
