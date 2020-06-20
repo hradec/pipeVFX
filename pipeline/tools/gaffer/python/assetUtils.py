@@ -6,6 +6,7 @@ import Gaffer
 import GafferCortex
 import GafferUI
 import Asset
+import math
 import pipe
 import os
 
@@ -15,7 +16,7 @@ if 'OCIO' in os.environ and not os.path.exists(os.environ['OCIO']):
 try:
     import maya.cmds as m
     from maya.mel import eval as meval
-    reload(Asset)
+
     # m.ls()
 except:
     m = None
@@ -25,7 +26,7 @@ try:
 except:
     j=None
 
-
+reload(Asset)
 
 class types(object):
     def __init__(self, refresh=None):
@@ -92,17 +93,20 @@ class shelf(object):
 
         topLevelShelf = mel.eval('string $m = $gShelfTopLevel')
         shelves = pm.shelfTabLayout(topLevelShelf, query=True, tabLabelIndex=True)
-        for index, shelf in enumerate(shelves):
-            pm.optionVar(stringValue=('shelfName%d' % (index+1), str(shelf)))
-            pm.optionVar(stringValue=('shelfLoad%d' % (index+1), 1))
-            pm.optionVar(stringValue=('shelfFile%d' % (index+1), 'shelf_'+str(shelf)))
-            pm.optionVar(stringValue=('shelfAlign%d' % (index+1), 'left'))
-            print index+1,shelf
+        if shelves and type(shelves) != type(True):
+            ret =  enumerate(shelves)
+            if ret and type(ret) != type(True):
+                for index, shelf in ret:
+                    pm.optionVar(stringValue=('shelfName%d' % (index+1), str(shelf)))
+                    pm.optionVar(stringValue=('shelfLoad%d' % (index+1), 1))
+                    pm.optionVar(stringValue=('shelfFile%d' % (index+1), 'shelf_'+str(shelf)))
+                    pm.optionVar(stringValue=('shelfAlign%d' % (index+1), 'left'))
+                    print index+1,shelf
 
-        ids = [x for x in m.optionVar(l=1) if 'shelfName' in x or 'shelfVers' in x or 'shelfFile' in x or 'shelfLoad' in x or 'shelfAlign' in x]
-        ids.sort()
-        for n in ids:
-            print n, m.optionVar(q=n)
+        # ids = [x for x in m.optionVar(l=1) if 'shelfName' in x or 'shelfVers' in x or 'shelfFile' in x or 'shelfLoad' in x or 'shelfAlign' in x]
+        # ids.sort()
+        # for n in ids:
+        #     print n, m.optionVar(q=n)
 
 
     def addShelf(self):
@@ -202,6 +206,7 @@ def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnl
 
 __publishOP__ = GafferCortex.ClassLoaderPath( IECore.ClassLoader.defaultOpLoader(), "/asset/publish" ).load()
 def loadAssetOP( path, newVersion=1, data=None ) :
+    '''# a generic class that loads the asset classes definitions stored in config/assets/'''
     classType = '/'.join(path.split('/')[0:2])
 
     app = __publishOP__()
@@ -226,6 +231,9 @@ def loadAssetOP( path, newVersion=1, data=None ) :
 
 
 class assetOP(object):
+    ''' this is the main wrapper class used to represent an SAM asset
+    every functionality an asset has can be triggered from this class,
+    including importing and publishing!'''
     @staticmethod
     def _fixShotPath(path):
         if j and '/assets/' not in j.shot().path():
@@ -274,7 +282,7 @@ class assetOP(object):
         return ret
 
 
-    def newPublish(self):
+    def newPublish(self, run=True):
         import os
         if m:
             import samPrman
@@ -289,12 +297,15 @@ class assetOP(object):
         app.parameters()['arguments'] = IECore.StringVectorData(['-Asset.type',self.pathPar,'0','IECORE_ASSET_OP_PATHS'])
         app.parameters()['op'] = 'publish'
         app.parameters()['gui'] = 1
-        print 'newPublish:',app.hostApp(),self.hostApp()
-        app.run()
+        # print 'newPublish:',app.hostApp(),self.hostApp()
+        if run:
+            app.run()
+        else:
+            return app
 
         # self.ancestor( GafferUI.Window ).close()
 
-    def updatePublish(self):
+    def updatePublish(self, run=True):
         self.__data()
         if self.data:
             if m:
@@ -312,18 +323,132 @@ class assetOP(object):
             a.parameters()['action'] = 'publish'
             a.parameters()['asset'] = self.pathPar
             a.hostApp(self.hostApp())
-            a.run()
+            if run:
+                a.run()
+            else:
+                return a
+
+    def publish(self, run=False):
+        ret = self.updatePublish(run)
+        if not ret:
+            ret = self.newPublish( run )
+            IECore.ParameterParser().parse( ['-Asset.type',"animation/alembic",'0','IECORE_ASSET_OP_PATHS'], op.parameters() )
+
+            # print dir(ret.parameters())
+            # print ret.parameters().values()
+            # ret._run(ret.parameters())
+            # ret.parameterChanged()
+
+            # import IECore
+            # c = IECore.ClassLoader.defaultLoader( "GAFFER_APP_PATHS" )
+            # c.refresh()
+            # a = c.load( "sam" )()
+            # a.hostApp( self.hostApp() )
+            # a.parameters()['type'] = self.pathPar.split('/')[0]
+            # a.parameters()['buttons'] = '/'.join(self.pathPar.split('/')[:2])
+            # a.parameters()['action'] = 'publish'
+            # a.parameters()['asset'] = self.pathPar
+            # a.hostApp(self.hostApp())
+            # ret = a
+
+        return ret
+
+    def frameRange(self):
+        startFrame = 0
+        endFrame = 0
+
+        if self.hostApp()=='maya' and m:
+            import genericAsset
+            startFrame = math.floor(float(m.playbackOptions( q=1, minTime=1 )))
+            endFrame = math.ceil(float(m.playbackOptions( q=1, maxTime=1 )))+1
+            minMax = genericAsset.maya.getAllNodesMinMax(self.nodes())
+            if minMax:
+                startFrame = math.floor(float(minMax[0]))
+                endFrame = math.floor(float(minMax[1]))
+
+        if self.hostApp()=='gaffer' and m:
+            pass
+
+        return (startFrame, endFrame)
 
 
     def loadOP( self ):
         self.__data()
         if not self.subOP:
-            import genericAsset
-            genericAsset.hostApp(self.hostApp())
+            try:
+                import genericAsset
+                genericAsset.hostApp(self.hostApp())
+            except: pass
             self.op     = loadAssetOP( self.pathPar, newVersion=0, data=self.data )
             self.subOP  = self.op.typeOP
+            self.parameters = self.op.parameters
+            self.op.assetParameter.path = self.pathPar
+
 
         return True if self.subOP else False
+
+
+    def printParameters( self ):
+        print "="*120
+        for each in  self.op.parameters()['Asset']['type'].keys():
+            print 'Asset type',each, self.op.parameters()['Asset']['type'][each].getValue()
+        for each in  self.op.parameters()['Asset']['info'].keys():
+            print 'Asset info', each, self.op.parameters()['Asset']['info'][each].getValue()
+        print "="*120
+
+    def parameterChanged( self , printBefore=False, printAfter=False, newVersion=True):
+        ''' does the same evaluation of parameters as the ui does.
+        and fills up the .data using data.txt from the actual asset version
+        after parameter evaluation'''
+        self.loadOP()
+        if printBefore:
+            self.printParameters()
+        if len( self.pathPar.split('/') ) > 2:
+            if not self.op.parameters()['Asset']['info']['name'].getValue().value.strip():
+                self.op.parameters()['Asset']['info']['name'].setValue( IECore.StringData( self.pathPar.split('/')[2] ) )
+
+        name = self.op.parameters()['Asset']['info']['name'].getValue()
+        version = self.op.parameters()['Asset']['info']['version'].getValue()
+        self.op.assetParameter.parameterChanged(self.op.parameters())
+
+        # this asset represent a new version to be published
+        if newVersion:
+            # update asset class based on the fixed parameters.
+            p = self.pathPar.split('/')
+            self.pathPar = "%s/%s/%s" % (p[0], p[1], self.op.parameters()['Asset']['info']['name'].getValue().value)
+            v = self.op.parameters()['Asset']['info']['version'].getValue().value
+            self.op.assetParameter.path = '%s/%02d.%02d.%02d' % (self.pathPar, v.x, v.y, v.z)
+
+        # this asset is the current asset, not a new version!!
+        else:
+            current = None
+            try:
+                current = os.path.basename(self.op.assetParameter.getCurrent().strip('/'))
+            except:
+                print 'WARNING: asset %s doesnt exist!' % self.pathPar
+
+            if current:
+                version = [ int(x) for x in current.split('.') ]
+                # print self.pathPar, self.op.assetParameter.path
+                self.pathPar = '/'.join(self.op.assetParameter.path.split('/')[0:3])
+                self.op.parameters()['Asset']['info']['name'].setValue( IECore.StringData( self.pathPar.split('/')[2] ) )
+                self.op.parameters()['Asset']['info']['version'].setValue(IECore.V3fData(IECore.V3f(version[0], version[1], version[2])))
+                # try:
+                # except:
+                #     self.setNew()
+
+        if printAfter:
+            self.printParameters()
+
+        self.data = self.op.assetParameter.getData()
+        # self.__data()
+
+
+    def getCurrent(self):
+        self.parameterChanged(newVersion=False)
+
+    def setNew(self):
+        self.parameterChanged(newVersion=True)
 
 
     def mayaLastLs( self ):
@@ -419,10 +544,20 @@ class assetOP(object):
         return ''
 
     def doesAssetExists(self, anyVersion=True):
+        ''' check if an asset exist in the host app, calling the actual asset
+        function with the same name!'''
         self.__data()
         if self.loadOP():
             return self.subOP.doesAssetExists( self.subOP.nodeName(self.data), anyVersion)
         return []
+
+    def doesAssetExistOnDisk(self, anyVersion=True):
+        ''' check if the asset is a new asset or an existing asset '''
+        self.__data()
+        if self.data:
+            return True
+        return False
+
 
     def doImport( self ):
         ''' do a checkout of the asset into the current application '''
@@ -436,6 +571,7 @@ class assetOP(object):
 
 
     def getJobShot(self):
+        '''# get the job/<shot or asset> a certain asset belongs to'''
         if self.data:
             assetJobPath = self.data['assetPath'].split('users')[0]
             job  = assetJobPath.split('jobs/')[1].split('/')[0]
@@ -450,6 +586,7 @@ class assetOP(object):
         return {}
 
     def go(self):
+        '''# set the current job/<shot or asset> to the asset one!'''
         assetJobShot = self.getJobShot()
         if assetJobShot:
             if not hasattr(self, '_original_PIPE_JOB'):
@@ -460,12 +597,14 @@ class assetOP(object):
             os.environ['PIPE_SHOT'] = '%s@%s' % (assetJobShot['type'], assetJobShot['shot'])
 
     def goBack(self):
+        '''return to the original job/<shot or asset> after a call to self.go!!'''
         if hasattr(self, '_original_PIPE_JOB'):
             os.environ['PIPE_JOB']  = self._original_PIPE_JOB
             os.environ['PIPE_SHOT'] = self._original_PIPE_SHOT
 
     @staticmethod
     def openScene(file, newFile=False):
+        ''' simple global wrapper to open a scene on the host app'''
         if not file.strip():
             return
         def __openScene():
@@ -479,6 +618,7 @@ class assetOP(object):
         # mayaLazyScriptJob( runOnce=True,  idleEvent=__openScene)
 
     def mayaImportDependency(self):
+        ''' actually open the asset dependency in the current maya (original scene)'''
         self.__data()
         if self.hostApp()=='maya' and m:
             if self.data:
@@ -487,9 +627,12 @@ class assetOP(object):
                 raise Exception( "You first need to select an asset!" )
 
     def mayaOpenDependency(self):
+        ''' run a new maya to open a dependency'''
         self._openDependency( cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', app=pipe.apps.maya )
 
     def gafferOpenDependency(self):
+        ''' open the asset dependency (original scene)
+        covers opening a gaffer scene inside maya gaffer or standalone gaffer'''
         if self.hostApp()=='maya':
             def __runGaffer(scene):
                 cmd = cmd='run gaffer test'
@@ -521,21 +664,22 @@ class assetOP(object):
                 ng = GafferUI.NodeGraph.acquire(script)
                 ng.frame( script.selection() )
 
+        # __runGaffer will be a different function depending on the host software this is running in
         self._openDependency( __runGaffer, copyToFolder=pipe.admin.job.shot.user().path('gaffer/'), app=pipe.apps.gaffer )
 
 
 
     def _openDependency( self, cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', copyToFolder=None, app=None ):
         '''
-        Open Button main function - its actually a generic button which can be configured by button attributes:
+        open asset dependency main funtion, used by all others methods that open the original asset dependency (scene) in the proper environment:
 
-            button.cmd          - if a string, it will do a os.system(button.cmd % dependencyScene ). If a function, it will call it as button.cmd(dependencyScene)
-            button.path         - if exists, makes dependencyScene = button.path
-            button.data         - holds the asset data dict
-            button.app          - holds the name of the app this button comunicate to (maya, nuke, houdini, etc)
-            button.copyToFolder - if the attribute Exists, it will copy the dependencyScene to the path specified and
-                                  call button.cmd( button.copyToFolder / basename( dependencyScene ) )  or
-                                  os.system( button.cmd % "button.copyToFolder / basename( dependencyScene )" )
+            cmd          - if a string, it will do a os.system(button.cmd % dependencyScene ). If a function, it will call it as button.cmd(dependencyScene)
+            path         - if exists, makes dependencyScene = path
+            data         - holds the asset data dict
+            app          - holds the name of the app this button comunicate to (maya, nuke, houdini, gaffer, etc)
+            copyToFolder - if the attribute Exists, it will copy the dependencyScene to the path specified and
+                           call button.cmd( button.copyToFolder / basename( dependencyScene ) )  or
+                           os.system( button.cmd % "button.copyToFolder / basename( dependencyScene )" )
         '''
         # other assets
         from pprint import pprint
@@ -543,20 +687,19 @@ class assetOP(object):
         import genericAsset
         reload(genericAsset)
 
+        # we default to maya
         if app == None:
             app = pipe.apps.maya
-
         if copyToFolder == None:
             copyToFolder = pipe.admin.job.shot.user().path('maya/scenes/')
 
-        # pprint(self.data)
         currentUserPath = pipe.admin.job.shot.user().path()
-
         jobData = self.getJobShot()
 
         # change the job/shot to the one in the asset
         self.go()
 
+        # if we have self.data, make a copy of the dependency file so the user can open it properly
         scene = ''
         self.__data()
         if self.data:
@@ -583,9 +726,11 @@ class assetOP(object):
                     os.system('cp "%s" "%s"' % (scene, sceneUser) )
                 scene = sceneUser
 
-            # use the importXgen static function from genericAsset.maya class to
-            # import the data needed by xgen. (the same function used in import!)
-            genericAsset.maya.importXgen( self.data )
+            # if we're in maya
+            if app == pipe.apps.maya:
+                # use the importXgen static function from genericAsset.maya class to
+                # import the file data needed by xgen. (the same function used in import!)
+                genericAsset.maya.importXgen( self.data )
 
         if type( cmd ) != str:
             cmd(scene)
