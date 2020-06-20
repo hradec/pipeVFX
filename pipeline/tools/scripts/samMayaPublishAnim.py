@@ -2,7 +2,8 @@
 
 import sys, os, argparse
 from glob import glob
-
+import pipe, traceback
+# print sys.argv
 
 if len(sys.argv)<2:
     sys.argv += ['-h']
@@ -20,17 +21,34 @@ parser.add_argument('-m', dest='maya_scene', help='a cena de maya com animacao p
 parser.add_argument('-j', dest='job', help='seta o job para usar durante a publicacao')
 parser.add_argument('-s', dest='shot', help='seta o shot para usar durante a publicao')
 parser.add_argument('-i', dest='rig_maya', action='append', help='o nome do asset rig/maya para importar e aplicar a animacao da cena de maya setada pelo parametro -m. (voce pode usar -i varias vezes para importar mais de um rig)')
+parser.add_argument('-ip', dest='playblast_assets', action='append', help='path completo do asset (ex: model/alembic/sala) para importar somente durante o render do playblast. (voce pode usar -i varias vezes para importar mais de um asset)')
 parser.add_argument('-o', dest='animation_alembic', help='o nome do asset animation/alembic para publicar os assets rig/maya animados q foram importados com o parametro -i.')
 parser.add_argument('--farm', dest='farm', action='store_true', help='faz a importacao e publicacao no farm.')
 parser.add_argument('-c', dest='camera', action='store_true', default=False, help='publica todas as cameras com nome "camera*" que tiverem na cena de animacao setada pelo parametro -m')
 parser.add_argument('-n', dest='ndryrun', action='store_true', default=False, help='nao faz nada! so simula o resultado sem fazer nada.')
+parser.add_argument('--hide', dest='hide', action='append', help='nome de um mesh q precisa ser hiden no render do playblas.')
+parser.add_argument('--start', dest='start', help='start frame override.')
+parser.add_argument('--end', dest='end', help='end frame override.')
+parser.add_argument('--maxdist', dest='maxdist', help='max distance for occlusion. Se nao for especificado, o script tenta calcular com base no primeiro asset.')
 
 
 args = parser.parse_args()
 
 
+if 'FARM' not in os.environ and args.farm:
+    try:
+        import assetUtils
+    except:
+        # restarts python using the new os.environ.
+        pipe.apps.gaffer().expand()
+        pipe._force_os_environ()
+
+
+
+print args.farm
 
 if args.maya_scene:
+
     rigs = []
     for each in args.rig_maya:
         if '/' not in each:
@@ -43,10 +61,15 @@ if args.maya_scene:
         anim = 'animation/alembic/%s' % args.animation_alembic
     anim = anim.split('/')
 
+    playblast_assets = ''
+    if args.playblast_assets:
+        playblast_assets = '-i '+' -i '.join(args.playblast_assets)
+
     j = args.job
     s = args.shot
     scenes = glob(args.maya_scene)
-    print scenes
+    if not scenes:
+        raise Exception("[PARSE ERROR] - no file to load!!")
     for args.maya_scene in scenes:
 
         maya_scene = os.path.abspath(args.maya_scene)
@@ -59,21 +82,45 @@ if args.maya_scene:
             args.shot = os.path.basename(maya_scene).lower().split("shot_")[1].split('_')[0]
 
         if args.farm:
-            import pipe
-            cmd = " ".join([ x for x in sys.argv if '--farm' not in x ])
-            cmd = ' '.join([
+            pipe.admin.job(args.job).shot(args.shot).apply()
+            asset = assetUtils.assetOP( '/'.join(anim), 'maya' )
+            asset.loadOP()
+            asset.setNew()
+            properName = asset.parameters()['Asset']['info']['name'].getValue()
+            properVersion = asset.parameters()['Asset']['info']['version'].getValue().value
+            asset.printParameters()
+            assetVersion = '%d.%d.%d' % (properVersion.x, properVersion.y, properVersion.z)
+
+            # cmd = " ".join([ x for x in sys.argv if '--farm' not in x ])
+            genericCmd = ' '+' '.join(['--start %s' % str(args.start) if args.start else '',
+                            '--end %s' % str(args.end) if args.end else '',
+                            '--hide ' if args.hide else '',
+                            ' --hide '.join(args.hide) if args.hide else '',
+                            '--maxdist %s' % str(args.maxdist) if args.maxdist else '',
+            ])
+            precmd  = 'export FARM=1 && source %s/scripts/go %s shot %s && ' % (pipe.roots.tools(), args.job, args.shot)
+            cmd = precmd + ' '.join([
                 sys.argv[0],
                 '-m', maya_scene,
                 '-j', args.job, '-s', args.shot,
                 '-i', ' -i '.join(args.rig_maya),
                 '-o', args.animation_alembic,
-                '-c' if args.camera else ''
-            ])
+                '-c' if args.camera else '',
+                ])+genericCmd
+            cmdplayblast = 'samMayaPublishPlayblast.py -j %s -s %s -i %s -i camera/alembic/camera %s %s' % (args.job, args.shot, '/'.join(anim), playblast_assets, genericCmd)
+            postCmd = {
+                'name': "playblast publish",
+                # 'cmd': "/usr/sbin/runuser -l rhradec --session-command '" + precmd + cmdplayblast + "-v %s " % assetVersion + " > /dev/null && echo DONE || exit -1 '"
+                'cmd': "/usr/sbin/runuser -l rhradec --session-command '" + precmd + cmdplayblast + " > /dev/null && echo DONE || exit -1 '"
+            }
             print cmd
-            title = "SAM %s_%s %s: converting %s to %s" % ( args.job, args.shot, os.path.basename(sys.argv[0]), os.path.basename(maya_scene), '/'.join(anim) )
-            print title
+            print postCmd
+            title = "publishing asset %s/%s/%s/%s" % ( anim[0], anim[1], properName, assetVersion )
+            description =  "using animation from maya scene %s" %  maya_scene
+            print 'title:', title
+            print 'description:', description
             if not args.ndryrun:
-                pipe.farm.cmds(title, [cmd], [maya_scene], capacity=1000).submit()
+                pipe.farm.cmds(title, [cmd], [maya_scene], capacity=1000, description=description, postCmd=postCmd).submit()
 
         else:
             import tempfile
@@ -88,9 +135,11 @@ if args.maya_scene:
                 maya_scene = "%s"
                 camera = %s
                 argv0 = "%s"
-            '''.split('\n')]) % (args.job, args.shot, str(rigs), str(anim), str(maya_scene), str(args.camera), str(sys.argv[0])) )
+                _start = %s
+                _end = %s
+            '''.split('\n')]) % (args.job, args.shot, str(rigs), str(anim), str(maya_scene), str(args.camera), str(sys.argv[0]), str(args.start), str(args.end) ))
             f.write( '\n'.join([ x[4*4:] for x in '''
-                import os, sys, traceback
+                import os, sys, traceback, math
                 import GafferUI, IECore
                 GafferUI.EventLoop.mainEventLoop().start()
                 import pymel.core as pm
@@ -121,8 +170,30 @@ if args.maya_scene:
                 # manualAssetAnimImport sets timeslider to the imported animation range
                 # so we can pull the last frame from the timeslider directly!
                 genericAsset.maya.setTimeSliderRangeToAvailableAnim()
-                startFrame = float(m.playbackOptions( q=1, minTime=1 ))
-                endFrame = float(m.playbackOptions( q=1, maxTime=1 ))
+
+                # get time range for the given assets only
+                sceneRange = genericAsset.maya.frameRange()
+                range = [999999999, -999999999 ,sceneRange[2]]
+                for each in rigs:
+                    asset = assetUtils.assetOP( each, 'maya' )
+                    asset.getCurrent()
+                    r = asset.frameRange()
+                    range = [
+                        min(range[0], r[0]),
+                        max(range[1], r[1]),
+                        range[2]
+                    ]
+                range = IECore.V3fData( IECore.V3f( range[0], range[1], range[2] ) )
+                if range.value.x < 0:
+                    range = IECore.V3fData( IECore.V3f( 0, range.value.y, range.value.z ) )
+                    genericAsset.maya.setOneNucleus(0)
+                if _start:
+                    range = IECore.V3fData( IECore.V3f( _start, range.value.y, range.value.z ) )
+                    genericAsset.maya.setOneNucleus(_start)
+                if _end:
+                    range = IECore.V3fData( IECore.V3f( range.value.x, _end, range.value.z ) )
+                print '====> assets time range:', range
+
 
                 # save scene right after connect the animation!
                 m.file( rename=mayaSceneDependency )
@@ -130,8 +201,8 @@ if args.maya_scene:
 
                 # create the publish op using assetUtils.assetOP class
                 print "="*120
-                print "start:", startFrame
-                print "end:", endFrame
+                print "start:", range.value.x
+                print "end:", range.value.y
                 print "publishing %s..." % '/'.join(anim)
                 print "="*120
 
@@ -149,11 +220,10 @@ if args.maya_scene:
                 asset.op.parameters()['Asset']['info']['name'].setValue( IECore.StringData( "%s.%s" % (shot, anim[-1]) ) )
 
                 # set time range
-                range = IECore.V3fData( IECore.V3f( startFrame, endFrame, 1 ) )
                 asset.op.parameters()['Asset']['type']['FrameRange']['range'].setValue(range)
 
                 # make sure parameters are OK, and increase version to publish!
-                asset.op.assetParameter.parameterChanged(asset.op.parameters())
+                asset.setNew()
 
                 print "="*120
                 for each in  asset.op.parameters()['Asset']['type'].keys():
@@ -186,7 +256,7 @@ if args.maya_scene:
                             asset.op.parameters()['Asset']['type']['FrameRange']['range'].setValue(range)
 
                             # make sure parameters are OK, and increase version to publish!
-                            asset.op.assetParameter.parameterChanged(asset.op.parameters())
+                            asset.setNew()
 
                             print "="*120
                             for each in  asset.op.parameters()['Asset']['type'].keys():
@@ -201,7 +271,9 @@ if args.maya_scene:
 
             '''.split('\n')]) )
             f.close()
-            cmd = "xvfb-run bash -c 'source /atomo/pipeline/tools/scripts/go %s shot %s && mayapy %s && rm %s'" % (args.job, args.shot, tmpfile, tmpfile)
+            cmd_extra = ""
+            # cmd_extra = '&& [ "$FARM" != "1" ] '+cmdplayblast
+            cmd = "xvfb-run --auto-servernum bash -c 'source /atomo/pipeline/tools/scripts/go %s shot %s && run mayapy %s >/tmp/samMayaPublish_%s_last.log 2>&1 ; cat /tmp/samMayaPublish_%s_last.log ; rm %s %s'" % (args.job, args.shot, tmpfile, os.environ['USER'], os.environ['USER'], tmpfile, cmd_extra)
             print cmd
             if not args.ndryrun:
                 os.system( cmd )
