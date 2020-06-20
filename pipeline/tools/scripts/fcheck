@@ -1,14 +1,16 @@
 #!/bin/bash
 
+echo "" > /tmp/fcheck.log 
+
 f="$(echo "$@" | awk '{print $(NF)}' | sed 's/@@@@/????/g' | sed 's/####/????/g')"
 start=$(ls -1  $f | sort | head -1 | awk -F"." '{print $(NF-1)}')
 
 file="$(echo "$@" | awk '{print $(NF)}' | sed 's/@@@@/%04d/g' | sed 's/####/%04d/g')"
 
-echo ffmpeg  -start_number $start -i $file -start_number $start -vcodec h264 -vf 'scale=-2:min(1080\,if(mod(ih\,2)\,ih-1\,ih))' ~/Desktop/last_playblast.mp4 >> /tmp/fcheck.log 2>&1
+echo ffmpeg_static  -start_number $start -i $file -vcodec h264 -vf 'scale=-2:min(1080\,if(mod(ih\,2)\,ih-1\,ih))' ~/Desktop/last_playblast.mp4 >> /tmp/fcheck.log 2>&1
 rm -rf ~/Desktop/last_playblast.mp4
-ffmpeg  -start_number $start -i $file -start_number $start -vcodec h264 -vf 'scale=-2:min(1080\,if(mod(ih\,2)\,ih-1\,ih))' ~/Desktop/last_playblast.mp4 >> /tmp/fcheck.log 2>&1 &
+ffmpeg_static  -start_number $start -i $file -vcodec h264 -vf 'scale=-2:min(1080\,if(mod(ih\,2)\,ih-1\,ih))' ~/Desktop/last_playblast.mp4 >> /tmp/fcheck.log 2>&1 &
 
 
-echo ffplay -loop 0 "$file" -start_number $start > /tmp/fcheck.log 2>&1
+echo ffplay -loop 0 "$file" -start_number $start >> /tmp/fcheck.log 2>&1
 ffplay -loop 0 "$file" -start_number $start >> /tmp/fcheck.log 2>&1
