@@ -23,3 +23,60 @@ class studiolibrary(baseApp):
 
     def environ(self):
         self['PYTHONPATH'] = self.path('src/')
+        maya.addon( self, script = self.path('src/') )
+
+
+    def startup(self):
+        if self.parent() in ['maya']:
+            job = pipe.admin.job.current()
+            shot = pipe.admin.job.shot.current()
+
+            userLib = os.path.abspath("%s/studiolibrary/" % os.environ["HOME"])
+            if not os.path.exists(userLib):
+                os.makedirs(userLib)
+
+            shotShared = os.path.abspath(shot.path("/published/studiolibrary/"))
+            if not os.path.exists(shotShared):
+                os.makedirs(shotShared)
+
+            jobShared = os.path.abspath(job.path("/ARTWORKS/studiolibrary/"))
+            if not os.path.exists(jobShared):
+                os.makedirs(jobShared)
+
+            globalShared = os.path.abspath("%s/../studiolibrary/" % pipe.roots.tools())
+
+            import studiolibrary
+            import assetUtils
+            class studioLibraryShelf(assetUtils.shelf):
+                def __init__(self):
+                    super(studioLibraryShelf, self).__init__('StudioLibrary')
+                    self.addShelfButton(
+                        '',
+                        'Global Shared Library',
+                        cmd='import studiolibrary;studiolibrary.main(name="Global Shared Library", path="%s" )' % globalShared,
+                        icon='/atomo/pipeline/tools/maya/icons/slglobal.bmp',
+                        # menu=[('RELOAD SHELF', 'import pipe;reload(pipe.apps);pipe.apps.studiolibrary().startup()')]
+                    )
+                    self.addShelfButton(
+                        '',
+                        'Job Shared Library',
+                        cmd='import studiolibrary;studiolibrary.main(name="Job Shared Library", path="%s" )' % jobShared,
+                        icon='/atomo/pipeline/tools/maya/icons/sljob.bmp',
+                        # menu=[('RELOAD SHELF', 'import pipe;reload(pipe.apps);pipe.apps.studiolibrary().startup()')]
+                    )
+                    self.addShelfButton(
+                        '',
+                        'Shot/Asset Shared Library',
+                        cmd='import studiolibrary;studiolibrary.main(name="Shot/Asset Shared Library", path="%s" )' % shotShared,
+                        icon='/atomo/pipeline/tools/maya/icons/slshot.bmp',
+                        # menu=[('RELOAD SHELF', 'import pipe;reload(pipe.apps);pipe.apps.studiolibrary().startup()')]
+                    )
+                    self.addShelfButton(
+                        '',
+                        'Global User Library',
+                        cmd='import studiolibrary;studiolibrary.main(name="Global User Library", path="%s" )' % userLib,
+                        icon='/atomo/pipeline/tools/maya/icons/sluser.bmp',
+                        # menu=[('RELOAD SHELF', 'import pipe;reload(pipe.apps);pipe.apps.studiolibrary().startup()')]
+                    )
+                    self.create()
+            studioLibraryShelf()

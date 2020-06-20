@@ -58,6 +58,7 @@ class maya(baseApp):
         # log.debug( "@@@@@ %s, %s %s" % ( 'MAYA_USE_VRAY' in os.environ, mv > 2016, allPlugs ) )
         # plugins
         if allPlugs:
+            self.update( studiolibrary() )
             self.update( prman() )
             self.update( cortex() )
             self.update( gaffer() )
@@ -339,6 +340,8 @@ class maya(baseApp):
     def postRun(self, cmd, returnCode, returnLog=""):
         ''' this is called after a binary of this class has exited.
         it's the perfect method to do post render frame checks, for example!'''
+        import os, sys, glob
+
         error = returnCode!=0
         extensions = [
             '.exr',
@@ -347,6 +350,17 @@ class maya(baseApp):
             '.dpx',
         ]
         images=[]
+
+        # list of substrings to find files in the same folder where
+        # images that appear in the logs are.
+        # (for those images that don't show up in the log!)
+        extra_images_filesystem_search = [
+            # as cryptomate in renderman doesn't show up in the log, we have to look
+            # for it in the same path where rendered images are.
+            # we assume they have a filename that contains "cryptomate" in it!
+            'cryptomate',
+            'cryptomatte',
+        ]
 
         # publish output log
         if hasattr(self, 'asset'):
@@ -420,6 +434,12 @@ class maya(baseApp):
 
                 images = filtered + unfiltered
 
+        # after we have some images from the log, we can look on the same
+        # paths where they are, looking for extra images that may not show up
+        # in the logs (like cryptomate in renderman!)
+        for path in set([ os.path.dirname(x) for x in images ]):
+            for substr in extra_images_filesystem_search:
+                images += glob.glob( "%s/*%s*" % (path, substr) )
 
         # run our pipe.frame.check generic frame check for the gathered image list
         if images:
