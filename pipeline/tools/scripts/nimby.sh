@@ -18,7 +18,9 @@
 #
 # =================================================================================
 
-idleNimbyOFFminutos=15
+export PATH=/atomo/pipeline/tools/scripts:$PATH
+
+idleNimbyOFFminutos=5
 
 timeOFF=$(( idleNimbyOFFminutos * 60 ))
 action=$1
@@ -35,12 +37,20 @@ if [ "$1" != "" ] ; then
 else
    # finds the X servers running, and check idle for all of then
    # this way we can run this as root, and it will query all X servers from other users!
-   for n in "$(pgrep -fa Xorg | sed 's/ /\n/g' | egrep run | awk -F'/' '{print $(NF)}')" ; do
+   # centos
+   d="$(pgrep -fa bin.X | grep -v Xpra | grep -v grep  | awk '{print $3}')"
+   if [ "$d" == "" ] ; then
+	   # arch
+	   d="$(pgrep -fa Xorg | grep -v Xpra | sed 's/ /\n/g' | egrep run | awk -F'/' '{print $(NF)}')"
+   fi
+#   for n in "$(pgrep -fa Xorg | grep -v Xpra | sed 's/ /\n/g' | egrep run | awk -F'/' '{print $(NF)}')" ; do
+   for n in $d ; do
 	export DISPLAY=$n
 	# gets idletime by running the idletime shell command
 	export idle=$(idletime)
+# echo $DISPLAY $idle $timeOFF
 	if [ "$action" == "" ] ; then
-		if [ $idle -lt 15 ] && [ $idle -ge 0 ] ; then
+		if [ $idle -lt 2 ] && [ $idle -ge 0 ] ; then
 			action="on"
 		elif [ $idle -gt $timeOFF ] ; then
 			action="off"
@@ -51,10 +61,13 @@ else
 
 	# here we use pipe.farm to set nimby for the current machine
 	export PYTHONPATH=/atomo/pipeline/tags/latest/python:$PYTHONPATH
+# echo $action
 	if [ "$action" == "off" ] ; then
 		/bin/python2 -c 'import pipe, socket;f=pipe.farm.engine();f._renderNodeSetParameter(socket.gethostname(),"NIMBY",False)'
+		/bin/python2 -c 'import pipe, socket;f=pipe.farm.engine();f._renderNodeSetParameter(socket.gethostname(),"nimby",False)'
 	elif [ "$action" == "on" ] ; then
-		/bin/python2 -c 'import pipe, socket;f=pipe.farm.engine();f._renderNodeSetParameter(socket.gethostname(),"NIMBY",True);f._renderEjectAll(socket.gethostname())'
+		/bin/python2 -c 'import pipe, socket;f=pipe.farm.engine();f._renderNodeSetParameter(socket.gethostname(),"nimby",True);f._renderEjectAll(socket.gethostname())'
+		/bin/python2 -c 'import pipe, socket;f=pipe.farm.engine();f._renderNodeSetParameter(socket.gethostname(),"nimby",True)'
 	fi
    done
 fi

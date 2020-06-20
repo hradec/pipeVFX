@@ -145,6 +145,8 @@ class prman(baseApp):
                 python = '%s/prman/python'      % each,
                 shader = [
                     '%s/prman/shaders'     % each,
+                    '%s/prman/ris/pattern' % each,
+                    '%s/prman/ris/integrator' % each,
                     '%s/prman/ris/$PRMAN_VERSION/pattern' % each,
                     '%s/prman/ris/$PRMAN_VERSION/integrator' % each,
                 ],

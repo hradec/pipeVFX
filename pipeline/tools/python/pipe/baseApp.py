@@ -951,9 +951,18 @@ class baseApp(_environ):
             del module
         self.version()
 
-    def expand(self):
-        ''' expand all env vars in this class to the environment '''
+    def expand(self, binName=None):
+        ''' expand all env vars in this class to the environment
+        if binName is specified, fullEnvironment will also run the license setup
+        '''
+        # here is were we actually update self with all updated
+        self.fullEnvironment(binName)
         _environ.evaluate(self)
+
+        # update python itself with the newly created PYTHONPATH.
+        for each in os.environ['PYTHONPATH'].split(':'):
+            sys.path += [each]
+
 
     def toolsPaths(self):
         ''' return all the tools paths in the hierarqui, sorted correctly! '''
@@ -991,7 +1000,7 @@ class baseApp(_environ):
             if os.path.exists( license_script ):
                 try:
                     exec( ''.join(open(license_script).readlines()),globals(),locals() )
-                    print( license_script )
+                    # print( license_script )
                     break
                 except:
                     print( bcolors.FAIL+'='*80 )
@@ -1086,17 +1095,29 @@ class baseApp(_environ):
         return ret
 
     def fullEnvironment(self, binName=None):
-        # here is were we actually update self with all updated
-        # classes - the ones we do 'self.update(classApp())' in environ method!
-        for className in  self.updatedClasses.keys():
-            # evaluate all classes, but itself!
-            if className != self.parent():
-                self.updatedClasses[className].evaluate()
-                # first, run license method for all added classes
-                if binName:
-                    self.updatedClasses[className]._license(binName)
-                # then, update self with the class!
-                _environ.update(self, self.updatedClasses[className])
+        '''
+        here is were we actually update self with all updated
+        classes - the ones we do 'self.update(classApp())' in environ method!
+        we also add all libraries path
+        if binName is specified, fullEnvironment will also run the license setup
+        for all classes in updatedClasses[], including the this one.
+        '''
+        # add our pipe library collection
+        self.updateLibs()
+
+        # only run if enviroment is set and not root!
+        if os.getuid()>0:
+            # here is were we actually update self with all updated
+            # classes - the ones we do 'self.update(classApp())' in environ method!
+            for className in  self.updatedClasses.keys():
+                # evaluate all classes, but itself!
+                if className != self.parent():
+                    self.updatedClasses[className].evaluate()
+                    # first, run license method for all added classes
+                    if binName:
+                        self.updatedClasses[className]._license(binName)
+                    # then, update self with the class!
+                    _environ.update(self, self.updatedClasses[className])
 
         # last, run self license
         if binName:
@@ -1173,9 +1194,6 @@ class baseApp(_environ):
         # use /bin/sh to run apps...
         os.environ['SHELL'] = '/bin/sh'
 
-        # add our pipe library collection
-        self.updateLibs()
-
         # if the app is a wine app, set WINEPREFIX
         if os.path.exists( "%s/drive_c" % self.path() ):
             self['WINEPREFIX'] = self.path()
@@ -1198,7 +1216,10 @@ class baseApp(_environ):
 
         # expand all environment variables stored in this class to
         # actual os.environ vars
-        self.expand()
+        # it also updates this class with libraries path, all the classes
+        # that where added by self.update() and if binName is specified,
+        # it will run the _license() method for all classes
+        self.expand(binName)
 
         # get extra default command line parameters
         # if extraCommandLine() method exists!

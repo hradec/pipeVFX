@@ -398,7 +398,7 @@ class job(baseFarmJobClass):
                 n += 1
 
 
-            if hasattr( self, "postCmd" ):
+            if hasattr( self, "postCmd" ) and self.postCmd:
                 block2 = af.Block( self.postCmd['name'] )
                 block2.setDependMask( "main" )
                 #block2.setTasksDependMask( "main" )
@@ -413,6 +413,8 @@ class job(baseFarmJobClass):
 
 
             for b in blocks:
+                if hasattr( self, "capacity" ) and self.capacity:
+                    b.setCapacity(self.capacity)
                 job.blocks.append(b)
 
             print( '='*80 )

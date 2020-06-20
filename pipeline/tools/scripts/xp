@@ -1,0 +1,13 @@
+#!/bin/bash
+
+port=$2
+if [ "$port" == "" ] ; then
+	port=40
+fi
+if [ "$(nmap -Pn -p 650$port $1 | grep open)" == "" ] ; then
+	echo start
+	/bin/xpra start --bind-tcp=$1:650$port ssh:$1:$port --start=terminology
+else
+	echo attach
+	/bin/xpra attach tcp:$1:650$port
+fi

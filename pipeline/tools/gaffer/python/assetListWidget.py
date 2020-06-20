@@ -24,7 +24,8 @@
 ############################################################################
 
 
-
+# TODO: Add a vertical toolbar with custom buttons for generic tools and
+#       project specific tools.
 
 import os
 import sys
@@ -52,6 +53,21 @@ if assetUtils.m:
     reload(genericAsset)
 
 import bundleListWidget
+
+# add a custom folder to search path, so we can add custom functionality
+tools = [ '%s/config/assets/' % x for x in pipe.apps.gaffer().toolsPaths() ]
+tools.reverse()
+for tool in tools:
+    if tool not in sys.path:
+        sys.path.insert(0,tool)
+
+try:
+    import custom
+    reload(custom)
+except:
+    class custom:
+        pass
+
 
 # import GafferSceneUI # for alembic previews
 # import GafferCortexUI # for alembic previews
@@ -235,6 +251,7 @@ class assetListWidget( GafferUI.EditorWidget ):
     __expansionChangedSignal = GafferUI.WidgetSignal()
     __filter = ''
 
+
     def assetFilter(self, textWidget):
         self.__filter =  textWidget.getText()
         self.refresh()
@@ -285,6 +302,9 @@ class assetListWidget( GafferUI.EditorWidget ):
 
     def __init__(self, scriptNode=None, hostApp='gaffer', **kw):
         from GafferUI.PathListingWidget import _TreeView
+
+        if not scriptNode:
+            scriptNode = Gaffer.ScriptNode()
 
         __toolTip__maya__=''
         if assetUtils.m:
@@ -454,6 +474,7 @@ class assetListWidget( GafferUI.EditorWidget ):
         # bundleListWidget.bundleListWidget._selectionChangedSignal().connect( Gaffer.WeakMethod( self.handleValue ) )
 
         # genericAsset.updateCurrentLoadedAssets(True)
+        genericAsset.updateCurrentLoadedAssets()
 
     def __buttonDoubleClick(self, *args):
         # import time
@@ -509,7 +530,8 @@ class assetListWidget( GafferUI.EditorWidget ):
              def __SAM_assetList_mayaNodeDeleted_IDLE__():
                 genericAsset.updateCurrentLoadedAssets()
                 self._mayaNodeDeleted(forceRefresh)
-             assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_mayaNodeDeleted_IDLE__ )
+             __SAM_assetList_mayaNodeDeleted_IDLE__()
+             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_mayaNodeDeleted_IDLE__ )
 
         assetUtils.mayaLazyScriptJob( runOnce=False,  deleteEvent=__SAM_assetList_mayaNodeDeleted__ )
         assetUtils.mayaLazyScriptJob( runOnce=False,  event=['deleteAll',lambda: __SAM_assetList_mayaNodeDeleted__(True)] )
@@ -557,7 +579,8 @@ class assetListWidget( GafferUI.EditorWidget ):
             # if selection is "importable" in the current app
             selected_canImport  = True #if [ x for x in selectedPathsOP if x.canImport() ] else False
 
-            canImport = not selectedPathsEditable and selected_canImport #selected_source_exists_in_host and selected_canImport
+            # canImport = not selectedPathsEditable and selected_canImport #selected_source_exists_in_host and selected_canImport
+            canImport = True
 
             # renderSettings can ALLWAYS be imported, even if they are publishable as well!
             if len(selectedPaths)==1:
@@ -609,7 +632,13 @@ class assetListWidget( GafferUI.EditorWidget ):
                     menuDefinition.append( "/publish new asset of type %s" % t.replace('/','_'), { "command" : IECore.curry(createNewAsset, selectedPaths, t) } )
 
 
-        menuDefinition.append( "/ " , { } )
+
+
+        if hasattr( custom, 'assetListRightClickMenu' ):
+            menuDefinition = custom.assetListRightClickMenu( self, pathListing, menuDefinition )
+
+
+        menuDefinition.append( "/     " , { } )
         menuDefinition.append( "/update all assets", { "command" :  IECore.curry( self.updateAllAssetsInScene) } )
 
         menuDefinition.append( "/--- " , { } )
@@ -632,9 +661,13 @@ class assetListWidget( GafferUI.EditorWidget ):
                     # print path
                     op = assetUtils.assetOP( path , self.hostApp() )
                     op.doImport( )
+
                 pb.step()
                 pb.close()
                 self._mayaNodeDeleted()
+
+                if hasattr( custom, 'assetListAssetImport' ):
+                    custom.assetListAssetImport(  )
                 # print op, path
             __SAM_assetList_doImport__()
             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_doImport__)
@@ -647,9 +680,14 @@ class assetListWidget( GafferUI.EditorWidget ):
                 pb.step()
                 if not checkIfNodeIsUpToDate(n):
                     n = n.split('_')
-                    op = assetUtils.assetOP( '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4])), self.hostApp() )
+                    path = '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4]))
+                    op = assetUtils.assetOP( path, self.hostApp() )
                     print '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4])), op.path, op.data
                     op.doImport()
+                    # run custom code, if any!
+
+            if hasattr( custom, 'assetListAssetImport' ):
+                custom.assetListAssetImport(  )
             pb.step()
             pb.close()
 

@@ -19,7 +19,7 @@
 # =================================================================================
 
 
-import os, glob, sys
+import os, glob, sys, traceback
 # avoid creating .pyc since it can cause trouble between Intel and AMD
 sys.dont_write_bytecode = True
 
@@ -140,6 +140,19 @@ import build
 
 
 
+def _force_os_environ(print_traceback=None):
+    ''' this is a hack to restart a running python to account for a new os.environ
+    (mostly updates to LD_LIBRARY_PATH) but it can cause misbehavior compared to
+    having the environment properly set before running python.
+    So used it carefully!!!'''
+    if print_traceback:
+        print traceback.print_exc()
+    import os
+    try:
+        os.execv(sys.argv[0], sys.argv)
+    except Exception, exc:
+        print 'Failed re-exec:', exc
+        sys.exit(1)
 
 def studio(name=None):
     import os

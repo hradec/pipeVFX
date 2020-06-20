@@ -150,7 +150,7 @@ shave_test.cob: all
 clean:
 	rm -rf *.so shaveAPITestApp *.cob *.rib
 
-install: shave_test.cob
+install: all
 	mkdir -p ../maya/$(MAYA_VERSION)/
 	cp shaveAPITestApp ../maya/$(MAYA_VERSION)/
 	cp shaveCortexWriter_$(MAYA_VERSION).so ../maya/$(MAYA_VERSION)/shaveCortexWriter.so

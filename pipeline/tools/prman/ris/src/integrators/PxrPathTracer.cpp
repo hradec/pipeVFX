@@ -63,7 +63,7 @@ enum DepthReduceMode
     k_depthReduceThruputAvg,      // Use avg thruput to control sample counts
     k_depthReduceThruputGAvg,     // Use geometric avg thruput to control
     k_depthReduceNone,            // Do no reduction down the tree
-    k_depthReduceDepthThruputAvg, // Use depth and avg thruput to control 
+    k_depthReduceDepthThruputAvg, // Use depth and avg thruput to control
 };
 
 enum TraceDepthMode
@@ -100,7 +100,7 @@ enum TraceDepthMode
 #define DEF_SSS_SAMPLES        1     // default number of subsurface samples
 #define DEF_REFR_SAMPLES       1     // default number of refraction samples
 #define DEF_ROULETTE_DEPTH     4     // do russian roulette at this ray depth
-#define DEF_ROULETTE_THRESHOLD 0.2f  // do russian roulette below this 
+#define DEF_ROULETTE_THRESHOLD 0.2f  // do russian roulette below this
                                      // weightedThruput
 #define DEF_CLAMP_DEPTH        2     // by default clamp at/beyond this depth
 #define DEF_CLAMP_LUMINANCE    10.0f // by default clamp the luminance to this
@@ -122,7 +122,7 @@ enum SampleType
     k_sampleNumTypes,
 };
 
-static const RtInt k_rngSamplePattern[] = 
+static const RtInt k_rngSamplePattern[] =
 {
     0x2d96c92b, // bxdf generate
     0x3917fe2e, // bxdf evaluate
@@ -136,7 +136,7 @@ static const RtInt k_rngSamplePattern[] =
     0x492502dd, // all
 };
 
-static const RtInt k_rngRoulettePattern[] = 
+static const RtInt k_rngRoulettePattern[] =
 {
     0x5fa21247, // bxdf generate (unused)
     0x21945daf, // bxdf evaluate (unused)
@@ -163,8 +163,8 @@ const int k_maxRaysPerBatch = 32768;
 // Some utility routines.
 
 static inline RtPoint3
-bias(const RtPoint3 &org, const RtNormal3 &N, const RtVector3 &dir, 
-     RtFloat biasAmt) 
+bias(const RtPoint3 &org, const RtNormal3 &N, const RtVector3 &dir,
+     RtFloat biasAmt)
 {
     // Currently we bias in the ray direction, but in some cases we might want
     // to bias along the surface normal (which is also provided as an input to
@@ -214,8 +214,8 @@ class PxrPathTracer : public RixIntegrator
     virtual ~PxrPathTracer();
 
     virtual int Init(RixContext &, char const *pluginpath);
-    virtual RixSCParamInfo const *GetParamTable(); 
-    virtual void Finalize(RixContext &); 
+    virtual RixSCParamInfo const *GetParamTable();
+    virtual void Finalize(RixContext &);
     virtual void RenderBegin(RixContext &ctx, RixIntegratorEnvironment &env,
                              RixParameterList const *plist);
     virtual void RenderEnd(RixContext &ctx);
@@ -281,22 +281,22 @@ class PxrPathTracer : public RixIntegrator
     std::vector<RtUInt64> m_statsRayCounts;
 };
 
-PxrPathTracer::PxrPathTracer() 
-    : 
-    m_numLightSamples(DEF_LIGHT_SAMPLES), 
-    m_numBxdfSamples(DEF_BXDF_SAMPLES), 
-    m_reduceDirectSamples(DEF_REDUCE_DIRECT_SAMPLES), 
+PxrPathTracer::PxrPathTracer()
+    :
+    m_numLightSamples(DEF_LIGHT_SAMPLES),
+    m_numBxdfSamples(DEF_BXDF_SAMPLES),
+    m_reduceDirectSamples(DEF_REDUCE_DIRECT_SAMPLES),
     m_numIndirectSamples(DEF_IND_SAMPLES),
     m_numDiffuseSamples(DEF_DIFF_SAMPLES),
     m_numSpecularSamples(DEF_SPEC_SAMPLES),
     m_numSubsurfaceSamples(DEF_SSS_SAMPLES),
     m_numRefractionSamples(DEF_REFR_SAMPLES),
-    m_sampleMode(DEF_SAMPLE_MODE), 
+    m_sampleMode(DEF_SAMPLE_MODE),
     m_maxSamples(0),
     m_maxIndSamples(0),
     m_rouletteDepth(DEF_ROULETTE_DEPTH),
-    m_rouletteThreshold(DEF_ROULETTE_THRESHOLD), 
-    m_clampDepth(DEF_CLAMP_DEPTH), 
+    m_rouletteThreshold(DEF_ROULETTE_THRESHOLD),
+    m_clampDepth(DEF_CLAMP_DEPTH),
     m_clampLuminance(DEF_CLAMP_LUMINANCE),
     m_allowCaustics(DEF_ALLOW_CAUSTICS),
     m_maxPathLength(k_defaultMaxPathLength),
@@ -308,14 +308,16 @@ PxrPathTracer::PxrPathTracer()
     m_msgs(0),
     m_timer(0),
     m_allWorkersMutex(0),
-    m_geoAovIds(0), 
-    m_statsBufferMemory(0.0f), 
+    m_geoAovIds(0),
+    m_statsBufferMemory(0.0f),
     m_statsAovMemory(0.0f)
 {
+std::cout << "\nBUMMMM 1\n" << std::endl; std::cout.flush();
 }
 
 PxrPathTracer::~PxrPathTracer()
 {
+std::cout << "\nBUMMMM 2\n" << std::endl; std::cout.flush();
     if (m_geoAovIds)
     {
         delete[] m_geoAovIds;
@@ -330,7 +332,7 @@ PxrPathTracer::Init(RixContext &ctx, char const *pluginpath)
     m_msgs = (RixMessages *) ctx.GetRixInterface(k_RixMessages);
     m_timer = (RixTimer *) ctx.GetRixInterface(k_RixTimer);
 
-    if (RixThreadUtils *threadUtils = 
+    if (RixThreadUtils *threadUtils =
         (RixThreadUtils*) ctx.GetRixInterface(k_RixThreadUtils))
     {
         m_allWorkersMutex = threadUtils->NewMutex();
@@ -350,6 +352,7 @@ PxrPathTracer::Init(RixContext &ctx, char const *pluginpath)
     else
         m_opacityThreshold = RixConstants::k_OneRGB;
 
+	std::cout << "\nBUMMMM - init\n" << std::endl; std::cout.flush();
     return 0;
 }
 
@@ -357,7 +360,7 @@ RixSCParamInfo const *
 PxrPathTracer::GetParamTable()
 {
     // Specify the parameters.
-    static RixSCParamInfo s_ptable[] = 
+    static RixSCParamInfo s_ptable[] =
     {
         RixSCParamInfo("numLightSamples", k_RixSCInteger),
         RixSCParamInfo("numBxdfSamples", k_RixSCInteger),
@@ -378,7 +381,7 @@ PxrPathTracer::GetParamTable()
         RixSCParamInfo("imagePlaneSubset", k_RixSCString),
         RixSCParamInfo("accumOpacity", k_RixSCInteger),
         RixSCParamInfo("volumeAggregate", k_RixSCString),
-        
+
         RixSCParamInfo() // end of table
     };
     return &s_ptable[0];
@@ -394,8 +397,9 @@ void
 PxrPathTracer::RenderBegin(RixContext &ctx, RixIntegratorEnvironment &env,
                            RixParameterList const *plist)
 {
+    std::cout << "\nBUMMMM - RenderBegin\n" << std::endl; std::cout.flush();
+
     // Fetch the options.
-    printf("\n\nBUMMMMMMMMMMMMM\n\n");
     GetOptions(ctx, m_traceDepthMode);
 
     RtConstString sampleModeStr = 0;
@@ -553,14 +557,14 @@ PxrPathTracer::RenderBegin(RixContext &ctx, RixIntegratorEnvironment &env,
         if(plist->EvalParam(paramId, 0, &m_volumeAggregate) != k_RixSCUniform)
             m_msgs->Error("%s: invalid parameter %s", inm, pnm);
     }
-    
+
     // Here we check all three conditions before allocating memory and ask the intergrator
     // to actually do the compTrans works because if there are no indirect samples, compTrans is
-    // not going to return anything different than directLightContext. There is no need to do this 
+    // not going to return anything different than directLightContext. There is no need to do this
     // extra work. Same goes for max path length
     if (m_accumOpacity)
     {
-        if (m_numIndirectSamples < 1) 
+        if (m_numIndirectSamples < 1)
         {
             m_accumOpacity = false;
             pnm = "numIndirectSamples";
@@ -611,7 +615,7 @@ PxrPathTracer::RenderBegin(RixContext &ctx, RixIntegratorEnvironment &env,
         else
         {
             m_msgs->Error("%s: unknown value for "
-                          "reduceDirectSamples parameter: \"%s\"\n", 
+                          "reduceDirectSamples parameter: \"%s\"\n",
                           inm, depthReduceModeStr);
         }
     }
@@ -622,9 +626,9 @@ PxrPathTracer::RenderBegin(RixContext &ctx, RixIntegratorEnvironment &env,
     m_numIndirectSamples     = clamp(m_numIndirectSamples, 0, MAX_IND_SAMPLES);
     m_numDiffuseSamples      = clamp(m_numDiffuseSamples, 0, MAX_DIFF_SAMPLES);
     m_numSpecularSamples     = clamp(m_numSpecularSamples, 0, MAX_SPEC_SAMPLES);
-    m_numSubsurfaceSamples   = clamp(m_numSubsurfaceSamples, 0, 
+    m_numSubsurfaceSamples   = clamp(m_numSubsurfaceSamples, 0,
                                      MAX_SSS_SAMPLES);
-    m_numRefractionSamples   = clamp(m_numRefractionSamples, 0, 
+    m_numRefractionSamples   = clamp(m_numRefractionSamples, 0,
                                      MAX_REFR_SAMPLES);
     m_rouletteDepth          = clamp(m_rouletteDepth, -1, MAX_DEPTH);
     m_rouletteThreshold      = clamp(m_rouletteThreshold, 0.0f, 1.0f);
@@ -635,11 +639,11 @@ PxrPathTracer::RenderBegin(RixContext &ctx, RixIntegratorEnvironment &env,
     RixStats* stats = (RixStats*) ctx.GetRixInterface(k_RixStats);
     stats->AddReporterCtx(statsReporter, this);
 
-    m_maxIndSamples = ((m_sampleMode == k_modeBxdf) 
-                       ? m_numIndirectSamples 
+    m_maxIndSamples = ((m_sampleMode == k_modeBxdf)
+                       ? m_numIndirectSamples
                        : (m_numDiffuseSamples    + m_numSpecularSamples +
                           m_numSubsurfaceSamples + m_numRefractionSamples));
-    
+
     m_maxSamples = std::max(std::max(m_numLightSamples, m_numBxdfSamples),
                             m_maxIndSamples);
 
@@ -655,7 +659,7 @@ PxrPathTracer::RenderBegin(RixContext &ctx, RixIntegratorEnvironment &env,
     m_maxShadingCtxSize      = env.maxShadingCtxSize;
 
     // Communicate the requirements for this integrator.
-    env.lightingRequirements = 
+    env.lightingRequirements =
                         RixIntegratorEnvironment::k_UnidirectionalLighting;
     env.supportedSamplingModes = RixIntegratorEnvironment::SamplingModes(
                                      RixIntegratorEnvironment::k_Fixed |
@@ -689,7 +693,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         RtInt              depth;           // counts the scattering bounces
         RtInt              diffusedepth;    // counts the diffuse bounces
         RtInt              speculardepth;   // counts the specular bounces
-        RtInt              truedepth;       // counts all bounces 
+        RtInt              truedepth;       // counts all bounces
                                             // (incl continuation)
         RtInt              sctxIdx;         // index of the shading context
         RtInt              dspIdx;          // index for display services
@@ -698,14 +702,14 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         unsigned char      onlyDiffuse;     // generate/evaluate only diffuse
         SampleType         sampleType;      // the originating type of samples
         bool               isCollector;     // originating ray is collector
-        bool               distanceWritten; // we have written the ray's 
+        bool               distanceWritten; // we have written the ray's
                                             // distance
         bool               isHoldout;       // light path is holdout
         bool               primaryIsHoldout; // this is a path spawned by a holdout object
                                             // this is needed because we do not want
                                             // compTrans to affect holdout opacity at all
                                             // at the first encounter of a holdout object
-                                            // this value will be set to true and will 
+                                            // this value will be set to true and will
                                             // always be true onwards
         bool               scattered;       // whether or not the previous event was a scattering
                                             // event
@@ -752,7 +756,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         }
 
         RayInfo            *rayInfo;
-        RixShadingContext const**sctxs; 
+        RixShadingContext const**sctxs;
         bool               *incidentSctxIsMatte;
         RtInt               numSctxs;
         DepthInfo          *depthInfo;// uniform ray depths per shading context
@@ -760,15 +764,15 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
     };
 
     ptWorker(RixIntegratorContext &iCtx,
-             RixRefCntPtr<RixLPE> rixLpe, 
-             RtInt numLight, RtInt numBxdf, 
+             RixRefCntPtr<RixLPE> rixLpe,
+             RtInt numLight, RtInt numBxdf,
              DepthReduceMode depthReduceDirect,
-             RtInt numIndirect, 
-             RtInt numDiffuse, RtInt numSpecular, 
-             RtInt numSubsurface, RtInt numRefraction, 
-             SampleMode sampleMode, RtInt maxSamples, RtInt maxIndSamples, 
-             RtInt rouletteDepth, RtFloat rouletteThreshold, 
-             RtInt clampDepth, RtFloat clampLuminance, 
+             RtInt numIndirect,
+             RtInt numDiffuse, RtInt numSpecular,
+             RtInt numSubsurface, RtInt numRefraction,
+             SampleMode sampleMode, RtInt maxSamples, RtInt maxIndSamples,
+             RtInt rouletteDepth, RtFloat rouletteThreshold,
+             RtInt clampDepth, RtFloat clampLuminance,
              RtInt allowCaustics, RtInt maxPathLength,
              RtInt maxContinuationLength,
              RtInt maxShadingCtxSize,
@@ -777,16 +781,16 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
              RtInt traceDepthMode,
              RtInt accumOpacity,
              RtConstString volumeAggregate)
-        : 
-        m_rixLpe(rixLpe), 
+        :
+        m_rixLpe(rixLpe),
         m_numPotentialDiffuseLobes(k_RixBXMaxNumDiffuseLobes),
         m_numPotentialSpecularLobes(k_RixBXMaxNumSpecularLobes),
         m_numPotentialUserLobes(k_RixBXMaxNumUserLobes),
         m_bufferMemory(0),
-        m_numLightSamples(numLight), 
+        m_numLightSamples(numLight),
         m_numBxdfSamples(numBxdf),
-        m_reduceDirectSamples(depthReduceDirect), 
-        m_numIndirectSamples(numIndirect), 
+        m_reduceDirectSamples(depthReduceDirect),
+        m_numIndirectSamples(numIndirect),
         m_numDiffuseSamples(numDiffuse),
         m_numSpecularSamples(numSpecular),
         m_numSubsurfaceSamples(numSubsurface),
@@ -847,9 +851,9 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         }
 
         // Set the per-event Russian Roulette acceptance probability.
-        // To avoid very low acceptance probabilities that can spike 
-        // the variance, ensure that the minimum cumulative 
-        // acceptance probability (across all Roulette termination 
+        // To avoid very low acceptance probabilities that can spike
+        // the variance, ensure that the minimum cumulative
+        // acceptance probability (across all Roulette termination
         // events) never goes below a reasonable threshold.
         if (m_rouletteDepth >= 0 &&
             m_maxPathLength + 1 > m_rouletteDepth)
@@ -865,7 +869,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         m_rouletteProbInv = 1.0f / m_rouletteProb;
 
         // allocate space:
-        
+
         int sz = m_maxSamples * m_maxPathCount;
 
         m_rngSamps         = new RixRNG::SampleCtx[sz];
@@ -887,7 +891,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         m_On               = new RtVector3[sz];
         m_FPdf             = new RtFloat[sz];
         m_RPdf             = new RtFloat[sz];
-        
+
         m_rays             = new RtRayGeometry[sz];
         m_backgroundColor  = new RtColorRGB[sz];
 
@@ -902,14 +906,14 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         // We allocate two complete arrays of LPE states, one for use
         // prior to any branching or splitting factor on indirect rays,
         // and another for use after branching/splitting for indirect rays.
-        // The pre-split array is of size equal to the maximum possible number 
+        // The pre-split array is of size equal to the maximum possible number
         // of camera hits in a batch, whereas the post-split array is that
-        // times the branching/splitting factor. 
+        // times the branching/splitting factor.
         int indSize = m_maxIndSamples * m_maxPathCount;
         m_preSplitLpeState  = m_rixLpe->AllocateStates(m_maxPathCount);
         m_postSplitLpeState = m_rixLpe->AllocateStates(indSize);
 
-        // Use ping-pong buffers to store the path weightedThruput, ray depth, 
+        // Use ping-pong buffers to store the path weightedThruput, ray depth,
         // and shading context information.
         m_shadeInfoPing    = new ShadeInfo(sz);
         m_shadeInfoPong    = new ShadeInfo(sz);
@@ -929,9 +933,9 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         else m_compTrans = NULL;
 
         // Keep track of the memory usage for the buffers allocated above.
-        m_bufferMemory += 
-            sz * 
-            (1 * sizeof(RixRNG::SampleCtx) + 
+        m_bufferMemory +=
+            sz *
+            (1 * sizeof(RixRNG::SampleCtx) +
              6 * sizeof(RtColorRGB) +
              2 * sizeof(RixBXLobeTraits) +
              1 * sizeof(RixBXLobeSampled) +
@@ -997,7 +1001,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         delete[] m_On;
         delete[] m_FPdf;
         delete[] m_RPdf;
-        
+
         delete[] m_rays;
         delete[] m_backgroundColor;
 
@@ -1075,9 +1079,9 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
 
         // Keep track of the memory usage for the buffers allocated above.
 
-        m_bufferMemory -= 
-            sz * 
-            (1 * sizeof(RixRNG::SampleCtx) + 
+        m_bufferMemory -=
+            sz *
+            (1 * sizeof(RixRNG::SampleCtx) +
              6 * sizeof(RtColorRGB) +
              2 * sizeof(RixBXLobeTraits) +
              1 * sizeof(RixBXLobeSampled) +
@@ -1105,7 +1109,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
                        int* numShadingCtxs,
                        RixShadingContext const** shadingCtxs,
                        RixTimer *timer);
-    
+
     void Integrate(RixIntegratorContext &iCtx,
                    RtInt ngrps, RixShadingContext const *sgrps[],
                    RixTimer* timer);
@@ -1120,14 +1124,14 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
     virtual void PerformDirectLighting(RixShadingContext const &,
                                        RixBXLobeTraits const *lobesWanted,
                                        int step);
-    
+
     void ResizeArrays(RixContext &ctx);
 
     RtInt64 GetBufferMemory() const { return m_bufferMemory; }
     RtInt64 GetAOVMemory() const {return m_aovMemory; }
 
-    void GetRayDepth(const int* rayId, 
-                     int numPts, 
+    void GetRayDepth(const int* rayId,
+                     int numPts,
                      void const *result) const;
 
   private:
@@ -1145,20 +1149,20 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
                                   int &nSctxsBatch, // out
                                   RixShadingContext const **&sctxsTmp); // out
 
-    void getBackgroundImageColor(RixIntegratorContext &iCtx, 
+    void getBackgroundImageColor(RixIntegratorContext &iCtx,
                                  RixShadingContext const &sCtx,
                                  ShadeInfo *shadeInfoPing,
-                                 bool isCollector, 
+                                 bool isCollector,
                                  RtColorRGB *backgroundColor,
                                  RtInt *rayId);
 
     void directLighting(RixIntegratorContext &iCtx,
-                        ShadeInfo *shadeInfoPing, 
+                        ShadeInfo *shadeInfoPing,
                         ShadeInfo *shadeInfoPong);
 
-    void directLightContext(RixIntegratorContext &iCtx, 
+    void directLightContext(RixIntegratorContext &iCtx,
                             int totalDepth, int maxDiff, int maxSpec,
-                            RixLPEToken lpeGrpId, bool isCollector, 
+                            RixLPEToken lpeGrpId, bool isCollector,
                             int lgtSamp, int srfSamp,
                             RtFloat invLgtSamp, RtFloat invSrfSamp,
                             RixShadingContext const &sCtx,
@@ -1170,14 +1174,14 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
                             bool writeAlpha,
                             bool hasVol,
                             bool isDelegate = false);
-    
+
     void emitLocal(RixIntegratorContext &iCtx,
                    ShadeInfo *shadeInfoPing);
 
     void emitLocalContext(RixIntegratorContext &iCtx,
                           RixShadingContext const &sCtx,
-                          RixLPEToken lpeGrpId, 
-                          bool isCollector, 
+                          RixLPEToken lpeGrpId,
+                          bool isCollector,
                           ShadeInfo *shadeInfoPing,
                           RixBXLobeTraits const *lobesWanted,
                           bool writeAlpha = true,
@@ -1191,11 +1195,11 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
     void createRays(RixIntegratorContext &iCtx, int &rayIdx, bool cameraHits,
                     ShadeInfo *shadeInfoPing, ShadeInfo *shadeInfoPong);
 
-    void createRaysHelper(RixIntegratorContext &iCtx, 
-                          SampleType sampleType, int &rayIdx, 
+    void createRaysHelper(RixIntegratorContext &iCtx,
+                          SampleType sampleType, int &rayIdx,
                           ShadeInfo *shadeInfoPing, ShadeInfo *shadeInfoPong);
 
-    void traceRays(RixIntegratorContext &iCtx, 
+    void traceRays(RixIntegratorContext &iCtx,
                    int nRays, RtRayGeometry *rays,
                    ShadeInfo *shadeInfoPing,
                    ShadeInfo *shadeInfoPong);
@@ -1204,21 +1208,21 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
                             float maxThruput, bool direct,
                             bool subsurface = false,
                             bool continuation = false);
-        
-    void computeClampDirect(int depth, 
-                            RtColorRGB const &lgtTrans, 
+
+    void computeClampDirect(int depth,
+                            RtColorRGB const &lgtTrans,
                             RixBXActiveLobeWeights &activeLobes,
-                            int weightIndex, 
-                            RtColorRGB const &thruput, 
+                            int weightIndex,
+                            RtColorRGB const &thruput,
                             float invNumSamp,
                             bool &isFinite, RtFloat &clampAmt);
 
-    void computeClampEmissive(int depth, 
+    void computeClampEmissive(int depth,
                               RtColorRGB const &emission,
-                              RtColorRGB const &thruput, 
+                              RtColorRGB const &thruput,
                               bool &isFinite, RtFloat &clampAmt);
 
-    SampleType findSampleType(SampleType srcSampleType, 
+    SampleType findSampleType(SampleType srcSampleType,
                               RixBXLobeSampled lobeSampled, int depth);
 
     void getDirectState(RixShadingContext const &sCtx,
@@ -1234,48 +1238,48 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
                                 bool &isCollector) const;
 
     // get a nice contiguous group of rng for calling generate
-    // scale numSamples and sampleid by correct number of samples.  
+    // scale numSamples and sampleid by correct number of samples.
     void initRNG(int numPts, int pattern, bool doRngSplit,
-                 int numSamp, RayInfo *rayInfo, RtInt *rayId) 
+                 int numSamp, RayInfo *rayInfo, RtInt *rayId)
     {
-        // Spawn a new random number domain using the immediate parent's 
-        // rng ctx instead of the rng ctx of the primary rays in order to 
-        // avoid repeats in the random numbers; for non-volume camera hits, 
-        // use the 2-argument NewDomain() overload for improved 
-        // stratification (when numSamp >= 2), and in all other cases use 
+        // Spawn a new random number domain using the immediate parent's
+        // rng ctx instead of the rng ctx of the primary rays in order to
+        // avoid repeats in the random numbers; for non-volume camera hits,
+        // use the 2-argument NewDomain() overload for improved
+        // stratification (when numSamp >= 2), and in all other cases use
         // the 3-argument NewDomain() overload (no splits).
-        for (int i = 0; i < numPts; i++)  
+        for (int i = 0; i < numPts; i++)
         {
             RtInt id = rayId[i];
             if (id < 0) continue;
-            m_rngSamps[i] = doRngSplit ? 
-                rayInfo[id].rngSamp.NewDomain(pattern, numSamp) : 
+            m_rngSamps[i] = doRngSplit ?
+                rayInfo[id].rngSamp.NewDomain(pattern, numSamp) :
                 rayInfo[id].rngSamp.NewDomain(pattern, 0, numSamp);
         }
     }
 
-    void initRNG(RixIntegratorContext &iCtx, 
+    void initRNG(RixIntegratorContext &iCtx,
                  int pattern, bool doRngSplit,
                  int numSamp, int numRays,
-                 RtRayGeometry const *rays) 
+                 RtRayGeometry const *rays)
     {
         // Spawn a new random number domain using the rng ctx of the
         // primary rays.
-        for (int i = 0; i < numRays; i++)  
+        for (int i = 0; i < numRays; i++)
         {
             RtInt id = rays[i].rayId;
             if (id < 0) continue;
             int iCtxIdx = rays[i].integratorCtxIndex;
             m_rngSamps[i] = doRngSplit ?
-                iCtx.rngCtx->GetSampleCtx(iCtxIdx).NewDomain(pattern, numSamp) : 
+                iCtx.rngCtx->GetSampleCtx(iCtxIdx).NewDomain(pattern, numSamp) :
                 iCtx.rngCtx->GetSampleCtx(iCtxIdx).NewDomain(pattern, 0, numSamp);
         }
     }
 
-    void incRNG(RixShadingContext const &sCtx) 
+    void incRNG(RixShadingContext const &sCtx)
     {
         // bump the sample in the rng
-        for (int i = 0; i < sCtx.numPts; i++)  
+        for (int i = 0; i < sCtx.numPts; i++)
         {
             m_rngSamps[i].sampleid++;
         }
@@ -1284,19 +1288,19 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
     void initChooseRNG(int numPts, bool doRngSplit,
                        int numSamp, RayInfo *rayInfo, RtInt *rayId)
     {
-        // Spawn a new random number domain using the immediate parent's 
-        // rng ctx instead of the rng ctx of the primary rays in order to 
-        // avoid repeats in the random numbers; for non-volume camera hits, 
-        // use the 2-argument NewDomain() overload for improved 
-        // stratification (when numSamp >= 2), and in all other cases use 
+        // Spawn a new random number domain using the immediate parent's
+        // rng ctx instead of the rng ctx of the primary rays in order to
+        // avoid repeats in the random numbers; for non-volume camera hits,
+        // use the 2-argument NewDomain() overload for improved
+        // stratification (when numSamp >= 2), and in all other cases use
         // the 3-argument NewDomain() overload (no splits).
         int pattern = k_rngSamplePattern[k_sampleLobes];
-        for (int i = 0; i < numPts; i++)  
+        for (int i = 0; i < numPts; i++)
         {
             RtInt id = rayId[i];
             if (id < 0) continue;
-            m_chooseSamps[i] = doRngSplit ? 
-                rayInfo[id].rngSamp.NewDomain(pattern, numSamp) : 
+            m_chooseSamps[i] = doRngSplit ?
+                rayInfo[id].rngSamp.NewDomain(pattern, numSamp) :
                 rayInfo[id].rngSamp.NewDomain(pattern, 0, numSamp);
         }
     }
@@ -1304,14 +1308,14 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
     void incChooseRNG(RixShadingContext const &sCtx)
     {
         // bump the sample in the rng
-        for (int i = 0; i < sCtx.numPts; i++)  
+        for (int i = 0; i < sCtx.numPts; i++)
         {
             m_chooseSamps[i].sampleid++;
         }
     }
 
     // Veach's MIS power heuristic with exponent 2
-    RtFloat misWeight(RtFloat nG, RtFloat pdfG, RtFloat nE, RtFloat pdfE) 
+    RtFloat misWeight(RtFloat nG, RtFloat pdfG, RtFloat nE, RtFloat pdfE)
     {
         if (nG != 0.0f && nE != 0.0f && (pdfG != 0.0f || pdfE != 0.0f))
         {
@@ -1331,7 +1335,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         RtFloat leastSpdf = isLight ? 0.0f : MIN_PDF;
         RtFloat leastLpdf = isLight ? MIN_PDF : 0.0f;
 
-        return (!lobeSampled.GetValid() || 
+        return (!lobeSampled.GetValid() ||
                 spdf < leastSpdf ||
                 spdf > MAX_PDF ||
                 lpdf < leastLpdf ||
@@ -1366,7 +1370,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
             rayIds[sCtxIndex] = rays[i].rayId;
         }
     }
-            
+
     void volumeAggregateMultiScatter(RixIntegratorContext &iCtx,
         int numRays, RtRayGeometry const * rays, bool isCamera,
         ShadeInfo *shadeInfoPing,
@@ -1381,7 +1385,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
         char const* subset,
         char const* excludeSubset,
         bool isPrimary);
-    
+
     // per shading point
     RixRNG::SampleCtx *m_rngSamps;
     RixRNG::SampleCtx *m_chooseSamps;
@@ -1474,7 +1478,7 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
     RtInt      m_allowCaustics;
     RtInt      m_maxPathLength;
     RtInt      m_maxContinuationLength;
-    RtInt      m_numLightGroups; 
+    RtInt      m_numLightGroups;
     RtConstString m_imagePlaneSubset;
     RtInt     *m_geoAovIds;
     RtInt      m_traceDepthMode;
@@ -1498,9 +1502,9 @@ class ptWorker : public RixVolumeIntegrator::IntegratorDelegate
     friend class PxrPathTracer;
 };
 
-void 
+void
 ptWorker::GetRayDepth(const int* rayId,
-                      int numPts, 
+                      int numPts,
                       void const *result) const
 {
     ShadeInfo* s = m_usingPing ? m_shadeInfoPing : m_shadeInfoPong;
@@ -1572,7 +1576,7 @@ ptWorker::ResizeArrays(RixContext &ctx)
         m_numPotentialSpecularLobes = lpeInfo->GetNumPotentialSpecularLobes();
         m_numPotentialUserLobes = lpeInfo->GetNumPotentialUserLobes();
     }
-    
+
     // Allocate the new buffers.
     for (int i = 0; i < m_numPotentialDiffuseLobes; i++)
     {
@@ -1581,7 +1585,7 @@ ptWorker::ResizeArrays(RixContext &ctx)
 
         m_bufferMemory += sz * 2 * sizeof(RtColorRGB);
     }
-    
+
     for (int i = 0; i < m_numPotentialSpecularLobes; i++)
     {
         m_ClSpecular[i] = new RtColorRGB[sz];
@@ -1628,13 +1632,13 @@ ptWorker::UpdateLPEs(RixIntegratorContext &iCtx)
         if (m_rixLpe != rixLpe)
         {
             int indSize = m_maxIndSamples * m_maxPathCount;
-            
+
             rixLpe->FreeStates(m_maxPathCount, m_preSplitLpeState);
             rixLpe->FreeStates(indSize, m_postSplitLpeState);
-            
+
             m_preSplitLpeState = rixLpe->AllocateStates(m_maxPathCount);
             m_postSplitLpeState = rixLpe->AllocateStates(indSize);
-            
+
             anyUpdates = true;
 
             m_rixLpe = rixLpe;
@@ -1659,7 +1663,7 @@ ptWorker::IntegrateRays(RixIntegratorContext& ictx,
     while (offset < ictx.numActiveRays)
     {
         batchSize = std::min(ictx.numActiveRays - offset, m_maxPathCount);
-    
+
         // Initialize the ray info on the ping buffer
         for (int i = 0; i < batchSize; ++i)
         {
@@ -1681,7 +1685,7 @@ ptWorker::IntegrateRays(RixIntegratorContext& ictx,
             m_shadeInfoPing->rayInfo[i].isHoldout = true;
             m_shadeInfoPing->rayInfo[i].scattered = true;
             m_shadeInfoPing->rayInfo[i].primaryIsHoldout = false;
-            m_shadeInfoPing->rayInfo[i].rngSamp = 
+            m_shadeInfoPing->rayInfo[i].rngSamp =
                 ictx.rngCtx->GetSampleCtx(iCtxIdx);
             if (m_rixLpe->AnyLPEs())
             {
@@ -1762,7 +1766,7 @@ ptWorker::Integrate(RixIntegratorContext &iCtx,
 
         // Currently renderer only guarantees a max on the size
         // of a single shade context but not on the number of shade
-        // contexts.  Here, we operate on that subset of incoming 
+        // contexts.  Here, we operate on that subset of incoming
         // grps that produces fewer than our configurable maximum.
         RixShadingContext const *sc = allGrps[g];
         npts += sc->numPts;
@@ -1813,22 +1817,22 @@ ptWorker::Integrate(RixIntegratorContext &iCtx,
                 // Add in the local emission.
                 emitLocal(iCtx, shadeInfoPing);
 
-                // Update the path throughputs by multiplying in the 
-                // transmission field of the shading context; the throughputs 
-                // are updated only after directLighting() and emitLocal() are 
+                // Update the path throughputs by multiplying in the
+                // transmission field of the shading context; the throughputs
+                // are updated only after directLighting() and emitLocal() are
                 // invoked.
                 updateThroughputs(iCtx, shadeInfoPing);
 
                 // output standard geometric AOVs
                 // make sure we only execute this on camera hits when at least
                 // one of the AOVs has been requested, except, for volumes,
-                // 'camera hits' should be the real scattering points as opposed to 
-                // the volume envelope. 
+                // 'camera hits' should be the real scattering points as opposed to
+                // the volume envelope.
                 if (m_geoAovIds)
                 {
-                    PxrGeoAOV::Splat(shadeInfoPing->numSctxs, 
+                    PxrGeoAOV::Splat(shadeInfoPing->numSctxs,
                                      shadeInfoPing->sctxs,
-                                     m_displaySvc, m_geoAovColor, 
+                                     m_displaySvc, m_geoAovColor,
                                      m_geoAovFloat, m_geoAovIds);
                 }
 
@@ -1852,17 +1856,17 @@ ptWorker::Integrate(RixIntegratorContext &iCtx,
                         assert(maxRayIdx <= m_maxIndSamples * m_maxPathCount);
                     }
                 }
-                    
+
                 // The core renderer frees shading contexts for camera hits.
                 if (!cameraHits)
                 {
-                    iCtx.ReleaseShadingContexts(shadeInfoPing->numSctxs, 
+                    iCtx.ReleaseShadingContexts(shadeInfoPing->numSctxs,
                                                 shadeInfoPing->sctxs);
                 }
                 else
                 {
                     // Reset the shading context pointer back to our buffer;
-                    // otherwise, the next time around we'll be operating on 
+                    // otherwise, the next time around we'll be operating on
                     // the wrong set of shading contexts.
                     shadeInfoPing->sctxs = sctxsBuffer;
                 }
@@ -1871,7 +1875,7 @@ ptWorker::Integrate(RixIntegratorContext &iCtx,
                 RtUInt64 timerStop = timer->SampleTime();
                 m_depthTimers[rayDepth] += timerStop - timerStart;
                 timerStart = timerStop;
-             
+
                 // If no indirect rays were created then stop.
                 if (rayIdx == 0)
                     break;
@@ -1892,7 +1896,7 @@ ptWorker::Integrate(RixIntegratorContext &iCtx,
 
                 // Note: We may or may not have made use of some or all
                 // of the LPE states within the m_postSplitLpeState array
-                // depending on whether 'doSplit' is ever true in 
+                // depending on whether 'doSplit' is ever true in
                 // createRaysHelper. Here, we just call Reset() on all of
                 // the LPE states that could have even potentially been
                 // used in the loop above (given that the cost is neglible).
@@ -1901,7 +1905,7 @@ ptWorker::Integrate(RixIntegratorContext &iCtx,
             }
 
             // now prepare for next iteration
-            firstGrp = g + 1; 
+            firstGrp = g + 1;
             npts = 0;
         }  // end of integration block
     } // end of per-group loop
@@ -1917,7 +1921,7 @@ ptWorker::GetTransmission(RixIntegratorContext& iCtx,
     for (int i = 0; i < numRays; ++i)
         rayId[i] = rays[i].rayId;
     initRNG(numRays, 0x5d43c6f8, false, 1, m_shadeInfoPing->rayInfo, rayId);
-    RixRNG rng(iCtx.rngCtx, m_rngSamps, numRays);        
+    RixRNG rng(iCtx.rngCtx, m_rngSamps, numRays);
     volumeAggregate.GetTransmission(numRays, rays, &rng, trans);
 }
 
@@ -1940,8 +1944,8 @@ ptWorker::PerformDirectLighting(RixShadingContext const &sCtx,
                        m_delegateState.totalDepth,
                        m_delegateState.maxDiffuseDepth,
                        m_delegateState.maxSpecularDepth,
-                       RixLPE::k_NONE, 
-                       false, 
+                       RixLPE::k_NONE,
+                       false,
                        m_delegateState.lgtSamp,
                        m_delegateState.srfSamp,
                        m_delegateState.invLgtSamp,
@@ -1953,18 +1957,18 @@ ptWorker::PerformDirectLighting(RixShadingContext const &sCtx,
                        lobesWanted,
                        step, false, true, true);
     emitLocalContext(*m_delegateState.iCtx,
-                     sCtx, 
+                     sCtx,
                      RixLPE::k_NONE,
-                     false, 
+                     false,
                      m_delegateState.shadeInfoPing,
                      lobesWanted, false, true);
 }
 
 void
-ptWorker::getBackgroundImageColor(RixIntegratorContext &iCtx, 
+ptWorker::getBackgroundImageColor(RixIntegratorContext &iCtx,
                                   RixShadingContext const &sCtx,
                                   ShadeInfo *shadeInfoPing,
-                                  bool isCollector, 
+                                  bool isCollector,
                                   RtColorRGB *backgroundColor,
                                   RtInt *rayId)
 {
@@ -1987,12 +1991,12 @@ ptWorker::getBackgroundImageColor(RixIntegratorContext &iCtx,
 
     RtPoint3 const *P;
     RtNormal3 const *Ngn;
-    RtFloat const *curvature; 
-    RtFloat const *iradius; 
-    RtFloat const *ispread; 
+    RtFloat const *curvature;
+    RtFloat const *iradius;
+    RtFloat const *ispread;
     RtFloat const *biasR;
     RtFloat const *biasT;
-    
+
     sCtx.GetBuiltinVar(RixShadingContext::k_P, &P);
     sCtx.GetBuiltinVar(RixShadingContext::k_Ngn, &Ngn);
     sCtx.GetBuiltinVar(RixShadingContext::k_curvature, &curvature);
@@ -2000,18 +2004,18 @@ ptWorker::getBackgroundImageColor(RixIntegratorContext &iCtx,
     sCtx.GetBuiltinVar(RixShadingContext::k_incidentRayRadius, &iradius);
     sCtx.GetBuiltinVar(RixShadingContext::k_biasR, &biasR);
     sCtx.GetBuiltinVar(RixShadingContext::k_biasT, &biasT);
-    
+
     // Fetch the attributes for the hit points in this shading context.
-    RtInt autoBias; 
+    RtInt autoBias;
     RtFloat biasVal;
     RtToken reflectSubset, transmitSubset;
     RtToken reflectExcludeSubset, transmitExcludeSubset;
-    getIndirectState(sCtx, autoBias, biasVal, 
+    getIndirectState(sCtx, autoBias, biasVal,
                      reflectSubset, transmitSubset,
-                     reflectExcludeSubset, transmitExcludeSubset); 
-    
+                     reflectExcludeSubset, transmitExcludeSubset);
+
     int numRays = 0;
-    
+
     for (int i = 0; i < npoints; ++i)
     {
         int ctxIdx = sCtx.integratorCtxIndex[i];
@@ -2021,16 +2025,16 @@ ptWorker::getBackgroundImageColor(RixIntegratorContext &iCtx,
             RtRayGeometry &ray = m_rays[numRays];
             RtVector3 dir = (P[i] - iCtx.primaryRays[ctxIdx].origin);
             dir.Normalize();
-            
-            if (autoBias) 
-            { 
+
+            if (autoBias)
+            {
                 // automatically compute good bias value
                 ray.origin = RixApplyTraceBias(P[i], Ngn[i], dir,
                                                biasR[i], biasT[i]);
-            } 
+            }
             else // use explicitly set Attribute trace bias value
                 ray.origin = bias(P[i], Ngn[i], dir, biasVal);
-            
+
             ray.direction = dir;
             ray.maxDist = 1e20f;
             ray.rayId = i;
@@ -2038,44 +2042,44 @@ ptWorker::getBackgroundImageColor(RixIntegratorContext &iCtx,
             ray.lobeSampled = RixBXLobeSampled();
             ray.wavelength = 0;
             // Compute ray spread for the lobe
-            ray.SetRaySpread(RixBXLobeSampled(), 
+            ray.SetRaySpread(RixBXLobeSampled(),
                              iradius[i],
                              ispread[i],
                              curvature[i],
                              0.0f);
             ray.InitOrigination(&sCtx, Ngn, i);
             ray.lpeState = NULL;
-            
+
             numRays++;
         }
     }
-    
+
     if (numRays > 0)
     {
         RixBXLobeTraits lobes = k_RixBXTraitsAllLobe;
         bool isPrimary = true;
         int nsctxs = 0;
-        
-        RixShadingContext const** shadeGrps = 
+
+        RixShadingContext const** shadeGrps =
             new RixShadingContext const*[numRays];
-        iCtx.GetNearestHits(numRays, m_rays, 
+        iCtx.GetNearestHits(numRays, m_rays,
                             lobes,
-                            false/* no misses */, &nsctxs, 
+                            false/* no misses */, &nsctxs,
                             shadeGrps,
                             m_imagePlaneSubset, NULL, false,
                             isPrimary ? k_SidesFront : k_SidesBoth,
                             isPrimary);
-        
+
         for (int j = 0; j < nsctxs; j++)
         {
             RixShadingContext const *sctx = shadeGrps[j];
-            if (!sctx) 
+            if (!sctx)
                 continue;
-            
+
             RixBxdf *bxdf = sctx->GetBxdf();
             if (!bxdf)
                 continue;
-            
+
             bool anyLocalEmission = bxdf->EmitLocal(m_emitLocal);
             if (anyLocalEmission)
             {
@@ -2085,16 +2089,16 @@ ptWorker::getBackgroundImageColor(RixIntegratorContext &iCtx,
                 }
             }
         }
-        
+
         iCtx.ReleaseShadingContexts(nsctxs, shadeGrps);
         delete[] shadeGrps;
     }
 }
 
 void
-ptWorker::directLightContext(RixIntegratorContext &iCtx, 
+ptWorker::directLightContext(RixIntegratorContext &iCtx,
                      int totalDepth, int maxDiffuseDepth, int maxSpecularDepth,
-                     RixLPEToken lpeGrpId, bool isCollector, 
+                     RixLPEToken lpeGrpId, bool isCollector,
                      int lgtSamp, int srfSamp, RtFloat invLgtSamp,
                      RtFloat invSrfSamp, RixShadingContext const &sCtx,
                      bool incidentIsMatte,
@@ -2162,16 +2166,16 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
                 m_displaySvc->FlagAsMatte(src.dspIdx);
         }
 
-    RixLightingServices::Mode lsvcMode = 
+    RixLightingServices::Mode lsvcMode =
         RixLightingServices::k_RespectFixedSampleCount;
-    if (m_reduceDirectSamples != k_depthReduceNone) 
+    if (m_reduceDirectSamples != k_depthReduceNone)
     {
         if (totalDepth != 0)
             lsvcMode = RixLightingServices::k_ReducedFixedSampleCount;
     }
 
     // Pass thruput to lighting; multiply in transmission.
-    for (int i = 0; i < npoints; i++) 
+    for (int i = 0; i < npoints; i++)
     {
         if (rayId[i] < 0) continue;
         RayInfo const &src = shadeInfoPing->rayInfo[rayId[i]];
@@ -2183,7 +2187,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             m_thruputToScatter[i] = src.thruputToScatter
                 * sCtx.transmission[i] * sCtx.pointWeight[i] * sCtx.pointSampleCount[i];
     }
-    
+
     // NB We're only checking for > 0 light samples here, so it's
     // okay to ask lighting services for the total fixed sample
     // count, even if we're in 'reduced' mode, since in that
@@ -2194,7 +2198,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
         // If there are no light or surface samples, then write alpha and exit.
         if (writeAlpha)
         {
-            for (int i = 0; i < npoints; i++) 
+            for (int i = 0; i < npoints; i++)
             {
                 if (rayId[i] < 0) continue;
                 RayInfo const &src = shadeInfoPing->rayInfo[rayId[i]];
@@ -2224,8 +2228,8 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
                 // If compTrans is turned on, it will be responsible to compute opacity
                 // along camera and indirect paths. SplatHelper should not write opacity
                 bool writeOpacity = !m_compTrans || (camVisMatte || camVisHoldout);
-                RixLPE::SplatHelper aovs(m_displaySvc, src.dspIdx, *m_rixLpe, 
-                                         *src.lpeState, 
+                RixLPE::SplatHelper aovs(m_displaySvc, src.dspIdx, *m_rixLpe,
+                                         *src.lpeState,
                                          src.depth,             // depth
                                          -1,                    // lgtGrpId
                                          lpeGrpId,              // lpeGrpId
@@ -2234,7 +2238,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
                                          k_OneRGB,              // lgtTrans
                                          &sCtx,                 // shadingCtx
                                          i,                     // shadingCtxIdx
-                                         writeOpacity);         // writeOpacity           
+                                         writeOpacity);         // writeOpacity
 
                 aovs.SplatValue(k_ZeroRGB, k_ZeroRGB, true);
             }
@@ -2249,7 +2253,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
 
     // Setup m_lobesWanted (onlyDiffuse controls allow/disallow caustics).
 
-    for (int i = 0; i < npoints; ++i) 
+    for (int i = 0; i < npoints; ++i)
     {
         if (rayId[i] < 0)
         {
@@ -2258,8 +2262,8 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
         }
         RayInfo const &src = shadeInfoPing->rayInfo[rayId[i]];
 
-        m_lobesWanted[i] = src.onlyDiffuse 
-            ? (k_RixBXTraitsAllDiffuse | k_RixBXTraitsAllUser) 
+        m_lobesWanted[i] = src.onlyDiffuse
+            ? (k_RixBXTraitsAllDiffuse | k_RixBXTraitsAllUser)
             : k_RixBXTraitsAllLobe;
         if (lobesWanted)
             m_lobesWanted[i] &= lobesWanted[i];
@@ -2275,7 +2279,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             m_lobesWanted[i].SetMaxSpecularDepth(src.speculardepth >= maxSpecularDepth);
         }
     }
-    
+
     // figure out approximately how many indirect samples will be in play
     int indSamp = 1;
     if (totalDepth > 0) {
@@ -2289,10 +2293,10 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             _samps = m_numDiffuseSamples + m_numSpecularSamples +
                         m_numSubsurfaceSamples + m_numRefractionSamples;
         }
-        // Note: The count for indirect rays must always be <= 1 at 
-        // non-camera hits (and passing in k_depthReduceDepth and 
+        // Note: The count for indirect rays must always be <= 1 at
+        // non-camera hits (and passing in k_depthReduceDepth and
         // direct=false will do this).
-        indSamp = computeSampleCount(0, _samps, k_depthReduceDepth, 
+        indSamp = computeSampleCount(0, _samps, k_depthReduceDepth,
                                      1.0f, false);
     }
 
@@ -2307,13 +2311,13 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
     RtInt fixedSampleCount = 0;
     lightingSvc->Begin(&sCtx, &rng, evalDomain,
                        RixLightingServices::k_MaterialAndLightSamples,
-                       lsvcMode, 
-                       RixLightingServices::SampleMode(), // defaults 
+                       lsvcMode,
+                       RixLightingServices::SampleMode(), // defaults
                        &fixedSampleCount,
                        totalDepth,indSamp);
 
 
-    if (lsvcMode != RixLightingServices::k_IgnoreFixedSampleCount && 
+    if (lsvcMode != RixLightingServices::k_IgnoreFixedSampleCount &&
         fixedSampleCount > 0)
     {
         lgtSamp += fixedSampleCount;
@@ -2322,25 +2326,25 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
 
     // XXX: if bxdf.GetAllLobeTraits() & Discrete, k_MaterialSamples
 
-    RixBXLobeWeights genContributions(lgtSamp * npoints, 
-                                      m_numPotentialDiffuseLobes, 
+    RixBXLobeWeights genContributions(lgtSamp * npoints,
+                                      m_numPotentialDiffuseLobes,
                                       m_numPotentialSpecularLobes,
                                       m_numPotentialUserLobes,
-                                      m_ClDiffuse, 
+                                      m_ClDiffuse,
                                       m_ClSpecular,
                                       m_ClUser);
 
 
-    RixBXLobeWeights elw(lgtSamp * npoints, 
-                         m_numPotentialDiffuseLobes, 
+    RixBXLobeWeights elw(lgtSamp * npoints,
+                         m_numPotentialDiffuseLobes,
                          m_numPotentialSpecularLobes,
                          m_numPotentialUserLobes,
-                         m_diffuse, 
+                         m_diffuse,
                          m_specular,
                          m_user);
 
     lightingSvc->GenerateSamples(lgtSamp, &rng, m_lightGroupIds,
-                                 m_lightLpeTokens, 
+                                 m_lightLpeTokens,
                                  m_PtoL, m_dist, &genContributions,
                                  m_lightTrans, m_lPdfIllum,
                                  m_lobesWanted,
@@ -2358,12 +2362,12 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
                                    activeMtlLobes,
                                    activeLgtLobes);
 
-    for (int ls = 0; ls < lgtSamp; ls++) 
+    for (int ls = 0; ls < lgtSamp; ls++)
     {
         int offset = ls * npoints;
 
         // process results
-        for (int i = 0; i < npoints; i++) 
+        for (int i = 0; i < npoints; i++)
         {
             if (rayId[i] < 0) continue;
             if (lobesWanted && !lobesWanted[i].HasAnyDiffSpec())
@@ -2382,11 +2386,11 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             else if (incidentIsMatte && camVisMatte) // matte objects before this matte object
                 eyeTrans = k_OneRGB;
             else if (camVisMatte) // no matte objects before this matte object
-                eyeTrans = src.thruputToScatter 
+                eyeTrans = src.thruputToScatter
                            * sCtx.transmission[i] * sCtx.pointWeight[i] * sCtx.pointSampleCount[i];
             else if (incidentIsMatte) // there is matte objects before this non-matte object
-                eyeTrans = k_OneRGB 
-                           - src.thruputToScatter 
+                eyeTrans = k_OneRGB
+                           - src.thruputToScatter
                              * sCtx.transmission[i] * sCtx.pointWeight[i] * sCtx.pointSampleCount[i];
             else if (camVisHoldout)
                 eyeTrans = sCtx.transmission[i] * sCtx.pointWeight[i] * sCtx.pointSampleCount[i];
@@ -2401,8 +2405,8 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             // If compTrans is turned on, it will be responsible to compute opacity
             // along camera and indirect paths. SplatHelper should not write opacity
             bool writeOpacity = !m_compTrans || (camVisMatte || camVisHoldout);
-            RixLPE::SplatHelper aovs(m_displaySvc, src.dspIdx, *m_rixLpe, 
-                                     *src.lpeState, 
+            RixLPE::SplatHelper aovs(m_displaySvc, src.dspIdx, *m_rixLpe,
+                                     *src.lpeState,
                                      src.depth,               // depth
                                      m_lightLpeTokens[idx],   // lgtGrpId
                                      lpeGrpId,                // lpeGrpId
@@ -2429,7 +2433,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
                     zeroShadows = true;
                 }
             }
-            
+
             RtColorRGB backWgt(m_backgroundColor[i]);
             bool isShadowCollector = ((src.depth == 0 && isCollector) ||
                                       (src.depth >= 1 && src.isCollector));
@@ -2440,7 +2444,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             {
                 // If there are any LPE AOVs, then we may still
                 // have a non-zero user lobe weight, so we want
-                // to still call SplatPerLobe, but we need to 
+                // to still call SplatPerLobe, but we need to
                 // zero out the diffuse/specular/shadowing terms.
                 activeMtlLobes.ZeroAtIndex(idx);
                 shadowWgt.Zero();
@@ -2449,7 +2453,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             {
 
                 // Calculate shadow weight
-                RtFloat invPdf = (m_lPdfIllum[idx] != 0.0f) 
+                RtFloat invPdf = (m_lPdfIllum[idx] != 0.0f)
                                ? (1.0f / m_lPdfIllum[idx]) : 0.0f;
 
                 RtFloat misW = misWeight(lgtSamp, m_lPdfIllum[idx],
@@ -2458,41 +2462,41 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
                 RtColorRGB wgt(sCtx.transmission[i] * sCtx.pointWeight[i] *
                                misW * invLgtSamp * invPdf);
 
-                shadowWgt = RtColorRGB(sCtx.transmission[i].Luminance() * 
-                                       sCtx.pointWeight[i] * 
+                shadowWgt = RtColorRGB(sCtx.transmission[i].Luminance() *
+                                       sCtx.pointWeight[i] *
                                        misW * invLgtSamp);
 
                 // Attenuate the material response by the illumination and weight.
                 for (int j = 0; j < activeMtlLobes.GetNumDiffuseLobes(); j++)
                 {
-                    activeMtlLobes.GetDiffuseLobe(j)[idx] *= 
+                    activeMtlLobes.GetDiffuseLobe(j)[idx] *=
                         activeLgtLobes.GetDiffuseLobe(j)[idx] * wgt;
                 }
                 for (int j = 0; j < activeMtlLobes.GetNumSpecularLobes(); j++)
                 {
-                    activeMtlLobes.GetSpecularLobe(j)[idx] *= 
+                    activeMtlLobes.GetSpecularLobe(j)[idx] *=
                         activeLgtLobes.GetSpecularLobe(j)[idx] * wgt;
                 }
                 // NB: User lobes may contain albedo or objectId values, so avoid
                 //     multiplying in any weighting factors to the user lobes here.
             }
             // Determine the clamping amount.
-            computeClampDirect(src.depth, lgtTrans, 
-                               activeMtlLobes, idx, 
+            computeClampDirect(src.depth, lgtTrans,
+                               activeMtlLobes, idx,
                                src.thruput, invLgtSamp, isFinite, clampAmt);
-                
+
             // Write to the display.
-            aovs.SplatPerLobe(activeMtlLobes, idx, shadowWgt, 
-                              src.weightedThruput, isFinite, clampAmt, 
+            aovs.SplatPerLobe(activeMtlLobes, idx, shadowWgt,
+                              src.weightedThruput, isFinite, clampAmt,
                               backWgt, isShadowCollector, isHoldout);
         }
     } // foreach light samp
 
-    // setup RNG for n bxdf GenerateSample() calls 
-    initRNG(sCtx.numPts, k_rngSamplePattern[k_sampleBxdfGen] + step, doRngSplit, 
+    // setup RNG for n bxdf GenerateSample() calls
+    initRNG(sCtx.numPts, k_rngSamplePattern[k_sampleBxdfGen] + step, doRngSplit,
             srfSamp, shadeInfoPing->rayInfo, rayId);
 
-    RixBXLobeWeights lw(srfSamp * npoints, 
+    RixBXLobeWeights lw(srfSamp * npoints,
                         m_numPotentialDiffuseLobes,
                         m_numPotentialSpecularLobes,
                         m_numPotentialUserLobes,
@@ -2500,48 +2504,48 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
                         m_specular,
                         m_user);
 
-    for (int bs = 0; bs < srfSamp; bs++) 
+    for (int bs = 0; bs < srfSamp; bs++)
     {
         int offset = bs * npoints;
 
-        // Changing the offset of the lobe weights will write into the lobe 
+        // Changing the offset of the lobe weights will write into the lobe
         // weights at the appropriate offset for this set of bxdf samples.
         lw.SetOffset(offset);
 
         bxdf.GenerateSample(k_RixBXDirectLighting,
-                            m_lobesWanted, 
-                            &rng, 
-                            m_lobeSampled  + offset, 
-                            m_On           + offset, 
-                            lw, 
-                            m_FPdf         + offset, 
+                            m_lobesWanted,
+                            &rng,
+                            m_lobeSampled  + offset,
+                            m_On           + offset,
+                            lw,
+                            m_FPdf         + offset,
                             m_RPdf         + offset,
                             NULL); // no opacity eval for direct lighting
 
         for (int i = 0; i < npoints; i++)
             m_dist[offset + i] = 1e20f;
-    
+
         incRNG(sCtx);
     }
 
     // Reset the offset of the lobe weights back to zero for the code below.
     lw.SetOffset(0);
 
-    RixBXLobeWeights evalContributions(srfSamp * npoints, 
-                                       m_numPotentialDiffuseLobes, 
+    RixBXLobeWeights evalContributions(srfSamp * npoints,
+                                       m_numPotentialDiffuseLobes,
                                        m_numPotentialSpecularLobes,
                                        m_numPotentialUserLobes,
-                                       m_ClDiffuse, 
+                                       m_ClDiffuse,
                                        m_ClSpecular,
                                        m_ClUser);
 
 
-    // setup RNG again for the evaluate samples call 
-    initRNG(sCtx.numPts, k_rngSamplePattern[k_sampleBxdfEval] + step, doRngSplit, 
+    // setup RNG again for the evaluate samples call
+    initRNG(sCtx.numPts, k_rngSamplePattern[k_sampleBxdfEval] + step, doRngSplit,
             srfSamp, shadeInfoPing->rayInfo, rayId);
 
     // Note we are evaluating samples for bxdf values that may be invalid.
-    lightingSvc->EvaluateSamples(srfSamp, &rng, m_On, m_dist, 
+    lightingSvc->EvaluateSamples(srfSamp, &rng, m_On, m_dist,
                                  m_FPdf, &lw, m_lobeSampled,
                                  // outputs
                                  m_lightGroupIds, m_lightLpeTokens,
@@ -2553,13 +2557,13 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
 
     lw.GetActiveLobesIntersection(evalContributions,
                                   activeMtlLobes, activeLgtLobes);
-    
-    for (int bs = 0; bs < srfSamp; bs++) 
+
+    for (int bs = 0; bs < srfSamp; bs++)
     {
         int offset = bs * npoints;
 
         // process results
-        for (int i = 0; i < npoints; i++) 
+        for (int i = 0; i < npoints; i++)
         {
             if (rayId[i] < 0) continue;
             if (lobesWanted && !lobesWanted[i].HasAnyDiffSpec())
@@ -2579,11 +2583,11 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             else if (incidentIsMatte && camVisMatte) // matte objects before this also matte object
                 eyeTrans = k_OneRGB;
             else if (camVisMatte) // no matte objects before this
-                eyeTrans = src.thruputToScatter 
+                eyeTrans = src.thruputToScatter
                            * sCtx.transmission[i] * sCtx.pointWeight[i]* sCtx.pointSampleCount[i];
             else if (incidentIsMatte) // there are matte objects before this non-matte object
-                eyeTrans = k_OneRGB 
-                           - src.thruputToScatter 
+                eyeTrans = k_OneRGB
+                           - src.thruputToScatter
                              * sCtx.transmission[i] * sCtx.pointWeight[i] * sCtx.pointSampleCount[i];
             else if (camVisHoldout)
                 eyeTrans = sCtx.transmission[i] * sCtx.pointWeight[i] * sCtx.pointSampleCount[i];
@@ -2599,7 +2603,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             // along camera and indirect paths. SplatHelper should not write opacity
             bool writeOpacity = !m_compTrans || (camVisMatte || camVisHoldout);
             RixLPE::SplatHelper aovs(m_displaySvc, src.dspIdx, *m_rixLpe,
-                                     *src.lpeState, 
+                                     *src.lpeState,
                                      src.depth,               // depth
                                      m_lightLpeTokens[idx],   // lgtGrpId
                                      lpeGrpId,                // lpeGrpId
@@ -2636,7 +2640,7 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             {
                     // If there are any LPE AOVs, then we may still
                     // have a non-zero user lobe weight, so we want
-                    // to still call SplatPerLobe, but we need to 
+                    // to still call SplatPerLobe, but we need to
                     // zero out the diffuse/specular/shadowing terms.
                     activeMtlLobes.ZeroAtIndex(idx);
                     shadowWgt.Zero();
@@ -2644,16 +2648,16 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
             else
             {
                 // Calculate shadow weight
-                RtFloat invPdf = (m_FPdf[idx] != 0.0f) 
+                RtFloat invPdf = (m_FPdf[idx] != 0.0f)
                                ? (1.0f / m_FPdf[idx]) : 0.0f;
 
                 RtFloat misW = 0.0f;
                 if (m_lobeSampled[idx].GetDiscrete())
                     misW = 1.f;
                 else
-                    misW = misWeight(srfSamp, m_FPdf[idx], 
+                    misW = misWeight(srfSamp, m_FPdf[idx],
                                      lgtSamp, m_lPdfIllum[idx]);
-            
+
                 RtColorRGB wgt(sCtx.transmission[i] * sCtx.pointWeight[i] *
                                misW * invSrfSamp * invPdf);
                 shadowWgt = RtColorRGB(wgt.Luminance() * m_lPdfIllum[idx]);
@@ -2661,24 +2665,24 @@ ptWorker::directLightContext(RixIntegratorContext &iCtx,
                 // Attenuate the material response by the illumination and weight.
                 for (int j = 0; j < activeMtlLobes.GetNumDiffuseLobes(); j++)
                 {
-                    activeMtlLobes.GetDiffuseLobe(j)[idx] *= 
+                    activeMtlLobes.GetDiffuseLobe(j)[idx] *=
                         activeLgtLobes.GetDiffuseLobe(j)[idx] * wgt;
                 }
                 for (int j = 0; j < activeMtlLobes.GetNumSpecularLobes(); j++)
                 {
-                    activeMtlLobes.GetSpecularLobe(j)[idx] *= 
+                    activeMtlLobes.GetSpecularLobe(j)[idx] *=
                         activeLgtLobes.GetSpecularLobe(j)[idx] * wgt;
                 }
                 // NB: User lobes may contain albedo or objectId values, so avoid
                 //     multiplying in any weighting factors to the user lobes here.
             }
             // Determine the clamping amount.
-            computeClampDirect(src.depth, lgtTrans, 
-                               activeMtlLobes, idx, 
+            computeClampDirect(src.depth, lgtTrans,
+                               activeMtlLobes, idx,
                                src.thruput, invSrfSamp, isFinite, clampAmt);
 
             // Write to the display.
-            aovs.SplatPerLobe(activeMtlLobes, idx, shadowWgt, 
+            aovs.SplatPerLobe(activeMtlLobes, idx, shadowWgt,
                               src.weightedThruput, isFinite, clampAmt,
                               backWgt, isShadowCollector, isHoldout);
         }
@@ -2692,14 +2696,14 @@ ptWorker::directLighting(RixIntegratorContext &iCtx,
                          ShadeInfo *shadeInfoPong)
 {
 
-    for (int g = 0; g < shadeInfoPing->numSctxs; g++) 
+    for (int g = 0; g < shadeInfoPing->numSctxs; g++)
     {
         RixShadingContext const &sCtx = *shadeInfoPing->sctxs[g];
 
         // This is not very pretty but it gets the job done.
         // If pong has zero shading contexts, it means we are at the very first
         // wave.  Otherwise, we can safely use ping's incidentSctxIsMatte.
-        bool incidentIsMatte = shadeInfoPong->numSctxs > 0 
+        bool incidentIsMatte = shadeInfoPong->numSctxs > 0
                                ? shadeInfoPing->incidentSctxIsMatte[g] : false;
         int totalDepth = shadeInfoPing->depthInfo[g].totalDepth;
 
@@ -2716,7 +2720,7 @@ ptWorker::directLighting(RixIntegratorContext &iCtx,
         if (m_reduceDirectSamples == k_depthReduceThruputMax) {
             // figure out maximal throughput
             maxThruput = 0.0f;
-            for (int i = 0; i < npoints; ++i) 
+            for (int i = 0; i < npoints; ++i)
             {
                 int id = sCtx.rayId[i];
                 RayInfo &src = shadeInfoPing->rayInfo[id];
@@ -2728,7 +2732,7 @@ ptWorker::directLighting(RixIntegratorContext &iCtx,
                    m_reduceDirectSamples == k_depthReduceDepthThruputAvg) {
             // figure out average throughput
             maxThruput = 0.0f;
-            for (int i = 0; i < npoints; ++i) 
+            for (int i = 0; i < npoints; ++i)
             {
                 int id = sCtx.rayId[i];
                 RayInfo &src = shadeInfoPing->rayInfo[id];
@@ -2740,7 +2744,7 @@ ptWorker::directLighting(RixIntegratorContext &iCtx,
         } else if (m_reduceDirectSamples == k_depthReduceThruputGAvg) {
             // figure out geometric average throughput
             maxThruput = 1.0f;
-            for (int i = 0; i < npoints; ++i) 
+            for (int i = 0; i < npoints; ++i)
             {
                 int id = sCtx.rayId[i];
                 RayInfo &src = shadeInfoPing->rayInfo[id];
@@ -2757,7 +2761,7 @@ ptWorker::directLighting(RixIntegratorContext &iCtx,
         // The bxdf sample count however was specified to cope with denoising
         // glossy sample counts, and so for that we need the material samples.
         // When we're fully diffuse, use fewer bxdf samples.
-        int effectiveBxdfSamps = m_numBxdfSamples; 
+        int effectiveBxdfSamps = m_numBxdfSamples;
         RixBXLobeTraits lobes = sCtx.GetBxdf()->GetAllLobeTraits();
         if (!(lobes & k_RixBXTraitsAllSpecular).HasAnyDiffSpec())
             effectiveBxdfSamps = std::max(effectiveBxdfSamps>>1,
@@ -2770,7 +2774,7 @@ ptWorker::directLighting(RixIntegratorContext &iCtx,
         int lgtSamp = computeSampleCount(totalDepth, m_numLightSamples,
                                          m_reduceDirectSamples, maxThruput,
                                          true, hasSss, hasCon);
-        int srfSamp = computeSampleCount(totalDepth, effectiveBxdfSamps, 
+        int srfSamp = computeSampleCount(totalDepth, effectiveBxdfSamps,
                                          m_reduceDirectSamples, maxThruput,
                                          true, hasSss, hasCon);
 
@@ -2779,20 +2783,20 @@ ptWorker::directLighting(RixIntegratorContext &iCtx,
 
         // NB: we assume directLighting precedes indirect (with whom we
         //  share the maxDiffuseDepth and maxSpecularDepth values).
-        getDirectState(sCtx, 
+        getDirectState(sCtx,
                        shadeInfoPing->depthInfo[g].maxDiffuseDepth,
                        shadeInfoPing->depthInfo[g].maxSpecularDepth,
                        shadeInfoPing->depthInfo[g].lpeGrpId,
                        shadeInfoPing->depthInfo[g].isCollector);
 
-        directLightContext(iCtx, totalDepth, 
+        directLightContext(iCtx, totalDepth,
                            shadeInfoPing->depthInfo[g].maxDiffuseDepth,
                            shadeInfoPing->depthInfo[g].maxSpecularDepth,
-                           shadeInfoPing->depthInfo[g].lpeGrpId, 
-                           shadeInfoPing->depthInfo[g].isCollector, 
+                           shadeInfoPing->depthInfo[g].lpeGrpId,
+                           shadeInfoPing->depthInfo[g].isCollector,
                            lgtSamp, srfSamp,
                            invLgtSamp, invSrfSamp, sCtx, incidentIsMatte,
-                           shadeInfoPing, 
+                           shadeInfoPing,
                            shadeInfoPong,
                            NULL, 0, true, hasVol);
     }
@@ -2802,7 +2806,7 @@ void
 ptWorker::emitLocalContext(RixIntegratorContext &iCtx,
                            RixShadingContext const &sCtx,
                            RixLPEToken lpeGrpId,
-                           bool isCollector, 
+                           bool isCollector,
                            ShadeInfo *shadeInfoPing,
                            RixBXLobeTraits const *lobesWanted,
                            bool writeAlpha,
@@ -2814,7 +2818,7 @@ ptWorker::emitLocalContext(RixIntegratorContext &iCtx,
     int npoints = sCtx.numPts;
     bool isFinite;
     RtFloat clampAmt;
-    
+
     // First, ensure we have a valid LPE token and mine one off the shading
     // context if we do not.
     if( lpeGrpId == RixLPE::k_NONE )
@@ -2847,8 +2851,8 @@ ptWorker::emitLocalContext(RixIntegratorContext &iCtx,
         {
             if (rayId[i] < 0) continue;
             if (lobesWanted && !lobesWanted[i].HasAnyDiffSpec())
-                continue;            
-            
+                continue;
+
             RayInfo const &src = shadeInfoPing->rayInfo[rayId[i]];
 
             bool camVisMatte = (src.depth == 0) && (matte > 0);
@@ -2856,7 +2860,7 @@ ptWorker::emitLocalContext(RixIntegratorContext &iCtx,
             RtColorRGB eyeTrans;
 
             // Analytic lights generate continuation rays to implement an
-            // 'accumulative' behavior for camera rays. But we still want 
+            // 'accumulative' behavior for camera rays. But we still want
             // to see them in the alpha, so we need to add '|| sCtx.light'
             // to the continuation traits conditional
             if (!writeAlpha)
@@ -2874,14 +2878,14 @@ ptWorker::emitLocalContext(RixIntegratorContext &iCtx,
             else
                 eyeTrans = k_OneRGB;
 
-            RtColorRGB val = m_emitLocal[i] * sCtx.transmission[i] * 
+            RtColorRGB val = m_emitLocal[i] * sCtx.transmission[i] *
                                               sCtx.pointWeight[i];
 
             // If compTrans is turned on, it will be responsible to compute opacity
             // along camera and indirect paths. SplatHelper should not write opacity
             bool writeOpacity = !m_compTrans || (camVisMatte || camVisHoldout);
             RixLPE::SplatHelper aovs(m_displaySvc, src.dspIdx, *m_rixLpe,
-                                     *src.lpeState, 
+                                     *src.lpeState,
                                      src.depth,               // depth
                                      -1,                      // lgtGrpId
                                      lpeGrpId,                // lpeGrpId
@@ -2891,14 +2895,14 @@ ptWorker::emitLocalContext(RixIntegratorContext &iCtx,
                                      &sCtx,                   // shadingCtx
                                      i,                       // shadingCtxIdx
                                      writeOpacity);
-            
+
             if (camVisMatte)
             {
                 aovs.SplatValue(k_ZeroRGB, k_ZeroRGB, true);
                 continue;
             }
 
-            computeClampEmissive(src.depth, val, src.thruput, 
+            computeClampEmissive(src.depth, val, src.thruput,
                                  isFinite, clampAmt);
 
             bool isShadowCollector = ((src.depth == 0 && isCollector) ||
@@ -2915,7 +2919,7 @@ ptWorker::emitLocal(RixIntegratorContext &iCtx,
                     ShadeInfo *shadeInfoPing)
 {
     // Add in any local emission (via EmitLocal() from the bxdf).
-    for (int g = 0; g < shadeInfoPing->numSctxs; g++) 
+    for (int g = 0; g < shadeInfoPing->numSctxs; g++)
     {
         RixShadingContext const &sCtx = *shadeInfoPing->sctxs[g];
         if(sCtx.HasHits())
@@ -2923,7 +2927,7 @@ ptWorker::emitLocal(RixIntegratorContext &iCtx,
             // The lpeGrpId in shadeInfoPing was set by directLighting()
             RixLPEToken lpeGrpId = shadeInfoPing->depthInfo[g].lpeGrpId;
             bool isCollector = shadeInfoPing->depthInfo[g].isCollector;
-            emitLocalContext(iCtx, sCtx, lpeGrpId, isCollector, 
+            emitLocalContext(iCtx, sCtx, lpeGrpId, isCollector,
                              shadeInfoPing, NULL);
         }
     }
@@ -2933,7 +2937,7 @@ void
 ptWorker::updateThroughputs(RixIntegratorContext &iCtx,
                             ShadeInfo *shadeInfoPing)
 {
-    for (int g = 0; g < shadeInfoPing->numSctxs; g++) 
+    for (int g = 0; g < shadeInfoPing->numSctxs; g++)
     {
         RixShadingContext const &sCtx = *shadeInfoPing->sctxs[g];
         int npoints = sCtx.numPts;
@@ -2946,7 +2950,7 @@ ptWorker::updateThroughputs(RixIntegratorContext &iCtx,
 
         // Accumulate throughput attenuation by participating media
         // in front of the hit into the total throughput
-        for (int i = 0; i < npoints; ++i) 
+        for (int i = 0; i < npoints; ++i)
         {
             int id = sCtx.rayId[i];
             RayInfo &src = shadeInfoPing->rayInfo[id];
@@ -2957,7 +2961,7 @@ ptWorker::updateThroughputs(RixIntegratorContext &iCtx,
 }
 
 void
-ptWorker::createRays(RixIntegratorContext &iCtx, int &rayIdx, bool cameraHits, 
+ptWorker::createRays(RixIntegratorContext &iCtx, int &rayIdx, bool cameraHits,
                      ShadeInfo *shadeInfoPing, ShadeInfo *shadeInfoPong)
 {
     if (cameraHits && m_sampleMode == k_modeManual)
@@ -2965,9 +2969,9 @@ ptWorker::createRays(RixIntegratorContext &iCtx, int &rayIdx, bool cameraHits,
         const int k_numTypes = 4;
         SampleType sampleTypes[] = { k_sampleDiffuse,
                                      k_sampleSpecular,
-                                     k_sampleSubsurface, 
+                                     k_sampleSubsurface,
                                      k_sampleRefraction };
-        
+
         for (int i = 0; i < k_numTypes; i++)
         {
             createRaysHelper(iCtx, sampleTypes[i], rayIdx,
@@ -2982,22 +2986,22 @@ ptWorker::createRays(RixIntegratorContext &iCtx, int &rayIdx, bool cameraHits,
 }
 
 void
-ptWorker::createRaysHelper(RixIntegratorContext &iCtx, 
-                           SampleType sampleType, 
+ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
+                           SampleType sampleType,
                            int &rayIdx,
                            ShadeInfo *shadeInfoPing, ShadeInfo *shadeInfoPong)
 {
-    for (int g = 0; g < shadeInfoPing->numSctxs; g++) 
+    for (int g = 0; g < shadeInfoPing->numSctxs; g++)
     {
         RixShadingContext const &sCtx = *shadeInfoPing->sctxs[g];
         if(!sCtx.HasHits())
             continue;
 
-        // NB: we assume that getDirectState has been called prior to 
+        // NB: we assume that getDirectState has been called prior to
         //     this point.
         int totalDepth = shadeInfoPing->depthInfo[g].totalDepth;
-        int maxDiffDepth = shadeInfoPing->depthInfo[g].maxDiffuseDepth; 
-        int maxSpecDepth = shadeInfoPing->depthInfo[g].maxSpecularDepth; 
+        int maxDiffDepth = shadeInfoPing->depthInfo[g].maxDiffuseDepth;
+        int maxSpecDepth = shadeInfoPing->depthInfo[g].maxSpecularDepth;
         RixLPEToken lpeGrpId = shadeInfoPing->depthInfo[g].lpeGrpId;
         bool isCollector = shadeInfoPing->depthInfo[g].isCollector;
         RixBxdf &bxdf = *(sCtx.GetBxdf());
@@ -3022,8 +3026,8 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
         {
             switch (sampleType)
             {
-                case k_sampleDiffuse: 
-                    samps = m_numDiffuseSamples; 
+                case k_sampleDiffuse:
+                    samps = m_numDiffuseSamples;
                     break;
                 case k_sampleSpecular:
                     samps = m_numSpecularSamples;
@@ -3040,7 +3044,7 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
             }
         }
 
-        indSamp = computeSampleCount(totalDepth, samps, k_depthReduceDepth, 
+        indSamp = computeSampleCount(totalDepth, samps, k_depthReduceDepth,
                                      1.0f, false,
                                      sCtx.HasSubsurface(),
                                      bxdf.GetAllLobeTraits().GetContinuation());
@@ -3049,15 +3053,15 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
             continue;
 
         RtFloat invIndSamp = (indSamp != 0) ? (1.0f / indSamp) : 1.0f;
-        
+
         // Fetch the attributes for the hit points in this shading context.
-        RtInt autoBias; 
+        RtInt autoBias;
         RtFloat biasVal;
         RtToken reflectSubset, transmitSubset;
         RtToken reflectExcludeSubset, transmitExcludeSubset;
-        getIndirectState(sCtx, autoBias, biasVal, 
+        getIndirectState(sCtx, autoBias, biasVal,
                          reflectSubset, transmitSubset,
-                         reflectExcludeSubset, transmitExcludeSubset); 
+                         reflectExcludeSubset, transmitExcludeSubset);
 
         shadeInfoPong->depthInfo[g].reflectSubset = reflectSubset;
         shadeInfoPong->depthInfo[g].transmitSubset = transmitSubset;
@@ -3079,20 +3083,20 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                 // Note: It would be possible to add more user attributes,
                 // user options, and/or integrator parameters that would
                 // independently control the lobes we request here for
-                // max transmission (diffuse/glossy/specular) depth vs. 
-                // max reflection   (diffuse/glossy/specular) depth; that 
-                // is, one could have, for example, six knobs to control 
+                // max transmission (diffuse/glossy/specular) depth vs.
+                // max reflection   (diffuse/glossy/specular) depth; that
+                // is, one could have, for example, six knobs to control
                 // the max ray depth for each of the six canonical lobes in
-                // the RixBXLobeTrait enum. 
-                // However, we currently choose in this integrator to 
-                // support just the existing trace:maxdiffusedepth and 
-                // trace:maxspeculardepth attributes in order to keep 
+                // the RixBXLobeTrait enum.
+                // However, we currently choose in this integrator to
+                // support just the existing trace:maxdiffusedepth and
+                // trace:maxspeculardepth attributes in order to keep
                 // the number of knobs that are exposed to the user to a
                 // minimum (that said, being able to control transmission
                 // depth independently of glossy/specular reflection depth
                 // can be useful in some cases; e.g., one could add support
-                // for a "user:maxtransmissiondepth" attribute). With the 
-                // code here, the max glossy/specular 
+                // for a "user:maxtransmissiondepth" attribute). With the
+                // code here, the max glossy/specular
                 // reflection/transmission ray depths are all controlled by
                 // the one trace:maxspeculardepth attribute.
                 if (m_traceDepthMode == k_traceDepthModeCombined)
@@ -3134,15 +3138,15 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
         }
 
         // If no lobes were requested for any of the hit points in this
-        // shading context, then the bxdf.GenerateSample() call below will 
+        // shading context, then the bxdf.GenerateSample() call below will
         // return no valid samples, and so we might as well immediately skip
         // to the hit points in the next shading context.
         if (!anyValid)
             continue;
 
-        // setup RNG for n bxdf GenerateSample calls 
+        // setup RNG for n bxdf GenerateSample calls
         bool doRngSplit = (totalDepth == 0);
-        initRNG(sCtx.numPts, k_rngSamplePattern[sampleType], doRngSplit, 
+        initRNG(sCtx.numPts, k_rngSamplePattern[sampleType], doRngSplit,
                 indSamp, shadeInfoPing->rayInfo, sCtx.rayId);
         RixRNG rng(iCtx.rngCtx, m_rngSamps, npoints);
 
@@ -3150,8 +3154,8 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
         initChooseRNG(sCtx.numPts, doRngSplit, indSamp, shadeInfoPing->rayInfo,
                       sCtx.rayId);
         RixRNG chooseRNG(iCtx.rngCtx, m_chooseSamps, npoints);
-        
-        RixBXLobeWeights lw(indSamp * npoints, 
+
+        RixBXLobeWeights lw(indSamp * npoints,
                             m_numPotentialDiffuseLobes,
                             m_numPotentialSpecularLobes,
                             m_numPotentialUserLobes,
@@ -3162,21 +3166,21 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
         if (m_compTrans) memset(m_compTrans, 0, sizeof(RtColorRGB) * indSamp * npoints);
 
         // Generate the indirect ray directions based on the bxdf.
-        for (int bs = 0; bs < indSamp; bs++) 
+        for (int bs = 0; bs < indSamp; bs++)
         {
             int offset = bs * npoints;
 
-            // Changing the offset of the lobe weights will write into the lobe 
+            // Changing the offset of the lobe weights will write into the lobe
             // weights at the appropriate offset for this set of bxdf samples.
             lw.SetOffset(offset);
 
             bxdf.GenerateSample(k_RixBXIndirectLighting,
-                m_lobesWanted, 
-                &rng, 
-                m_lobeSampled  + offset, 
-                m_On           + offset, 
-                lw, 
-                m_FPdf         + offset, 
+                m_lobesWanted,
+                &rng,
+                m_lobeSampled  + offset,
+                m_On           + offset,
+                lw,
+                m_FPdf         + offset,
                 m_RPdf         + offset,
                 m_compTrans ? m_compTrans + offset : NULL);
 
@@ -3189,7 +3193,7 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
 
             for (int i = 0; i < npoints; i++)
                 m_dist[offset + i] = 1e20;
-            
+
             incRNG(sCtx);
             incChooseRNG(sCtx);
         }
@@ -3201,15 +3205,15 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
         lw.GetActiveLobes(activeLobes);
 
         // setup RNG for n Russian Roulette events.
-        initRNG(sCtx.numPts, k_rngRoulettePattern[sampleType], doRngSplit, 
+        initRNG(sCtx.numPts, k_rngRoulettePattern[sampleType], doRngSplit,
                 indSamp, shadeInfoPing->rayInfo, sCtx.rayId);
-        
+
         RtPoint3 const *P;
         RtNormal3 const *Nn;
         RtNormal3 const *Ngn;
-        RtFloat const *curvature; 
-        RtFloat const *iradius; 
-        RtFloat const *ispread; 
+        RtFloat const *curvature;
+        RtFloat const *iradius;
+        RtFloat const *ispread;
         RtFloat const *biasR;
         RtFloat const *biasT;
         RtFloat const *wavelength;
@@ -3226,16 +3230,16 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
         // For continuation rays, we only allow one indirect sample. So use indSamp.
         // For any other case, we use m_numIndirectSamples at the first hits, and that
         // is what we should use here.
-        float invNumIndirectGl = bxdf.GetAllLobeTraits().GetContinuation() ? 
+        float invNumIndirectGl = bxdf.GetAllLobeTraits().GetContinuation() ?
                                  1.0f / indSamp :
                                  1.0f / m_numIndirectSamples;
-        
+
         bool hasVol = sCtx.HasVolume(k_RixSCAnyVolume);
 
-        for (int bs = 0; bs < indSamp; bs++) 
+        for (int bs = 0; bs < indSamp; bs++)
         {
             // process results
-            for (int i = 0; i < npoints; i++) 
+            for (int i = 0; i < npoints; i++)
             {
                 int idx = bs * npoints + i;
                 int id = sCtx.rayId[i];
@@ -3243,10 +3247,10 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
 
                 // Don't trace indirect rays off of camera rays that hit
                 // matte objects (although continuation rays are okay).
-                // Note: we do want to trace indirect rays off of spawned 
-                // indirect rays that hit matte objects in order to obtain 
+                // Note: we do want to trace indirect rays off of spawned
+                // indirect rays that hit matte objects in order to obtain
                 // the same GI on camera visible non-matte objects.
-                if ((matte > 0) && !m_lobeSampled[idx].GetContinuation() && 
+                if ((matte > 0) && !m_lobeSampled[idx].GetContinuation() &&
                     src.depth == 0)
                 {
                     continue;
@@ -3265,31 +3269,31 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                 // need to correct the transmission, which will be 0
                 // for a reflection ray, or the bxdf's desired transmission
                 // divided by the probability of choosing the refract
-                // direction. This is accumulated with the ray's 
+                // direction. This is accumulated with the ray's
                 // previously recorded thruputToScatter and the transmission
                 // between the previous vertex and this one at the bxdf's surface
                 if (m_compTrans && !src.primaryIsHoldout && !matte)
                 {
                     RtColorRGB eyeTrans = src.thruputToScatter *
                                           sCtx.transmission[i] *
-                                          sCtx.pointWeight[i] * 
+                                          sCtx.pointWeight[i] *
                                           sCtx.pointSampleCount[i] *
                                           m_compTrans[idx];
 
                     RtColorRGB opacity = k_OneRGB - eyeTrans;
-                    
+
                     // Since alpha is accumulated along the path, at every new bounce we replace
                     // the old alpha value with the new one. This works out to be to splat the difference
                     // between new and old alpha
                     // at ray true depth 0, there is no 'old alpha' because it is the first time
                     // we do compTrans.
-                    RtColorRGB opacityOld = src.truedepth == 0 
+                    RtColorRGB opacityOld = src.truedepth == 0
                                             ? k_ZeroRGB : (k_OneRGB - src.thruputToScatter);
 
                     RtColorRGB opacityDiff = (opacity - opacityOld) * invNumIndirectGl;
 
                     // NB SplatOpacity ignores the channel id
-                    m_displaySvc->SplatOpacity(0, src.dspIdx, opacityDiff); 
+                    m_displaySvc->SplatOpacity(0, src.dspIdx, opacityDiff);
                 }
 
                 if (badSamp(m_lobeSampled[idx], m_FPdf[idx], 0.0f, false))
@@ -3310,26 +3314,26 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                 RtColorRGB newThruput;
                 RtColorRGB newThruputToScatter;
                 RtFloat    invPdf = 1.0f / m_FPdf[idx]; // non-zero if here
-                RtColorRGB wgt = invPdf * invIndSamp * 
+                RtColorRGB wgt = invPdf * invIndSamp *
                                      sCtx.transmission[i] * sCtx.pointWeight[i];
 
                 RtColorRGB mtlResponse = activeLobes.SumAtIndex(idx);
                 RtColorRGB thruputSrf = mtlResponse * invPdf;
 
                 // New total throughput terms
-                newWeightedThruput = (src.weightedThruput * thruputSrf * 
+                newWeightedThruput = (src.weightedThruput * thruputSrf *
                                       invIndSamp);
                 newThruput = src.thruput * thruputSrf;
                 newThruputToScatter = src.thruputToScatter *
                     sCtx.transmission[i] * sCtx.pointWeight[i] * sCtx.pointSampleCount[i];
                 if (m_compTrans) newThruputToScatter *= m_compTrans[idx];
-                
+
                 bool doSkip = false;
 
                 if (newWeightedThruput == k_ZeroRGB)
                     doSkip = true;
 
-                // Perform Russian Roulette (adjust weightedThruput to 
+                // Perform Russian Roulette (adjust weightedThruput to
                 // compensate).
                 if (!doSkip &&
                     m_rouletteDepth >= 0 &&
@@ -3339,31 +3343,31 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                     totalDepth < m_maxPathLength &&
                     (!m_compTrans || src.thruputToScatter.ChannelAvg() <= 0.0f))
                 {
-                    // We apply Russian Roulette fairly conservatively in 
-                    // order to avoid situations where the acceptance 
-                    // probability is so low that significant paths are 
-                    // effectively never accepted. We ensure that the 
-                    // cumulative acceptance probability (across all 
-                    // termination events) never goes below a reasonable 
-                    // minimum to avoid spiking the variance (yielding 
+                    // We apply Russian Roulette fairly conservatively in
+                    // order to avoid situations where the acceptance
+                    // probability is so low that significant paths are
+                    // effectively never accepted. We ensure that the
+                    // cumulative acceptance probability (across all
+                    // termination events) never goes below a reasonable
+                    // minimum to avoid spiking the variance (yielding
                     // fireflies / etc.).
                     float lum = newWeightedThruput.Luminance();
                     if (lum < m_rouletteThreshold)
                     {
                         // Don't stratify Russian Roulette random numbers.
-                        if (hashToRandom(m_rngSamps[i].sampleid, 
-                                         m_rngSamps[i].patternid) > 
+                        if (hashToRandom(m_rngSamps[i].sampleid,
+                                         m_rngSamps[i].patternid) >
                             m_rouletteProb)
                         {
                             doSkip = true;
                         }
-                        
+
                         newWeightedThruput *= m_rouletteProbInv;
                         newThruput *= m_rouletteProbInv;
                         wgt *= m_rouletteProbInv;
                     }
                 }
-                
+
                 if (!doSkip)
                 {
                     RtRayGeometry &ray = m_rays[rayIdx];
@@ -3371,12 +3375,12 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                     dir.Normalize();
                     RixBXLobeSampled lobeSampled = m_lobeSampled[idx];
 
-                    if (autoBias) 
-                    { 
+                    if (autoBias)
+                    {
                         // automatically compute good bias value
                         ray.origin = RixApplyTraceBias(P[i], Ngn[i], dir,
                                                        biasR[i], biasT[i]);
-                    } 
+                    }
                     else // use explicitly set Attribute trace bias value
                         ray.origin = bias(P[i], Ngn[i], dir, biasVal);
 
@@ -3392,13 +3396,13 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                                      ispread[i],
                                      curvature[i],
                                      m_FPdf[idx]);
-                    // 
+                    //
                     ray.InitOrigination(&sCtx, Ngn, i);
 
                     // Store the updated throughput, ray depth, the current
                     // shading context and the "parent" random number context
-                    // in the ping/pong buffer so that we can access this 
-                    // information in traceRays() below and at the next batch 
+                    // in the ping/pong buffer so that we can access this
+                    // information in traceRays() below and at the next batch
                     // of ray hits.
                     RayInfo &dst        = shadeInfoPong->rayInfo[rayIdx];
                     dst.weightedThruput = newWeightedThruput;
@@ -3413,8 +3417,8 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                     if (isScatteringEvent && !lobeSampled.GetUser())
                     {
                         // (Do not count subsurface as a diffuse bounce)
-                        dst.diffusedepth    = 
-                            (lobeSampled.GetDiffuse() && 
+                        dst.diffusedepth    =
+                            (lobeSampled.GetDiffuse() &&
                              !lobeSampled.LobeIdIsSubsurface())
                             ? (src.diffusedepth + 1) : src.diffusedepth;
 
@@ -3441,25 +3445,25 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                     }
                     else
                     {
-                        dst.onlyDiffuse = m_allowCaustics ? false : 
-                            (src.onlyDiffuse || 
+                        dst.onlyDiffuse = m_allowCaustics ? false :
+                            (src.onlyDiffuse ||
                              lobeSampled.GetDiffuse());
                     }
 
                     if (lobeSampled.GetTransmit() || !isScatteringEvent)
-                    {                       
+                    {
                         dst.thruputToScatter = newThruputToScatter;
                     }
                     else
-                    {                        
-                        dst.thruputToScatter = k_ZeroRGB;                        
+                    {
+                        dst.thruputToScatter = k_ZeroRGB;
                     }
 
                     // At camera hits, the sampleType and lobeTraits are set
                     // to that at the camera hit; at secondary hits, use the
                     // sampleType/lobeTraits of the originating camera hit.
-                    dst.sampleType = findSampleType(src.sampleType, 
-                                                    lobeSampled, 
+                    dst.sampleType = findSampleType(src.sampleType,
+                                                    lobeSampled,
                                                     src.depth);
 
                     if (src.depth == 0)
@@ -3474,19 +3478,19 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                     // Update the lpeState for the LPE AOVs.
                     if (m_rixLpe->AnyLPEs())
                     {
-                        // Note: As controlled by computeSampleCount(), we 
+                        // Note: As controlled by computeSampleCount(), we
                         // will have a splitting/branching factor greater than
                         // one at most once along any given individual ray path.
                         // At the moment, we split/branch at the first scattering
-                        // event after the initial camera hit. We can tell when 
-                        // there is a split because the number of indirect samples 
+                        // event after the initial camera hit. We can tell when
+                        // there is a split because the number of indirect samples
                         // (e.g., 'indSamp') will be greater than 1. When we split,
-                        // we switch to using the LPE states in the 
-                        // m_postSplitLpeState array (since we want a different 
+                        // we switch to using the LPE states in the
+                        // m_postSplitLpeState array (since we want a different
                         // LPE state per split ray path).
 
                         bool doSplit = (indSamp > 1);
-                        if (doSplit) 
+                        if (doSplit)
                         {
                             dst.lpeState = &m_postSplitLpeState[rayIdx];
                             if (hasVol)
@@ -3498,11 +3502,11 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                                 *dst.lpeState = *src.lpeState;
                             }
                             else
-                            {       
-                                // If this is a hard surface we can just update the pointer and 
-                                // redo camera state transition (since we always 
-                                // split at the first scattering event after the 
-                                // initial camera hit if we ever split).                         
+                            {
+                                // If this is a hard surface we can just update the pointer and
+                                // redo camera state transition (since we always
+                                // split at the first scattering event after the
+                                // initial camera hit if we ever split).
                                 dst.lpeState->MoveCamera(&sCtx, i);
                             }
                         }
@@ -3518,7 +3522,7 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                         // Update the LPE states
                         RixLPEScatterEvent scatterEvent(lobeSampled);
                         dst.lpeState->MoveVertex
-                            (&sCtx, i, scatterEvent, 
+                            (&sCtx, i, scatterEvent,
                              activeLobes.SumAtIndex(idx) * sCtx.pointSampleCount[i],
                              lpeGrpId, isScatteringEvent);
                     }
@@ -3526,31 +3530,31 @@ ptWorker::createRaysHelper(RixIntegratorContext &iCtx,
                     {
                         ray.lpeState = NULL;
                     }
-                    
+
                     rayIdx++;
                 }
-            } 
-            
+            }
+
             incRNG(sCtx);
         } // foreach indSamp
     }
 }
 
-// This function takes a number of rays and generates a number of 
+// This function takes a number of rays and generates a number of
 // shading contexts from the rays subject to:
 // (1) Each shading context has at most 'batchSize' number of rays in them.
 // (2) We expect all rays to have the same volume behavior, so either
-// all of them are volume rays or none is. 
-// If these is no volumetric behavior in these rays, no split is needed because 
+// all of them are volume rays or none is.
+// If these is no volumetric behavior in these rays, no split is needed because
 // ptWorker::GetNearestHits (SpIntegratorCtx::GetNearestHits) will be called
-// which guarantees that all the shading contexts created are properly sized. 
+// which guarantees that all the shading contexts created are properly sized.
 // Otherwise we will split rays into batches before calling volumeIntegrator's
 // GetNearestHits because volume integrator has no knowledge of maxShadingSize.
-// In the volume case, this func will make sure all the points 
-// within the shading batch have unique shadingCtxIndex. 
+// In the volume case, this func will make sure all the points
+// within the shading batch have unique shadingCtxIndex.
 void
-ptWorker::splitRaysIntoShadingCtxs(RixIntegratorContext &iCtx, 
-                                   int nRays, 
+ptWorker::splitRaysIntoShadingCtxs(RixIntegratorContext &iCtx,
+                                   int nRays,
                                    RtRayGeometry *rays,
                                    RixBXLobeTraits const &lobesWanted,
                                    RixRNG::SampleCtx *perRayRngCtx,
@@ -3584,7 +3588,7 @@ ptWorker::splitRaysIntoShadingCtxs(RixIntegratorContext &iCtx,
         {
             if (isUsed[rays[s].shadingCtxIndex])
             {
-                // this means we are at a new sample 
+                // this means we are at a new sample
                 // and need to break up from previous batch
                 break;
             }
@@ -3641,7 +3645,7 @@ ptWorker::splitRaysIntoShadingCtxs(RixIntegratorContext &iCtx,
 }
 
 void
-ptWorker::traceRays(RixIntegratorContext &iCtx, 
+ptWorker::traceRays(RixIntegratorContext &iCtx,
                     int nRays, RtRayGeometry *rays,
                     ShadeInfo *shadeInfoPing,
                     ShadeInfo *shadeInfoPong)
@@ -3657,7 +3661,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
     {
         int nRaysBatch = nRays;
         if (nRaysBatch > k_maxRaysPerBatch)
-            nRaysBatch = k_maxRaysPerBatch; 
+            nRaysBatch = k_maxRaysPerBatch;
 
         int nSctxsBatch = 0; // counts the number of additional sctxs produced
 
@@ -3674,7 +3678,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
         bool hasSss = firstSctx->HasSubsurface();
         bool hasVol = firstSctx->HasVolume(k_RixSCAnyVolume);
         bool incidentIsMatte = RixIsMatte((*firstSctx)) > 0;
-       if (hasSss || hasVol) 
+       if (hasSss || hasVol)
             m_perRayRngCtx[0] = shadeInfoPong->rayInfo[curPos].rngSamp;
 
         for (int i = curPos+1; i < curPos+nRaysBatch; i++)
@@ -3685,10 +3689,10 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
             RtToken subsetT = shadeInfoPong->depthInfo[sctxIdx].transmitSubset;
             RtToken excludeSubsetR = shadeInfoPong->depthInfo[sctxIdx].reflectExcludeSubset;
             RtToken excludeSubsetT = shadeInfoPong->depthInfo[sctxIdx].transmitExcludeSubset;
-        
+
             if (shadeInfoPong->rayInfo[i].depth != firstDepth ||
-                (firstSubsetR != subsetR || firstSubsetT != subsetT) || 
-                (firstExcludeSubsetR != excludeSubsetR || firstExcludeSubsetT != excludeSubsetT) || 
+                (firstSubsetR != subsetR || firstSubsetT != subsetT) ||
+                (firstExcludeSubsetR != excludeSubsetR || firstExcludeSubsetT != excludeSubsetT) ||
                 (hasVol && sCtx != firstSctx) ||
                 (!hasVol && sCtx->HasVolume(k_RixSCAnyVolume)) ||
                 (hasSss && sCtx != firstSctx) ||
@@ -3697,7 +3701,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
                 nRaysBatch = i - curPos;
                 break;
             }
-            else 
+            else
             if (hasSss || hasVol)
             {
                 // We want to provide the per-ray "parent" random
@@ -3715,7 +3719,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
         assert(shadeInfoPong->rayInfo[curPos].depth ==
                shadeInfoPong->rayInfo[curPos+nRaysBatch-1].depth);
 
-        if (!hasSss && !hasVol) 
+        if (!hasSss && !hasVol)
         {
             RixBXLobeTraits lobes = k_RixBXTraitsAllLobe;
             if( !m_allowCaustics )
@@ -3767,13 +3771,13 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
                         idst = nRaysAllR++;
                     m_raysAll[idst] = rays[i];
                 }
-                
+
                 RixShadingContext const **sctxsTmp = sctxs;
-                
+
                 if (nRaysAllR > 0)
                 {
                     int nvsctx = 0;
-                    getNearestHits(iCtx, nRaysAllR, m_raysAll, 
+                    getNearestHits(iCtx, nRaysAllR, m_raysAll,
                                    lobes,
                                    &nvsctx, sctxsTmp,
                                    reflectSubset, reflectExcludeSubset,
@@ -3781,34 +3785,34 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
                     nSctxsBatch += nvsctx;
                     sctxsTmp += nvsctx;
                 }
-                
+
                 if (nRaysAllT > 0)
                 {
                     // Transmission: call sss interior integrator if there is one
                     int nvsctx = 0;
                     int tindex = k_maxRaysPerBatch - nRaysAllT;
                     RtRayGeometry *_rays = m_raysAll + tindex;
-                    
+
                     getNearestHits(iCtx, nRaysAllT, _rays,
                                    lobes,
                                    &nvsctx, sctxsTmp,
                                    transmitSubset, transmitExcludeSubset,
                                    isPrimary);
-                    
+
                     nSctxsBatch += nvsctx;
                     sctxsTmp += nvsctx;
                 }
             }
-        } 
+        }
         else if (hasSss && !hasVol)
         {
             // Let the subsurf interior integrator generate the ray hit sctxs.
             // Results are written into sctxs transmission and are multiplied
             // onto the thruput in directLighting().
             // Here we split the rays up into two batches: those that should
-            // be onlyDiffuse, and the rest. These are further divided into 
+            // be onlyDiffuse, and the rest. These are further divided into
             // two groups (reflect and transmit) -- similar to the volume case.
-            // Transmission rays are passed to the subsurface interior 
+            // Transmission rays are passed to the subsurface interior
             // integrator, reflection rays are not.
 
             int nRaysDiffR = 0, nRaysDiffT = 0;
@@ -3899,7 +3903,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
             {
                 // Reflection rays
                 int nvsctx = 0;
-                getNearestHits(iCtx, nRaysAllR, m_raysAll, 
+                getNearestHits(iCtx, nRaysAllR, m_raysAll,
                                k_RixBXTraitsAllLobe,
                                &nvsctx, sctxsTmp,
                                reflectSubset, reflectExcludeSubset,
@@ -3912,7 +3916,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
             {
                 // Diffuse reflection rays
                 int nvsctx = 0;
-                getNearestHits(iCtx, nRaysDiffR, m_raysDiff, 
+                getNearestHits(iCtx, nRaysDiffR, m_raysDiff,
                                k_RixBXTraitsAllLobe,
                                &nvsctx, sctxsTmp,
                                reflectSubset, reflectExcludeSubset,
@@ -4023,7 +4027,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
                     m_perRayRngCtxAll[idst] = m_perRayRngCtx[i - curPos];
                 }
             }
-            
+
             // Save delegate state needed for any interior direct
             // lighting requests
             m_delegateState.iCtx = &iCtx;
@@ -4040,7 +4044,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
             m_delegateState.invSrfSamp = 1.0f;
             m_delegateState.shadeInfoPing = shadeInfoPong;
             m_delegateState.shadeInfoPong = shadeInfoPing;
-        
+
             int g = shadeInfoPong->rayInfo[curPos].sctxIdx;
             m_delegateState.maxDiffuseDepth = shadeInfoPing->depthInfo[g].maxDiffuseDepth;
             m_delegateState.maxSpecularDepth = shadeInfoPing->depthInfo[g].maxSpecularDepth;
@@ -4067,12 +4071,12 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
                     nSctxsBatch,
                     sctxsTmp);
             }
-                         
+
             if (nRaysDiffR > 0)
             {
                 // The 'onlyDiffuse' reflect rays (e.g., no caustics).
                 splitRaysIntoShadingCtxs(iCtx,
-                    nRaysDiffR, 
+                    nRaysDiffR,
                     m_raysDiff,
                     (k_RixBXTraitsAllDiffuse | k_RixBXTraitsAllUser),
                     m_perRayRngCtxDiff,
@@ -4093,7 +4097,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
 
                 splitRaysIntoShadingCtxs(iCtx,
                     nRaysAllT,
-                    _rays, 
+                    _rays,
                     k_RixBXTraitsAllLobe,
                     m_perRayRngCtxAll + tindex,
                     m_delegateRayIds,
@@ -4101,7 +4105,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
                     transmitSubset,
                     transmitExcludeSubset,
                     isPrimary,
-                    false, // opposite 
+                    false, // opposite
                     nSctxsBatch,
                     sctxsTmp);
             }
@@ -4197,7 +4201,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
             m_delegateState.invSrfSamp = 1.0f;
             m_delegateState.shadeInfoPing = shadeInfoPong;
             m_delegateState.shadeInfoPong = shadeInfoPing;
-        
+
             int g = shadeInfoPong->rayInfo[curPos].sctxIdx;
             m_delegateState.maxDiffuseDepth = shadeInfoPing->depthInfo[g].maxDiffuseDepth;
             m_delegateState.maxSpecularDepth = shadeInfoPing->depthInfo[g].maxSpecularDepth;
@@ -4229,15 +4233,15 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
             {
                 // The sss reflection rays (is there such a thing?)
                 int nvsctx = 0;
-                RixVolumeIntegrator *sss = 
+                RixVolumeIntegrator *sss =
                     firstSctx->BeginSubsurface(nRaysSssR, raysSss);
                 if(sss)
                 {
                     RixRNG sssRNG(iCtx.rngCtx, perRayRngCtxSss, nRaysSssR);
                     setDelegateRayIds(nRaysSssR, raysSss, m_delegateRayIds);
-                    m_useDelegateRayIds = true;           
+                    m_useDelegateRayIds = true;
                     sss->GetNearestHits(nRaysSssR, raysSss, &sssRNG,
-                                        k_RixBXTraitsAllLobe, iCtx, 
+                                        k_RixBXTraitsAllLobe, iCtx,
                                         iCtx.GetLightingServices(),
                                         this,
                                         &nvsctx, sctxsTmp,
@@ -4251,7 +4255,7 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
                 {
                     // no incident shader, AllLobe is fine since
                     // there's no additional hidden bounces within
-                    getNearestHits(iCtx, nRaysSssR, raysSss, 
+                    getNearestHits(iCtx, nRaysSssR, raysSss,
                                    k_RixBXTraitsAllLobe,
                                    &nvsctx, sctxsTmp,
                                    reflectSubset, reflectExcludeSubset,
@@ -4286,11 +4290,11 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
                 int nvsctx = 0;
                 int tindex = k_maxRaysPerBatch - nRaysSssT;
                 RtRayGeometry *_rays = raysSss + tindex;
-                RixVolumeIntegrator *sss = 
+                RixVolumeIntegrator *sss =
                     firstSctx->BeginSubsurface(nRaysSssT, _rays);
                 if(sss)
                 {
-                    RixRNG sssRNG(iCtx.rngCtx, perRayRngCtxSss + tindex, 
+                    RixRNG sssRNG(iCtx.rngCtx, perRayRngCtxSss + tindex,
                                   nRaysSssT);
                     setDelegateRayIds(nRaysSssT, _rays, m_delegateRayIds);
                     m_useDelegateRayIds = true;
@@ -4342,8 +4346,8 @@ ptWorker::traceRays(RixIntegratorContext &iCtx,
     }
 }
 
-int 
-ptWorker::computeSampleCount(int depth, int numSamp, 
+int
+ptWorker::computeSampleCount(int depth, int numSamp,
                              DepthReduceMode depthReduce,
                              float maxThruput, bool direct,
                              bool subsurface, bool continuation)
@@ -4352,26 +4356,26 @@ ptWorker::computeSampleCount(int depth, int numSamp,
 
     // Try to reduce the number of samples.
     // We choose to potentially use multiple samples only at camera hits.
-    // (To avoid an exponential blow-up on ray counts at increasing ray 
+    // (To avoid an exponential blow-up on ray counts at increasing ray
     // depths.)
 
     if (numSamp <= 1)
         return numSamp; // no reduction possible: early out
 
-    if (depthReduce == k_depthReduceNone) 
+    if (depthReduce == k_depthReduceNone)
         return numSamp;
 
     if (depth == 1 && maxThruput >= 1.0f && direct && subsurface && !continuation)
         return numSamp; // don't reduce for subsurf scattering
 
-    if (depthReduce == k_depthReduceDepth || 
-        depthReduce == k_depthReduceDepthThruputAvg) 
+    if (depthReduce == k_depthReduceDepth ||
+        depthReduce == k_depthReduceDepthThruputAvg)
     {
         bool canUseManySamples = (depth == 0 && !continuation);
         bool canUseSmallerManySamples = (depth == 1 && direct && !continuation);
 
-        int newSamp = canUseManySamples ? numSamp : 
-                        (canUseSmallerManySamples ? (int)sqrtf(numSamp) : 
+        int newSamp = canUseManySamples ? numSamp :
+                        (canUseSmallerManySamples ? (int)sqrtf(numSamp) :
                                             std::min(numSamp, 1));
 
         if (direct && depth >= 1)
@@ -4379,9 +4383,9 @@ ptWorker::computeSampleCount(int depth, int numSamp,
 
         if (depthReduce == k_depthReduceDepthThruputAvg)
         {
-            int thruSamp = std::max(numSamp ? 1 : 0, 
+            int thruSamp = std::max(numSamp ? 1 : 0,
                                   (int)(numSamp * maxThruput + 0.5f));
-            
+
             return std::min(newSamp, thruSamp);
         }
         else
@@ -4396,12 +4400,12 @@ ptWorker::computeSampleCount(int depth, int numSamp,
 }
 
 void
-ptWorker::computeClampDirect(int depth, 
-                             RtColorRGB const &lgtTrans, 
-                             RixBXActiveLobeWeights &activeLobes, 
-                             int weightIndex, 
-                             RtColorRGB const &thruput, 
-                             float invNumSamp, 
+ptWorker::computeClampDirect(int depth,
+                             RtColorRGB const &lgtTrans,
+                             RixBXActiveLobeWeights &activeLobes,
+                             int weightIndex,
+                             RtColorRGB const &thruput,
+                             float invNumSamp,
                              bool &isFinite, RtFloat &clampAmt)
 {
     clampAmt = 1.0f;
@@ -4423,10 +4427,10 @@ ptWorker::computeClampDirect(int depth,
     }
 }
 
-void 
-ptWorker::computeClampEmissive(int depth, 
+void
+ptWorker::computeClampEmissive(int depth,
                                RtColorRGB const &emission,
-                               RtColorRGB const &thruput, 
+                               RtColorRGB const &thruput,
                                bool &isFinite, RtFloat &clampAmt)
 {
     clampAmt = 1.0f;
@@ -4447,11 +4451,11 @@ ptWorker::computeClampEmissive(int depth,
 }
 
 SampleType
-ptWorker::findSampleType(SampleType srcSampleType, 
+ptWorker::findSampleType(SampleType srcSampleType,
                          RixBXLobeSampled lobeSampled, int depth)
 {
     SampleType ret;
-    
+
     if (depth == 0 && lobeSampled.GetValid())
     {
         if (lobeSampled.GetDiffuse() && lobeSampled.GetReflect())
@@ -4469,7 +4473,7 @@ ptWorker::findSampleType(SampleType srcSampleType,
     {
         ret = srcSampleType;
     }
-    
+
     return ret;
 }
 
@@ -4491,7 +4495,7 @@ ptWorker::getDirectState(RixShadingContext const &sCtx,
     lpeGrpId = RixLPE::k_BLANK;
     isCollector = false;
 
-    if (RixRenderState *state = 
+    if (RixRenderState *state =
         (RixRenderState *) sCtx.GetRixInterface(k_RixRenderState))
     {
         RtFloat diffDepthVal, specDepthVal;
@@ -4499,12 +4503,12 @@ ptWorker::getDirectState(RixShadingContext const &sCtx,
         RtInt diffDepthRet, specDepthRet;
         RtInt diffDepthCount, specDepthCount;
 
-        diffDepthRet = state->GetAttribute(k_diffDepthName, &diffDepthVal, 
-                                           k_diffDepthLen,  &diffDepthType, 
+        diffDepthRet = state->GetAttribute(k_diffDepthName, &diffDepthVal,
+                                           k_diffDepthLen,  &diffDepthType,
                                            &diffDepthCount);
 
-        specDepthRet = state->GetAttribute(k_specDepthName, &specDepthVal, 
-                                           k_specDepthLen,  &specDepthType, 
+        specDepthRet = state->GetAttribute(k_specDepthName, &specDepthVal,
+                                           k_specDepthLen,  &specDepthType,
                                            &specDepthCount);
 
         if (diffDepthRet == 0 && diffDepthCount == 1)
@@ -4524,15 +4528,15 @@ ptWorker::getIndirectState(RixShadingContext const &sCtx,
                            RtToken &reflectExcludeSubset, RtToken &transmitExcludeSubset)
 {
     // Note: We currently call this routine to fetch the current attribute
-    // state for built-in attributes (or user attributes) that we are 
-    // interested in once per shading context (that is, once per similar 
+    // state for built-in attributes (or user attributes) that we are
+    // interested in once per shading context (that is, once per similar
     // group of hit points). Our profiling indicates that the computational
     // expense of calling this routine per shading context is neglible and
-    // is currently not anywhere close to being a bottleneck. However, if 
-    // one were to query the value of thousands upon thousands of different 
-    // attributes within this routine, it's conceivable that performance 
-    // could be affected. If that were to become an issue for some reason, 
-    // one might consider using (non-primitive-specific) user options and/or 
+    // is currently not anywhere close to being a bottleneck. However, if
+    // one were to query the value of thousands upon thousands of different
+    // attributes within this routine, it's conceivable that performance
+    // could be affected. If that were to become an issue for some reason,
+    // one might consider using (non-primitive-specific) user options and/or
     // custom integrator parameters instead of (per-primitive) attributes.
 
     static const char    *k_autoBiasName       = "trace:autobias";
@@ -4557,7 +4561,7 @@ ptWorker::getIndirectState(RixShadingContext const &sCtx,
     reflectExcludeSubset  = NULL;
     transmitExcludeSubset = NULL;
 
-    if (RixRenderState *state = 
+    if (RixRenderState *state =
         (RixRenderState *) sCtx.GetRixInterface(k_RixRenderState))
     {
         RixRenderState::Type autoBiasType, biasType;
@@ -4569,18 +4573,18 @@ ptWorker::getIndirectState(RixShadingContext const &sCtx,
         RtToken reflectExcludeSubsetVal, transmitExcludeSubsetVal;
 
         RtInt autoBiasRet, biasRet;
-        RtInt reflectSubsetRet, transmitSubsetRet; 
-        RtInt reflectExcludeSubsetRet, transmitExcludeSubsetRet; 
+        RtInt reflectSubsetRet, transmitSubsetRet;
+        RtInt reflectExcludeSubsetRet, transmitExcludeSubsetRet;
 
         RtInt autoBiasCount, biasCount;
-        RtInt reflectSubsetCount, transmitSubsetCount; 
-        RtInt reflectExcludeSubsetCount, transmitExcludeSubsetCount; 
-        
-        autoBiasRet = state->GetAttribute(k_autoBiasName, &autoBiasVal, 
-                                          k_autoBiasLen,  &autoBiasType, 
+        RtInt reflectSubsetCount, transmitSubsetCount;
+        RtInt reflectExcludeSubsetCount, transmitExcludeSubsetCount;
+
+        autoBiasRet = state->GetAttribute(k_autoBiasName, &autoBiasVal,
+                                          k_autoBiasLen,  &autoBiasType,
                                           &autoBiasCount);
 
-        biasRet = state->GetAttribute(k_biasName, &biasVal, 
+        biasRet = state->GetAttribute(k_biasName, &biasVal,
                                       k_biasLen,  &biasType, &biasCount);
 
         reflectSubsetRet = state->GetAttribute(k_reflectSubsetName,
@@ -4588,7 +4592,7 @@ ptWorker::getIndirectState(RixShadingContext const &sCtx,
                                                k_reflectSubsetLen,
                                                &reflectSubsetType,
                                                &reflectSubsetCount);
-        
+
         transmitSubsetRet = state->GetAttribute(k_transmitSubsetName,
                                                 &transmitSubsetVal,
                                                 k_transmitSubsetLen,
@@ -4600,19 +4604,19 @@ ptWorker::getIndirectState(RixShadingContext const &sCtx,
                                                k_reflectExcludeSubsetLen,
                                                &reflectExcludeSubsetType,
                                                &reflectExcludeSubsetCount);
-        
+
         transmitExcludeSubsetRet = state->GetAttribute(k_transmitExcludeSubsetName,
                                                 &transmitExcludeSubsetVal,
                                                 k_transmitExcludeSubsetLen,
                                                 &transmitExcludeSubsetType,
                                                 &transmitExcludeSubsetCount);
-        
+
         if (autoBiasRet == 0 && autoBiasCount == 1)
             autoBias = (RtInt) autoBiasVal;
-            
+
         if (biasRet == 0 && biasCount == 1)
             bias = biasVal;
-        
+
         if (reflectSubsetRet == 0 && reflectSubsetCount == 1)
             reflectSubset = reflectSubsetVal;
 
@@ -4639,23 +4643,23 @@ ptWorker::resolveLPEToken(RixShadingContext const& sCtx,
 
     // Unkown lpe group. It is necessary to mine this from the shading
     // context here
-    RixRenderState *state = 
+    RixRenderState *state =
         (RixRenderState *) sCtx.GetRixInterface(k_RixRenderState);
     RtInt ret, count;
     RixRenderState::Type type;
 
     char const *lpeGroup = 0;
     RtToken lpeGroupVal;
-    ret = state->GetAttribute(k_lpeGroupName, &lpeGroupVal, 
-                              k_lpeGroupLen,  &type, 
+    ret = state->GetAttribute(k_lpeGroupName, &lpeGroupVal,
+                              k_lpeGroupLen,  &type,
                               &count);
     if (ret == 0 && count == 1)
         lpeGroup = lpeGroupVal;
 
     char const *objName = 0;
     RtToken objNameVal;
-    ret = state->GetAttribute(k_objectName, &objNameVal, 
-                              k_objectNameLen,  &type, 
+    ret = state->GetAttribute(k_objectName, &objNameVal,
+                              k_objectNameLen,  &type,
                               &count);
     if (ret == 0 && count == 1)
         objName = objNameVal;
@@ -4663,7 +4667,7 @@ ptWorker::resolveLPEToken(RixShadingContext const& sCtx,
     RixLPEToken lpeId = m_rixLpe->GroupAndObjectToToken(lpeGroup, objName);
 
     isCollector = false;
-    if (lpeGroup && 
+    if (lpeGroup &&
         strstr(lpeGroup, k_collectorGroupPrefix) == lpeGroup)
     {
         isCollector = true;
@@ -4706,7 +4710,7 @@ ptWorker::volumeAggregateMultiScatter(RixIntegratorContext& iCtx,
             rayId[i] = aggregateRays[i].rayId;
             aggregateRays[i].raySpread = iCtx.primaryRays[iCtxIndex].raySpread;
             aggregateRays[i].originRadius =
-                iCtx.primaryRays[iCtxIndex].originRadius + 
+                iCtx.primaryRays[iCtxIndex].originRadius +
                 RtVector3(aggregateRays[i].origin).Length() * iCtx.primaryRays[iCtxIndex].raySpread;
         }
         initRNG(numRays, 0x6b4f3f64, false, 1, shadeInfoPing->rayInfo, rayId);
@@ -4750,11 +4754,11 @@ ptWorker::getNearestHits(RixIntegratorContext &iCtx,
         volumeAggregateMultiScatter(iCtx, numRays, rays,
             false, m_shadeInfoPing, &nAggregateShadingCtxs, shadingCtxs,
             &nNewRays, m_rays);
-    
+
         iCtx.GetNearestHits(nNewRays, m_rays, lobesWanted, false,
             numShadingCtxs, shadingCtxs + nAggregateShadingCtxs, subset,
             excludeSubset, false,
-            isPrimary ? k_SidesFront : k_SidesBoth, isPrimary);            
+            isPrimary ? k_SidesFront : k_SidesBoth, isPrimary);
         *numShadingCtxs += nAggregateShadingCtxs;
     }
     else
@@ -4780,7 +4784,7 @@ PxrPathTracer::IntegrateRays(RixBXLobeTraits const& lobesWanted,
     {
         iCtx.GetDisplayServices()->DiscardIteration(true);
     }
-    else 
+    else
     {
         // Now perform the integration work.
         worker->IntegrateRays(iCtx, lobesWanted,
@@ -4800,7 +4804,7 @@ PxrPathTracer::Integrate(RtInt ngrps, RixShadingContext const *sgrps[],
     {
         iCtx.GetDisplayServices()->DiscardIteration(true);
     }
-    else 
+    else
     {
         // Now perform the integration work.
         worker->Integrate(iCtx, ngrps, sgrps, m_timer);
@@ -4824,7 +4828,7 @@ PxrPathTracer::GetTransmission(int numRays, RtRayGeometry const* rays,
         int iCtxIndex = aggregateRays[i].integratorCtxIndex;
         aggregateRays[i].raySpread = iCtx.primaryRays[iCtxIndex].raySpread;
         aggregateRays[i].originRadius =
-            iCtx.primaryRays[iCtxIndex].originRadius + 
+            iCtx.primaryRays[iCtxIndex].originRadius +
             RtVector3(aggregateRays[i].origin).Length() * iCtx.primaryRays[iCtxIndex].raySpread;
     }
     worker->GetTransmission(iCtx, numRays, aggregateRays, trans, subset);
@@ -4841,8 +4845,8 @@ PxrPathTracer::GetProperty(RixIntegratorContext& ictx,
     switch (property)
     {
         case k_RayDepth:
-        // Caller is responsible for allocating the memory. 
-        // So here we assume we can safely fill in values.   
+        // Caller is responsible for allocating the memory.
+        // So here we assume we can safely fill in values.
             getWorker(ictx)->GetRayDepth(rayId, numRays, result);
             return true;
             break;
@@ -4867,6 +4871,7 @@ PxrPathTracer::Synchronize(RixContext &rctx, RixSCSyncMsg m,
 void
 PxrPathTracer::RenderEnd(RixContext &ctx)
 {
+    std::cout << "\nBUMMMM - RenderEnd\n" << std::endl; std::cout.flush();
     if (m_allWorkersMutex)
     {
         // gather stats first
@@ -4919,7 +4924,7 @@ PxrPathTracer::GetOptions(RixContext &ctx, RtInt &traceDepthMode)
 
     traceDepthMode = k_traceDepthModeCombined;
 
-    if (RixRenderState *state = 
+    if (RixRenderState *state =
         (RixRenderState *) ctx.GetRixInterface(k_RixRenderState))
     {
         RtToken traceDepthModeVal = NULL;
@@ -4927,11 +4932,11 @@ PxrPathTracer::GetOptions(RixContext &ctx, RtInt &traceDepthMode)
         RtInt traceDepthModeRet;
         RtInt traceDepthModeCount;
 
-        traceDepthModeRet = 
-            state->GetOption(k_traceDepthModeName, &traceDepthModeVal, 
-                             k_traceDepthModeLen,  &traceDepthModeType, 
+        traceDepthModeRet =
+            state->GetOption(k_traceDepthModeName, &traceDepthModeVal,
+                             k_traceDepthModeLen,  &traceDepthModeType,
                              &traceDepthModeCount);
-        
+
         if (traceDepthModeRet == 0 && traceDepthModeCount == 1)
         {
             if (traceDepthModeVal != NULL)
@@ -4992,7 +4997,7 @@ PxrPathTracer::ReportStats(RixXmlFile* file)
     for (size_t i=0; i<m_statsRayCounts.size(); ++i)
         file->WriteXml("<bin label=\"%lu\">%llu</bin>\n", i+1, m_statsRayCounts[i]);
     file->WriteXml("</histogram>\n");
-    
+
 }
 
 ptWorker*
@@ -5005,13 +5010,13 @@ PxrPathTracer::getWorker(RixIntegratorContext& iCtx)
         worker = new ptWorker(iCtx, iCtx.GetRixLPE(),
                               m_numLightSamples,      m_numBxdfSamples,
                               m_reduceDirectSamples,
-                              m_numIndirectSamples, 
+                              m_numIndirectSamples,
                               m_numDiffuseSamples,    m_numSpecularSamples,
                               m_numSubsurfaceSamples, m_numRefractionSamples,
-                              m_sampleMode,           m_maxSamples, 
-                              m_maxIndSamples, 
-                              m_rouletteDepth,        m_rouletteThreshold, 
-                              m_clampDepth,           m_clampLuminance, 
+                              m_sampleMode,           m_maxSamples,
+                              m_maxIndSamples,
+                              m_rouletteDepth,        m_rouletteThreshold,
+                              m_clampDepth,           m_clampLuminance,
                               m_allowCaustics,        m_maxPathLength,
                               m_maxContinuationLength,
                               m_maxShadingCtxSize,
@@ -5020,7 +5025,7 @@ PxrPathTracer::getWorker(RixIntegratorContext& iCtx)
                               m_traceDepthMode,
                               m_accumOpacity,
                               m_volumeAggregate);
-        
+
         storage->Set("PxrPathTracerWorker", worker, NULL);
 
         if (m_allWorkersMutex)

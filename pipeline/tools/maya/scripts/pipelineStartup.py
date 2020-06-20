@@ -227,7 +227,7 @@ def loadAssetManager():
     except:
         IECore = None
 
-    if IECore:
+    if IECore :
         def __publishRender() :
             __publish('render','maya')
             # import maya.cmds as m
@@ -371,26 +371,26 @@ def loadAssetManager():
             atomoShelfs.buildShelf()
 
 
-    def AESamMenu(arg1, arg2):
-        AEmenu = meval('global string $gAEMenuBarLayoutName;$__samAEMenu=$gAEMenuBarLayoutName')
-        m.setParent( AEmenu )
-        m.setParent( "AESamMenu", menu=1 )
-        m.menu( "AESamMenu", edit=1, deleteAllItems=1 )
-        m.menuItem( divider=1 )
-        m.ls(sl=1)
-        node = meval('global string $gAECurrentTab;$__samAEMenuSelected=$gAECurrentTab')
-        if node:
-            if m.nodeType( node ) == 'shaveHair':
-                m.menuItem( l="Add SAM shave attributes", c=lambda x: AESamShaveNameAttr(node,x) )
-            elif m.nodeType( node ) in ['mesh']:
-                m.menuItem( l="Add SAM Dynamic Rule attribute", c=lambda x: AESamDRAttr(node,x) )
+            def AESamMenu(arg1, arg2):
+                AEmenu = meval('global string $gAEMenuBarLayoutName;$__samAEMenu=$gAEMenuBarLayoutName')
+                m.setParent( AEmenu )
+                m.setParent( "AESamMenu", menu=1 )
+                m.menu( "AESamMenu", edit=1, deleteAllItems=1 )
+                m.menuItem( divider=1 )
+                m.ls(sl=1)
+                node = meval('global string $gAECurrentTab;$__samAEMenuSelected=$gAECurrentTab')
+                if node:
+                    if m.nodeType( node ) == 'shaveHair':
+                        m.menuItem( l="Add SAM shave attributes", c=lambda x: AESamShaveNameAttr(node,x) )
+                    elif m.nodeType( node ) in ['mesh']:
+                        m.menuItem( l="Add SAM Dynamic Rule attribute", c=lambda x: AESamDRAttr(node,x) )
 
-    # add SAM menu to attribute editor
-    AEmenu = meval('global string $gAEMenuBarLayoutName;$__samAEMenu=$gAEMenuBarLayoutName')
-    m.setParent( AEmenu )
-    if "AESamMenu" not in m.menuBarLayout( AEmenu, q=1, menuArray=1 ):
-        m.menu("AESamMenu", label="SAM", pmc=AESamMenu)
-    m.menu("AESamMenu", e=1, pmc=AESamMenu)
+            # add SAM menu to attribute editor
+            AEmenu = meval('global string $gAEMenuBarLayoutName;$__samAEMenu=$gAEMenuBarLayoutName')
+            m.setParent( AEmenu )
+            if "AESamMenu" not in m.menuBarLayout( AEmenu, q=1, menuArray=1 ):
+                m.menu("AESamMenu", label="SAM", pmc=AESamMenu)
+            m.menu("AESamMenu", e=1, pmc=AESamMenu)
 
 
     print 'loadAssetManager() done: %.02f secs' % (time()-startTime)
@@ -425,7 +425,8 @@ def RMS_setup():
 if m.about(batch=1):
     pipeIdleStartup()
     loadAssetManager()
-    RMS_setup()
+    if float(os.environ["MAYA_VERSION"]) < 2018:
+        RMS_setup()
 else:
     def __runAll__():
         # if float(os.environ["MAYA_VERSION"]) < 2018:
@@ -441,3 +442,8 @@ else:
             pb.close()
     __runAll__()
     # m.scriptJob( runOnce=True,  idleEvent=__runAll__ )
+
+
+import pipe
+for classes in [ "pipe.apps.%s" % x for x in dir(pipe.apps) if "startup" in eval("dir(pipe.apps.%s)" % x)]:
+    eval("%s().startup()" % classes)

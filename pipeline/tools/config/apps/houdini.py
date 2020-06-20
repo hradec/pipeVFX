@@ -107,6 +107,7 @@ class houdini(baseApp):
            script      = '%s/engine/maya/maya$MAYA_VERSION_MAJOR/scripts/' % self.path(),
         )
 
+        self['HOUDINI_DISABLE_SSE'] = '1'
 
 
     def bins(self):
@@ -305,6 +306,8 @@ class houdini(baseApp):
         major_version = self.version().replace('hfs','').split('.')[0]
         if 'PIPE_HOUDINI_LICENSE_SERVERS_%s' % major_version in os.environ:
             env_var = 'PIPE_HOUDINI_LICENSE_SERVERS_%s' % major_version
+        elif int(major_version) >= 16 and 'PIPE_HOUDINI_LICENSE_SERVERS_16' in os.environ:
+            env_var = 'PIPE_HOUDINI_LICENSE_SERVERS_16'
         elif 'PIPE_HOUDINI_LICENSE_SERVERS' in os.environ:
             env_var = 'PIPE_HOUDINI_LICENSE_SERVERS'
         else:
