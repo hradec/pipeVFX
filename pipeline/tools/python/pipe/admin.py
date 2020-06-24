@@ -227,6 +227,14 @@ class sudo():
         if os.path.exists(fromPath):
             self.cmd( "cp -rf '%s' '%s'" % (fromPath, toPath) )
 
+    def cpmvlink(self, fromPath, toPath, fromUser, toUser):
+        if os.path.exists(fromPath):
+            self.rm( "rm -rf '%s'" % (toPath) )
+            self.cmd( "su -c 'mv %s %s'" % (fromPath, toPath) )
+            self.cmd( "su -c 'ln -s %s  %s'" % (toPath,fromPath) )
+            self.cmd( "su -c 'chown %s  %s'" % (fromUser, fromPath) )
+            self.cmd( "su -c 'chown %s  %s'" % (toUser, toPath) )
+
     def mv(self, fromPath, toPath):
         if os.path.exists(fromPath):
             self.cmd( "mv '%s' '%s'" % (fromPath, toPath) )

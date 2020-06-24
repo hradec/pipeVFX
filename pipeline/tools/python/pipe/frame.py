@@ -200,6 +200,7 @@ def publish(frames, assetPath):
                 sys.stdout.flush()
                 time.sleep(1)
                 sucess=False
+                sudo = pipe.admin.sudo()
                 for tries in range(5):
                     fileTemp = tempfile.mktemp()
                     if tries>1:
@@ -207,33 +208,35 @@ def publish(frames, assetPath):
                         time.sleep(tries*tries)
 
                     # this is were we publish our images.
-                    sudo = pipe.admin.sudo()
                     # sudo.rm( target )
                     # sudo.cp( os.path.abspath(images[n]), fileTemp )
                     # sudo.cp( fileTemp, target )
                     # sudo.mv( os.path.abspath(images[n]), target )
-                    sudo.cp( os.path.abspath(images[n]), target )
-                    cmd = ""
+                    sudo.cpmvlink( os.path.abspath(images[n]), target, pipe.admin.username(), 'root' )
+                    print( sudo.run() )
+                    break
 
+                    # cmd = ""
                     # generate jpg preview images
                     # for cmd in webplayer(images[n], '%s/.webplayer' % imagePath, montageImages ):
                     #     sudo.cmd( cmd )
 
-                    # execute commands as root
-                    print( sudo.run() )
+                # execute commands as root
+                # we don't check anymore, since now we use cpmvlink (it moves
+                # the file, and creates a symlink were the original was)
 
                     # check if publish was done suscessfuly
-                    if os.path.exists( target ):
-                        if filecmp.cmp( os.path.abspath(images[n]), target ):
-                            sucess=True
-                            break
+                    # if os.path.exists( target ):
+                    #     if filecmp.cmp( os.path.abspath(images[n]), target ):
+                    #         sucess=True
+                    #         break
 
 
                 # sudo = pipe.admin.sudo()
                 # sudo.rm( fileTemp )
                 # print( sudo.run() )
-                if not sucess:
-                    threads_return.put(False)
+                # if not sucess:
+                #     threads_return.put(False)
 
 
 
@@ -381,9 +384,9 @@ def publishLog(log, assetPath, className):
         print( "\nstoring render log at %s" % logFile )
         sudo = pipe.admin.sudo()
         sudo.mkdir( logPath )
-        sudo.cp( file, logFile )
+        sudo.cpmvlink( file, logFile, pipe.admin.username(), 'root' )
+        sudo.rm(file)
         sudo.run()
-        os.remove(file)
         print( '\n','='*300 )
 
         # store pixar statisc job file
