@@ -550,6 +550,11 @@ class baseApp(_environ):
             derivated class, for example:
                 for a "class maya", it will init self.appFromDB with all data for the app "maya"
         '''
+        # self._SINGLE_ += ['PYTHONHOME']
+        # self._CANT_UPDATE_ += ['PYTHONHOME']
+        self._PARENT_ONLY_ += ['PYTHONHOME']
+
+
         if app:
             self.className = app
         else:

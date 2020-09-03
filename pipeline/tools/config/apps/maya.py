@@ -39,6 +39,13 @@ class maya(baseApp):
             self['LD_LIBRARYN32_PATH'] = self.path("lib")
             self['libn32'] = '1'
 
+            # pipeline alembic plugins!
+            self.update( pipe.libs.alembic() )
+        else:
+            self['PYTHONHOME'] = self.path()
+        self['PYTHONHOME'] = self.path()
+
+
 
         # self['MAYA_SHELF_PATH'] =
 
@@ -111,9 +118,6 @@ class maya(baseApp):
             )
             self['PYTHONPATH'] = '%s/maya/plugins' % each
             self['PYTHONPATH'] = '%s/maya/scripts' % each
-
-        # pipeline alembic plugins!
-        self.update( pipe.libs.alembic() )
 
         # don't use pipe openvdb since prman 21 comes with its own.
         prman_version = float(pipe.version.get('prman'))
@@ -219,8 +223,6 @@ class maya(baseApp):
 
             self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
 
-            if mv > 2017:
-                self['PYTHONHOME'] = self.path()
 
 
         # we run this to make sure Asset module works when importing IECore

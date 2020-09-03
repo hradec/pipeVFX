@@ -224,9 +224,10 @@ def alias(withlibs=True):
                     aliasScript.append('''alias %s='env LD_PRELOAD="" %s -c "import pipe;pipe.apps.%s().run(\\"%s\\")"' ''' % (each[0].replace(' ','_'), pythonBin, appname, each[1]) )
             except:
                 from bcolors import bcolors
-                sys.stderr.write(bcolors.FAIL)
-                sys.stderr.write("\nERROR: Application %s %s doesnt exist in the current job/shot!!\n" % (appname, appClass.version()))
-                sys.stderr.write(bcolors.END)
+                sys.stderr.write(bcolors.FAIL+"="*80)
+                sys.stderr.write("\n%s\n" % traceback.print_exc())
+                sys.stderr.write("\n\nERROR: Application %s %s doesnt exist in the current job/shot!!\n\n" % (appname, appClass.version()))
+                sys.stderr.write("="*80+bcolors.END)
 
 
     return '\n'.join(aliasScript)

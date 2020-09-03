@@ -169,6 +169,13 @@ class prman(baseApp):
 
         # self.ignorePipeLib( "libpng" )
 
+        # renderman 23 and up
+        # ====================================================================
+        self['RFM_SITE_CONFIG'] = '%s/prman' % pipe.roots().tools()
+        if len(self.toolsPaths())>1:
+            self['RFM_SHOW_CONFIG'] = '%s/prman' % self.toolsPaths()[-2]
+
+
     @staticmethod
     def addon( caller, shader='', procedurals='', script='',python='', display='', texture='', lib='', rsl='' ):
         caller['PYTHONPATH'] = script
@@ -228,7 +235,7 @@ class prman(baseApp):
         pv = float( pipe.version.get('prman') )
         if pv > 20.0:
             license = '%s/licenses/prman/generic.license.r%s' % (pipe.roots().tools(), int(pv))
-            if not os.path.exists(self['PIXAR_LICENSE_FILE']):
+            if not os.path.exists(license):
                 license = '%s/licenses/prman/generic.license.r%s' % (pipe.roots().tools(), pv)
             self['PIXAR_LICENSE_FILE'] = license
         else:

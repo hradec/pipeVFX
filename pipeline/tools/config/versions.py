@@ -31,7 +31,7 @@ os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 # ===================================================================
 pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
 pipe.version.set( maya      = '2018' )
-pipe.version.set( maya      = '2016.5' )
+#pipe.version.set( maya      = '2016.5' )
 pipe.version.set( nuke      = '12.1v1' )
 pipe.version.set( houdini   = 'hfs17.5.173' )
 pipe.version.set( delight   = '11.0.12' )
@@ -39,20 +39,8 @@ pipe.version.set( mari      = '2.0v1' )
 pipe.version.set( xpra      = '0.15.svn9672' )
 pipe.version.set( arnold    = '5.1.0.1' )
 pipe.version.set( realflow  = '10.5.3.0189' )
-pipe.version.set( prman     = '23.2' )
-pipe.version.set( prman     = '21.7' )
+pipe.version.set( prman     = '23.4' )
 pipe.version.set( unreal    = '4.22.0.opengl' )
-
-
-# version support dropped
-# ===================================================================
-if float(pipe.version.get('maya')) <= 2014:
-    # maximum versions for maya 2014
-    pipe.version.set( prman     = '20.11' )
-
-if float(pipe.version.get('maya')) < 2018:
-    # maximum versions for maya 2018
-    pipe.version.set( prman     = '21.7' )
 
 
 # set global library versions
@@ -60,7 +48,7 @@ if float(pipe.version.get('maya')) < 2018:
 if 'GCC_VERSION' in os.environ:
     pipe.version.set( python        = '2.7' )
     exr='2.0.0'
-    # exr='2.2.0'
+    exr='2.2.0'
     pipe.libs.version.set( python   = '2.7' )
     pipe.libs.version.set( freetype = '2.4.0' )
     pipe.libs.version.set( boost    = '1.61' )
@@ -77,6 +65,21 @@ else:
     pipe.libs.version.set( freetype = '2.3.5' )
     pipe.libs.version.set( openexr  = '2.0.0' )
     pipe.libs.version.set( ilmbase  = '2.0.0' )
+
+
+# specific versions for software packages
+# ===================================================================
+mv = float(pipe.version.get('maya'))
+if mv <= 2018:
+    # maximum versions for maya equal and below 2018
+    # pipe.libs.version.set( alembic     = '1.5.8' )
+    if mv < 2018:
+        # maximum versions for maya below 2018
+        pipe.version.set( prman     = '21.7' )
+    if mv <= 2014:
+        # maximum versions for maya 2014
+        pipe.version.set( prman     = '20.11' )
+
 
 
 # gaffer and cortex version need to be tested toguether!

@@ -29,8 +29,10 @@ os.environ['GCC_VERSION'] = 'gcc-%s' % gcc_version
 # build all pkgs, if not already built!
 import build
 print 'build.installRoot() = '+build.installRoot()
+
 # pkgs will have all scons builds as its parameters
 # ex: to use boost, just add pkgs.boost as a dependency
+exr_version = '2.2.0'
 pkgs = build.pkgs.all(ARGUMENTS) # noqa
 
 # get installed app versions using pipe
@@ -66,7 +68,7 @@ depend = [
     pkgs.freeglut, pkgs.freetype, pkgs.libpng, pkgs.hdf5,
     pkgs.tiff, pkgs.jpeg, pkgs.alembic, pkgs.openssl,
     pkgs.glew, pkgs.blosc, pkgs.usd, pkgs.opensubdiv,
-    pkgs.ptex, pkgs.openvdb, pkgs.appleseed
+    pkgs.ptex, pkgs.openvdb #, pkgs.appleseed
 ]
 
 # build cortex matrix
@@ -105,9 +107,9 @@ for boost_version in pkgs.boost.versions:
     for n in range(len(_download)):
         _download[n][4] = _download[n][4].copy()
         _download[n][4][ pkgs.boost     ] = boost_version
-        _download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = '2.0.0'
-        _download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = '2.0.0'
-        _download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = '2.0.0'
+        _download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+        _download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+        _download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
         # we use different OIIO versions for cortex 9 and 10
         if build.versionMajor(_download[n][2]) < 10.0:
             _download[n][4][ pkgs.oiio ['boost.%s' % boost_version] ] = '1.6.15'
@@ -163,9 +165,9 @@ for boost_version in pkgs.boost.versions:
                     __download[n][4][ pkgs.alembic   ] = alembic_version
                     __download[n][4][ pkgs.hdf5      ] = alembic_dependencies[pkgs.hdf5]
                     __download[n][4][ cortex         ['boost.%s' % boost_version] ] = __download[n][2]
-                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = '2.0.0'
-                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = '2.0.0'
-                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = '2.0.0'
+                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
                     __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
 
                 # and build cortex
@@ -204,9 +206,9 @@ for boost_version in pkgs.boost.versions:
                     __download[n][4][ pkgs.boost     ] = boost_version
                     __download[n][4][ pkgs.usd       ] = usd_version
                     __download[n][4][ cortex         ['boost.%s' % boost_version] ] = __download[n][2]
-                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = '2.0.0'
-                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = '2.0.0'
-                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = '2.0.0'
+                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
                     __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
 
                 # now build the version of cortex with the usd version
@@ -246,9 +248,9 @@ for boost_version in pkgs.boost.versions:
                     __download[n][4][ pkgs.boost     ] = boost_version
                     __download[n][4][ pkgs.openvdb   ] = openvdb_version
                     __download[n][4][ cortex         ['boost.%s' % boost_version] ] = __download[n][2]
-                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = '2.0.0'
-                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = '2.0.0'
-                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = '2.0.0'
+                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
                     __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
 
                 # now build the version of cortex with the openvdb version
@@ -290,9 +292,9 @@ for boost_version in pkgs.boost.versions:
                     __download[n][4] = __download[n][4].copy()
                     __download[n][4][ pkgs.boost     ] = boost_version
                     __download[n][4][ cortex         ['boost.%s' % boost_version] ] = __download[n][2]
-                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = '2.0.0'
-                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = '2.0.0'
-                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = '2.0.0'
+                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
                     __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
                     __download[n][4][ pkgs.usd       ] = None
                     __download[n][4][ pkgs.alembic   ] = None
@@ -341,10 +343,10 @@ def buildGaffer(apps=[], boost='1.61.0', __download__=None):
 
     # if building with a boost version that has a cortex built with appleseed, use it!
     # [ x[2] for x in pkgs.appleseed.download if x[4][pkgs.boost] == boost ]
-    av = ['2.0.5.beta']
-    if av:
-        av = build.pkgs.versionSort( av )
-        cortex_build = "boost.%s.appleseed.%s" % (boost, av[-1])
+    # av = ['2.0.5.beta']
+    # if av:
+    #     av = build.pkgs.versionSort( av )
+    #     cortex_build = "boost.%s.appleseed.%s" % (boost, av[-1])
 
     suffix = ".".join([ x for x in [cortex_build, suffix] if x])
 
@@ -357,9 +359,9 @@ def buildGaffer(apps=[], boost='1.61.0', __download__=None):
     #     pkgs.pyside: None, pkgs.pyqt: '4.8.7',
     #     pkgs.gcc : '4.1.2', pkgs.tbb: '4.4.6',
     #     pkgs.boost : "1.51.0", pkgs.oiio: '1.6.15',
-    #     pkgs.openexr['boost.1.51.0'] : '2.0.0',
-    #     pkgs.ilmbase['boost.1.51.0'] : '2.0.0',
-    #     pkgs.pyilmbase['boost.1.51.0'] : '2.0.0',
+    #     pkgs.openexr['boost.1.51.0'] : exr_version,
+    #     pkgs.ilmbase['boost.1.51.0'] : exr_version,
+    #     pkgs.pyilmbase['boost.1.51.0'] : exr_version,
     #     cortex['boost.1.51.0'] : cortex9version}
     # ],[
         'https://github.com/GafferHQ/gaffer/archive/0.55.0.0.tar.gz',
@@ -371,9 +373,9 @@ def buildGaffer(apps=[], boost='1.61.0', __download__=None):
         pkgs.llvm: '7.1.0', pkgs.gcc : '4.8.5',
         pkgs.openvdb: '6.0.0', pkgs.tbb: '4.4.6',
         pkgs.boost : boost,
-        pkgs.openexr['boost.%s' % boost] : '2.0.0',
-        pkgs.ilmbase['boost.%s' % boost] : '2.0.0',
-        pkgs.pyilmbase['boost.%s' % boost] : '2.0.0',
+        pkgs.openexr['boost.%s' % boost] : exr_version,
+        pkgs.ilmbase['boost.%s' % boost] : exr_version,
+        pkgs.pyilmbase['boost.%s' % boost] : exr_version,
         pkgs.oiio['boost.%s' % boost]: '1.8.10',
         cortex[cortex_build] : cortex10version}
     ]]
@@ -723,9 +725,9 @@ if canBuildCortexNow:
             # with cortex core boost version.
             _download[n][4][ pkgs.boost    ] = boostVersion
             _download[n][4][ cortex        ["boost.%s" % boostVersion] ] = cortexVersion
-            _download[n][4][ pkgs.ilmbase  ['boost.%s' % boostVersion] ] = '2.0.0'
-            _download[n][4][ pkgs.openexr  ['boost.%s' % boostVersion] ] = '2.0.0'
-            _download[n][4][ pkgs.pyilmbase['boost.%s' % boostVersion] ] = '2.0.0'
+            _download[n][4][ pkgs.ilmbase  ['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.openexr  ['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.pyilmbase['boost.%s' % boostVersion] ] = exr_version
             _download[n][4][ pkgs.gcc      ] = '4.8.5'
             _download[n][4][ pkgs.usd      ] = usd
             _download[n][4][ pkgs.alembic  ] = alembic
@@ -782,9 +784,9 @@ if canBuildCortexNow:
             # with cortex core boost version.
             _download[n][4][ pkgs.boost    ] = boostVersion
             _download[n][4][ cortex        ["boost.%s" % boostVersion] ] = cortexVersion
-            _download[n][4][ pkgs.ilmbase  ['boost.%s' % boostVersion] ] = '2.0.0'
-            _download[n][4][ pkgs.openexr  ['boost.%s' % boostVersion] ] = '2.0.0'
-            _download[n][4][ pkgs.pyilmbase['boost.%s' % boostVersion] ] = '2.0.0'
+            _download[n][4][ pkgs.ilmbase  ['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.openexr  ['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.pyilmbase['boost.%s' % boostVersion] ] = exr_version
             _download[n][4][ pkgs.gcc      ] = '4.8.5'
             _download[n][4][ pkgs.usd      ] = usd
             _download[n][4][ pkgs.alembic  ] = alembic
@@ -834,9 +836,9 @@ if canBuildCortexNow:
     #                 pkgs.llvm: '7.1.0', pkgs.gcc : '4.8.5',
     #                 pkgs.openvdb: '6.0.0', pkgs.tbb: '4.4.6',
     #                 pkgs.boost : boost,
-    #                 pkgs.openexr['boost.%s' % boost] : '2.0.0',
-    #                 pkgs.ilmbase['boost.%s' % boost] : '2.0.0',
-    #                 pkgs.pyilmbase['boost.%s' % boost] : '2.0.0',
+    #                 pkgs.openexr['boost.%s' % boost] : exr_version,
+    #                 pkgs.ilmbase['boost.%s' % boost] : exr_version,
+    #                 pkgs.pyilmbase['boost.%s' % boost] : exr_version,
     #                 pkgs.oiio['boost.%s' % boost]: '1.8.10',
     #                 cortex[cortex_build] : cortex10version}
     #             ]]
