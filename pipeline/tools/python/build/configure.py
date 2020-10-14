@@ -112,6 +112,17 @@ class gccBuild(configure):
             tt = '/'.join([os.path.dirname(t),'bin'])
             # print tt
             configure.uncompressor( self, [tt], source, env)
+        elif float(v) == 4.8:
+            configure.uncompressor( self, target, source, env)
+        elif float(v) == 6.3:
+            configure.uncompressor( self, target, source, env)
+            os.system( " && ".join([
+                "cd %s",
+                "tar xf ./gcc-6.3.1-20170216.tar.bz2",
+                "tar xf ./doxygen-1.8.0.src.tar.gz",
+                "tar xf ./isl-0.14.tar.bz2",
+                "tar xf ./mpc-0.8.1.tar.gz",
+            ]) % (os.path.dirname(t)) )
         else:
             configure.uncompressor( self, target, source, env)
 
@@ -234,6 +245,83 @@ class gccBuild(configure):
                 'make -j $DCORES',
                 'make install',
             ])
+        elif float(os_environ['VERSION_MAJOR']) == 6.3:
+            # extract from https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=gcc48
+            distroSpecific = []
+            distroSpecificConfigure = ''
+            # if 'arch' in pipe.distro:
+            #     distroSpecific = [
+            #         # Do not run fixincludes
+            #         "sed -i -e 's@\./fixinc\.sh@-c true@' 'gcc/Makefile.in'",
+            #         # fix build with GCC 6
+            #         "curl -L -s 'https://aur.archlinux.org/cgit/aur.git/plain/gcc-4.9-fix-build-with-gcc-6.patch?h=gcc48' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
+            #         # Arch Linux installs x86_64 libraries /lib
+            #         "sed -i -e '/m64=/s/lib64/lib/' 'gcc/config/i386/t-linux64'",
+            #         # hack! - some configure tests for header files using "$CPP $CPPFLAGS"
+            #         "sed -i -e '/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/' {libiberty,gcc}/configure",
+            #         # installing libiberty headers is broken
+            #         # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56780#c6
+            #         # "sed -i -e 's/@target_header_dir@/libiberty/' 'libiberty/Makefile.in'",
+            #     ]
+            #     distroSpecificConfigure = ' '.join([
+            #         '--disable-libstdcxx-pch '
+            #         '--disable-libunwind-exceptions '
+            #         '--disable-multilib '
+            #         '--disable-werror '
+            #         '--enable-__cxa_atexit '
+            #         '--enable-checking=release '
+            #         '--enable-clocale=gnu '
+            #         '--enable-cloog-backend=isl '
+            #         '--enable-gnu-unique-object '
+            #         '--enable-gold '
+            #         '--enable-languages="c,c++" '
+            #         '--enable-plugin '
+            #         '--enable-fdpic '
+            #         '--enable-shared '
+            #         '--enable-threads=posix '
+            #         '--enable-version-specific-runtime-libs '
+            #         '--infodir="$INSTALL_FOLDER/share/info" '
+            #         '--libdir="$INSTALL_FOLDER/lib" '
+            #         '--libexecdir="$INSTALL_FOLDER/lib" '
+            #         '--mandir=$INSTALL_FOLDER/share/man '
+            #         "--program-suffix=$(basename $TARGET_FOLDER) "
+            #         "--with-ppl "
+            #         "--without-system-zlib "
+            #     ])
+
+            cmd = ' && '.join(distroSpecific+[
+                # "./contrib/download_prerequisites",
+                "ls -lh",
+                "cd gcc-6.3.1-20170216",
+                # "( for n in $(ls ../gcc6*.patch) ; do patch -p < $n ; done )",
+                "mkdir -p build",
+                "cd build",
+                "ulimit -s 32768",
+                '../configure '
+                        '--disable-multilib '
+                        '--disable-werror '
+                        '--disable-bootstrap '
+                        '--disable-install-libiberty '
+                        '--disable-werror '
+                        '--enable-__cxa_atexit '
+                        '--enable-checking=release '
+                        '--enable-languages="c,c++" '
+                        '--enable-fdpic '
+                        "--without-system-zlib "
+                        "--with-ppl "
+                        '--with-gmp=$GMP_TARGET_FOLDER '
+                        '--with-mpfr=$MPFR_TARGET_FOLDER '
+                        '--with-mpc=$MPC_TARGET_FOLDER '
+                        '--infodir="$INSTALL_FOLDER/share/info" '
+                        '--libdir="$INSTALL_FOLDER/lib" '
+                        '--libexecdir="$INSTALL_FOLDER/lib" '
+                        '--mandir=$INSTALL_FOLDER/share/man '
+                        "--program-suffix=$(basename $TARGET_FOLDER) "
+                        "%s --prefix=$INSTALL_FOLDER " % distroSpecificConfigure,
+                'make -j $DCORES',
+                'make install',
+            ])
+
         else:
             cmd = ' && '.join([
                 "mkdir -p build",
@@ -267,6 +355,7 @@ class gccBuild(configure):
                 # 'make install',
             ])
 
+
         # make sure we're using the distros GCC to build GCC
         symlinks =  [
             'ln -s  $TARGET_FOLDER /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2 || true',
@@ -298,7 +387,8 @@ class gccBuild(configure):
                 if versionMajor == 4.8:
                     ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
                 else:
-                    ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+                    # ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+                    ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
 
             # we add a couple of wrappers to ar and ranlib, so we don't have to build then.
             # the wrapper make sure they can load the correct libstdc++ from system
@@ -390,10 +480,10 @@ class boost(configure):
 
         if float(os_environ['VERSION_MAJOR']) == 1.54:
             cmd = [
-                "curl -L -s 'http://www.boost.org/patches/1_54_0/001-coroutine.patch' | sed 's/1_54_0/./g' | patch -p1",
-                "curl -L -s 'http://www.boost.org/patches/1_54_0/002-date-time.patch' | sed 's/1_54_0/./g' | patch -p1",
-                "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
-                "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
+                # "curl -L -s 'http://www.boost.org/patches/1_54_0/001-coroutine.patch' | sed 's/1_54_0/./g' | patch -p1",
+                # "curl -L -s 'http://www.boost.org/patches/1_54_0/002-date-time.patch' | sed 's/1_54_0/./g' | patch -p1",
+                # "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
+                # "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
                 ' ./b2 -j $CORES  --without-log  variant=release threading=multi cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
@@ -411,6 +501,10 @@ class boost(configure):
                 # ' ./b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
+        # starting with boost 1.70, the python version is added to the libbost_python library, so some older packages will fail to find it.
+        # we fix it by adding a link
+        if float(os_environ['VERSION_MAJOR']) >= 1.70:
+            cmd += ['( x=$(ls $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python??.so) ; [ "$x" != "" ] && ln -s $(basename $x) $(dirname $x)/libboost_python.so )']
 
         # if we need to build with system gcc
         # if float(os_environ['VERSION_MAJOR']) in []:
