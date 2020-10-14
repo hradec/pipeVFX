@@ -5,12 +5,11 @@ processed = {}
 created = []
 remove = []
 
-m.delete(m.ls("dbool_*"))
-m.delete(m.ls("__tmp*"))
+def atoi(text):
+    return int(text) if text.isdigit() else text
 
 def cleanName(name):
     return str(''.join(re.findall('[a-zA-Z]', name))).strip()
-
 
 def difference(node):
     meshes = traverse(node)
@@ -30,8 +29,8 @@ def difference(node):
           m.delete( tmp2 )
         except:
           pass
-			
-            
+
+
     return current
 
 def union(node):
@@ -48,15 +47,14 @@ def union(node):
         current = m.duplicate(tmp2,rc=1)
         m.delete( tmp )
         m.delete( tmp2 )
-        
+
         #if node[:7] == '__union':
         #    name = node.split('union_')[-1]
         #    m.select( current )
         #    m.rename( name )
         #    return name
-            
-    return current
 
+    return current
 
 def intersect(node):
     print node
@@ -73,21 +71,19 @@ def intersect(node):
         current = m.duplicate(tmp2,rc=1)
         m.delete( tmp )
         m.delete( tmp2 )
-        
+
         if node[:7] == '__union':
             name = node.split('union_')[-1]
             m.select( current )
             m.rename( name )
             return name
-            
+
     return current
 
-
-
-
 def instance(node):
-    meshes = None;#traverse(node)
+    meshes = None;
     if not meshes:
+        parent=m.listRelatives(node, p=1)
         name = node.split('instance_')[-1]
         name = 'dbool%s' % ''.join(re.findall('[a-zA-Z]', name))
         meshes = []
@@ -105,14 +101,13 @@ def instance(node):
             m.setAttr( "%s.scaleX" % mesh[0], m.getAttr( "%s.scaleX" % node ) )
             m.setAttr( "%s.scaleY" % mesh[0], m.getAttr( "%s.scaleY" % node ) )
             m.setAttr( "%s.scaleZ" % mesh[0], m.getAttr( "%s.scaleZ" % node ) )
-            #m.select([mesh[0],each])
-            #m.parent(r=1)
+            # m.select(mesh[0], parent)
+            # m.parent(r=1)
             meshes += mesh
     return meshes
-    
-    
+
 def delete(node):
-    meshes = None;#traverse(node)
+    meshes = None;
     if not meshes:
         name = node.split('delete_')[-1]
         name = ''.join(re.findall('[a-zA-Z_]', name))
@@ -123,9 +118,6 @@ def delete(node):
             if m.objExists(each):
                 m.delete(each)
     return meshes
-    
-    
-    
 
 def traverse(script):
     meshes=[]
@@ -143,7 +135,7 @@ def traverse(script):
                         mesh = difference(each)
                         name = "dbool_%s" % node.split('difference_')[-1]
                         meshes.append(m.rename( mesh, name ))
-            
+
                 if node[:7] == '__union':
                     if not processed.has_key(each):
                         processed[each] = True
@@ -157,54 +149,30 @@ def traverse(script):
                         mesh = intersect(each)
                         name = "dbool_%s" % node.split('intersect_')[-1]
                         meshes.append(m.rename( mesh, name ))
-                        
+
                 if node[:10] == '__instance':
                     if not processed.has_key(each):
                         processed[each] = True
                         mesh = instance(each)
                         meshes.extend( mesh )
+
                 if node[:8] == '__delete':
                     if not processed.has_key(each):
                         processed[each] = True
                         mesh = delete(each)
+
                 else:
                     meshes += traverse(each)
+
             elif type == 'mesh':
                 if not m.getAttr('%s.intermediateObject' % each):
                     meshes.append( each )
-            
+
     return meshes
-            
 
-old=[]
-meshes = []
-disabled = []
-if m.objExists('disable'):
-    disabled=m.listConnections('disable.dagSetMembers')
-for script in m.ls('__scrip*'):
-    if script not in disabled:
-        print script
-        old.extend(meshes)
-        m.duplicate(script,rc=1,name='__tmp')
-        m.duplicate('__tmp',rc=1,name='__tmp2')
-        m.delete('__tmp')
-        m.hide(script)
-        meshes = traverse('__tmp2')
-        created.extend( meshes )
-        m.delete('__tmp2')
-
-if m.ls('____tmp_*'):
-	m.delete('____tmp_*')
-
-noIntermediate = m.ls("dbool_*",dag=1,type='mesh',l=1,noIntermediate=1)
-for each in filter(lambda x: x not in noIntermediate, m.ls("dbool_*",dag=1,type='mesh',l=1,noIntermediate=0)):
-    m.delete(each.split('|')[1])
-
-
-
-def bindToPrintable():    
+def bindToPrintable():
     printable = {}
-    for each in m.ls('print_*',type='transform'): 
+    for each in m.ls('print_*',type='transform'):
         cn = cleanName(each.replace('print_',''))
         if cn not in printable:
             printable[cn] = []
@@ -216,13 +184,88 @@ def bindToPrintable():
             for printNode in printable[found]:
                 dboolMesh = m.ls(dbool, dag=1, type='mesh')[0]
                 printMesh = m.ls(printNode, dag=1, type='mesh')[0]
-                print dboolMesh , printMesh 
+                print "mskin:", dboolMesh , printMesh
                 try: m.connectAttr('%s.outMesh' % dboolMesh, '%s.inMesh' % printMesh, f=1);
                 except: pass
 
+def cleanUp():
+    ''' remove all created dbool_*, and unhide all scripts '''
+    m.delete(m.ls('|dbool_*'))
+    m.delete(m.ls("__tmp*"))
+    for n in m.ls("|__script*"):
+        m.setAttr("%s.visibility" % n, 1)
+
+def mskin():
+    '''
+    turn all meshes into an instance of the first
+    (connect the first outMesh into all others inMesh)
+    '''
+    sl = m.ls(sl=1,dag=1,ni=1,type='mesh',)
+    for n in range(1,len(sl)):
+        m.connectAttr('%s.outMesh' % sl[0], '%s.inMesh' % sl[n], f=1);
+
 
 def run():
-	bindToPrintable()
+    ''' executa all __script* groups in the DAG root. '''
+    old=[]
+    meshes = []
+    disabled = []
 
+    cleanUp()
 
+    try: disabled=m.listConnections('disable.dagSetMembers')
+    except: True
 
+    # dont execute scripts that are inside a display layer and are not visible!
+    for each in m.ls(type='displayLayer'):
+        if not m.getAttr('%s.visibility' % each):
+            disabled += m.editDisplayLayerMembers(each,q=1)
+
+    scripts=m.ls('__scrip*')
+    def natural_keys(text):
+        '''
+        alist.sort(key=natural_keys) sorts in human order
+        http://nedbatchelder.com/blog/200712/human_sorting.html
+        (See Toothy's implementation in the comments)
+        '''
+        res = [ atoi(c) for c in re.split(r'(\d+)', text) if c.isdigit() ]
+        if not res:
+            res = [text]
+        return [res[0]]
+    scripts.sort(key=natural_keys)
+    print scripts
+
+    for script in scripts:
+        if script not in disabled:
+            # move the script transform to 0,0,0
+            transform=m.getAttr("%s.translate" % script)[0]
+            m.setAttr( "%s.translate" % script, 0.0, 0.0, 0.0 )
+
+            # execute
+            print script, transform
+            old.extend(meshes)
+            m.duplicate(script,rc=1,name='__tmp')
+            m.duplicate('__tmp',rc=1,name='__tmp2')
+            m.delete('__tmp')
+            m.hide(script)
+            meshes = traverse('__tmp2')
+            created.extend( meshes )
+            m.delete('__tmp2')
+
+            # move the script and the created meshes transforms back to original position
+            m.setAttr( "%s.translate" % script, transform[0], transform[1], transform[2] )
+            print meshes
+            for mesh in [ x for x in meshes if 'dbool_' in x[0:7] ]:
+                m.setAttr( "%s.translate" % mesh, transform[0], transform[1], transform[2] )
+
+            # attach models to print_* equivalent!
+            bindToPrintable()
+
+    if m.ls('____tmp_*'):
+    	m.delete('____tmp_*')
+
+    noIntermediate = m.ls("dbool_*",dag=1,type='mesh',l=1,noIntermediate=1)
+    for each in filter(lambda x: x not in noIntermediate, m.ls("dbool_*",dag=1,type='mesh',l=1,noIntermediate=0)):
+        m.delete(each.split('|')[1])
+
+    bindToPrintable()
