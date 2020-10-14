@@ -80,6 +80,15 @@ class cmake(make):
         ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
         ' make $MAKE_PARALLEL $MAKE_VERBOSE &&  make install'
     ]
+    needed_flags=[
+        '-DCMAKE_CC_FLAGS="$CFLAGS"',
+        '-DCMAKE_CXX_FLAGS="$CXXFLAGS"',
+        '-DCMAKE_CPP_FLAGS="$CPPFLAGS"',
+        '-DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS"',
+        '-DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS"',
+        '-DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS"',
+        '-DCMAKE_STATIC_LINKER_FLAGS="$STATICFLAGS"',
+    ]
     flags = [
             '-Wno-dev',
             '-DUSE_SIMD=0',
@@ -153,7 +162,8 @@ class cmake(make):
             'export OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
             'export OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
         ]
-        for each in self.flags:
+
+        for each in self.needed_flags+self.flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
                 cmd = cmd.replace('cmake','cmake '+each+' ')
 
