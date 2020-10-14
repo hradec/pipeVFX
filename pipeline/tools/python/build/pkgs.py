@@ -251,9 +251,9 @@ class all: # noqa
                     # CY2018 GCC 6.3.1 source code.
                    'http://vault.centos.org/7.5.1804/sclo/Source/rh/devtoolset-6/devtoolset-6-gcc-6.3.1-3.1.el7.src.rpm',
                    'gcc-6.3.1.rpm.tar.gz',
-                   '6.3.0',
+                   '6.3.1',
                    'f6f508c03da14106554604b1ad3a5aab',
-                   { build.override.src: 'gcc.spec' }
+                   { build.override.src: 'gcc.spec' } #, self.gcc_4_1_2: None }
                 )],
                 depend = allDepend+[self.gcc_4_1_2],
                 environ = { 'LD' : 'ld' },
@@ -476,17 +476,11 @@ class all: # noqa
             ARGUMENTS,
             'cmake',
             download=[(
-                'https://cmake.org/files/v3.9/cmake-3.9.6.tar.gz',
-                'cmake-3.9.6.tar.gz',
-                '3.9.6',
-                '084b1c8b2efc1c1ba432dea37243c0ae',
-                { gcc : '4.8.5' }
-            ),(
-                'https://cmake.org/files/v3.9/cmake-3.9.0.tar.gz',
-                'cmake-3.9.0.tar.gz',
-                '3.9.0',
-                '180e23b4c9b55915d271b315297f6951',
-                { gcc : '4.8.5' }
+                'http://www.cmake.org/files/v3.4/cmake-3.4.3.tar.gz',
+                'cmake-3.4.3.tar.gz',
+                '3.4.3',
+                '4cb3ff35b2472aae70f542116d616e63',
+                { gcc : '4.1.2' }
             ),(
                 'https://cmake.org/files/v3.8/cmake-3.8.2.tar.gz',
                 'cmake-3.8.2.tar.gz',
@@ -494,11 +488,23 @@ class all: # noqa
                 'b5dff61f6a7f1305271ab3f6ae261419',
                 { gcc : '4.1.2' }
             ),(
-                'http://www.cmake.org/files/v3.4/cmake-3.4.3.tar.gz',
-                'cmake-3.4.3.tar.gz',
-                '3.4.3',
-                '4cb3ff35b2472aae70f542116d616e63',
-                { gcc : '4.1.2' }
+                'https://cmake.org/files/v3.9/cmake-3.9.0.tar.gz',
+                'cmake-3.9.0.tar.gz',
+                '3.9.0',
+                '180e23b4c9b55915d271b315297f6951',
+                { gcc : '4.8.5' }
+            ),(
+                'https://cmake.org/files/v3.9/cmake-3.9.6.tar.gz',
+                'cmake-3.9.6.tar.gz',
+                '3.9.6',
+                '084b1c8b2efc1c1ba432dea37243c0ae',
+                { gcc : '4.8.5' }
+            ),(
+                'https://github.com/Kitware/CMake/releases/download/v3.18.2/cmake-3.18.2.tar.gz',
+                'cmake-3.18.2.tar.gz',
+                '3.18.2',
+                '7a882b3764f42981705286ac9daa29c2',
+                { gcc : '4.8.5' }
             )],
             cmd = [
                 "./configure --system-curl",
@@ -513,7 +519,7 @@ class all: # noqa
             }},
             depend=[gcc]+allDepend,
             environ={
-                'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,/usr/lib64/ -Wl,-rpath,/usr/lib64/",
+                'LDFLAGS' : "-Wl,-rpath-link,/usr/lib64/ -Wl,-rpath,/usr/lib64/ $LDFLAGS",
                 'LD'      : 'ld',
             },        )
         self.cmake = cmake
@@ -946,21 +952,22 @@ class all: # noqa
                 'boost_1_61_0.tar.gz',
                 '1.61.0',
                 '874805ba2e2ee415b1877ef3297bf8ad',
-                { gcc : '4.8.5' }
+                # { gcc : '4.8.5' }
+                { gcc : '6.3.1' }
             ),(
                 # CY2019
                 'http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.gz',
                 'boost_1_66_0.tar.gz',
                 '1.66.0',
                 'd275cd85b00022313c171f602db59fc5',
-                { gcc : '4.8.5' }
+                { gcc : '6.3.1' }
             # ),(
             #     # CY2020
             #     'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
             #     'boost_1_70_0.tar.gz',
             #     '1.70.0',
             #     'fea771fe8176828fabf9c09242ee8c26',
-            #     { gcc : '4.8.5' }
+            #     { gcc :  '6.3.1' }
             )],
             baseLibs=[python],
             depend=[python, openssl, bzip2, icu]+allDepend,
@@ -977,7 +984,7 @@ class all: # noqa
         self.ilmbase = {}
         self.pyilmbase = {}
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
             ilmbase = build.configure(
                 ARGUMENTS,
@@ -988,27 +995,27 @@ class all: # noqa
                     'ilmbase-2.0.0.tar.gz',
                     '2.0.0',
                     '70f1413840c2a228783d1332b8b168e6',
-                    { gcc : '4.1.2', python: '2.7.16', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', boost: boost_version }
                 ),(
                     'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
                     'ilmbase-2.1.0.tar.gz',
                     '2.1.0',
                     '8ba2f608191ad020e50277d8a3ba0850',
-                    { gcc : '4.1.2', python: '2.7.16', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', boost: boost_version }
                 ),(
                     # CY2016 - CY2018
                     'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
                     'ilmbase-2.2.0.tar.gz',
                     '2.2.0',
                     'b540db502c5fa42078249f43d18a4652',
-                    { gcc : '4.1.2', python: '2.7.16', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', boost: boost_version }
                 # ),(
                 #     # CY2019 -  *** A compiler with support for C++14 language features is required.
                 #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
                 #     'ilmbase-2.3.0.tar.gz',
                 #     '2.3.0',
                 #     '354bf86de3b930ab87ac63619d60c860',
-                #     { gcc : '4.8.5', python: '2.7.16' }
+                #     { gcc : '6.3.1', python: '2.7.16' }
                 )],
                 depend=[gcc, python, openssl]+allDepend,
                 environ={
@@ -1024,7 +1031,7 @@ class all: # noqa
             self.ilmbase[sufix] = ilmbase
 
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
             openexr = build.configure(
                 ARGUMENTS,
@@ -1035,34 +1042,34 @@ class all: # noqa
                     'openexr-2.0.0.tar.gz',
                     '2.0.0',
                     '0820e1a8665236cb9e728534ebf8df18',
-                    { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.0.0', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.0.0', boost: boost_version }
                 ),(
                     'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
                     'openexr-2.1.0.tar.gz',
                     '2.1.0',
                     '33735d37d2ee01c6d8fbd0df94fb8b43',
-                    { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.1.0', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.1.0', boost: boost_version }
                 ),(
                     # CY2016 - CY2018
                     'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
                     'openexr-2.2.0.tar.gz',
                     '2.2.0',
                     'b64e931c82aa3790329c21418373db4e',
-                    { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.2.0', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.2.0', boost: boost_version }
                 # ),(
                 #     # CY2019
                 #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
                 #     'openexr-2.3.0.tar.gz',
                 #     '2.3.0',
                 #     'a157e8a46596bc185f2472a5a4682174',
-                #     { gcc : '4.1.2', python: '2.7.16' }
+                #     { gcc : '6.3.1', python: '2.7.16' }
                 # ),(
                 #     # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
                 #     'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.0.tar.gz',
                 #     'openexr-2.4.0.tar.gz',
                 #     '2.4.0',
                 #     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
-                #     { gcc : '4.1.2', python: '2.7.16' }
+                #     { gcc : '6.3.1', python: '2.7.16' }
                 )],
                 sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
                 depend=[gcc, python, openssl]+allDepend,
@@ -1079,7 +1086,7 @@ class all: # noqa
             self.openexr[sufix] = openexr
 
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
+            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1' #'4.8.5'
             sufix = "boost.%s" % boost_version
             pyilmbase = build.configure(
                 ARGUMENTS,
@@ -1093,37 +1100,50 @@ class all: # noqa
                     'pyilmbase-2.0.0.tar.gz',
                     '2.0.0',
                     '4585eba94a82f0b0916445990a47d143',
-                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.0.0', self.openexr[sufix]: '2.0.0', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.0.0', self.openexr[sufix]: '2.0.0', boost: boost_version }
                 ),(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
                     'pyilmbase-2.1.0.tar.gz',
                     '2.1.0',
                     'af1115f4d759c574ce84efcde9845d29',
-                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.1.0', self.openexr[sufix]: '2.1.0', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.1.0', self.openexr[sufix]: '2.1.0', boost: boost_version }
                 ),(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
                     'pyilmbase-2.2.0.tar.gz',
                     '2.2.0',
                     'e84a6a4462f90b5e14d83d67253d8e5a',
-                    { gcc : '4.8.5', python: '2.7.16', self.ilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0', boost: boost_version }
+                    { gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0', boost: boost_version }
                 # ),(
                 #     'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
                 #     'pyilmbase-2.3.0.tar.gz',
                 #     '2.3.0',
-                #     'e84a6a4462f90b5e14d83d67253d8e5a',
-                #     { gcc : '4.1.2', python: '2.7.16', self.ilmbase[sufix]: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
+                #     '7ec7fef6f65594acd612bbe9fbefcea3',
+                #     { gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
                 )],
                 # baseLibs=[python],
                 depend=[python, gcc, python],
                 environ={
-                    'CFLAGS'    : ' -std=c++11 $CFLAGS ',
-                    'CXXFLAGS'  : ' -std=c++11 $CXXFLAGS ',
+                    'CFLAGS'    : ' -std=c++11 -I$BOOST_TARGET_FOLDER/include/boost/ -I$BOOST_TARGET_FOLDER/include/boost/python $CFLAGS ',
+                    'CXXFLAGS'  : ' -std=c++11 -I$BOOST_TARGET_FOLDER/include/boost/ -I$BOOST_TARGET_FOLDER/include/boost/python $CXXFLAGS ',
                     'LD'        : 'ld',
-                    'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ',
+                    'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -L$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/',
                 },
                 cmd = [
                     'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
-                    'make -j $DCORES ; make install',
+                    # we have to forcely build libPyImath first, since the build
+                    # tries to build imathmodule with libPyImath before
+                    # libPyImath is done!
+                    # 'cd $SOURCE_FOLDER/PyIex && make -j $DCORES install',
+                    # 'sleep 30',
+                    # 'cd $SOURCE_FOLDER/PyImath && make libPyImath.la -j $DCORES',
+                    # 'sleep 30',
+                    # 'cd $SOURCE_FOLDER/PyImath && make imathmodule.la -j $DCORES',
+                    # 'sleep 30',
+                    # 'cd $SOURCE_FOLDER/ && make -j $DCORES ',
+                    # 'sleep 30',
+                    # now we can build normaly and install!
+                    'export DCORES=1',
+                    'cd $SOURCE_FOLDER && make install -j $DCORES ; sleep 30 ; make install',
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
@@ -1288,8 +1308,10 @@ class all: # noqa
         ]
 
         self.exr_rpath_environ = {
-            'LDFLAGS' : ' $LDFLAGS -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(self.rpath)
-            +' -Wl,-rpath,'+' -Wl,-rpath,'.join(self.rpath),
+            'LDFLAGS' : ' $LDFLAGS '
+                +' -L'+' -L'.join(self.rpath)
+                +' -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(self.rpath)
+                +' -Wl,-rpath,'+' -Wl,-rpath,'.join(self.rpath),
             # we need this to build with exr version below 2.2.0
             'CPLUS_INCLUDE_PATH' : ':'.join([
                 '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
@@ -1305,7 +1327,7 @@ class all: # noqa
         environ = self.exr_rpath_environ
 
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
 
             # build sony field3d used by oiio 2.x
@@ -1328,14 +1350,14 @@ class all: # noqa
                     '61660c2400213ca9adbb3e17782cccfb',
                     field3d_dependency_versions,
                 )],
-                depend   = [boost,ilmbase,hdf5,icu]+allDepend,
+                depend   = [icu]+allDepend,
                 environ = environ,
             )
             self.field3d[sufix] = field3d
 
         # repeat the same loop, so we build all field3d first
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '4.8.5'
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
 
             # here we select the versions of OIIO to build for each boost.
@@ -1347,15 +1369,17 @@ class all: # noqa
                     'oiio-Release-1.5.24.tar.gz',
                     '1.5.24',
                     '8c1f9a0ec5b55a18eeea76d33ca7a02c',
-                    { gcc : '4.1.2',  boost : "1.51.0", python: '2.7.16', }
+                    { gcc : gcc_version,  boost : boost_version, python: '2.7.16', }
+                    # { gcc : '4.1.2',  boost : "1.51.0", python: '2.7.16', }
                 ]]
-            if build.versionMajor(boost_version) >= 1.51:
+            if build.versionMajor(boost_version) >= 1.51 and build.versionMajor(boost_version) < 1.70:
                 download += [[
                         'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
                         'oiio-Release-1.6.15.tar.gz',
                         '1.6.15',
                         '3fe2cef4fb5f7bc78b136d2837e1062f',
-                        { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16',}
+                        { gcc : gcc_version, boost : boost_version, python: '2.7.16',}
+                        # { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16',}
                 ]]
             if build.versionMajor(boost_version) > 1.53:
                 download += [[
@@ -1363,13 +1387,15 @@ class all: # noqa
                         'oiio-Release-1.8.10.tar.gz',
                         '1.8.10',
                         'a129a4caa39d7ad79aa1a3dc60cb0418',
-                        { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16',}
+                        { gcc : gcc_version, boost : boost_version, python: '2.7.16',}
+                        # { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16',}
                     ],[
                         'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                         'oiio-Release-2.0.11.tar.gz',
                         '2.0.11',
                         '4fa0ce4538fb2d7eb72f54f4036972d5',
-                        { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16',}
+                        { gcc : gcc_version, boost : boost_version, python: '2.7.16',}
+                        # { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16',}
                 ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
@@ -1381,7 +1407,7 @@ class all: # noqa
                 _download[n][4] = _download[n][4].copy()
                 _download[n][4][ boost ] = boost_version
                 if build.versionMajor( _download[n][4][ gcc ] ) < 4.8:
-                    _download[n][4][ gcc ] = gcc_version
+                    _download[n][4][ gcc ] = '4.8.5'
                 _download[n][4][ self.ilmbase  [sufix] ] = exr_version
                 _download[n][4][ self.pyilmbase[sufix] ] = exr_version
                 _download[n][4][ self.openexr  [sufix] ] = exr_version
@@ -1468,19 +1494,19 @@ class all: # noqa
                 'llvm-9.0.0.src.tar.gz',
                 '9.0.0',
                 '0fd4283ff485dffb71a4f1cc8fd3fc72',
-                { gcc : '4.8.5', clang : '9.0.0' }
+                { gcc : '6.3.1', clang : '9.0.0', boost: '1.61.0'}
             ),(
                 'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/llvm-7.1.0.src.tar.xz',
                 'llvm-7.1.0.src.tar.gz',
                 '7.1.0',
                 '26844e21dbad09dc7f9b37b89d7a2e48',
-                { gcc : '4.8.5', clang : '7.1.0' }
+                { gcc : '6.3.1', clang : '7.1.0', boost: '1.61.0' }
             ),(
                 'http://releases.llvm.org/3.9.1/llvm-3.9.1.src.tar.xz',
                 'llvm-3.9.1.src.tar.gz',
                 '3.9.1',
                 '3259018a7437e157f3642df80f1983ea',
-                { gcc : '4.8.5', clang : '3.9.1' }
+                { gcc : '6.3.1', clang : '3.9.1', boost: '1.61.0' }
             )],
             sed = {
                 '3.5.2' : {
@@ -1498,7 +1524,8 @@ class all: # noqa
                 'mkdir -p build && cd build',
                 # since llvm link uses lots of memory, we define the number
                 # of threads by dividing the ammount of memory in GB by 12
-                # 'export MAKE_PARALLEL=""',
+                'export DCORES=1',
+                'export MAKE_PARALLEL=" VERBOSE=1 "',
                 ' && '.join(build.cmake.cmd),
             ],
             flags = [
@@ -1713,7 +1740,7 @@ class all: # noqa
                 'OpenShadingLanguage-Release-1.10.7.tar.gz',
                 '1.10.7',
                 '53f66e12c3e29c62dc51b070f027a0ad',
-                {llvm : "7.1.0", gcc: "4.8.5", boost: bv,
+                {llvm : "7.1.0", gcc: "6.3.1", boost: bv,
                 self.ilmbase['boost.%s' % bv]: exr_version,
                 self.openexr['boost.%s' % bv]: exr_version,
                 self.oiio   ['boost.%s' % bv]: "1.8.10", }
@@ -1778,6 +1805,10 @@ class all: # noqa
                             ' -isystem /usr/include',
                 'LD' :  'g++ '
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ' + self.exr_rpath_environ['LDFLAGS'],
+
+                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ' + self.exr_rpath_environ['LDFLAGS'],
             },
@@ -2023,7 +2054,7 @@ class all: # noqa
                 'ptex-2.3.2.tar.gz',
                 '2.3.2',
                 'd409eecde96f89517bc271b1d4909bc5',
-                { cmake: '3.8.2', gcc : '4.1.2' }
+                { cmake: '3.8.2', gcc : '6.3.1' }
             ),(
                 # CY 2019
                 'https://github.com/wdas/ptex/archive/v2.1.33.tar.gz',
@@ -2073,7 +2104,7 @@ class all: # noqa
             'openvdb',
             download=[(
             #     # CY 2020
-            #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
+            #     'https://github.com/AcademySftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
             #     'openvdb-7.0.0.tar.gz',
             #     '7.0.0',
             #     'd409eecde96f89517bc271b1d4909bc5',
@@ -2085,7 +2116,7 @@ class all: # noqa
                 'openvdb-6.0.0.tar.gz',
                 '6.0.0',
                 '43604208441b1f3625c479ef0a36d7ad',
-                { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
+                { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
                 self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
             ),(
                 # CY 2018
@@ -2093,7 +2124,7 @@ class all: # noqa
                 'openvdb-5.0.0.tar.gz',
                 '5.0.0',
                 '9ba08c29dda60ec625acb8a5928875e5',
-                { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
+                { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
                 self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
             ),(
                 # CY 2017
@@ -2101,7 +2132,7 @@ class all: # noqa
                 'openvdb-4.0.0.tar.gz',
                 '4.0.0',
                 'c56d8a1a460f1d3327f2568e3934ca6a',
-                { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
+                { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
                 self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
             ),(
                 # CY 2015-2016
@@ -2109,7 +2140,7 @@ class all: # noqa
                 'openvdb-3.0.0.tar.gz',
                 '3.0.0',
                 '3ca8f930ddf759763088e265654f4084',
-                { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
+                { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
                 self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version, self.pyilmbase['boost.1.61.0']: exr_version, }
             )],
             depend=allDepend+[glfw],
@@ -2150,6 +2181,7 @@ class all: # noqa
         allDepend += [openvdb]
 
         # build alembic without apps plugins
+        print self.ilmbase
         alembic = build.alembic(
             ARGUMENTS,
             'alembic',
@@ -2192,7 +2224,7 @@ class all: # noqa
                 'alembic-1.7.11.tar.gz',
                 '1.7.11',
                 'e156568a8d8b48c4da4fe2496386243d',
-                {gcc: '4.8.5', boost: '1.61.0', hdf5: '1.8.11',
+                {gcc: '6.3.1', boost: '1.61.0', hdf5: '1.8.11',
                 self.ilmbase  ['boost.1.61.0']: exr_version,
                 self.openexr  ['boost.1.61.0']: exr_version,
                 self.pyilmbase['boost.1.61.0']: exr_version },
@@ -2202,7 +2234,7 @@ class all: # noqa
                 'alembic-1.7.1.tar.gz',
                 '1.7.1',
                 'c8e2c8f951af09cfdacb2ca1fd5823a5',
-                {gcc: '4.8.5', boost: '1.61.0', hdf5: '1.8.11',
+                {gcc: '6.3.1', boost: '1.61.0', hdf5: '1.8.11',
                 self.ilmbase  ['boost.1.61.0']: exr_version,
                 self.openexr  ['boost.1.61.0']: exr_version,
                 self.pyilmbase['boost.1.61.0']: exr_version },
@@ -2211,7 +2243,7 @@ class all: # noqa
             depend=allDepend+[hdf5],
             environ = {
                 # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
-                'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
+                'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib -lhdf5_hl $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
                 'LD_PRELOAD': ':'.join([
                     '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
                     '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
@@ -2229,7 +2261,7 @@ class all: # noqa
                 'clew-0.10.2016.zip',
                 '0.10.2016',
                 None,
-                {gcc: '4.8.5'},
+                {gcc: '4.8.5', boost: '1.61.0'},
             )],
             depend=allDepend+[boost, glfw, glew],
             verbose=1,
@@ -2296,10 +2328,10 @@ class all: # noqa
                 'OpenSubdiv-3_4_0.tar.gz',
                 '3.4.0',
                 '2eea21ef2d85bcbbcee94e287c34a07e',
-                {gcc: '4.8.5', boost: '1.61.0', ptex: '2.3.2'},
+                {gcc: '6.3.1', boost: '1.61.0', ptex: '2.3.2'},
             )],
             # baseLibs=[python],
-            depend=allDepend+[boost, hdf5, glfw, glew, ptex],
+            depend=allDepend+[hdf5, glfw, glew],
             flags=[
                 "-DGLEW_LOCATION=$GLEW_TARGET_FOLDER/",
                 "-DVERBOSE=1",
@@ -2307,7 +2339,7 @@ class all: # noqa
             environ = {
                 'CFLAGS'    : ' -fopenmp $CFLAGS ',
                 'CXXFLAGS'  : ' -fopenmp $CXXFLAGS ',
-                'LDFLAGS'   : ' -lX11 -lclew $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'] ,
+                'LDFLAGS'   : ' -lX11 -lclew -lPtex $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'] ,
             },
             verbose=1,
         )
@@ -2339,8 +2371,21 @@ class all: # noqa
                 'USD-19.07.tar.gz',
                 '19.7.0',
                 '8d274089364cfed23004ae52fa3d258f',
-                {gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
-                cmake: '3.8.2', tbb: '4.4.6',
+                {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                cmake: '3.18.2', tbb: '4.4.6',
+                boost: '1.61.0',
+                self.ilmbase['boost.1.61.0']: exr_version,
+                self.openexr['boost.1.61.0']: exr_version,
+                self.oiio   ['boost.1.61.0']: '1.8.10'},
+
+            ),(
+                # this is the latest for now - sept/2020
+                'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
+                'USD-20.08.tar.gz',
+                '20.8.0',
+                'e7f31719ef2359c939d23871333a763a',
+                {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                cmake: '3.18.2', tbb: '4.4.6',
                 boost: '1.61.0',
                 self.ilmbase['boost.1.61.0']: exr_version,
                 self.openexr['boost.1.61.0']: exr_version,
@@ -2375,9 +2420,9 @@ class all: # noqa
                 " -D PXR_BUILD_TESTS=OFF"
                 # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
                 # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
-                " --build --target install -j $CORES ..",
-                "make -j $CORES",
-                "make install",
+                " --build --target install --parallel $DCORES ..",
+                "make -j $DCORES",
+                "make -j $DCORES install",
                 "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
             ],
             flags=[
@@ -2387,19 +2432,23 @@ class all: # noqa
                 "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
                 "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
                 "-D PXR_BUILD_IMAGING=ON",
-                "-D PXR_BUILD_USD_IMAGING=ON"
+                "-D PXR_BUILD_USD_IMAGING=ON",
 
                 # enable support to different components.
-                " -D PXR_ENABLE_HDF5_SUPPORT=ON"
-                " -D PXR_ENABLE_OSL_SUPPORT=ON"
-                " -D PXR_ENABLE_PTEX_SUPPORT=ON"
+                " -D PXR_ENABLE_HDF5_SUPPORT=ON",
+                " -D PXR_ENABLE_OSL_SUPPORT=ON",
+                " -D PXR_ENABLE_PTEX_SUPPORT=ON",
+                " -D VERBOSE=1",
+                " -D CMAKE_CXX_STANDARD=11",
+                " -D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
+                " -D_GLIBCXX_USE_CXX11_ABI=0",
             ],
             environ = {
                 # we need boost first of everything else since icu also has regex.h
                 'CFLAGS'    : ' -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost ',
-                'CXXFLAGS'  : ' -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost ',
+                'CXXFLAGS'  : ' -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options ',
                 'LD'        : 'ld',
-                'LDFLAGS'   : '$LDFLAGS -lboost_regex ' + self.exr_rpath_environ['LDFLAGS'],
+                'LDFLAGS'   : '$LDFLAGS -lboost_regex -lboost_program_options' + self.exr_rpath_environ['LDFLAGS'],
                 'LD_PRELOAD': ':'.join([
                     '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
                     '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
@@ -2420,7 +2469,7 @@ class all: # noqa
                 'lz4-1.9.2.tar.gz',
                 '1.9.2',
                 '3898c56c82fb3d9455aefd48db48eaad',
-                { gcc: '4.8.5', cmake: '3.9.0', tbb: '4.4.6',
+                { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
                 qt: '5.6.1', boost: '1.61.0', },
             )],
             depend = allDepend+[python],
@@ -2444,21 +2493,21 @@ class all: # noqa
             #     'SeExpr-2.0-beta.2.tar.gz',
             #     '2.0.0.beta2',
             #     '528037ccab6034504a057e68cb455bd8',
-            #     { gcc: '4.8.5', cmake: '3.9.0', tbb: '4.4.6',
+            #     { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
             #     qt: '5.6.1', boost: '1.61.0', },
             # ),(
             #     'https://github.com/appleseedhq/SeExpr/archive/v2.11.tar.gz',
             #     'SeExpr-2.11.tar.gz',
             #     '2.11.0',
             #     '9c3c98c1c988c7901200600b8a542cc9',
-            #     { gcc: '4.8.5', cmake: '3.9.0', tbb: '4.4.6',
+            #     { gcc: 6.3.1', cmake: '3.9.0', tbb: '4.4.6',
             #     qt: '5.6.1', boost: '1.61.0', },
             # ),(
                 'https://github.com/appleseedhq/SeExpr/archive/appleseed-qt5.zip',
                 'SeExpr-appleseed-qt5.zip',
                 '2.1.0.beta',
                 'c73820b50ebb15ce8a5affcab60722a2',
-                { gcc: '4.8.5', cmake: '3.9.0', tbb: '4.4.6',
+                { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
                 qt: '5.6.1', boost: '1.61.0', },
             )],
             depend = allDepend+[python, qt],
@@ -2487,7 +2536,7 @@ class all: # noqa
                 'xerces-c-3.2.2.tar.gz',
                 '3.2.2',
                 'bd91a5583212e77035a5d524eda17555',
-                { gcc: '4.8.5', cmake: '3.9.0', tbb: '4.4.6',
+                { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
                 qt: '5.6.1', boost: '1.61.0', },
             )],
             depend = allDepend+[python],
@@ -2525,7 +2574,7 @@ class all: # noqa
             #     'appleseed-2.1.0-beta.tar.gz',
             #     '2.1.0.beta',
             #     '4413d83ee8d6fc379f4a914381f1c7a4',
-            #     { gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11',
+            #     { gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11',
             #     hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '5.6.1',
             #     self.boost: '1.61.0', embree: '3.6.1',
             #     self.ilmbase['boost.1.61.0']: exr_version,
@@ -2536,7 +2585,7 @@ class all: # noqa
                 'appleseed-2.0.5-beta.tar.gz',
                 '2.0.5.beta',
                 '8fd84ddd180abc8fba75163b67419e3e',
-                { gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11',
+                { gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11',
                 hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '4.8.7',
                 self.boost: '1.61.0', embree: '3.5.2',
                 self.ilmbase['boost.1.61.0']: exr_version,

@@ -19,6 +19,10 @@ from cortex_options import *
 
 BUILD_TYPE="RELEASE"
 
+# os.environ['LD_LIBRARY_PATH'] = '$GCC_TARGET_FOLDER/lib/'
+# ENV_VARS_TO_IMPORT="LD_LIBRARY_PATH"
+
+
 cortex = os.environ['CORTEX_VERSION']
 qt     = os.environ['QT_VERSION']
 pyqt   = os.environ['PYQT_VERSION']
@@ -28,6 +32,9 @@ ocio   = os.environ['OCIO_VERSION']
 osl    = os.environ['OSL_VERSION']
 boost  = os.environ['BOOST_VERSION']
 
+import build
+if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 4.2:
+    CXXSTD = "c++11"
 
 # INSTALL_DIR = os.environ['TARGET_FOLDER']
 BUILD_DIR='/tmp/build/gaffer-${GAFFER_MAJOR_VERSION}.${GAFFER_MINOR_VERSION}.${GAFFER_PATCH_VERSION}-${GAFFER_PLATFORM}-python'+'.'.join(python.split('.')[:2])
@@ -40,7 +47,7 @@ LOCATE_DEPENDENCY_LIBPATH=[]
 libs = os.path.dirname( INSTALL_PREFIX )
 apps = '/atomo/apps/linux/x86_64/'
 
-
+# OSLHOME=os.environ['OSL_TARGET_FOLDER']
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['PYTHON_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include/python%s' % ( os.environ['PYTHON_TARGET_FOLDER'], '.'.join(python.split('.')[:2]) ) )
@@ -102,8 +109,9 @@ LOCATE_DEPENDENCY_LIBPATH.append( '%s/usd/%s/lib/boost%s'               % ( os.e
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/usd/%s/lib/boost%s/python%s'      % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['USD_VERSION'], boost, '.'.join(python.split('.')[:2]) ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/openvdb/%s/lib/boost%s'           % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['OPENVDB_VERSION'], boost ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/openvdb/%s/lib/boost%s/python%s'  % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['OPENVDB_VERSION'], boost,  '.'.join(python.split('.')[:2]) ) )
-LOCATE_DEPENDENCY_LIBPATH.append( '%s/appleseed/%s/lib/'          % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['APPLESEED_VERSION'] ) )
-LOCATE_DEPENDENCY_LIBPATH.append( '%s/appleseed/%s/lib/python%s'  % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['APPLESEED_VERSION'],  '.'.join(python.split('.')[:2]) ) )
+if 'APPLESEED_VERSION' in os.environ:
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/appleseed/%s/lib/'          % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['APPLESEED_VERSION'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/appleseed/%s/lib/python%s'  % ( os.environ['CORTEX_TARGET_FOLDER'], os.environ['APPLESEED_VERSION'],  '.'.join(python.split('.')[:2]) ) )
 
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['QT_TARGET_FOLDER'] ) )
@@ -209,7 +217,6 @@ popPrint('All Gaffer Paths...')
 # print LINKFLAGS
 # SHLINKFLAGS=LINKFLAGS
 
-# ENV_VARS_TO_IMPORT="PATH"
 
 #INSTALL_DIR="/atomo/pipeline/libs/linux/x86_64/gcc-%s/gaffer/%s/" % (gcc, getCortexVersion())
 #INSTALL_DIR="/atomo/apps/linux/x86_64/gaffer/%s/" % getCortexVersion()

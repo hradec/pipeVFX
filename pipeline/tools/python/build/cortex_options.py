@@ -98,6 +98,9 @@ arnold   = app_environ('ARNOLD_VERSION')
 
 popPrint('Versions being used to build cortex...')
 
+import build
+if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 4.2:
+    CXXSTD = "c++11"
 
 # python
 # =============================================================================================================================================================
