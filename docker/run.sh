@@ -12,6 +12,7 @@ mkdir -p /atomo/pipeline/libs/
 
 export TERM=xterm-256color
 
+
 if [ "$RUN_SHELL" == "1" ] ; then
     # set root password to "nopass"
     passwd="nopasswd"
@@ -52,6 +53,11 @@ else
         echo "Building in ramdisk!!! $EXTRA"
         mount -t tmpfs tmpfs /atomo/pipeline/build/.build
     fi
+
+    # remove boost libraries to avoid building against then.
+    mkdir -p /root/source-highlight/libs/
+    mv /usr/lib64/libboost_* /root/source-highlight/libs/
+    ldconfig
 
     # we run scons 3 times just in case, since pkgs using
     # cuda may fail to build at first, but build on a second try.
