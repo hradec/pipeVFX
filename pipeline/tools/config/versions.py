@@ -21,7 +21,8 @@
 import pipe,os
 
 # default libraries set
-os.environ['GCC_VERSION'] = 'gcc-multi'
+# os.environ['GCC_VERSION'] = 'gcc-multi'
+os.environ['GCC_VERSION'] = 'pipevfx.5.0.0'
 
 # default farm engine!
 os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
@@ -40,7 +41,8 @@ pipe.version.set( xpra      = '0.15.svn9672' )
 pipe.version.set( arnold    = '5.1.0.1' )
 pipe.version.set( realflow  = '10.5.3.0189' )
 pipe.version.set( prman     = '23.4' )
-pipe.version.set( unreal    = '4.22.0.opengl' )
+pipe.version.set( keentools = '02.01.01' )
+
 
 
 # set global library versions
