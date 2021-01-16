@@ -167,6 +167,10 @@ class maya(baseApp):
             pipe.libs.version.set( sip  = '4.16.7.maya%s' % self.version() )
             pipe.libs.version.set( pyqt = '4.11.4.maya%s' % self.version() )
 
+        if mv > 2017:
+            self.ignorePipeLib( "pyqt" )
+            self.ignorePipeLib( "sip" )
+
         # xgen libraries
         self['XGEN_GLOBAL'] = self.path('plug-ins/xgen/')
         maya.addon( self, lib=self.path('plug-ins/xgen/lib/') )
@@ -222,8 +226,6 @@ class maya(baseApp):
             self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
 
             self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
-
-
 
         # we run this to make sure Asset module works when importing IECore
         # for maya 2018 and up, since it comes with pyilmbase, which doens't match
@@ -519,6 +521,7 @@ class maya(baseApp):
                 'OpenEXR exception',
                 '* CRASHED',
                 'render terminating early:  received abort signal',
+                'Maya exited with status'
         ]
         for s in fatalErrors:
             if s in str(returnLog):
