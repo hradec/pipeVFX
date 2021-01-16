@@ -501,6 +501,7 @@ class maya(baseApp):
                 'OpenEXR exception',
                 '* CRASHED',
                 'render terminating early:  received abort signal',
+                'Maya exited with status',
         ]
         for s in fatalErrors:
             if s in str(returnLog):
