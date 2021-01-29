@@ -19,6 +19,14 @@
 # =================================================================================
 
 import os, sys
+import maya
+import maya.cmds as m
+from maya.mel import eval as meval
+if 'DISPLAY' in os.environ:
+    try:
+        m.scriptEditorInfo(wh=True, hfn='/dev/stderr')
+    except: pass
+
 
 print "Loading Pipeline Startup from %s" % __file__
 
@@ -27,28 +35,23 @@ print "Loading Pipeline Startup from %s" % __file__
 # we add alembic/imath pythonpath to the top of sys.path here so maya will use
 # our version!
 import pipe
-libs = [
-    pipe.libs.alembic(),
-    pipe.libs.pyilmbase(),
-    pipe.libs.openvdb(),
-    pipe.libs.usd(),
-]
-for lib in libs:
-    p = lib['PYTHONPATH']
-    if type(p) == type(""):
-        p = [p]
-    for x in p:
-        sys.path.insert( 0, os.path.expandvars(x) )
-import imath, alembic
+
+def prependPythonPath( libs ):
+    if type(libs) != type([]):
+        libs = [libs]
+    for lib in libs:
+        p = lib['PYTHONPATH']
+        if type(p) == type(""):
+            p = [p]
+        for x in p:
+            sys.path.insert( 0, os.path.expandvars(x) )
+
+
 
 # now we add maya pythonpath to the top!
-sys.path.insert( 0, "%s/lib/python%s.zip" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
-sys.path.insert( 0, "%s/lib/python%s/lib-dynload" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
-sys.path.insert( 0, "%s/lib/python%s/site-packages/" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
-
-import maya
-import maya.cmds as m
-from maya.mel import eval as meval
+# sys.path.insert( 0, "%s/lib/python%s.zip" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
+# sys.path.insert( 0, "%s/lib/python%s/lib-dynload" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
+# sys.path.insert( 0, "%s/lib/python%s/site-packages/" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
 
 
 # fix the F key, just in case!
@@ -60,11 +63,8 @@ from time import time
 
 startTime = time()
 
-if 'DISPLAY' in os.environ:
-    try:
-        m.scriptEditorInfo(wh=True, hfn='/dev/stderr')
-    except: pass
 print 'Pipeline Startup...'
+sys.stdout.flush()
 
 #
 if 'MAYA_USE_VRAY' in os.environ:
@@ -84,6 +84,7 @@ def pipeIdleStartup():
     import traceback
 
     print 'PipeIdleStartup...'
+    sys.stdout.flush()
     # if we're in a job/shot, set workspace current to the
     # current user maya folder
     j = pipe.admin.job.current()
@@ -92,33 +93,50 @@ def pipeIdleStartup():
         user = j.shot.user()
         m.workspace( user.path('maya'), o=1 )
 
+
+    plugs=[]
+    if float(os.environ["MAYA_VERSION"]) > 2017:
+        prependPythonPath([
+            pipe.libs.pyilmbase(),
+            pipe.libs.alembic(),
+            pipe.libs.openvdb(),
+            pipe.libs.usd(),
+        ])
+        import imath
+        import alembic
+        plugs += ['RenderMan_for_Maya.py']
+    else:
+        plugs += ['RenderMan_for_Maya']
+
     # if user is 3d, add qube ui!
     # if os.environ['USER'] == '3d':
     #     meval('qube_addUI();')
 
     # force auto-load of these plugins at startup!
-    plugs=[
+    plugs+=[
         # 'slumMayaPlugin.py',
-        'OpenVDB',
         'AbcImport',
         'AbcExport',
         'gpuCache',
         'ieCore',
-        'RenderMan_for_Maya',
         'houdiniEngine',
+        'OpenVDB',
 #        '3delight_for_maya%s' % os.environ['MAYA_VERSION_MAJOR'],
     ]
+
     if plugs:
         for each in plugs:
             print '='*80
             print 'PIPE: auto-loading %s plugin...\n' % each
+            sys.stdout.flush()
             try:
                 m.loadPlugin( each )
             except:
                 print "Can't load %s plugin!!" % each
                 traceback.print_exc()
         print '='*80
-
+        print "Finished plugin auto-loading..."
+        sys.stdout.flush()
 
     # re-initialize cortex menu to filter out admin ops!
     try:
@@ -433,17 +451,19 @@ else:
             import genericAsset
             pb = genericAsset.progressBar(3,"Finishing maya startup... ")
             pb.step()
-            loadAssetManager()
-            pb.step()
             pipeIdleStartup()
             pb.step()
+            loadAssetManager()
+            pb.step()
+            print float(os.environ["MAYA_VERSION"])
             if float(os.environ["MAYA_VERSION"]) < 2018:
                 RMS_setup()
             pb.close()
-    __runAll__()
-    # m.scriptJob( runOnce=True,  idleEvent=__runAll__ )
+    # __runAll__()
+    m.scriptJob( runOnce=True,  idleEvent=__runAll__ )
 
 
-import pipe
-for classes in [ "pipe.apps.%s" % x for x in dir(pipe.apps) if "startup" in eval("dir(pipe.apps.%s)" % x)]:
-    eval("%s().startup()" % classes)
+# import pipe
+# for classes in [ "pipe.apps.%s" % x for x in dir(pipe.apps) if "startup" in eval("dir(pipe.apps.%s)" % x)]:
+#     print "Running startup method of %s..." % classes
+#     eval("%s().startup()" % classes)

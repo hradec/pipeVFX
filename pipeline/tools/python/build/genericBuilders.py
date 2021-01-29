@@ -1163,7 +1163,8 @@ class generic:
 
 
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
-                    os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
+                    # os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
+                    os_environ['%s_VERSION' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].strip('/').split('/')[-1]
                     os_environ['%s_ROOT' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()]
 
                     if os_environ['VERSION'] not in DB[self.name]:
@@ -1408,7 +1409,7 @@ class generic:
         if DEBUG():
             showLog = ' | tee -a '
         pipeFile = ' 2>&1 \
-            | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors \
+            | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors \
             | tee -a  %s %s %s.err ' % (lastlog, showLog, lastlog)
         # cmd = cmd.replace( '&&', ' %s && ' % pipeFile )
 
@@ -1556,12 +1557,24 @@ class generic:
 
         # add  options last, so we can add includes before and after the bunch
         # https://gcc.gnu.org/onlinedocs/gcc-4.1.2/cpp/Invocation.html#Invocation
-        # -nostdinc     Do not search the standard system directories for header files. Only the directories you have specified with -I options (and the directory of the current file, if appropriate) are searched.
-        # -nostdinc++   Do not search for header files in the C++-specific standard directories, but do still search the other standard directories. (This option is used when building the C++ library.)
-        # -isystem dir  Search dir for header files, after all directories specified by -I but before the standard system directories. Mark it as a system directory, so that it gets the same special treatment as is applied to the standard system directories. See System Headers.
+        # -nostdinc     Do not search the standard system directories for header
+        # files. Only the directories you have specified with -I options (and
+        # the directory of the current file, if appropriate) are searched.
+        # -nostdinc++   Do not search for header files in the C++-specific standard
+        # directories, but do still search the other standard directories. (This
+        # option is used when building the C++ library.)
+        # -isystem dir  Search dir for header files, after all directories
+        # specified by -I but before the standard system directories.
+        # Mark it as a system directory, so that it gets the same special
+        # treatment as is applied to the standard system directories. See System Headers.
         os_environ['CFLAGS']   = ' -O2 -fPIC -w -nostdinc  -Wno-error ' + os_environ['CFLAGS']
-        os_environ['CXXFLAGS'] = ' -O2 -fPIC -w -nostdinc++ -Wno-error ' + os_environ['CXXFLAGS']
+        os_environ['CXXFLAGS'] = ' -O2 -fPIC -w -nostdinc -nostdinc++ -Wno-error ' + os_environ['CXXFLAGS']
         os_environ['LDFLAGS']  = ' -fPIC ' + os_environ['LDFLAGS']
+
+        if 'GCC_VERSION' in os_environ and versionMajor(os_environ['GCC_VERSION'])>=6.3:
+            os_environ['CFLAGS']   = ' -D_GLIBCXX_USE_CXX11_ABI=0 ' + os_environ['CFLAGS']
+            os_environ['CXXFLAGS'] = ' -D_GLIBCXX_USE_CXX11_ABI=0 ' + os_environ['CXXFLAGS']
+
 
         # since we're using -nostdinc, we have to setup the system folders by hand
         system_includes = [
@@ -1661,6 +1674,8 @@ class generic:
 
 
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
+        # LD_RUN_PATH should do the same as specifying -Wl,-rpath,<path> for
+        # each library path in the command line. Need testing though!
         if '/gcc/' not in target:
             os_environ['LD_RUN_PATH'] = os_environ['LIBRARY_PATH']
             # os_environ['LD_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
@@ -1675,7 +1690,7 @@ class generic:
 
         # keep giving feedback about the build.
         while proc.poll() is None:
-            tail = os.popen('tail -n 100 %s | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
+            tail = os.popen('tail -n 100 %s | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
             if not tail:
                 tail=['']
             _elapsed = time.gmtime(time.time()-_start)
@@ -1740,7 +1755,7 @@ class generic:
             if not self.travis and not sconsParallel:
                 _print(  '-'*tcols )
                 if not DEBUG():
-                    os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors' % lastlog )
+                    os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors' % lastlog )
                 #for each in open("%s.err" % lastlog).readlines() :
                 #    print '::\t%s' % each.strip()
                 _print( ret )

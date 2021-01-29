@@ -33,8 +33,8 @@ class python(baseLib):
         # compiled with the system libraries.
         # we have to remove this once OIIO and OCIO are properly build with the pipe gcc!
         if self.parent() not in ['nuke']:
-            self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libstdc++.so.6")
-            self['LD_PRELOAD'] = pipe.base.findSharedLibrary("libgcc_s.so.1")
+            self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
+            self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
 
         # if nuke version < 8.0 or gaffer, force to load our libpython shared lib
         if parent in ['nuke','gaffer']:
@@ -45,7 +45,7 @@ class python(baseLib):
 
 
         # set PYTHONHOME for some apps...
-        if self.parent() in ['python','delight','houdini','cortex', 'qube']:
+        if self.parent() in ['python','delight','houdini','cortex', 'qube', 'unreal']:
             self['PYTHONHOME'] = self.path()
             # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
             self.ignorePipeLib( "freetype" )

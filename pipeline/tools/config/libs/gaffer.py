@@ -60,6 +60,8 @@ class gaffer(baseLib):
 
             if hasattr( pipe.libs, 'ocio' ):
                 # self['LD_PRELOAD'] = pipe.libs.ocio().path('lib/libOpenColorIO.so.1')
+                self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
+                self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
                 self.insert( 'LD_LIBRARY_PATH', 0,  pipe.libs.ocio().path('lib/python$PYTHON_VERSION_MAJOR/site-packages') )
 
             # our standard OCIO color space

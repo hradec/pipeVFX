@@ -168,6 +168,11 @@ def traverse(script):
                 if not m.getAttr('%s.intermediateObject' % each):
                     meshes.append( each )
 
+            # for mesh in meshes:
+            #     # print mesh, "merge"
+            #     m.polyMergeVertex( mesh, d=0.01, am=1, ch=1 )
+            # m.select(cl=1)
+
     return meshes
 
 def bindToPrintable():

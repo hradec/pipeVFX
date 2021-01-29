@@ -32,7 +32,7 @@ genericRegistry = [
     '   pass',
 ]
 for each in libsDB():
-    if each != 'gcc':
+    # if each != 'gcc':
          exec( '\n'.join(genericRegistry) % each.replace('-','_').replace('+','_plus_') )
 
 

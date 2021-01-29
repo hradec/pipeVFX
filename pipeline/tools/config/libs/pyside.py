@@ -23,6 +23,6 @@
 class pyside(baseLib):
     def environ(self):
         self['LD_PRELOAD'] = ':'.join([
-            pipe.findLibrary('libstdc++.so.6'),
-            pipe.findLibrary('libgcc_s.so.1'),
+            pipe.latestGCCLibrary("libstdc++.so.6"),
+            pipe.latestGCCLibrary("libgcc_s.so.1"),
         ])

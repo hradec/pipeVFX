@@ -153,8 +153,9 @@ class SAMPanel( GafferUI.EditorWidget ):
         self.__buttons = []
         self.__buttonsSignals = []
         with self.layout:
+          with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Vertical ):
             with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Vertical ):
-                with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Horizontal ) as toolbar:
+                with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Horizontal ):
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "samShelfPanelx20.png", toolTip="Refresh the panel from the most up-to-date data"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )

@@ -83,20 +83,13 @@ for each in glob.glob('%s/*.py' %  moduleRootPath):
 os.chdir(curdir)
 '''
 
-from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name
+from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name, findSharedLibrary
 
 
 def versionMajor(versionString):
     if not versionString:
         return 0.0
     return float('.'.join(versionString.split('.')[:2]))
-
-def findLibrary(libname):
-    import os
-    # '%s/gcc/4.8.5/lib64/libstdc++.so.6' % pipe.build.install(),
-    # '%s/gcc/4.8.5/lib64/libgcc_s.so.1' % pipe.build.install(),
-    return ''.join(os.popen( "ldconfig -p | grep %s | grep $(uname -m | sed 's/_/-/g')" % libname ).readlines()).strip().split(' ')[-1]
-
 
 
 def versionSort(versions):
@@ -139,6 +132,20 @@ import frame
 import build
 
 
+def latestGCCLibrary(libname):
+    import os, libs
+    _lib = libs.gcc().path('lib/%s' % libname)
+    if not os.path.exists(_lib):
+        _lib = findSharedLibrary(libname)
+    return _lib
+
+
+def findLibrary(libname):
+    return findSharedLibrary(libname)
+    # import os
+    # # '%s/gcc/4.8.5/lib64/libstdc++.so.6' % pipe.build.install(),
+    # # '%s/gcc/4.8.5/lib64/libgcc_s.so.1' % pipe.build.install(),
+    # return ''.join(os.popen( "ldconfig -p | grep %s | grep $(uname -m | sed 's/_/-/g')" % libname ).readlines()).strip().split(' ')[-1]
 
 def _force_os_environ(print_traceback=None):
     ''' this is a hack to restart a running python to account for a new os.environ

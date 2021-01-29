@@ -497,7 +497,7 @@ class boost(configure):
         if float(os_environ['VERSION_MAJOR']) >= 1.61:
             cmd = [
                 ' ./bootstrap.sh --prefix=$INSTALL_FOLDER --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER --without-libraries=log --without-icu',
-                ' ./bjam -j $CORES --disable-icu cxxflags="-fPIC -fpermissive -std=c++11" variant=release linkflags="$LDFLAGS" link=shared threading=multi  -d+2  install',
+                ' ./bjam -j $CORES --disable-icu cxxflags=" -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC -fpermissive -std=c++11 " variant=release linkflags="$LDFLAGS" link=shared threading=multi  -d+2  install',
                 # ' ./b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
@@ -580,7 +580,7 @@ class python(configure):
             '$PYTHON ./setup.py install --prefix=$INSTALL_FOLDER '
         ')',
         "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/easy_install hashlib || true)",
-        '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip || true)',
+        '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip==20 || true)',
         '(ln -s pip$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/pip || true)',
         "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/pip install  readline || true)",
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
@@ -590,11 +590,11 @@ class python(configure):
         cmd = configure.fixCMD(self,cmd, os_environ)
         if self.kargs.has_key('easy_install'):
             for each in self.kargs['easy_install']:
-                cmd += ' && $INSTALL_FOLDER/bin/easy_install %s ' % each
+                cmd += ' && PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/easy_install %s ' % each
         if self.kargs.has_key('pip'):
             for each in self.kargs['pip']:
                 if int(pipe.apps.version.get('python').split('.')[0]) < 3 or 'PyOpenGL-accelerate' not in each:
-                    cmd += ' && $INSTALL_FOLDER/bin/pip install %s ' % each
+                    cmd += ' && PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/pip install %s ' % each
         return cmd
 
     # def installer(self, target, source, env): # noqa
