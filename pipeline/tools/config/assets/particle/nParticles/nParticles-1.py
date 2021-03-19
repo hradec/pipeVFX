@@ -107,7 +107,7 @@ class nParticles( IECore.Op ) :
 
         self.parameters().addParameters([
             IECore.CompoundParameter("FrameRange","",[
-                IECore.V3fParameter("range","Inicio, fim e 'step' da sequencia a ser rendida.",IECore.V3f(start, end, byFrameStep), userData=disabled),
+                IECore.V3iParameter("range","Inicio, fim e 'step' da sequencia a ser rendida.",IECore.V3i(int(start), int(end), int(byFrameStep)), userData=disabled),
             ],userData = { "UI": {"collapsed" : IECore.BoolData(False)}}),
         ])
 
