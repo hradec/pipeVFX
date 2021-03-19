@@ -66,29 +66,30 @@ def intersect(node):
         tmp     = m.listRelatives(current,p=1,f=1)
         if not tmp:
             tmp = current
-        tmp3    = m.polyCBoolOp(current, meshes[n], op=3, ch=1, preserveColor=0)
+        tmp3    = m.polyCBoolOp(current, meshes[n], op=3, ch=1, preserveColor=0, classification=1 )
         tmp2    = filter(lambda x: m.nodeType(x) == 'transform', tmp3)
         current = m.duplicate(tmp2,rc=1)
         m.delete( tmp )
         m.delete( tmp2 )
 
-        if node[:7] == '__union':
-            name = node.split('union_')[-1]
-            m.select( current )
-            m.rename( name )
-            return name
+        # if node[:7] == '__union':
+        #     name = node.split('union_')[-1]
+        #     m.select( current )
+        #     m.rename( name )
+        #     return name
 
     return current
 
 def instance(node):
     meshes = None;
+    all = m.ls('dbool_*',dag=1, type='transform')+m.ls('____tmp__dbool_*',dag=1, type='transform')
     if not meshes:
         parent=m.listRelatives(node, p=1)
-        name = node.split('instance_')[-1]
-        name = 'dbool%s' % ''.join(re.findall('[a-zA-Z]', name))
+        _name = node.split('instance_')[-1]
+        name = 'dbool%s' % ( ''.join(re.findall('[a-zA-Z]', _name)) )
         meshes = []
-        print "instance:",name, map(lambda x: ''.join(re.findall('[a-zA-Z]', x)), created), filter(lambda x: name in ''.join(re.findall('[a-zA-Z]', x)), created)
-        for each in filter(lambda x: name in ''.join(re.findall('[a-zA-Z]', x)), created):
+        print "instance:",name, map(lambda x: ''.join(re.findall('[a-zA-Z]', x)), all), filter(lambda x: name in ''.join(re.findall('[a-zA-Z]', x)), all)
+        for each in filter(lambda x: name in ''.join(re.findall('[a-zA-Z]', x)), all):
             print each
             mesh = m.duplicate(each,rc=1, name='____tmp_%s' % each)
             print name, mesh,  m.getAttr( "%s.translateY" % node )
@@ -107,19 +108,23 @@ def instance(node):
     return meshes
 
 def delete(node):
+    global created
     meshes = None;
+    all = m.ls('dbool_*',dag=1, type='transform')+m.ls('____tmp__dbool_*',dag=1, type='transform')
     if not meshes:
         name = node.split('delete_')[-1]
         name = ''.join(re.findall('[a-zA-Z_]', name))
         print "delete: ", name
         meshes = []
-        for each in filter(lambda x: name in x, created):
+        for each in filter(lambda x: name in x, all):
             print each
             if m.objExists(each):
                 m.delete(each)
     return meshes
 
 def traverse(script):
+    print "traverse:", script
+    global created
     meshes=[]
     children = m.listRelatives(script,c=1,f=1)
     if not children:
@@ -153,6 +158,7 @@ def traverse(script):
                 if node[:10] == '__instance':
                     if not processed.has_key(each):
                         processed[each] = True
+                        print "====>", meshes, created
                         mesh = instance(each)
                         meshes.extend( mesh )
 
@@ -168,9 +174,9 @@ def traverse(script):
                 if not m.getAttr('%s.intermediateObject' % each):
                     meshes.append( each )
 
-            # for mesh in meshes:
-            #     # print mesh, "merge"
-            #     m.polyMergeVertex( mesh, d=0.01, am=1, ch=1 )
+            for mesh in meshes:
+                if m.objExists(mesh):
+                    m.polyMergeVertex( mesh, d=0.01, am=1, ch=1 )
             # m.select(cl=1)
 
     return meshes
@@ -193,6 +199,10 @@ def bindToPrintable():
                 try: m.connectAttr('%s.outMesh' % dboolMesh, '%s.inMesh' % printMesh, f=1);
                 except: pass
 
+def NormalAngle(degree=30):
+    for each in m.ls(sl=1,type='mesh',dag=1,ni=1):
+        m.polySoftEdge( each, angle=degree, ch=1 )
+
 def cleanUp():
     ''' remove all created dbool_*, and unhide all scripts '''
     m.delete(m.ls('|dbool_*'))
@@ -212,6 +222,7 @@ def mskin():
 
 def run():
     ''' executa all __script* groups in the DAG root. '''
+    global created
     old=[]
     meshes = []
     disabled = []
@@ -231,7 +242,7 @@ def run():
         '''
         alist.sort(key=natural_keys) sorts in human order
         http://nedbatchelder.com/blog/200712/human_sorting.html
-        (See Toothy's implementation in the comments)
+        (See Toothy's implementation in the comments
         '''
         res = [ atoi(c) for c in re.split(r'(\d+)', text) if c.isdigit() ]
         if not res:
@@ -261,16 +272,24 @@ def run():
             m.setAttr( "%s.translate" % script, transform[0], transform[1], transform[2] )
             print meshes
             for mesh in [ x for x in meshes if 'dbool_' in x[0:7] ]:
-                m.setAttr( "%s.translate" % mesh, transform[0], transform[1], transform[2] )
+                if m.objExists(mesh):
+                    m.setAttr( "%s.translate" % mesh, transform[0], transform[1], transform[2] )
 
             # attach models to print_* equivalent!
-            bindToPrintable()
+            try:
+                bindToPrintable()
+            except: pass
+
 
     if m.ls('____tmp_*'):
     	m.delete('____tmp_*')
+    if m.ls('__tmp*'):
+    	m.delete('__tmp*')
 
-    noIntermediate = m.ls("dbool_*",dag=1,type='mesh',l=1,noIntermediate=1)
-    for each in filter(lambda x: x not in noIntermediate, m.ls("dbool_*",dag=1,type='mesh',l=1,noIntermediate=0)):
-        m.delete(each.split('|')[1])
+    # noIntermediate = m.ls("dbool_*",dag=1,type='mesh',l=1,noIntermediate=1)
+    # for each in filter(lambda x: x not in noIntermediate, m.ls("dbool_*",dag=1,type='mesh',l=1,noIntermediate=0)):
+    #     m.delete(each.split('|')[1])
 
-    bindToPrintable()
+    try:
+        bindToPrintable()
+    except: pass
