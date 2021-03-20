@@ -506,7 +506,8 @@ class job(baseFarmJobClass):
                 _job.setAnnotation( self.asset )
 
             print( '='*80 )
-            print( _job.output(1) )
+            try: print( _job.output(1) )
+            except: print( _job.output() )
             print( '='*80 )
 
             return _job.send()

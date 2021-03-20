@@ -31,8 +31,18 @@ class blender(baseApp):
         self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/lib-dynload/'))
         self.insert('LD_LIBRARY_PATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/lib-dynload/'))
 
+        self.update(cgru())
         self.update(cortex())
         self.update(gaffer())
+
+    @staticmethod
+    def addon(caller, plugin="", script="", icon="", lib=''):
+        ''' the addon method MUST be implemented for all classes so other apps can set up
+        searchpaths for this app. For example, another app which has plugins for this one!'''
+        caller['BLENDER_USER_SCRIPTS']      = plugin
+        caller['BLENDER_USER_SCRIPTS']      = script
+        caller['LD_LIBRARY_PATH']           = lib
+
 
     def preRun(self, cmd):
         l=os.environ['LD_LIBRARY_PATH'].split(':')
