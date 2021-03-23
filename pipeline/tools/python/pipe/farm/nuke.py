@@ -19,7 +19,7 @@
 # =================================================================================
 
 import pipe.apps
-import current
+from pipe.farm import current
 import os
 
 class nuke(current.engine):

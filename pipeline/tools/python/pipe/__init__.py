@@ -19,7 +19,9 @@
 # =================================================================================
 
 
+from __future__ import print_function
 import os, glob, sys, traceback
+
 # avoid creating .pyc since it can cause trouble between Intel and AMD
 sys.dont_write_bytecode = True
 
@@ -153,12 +155,12 @@ def _force_os_environ(print_traceback=None):
     having the environment properly set before running python.
     So used it carefully!!!'''
     if print_traceback:
-        print traceback.print_exc()
+        print (traceback.print_exc())
     import os
     try:
         os.execv(sys.argv[0], sys.argv)
-    except Exception, exc:
-        print 'Failed re-exec:', exc
+    except (Exception, exc):
+        print ('Failed re-exec:', exc)
         sys.exit(1)
 
 def studio(name=None):
@@ -397,7 +399,7 @@ def go():
             if '-h' in args:
                 id=0-len(argsHist)
                 for each in argsHist:
-                    print >>sys.stderr,'\t%d = go %s' % (id, ' '.join(each[1:]))
+                    sys.stderr.write('\t%d = go %s\n' % (id, ' '.join(each[1:])))
                     id += 1
                 return ''
 
@@ -433,8 +435,8 @@ def go():
         if lines:
             for each in lines[-20:]:
                 if str(args) != each.strip():
-                    print >>f, each.strip()
-        print >>f, args
+                    f.write("%s\n" % each.strip())
+        f.write("%s\n" % args)
         f.close()
     except:
         pass

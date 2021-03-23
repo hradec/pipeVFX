@@ -20,7 +20,7 @@
 import sys, os
 sys.path += [os.path.dirname(__file__)]
 
-import afanasy as afanasy
-import qube as qube
+from pipe.farm.engines import afanasy as afanasy
+from pipe.farm.engines import qube as qube
 
 sys.path.remove( os.path.dirname(__file__) )

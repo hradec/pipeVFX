@@ -17,6 +17,7 @@
 #    You should have received a copy of the GNU Lesser General Public License
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
+from __future__ import print_function
 
 class redshift(baseApp):
     def environ(self):
@@ -76,22 +77,22 @@ class redshift(baseApp):
 
         licenses=[ [ l for l in x.split('/') if '.local' in l ][0] for x in glob.glob("/atomo/pipeline/tools/licenses/redshift/*/*/") ]
         if not licenses:
-            print "\n\nRedshift is not currently licensed on any machine!\n\n"
+            print ("\n\nRedshift is not currently licensed on any machine!\n\n")
         else:
             if socket.gethostname() not in licenses:
-                print "\n\nRedshift has license files on this machine(s):"+b.FAIL
+                print ("\n\nRedshift has license files on this machine(s):"+b.FAIL)
                 for l in licenses:
-                    print "\t%s" % l
-                print b.END+"\nYou need to deactivate first before activating here."
+                    print ("\t%s" % l)
+                print (b.END+"\nYou need to deactivate first before activating here.")
 
                 if '--force' not in sys.argv:
-                    print b.END+"\nRun this tool again with "+b.GREEN+" --force "+b.END+" to force open the license tool to reset the license."
-                    print b.WARNING+"(avoid using --force or else we will have to manually erase the license found at /atomo/pipeline/tools/licenses/redshift/%s)\n\n%s" % (licenses[0], b.END)
+                    print (b.END+"\nRun this tool again with "+b.GREEN+" --force "+b.END+" to force open the license tool to reset the license.")
+                    print (b.WARNING+"(avoid using --force or else we will have to manually erase the license found at /atomo/pipeline/tools/licenses/redshift/%s)\n\n%s" % (licenses[0], b.END))
                     sys.exit(-1)
 
         if 'redshiftLicensingTool' in app:
             while not os.path.exists('/var/tmp/redshift'):
-                print "Linux still finishing boot... waiting fixed license path to become available. (press CTRL+C to cancel)"
+                print ("Linux still finishing boot... waiting fixed license path to become available. (press CTRL+C to cancel)")
                 time.sleep(5)
 
             # proxy for redshift licenseManager

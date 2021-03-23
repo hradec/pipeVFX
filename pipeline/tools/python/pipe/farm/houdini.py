@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 # =================================================================================
 
 import pipe.apps
-import current
+from pipe.farm import current
 import os
 
 
@@ -32,23 +32,22 @@ class houdini(current.engine):
         if not os.path.exists(self.scene):
             raise Exception("Can find the file %s!!!" % self.scene)
         current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group)
-        
+
     def cook(self):
 
         output_drivers = self.output_driver
         if type(self.output_driver) == type([]):
             output_drivers = ','.join(self.output_driver)
-       
-        # if renderer os mantra, do a hrender normally. 
+
+        # if renderer os mantra, do a hrender normally.
         # we can setup here different renders to do simulation, for example!
-        if self.renderer == 'mantra': 
+        if self.renderer == 'mantra':
             self.name += " | HOUDINI v%s" % pipe.apps.houdini().version()[3:]
             #self.licenses['mantra'] = True
-            
+
         self.cmd = ' '.join([
             'run hrender -e -f %s %s' % (self.frameNumber(),self.frameNumber()),
             '-d %s' % output_drivers,
 #            '-o "%s"' % self.output_filename,
             '\\\'%s\\\'' % self.scene
         ])
-        

@@ -18,6 +18,8 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+from __future__ import print_function
+
 import pipe
 import os,sys, time
 import tempfile, filecmp
@@ -545,7 +547,7 @@ def _makeMontage(montageImages, imagePath):
     montageImages.sort()
 
     def __threadedSudoCmd__(cmd):
-        print cmd
+        print( cmd )
         sudo = pipe.admin.sudo()
         sudo.cmd( cmd )
         print( sudo.run() )
@@ -607,7 +609,7 @@ def makeMontage(path):
     montageImages=[]
     frames = {}
     for f in files:
-        print f
+        print( f )
         frame = os.path.splitext(os.path.splitext(f)[0])[1][1:]
         if frame not in frames:
             frames[ frame ] = []

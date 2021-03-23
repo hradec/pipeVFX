@@ -1,0 +1,28 @@
+#!/bin/bash
+
+export USER=$(/bin/python2 -c "import sys;print ''.join(sys.argv).split('/users/')[-1].split('/blender/')[0]" "$@")
+
+source /atomo/pipeline/tools/init/bash
+
+export PIPE_FARM_USER=$USER
+
+export PIPE_JOB=$(/bin/python2 -c "import sys;print ''.join(sys.argv).split('/jobs/')[-1].split('/')[0]" "$@")
+export PIPE_SHOT=$(/bin/python2 -c "import sys;print '@'.join(''.join(sys.argv).split('/$PIPE_JOB/')[-1].split('/')[:2]).replace('s@','@')" "$@")
+
+
+export src="source /atomo/pipeline/tools/scripts/go $PIPE_JOB   $(/bin/python2 -c "import sys;print ' '.join('$PIPE_SHOT'.split('@'))" "$@")"
+
+#env | grep PIPE
+
+args="$(echo "$@" | sed 's/-i//')"
+cmd=$(echo runuser -l $USER -c "\" source /atomo/pipeline/tools/init/bash && $src && run blender $args\"")
+echo "HOST: $(hostname)"
+echo $cmd
+eval "$cmd"
+result=$?
+if [ $result -ne 0 ] ; then
+
+    echo "[ PARSE ERROR ]"
+
+fi
+exit $result

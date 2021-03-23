@@ -344,7 +344,7 @@ class job(sudo):
         if not os.path.exists( path ):
             tags = [ x.split('/')[-1] for x in glob.glob( "%s/*.*.*" % roots.tags() ) if x.split('/')[-1][0].isdigit() ]
             tags.sort(key=StrictVersion)
-            print tags
+            # print tags
             self.symlink( '%s/%s' % (roots.tags(), tags[-1]), path )
 
     def mkpublished(self, path):
