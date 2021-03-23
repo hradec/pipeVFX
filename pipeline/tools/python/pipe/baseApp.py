@@ -99,9 +99,9 @@ class appsDB(dict):
         self.latest = {}
         self.app = appName
 
-        self.win = platform == WIN
-        self.osx = platform == OSX
-        self.linux = platform == LIN
+        self.win = WIN in platform
+        self.osx =  OSX in platform
+        self.linux = LIN in platform
         self.arch = arch
         self.platform = platform
         self.py = py
@@ -552,7 +552,7 @@ class baseApp(_environ):
         self.updatedClasses = {}
 
         # current local machine/system info
-        from platform import dist
+        from platform import platform as dist
         self.platform = dist()[0].lower()
         self.win = platform == WIN
         self.osx = platform == OSX

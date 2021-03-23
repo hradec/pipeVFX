@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -19,17 +19,17 @@
 # =================================================================================
 
 import pipe.apps
-import current
+from pipe.farm import current
 import os, sys
 
 
 class daily(current.engine):
 #    def __init__(self, cmdLine, name='', CPUS=0, extra={}, priority = 9999, range = range(1,11,1), group = 'pipe', pad=4, asset=''):
 #        current.engine.__init__(self, '', name='', CPUS=0, extra={}, priority = 9999, range = range(1,11,1), group = 'pipe', pad=4, asset='')
-    
+
     def subJobs(self):
         return '1'
-        
+
     def cook(self):
         d = pipe.apps.dailies()
         version = os.path.basename( os.path.realpath( d.path() ) )
@@ -40,4 +40,3 @@ class daily(current.engine):
             '"%s"' % self.cmd,
             '%s,%s,1' % (self.frameNumber(), self.frameNumber()),
         ])
-        

@@ -271,7 +271,7 @@ class job(baseFarmJobClass):
             j = self.list(jobID)
 
         assert( j )
-        assert( len(j) is 1 )
+        assert( len(j) == 1 )
 
         jobID = j[0]['id']
 
@@ -318,7 +318,7 @@ class job(baseFarmJobClass):
             j = self.list(jobID)
 
         assert( j )
-        assert( len(j) is 1 )
+        assert( len(j) == 1 )
 
 
         firstFrame = j[0]['blocks'][blockID]['frame_first']

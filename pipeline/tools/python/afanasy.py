@@ -46,7 +46,7 @@ class simple( object ):
             job = self._getJobList(jobID)
 
         assert( job )
-        assert( len(job) is 1 )
+        assert( len(job) == 1 )
 
 
         firstFrame = job[0]['blocks'][blockID]['frame_first']
