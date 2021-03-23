@@ -41,25 +41,26 @@ class redshift(baseApp):
         # MAYA_RENDER_DESC_PATH = $REDSHIFT_RENDER_DESC_PATH
         # MAYA_CUSTOM_TEMPLATE_PATH = $REDSHIFT_CUSTOM_TEMPLATE_PATH
 
-        maya.addon(self,
-            plugin = self.path("redshift4maya/$MAYA_VERSION"),
-            script = self.path("redshift4maya/common/scripts"),
-            icon = self.path("redshift4maya/common/icons"),
-            renderDesc = self.path('redshift4maya/common/rendererDesc'),
-            lib = [
-                self.path('redshift4maya/$MAYA_VERSION/extensions'),
-                self.path('bin'),
-            ],
-            preset = '',
-            module = '',
-            shelves = self.path('redshift4maya/common/shelves/$MAYA_VERSION_MAJOR'),
-            templates = self.path('redshift4maya/common/scripts/NETemplates'),
-        )
+        try:
+            maya.addon(self,
+                plugin = self.path("redshift4maya/$MAYA_VERSION"),
+                script = self.path("redshift4maya/common/scripts"),
+                icon = self.path("redshift4maya/common/icons"),
+                renderDesc = self.path('redshift4maya/common/rendererDesc'),
+                lib = [
+                    self.path('redshift4maya/$MAYA_VERSION/extensions'),
+                    self.path('bin'),
+                ],
+                preset = '',
+                module = '',
+                shelves = self.path('redshift4maya/common/shelves/$MAYA_VERSION_MAJOR'),
+                templates = self.path('redshift4maya/common/scripts/NETemplates'),
+            )
 
-        # add ranch renderfarm to redshift setup!
-        self.update( ranch() )
-
-
+            # add ranch renderfarm to redshift setup!
+            self.update( ranch() )
+        except:
+            pass
 
     def bins(self):
         ret = [
@@ -70,13 +71,34 @@ class redshift(baseApp):
         return ret
 
     def run(self, app):
-        import os, sys, glob
+        import os, sys, glob, time, socket
+        from pipe.bcolors import bcolors as b
 
+        licenses=[ [ l for l in x.split('/') if '.local' in l ][0] for x in glob.glob("/atomo/pipeline/tools/licenses/redshift/*/*/") ]
+        if not licenses:
+            print "\n\nRedshift is not currently licensed on any machine!\n\n"
+        else:
+            if socket.gethostname() not in licenses:
+                print "\n\nRedshift has license files on this machine(s):"+b.FAIL
+                for l in licenses:
+                    print "\t%s" % l
+                print b.END+"\nYou need to deactivate first before activating here."
 
-        # if 'redshiftLicensingTool' in app:
-        #     #proxy for redshift licenseManager
-        #     self['http_proxy'] = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
-        #
+                if '--force' not in sys.argv:
+                    print b.END+"\nRun this tool again with "+b.GREEN+" --force "+b.END+" to force open the license tool to reset the license."
+                    print b.WARNING+"(avoid using --force or else we will have to manually erase the license found at /atomo/pipeline/tools/licenses/redshift/%s)\n\n%s" % (licenses[0], b.END)
+                    sys.exit(-1)
+
+        if 'redshiftLicensingTool' in app:
+            while not os.path.exists('/var/tmp/redshift'):
+                print "Linux still finishing boot... waiting fixed license path to become available. (press CTRL+C to cancel)"
+                time.sleep(5)
+
+            # proxy for redshift licenseManager
+            # locked node license - this damn thing needs internet to run in locked node!!
+            self['http_proxy']  = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
+            self['https_proxy'] = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
+
         baseApp.run( self, app )
 
     def license(self):
@@ -84,7 +106,3 @@ class redshift(baseApp):
         # setup for floating licenses - no internet needed!!
         # self['redshift_LICENSE'] = os.environ['PIPE_REDSHIFT_LICENSE']
         # self['RLM_LICENSE_PASSWORD'] = '1'
-
-        # locked node license - this damn thing needs internet to run in locked node!!
-        # self['http_proxy']  = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
-        # self['https_proxy'] = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
