@@ -43,6 +43,11 @@ class blender(baseApp):
         caller['BLENDER_USER_SCRIPTS']      = script
         caller['LD_LIBRARY_PATH']           = lib
 
+    def bins(self):
+        ret = [
+            ('blender', 'blender --python-use-system-env'),
+        ]
+        return ret
 
     def preRun(self, cmd):
         l=os.environ['LD_LIBRARY_PATH'].split(':')
