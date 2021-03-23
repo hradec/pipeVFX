@@ -18,4 +18,11 @@ args="$(echo "$@" | sed 's/-i//')"
 cmd=$(echo runuser -l $USER -c "\" source /atomo/pipeline/tools/init/bash && $src && run blender $args\"")
 echo "HOST: $(hostname)"
 echo $cmd
-eval "$cmd  ; echo $?"
+eval "$cmd"
+result=$?
+if [ $result -ne 0 ] ; then
+
+    echo "[ PARSE ERROR ]"
+
+fi
+exit $result
