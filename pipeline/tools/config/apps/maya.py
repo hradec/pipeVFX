@@ -162,14 +162,21 @@ class maya(baseApp):
                 if self.parent() in ['maya']:
                     self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
 
-        # set the proper sip/pyqt so gaffer works
-        if mv > 2015:
-            pipe.libs.version.set( sip  = '4.16.7.maya%s' % self.version() )
-            pipe.libs.version.set( pyqt = '4.11.4.maya%s' % self.version() )
+        if self.parent() in ['maya']:
+            if mv > 2017:
+                self.ignorePipeLib( "qt" )
+                self.ignorePipeLib( "pyqt" )
+                self.ignorePipeLib( "sip" )
+                self.ignorePipeLib( "pyside" )
+                # self.update(pipe.libs.pyside())
+                # pipe.libs.version.set( pyqt = '5.12.0' )
+                self.ignorePipeLib( "fontconfig" )
 
-        if mv > 2017:
-            self.ignorePipeLib( "pyqt" )
-            self.ignorePipeLib( "sip" )
+            # set the proper sip/pyqt so gaffer works
+            elif mv > 2015:
+                pipe.libs.version.set( sip  = '4.16.7.maya%s' % self.version() )
+                pipe.libs.version.set( pyqt = '4.11.4.maya%s' % self.version() )
+
 
         # xgen libraries
         self['XGEN_GLOBAL'] = self.path('plug-ins/xgen/')
@@ -521,7 +528,7 @@ class maya(baseApp):
                 'OpenEXR exception',
                 '* CRASHED',
                 'render terminating early:  received abort signal',
-                'Maya exited with status'
+                'Maya exited with status',
         ]
         for s in fatalErrors:
             if s in str(returnLog):
