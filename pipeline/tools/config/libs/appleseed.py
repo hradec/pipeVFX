@@ -23,7 +23,8 @@
 class appleseed(baseLib):
 
     def environ(self):
-        self['PYTHONHOME'] = pipe.libs.python().path()
+        if self.parent() in ['gaffer','python']:
+            self['PYTHONHOME'] = pipe.libs.python().path()
         self['PYTHONPATH'] = '%s/lib/python$PYTHON_VERSION_MAJOR' % self.path()
 
         self['APPLESEED'] = self.path()

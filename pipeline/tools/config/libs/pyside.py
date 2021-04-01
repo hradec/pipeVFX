@@ -26,3 +26,4 @@ class pyside(baseLib):
             pipe.latestGCCLibrary("libstdc++.so.6"),
             pipe.latestGCCLibrary("libgcc_s.so.1"),
         ])
+        self['PYTHONPATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR_qt$QT_VERSION')

@@ -59,7 +59,6 @@ if 'GCC_VERSION' in os.environ:
     pipe.libs.version.set( pyilmbase= exr )
     pipe.libs.version.set( oiio     = '1.8' )
     pipe.libs.version.set( tbb      = '4.4.6' )
-    pipe.libs.version.set( pyqt     = '4.11.4' )
 else:
     pipe.version.set( python        = '2.6.8' )
     pipe.libs.version.set( alembic  = '1.1.1' )
@@ -72,12 +71,21 @@ else:
 # specific versions for software packages
 # ===================================================================
 mv = float(pipe.version.get('maya'))
-if mv <= 2018:
-    # maximum versions for maya equal and below 2018
+if mv < 2018:
+    # maximum versions for maya below 2018
     # pipe.libs.version.set( alembic     = '1.5.8' )
-    if mv < 2018:
-        # maximum versions for maya below 2018
-        pipe.version.set( prman     = '21.7' )
+    pipe.version.set( python        = '2.7' )
+    exr='2.0.0'
+    pipe.libs.version.set( python   = '2.7' )
+    pipe.libs.version.set( freetype = '2.4.0' )
+    pipe.libs.version.set( boost    = '1.61' )
+    pipe.libs.version.set( openexr  = exr )
+    pipe.libs.version.set( ilmbase  = exr )
+    pipe.libs.version.set( pyilmbase= exr )
+    pipe.libs.version.set( oiio     = '1.8' )
+    pipe.libs.version.set( tbb      = '4.4.6' )
+    pipe.libs.version.set( pyqt = '4.11.4' )
+    pipe.version.set( prman     = '21.7' )
     if mv <= 2014:
         # maximum versions for maya 2014
         pipe.version.set( prman     = '20.11' )
@@ -87,8 +95,10 @@ if mv <= 2018:
 # gaffer and cortex version need to be tested toguether!
 # ===================================================================
 if 'GCC_VERSION' in os.environ:
-    pipe.version.set( gaffer        = '0.55' )
-    pipe.libs.version.set( gaffer   = '0.55' )
+    # pipe.version.set( gaffer        = '0.59.6.0' )
+    # pipe.libs.version.set( gaffer   = '0.59.6.0' )
+    pipe.version.set( gaffer        = '0.55.0.0' )
+    pipe.libs.version.set( gaffer   = '0.55.0.0' )
     pipe.libs.version.set( cortex   = '10.0' )
     pipe.libs.version.set( appleseed= '2.0.5.beta' )
 else:

@@ -49,10 +49,14 @@ def prependPythonPath( libs ):
 
 
 # now we add maya pythonpath to the top!
-# sys.path.insert( 0, "%s/lib/python%s.zip" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
-# sys.path.insert( 0, "%s/lib/python%s/lib-dynload" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
-# sys.path.insert( 0, "%s/lib/python%s/site-packages/" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'] ) )
-
+if float(os.environ["MAYA_VERSION"]) > 2017:
+    prependPythonPath(pipe.apps.maya())
+    if not m.about(batch=1):
+        # force PySide2 to load from maya folder!
+        import PySide2
+        import shiboken2
+        reload(PySide2)
+        reload(shiboken2)
 
 # fix the F key, just in case!
 meval('optionVar  -fv "defaultFitFactor" 0.99')
@@ -65,6 +69,9 @@ startTime = time()
 
 print 'Pipeline Startup...'
 sys.stdout.flush()
+
+
+
 
 #
 if 'MAYA_USE_VRAY' in os.environ:
