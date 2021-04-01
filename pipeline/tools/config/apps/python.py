@@ -35,7 +35,7 @@ class python(baseLib):
         if self.parent() not in ['nuke']:
             self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
             self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
-
+            
         # if nuke version < 8.0 or gaffer, force to load our libpython shared lib
         if parent in ['nuke','gaffer']:
             sharedLib = self.path('lib/libpython%s.so.1.0' % pipe.libs.version.get('python')[:3])
@@ -56,8 +56,10 @@ class python(baseLib):
             #     self.ignorePipeLib( "qt" )
 
             # initialize cortex environment so we can load its modules.
-            self.update( cortex() )
-            self.update( gaffer() )
+            # self.update( cortex() )
+            # self.update( gaffer() )
+            self.update( pipe.libs.cortex() )
+            self.update( pipe.libs.gaffer() )
 
             # also, initialize buildStuff in case theres some pythonmodules there.
             self.update( buildStuff() )

@@ -68,20 +68,36 @@ class gaffer(baseLib):
             if self.parent() in ["gaffer", 'maya', 'houdini']:
                 self['OCIO'] = '/atomo/pipeline/tools/ocio/config.ocio'
 
-        self.update( pipe.libs.openvdb() )
-        self.update( pipe.libs.qtpy() )
-
+        # self.update( pipe.libs.openvdb() )
+        # self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
         # add all versions of OIIO libraries to search path
         for each in glob.glob( "%s/*" % os.path.dirname(pipe.libs.oiio().path()) ):
             # print each
             self['LD_LIBRARY_PATH'] = '%s/lib/' % each
 
-        if self.parent() in ['gaffer']:
+        self.update( pipe.libs.pyqt() )
+        if self.parent() in ['gaffer','python']:
+            if os.path.exists(self.path("lib/libtbb.so.2")):
+                self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
+            else:
+                self['LD_PRELOAD'] = pipe.libs.tbb().path("lib/libtbb.so.2")
+
+            # preload Qt
+            for each in glob.glob(pipe.libs.qt().path("lib/*.so*")):
+                if os.path.isfile(each):
+                    self['LD_PRELOAD'] = each
+
+            self.update( pipe.libs.pyside() )
+            # self.update( pipe.libs.qtpy() )
             self.update( pipe.libs.python() )
             self.update( pipe.apps.prman() )
-            self.update( pipe.libs.cortex() )
-            self.update( pipe.libs.appleseed() )
-            self.update( pipe.libs.alembic() )
+            self.ignorePipeLib( "openxer" )
+            self.ignorePipeLib( "ilmbase" )
+            self.ignorePipeLib( "boost" )
+            self.ignorePipeLib( "cortex" )
+            # self.update( pipe.libs.cortex() )
+            # self.update( pipe.libs.appleseed() )
+            # self.update( pipe.libs.alembic() )
             # self.update( maya() )
 
             # hack to enable renderman in gaffer!
@@ -99,9 +115,9 @@ class gaffer(baseLib):
         if pipe.versionMajor(self.version())>0.5 and pipe.versionMajor(self.version())<2.0:
             # gaffer 0.55 and up is using PySide2, because Maya2018
             self['GAFFERUI_QT_BINDINGS'] = 'PySide2'
-        else:
-            # any other version (old gaffer), uses PyQt4
-            self['GAFFERUI_QT_BINDINGS'] = 'PyQt4'
+        # else:
+        #     # any other version (old gaffer), uses PyQt4
+        #     self['GAFFERUI_QT_BINDINGS'] = 'PyQt4'
 
 
         if self.parent() in ['maya']:
