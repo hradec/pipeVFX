@@ -106,8 +106,8 @@ def versionSort(versions):
 if osx:
     # we only set brew pythonpath if running system python!
     if sys.executable == '/usr/bin/python':
-        sys.path.insert(0, '/usr/local/lib/python2.7/site-packages/gtk-2.0/')
-        sys.path.insert(0, '/usr/local/lib/python2.7/site-packages/')
+        sys.path.insert(0, '/usr/local/lib/python$PYTHON_VERSION_MAJOR/site-packages/gtk-2.0/')
+        sys.path.insert(0, '/usr/local/lib/python$PYTHON_VERSION_MAJOR/site-packages/')
 
     # load dbus session, if needed!
     if not ''.join(os.popen('launchctl list | grep "dbus-session" 2>&1').readlines()).strip():
@@ -283,7 +283,7 @@ def init():
         paths = glob.glob( '%s/python-dbus/*' % roots.libs() )
         if paths:
             paths.sort()
-            pythonpath += ':%s/lib/python2.6/site-packages/' % paths[-1]
+            pythonpath += ':%s/lib/python$PYTHON_VERSION_MAJOR/site-packages/' % paths[-1]
 
     # add central bin/scripts folders
     path += '%s/bin:%s/scripts' % (root,root)

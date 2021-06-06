@@ -117,6 +117,7 @@ class prman(baseApp):
             self['MAYA_SHADER_LIBRARY_PATH'] = p
 
         #if self.parent  in ['nuke']:
+        folders = [ x.strip() for x in folders ]
         for each in folders:
             prman.addon(self,
                 python=[
