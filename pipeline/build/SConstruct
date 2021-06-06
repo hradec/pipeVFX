@@ -29,8 +29,10 @@ os.environ['GCC_VERSION'] = 'gcc-%s' % gcc_version
 # build all pkgs, if not already built!
 import build
 print 'build.installRoot() = '+build.installRoot()
+
 # pkgs will have all scons builds as its parameters
 # ex: to use boost, just add pkgs.boost as a dependency
+exr_version = '2.2.0'
 pkgs = build.pkgs.all(ARGUMENTS) # noqa
 
 # get installed app versions using pipe
@@ -39,21 +41,34 @@ import pipe
 # ===========================================================================================
 # CORTEX VFX
 # ===========================================================================================
-boostMasterVersion = "1.55.0"
+boostMasterVersion = "1.61.0"
 download = [[
     'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
     'cortex-9.18.0.tar.gz',
     '9.18.0',
     'b3c55cc5e0e95668208713a01a145869',
     {pkgs.boost : "1.51.0", pkgs.alembic : "1.7.11",
-     pkgs.gcc : '4.1.2', pkgs.oiio: '1.6.15', pkgs.tbb: '4.4.6'}
-],[
-    'https://github.com/ImageEngine/cortex/archive/10.0.0-a68.tar.gz',
-    'cortex-10.0.0-a68.tar.gz',
-    '10.0.0.a68',
-    'e506ed51b6e94f729925d5a6742c75c2',
-    {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.7.11",
-     pkgs.gcc : '4.8.5', pkgs.oiio: '1.8.10', pkgs.tbb: '4.4.6'}
+     pkgs.hdf5 : [ x[4][pkgs.hdf5] for x in pkgs.alembic.download if x[2] == "1.7.11" ][0],
+     pkgs.gcc : '4.1.2',
+     pkgs.ocio: '1.0.9', pkgs.tbb: '4.4.6'}
+# ],[
+#     'https://github.com/ImageEngine/cortex/archive/10.0.0-a68.tar.gz',
+#     'cortex-10.0.0-a68.tar.gz',
+#     '10.0.0.a68',
+#     'e506ed51b6e94f729925d5a6742c75c2',
+#     {pkgs.boost : boostMasterVersion, pkgs.gcc : '4.8.5' if build.versionMajor(boostMasterVersion) < 1.61 else '6.3.1',
+#      pkgs.alembic : "1.7.11",
+#      pkgs.hdf5 : [ x[4][pkgs.hdf5] for x in pkgs.alembic.download if x[2] == "1.7.11" ][0],
+#      pkgs.ocio: '1.0.9', pkgs.tbb: '4.4.6'}
+ ],[
+     'https://github.com/ImageEngine/cortex/archive/10.0.0-a82.tar.gz',
+     'cortex-10.0.0-a82.tar.gz',
+     '10.0.0.a82',
+     'ade21122c6b8771570f8211b580230a9',
+     {pkgs.boost : boostMasterVersion, pkgs.gcc : '4.8.5' if build.versionMajor(boostMasterVersion) < 1.61 else '6.3.1',
+      pkgs.alembic : "1.7.11",
+      pkgs.hdf5 : [ x[4][pkgs.hdf5] for x in pkgs.alembic.download if x[2] == "1.7.11" ][0],
+      pkgs.ocio: '1.0.9', pkgs.tbb: '4.4.6'}
 ]]
 
 # cortex dependency
@@ -61,8 +76,8 @@ depend = [
     pkgs.icu, pkgs.tbb, pkgs.jpeg, pkgs.libraw,
     pkgs.freeglut, pkgs.freetype, pkgs.libpng, pkgs.hdf5,
     pkgs.tiff, pkgs.jpeg, pkgs.alembic, pkgs.openssl,
-    pkgs.ilmbase, pkgs.openexr, pkgs.glew, pkgs.blosc,
-    pkgs.usd, pkgs.opensubdiv, pkgs.ptex, pkgs.openvdb, pkgs.oiio
+    pkgs.glew, pkgs.blosc, pkgs.usd, pkgs.opensubdiv,
+    pkgs.ptex, pkgs.openvdb #, pkgs.appleseed
 ]
 
 # build cortex matrix
@@ -77,22 +92,19 @@ if os.path.exists( patchFile ):
 
 # build one version of IECore, IECorePython and IECoreGL libraries for each boost version
 for boost_version in pkgs.boost.versions:
-    sufix = "core.boost.%s" % boost_version
+    core_sufix = "boost.%s" % boost_version
     _download = []
     extraInstall = ""
     # build versions that match boost 1.51 and the masterVersion of boost.
-    if boost_version in ['1.51.0',boostMasterVersion]:
-        _download = [ x for x in download if x[4][pkgs.boost]==boost_version ]
+    if build.versionMajor(boost_version) < 1.55:
+        # _download = [ x for x in download if x[4][pkgs.boost]==boost_version ]
+        _download = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
 
     # build all versions newer than 10.0 with boost 1.55 and up.
-    elif build.versionMajor(boost_version) >= 1.55:
+    elif build.versionMajor(boost_version) >= 1.57:
         # this forces to build only versions 10.0 and up!
         # so versions below 10.0 will only build for boost versions below 1.
         _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
-        for n in range(len(_download)):
-            _download[n][4] = _download[n][4].copy()
-            _download[n][4][pkgs.boost] = boost_version
-
         if _download:
             # if we have cortex >= 10 to build, add some installs!
             extraInstall += " installImage installScene "
@@ -100,12 +112,30 @@ for boost_version in pkgs.boost.versions:
             if boost_version in ['1.66.0']:
                 continue
 
+    # set the boost version of all downloads.
+    for n in range(len(_download)):
+        _download[n][4] = _download[n][4].copy()
+        _download[n][4][ pkgs.boost     ] = boost_version
+        _download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+        _download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+        _download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
+        # we use different OIIO versions for cortex 9 and 10
+        if build.versionMajor(_download[n][2]) < 10.0:
+            _download[n][4][ pkgs.oiio ['boost.%s' % boost_version] ] = '1.6.15'
+        else:
+            _download[n][4][ pkgs.oiio ['boost.%s' % boost_version] ] = '1.8.10'
+
+
     if _download:
-        # build cortex core libraries only
-        cortex[sufix] = build.cortex(
+        # ===========================================================================================
+        # CORTEX CORE for each boost
+        # ===========================================================================================
+        print core_sufix
+        cortex_environ = pkgs.exr_rpath_environ.copy()
+        cortex[core_sufix] = build.cortex(
             ARGUMENTS, # noqa
             'cortex',
-            targetSuffix = sufix,
+            targetSuffix = core_sufix,
             # build the version that matches the boost version in the loop!
             download = _download,
             # baseLibs = [pkgs.python],
@@ -113,124 +143,319 @@ for boost_version in pkgs.boost.versions:
             depend = depend+[pkgs.python],
             patch = devPatch,
             dontUseTargetSuffixForFolders = 1,
-            environ = { 'LD' : 'ld' },
+            # environ = { 'LD' : 'ld' },
             cmd = [
+                'export DCORES=$CORES',
                 build.cortex.cmd[0]+"installLib",
                 build.cortex.cmd[0]+"installCore",
                 build.cortex.cmd[0]+extraInstall+"installGL installStubs",
-            ]
+            ],
+            environ = cortex_environ,
         )
 
+        # ===========================================================================================
+        # CORTEX ALEMBIC for each boost
+        # ===========================================================================================
+        for alembic_version in pkgs.alembic.versions:
+            # build the alembic cortex only for the boost version used to build the current alembic version.
+            alembic_boost = [ x[4][pkgs.boost] for x in pkgs.alembic.download if x[2] == alembic_version ][0]
+            if alembic_boost and alembic_boost == boost_version:
+                sufix = "boost.%s.alembic.%s" % (boost_version, alembic_version)
+
+                # cortex 9 is only compatible with alembic below 1.6
+                # __download = []+_download
+                # if build.versionMajor(alembic_version) > 1.5:
+                __download = [ []+x for x in _download if build.versionMajor(x[2]) >= 10.0 ]
+
+                # now set the alembic version for all cortex versions
+                for n in range(len(__download)):
+                    alembic_dependencies = [ x[4] for x in pkgs.alembic.download if x[2] == alembic_version ][0]
+                    __download[n][4] = __download[n][4].copy()
+                    __download[n][4][ pkgs.boost     ] = boost_version
+                    __download[n][4][ pkgs.alembic   ] = alembic_version
+                    __download[n][4][ pkgs.hdf5      ] = alembic_dependencies[pkgs.hdf5]
+                    __download[n][4][ cortex         ['boost.%s' % boost_version] ] = __download[n][2]
+                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
+
+                # and build cortex
+                cortex[sufix] = build.cortex(
+                    ARGUMENTS, # noqa
+                    'cortex',
+                    targetSuffix = sufix,
+                    download = __download,
+                    sed = build.cortex.onlyIECoreExtraSED(),
+                    # baseLibs = [pkgs.python],
+                    depend = depend+[pkgs.python],
+                    patch = devPatch,
+                    dontUseTargetSuffixForFolders = 1,
+                    cmd = [build.cortex.cmd[0]+"installAlembic"],
+                    environ = cortex_environ,
+                    # environ = { 'LD' : 'ld' },
+                )
+
+        # ===========================================================================================
+        # CORTEX USD for each boost
+        # ===========================================================================================
+        for usd_version in pkgs.usd.versions:
+
+            if build.versionMajor(usd_version) != 19.7:
+                continue
+
+            # build the usd cortex only for the boost version used to build the current usd version.
+            usd_boost = [ x[4][pkgs.boost] for x in pkgs.usd.download if x[2] == usd_version ][0]
+            if usd_boost and usd_boost == boost_version:
+
+                sufix = "boost.%s.usd.%s" % (boost_version, usd_version)
+                # since USD was introduced in cortex 10, only build for version >= 10
+                __download = [ []+x for x in _download if build.versionMajor(x[2]) >= 10.0 ]
+
+                # set the version of usd for all versions of cortex >= 10
+                for n in range(len(__download)):
+                    __download[n][4] = __download[n][4].copy()
+                    __download[n][4][ pkgs.boost     ] = boost_version
+                    __download[n][4][ pkgs.usd       ] = usd_version
+                    __download[n][4][ cortex         ['boost.%s' % boost_version] ] = __download[n][2]
+                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
+
+                # now build the version of cortex with the usd version
+                cortex[sufix] = build.cortex(
+                    ARGUMENTS, # noqa
+                    'cortex',
+                    targetSuffix = sufix,
+                    download = __download,
+                    sed = build.cortex.onlyIECoreExtraSED(),
+                    # baseLibs = [pkgs.python],
+                    depend = depend+[pkgs.python],
+                    patch = devPatch,
+                    dontUseTargetSuffixForFolders = 1,
+                    cmd = [build.cortex.cmd[0]+"installUSD"],
+                    environ = cortex_environ,
+                    # environ = { 'LD' : 'ld' },
+                )
+
+        # ===========================================================================================
+        # CORTEX OPENVDB for each boost
+        # ===========================================================================================
+        for openvdb_version in pkgs.openvdb.versions:
+            # build the openvdb cortex only for the boost version used to build the current openvdb version.
+            openvdb_boost = [ x[4][pkgs.boost] for x in pkgs.openvdb.download if x[2] == openvdb_version ][0]
+            if openvdb_boost and openvdb_boost == boost_version:
+
+                sufix = "boost.%s.openvdb.%s" % (boost_version, openvdb_version)
+
+                # since openvdb was introduced in cortex 10, only build for version >= 10
+                __download = [ []+x for x in _download if build.versionMajor(x[2]) >= 10.0 ]
+
+                # set the version of openvdb for all versions of cortex.
+                for n in range(len(__download)):
+                    __download[n][4] = __download[n][4].copy()
+                    __download[n][4][ pkgs.boost     ] = boost_version
+                    __download[n][4][ pkgs.openvdb   ] = openvdb_version
+                    __download[n][4][ cortex         ['boost.%s' % boost_version] ] = __download[n][2]
+                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
+
+                # now build the version of cortex with the openvdb version
+                cortex[sufix] = build.cortex(
+                    ARGUMENTS, # noqa
+                    'cortex',
+                    targetSuffix = sufix,
+                    download = __download,
+                    sed = build.cortex.onlyIECoreExtraSED(),
+                    # baseLibs = [pkgs.python],
+                    depend = depend+[pkgs.python],
+                    patch = devPatch,
+                    dontUseTargetSuffixForFolders = 1,
+                    cmd = [
+                        build.cortex.cmd[0]+"installVDB",
+                    ],
+                    environ = cortex_environ,
+                )
+
+'''
+        # ===========================================================================================
+        # CORTEX APPLESEED
+        # ===========================================================================================
+        # build the appleseed version for the current boost version, if any!
+        appleseed_versions = [ x[2] for x in pkgs.appleseed.download if x[4][pkgs.boost] == boost_version ]
+        for appleseed_version in appleseed_versions:
+            # build the openvdb cortex only for the boost version used to build the current openvdb version.
+            appleseed_boost = [ x[4][pkgs.boost] for x in pkgs.appleseed.download if x[2] == appleseed_version ][0]
+            if appleseed_boost and appleseed_boost == boost_version:
+
+                sufix = "boost.%s.appleseed.%s" % (boost_version, appleseed_version)
+
+                # since openvdb was introduced in cortex 10, only build for version >= 10
+                __download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
+
+                # set the version of openvdb for all versions of cortex.
+                for n in range(len(__download)):
+                    __download[n][4] = __download[n][4].copy()
+                    __download[n][4][ pkgs.boost     ] = boost_version
+                    __download[n][4][ cortex         ['boost.%s' % boost_version] ] = __download[n][2]
+                    __download[n][4][ pkgs.ilmbase   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.pyilmbase ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
+                    __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
+                    __download[n][4][ pkgs.usd       ] = None
+                    __download[n][4][ pkgs.alembic   ] = None
+                    __download[n][4][ pkgs.openvdb   ] = None
+
+                # now build the version of cortex with the openvdb version
+                cortex[sufix] = build.cortex(
+                    ARGUMENTS, # noqa
+                    'cortex',
+                    targetSuffix = sufix,
+                    download = __download,
+                    sed = build.cortex.onlyIECoreExtraSED(),
+                    # baseLibs = [pkgs.python],
+                    depend = depend+[pkgs.python],
+                    patch = devPatch,
+                    dontUseTargetSuffixForFolders = 1,
+                    cmd = [
+                        build.cortex.cmd[0]+"installAppleseed",
+                    ],
+                    environ = cortex_environ,
+                )
+'''
+
 
 # ===========================================================================================
-# CORTEX ALEMBIC
+# GAFFER
 # ===========================================================================================
-for alembic_version in pkgs.alembic.versions:
-    # skip the version we already build for!
-    # if alembic_version == download[n][4][pkgs.alembic]:
-    #     continue
+pkgs.gaffer = {}
+def buildGaffer(apps=[], boost='1.61.0', __download__=None):
+    suffix = ''
+    gcc = '4.8.5'
+    if float('.'.join(boost.split('.')[0:2])) >= 1.61:
+        gcc = '6.3.1'
+    version=0
+    if apps:
+        version = apps[0][1]
+        suffix = "%s.%s" % (str(apps[0][0]).split("'")[1].split(".")[-1], version)
 
-    sufix = "core.alembic.%s" % alembic_version
+    # grab the latest version of cortex to build gaffer.
+    _downloadCortex9 = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
+    cortex9version = _downloadCortex9[-1][2]
+    _downloadCortex10 = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
+    cortex10version = _downloadCortex10[-1][2]
+    print cortex10version
 
-    # cortex 9 is only compatible with alembic below 1.6
-    _download = []+download
-    if build.versionMajor(alembic_version) > 1.5:
-        _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
+    # use a cortex build without applessed.
+    usd = '19.7.0'
+    cortex_build = 'boost.%s' % boost
+    cortex_build = "boost.%s.usd.%s" % (boost, usd)
 
-    # now set the alembic version for all cortex versions
-    for n in range(len(_download)):
-        _download[n][4] = _download[n][4].copy()
-        _download[n][4][ pkgs.alembic ] = alembic_version
-        _download[n][4][ cortex["core.boost.%s" % _download[n][4][pkgs.boost]] ] = _download[n][2]
+    # if building with a boost version that has a cortex built with appleseed, use it!
+    # [ x[2] for x in pkgs.appleseed.download if x[4][pkgs.boost] == boost ]
+    # av = ['2.0.5.beta']
+    # if av:
+    #     av = build.pkgs.versionSort( av )
+    #     cortex_build = "boost.%s.appleseed.%s" % (boost, av[-1])
 
-    # and build cortex
-    cortex[sufix] = build.cortex(
-        ARGUMENTS, # noqa
-        'cortex',
-        targetSuffix = sufix,
-        download = _download,
-        sed = build.cortex.noIECoreSED(),
-        # baseLibs = [pkgs.python],
-        depend = depend+[pkgs.python],
-        patch = devPatch,
-        dontUseTargetSuffixForFolders = 1,
-        cmd = [build.cortex.cmd[0]+"installAlembic"],
-        environ = {
-            'LD' : 'ld',
+    suffix = ".".join([ x for x in [cortex_build, suffix] if x])
+
+    gaffer_download = [[
+    #     'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
+    #     'gaffer-0.32.0.0.tar.gz',
+    #     '0.32.0.0',
+    #     '2ae5c942f79dff458abda6bfb4c081f2',
+    #     {pkgs.alembic : "1.5.8", pkgs.ocio: '1.0.9',
+    #     pkgs.pyside: None, pkgs.pyqt: '4.8.7',
+    #     pkgs.gcc : gcc, pkgs.tbb: '4.4.6',
+    #     pkgs.boost : "1.51.0", pkgs.oiio: '1.6.15',
+    #     pkgs.openexr['boost.1.51.0'] : exr_version,
+    #     pkgs.ilmbase['boost.1.51.0'] : exr_version,
+    #     pkgs.pyilmbase['boost.1.51.0'] : exr_version,
+    #     cortex['boost.1.51.0'] : cortex9version}
+    # ],[
+        'https://github.com/GafferHQ/gaffer/archive/0.55.0.0.tar.gz',
+        'gaffer-0.55.0.0.tar.gz',
+        '0.55.0.0',
+        '876127bfe6fd62ab9d6a8a9e6da2f75f',
+        {pkgs.alembic : "1.7.11", pkgs.ocio: '1.0.9',
+        pkgs.pyside: '2.0.18', pkgs.pyqt: None,
+        pkgs.openvdb: '6.0.0', pkgs.tbb: '4.4.6',
+        pkgs.llvm: '7.1.0', pkgs.gcc : gcc,
+        pkgs.boost : boost,
+        pkgs.usd : usd,
+        pkgs.openexr['boost.%s' % boost] : exr_version,
+        pkgs.ilmbase['boost.%s' % boost] : exr_version,
+        pkgs.pyilmbase['boost.%s' % boost] : exr_version,
+        cortex[cortex_build] : cortex10version,
+        pkgs.oiio['boost.%s' % boost]: '1.8.10',
         }
-    )
+    ]]
+    if __download__:
+        gaffer_download=__download__
 
-# ===========================================================================================
-# CORTEX USD
-# ===========================================================================================
-for usd_version in pkgs.usd.versions:
-    # skip the version we already build for!
-    # if usd_version == pkgs.usd.versions.keys()[-1]:
-    #     continue
-
-    sufix = "core.usd.%s" % usd_version
-    # since USD was introduced in cortex 10, only build for version >= 10
-    _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
-
-    # set the version of usd for all versions of cortex >= 10
-    for n in range(len(_download)):
-        _download[n][4] = _download[n][4].copy()
-        _download[n][4][pkgs.usd] = usd_version
-        _download[n][4][ cortex["core.boost.%s" % _download[n][4][pkgs.boost]] ] = _download[n][2]
-
-    # now build the version of cortex with the usd version
-    cortex[sufix] = build.cortex(
+    return build.gaffer(
         ARGUMENTS, # noqa
-        'cortex',
-        targetSuffix = sufix,
-        download = _download,
-        sed = build.cortex.noIECoreSED(),
+        'gaffer',
+        targetSuffix = suffix,
+        sed=build.gaffer.sed,
         # baseLibs = [pkgs.python],
-        depend = depend+[pkgs.python],
-        patch = devPatch,
-        dontUseTargetSuffixForFolders = 1,
-        cmd = [build.cortex.cmd[0]+"installUSD"],
-        environ = { 'LD' : 'ld' },
-    )
-
-# ===========================================================================================
-# CORTEX OPENVDB
-# ===========================================================================================
-for openvdb_version in pkgs.openvdb.versions:
-    # now build IECoreVDB for all versions of VDB
-    # skip the version we already build for!
-    # if openvdb_version == pkgs.openvdb.versions.keys()[-1]:
-    #     continue
-
-    sufix = "core.openvdb.%s" % openvdb_version
-
-    # since openvdb was introduced in cortex 10, only build for version >= 10
-    _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
-
-    # set the version of openvdb for all versions of cortex.
-    for n in range(len(_download)):
-        _download[n][4] = _download[n][4].copy()
-        _download[n][4][pkgs.openvdb] = openvdb_version
-        _download[n][4][ cortex["core.boost.%s" % _download[n][4][pkgs.boost]] ] = _download[n][2]
-
-    # now build the version of cortex with the openvdb version
-    cortex[sufix] = build.cortex(
-        ARGUMENTS, # noqa
-        'cortex',
-        targetSuffix = sufix,
-        download = _download,
-        sed = build.cortex.noIECoreSED(),
-        # baseLibs = [pkgs.python],
-        depend = depend+[pkgs.python],
-        patch = devPatch,
-        dontUseTargetSuffixForFolders = 1,
+        download = gaffer_download,
+        depend =  depend + [
+            pkgs.qt, pkgs.qtpy, pkgs.osl,
+            pkgs.oiio, pkgs.ocio, pkgs.llvm,
+            pkgs.python,
+        ],
+        apps = apps,
         cmd = [
-            build.cortex.cmd[0]+"installVDB",
-        ]
+            "DCORES=$CORES "+build.gaffer.cmd[0],
+            "DCORES=$CORES "+build.gaffer.cmd[0]+' build',
+            "DCORES=$CORES "+build.gaffer.cmd[0]+' install',
+        ],
+        dontUseTargetSuffixForFolders = 1,
+        dontAddLLVMtoEnviron = 1,
+        environ = {
+            'CXXFLAGS' : ' '.join([
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
+                '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
+                '-isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
+                '-isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/',
+                '-I$FREETYPE_TARGET_FOLDER/include/freetype2/',
+                '-fno-strict-aliasing',
+                '-D_GLIBCXX_USE_CXX11_ABI=0',
+                '$CXXFLAGS',
+            ]),
+            # we need this for pre-compiled appleseed (binary tarball),
+            # since centos 7 libc is too old
+            'LD_PRELOAD': ':'.join([
+                '/lib64/libexpat.so.1',
+                '$GCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                '$GCC_TARGET_FOLDER/lib64/libgcc_s.so.1'
+            ]),
+            'LDFLAGS': pkgs.exr_rpath_environ['LDFLAGS'],
+            # 'DCORES' : '1',
+            # 'LD' : 'ld'
+        },
     )
+# build gaffer without any app support first!
+gaffer = buildGaffer()
+pkgs.gaffer[ gaffer.targetSuffix ] = gaffer
 
 
 
+
+
+
+
+# ===========================================================================================
+# FROM HERE, WE DEAL WITH THIRDY-PARTIE APPS
+# ===========================================================================================
 # we need libraries built to detect installed apps, so if we don't have then yet,
 # we cant build app dependent packages.
 canBuildCortexNow = False
@@ -278,9 +503,11 @@ if canBuildCortexNow:
 
         targetSuffix = "maya.%s" % str(version)
 
+        # ===========================================================================================
         # build sip/pyqt for maya version!
         # for maya 2018 we're building pyside using autodesk qt 5.6.1
         # so we don't need maya to build it!
+        # ===========================================================================================
         if float(version) > 2016 and float(version) < 2018:
             pkgs.maya_sip.update({ targetSuffix : build.pythonSetup(
                 ARGUMENTS,
@@ -353,11 +580,20 @@ if canBuildCortexNow:
 
         # build plugins
         if version:
+            # ===========================================================================================
+            # MAYA USD
+            # ===========================================================================================
             maya_environ = pkgs.usd.environ.copy()
             maya_environ.update({
-                'MAYA_EXECUTABLE' : pipe.apps.maya().path('bin/maya.bin'),
-                'MAYA_LOCATION' : pipe.apps.maya().path(),
-                'MAYA_ROOT' : pipe.apps.maya().path(),
+                'MAYA_EXECUTABLE'   : pipe.apps.maya().path('bin/maya.bin'),
+                'MAYA_LOCATION'     : pipe.apps.maya().path(),
+                'MAYA_ROOT'         : pipe.apps.maya().path(),
+                'LDFLAGS'           : pkgs.usd.environ['LDFLAGS'],
+                'CFLAGS'            : pkgs.usd.environ['CFLAGS'],
+                'CXXFLAGS'          : pkgs.usd.environ['CXXFLAGS'].replace('-lboost_program_options',''),
+                'LD'                : pkgs.usd.environ['LDFLAGS'],
+                'LD_PRELOAD'        : pkgs.usd.environ['LD_PRELOAD'],
+                'DCORES'            : '$CORES',
             })
             pkgs.maya_usd.update({ targetSuffix : build.cmake(
                 ARGUMENTS,
@@ -365,13 +601,17 @@ if canBuildCortexNow:
                 sed = pkgs.usd.sed,
                 targetSuffix = targetSuffix,
                 download = pkgs.usd.download,
-                depend = pkgs.usd.depend+[pkgs.usd],
-                cmd = pkgs.usd.cmd,
+                depend = [ x for x in pkgs.usd.depend if x.name not in ['tbb'] ],
+                cmd = [ x.replace('make ', 'make VERBOSE=1 ') for x in pkgs.usd.cmd ],
                 apps = [ (pipe.apps.maya, str(version)) ],
                 environ = maya_environ,
                 flags=pkgs.usd.flags+[
-                    '-D PXR_BUILD_MAYA_PLUGIN=ON'
-                    '-D PXR_BUILD_MATERIALX_PLUGIN=ON'
+                    '-D PXR_BUILD_MAYA_PLUGIN=ON',
+                    '-D PXR_BUILD_MATERIALX_PLUGIN=ON',
+                    '-D OpenGL_GL_PREFERENCE=GLVND',
+                    '-D MAYA_EXECUTABLE="'+pipe.apps.maya().path('bin/maya.bin')+'"',
+                    '-D MAYA_PY_EXECUTABLE="'+pipe.apps.maya().path('bin/mayapy')+'"',
+                    '-D VERBOSE=1',
                 ],
             )})
             # pkgs.maya_usd.update({ targetSuffix : build.cmake(
@@ -398,29 +638,47 @@ if canBuildCortexNow:
 
 
 
+            # ===========================================================================================
+            # MAYA ALEMBIC
+            # ===========================================================================================
+            for alembic_version in pkgs.alembic.versions:
+                if build.versionMajor(alembic_version) <= 1.5 and build.versionMajor(version) >= 2018:
+                    continue
 
-            maya_environ = pkgs.alembic.environ.copy()
-            maya_environ.update({
-                'CFLAGS' : ' -std=c++11 $CFLAGS ',
-                'CXXFLAGS' : ' -std=c++11 $CXXFLAGS ',
-            })
-            _download = []+pkgs.alembic.download
-            for n in range(len(_download)):
-                _download[n][4] = pkgs.alembic.download[n][4].copy()
-                _download[n][4][pkgs.gcc] = '4.8.5'
-            pkgs.maya_alembic.update({ targetSuffix : build.alembic(
-                ARGUMENTS,
-                'alembic',
-                targetSuffix = targetSuffix,
-                sed = pkgs.alembic.sed,
-                baseLibs = pkgs.alembic.baseLibs,
-                download = _download,
-                depend = pkgs.alembic.depend,
-                cmd = pkgs.alembic.cmd,
-                apps = [ (pipe.apps.maya, str(version)) ],
-                environ = maya_environ,
-                flags = ['-DUSE_MAYA=1', '-DMAYA_ROOT=$MAYA_ROOT'],
-            )})
+                maya_environ = pkgs.alembic.environ.copy()
+                maya_environ.update({
+                    'CFLAGS'    : ' -std=c++11 $CFLAGS ',
+                    'CXXFLAGS'  : ' -DALEMBIC_LIB_USES_BOOST=1 -std=c++11 $CXXFLAGS ',
+                    'LDFLAGS'   : '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+                    # 'LDFLAGS'   : ' $LDFLAGS -lpthread'
+                })
+                # _download = []+[ x for x in pkgs.alembic.download if x[2] == alembic_version ]
+                _download = pkgs.alembic.downloadVersion(alembic_version)
+                for n in range(len(_download)):
+                    _download[n][4] = _download[n][4].copy()
+                    _download[n][4][pkgs.gcc] = '4.8.5'
+                    if build.versionMajor(version)>=2018:
+                        _download[n][4][pkgs.gcc] = '6.3.1'
+                        _download[n][4][pkgs.boost] = '1.61.0'
+
+                pkgs.maya_alembic.update({ targetSuffix : build.alembic(
+                    ARGUMENTS,
+                    'alembic',
+                    targetSuffix = targetSuffix,
+                    sed = pkgs.alembic.sed,
+                    baseLibs = pkgs.alembic.baseLibs,
+                    download = _download,
+                    depend = pkgs.alembic.depend + [pkgs.openssl],
+                    cmd = pkgs.alembic.cmd,
+                    apps = [ (pipe.apps.maya, str(version)) ],
+                    environ = maya_environ,
+                    flags = ['-DUSE_MAYA=1', '-DMAYA_ROOT=$MAYA_ROOT'],
+                )})
+
+
+            # ===========================================================================================
+            # MAYA OPENVDB
+            # ===========================================================================================
             # pkgs.maya_openvdb.update({ targetSuffix : build.make(
             #     ARGUMENTS,
             #     'openvdb',
@@ -475,6 +733,9 @@ if canBuildCortexNow:
     # ===========================================================================================
     # CORTEX MAYA
     # ===========================================================================================
+    usd     = None #pkgs.usd.download[-1][2]
+    alembic = None #pkgs.alembic.download[-1][2]
+    openvdb = None #pkgs.openvdb.download[-1][2]
     for version in mv:
         sufix = "core.maya.%s" % version
 
@@ -490,10 +751,27 @@ if canBuildCortexNow:
             cortexVersion   = _download[n][2]
             boostVersion    = _download[n][4][pkgs.boost]
             _download[n][4] = _download[n][4].copy()
-            _download[n][4][ cortex["core.boost.%s" % boostVersion ] ] = cortexVersion
-            _download[n][4][ pkgs.alembic ] = None
-            _download[n][4][ pkgs.boost ] = boostVersion
-            _download[n][4][ pkgs.gcc ] = '4.8.5'
+            # as we mangle vdb, usd and alembic inside cortex (we don't use the
+            # targetSuffix) we can only specify the main core cortex build here,
+            # and cortex_options.pywill take care of setting the libs paths for
+            # everything according with the specified boost version.
+            # we specify "boost.<boost version" so this build has a dependency
+            # with cortex core boost version.
+            _download[n][4][ pkgs.boost    ] = boostVersion
+            _download[n][4][ cortex        ["boost.%s" % boostVersion] ] = cortexVersion
+            _download[n][4][ pkgs.ilmbase  ['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.openexr  ['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.pyilmbase['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.gcc      ] = '4.8.5' if build.versionMajor(boostVersion) < 1.61 else '6.3.1'
+            _download[n][4][ pkgs.usd      ] = usd
+            _download[n][4][ pkgs.alembic  ] = alembic
+            _download[n][4][ pkgs.openvdb  ] = openvdb
+            # we use different OIIO versions for cortex 9 and 10
+            if build.versionMajor(_download[n][2]) < 10.0:
+                _download[n][4][ pkgs.oiio['boost.%s' % boostVersion]] = '1.6.15'
+            else:
+                _download[n][4][ pkgs.oiio['boost.%s' % boostVersion]] = '1.8.10'
+
 
         # now build the version of cortex with the openvdb version
         cortex[sufix] = build.cortex(
@@ -508,8 +786,11 @@ if canBuildCortexNow:
             dontUseTargetSuffixForFolders = 1,
             apps = [ (pipe.apps.maya, str(version)) ],
             cmd = [
-                build.cortex.cmd[0]+"installMaya",
-            ]
+                build.cortex.cmd[0]+"install installMaya",
+            ],
+            environ = {
+                'LDFLAGS': pkgs.exr_rpath_environ['LDFLAGS'],
+            },
         )
 
     # ===========================================================================================
@@ -529,10 +810,26 @@ if canBuildCortexNow:
             cortexVersion   = _download[n][2]
             boostVersion    = _download[n][4][pkgs.boost]
             _download[n][4] = _download[n][4].copy()
-            _download[n][4][ cortex["core.boost.%s" % boostVersion ] ] = cortexVersion
-            _download[n][4][ pkgs.alembic ] = None
-            _download[n][4][ pkgs.boost ] = boostVersion
-            _download[n][4][ pkgs.gcc ] = '4.8.5'
+            # as we mangle vdb, usd and alembic inside cortex (we don't use the
+            # targetSuffix) we can only specify the main core cortex build here,
+            # and cortex_options.pywill take care of setting the libs paths for
+            # everything according with the specified boost version.
+            # we specify "boost.<boost version" so this build has a dependency
+            # with cortex core boost version.
+            _download[n][4][ pkgs.boost    ] = boostVersion
+            _download[n][4][ cortex        ["boost.%s" % boostVersion] ] = cortexVersion
+            _download[n][4][ pkgs.ilmbase  ['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.openexr  ['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.pyilmbase['boost.%s' % boostVersion] ] = exr_version
+            _download[n][4][ pkgs.gcc      ] = '4.8.5' if build.versionMajor(boostVersion) < 1.61 else '6.3.1'
+            _download[n][4][ pkgs.usd      ] = usd
+            _download[n][4][ pkgs.alembic  ] = alembic
+            _download[n][4][ pkgs.openvdb  ] = openvdb
+            # we use different OIIO versions for cortex 9 and 10
+            if build.versionMajor(_download[n][2]) < 10.0:
+                _download[n][4][ pkgs.oiio['boost.%s' % boostVersion]] = '1.6.15'
+            else:
+                _download[n][4][ pkgs.oiio['boost.%s' % boostVersion]] = '1.8.10'
 
         # now build the version of cortex
         cortex[sufix] = build.cortex(
@@ -548,168 +845,40 @@ if canBuildCortexNow:
             apps = [( pipe.apps.prman, version )],
             cmd = [
                 build.cortex.cmd[0]+"installRI",
-            ]
-        )
-
-
-
-    # class buildCortexApps:
-    #     ''' # this class construct data to build cortex for all the apps.'''
-    #     name, versions, baseLibs, install, download = (0,1,2,3,4)
-    #     def __init__(self, download):
-    #         # disable alembic from now on...
-    #         pkg = build.pkg
-    #         # set the version of each pkg needed for each build.
-    #         self.builds = [
-    #             # IECoreRI needs to be build first since IECoreMaya depends on it!
-    #             # we also need to build for all python versions
-    #             # (pipe.apps.prman,   pv, None, 'installRI',   download),
-    #             # for maya/nuke/houdini, we only need to build for the needed python version.
-    #             (pipe.apps.maya,    mv, None,        'installMaya', download),
-    #             (pipe.apps.nuke,    nv, None,        'installNuke', download),
-    #             # houdini has specific needs regarding pkg versions.
-    #             (pipe.apps.houdini, hv, None,        'installHoudini installMantra', download),
-    #         ]
-    #
-    #         # use the data in buildList to build cortex for all apps
-    #         for app in self.builds:
-    #             for v in app[ self.versions ]:
-    #
-    #                 _download = []+app[ self.download ]
-    #                 if app[ self.name ] == pipe.apps.prman and v>=22.0:
-    #                     _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
-    #                 else:
-    #                     _download = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
-    #
-    #                 for n in range(len(_download)):
-    #                     cortexVersion = _download[n][2]
-    #                     # set the versions used for each app
-    #                     gcc = '4.8.5'
-    #                     tbb = _download[n][4][pkgs.tbb]
-    #                     alembic = None
-    #                     boostVersion = _download[n][4][pkgs.boost]
-    #                     if app[ self.name ] == pipe.apps.prman:
-    #                         boostVersion = _download[n][4][pkgs.boost]
-    #                     elif app[ self.name ] == pipe.apps.nuke:
-    #                         boostVersion = _download[n][4][pkgs.boost]
-    #                     elif app[ self.name ] == pipe.apps.houdini:
-    #                         tbb = None
-    #                         boostVersion = '1.55.0'
-    #
-    #                     _download[n][4] = download[n][4].copy()
-    #                     # set the cortex build with the boost version of choice, using the same cortex version.
-    #                     _download[n][4][ cortex["core.boost.%s" % boostVersion ] ] = cortexVersion
-    #                     _download[n][4][ pkgs.alembic ] = alembic
-    #                     _download[n][4][ pkgs.boost ] = boostVersion
-    #                     _download[n][4][ pkgs.tbb ] = tbb
-    #                     _download[n][4][ pkgs.gcc ] = gcc
-    #
-    #                 # we use this to apply patches created when developing cortex
-    #                 devPatch = []
-    #                 # print app[ self.download ]
-    #                 patchFile = os.environ['HOME']+'/dev/cortex.git/patch.$(basename $CORTEX_TARGET_FOLDER)'
-    #                 if os.path.exists( patchFile ):
-    #                     devPatch = [ ''.join(open(patchFile).readlines()) ]
-    #
-    #                 sufix = app[ self.name ]().className + v
-    #                 cortex[sufix] = build.cortex(
-    #                     ARGUMENTS, # noqa
-    #                     'cortex',
-    #                     targetSuffix = sufix,
-    #                     download = app[ self.download ],
-    #                     sed = build.cortex.noIECoreSED(),
-    #                     # baseLibs = app[ self.baseLibs ],
-    #                     depend = depend+[pkgs.python],
-    #                     apps = [( app[ self.name ], v )],
-    #                     patch = devPatch,
-    #                     dontUseTargetSuffixForFolders = 1,
-    #                     cmd = [
-    #                         build.cortex.cmd[0]+app[ self.install ],
-    #                     ]
-    #                 )
-    # buildCortexApps(download)
-
-    # ===========================================================================================
-    # GAFFER
-    # ===========================================================================================
-    pkgs.gaffer = {}
-    # set first version to 0, so we build gaffer without any app support.
-    gaffer_versions = ['0']
-    # now, add prman versions to build gaffer against
-    gaffer_versions += pv
-
-    # so now we can build!
-    for version in gaffer_versions:
-        sufix = ''
-        apps = []
-        if float(version) > 0:
-            sufix = 'prman.'+ version
-            apps = [( pipe.apps.prman, version )]
-
-        _download = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
-        cortex9version = _download[-1][2]
-        _download = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
-        cortex10version = _download[-1][2]
-
-        pkgs.gaffer[sufix] = build.gaffer(
-            ARGUMENTS, # noqa
-            'gaffer',
-            targetSuffix = sufix,
-            download = [[
-                'https://github.com/GafferHQ/gaffer/archive/0.32.0.0.tar.gz',
-                'gaffer-0.32.0.0.tar.gz',
-                '0.32.0.0',
-                '2ae5c942f79dff458abda6bfb4c081f2',
-                {pkgs.boost : "1.51.0", pkgs.alembic : "1.5.8",
-                pkgs.oiio: '1.6.15', pkgs.ocio: '1.0.9',
-                pkgs.pyside: None, pkgs.pyqt: '4.8.7',
-                pkgs.gcc : '4.1.2', cortex['core.boost.1.51.0'] : cortex9version}
-            ],[
-                'https://github.com/GafferHQ/gaffer/archive/0.55.0.0.tar.gz',
-                'gaffer-0.55.0.0.tar.gz',
-                '0.55.0.0',
-                '876127bfe6fd62ab9d6a8a9e6da2f75f',
-                {pkgs.boost : boostMasterVersion, pkgs.alembic : "1.7.11",
-                pkgs.oiio: '1.6.15', pkgs.ocio: '1.0.9',
-                pkgs.pyside: '2.0.18',  pkgs.pyqt: None,
-                pkgs.gcc : '4.8.5',  cortex['core.boost.%s' % boostMasterVersion] : cortex10version}
-            ]],
-            # baseLibs = [pkgs.python],
-            depend =  depend + [
-                pkgs.qt, pkgs.qtpy, pkgs.osl,
-                pkgs.oiio, pkgs.ocio, pkgs.llvm,
-                pkgs.python, pkgs.usd,
             ],
-            apps = apps,
-            sconsInstall = "install",
-            dontUseTargetSuffixForFolders = 1,
             environ = {
-                'C_INCLUDE_PATH' : ':'.join([
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
-                    '$C_INCLUDE_PATH',
-                ]),
-                'CPLUS_INCLUDE_PATH' : ':'.join([
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                    '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
-                    '$CPLUS_INCLUDE_PATH',
-                ]),
-                'CXXFLAGS' : ' '.join([
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
-                    '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
-                    '-I$FREETYPE_TARGET_FOLDER/include/freetype2/'
-                    '$CXXFLAGS',
-                ]),
-                'LD' : 'ld'
-            }
+                'LDFLAGS': '$LDFLAGS ' + pkgs.exr_rpath_environ['LDFLAGS'],
+            },
         )
+
+    # ===========================================================================================
+    # GAFFER PRMAN
+    # ===========================================================================================
+    # now use prman versions to build gaffer against
+    # for version in pv:
+    #     if float(version) > 21.4:
+    #         boost="1.61.0"
+    #         download = None
+    #         if float(version) >= 23.0:
+    #             download = [[
+    #                 'https://github.com/johnhaddon/gaffer/archive/renderMan.zip',
+    #                 'gaffer-0.54.0.0.tar.gz',
+    #                 '0.54.0.prman',
+    #                 '876127bfe6fd62ab9d6a8a9e6da2f75f',
+    #                 {pkgs.alembic : "1.7.11", pkgs.ocio: '1.0.9',
+    #                 pkgs.pyside: '2.0.18', pkgs.pyqt: None,
+    #                 pkgs.llvm: '7.1.0', pkgs.gcc : '4.8.5' if build.versionMajor(boost) < 1.61 else '6.3.1',
+    #                 pkgs.openvdb: '6.0.0', pkgs.tbb: '4.4.6',
+    #                 pkgs.boost : boost,
+    #                 pkgs.openexr['boost.%s' % boost] : exr_version,
+    #                 pkgs.ilmbase['boost.%s' % boost] : exr_version,
+    #                 pkgs.pyilmbase['boost.%s' % boost] : exr_version,
+    #                 pkgs.oiio['boost.%s' % boost]: '1.8.10',
+    #                 cortex[cortex_build] : cortex10version}
+    #             ]]
+    #
+    #         gaffer = buildGaffer( [(pipe.apps.prman, version)], boost, download )
+    #         pkgs.gaffer[ gaffer.targetSuffix ] = gaffer
 
 
 

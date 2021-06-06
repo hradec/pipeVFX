@@ -80,6 +80,15 @@ class cmake(make):
         ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
         ' make $MAKE_PARALLEL $MAKE_VERBOSE &&  make install'
     ]
+    needed_flags=[
+        '-DCMAKE_CC_FLAGS="$CFLAGS"',
+        '-DCMAKE_CXX_FLAGS="$CXXFLAGS"',
+        '-DCMAKE_CPP_FLAGS="$CPPFLAGS"',
+        '-DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS"',
+        '-DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS"',
+        '-DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS"',
+        '-DCMAKE_STATIC_LINKER_FLAGS="$STATICFLAGS"',
+    ]
     flags = [
             '-Wno-dev',
             '-DUSE_SIMD=0',
@@ -91,6 +100,10 @@ class cmake(make):
             '-DCMAKE_CC_FLAGS="$CFLAGS"',
             '-DCMAKE_CXX_FLAGS="$CXXFLAGS"',
             '-DCMAKE_CPP_FLAGS="$CPPFLAGS"',
+            '-DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS"',
+            '-DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS"',
+            '-DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS"',
+            '-DCMAKE_STATIC_LINKER_FLAGS="$STATICFLAGS"',
             # '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
             # '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
             # '-DCMAKE_LINKER=$LD',
@@ -149,7 +162,8 @@ class cmake(make):
             'export OPENEXR_LIBRARIES=$OPENEXR_TARGET_FOLDER/lib/libIlmImf.so',
             'export OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
         ]
-        for each in self.flags:
+
+        for each in self.needed_flags+self.flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
                 cmd = cmd.replace('cmake','cmake '+each+' ')
 
@@ -164,7 +178,8 @@ class cmake(make):
 class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
-        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
+        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
+        ' && '
         ' make $MAKE_PARALLEL $MAKE_VERBOSE  &&  make install',
         '( [ "$(basename $TARGET_FOLDER)" == "1.5.8" ] ',
         '( mkdir -p $INSTALL_FOLDER/bin/',
@@ -213,12 +228,12 @@ class alembic(cmake):
 
         },
         '1.6.0' : {
-            'python/PyAlembic/CMakeLists.txt' : [
-                ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
-                ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
-                ('/usr/include/python','${PYTHON_TARGET_FOLDER}/include/python'),
-                ('/lib/libpython','${PYTHON_TARGET_FOLDER}/lib/libpython'),
-            ],
+            # 'python/PyAlembic/CMakeLists.txt' : [
+            #     ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+            #     ('SET(.*ALEMBIC_PYTHON_ROOT','#SET( ALEMBIC_PYTHON_ROOT'),
+            #     ('/usr/include/python','${PYTHON_TARGET_FOLDER}/include/python'),
+            #     ('/lib/libpython','${PYTHON_TARGET_FOLDER}/lib/libpython'),
+            # ],
             'CMakeLists.txt' : [
                 ('/alembic-${VERSION}',' '),
             ],
@@ -238,13 +253,27 @@ class alembic(cmake):
         environ = []
 
         extra_flags = [
-            '-DUSE_PYALEMBIC=0', # disable python bindings
+            '-Wno-dev',
+            # '-DUSE_PYALEMBIC=0', # disable python bindings
+            '-DUSE_PYALEMBIC=1',
+            '-DALEMBIC_PYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER/',
+            '-DALEMBIC_PYILMBASE_MODULE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
+            '-DALEMBIC_PYILMBASE_PYIMATH_MODULE=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so',
+            '-DALEMBIC_PYILMBASE_INCLUDE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/include/OpenEXR/',
+            '-DPYILMBASE_LIBRARY_DIR=$PYILMBASE_TARGET_FOLDER/lib/',
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
             '-DALEMBIC_PYTHON_LIBRARY=$PYTHON_TARGET_FOLDER/lib/libpython$PYTHON_VERSION_MAJOR.so',
+            '-DPYTHON_INCLUDE_DIRS=$PYTHON_TARGET_FOLDER/include',
+            '-DPYTHON_EXECUTABLE=$PYTHON_ROOT/bin/python',
+            '-DBOOST_ROOT=$BOOST_TARGET_FOLDER/',
+            '-DBOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+            '-DBoost_NO_SYSTEM_PATHS=1',
+            '-DBoost_PYTHON_LIBRARY=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so',
+            '-DBoost_USE_MULTITHREADED=0',
+            '-DBoost_USE_STATIC_LIBS=0',
+            # '-DBOOST LIBRARIES="$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_thread.so:$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_program_options.so"',
             '-DALEMBIC_SHARED_LIBS=1',
             '-DALEMBIC_LIB_USES_BOOST=1',
-            # '-DUSE_PRMAN=1',
-            # '-DUSE_MAYA=1',
             '-DBUILD_SHARED_LIBS:BOOL="TRUE"',
             '-DBUILD_STATIC_LIBS:BOOL="FALSE" ',
             "-DUSE_HDF5=ON",
@@ -269,15 +298,19 @@ class download(make):
     the build is just copying over the uncompressed source to the target folder to be used later by other builds
     '''
     src='CMakeLists.txt'
-    cmd=[
-        'mkdir -p $INSTALL_FOLDER',
-        'cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/',
-        'echo "Done!!!!!"',
-    ]
+    cmd=['mkdir -p $INSTALL_FOLDER ; cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/ && echo $? && echo Done']
+    # this package will finih pretty fast!
     noMinTime=True
-    # as we want this packages just to be used for building other packages, we don't need a installation target_folder
-#    def installer(self, target, source, env):
-#        os.system("rm -rf %s" % os.path.abspath(os.path.dirname(os.path.dirname(str(target[0])))) )
+
+class displayDB(make):
+    '''
+    a simple class to display the DB after all builds
+    '''
+    src='CMakeLists.txt'
+    cmd=['mkdir -p $INSTALL_FOLDER ; cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/ && echo $? && echo Done']
+    # this package will finih pretty fast!
+    noMinTime=True
+
 
 
 class glew(make):
@@ -297,12 +330,13 @@ class glew(make):
             ],
         },
     }
-    def installer(self, target, source, env):
+    def installer(self, target, source, os_environ):
         ''' just a small installation patch to link lib64 to lib, which is the
         expected shared library folder name, since pipeVFX organize packages in
         arch specific hierarchy - linux/x86_64/package '''
         ret = []
-        targetFolder = os.path.dirname(str(target[0]))
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
         if not os.path.exists("%s/lib" % targetFolder):
             if os.path.exists("%s/lib64" % targetFolder):
                 ret = os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
@@ -319,12 +353,13 @@ class glfw(cmake):
     #         ],
     #     },
     # }
-    def installer(self, target, source, env):
+    def installer(self, target, source, os_environ):
         ''' just a small installation patch to link lib64 to lib, which is the
         expected shared library folder name, since pipeVFX organize packages in
         arch specific hierarchy - linux/x86_64/package '''
         ret = []
-        targetFolder = os.path.dirname(str(target[0]))
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
         if os.path.exists("%s/lib" % targetFolder):
             if os.path.exists("%s/lib64" % targetFolder):
                 ret = os.popen("rm -rf  %s/lib" % targetFolder).readlines()
@@ -339,18 +374,16 @@ class tbb(make):
     installer() method'''
     cmd = [' make -j $DCORES ']
 
-    def installer(self, target, source, env):
+    def installer(self, target, source, os_environ):
         '''we use this method to do a custom tbb install
         by copying files over.'''
         import build
-        # print str(target[0]), [ str(x) for x in source ]
-        # print self.buildFolder
         lines = []
-        for each in [ str(x) for x in source if self.src in str(x) ]:
-            path = os.path.abspath( os.path.dirname(each) )
-            target = os.path.abspath( os.path.dirname(str(target[0])) )
-            lines += os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (path, target)).readlines()
-            for SHLIBEXT in build.SHLIBEXT:
-                lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
-                lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (path, SHLIBEXT, target) ).readlines()
+        sourceFolder = os_environ['SOURCE_FOLDER']
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
+        lines += os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (sourceFolder, targetFolder)).readlines()
+        for SHLIBEXT in build.SHLIBEXT:
+            lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (sourceFolder, SHLIBEXT, targetFolder) ).readlines()
+            lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (sourceFolder, SHLIBEXT, targetFolder) ).readlines()
         return lines

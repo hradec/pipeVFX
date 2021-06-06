@@ -30,6 +30,18 @@ from multiprocessing import cpu_count
 
 from bcolors import bcolors
 
+libraries_with_versioned_names = [
+    'boost',
+    'tiff',
+    'jpeg',
+    'libpng',
+    'libraw',
+    'oiio',
+    'openvdb',
+    'alembic',
+]
+
+
 def wacom():
     ''' check if wacon is attached '''
     return map( lambda x: x.strip(), os.popen('xsetwacom --list').readlines() )
@@ -99,9 +111,9 @@ class appsDB(dict):
         self.latest = {}
         self.app = appName
 
-        self.win = platform == WIN
-        self.osx = platform == OSX
-        self.linux = platform == LIN
+        self.win = WIN in platform
+        self.osx =  OSX in platform
+        self.linux = LIN in platform
         self.arch = arch
         self.platform = platform
         self.py = py
@@ -198,12 +210,17 @@ class appsDB(dict):
         if macfixData['subpath']:
             subPath = '%s/%s' % (macfixData['subpath'],subPath)
 
-        # account for app version builds of a package, if they exist.
-        if self.parent() and self.parent() != self.app:
-            parent_version =  version.get( self.parent() )
-            _subPath = '%s.%s/%s' % ( self.parent(), parent_version, subPath )
-            if os.path.exists( ret+'/'+_subPath ):
-                subPath = _subPath
+        # account for targetSuffix version builds of a package, if they exist.
+        for targetSuffix in  [self.parent(), 'boost']:
+            if targetSuffix and targetSuffix != self.app:
+                parent_version =  version.get( targetSuffix )
+                if not parent_version:
+                    parent_version =  versionLib.get( targetSuffix )
+                _subPath = '%s.%s/%s' % ( targetSuffix, parent_version, subPath )
+                # use glob instead of os.path.exists, since glob will
+                # resolve wildcards!
+                if glob( ret+'/'+_subPath ):
+                    subPath = _subPath
 
         if subPath:
             subPath = '/%s' % subPath
@@ -533,6 +550,11 @@ class baseApp(_environ):
             derivated class, for example:
                 for a "class maya", it will init self.appFromDB with all data for the app "maya"
         '''
+        # self._SINGLE_ += ['PYTHONHOME']
+        # self._CANT_UPDATE_ += ['PYTHONHOME']
+        self._PARENT_ONLY_ += ['PYTHONHOME']
+
+
         if app:
             self.className = app
         else:
@@ -574,7 +596,7 @@ class baseApp(_environ):
         self.updatedClasses = {}
 
         # current local machine/system info
-        from platform import dist
+        from platform import platform as dist
         self.platform = dist()[0].lower()
         self.win = platform == WIN
         self.osx = platform == OSX
@@ -776,11 +798,25 @@ class baseApp(_environ):
             self['LD_LIBRARY_PATH']=self.path('lib/python$PYTHON_VERSION_MAJOR')
             self['LD_LIBRARY_PATH']=self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')
 
-            # add all boost lib versions to search path, since boost is version controlled in its name
-            for each in glob( "%s/boost/*/lib/python%s/" % (roots.libs(), '.'.join(versionLib.get('python').split('.')[:2]))):
-                self['LD_LIBRARY_PATH'] = each
-
             self['BOOST_VERSION'] = versionLib.get('boost')
+
+            def addTargetSuffix(lib, _suffix=['*/boost.*']):
+                # account for targetSuffix folders (boost for now!)
+                pv='.'.join(versionLib.get('python').split('.')[:2])
+                for suffix in _suffix:
+                    for each in glob( "%s/%s/%s/lib/python%s" % (roots.libs(), lib, suffix, pv) ):
+                        self['LD_LIBRARY_PATH'] = each
+                    for each in glob( "%s/%s/%s/lib" % (roots.libs(), lib, suffix) ):
+                        self['LD_LIBRARY_PATH'] = each
+
+            # account for all versions of theses packages!
+            for lib in libraries_with_versioned_names:
+                # add all targetSuffix version
+                addTargetSuffix(lib, [
+                    '*',
+                    '*/boost.*'
+                ])
+
             # if we have extra variables, just update itself with it!
             for each in extraUpdates:
                 self[each] = allLibs[each]
@@ -920,9 +956,18 @@ class baseApp(_environ):
             del module
         self.version()
 
-    def expand(self):
-        ''' expand all env vars in this class to the environment '''
+    def expand(self, binName=None):
+        ''' expand all env vars in this class to the environment
+        if binName is specified, fullEnvironment will also run the license setup
+        '''
+        # here is were we actually update self with all updated
+        self.fullEnvironment(binName)
         _environ.evaluate(self)
+
+        # update python itself with the newly created PYTHONPATH.
+        for each in os.environ['PYTHONPATH'].split(':'):
+            sys.path += [each]
+
 
     def toolsPaths(self):
         ''' return all the tools paths in the hierarqui, sorted correctly! '''
@@ -960,7 +1005,7 @@ class baseApp(_environ):
             if os.path.exists( license_script ):
                 try:
                     exec( ''.join(open(license_script).readlines()),globals(),locals() )
-                    print( license_script )
+                    # print( license_script )
                     break
                 except:
                     print( bcolors.FAIL+'='*80 )
@@ -1055,17 +1100,29 @@ class baseApp(_environ):
         return ret
 
     def fullEnvironment(self, binName=None):
-        # here is were we actually update self with all updated
-        # classes - the ones we do 'self.update(classApp())' in environ method!
-        for className in  self.updatedClasses.keys():
-            # evaluate all classes, but itself!
-            if className != self.parent():
-                self.updatedClasses[className].evaluate()
-                # first, run license method for all added classes
-                if binName:
-                    self.updatedClasses[className]._license(binName)
-                # then, update self with the class!
-                _environ.update(self, self.updatedClasses[className])
+        '''
+        here is were we actually update self with all updated
+        classes - the ones we do 'self.update(classApp())' in environ method!
+        we also add all libraries path
+        if binName is specified, fullEnvironment will also run the license setup
+        for all classes in updatedClasses[], including the this one.
+        '''
+        # add our pipe library collection
+        self.updateLibs()
+
+        # only run if enviroment is set and not root!
+        if os.getuid()>0:
+            # here is were we actually update self with all updated
+            # classes - the ones we do 'self.update(classApp())' in environ method!
+            for className in  self.updatedClasses.keys():
+                # evaluate all classes, but itself!
+                if className != self.parent():
+                    self.updatedClasses[className].evaluate()
+                    # first, run license method for all added classes
+                    if binName:
+                        self.updatedClasses[className]._license(binName)
+                    # then, update self with the class!
+                    _environ.update(self, self.updatedClasses[className])
 
         # last, run self license
         if binName:
@@ -1142,9 +1199,6 @@ class baseApp(_environ):
         # use /bin/sh to run apps...
         os.environ['SHELL'] = '/bin/sh'
 
-        # add our pipe library collection
-        self.updateLibs()
-
         # if the app is a wine app, set WINEPREFIX
         if os.path.exists( "%s/drive_c" % self.path() ):
             self['WINEPREFIX'] = self.path()
@@ -1158,22 +1212,19 @@ class baseApp(_environ):
 
 
         # only run if enviroment is set and not root!
-        if os.getuid()>0:
+        if os.getuid()>0 or 'RUN_SHELL' in os.environ:
             # here is were we actually update self with all updated
             # classes - the ones we do 'self.update(classApp())' in environ method!
-            # for className in  self.updatedClasses.keys():
-            #     self.updatedClasses[className].evaluate()
-            #     # first, run license method for all added classes
-            #     self.updatedClasses[className]._license(binName)
-            #     # then, update self with the class!
-            #     _environ.update(self, self.updatedClasses[className])
             self.fullEnvironment(binName)
 
 
 
         # expand all environment variables stored in this class to
         # actual os.environ vars
-        self.expand()
+        # it also updates this class with libraries path, all the classes
+        # that where added by self.update() and if binName is specified,
+        # it will run the _license() method for all classes
+        self.expand(binName)
 
         # get extra default command line parameters
         # if extraCommandLine() method exists!

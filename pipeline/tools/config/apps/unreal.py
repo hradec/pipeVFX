@@ -22,18 +22,46 @@
 class unreal(baseApp):
 
     def environ(self):
+        self.update( python() )
         pass
 
     def license(self):
         pass
 
     def bins(self):
-        return [
-            ('unreal', 'Engine/Binaries/Linux/UE4Editor -USEALLAVAILABLECORES')
+        extra  = ''
+        # extra += ' -USEALLAVAILABLECORES '
+        ret = [
+            # ('unreal', 'Engine/Binaries/Linux/UE4Editor -USEALLAVAILABLECORES'),
+            ('unreal', 'Engine/Binaries/Linux/UE4Editor'),
+            ('UE4Editor', 'Engine/Binaries/Linux/UE4Editor'),
+            ('UE4Editor.exe', 'Engine/Binaries/Linux/UE4Editor'),
+            ('unreal-cmd', 'Engine/Binaries/Linux/UE4Editor-Cmd'),
+            ('UE4Editor-Cmd', 'Engine/Binaries/Linux/UE4Editor-Cmd'),
+            ('UE4Editor-Cmd.exe', 'Engine/Binaries/Linux/UE4Editor-Cmd'),
         ]
+        return [ (x[0],x[1]+extra) for x in ret ]
+
+    def run(self, app):
+        # run the application
+        self['PYTHONPATH'] = ''
+        os.environ['PYTHONPATH'] = ''
+        cmd = app.split(' ')
+        pars=[
+            # 'NOHOMEDIR="$NOHOMEDIR"',
+            # 'NOINI',
+            # 'NOCONTENTBROWSER', #Disable the Content Browser.
+            # 'NOLOADSTARTUPPACKAGES',
+            # 'VERBOSE',
+            # 'PATHS', #: Set what paths to use for testing wrangled content. Not used for shipping releases.
+            # 'WARNINGSASERRORS', #: Treat warnings as errors.
+        ]
+        baseApp.run( self, ' '.join(cmd[0:]+pars) )
+
 
     def userSetup(self, jobuser):
         self['HOME'] = jobuser.path('unreal')
+        # self['NOHOMEDIR'] = jobuser.path('unreal')
         if not os.path.exists( jobuser.path('unreal/.confg') ):
             jobuser.mkdir( 'unreal' )
             jobuser.mkdir( 'unreal/.config/' )

@@ -19,13 +19,19 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import os
+import os, sys
 from glob import glob
 import pipe
 
 try:
     from IECore import *
     import IECore
+    if not hasattr(IECore, 'V3i'):
+        from imath import *
+        IECore.V2f = V2f
+        IECore.V2i = V2i
+        IECore.V3f = V3f
+        IECore.V3i = V3i
 except:
     CompoundParameter = object
     CompoundObject = {}
@@ -312,7 +318,7 @@ class AssetParameter( CompoundParameter ):
     def getData(self):
         if self.path:
             p = self.getFilePath()
-            # print p
+            # print '====>',p, self.path
             if os.path.exists("%s/data.txt" % p):
                 f = open("%s/data.txt" % p)
                 l = f.readlines()
@@ -323,10 +329,32 @@ class AssetParameter( CompoundParameter ):
         return {}
 
     def getCurrent(self):
+        current = None
         if self.path:
-            p = self.getFilePath()
-            return  ''.join(open("%s/../current" % p).readlines()).strip()
-        return None
+            p = self.getFilePath().split('/sam/')
+            pp = p[-1].split('/')
+            # if this asset is not a shot asset, and we're in a shot,
+            # try to find the shot asset first!
+            if self.shot.path().split('/')[-2] == 'shots' and '.' not in pp[2]:
+                pp[2] = self.shot.path().split('/')[-1]+'.'+pp[2]
+
+            current = "%s/sam/%s/%s/%s/current" % (p[0],pp[0],pp[1],pp[2])
+            if not os.path.exists(current) and '.' in pp[2]:
+                # so the shot asset doesn't exist, roll back to the normal one!
+                pp[2] = pp[2].split('.')[-1]
+                current = "%s/sam/%s/%s/%s/current" % (p[0],pp[0],pp[1],pp[2])
+                if not os.path.exists(current):
+                    raise Exception("asset %s doesn't exist." % current)
+
+            # adjust self.path to the proper asset level (asset or shot!)
+            self.path = '/'.join(pp[0:3])
+            # now retrieve the current version
+            current = ''.join(open(current).readlines()).strip()
+            # and update self.path with the current version!
+            ppp = self.path.split('/')
+            self.path = '/'.join(ppp[0:3]+[os.path.basename(current.strip('/'))])
+            # print "----->", self.path
+        return current
 
     def getFilePath(self):
         if self.job and self.path:
@@ -406,7 +434,7 @@ class AssetParameter( CompoundParameter ):
                     # make sure an asset in a shot is being published
                     # with the template shotname.assetname
                     assetName = assetName.split('.')[-1]
-                    print  self.shot.path()
+                    # print  self.shot.path()
                     if self.shot.path().split('/')[-2] == 'shots':
                         assetName = assetName.strip().replace(self.shot.shot,'').strip('_')
                         if not assetName:

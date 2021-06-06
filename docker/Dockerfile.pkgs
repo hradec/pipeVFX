@@ -5,8 +5,9 @@
 # we can also create new images based on this one to download new packages
 # without having to re-download the ones in this image!
 
-ARG BASE_IMAGE
-FROM $BASE_IMAGE
+# ARG BASE_IMAGE
+# FROM $BASE_IMAGE
+FROM centos:7.6.1810
 
 ARG http
 ARG https
@@ -46,6 +47,19 @@ COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
 COPY docker/gcc-bin-4.1.2.tgz       /atomo/pipeline/build/.download/4.1.2.tar.gz
 COPY docker/setuptools-33.1.1.zip   /atomo/pipeline/build/.download/setuptools-33.1.1.zip
 
+# copy over the latest packages from the latest pkg TAG image!
+# this makes upload/download a large layer all the time,
+# but prevents this image from being rebuild all the time when we add
+# a new package.
+# By copying over, we don't run into the "max depth exced" docker build error for
+# having more than 125 layers, which happens a lot if we use the previous tag as base image.
+# after building this image, we tag it as centos7_latest, so next build will
+# pull the up2date cache from this build.
+#
+# WARNING: if building for the first time, comment this line out!
+COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download/*  /atomo/pipeline/build/.download/
+
+
 # download packages so the image contain all tarballs.
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     ( cat /etc/yum.repos.d/epel.repo \
@@ -59,7 +73,7 @@ RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     cd /atomo/pipeline/build && \
     env && \
     PYTHONPATH=/atomo/pipeline/tools/python \
-    scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 ))
+    scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) || true
 
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*

@@ -112,6 +112,17 @@ class gccBuild(configure):
             tt = '/'.join([os.path.dirname(t),'bin'])
             # print tt
             configure.uncompressor( self, [tt], source, env)
+        elif float(v) == 4.8:
+            configure.uncompressor( self, target, source, env)
+        elif float(v) == 6.3:
+            configure.uncompressor( self, target, source, env)
+            os.system( " && ".join([
+                "cd %s",
+                "tar xf ./gcc-6.3.1-20170216.tar.bz2",
+                "tar xf ./doxygen-1.8.0.src.tar.gz",
+                "tar xf ./isl-0.14.tar.bz2",
+                "tar xf ./mpc-0.8.1.tar.gz",
+            ]) % (os.path.dirname(t)) )
         else:
             configure.uncompressor( self, target, source, env)
 
@@ -234,6 +245,83 @@ class gccBuild(configure):
                 'make -j $DCORES',
                 'make install',
             ])
+        elif float(os_environ['VERSION_MAJOR']) == 6.3:
+            # extract from https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=gcc48
+            distroSpecific = []
+            distroSpecificConfigure = ''
+            # if 'arch' in pipe.distro:
+            #     distroSpecific = [
+            #         # Do not run fixincludes
+            #         "sed -i -e 's@\./fixinc\.sh@-c true@' 'gcc/Makefile.in'",
+            #         # fix build with GCC 6
+            #         "curl -L -s 'https://aur.archlinux.org/cgit/aur.git/plain/gcc-4.9-fix-build-with-gcc-6.patch?h=gcc48' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
+            #         # Arch Linux installs x86_64 libraries /lib
+            #         "sed -i -e '/m64=/s/lib64/lib/' 'gcc/config/i386/t-linux64'",
+            #         # hack! - some configure tests for header files using "$CPP $CPPFLAGS"
+            #         "sed -i -e '/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/' {libiberty,gcc}/configure",
+            #         # installing libiberty headers is broken
+            #         # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56780#c6
+            #         # "sed -i -e 's/@target_header_dir@/libiberty/' 'libiberty/Makefile.in'",
+            #     ]
+            #     distroSpecificConfigure = ' '.join([
+            #         '--disable-libstdcxx-pch '
+            #         '--disable-libunwind-exceptions '
+            #         '--disable-multilib '
+            #         '--disable-werror '
+            #         '--enable-__cxa_atexit '
+            #         '--enable-checking=release '
+            #         '--enable-clocale=gnu '
+            #         '--enable-cloog-backend=isl '
+            #         '--enable-gnu-unique-object '
+            #         '--enable-gold '
+            #         '--enable-languages="c,c++" '
+            #         '--enable-plugin '
+            #         '--enable-fdpic '
+            #         '--enable-shared '
+            #         '--enable-threads=posix '
+            #         '--enable-version-specific-runtime-libs '
+            #         '--infodir="$INSTALL_FOLDER/share/info" '
+            #         '--libdir="$INSTALL_FOLDER/lib" '
+            #         '--libexecdir="$INSTALL_FOLDER/lib" '
+            #         '--mandir=$INSTALL_FOLDER/share/man '
+            #         "--program-suffix=$(basename $TARGET_FOLDER) "
+            #         "--with-ppl "
+            #         "--without-system-zlib "
+            #     ])
+
+            cmd = ' && '.join(distroSpecific+[
+                # "./contrib/download_prerequisites",
+                "ls -lh",
+                "cd gcc-6.3.1-20170216",
+                # "( for n in $(ls ../gcc6*.patch) ; do patch -p < $n ; done )",
+                "mkdir -p build",
+                "cd build",
+                "ulimit -s 32768",
+                '../configure '
+                        '--disable-multilib '
+                        '--disable-werror '
+                        '--disable-bootstrap '
+                        '--disable-install-libiberty '
+                        '--disable-werror '
+                        '--enable-__cxa_atexit '
+                        '--enable-checking=release '
+                        '--enable-languages="c,c++" '
+                        '--enable-fdpic '
+                        "--without-system-zlib "
+                        "--with-ppl "
+                        '--with-gmp=$GMP_TARGET_FOLDER '
+                        '--with-mpfr=$MPFR_TARGET_FOLDER '
+                        '--with-mpc=$MPC_TARGET_FOLDER '
+                        '--infodir="$INSTALL_FOLDER/share/info" '
+                        '--libdir="$INSTALL_FOLDER/lib" '
+                        '--libexecdir="$INSTALL_FOLDER/lib" '
+                        '--mandir=$INSTALL_FOLDER/share/man '
+                        "--program-suffix=$(basename $TARGET_FOLDER) "
+                        "%s --prefix=$INSTALL_FOLDER " % distroSpecificConfigure,
+                'make -j $DCORES',
+                'make install',
+            ])
+
         else:
             cmd = ' && '.join([
                 "mkdir -p build",
@@ -267,6 +355,7 @@ class gccBuild(configure):
                 # 'make install',
             ])
 
+
         # make sure we're using the distros GCC to build GCC
         symlinks =  [
             'ln -s  $TARGET_FOLDER /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2 || true',
@@ -286,9 +375,9 @@ class gccBuild(configure):
         ]+symlinks)
         return cmd
 
-    def installer(self, target, source, env): # noqa
-        targetFolder = os.path.dirname(str(target[0]))
-        versionMajor = float( '.'.join( os.path.basename(targetFolder).split('.')[:2] ) )
+    def installer(self, target, source, os_environ): # noqa
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
         ret = []
         for each in glob("%s/bin/*" % targetFolder):
             each = os.path.basename(each)
@@ -298,7 +387,8 @@ class gccBuild(configure):
                 if versionMajor == 4.8:
                     ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
                 else:
-                    ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+                    # ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+                    ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
 
             # we add a couple of wrappers to ar and ranlib, so we don't have to build then.
             # the wrapper make sure they can load the correct libstdc++ from system
@@ -312,16 +402,24 @@ class openssl(configure):
     ''' a make class to exclusively build openssl package
     we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
     src='config'
+    extra_version_strings=[]
     cmd=[
         # './config no-shared no-idea no-mdc2 no-rc5 zlib enable-tlsext no-ssl2 --prefix=$INSTALL_FOLDER',
         # 'make depend && make && make install',
+        # setup version list needed in the library!
         '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.$3}') { global: *;};" | tee ./openssl.ld''',
         '''echo "OPENSSL_$(basename $TARGET_FOLDER | awk -F'.' '{print $1.$2.0}') { global: *;};" | tee -a ./openssl.ld''',
+
+        '''echo "OPENSSL_1.0.1 { global: *;};" | tee -a ./openssl.ld''',
+        '''echo "OPENSSL_1.0.1_EC { global: *;};" | tee -a ./openssl.ld''',
+        '''echo "libcrypto.so.10 { global: *;};" | tee -a ./openssl.ld''',
         './config shared enable-tlsext --prefix=$INSTALL_FOLDER -Wl,--version-script=$(pwd)/openssl.ld -Wl,-Bsymbolic-functions',
         'make -j $DCORES && make install -j $DCORES' ,
     ]
-    def installer(self, target, source, env): # noqa
-        targetFolder = os.path.dirname(str(target[0]))
+    def installer(self, target, source, os_environ): # noqa
+        targetFolder = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
+
         ret = ''
         # ret = os.popen("ln -s libssl.so %s/lib/libssl.so.10" % targetFolder).readlines()
         # ret += os.popen("ln -s libcrypto.so %s/lib/libcrypto.so.10" % targetFolder).readlines()
@@ -331,9 +429,10 @@ class openssl(configure):
 class freetype(configure):
     ''' a make class to exclusively build freetype package
     we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
-    def installer(self, target, source, env): # noqa
+    def installer(self, target, source, os_environ): # noqa
         ret = []
-        t = os.path.dirname(str(target[0]))
+        t = os_environ['INSTALL_FOLDER']
+        versionMajor = float( os_environ['VERSION_MAJOR'] )
         if os.path.exists( "%s/include/freetype2" % t):
             if not os.path.exists( "%s/include/freetype" % t):
                 ret = os.popen("ln -s freetype2 %s/include/freetype" % t).readlines()
@@ -349,15 +448,17 @@ class boost(configure):
     def fixCMD(self, cmd, os_environ):
         # generic build command for versions 1.58 and up
         cmd = [
-            ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
-            ' ./b2 -j $CORES variant=release cxxflags="-fPIC -fpermissive -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            # ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
+            # ' ./b2 -j $CORES variant=release cxxflags="-fPIC -fpermissive -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            ' ./bootstrap.sh --prefix=$INSTALL_FOLDER --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER --without-libraries=log --without-icu',
+            ' ./bjam -j $CORES --disable-icu cxxflags="-fPIC -fpermissive " variant=release linkflags="$LDFLAGS" link=shared threading=multi  -d+2  install',
         ]
         # if version is below 1.58, use this build commands
-        if float(os_environ['VERSION_MAJOR']) < 1.58 and  float(os_environ['VERSION_MAJOR']) > 1.55 :
+        if float(os_environ['VERSION_MAJOR']) > 1.55 and  float(os_environ['VERSION_MAJOR']) < 1.58 :
             cmd = [
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER ',
                 'echo -e "using gcc : : $CXX : <archiver>$AR ;"  > ./user-config.jam && cp ./user-config.jam ./user-config2.jam ',
-                ' ./b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC -fpermissive  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 --without-mpi -sICU_PATH=/tmp -sNO_BZIP2=1  -q --layout=tagged  --debug-configuration install',
+                ' ./b2 -j $CORES  --without-log threading=multi  variant=release  --user-config=./user-config.jam cxxflags="-fPIC -fpermissive  -D__AA__USE_BSD $CPPFLAGS " linkflags="$LDFLAGS" -d+2 -q  install',
                 # './b2 -j $DCORES --user-config=./user-config.jam cxxflags="-fPIC  -D__AA__USE_BSD $CPPFLAGS -std=gnu++11" linkflags="$LDFLAGS" -d+2 install',
             ]
 
@@ -366,7 +467,9 @@ class boost(configure):
             cmd = [
                 "curl -L -s 'http://www.boost.org/patches/1_58_0/0001-Fix-exec_file-for-Python-3-3.4.patch'            | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
                 "curl -L -s 'http://www.boost.org/patches/1_58_0/0002-Fix-a-regression-with-non-constexpr-types.patch' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
-            ] + cmd
+            ] + cmd + [
+                # "ls  $BOOST_TARGET_FOLDER/lib/python2.7/*-mt* | while read p ; do bp=$(basename $p) ; np=$( echo $bp | sed 's/-mt//') ; ln -s $bp  $(dirname $p)/$np ; done"
+            ]
 
         if float(os_environ['VERSION_MAJOR']) == 1.55:
             cmd = [
@@ -377,34 +480,66 @@ class boost(configure):
 
         if float(os_environ['VERSION_MAJOR']) == 1.54:
             cmd = [
-                "curl -L -s 'http://www.boost.org/patches/1_54_0/001-coroutine.patch' | sed 's/1_54_0/./g' | patch -p1",
-                "curl -L -s 'http://www.boost.org/patches/1_54_0/002-date-time.patch' | sed 's/1_54_0/./g' | patch -p1",
-                "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
-                "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
+                # "curl -L -s 'http://www.boost.org/patches/1_54_0/001-coroutine.patch' | sed 's/1_54_0/./g' | patch -p1",
+                # "curl -L -s 'http://www.boost.org/patches/1_54_0/002-date-time.patch' | sed 's/1_54_0/./g' | patch -p1",
+                # "curl -L -s 'http://www.boost.org/patches/1_54_0/003-log.patch'       | sed 's/1_54_0/./g' | patch -p1",
+                # "curl -L -s 'http://www.boost.org/patches/1_54_0/004-thread.patch'    | sed 's/1_54_0/./g' | patch -p1",
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
-                ' ./b2 -j $CORES  --without-log  variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                ' ./b2 -j $CORES  --without-log  variant=release threading=multi cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
-        if float(os_environ['VERSION_MAJOR']) == 1.51:
+        if float(os_environ['VERSION_MAJOR']) <= 1.53:
             cmd = [
                 ' ./bootstrap.sh --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --prefix=$INSTALL_FOLDER',
-                ' ./b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+                ' ./b2 -j $CORES   variant=release threading=multi cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
             ]
 
+        if float(os_environ['VERSION_MAJOR']) >= 1.61:
+            cmd = [
+                ' ./bootstrap.sh --prefix=$INSTALL_FOLDER --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER --without-libraries=log --without-icu',
+                ' ./bjam -j $CORES --disable-icu cxxflags=" -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC -fpermissive -std=c++11 " variant=release linkflags="$LDFLAGS" link=shared threading=multi  -d+2  install',
+                # ' ./b2 -j $CORES   variant=release cxxflags="-fPIC -fpermissive  -D__GLIBC_HAVE_LONG_LONG -D__AA__USE_BSD $CPPFLAGS" linkflags="$LDFLAGS" -d+2 install',
+            ]
 
+        # starting with boost 1.70, the python version is added to the libbost_python library, so some older packages will fail to find it.
+        # we fix it by adding a link
+        if float(os_environ['VERSION_MAJOR']) >= 1.70:
+            cmd += ['( x=$(ls $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python??.so) ; [ "$x" != "" ] && ln -s $(basename $x) $(dirname $x)/libboost_python.so )']
 
         # if we need to build with system gcc
-        if float(os_environ['VERSION_MAJOR']) in []:
-            cmd = [
-                "export PATH=$(echo $PATH | sed 's/gcc.4.1.2.bin//g')",
-            ] + cmd
+        # if float(os_environ['VERSION_MAJOR']) in []:
+        #     cmd = [
+        #         "export PATH=$(echo $PATH | sed 's/gcc.4.1.2.bin//g')",
+        #     ] + cmd
 
         cmd = ['export LDFLAGS="$LDFLAGS -L$BZIP2_TARGET_FOLDER/lib/"']+cmd
 
-        return ' && '.join(cmd)
+        return ' && '.join(cmd+[
+            'list=$(ls  $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/*-mt* 2>/dev/null) && '
+            '[ "$list" != ""  ] && ('
+                'for p in $list ; do '
+                    'bp=$(basename $p) ; '
+                    'np=$( echo $bp | sed "s/-mt//") ; '
+                    'ln -s $bp  $(dirname $p)/$np ; '
+                'done'
+            ') || true'
+        ])
 
-#    def installer(self, target, source, env):
-#        os.popen("rm -rf %s/lib/python*/*.a" % env['TARGET_FOLDER']).readlines()
+    # def installer(self, target, source, os_environ):
+    #     ''' in case boost was build with -mt sufix, create link without it so everything works as it should'''
+    #     from subprocess import Popen
+    #     cmd=[
+    #         'list=$(ls  $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/*-mt* 2>/dev/null) && '
+    #         '[ "$list" != ""  ] && ('
+    #             'for p in $list ; do '
+    #                 'bp=$(basename $p) ; '
+    #                 'np=$( echo $bp | sed "s/-mt//") ; '
+    #                 'ln -s $bp  $(dirname $p)/$np ; '
+    #             'done'
+    #         ')'
+    #     ][0]
+    #     proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
+    #     proc.wait()
 
 
 
@@ -445,7 +580,7 @@ class python(configure):
             '$PYTHON ./setup.py install --prefix=$INSTALL_FOLDER '
         ')',
         "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/easy_install hashlib || true)",
-        '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip || true)',
+        '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip==20 || true)',
         '(ln -s pip$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/pip || true)',
         "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/pip install  readline || true)",
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
@@ -455,11 +590,11 @@ class python(configure):
         cmd = configure.fixCMD(self,cmd, os_environ)
         if self.kargs.has_key('easy_install'):
             for each in self.kargs['easy_install']:
-                cmd += ' && $INSTALL_FOLDER/bin/easy_install %s ' % each
+                cmd += ' && PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/easy_install %s ' % each
         if self.kargs.has_key('pip'):
             for each in self.kargs['pip']:
                 if int(pipe.apps.version.get('python').split('.')[0]) < 3 or 'PyOpenGL-accelerate' not in each:
-                    cmd += ' && $INSTALL_FOLDER/bin/pip install %s ' % each
+                    cmd += ' && PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/pip install %s ' % each
         return cmd
 
     # def installer(self, target, source, env): # noqa
@@ -478,9 +613,9 @@ class cortex(configure):
     }
     cmd=[
         # '''export LDFLAGS=$(ls $ALEMBIC_TARGET_FOLDER/lib/ | sed -e 's/lib//g' -e 's/.so//g' |  awk '{print "-l"$1}') ; '''
-        ' scons OPTIONS=%s/cortex.options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
-        ' scons OPTIONS=%s/cortex.options.py -j $DCORES '         % os.path.abspath( os.path.dirname(__file__)),
-        # 'scons OPTIONS=%s/cortex.options.py -j $DCORES install' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/cortex_options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/cortex_options.py -j $DCORES '         % os.path.abspath( os.path.dirname(__file__)),
+        # 'scons OPTIONS=%s/cortex_options.py -j $DCORES install' % os.path.abspath( os.path.dirname(__file__)),
     ]
     apps=[]
     sconsInstall=""
@@ -590,32 +725,35 @@ class cortex(configure):
        # ],
        # fixes to option vars being treated as strings or lists.
        'SConstruct' : [
-           ('houdiniEnv.Prepend( SHLINKFLAGS = "$HOUDINI_LINK_FLAGS" )', 'houdiniEnv.Prepend( SHLINKFLAGS = ["$HOUDINI_LINK_FLAGS"] )'),
-           ('CPPFLAGS = "-DIECOREALEMBIC_WITH_OGAWA"', 'CPPFLAGS = ["-DIECOREALEMBIC_WITH_OGAWA"]'),
-           ('testEnv.Prepend( CXXFLAGS = " ".join( dependencyIncludes ) )', 'testEnv.Prepend( CXXFLAGS = dependencyIncludes )'),
-           ('vdbEnv.subst( "$INSTALL_LIB_NAME" )','vdbEnv.subst( "$INSTALL_VDBLIB_NAME" )'),
-           ('usdEnv.subst( "$INSTALL_ALEMBICLIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
-           ('usdEnv.subst( "$INSTALL_LIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
-           ('INSTALL_PYTHON_DIR/IECoreUSD', 'INSTALL_USDPYTHON_DIR/IECoreUSD'),
-           ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
-           ('INSTALL_PYTHON_DIR/IECoreVDB', 'INSTALL_VDBPYTHON_DIR/IECoreVDB'),
+            ('houdiniEnv.Prepend( SHLINKFLAGS = "$HOUDINI_LINK_FLAGS" )', 'houdiniEnv.Prepend( SHLINKFLAGS = ["$HOUDINI_LINK_FLAGS"] )'),
+            ('CPPFLAGS = "-DIECOREALEMBIC_WITH_OGAWA"', 'CPPFLAGS = ["-DIECOREALEMBIC_WITH_OGAWA"]'),
+            ('testEnv.Prepend( CXXFLAGS = " ".join( dependencyIncludes ) )', 'testEnv.Prepend( CXXFLAGS = dependencyIncludes )'),
 
-           # alembic fix for multiple libs... Cortex doesn't detect all the libraries we have built for alembic 1.5.8
-           # we need it on pre and pos version 10
-           ('.hdf5.HDF5_LIB_SUFFIX..','"hdf5$HDF5_LIB_SUFFIX",]+env["ALEMBIC_EXTRA_LIBS"].split(" ")+['),
+            # alembic fix for multiple libs... Cortex doesn't detect all the libraries we have built for alembic 1.5.8
+            # we need it on pre and pos version 10
+            ('.hdf5.HDF5_LIB_SUFFIX..','"hdf5$HDF5_LIB_SUFFIX",]+env["ALEMBIC_EXTRA_LIBS"].split(" ")+['),
 
-           ('Documentation options', '\n\n'
+            ('# Documentation options', '\n\n'
                'o.Add("ALEMBIC_EXTRA_LIBS")\n'
                'o.Add("INSTALL_VDBLIB_NAME")\n'
                'o.Add("INSTALL_VDBPYTHON_DIR")\n'
                'o.Add("INSTALL_USDLIB_NAME")\n'
                'o.Add("INSTALL_USDPYTHON_DIR")\n'
                'o.Add("INSTALL_ALEMBICPYTHON_DIR")\n'
+               'o.Add("INSTALL_APPLESEEDPYTHON_DIR")\n'
+               '# Documentation options\n'
             ),
             ('vdbPythonModuleEnv.Alias( "installScene", vdbPythonModuleInstall )',
                 'vdbPythonModuleEnv.Alias( "installScene", vdbPythonModuleInstall )\n'
                 '\t\tvdbPythonModuleEnv.Alias( "installVDB", vdbPythonModuleInstall )'
             ),
+            ('vdbEnv.subst( "$INSTALL_LIB_NAME" )','vdbEnv.subst( "$INSTALL_VDBLIB_NAME" )'),
+            ('usdEnv.subst( "$INSTALL_ALEMBICLIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
+            ('usdEnv.subst( "$INSTALL_LIB_NAME" )', 'usdEnv.subst( "$INSTALL_USDLIB_NAME" )'),
+            ('INSTALL_PYTHON_DIR/IECoreUSD', 'INSTALL_USDPYTHON_DIR/IECoreUSD'),
+            ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
+            ('INSTALL_PYTHON_DIR/IECoreVDB', 'INSTALL_VDBPYTHON_DIR/IECoreVDB'),
+
             ('"lib/"','""'),
 
             # add the proper dependency to the libraries, so libraries get installed before continue building
@@ -632,7 +770,7 @@ class cortex(configure):
             (', arnoldSources )'   , ', arnoldSources    )\n\t\tarnoldEnv.Depends(    arnoldLibrary,    [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
             (', usdSources )'      , ', usdSources       )\n\t\tusdEnv.Depends(       usdLibrary,       [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
             (', alembicSources )'  , ', alembicSources   )\n\t\talembicEnv.Depends(   alembicLibrary,   [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
-            (', appleseedSources )', ', appleseedSources )\n\t\tappleseedEnv.Depends( applessedLibrary, [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall,alembicLibrary] )'),
+            (', appleseedSources )', ', appleseedSources )\n\t\tappleseedEnv.Depends( appleseedLibrary, [coreLibraryInstall,sceneLibraryInstall,imageLibraryInstall,glLibraryInstall] )'),
 
 
             ('+ imagePythonModuleSources )'  , '+ imagePythonModuleSources   )\n\t\timagePythonModuleEnv.Depends(     imagePythonModule,     [corePythonLibraryInstall,corePythonModuleInstall] )'),
@@ -654,7 +792,11 @@ class cortex(configure):
 
             ('riSources )','riSources )\n\t\triEnv.Depends(riLibrary, coreLibraryInstall)'),
             ('rmanProcedurals.python.Procedural.cpp. )','rmanProcedurals/python/Procedural.cpp" )\n\t\triPythonProceduralEnv.Depends(riPythonProcedural, riLibrary)'),
+
             # ('rmanDisplays.ieDisplay.IEDisplay.cpp. )','rmanDisplays/ieDisplay/IEDisplay.cpp" )\n\t\triDisplayDriverEnv.Depends(riDisplayDriver, riLibrary)'),
+
+            ('appleseedDriverInstall = ','appleseedDriverEnv.Depends(appleseedDriver, appleseedLibrary)\n\t\tappleseedDriverInstall = '),
+            ('INSTALL_PYTHON_DIR/IECoreAppleseed',    'INSTALL_APPLESEEDPYTHON_DIR/IECoreAppleseed'),
 
 
            # ('riTestEnv.Depends( riTest, [ corePythonModule + riPythonProceduralForTest + riDisplayDriverForTest ] )',''),
@@ -727,16 +869,20 @@ class cortex(configure):
                         ('imagePythonModule = ','imagePythonModule = [] #'),
                         ('vdbLibrary = ','vdbLibrary = [] #'),
                         ('vdbPythonModule = ','vdbPythonModule = [] #'),
+                        ('usdLibrary = ','usdLibrary = [] #'),
+                        ('usdPythonModule = ','usdPythonModule = [] #'),
+                        ('alembicLibrary = ','alembicLibrary = [] #'),
+                        ('alembicPythonModule = ','alembicPythonModule = [] #'),
                         ('Default. coreLibrary','#Default( coreLibrary'),
                         ('Default. . glLibrary','#Default( [ glLibrary'),
                         ('Default. sceneLibrary','#Default( sceneLibrary'),
                         ('Default. . imageLibrary','#Default( [ imageLibrary'),
-                        ('Default. vdbLibrary','#Default( vdbLibrary'),
                         ('INSTALL_PYTHON_DIR/IECoreMaya',    'INSTALL_MAYAPYTHON_DIR/IECoreMaya'),
                         ('INSTALL_PYTHON_DIR/IECoreHoudini', 'INSTALL_HOUDINIPYTHON_DIR/IECoreHoudini'),
                         ('INSTALL_PYTHON_DIR/IECoreMantra',  'INSTALL_HOUDINIPYTHON_DIR/IECoreMantra'),
                         ('INSTALL_PYTHON_DIR/IECoreRI',      'INSTALL_RMANPYTHON_DIR/IECoreRI'),
                         ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
+                        ('INSTALL_PYTHON_DIR/IECoreAppleseed', 'INSTALL_APPLESEEDPYTHON_DIR/IECoreAppleseed'),
                         ('# Documentation options',
                             'o.Add("INSTALL_MAYAPYTHON_DIR","","")\n'
                             'o.Add("INSTALL_HOUDINIPYTHON_DIR","","")\n'
@@ -744,6 +890,7 @@ class cortex(configure):
                             'o.Add("ALEMBIC_EXTRA_LIBS")\n'
                             'o.Add("INSTALL_ALEMBICPYTHON_DIR","","")\n'
                             'o.Add("INSTALL_RMANPYTHON_DIR","","")\n'
+                            'o.Add("INSTALL_APPLESEEDPYTHON_DIR","","")\n'
                             '# Documentation options'
                         ),
                     ]
@@ -773,6 +920,40 @@ class cortex(configure):
                     ]
         return noIECoreSED
 
+    @staticmethod
+    def onlyIECoreExtraSED():
+        self = cortex
+        # noIECoreSED adds some extra patches to SConstruct to avoid re-building IECore, IECorePython, IECoreGL
+        noIECoreSED = {}
+        for v in self.sed:
+            noIECoreSED[v] = self.sed[v].copy()
+            for each in self.sed[v]:
+                noIECoreSED[v][each] = []
+                noIECoreSED[v][each].extend( self.sed[v][each] )
+                if each == 'SConstruct':
+                    noIECoreSED[v][each] += [
+                    ('coreLibrary = ','coreLibrary = [] #'),
+                    ('corePythonLibrary = ','corePythonLibrary = [] #'),
+                    ('corePythonModule = ','corePythonModule = [] #'),
+                    ('glLibrary = ','glLibrary = [] #'),
+                    ('glPythonModule = ','glPythonModule = [] #'),
+                    ('sceneLibrary = ','sceneLibrary = [] #'),
+                    ('scenePythonModule = ','scenePythonModule = [] #'),
+                    ('imageLibrary = ','imageLibrary = [] #'),
+                    ('imagePythonModule = ','imagePythonModule = [] #'),
+                    ('Default. coreLibrary','#Default( coreLibrary'),
+                    ('Default. . glLibrary','#Default( [ glLibrary'),
+                    ('Default. sceneLibrary','#Default( sceneLibrary'),
+                    ('Default. . imageLibrary','#Default( [ imageLibrary'),
+                    ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
+                    ('# Documentation options',
+                        'o.Add("ALEMBIC_EXTRA_LIBS")\n'
+                        'o.Add("INSTALL_ALEMBICPYTHON_DIR","","")\n'
+                        '# Documentation options'
+                    )]
+        return noIECoreSED
+
+
     def fixCMD(self, cmd, os_environ):
             return cmd + " " + self.sconsInstall
 
@@ -785,37 +966,50 @@ class gaffer(cortex):
     environ = {
     }
     cmd=[
-        ' scons OPTIONS=%s/gaffer.options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
-        ' scons OPTIONS=%s/gaffer.options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/gaffer_options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
+        # ' scons OPTIONS=%s/gaffer_options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
     ]
     # disable Appleseed build since we don't have it building yet!
     sed={'0.0.0' : {
-        'SConstruct' : [
-            ('if not haveRequiredOptions ', 'if not haveRequiredOptions or "applesed" in libraryName.lower() '),
-            ('"GafferAppleseed" : {',"''' "),
-            ('"GafferAppleseedUITest',"''' #")
-        ]
+        # 'SConstruct' : [
+        #     ('if not haveRequiredOptions ', 'if not haveRequiredOptions or "applesed" in libraryName.lower() '),
+        #     ('"GafferAppleseed" : {',"''' "),
+        #     ('"GafferAppleseedUITest',"''' #"),
+        #     ('LOCATE_DEPENDENCY_PYTHONPATH"] ) ','LOCATE_DEPENDENCY_PYTHONPATH"] ) + os.environ["PYTHONPATH"].split(":")'),
+        #     ('LOCATE_DEPENDENCY_LIBPATH"] )', 'LOCATE_DEPENDENCY_LIBPATH"] ) + os.environ["LD_LIBRARY_PATH"].split(":")'),
+        # ]
     }}
-    def installer(self, target, source, env): # noqa
-        ''' we create/update the /atomo/app/.../gaffer folder since gaffer is also an app! '''
-        targetFolder = os.path.dirname(str(target[0]))
-        versionMajor = float( '.'.join( os.path.basename(targetFolder).split('.')[:2] ) )
-        app = '%s/%s' % (pipe.roots.apps(), '/'.join(targetFolder.split('/')[-2:]))
-        ret = []
-        if not os.path.exists( app ):
-            ret += os.popen( 'sudo ln -s $INSTALL_FOLDER  %s' % app ).readlines()
-        # for each in glob("%s/bin/*" % targetFolder):
-        #     each = os.path.basename(each)
-        #     if 'linux-gnu' not in each:
-        #         if versionMajor == 4.1:
-        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
-        #         if versionMajor == 4.8:
-        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
-        #         else:
-        #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
-        #
-        #     # we add a couple of wrappers to ar and ranlib, so we don't have to build then.
-        #     # the wrapper make sure they can load the correct libstdc++ from system
-        #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ar \\$@" > %s/bin/ar ; chmod a+x %s/bin/ar' % (targetFolder,targetFolder) ).readlines()
-        #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ranlib \\$@" > %s/bin/ranlib ; chmod a+x %s/bin/ranlib' % (targetFolder,targetFolder) ).readlines()
-        return ret
+
+    def fixCMD(self, cmd, os_environ):
+        # add all boost library versions to searchpath
+        os_environ['LD_LIBRARY_PATH'] += ':'.join([os_environ['LD_LIBRARY_PATH']]+
+            glob( '%s/../*/lib/python%s' % (os_environ['BOOST_TARGET_FOLDER'], os_environ['PYTHON_VERSION_MAJOR']) )
+        )
+        os_environ['LD_LIBRARY_PATH'] += ':'.join([os_environ['LD_LIBRARY_PATH']]+
+            [os.path.abspath(x) for x in glob( '%s/../../*/%s/lib/' % ( os_environ['OIIO_TARGET_FOLDER'], os.path.basename(os_environ['OIIO_TARGET_FOLDER']) ) )]
+        )
+        return cmd
+
+    # def installer(self, target, source, env): # noqa
+    #     ''' we create/update the /atomo/app/.../gaffer folder since gaffer is also an app! '''
+    #     targetFolder = os.path.dirname(str(target[0]))
+    #     versionMajor = float( '.'.join( os.path.basename(targetFolder).split('.')[:2] ) )
+    #     app = '%s/%s' % (pipe.roots.apps(), '/'.join(targetFolder.split('/')[-2:]))
+    #     ret = []
+    #     if not os.path.exists( app ):
+    #         ret += os.popen( 'sudo ln -s $INSTALL_FOLDER  %s' % app ).readlines()
+    #     # for each in glob("%s/bin/*" % targetFolder):
+    #     #     each = os.path.basename(each)
+    #     #     if 'linux-gnu' not in each:
+    #     #         if versionMajor == 4.1:
+    #     #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+    #     #         if versionMajor == 4.8:
+    #     #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, ''.join( [ c for c in each if not c.isdigit() and c not in ['.'] ] )) ).readlines()
+    #     #         else:
+    #     #             ret += os.popen( "ln -s %s %s/bin/%s 2>&1" % (each, targetFolder, each.split('-')[0]) ).readlines()
+    #     #
+    #     #     # we add a couple of wrappers to ar and ranlib, so we don't have to build then.
+    #     #     # the wrapper make sure they can load the correct libstdc++ from system
+    #     #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ar \\$@" > %s/bin/ar ; chmod a+x %s/bin/ar' % (targetFolder,targetFolder) ).readlines()
+    #     #     ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ranlib \\$@" > %s/bin/ranlib ; chmod a+x %s/bin/ranlib' % (targetFolder,targetFolder) ).readlines()
+    #     return ret

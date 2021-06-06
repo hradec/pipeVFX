@@ -37,6 +37,3 @@ SHLIBEXT=[
     '.so',
     '.dylib',
 ]
-
-def versionMajor(versionString):
-    return float('.'.join(versionString.split('.')[:2]))

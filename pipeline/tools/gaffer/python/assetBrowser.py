@@ -42,9 +42,9 @@ import samEditor
 import timelineImage
 import genericAsset
 
+from opDialogue import OpDialogue
 
-QtGui = GafferUI._qtImport( "QtGui" )
-QtCore = GafferUI._qtImport( "QtCore" )
+QtCore, QtGui = pipe.importQt()
 
 
 try:
@@ -152,7 +152,9 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         # print Asset.AssetParameter().classLoader.classNames( "*" )
         # return True
         # classes = Asset.AssetParameter().classLoader.classNames( "*" )
-        return '/'.join(path.split('/')[0:2]) in classes
+        # print path, '/'.join(path.strip('/').split('/')[0:2]) in classes, classes
+        # sys.stdout.flush()
+        return '/'.join(path.strip('/').split('/')[0:2]) in classes
 
     def getPath(self):
         p = str(GafferUI.DeferredPathPreview.getPath(self))
@@ -174,6 +176,8 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         ''' Main Asset Preview tab '''
         self.parent().setCurrent(self)
         del self.__column[:]
+        # print '===',path
+        sys.stdout.flush()
 
         self.browser = self.ancestor( GafferUI.SplitContainer ).browser
 
@@ -515,9 +519,11 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         self.classType = '/'.join(path.split('/')[0:2])
 
         app = GafferCortex.ClassLoaderPath( IECore.ClassLoader.defaultOpLoader(), "/asset/publish" ).load()()
+        print app
 
         # load the type op so we can run it
-        opNames = Asset.AssetParameter().classLoader.classNames( "*%s" % '/'.join(path.split('/')[:2]) )
+        opNames = Asset.AssetParameter().classLoader.classNames( "*%s" % '/'.join(path.strip('/').split('/')[:2]) )
+        print app,opNames
         app.parameters()['Asset']['type'].setClass(opNames[0],1)
 
         try:
@@ -724,9 +730,9 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
 
         def showDialogue( menu ) :
 
-            dialogue = GafferUI.OpDialogue(
+            dialogue = OpDialogue(
                 op,
-                postExecuteBehaviour = GafferUI.OpDialogue.PostExecuteBehaviour.Close,
+                postExecuteBehaviour = OpDialogue.PostExecuteBehaviour.Close,
                 executeInBackground=True
             )
             dialogue.waitForResult( parentWindow = menu.ancestor( GafferUI.Window ) )

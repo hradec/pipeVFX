@@ -19,25 +19,46 @@
 # =================================================================================
 
 
+# import maya.app
+# maya.app.general.fileTexturePathResolver.findAllFilesForPattern("/BTRFS10TB/atomo/jobs/0704.hi_chew/assets/sala/users/iinaja/maya/sourceimages/personagem_maca/textura/corpo/Base_maca_Color_<UDIM>.png",0)
+
+
 import IECore, Gaffer, GafferUI, pipe, tempfile
 import Asset
 from glob import glob
-import os, datetime, sys
+import os, datetime, sys, math
 import assetUtils
 import traceback
 from functools import wraps
 
+import nodeMD5
+reload(nodeMD5)
+
+import samXgen
+reload(samXgen)
+
 try:
     from pymel import core as pm
     import maya.cmds as m
-    from maya.mel import eval as meval
-    import IECoreMaya
-    reload(assetUtils)
     _m = m
+    from maya.mel import eval as meval
+    reload(assetUtils)
+    import IECoreMaya
     # hostApp('maya')
     import maya.utils as mu
+    import pymel.core as pm
+    import maya.app as ma
 except:
+    # print traceback.print_exc()
     m = None
+
+if m:
+    try:
+        from maya.app.general import fileTexturePathResolver
+        import IECoreMaya
+        reload(assetUtils)
+    except:
+        print traceback.print_exc()
 
 
 # -----------------------------------------------------------------------------
@@ -62,6 +83,10 @@ def viewportOff( func ):
         try:
             return func( *args, **kwargs )
         except Exception:
+            print "Exception in user code (from inside viewportOff(%s)):" % func
+            print '-'*60
+            traceback.print_exc(file=sys.stdout)
+            print '-'*60
             raise # will raise original error
         finally:
             meval("paneLayout -e -manage true $gMainPane")
@@ -86,7 +111,7 @@ def cleanAllShapeName():
                     l = len(last)
 
         each = '|'.join(each.split('|')[:-1]+[last])
-        print each
+        # print each
 
 
 
@@ -119,7 +144,7 @@ def pop(attrPOP):
                         if type(v) in [ str ]:
                             m.setAttr( attrName, v, type='string')
                     except:
-                        print attrName
+                        print "pop(attrPOP) Exception: "+str(attrName)
 
 
 
@@ -129,9 +154,12 @@ def hostApp(app=None):
     if app:
         globals()['_hostApp_'] = app
 
-    if globals()['_hostApp_']=='maya':
-        globals()['m']=globals()['_m']
-    else:
+    try:
+        if globals()['_hostApp_']=='maya':
+            globals()['m']=globals()['_m']
+        else:
+            raise
+    except:
         globals()['m']=None
     # print app, globals()['m'], globals().keys()
     return globals()['_hostApp_']
@@ -145,6 +173,16 @@ def _nodeNameTemplate(prefix=False):
 
 def _nodeName(data=None):
     ret = 'SAM_none_none_none_none'
+    ret =  _nodeNameTemplate() % (
+        data['assetType'].replace('/','_'),
+        data['assetName'].replace('.','_'), #split('.')[-1],
+        data['assetInfo']['version'].value.x,
+        data['assetInfo']['version'].value.y,
+        data['assetInfo']['version'].value.z,
+        ''
+    )
+
+
     try:
         ret =  _nodeNameTemplate() % (
             data['assetType'].replace('/','_'),
@@ -158,7 +196,7 @@ def _nodeName(data=None):
         pass
     return ret
 
-
+# @viewportOff
 def updateCurrentLoadedAssets(forceRefresh=False):
     # if forceRefresh or '_updateCurrentLoadedAssets__' not in globals():
     #     globals()['_updateCurrentLoadedAssets__'] = {}
@@ -169,7 +207,22 @@ def updateCurrentLoadedAssets(forceRefresh=False):
         if 'off' not in ''.join(m.evaluationManager( q=1, mode=1 )):
             m.evaluationManager( mode="off" )
 
+        maya.shaveCleanup()
         maya.applyCustomRules()
+
+        # fix alembicNode starting on negative frames, since it can break rendering in the farm!
+        if m:
+            for each in pm.ls(type="AlembicNode"):
+                start = float(each.getAttr('startFrame'))
+                print start
+                if start < 0:
+                    if not each.hasAttr('originalStart'):
+                        print each.name()
+                        each.addAttr('originalStart', at='double')
+                    each.setAttr('originalStart', start)
+                    each.setAttr('startFrame', 0)
+
+
 
         types = assetUtils.types(forceRefresh)
         for t in types.keys():
@@ -182,7 +235,7 @@ def updateCurrentLoadedAssets(forceRefresh=False):
             #     _updateCurrentLoadedAssets__[t] = None
 
             op = types.op(t)
-            # print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
+            print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
             if hasattr(op.op, 'typeOP') and hasattr(op.op.typeOP, 'onRefreshCallback'):
                 canRefresh = True
                 if m and not m.ls('|%s*_??_??_??_*' % nodeNamePrefix):
@@ -213,7 +266,12 @@ class progressBar():
     def step(self):
         if self.w:
             self.pb.setProgress( self.pb.getProgress()+1 )
-            # mu.processIdleEvents()
+            # WARNING: processIdleEvents() crashes maya when called here since
+            #          this method can be called when inside a idle event already!
+            #          we can only enable it, if we find a way to detect when
+            #          inside an idle event!
+            # if m:
+            #     mu.processIdleEvents()
     def close(self):
         if self.w:
             del self.w
@@ -370,7 +428,7 @@ class _genericAssetClass( IECore.Op ) :
             parameter.parameterChanged( parameter )
 
         if parameter.name == 'enableAnimation':
-            print dir(parameter)
+            # print dir(parameter)
             self.animation = bool(parameter.getValue())
             self.parameters()["FrameRange"].userData()["UI"]["visible"] = IECore.BoolData(bool(parameter.getValue()))
             self.updateFromHost()
@@ -383,10 +441,11 @@ class _genericAssetClass( IECore.Op ) :
         '''
             Delete namespaces in a scene!
         '''
-        if hostApp()=='maya' and m:
-            for each in { ':%s' % ':'.join(x.split(':')[:-1]) : x.split(':')[-1] for x in  m.ls("*:*")}:
-                print each
-                m.namespace( removeNamespace = each, mergeNamespaceWithParent = True)
+        _genericAssetClass.removeNamespaces()
+        #     for each in { ':%s' % ':'.join(x.split(':')[:-1]) : x.split(':')[-1] for x in  m.ls("*:*")}:
+        #         # print each
+        #         m.namespace( removeNamespace = each, mergeNamespaceWithRoot = True)
+
 
     @staticmethod
     def doPublishPreview(data={}):
@@ -399,21 +458,22 @@ class _genericAssetClass( IECore.Op ) :
             data['extraFiles'] = []
 
         if hostApp() == 'maya' and m:
-            import maya.OpenMaya as api
-            import maya.OpenMayaUI as apiUI
-            data['extraFiles'] += [ '%s/data/preview.jpg' % m.workspace(q=1, rd=1) ]
+            if not m.about(batch=1):
+                import maya.OpenMaya as api
+                import maya.OpenMayaUI as apiUI
+                data['extraFiles'] += [ '%s/data/preview.jpg' % m.workspace(q=1, rd=1) ]
 
-            sl = m.ls(sl=1)
-            m.select(cl=1)
+                sl = m.ls(sl=1)
+                m.select(cl=1)
 
-            #Grab the last active 3d viewport
-            view = apiUI.M3dView.active3dView()
+                #Grab the last active 3d viewport
+                view = apiUI.M3dView.active3dView()
 
-            #read the color buffer from the view, and save the MImage to disk
-            image = api.MImage()
-            view.readColorBuffer(image, True)
-            image.writeToFile(data['extraFiles'][-1], 'jpg')
-            m.select(sl)
+                #read the color buffer from the view, and save the MImage to disk
+                image = api.MImage()
+                view.readColorBuffer(image, True)
+                image.writeToFile(data['extraFiles'][-1], 'jpg')
+                m.select(sl)
 
         elif hostApp() == 'gaffer':
             data['extraFiles'] += [ '%s/data/preview.jpg' % m.workspace(q=1, rd=1) ]
@@ -444,7 +504,7 @@ class _genericAssetClass( IECore.Op ) :
             maya.cleanNodes( self.doesAssetExists(nodeName) )
 
             # cleanup shader leftovers
-            maya.cleanUnusedShadingNodes()
+            # maya.cleanUnusedShadingNodes()
 
             maya.cleanNodes( m.ls("SAMIMPORT*") )
 
@@ -483,9 +543,13 @@ class _genericAssetClass( IECore.Op ) :
         self.data['meshPrimitives'] = meshPrimitives
         self.data['multipleFiles'] = [  x.replace('|','_') for x in self.data['meshPrimitives'] ]
 
-
         if not self.canPublish:
             raise Exception("ERROR: You need to save the scene before publishing it, so SAM can keep track of what created the asset!")
+
+        # create a md5 attr with the md5 of the original
+        # name, so we can find geometry if the host screw up the
+        # original published names.
+        nodeMD5.nodeMD5().bakeAllMD5()
 
         canPublish = 0
         if hasattr(self, 'doPublishMaya') and 'maya' in self._host:
@@ -577,11 +641,44 @@ class _genericAssetClass( IECore.Op ) :
             if not canPublish:
                 raise Exception("Can't import asset when running from shell!!")
 
+            self.fixRIGMeshCTRLS()
+
             updateCurrentLoadedAssets()
 
             pop(stack)
 
+    @staticmethod
+    def removeNamespaces():
+        if m:
+            defaults = ['UI', 'shared']
+            namespaces = 1
+            while namespaces:
+                namespaces = [ns for ns in pm.namespaceInfo(lon=True) if ns not in defaults]
+                for ns in namespaces:
+                    print ns
+                    m.namespace( removeNamespace = ns, mergeNamespaceWithRoot = True)
+    @staticmethod
+    def fixRIGMeshCTRLS(grp='|CTRLS|'):
+        if m:
+            attrs=[
+                'castsShadows',
+                'receiveShadows',
+                'holdOut',
+                'motionBlur',
+                'primaryVisibility',
+                'smoothShading',
+                'visibleInReflections',
+                'visibleInRefractions',
+                'doubleSided',
+                'opposite',
+            ]
+            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x ]:
+                for a in attrs:
+                    m.setAttr( '%s.%s' % (n,a), 0 )
 
+            # for node in m.ls(geometry=1,l=1):
+            #     if grp in node:
+            #         m.delete(node)
 
 __maya__attach__shaders__lazyCount = 0
 class maya( _genericAssetClass ) :
@@ -592,7 +689,6 @@ class maya( _genericAssetClass ) :
     def __init__( self, prefix, mayaNodeTypes='transform', mayaScenePublishType=None, animation=False ) :
         _genericAssetClass.__init__( self, prefix, animation=animation, mayaNodeTypes=mayaNodeTypes )
         self.__mayaScenePublishType = mayaScenePublishType
-
 
     def setMayaSceneType(self, st):
         self.__mayaScenePublishType = st
@@ -617,6 +713,28 @@ class maya( _genericAssetClass ) :
         #     maya.createDinamicRules(customRules)
         maya.createDinamicRules()
 
+
+    @staticmethod
+    def shaveCleanup():
+        if m:
+            print "Shave Cleanup!"
+            # shave cleanup
+            attrs_to_clean = [
+                "renderManRISGlobals.rman__torattr___preRenderScript",
+                "renderManRISGlobals.rman__torattr___postRenderScript",
+                "renderManRISGlobals.rman__torattr___postTransformScript",
+                "renderManRISGlobals.rman__torattr___renderBeginScript",
+                "defaultRenderGlobals.preRenderMel",
+            ]
+            for attr in attrs_to_clean:
+                if m.objExists(attr):
+                    tmp = m.getAttr( attr );
+                    if tmp:
+                        tmp = ';'.join([ x for x in tmp.split(';') if  x.strip() and 'shave' not in x.lower() ])
+                        print attr, tmp
+                        m.setAttr( attr , tmp, type="string" );
+
+
     @staticmethod
     class prmanDinamicRules():
         ''' a simple class to handle prman dinamic rules in a simple way!'''
@@ -631,14 +749,16 @@ class maya( _genericAssetClass ) :
                 self.cache = {}
             except:
                 print "WARNING: No prman python module to set dynamic rules for shaders."
-                rlf2maya = rlf = None
+                self.rlf2maya = self.rlf = None
 
         def fromScene(self):
             if self.rlf2maya:
                 self.s = self.rlf2maya.GetActiveScope()
 
         def isEmpty(self):
-            return self.s.GetRules() == []
+            if self.rlf2maya:
+                return self.s.GetRules() == []
+            return True
 
         def payload(self, sg):
             if self.rlf2maya:
@@ -661,16 +781,18 @@ class maya( _genericAssetClass ) :
                 return p
 
         def addRule(self, name, sg, node=''):
-            if name and name in self.cache.keys():
-                if sg != self.cache[name]:
-                    if not node:
-                        node=name
-                    print self.cache.keys()
-                    raise Exception("ERROR: there are 2 shape nodes named %s(sg:%s) and %s(sg:%s) with different shadingGroups! Please rename one!!" % (node, sg, name, self.cache[name]))
-                else:
-                    return
             if self.rlf2maya:
-                self.cache[name] = sg
+                if name and name in self.cache.keys():
+                    if sg != self.cache[name]:
+                        # print self.cache.keys()
+                        raise Exception("ERROR: there are 2 shape nodes named \n%s(sg:%s)\n and \n%s(sg:%s) \nwith different shadingGroups! Please rename one!!" % (node, sg, name, self.cache[name]))
+                    else:
+                        return
+
+                if not node:
+                    node=name
+
+                self.cache[node] = sg
                 r=self.rlf.RLFRule()
                 p=self.payload(sg)
                 if p:
@@ -681,63 +803,70 @@ class maya( _genericAssetClass ) :
             if self.rlf2maya:
                 self.rlf2maya.SetActiveScope(self.s)
 
-
     @staticmethod
     def attachShadersLazy():
         maya.attachShaders( lazyRefresh=True )
 
     @staticmethod
     def attachShaders(lazyRefresh=False):
-        if lazyRefresh:
-            def __attachShaders():
-                maya._attachShaders(True)
-            assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__attachShaders )
-        else:
-            assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._attachShaders )
-
-
+        maya._attachShaders(True)
+        # if lazyRefresh:
+        #     def __attachShaders():
+        #         maya._attachShaders(True)
+        #     assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__attachShaders )
+        # else:
+        #     assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._attachShaders )
 
     @staticmethod
     def node2rule(nodeName):
-        if 'SAM_' in nodeName:
-            return ''
+        # if 'SAM_' in nodeName:
+        #     return ''
         #*[starts-with(name(),'paperclip')]
-        print nodeName
+        # print nodeName
         paths = []
         # for path in nodeName.split('|'):
-        for path in [nodeName.split('|')[-1]]:
-            if path:
-                path = path.split(':')[-1]
-                # remove Shape from name
-                l = 0
-                for x in path.split('Shape'):
-                    if len(x) > l:
-                        path = x
-                        l = len(path)
-
-                for n in range(10):
-                    # path = path.replace(str(n),'')
-                    # split node name and gather the longest string!
+        nodeNames = [ x for x in nodeName.split('|') if x.strip() and 'SAM' not in x and 'group' not in x ]
+        if len(nodeNames) > 1:
+            for path in [nodeNames[0],nodeNames[-1]]:
+                if path.strip():
+                    path = path.split(':')[-1]
+                    # remove Shape from name
                     l = 0
-                    for x in path.split(str(n)):
+                    for x in path.split('Shape'):
                         if len(x) > l:
                             path = x
                             l = len(path)
 
-                paths += [path]
+                    for n in range(10):
+                        # path = path.replace(str(n),'')
+                        # split node name by number and gather the longest string!
+                        l = 0
+                        for x in path.split(str(n)):
+                            if len(x) > l:
+                                path = x
+                                l = len(path)
 
-        if paths:
-            p = ''
-            # paths.reverse()
-            for ps in paths:
-                if not p:
-                    p = "*[starts-with(name(),'%s')]" % ps
-                else:
-                    p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
-            rule = p
+                    paths += [path]
 
-            rule = '/'.join( [ "*[contains(name(),'%s')]" % ps for ps in paths ] ).strip('|').replace('|','/')
+            # print paths
+            rule = "//%s//*[contains(name(),'%s')]" % (paths[0], paths[-1])
         else:
+            paths = nodeName.split('|')[-1]
+            rule = '/'.join( [ "*[contains(name(),'%s')]" % ps for ps in paths ] ).strip('|').replace('|','/')
+
+        # if paths:
+        #     p = ''
+        #     # paths.reverse()
+        #     for ps in paths:
+        #         if not p:
+        #             # p = "*[starts-with(name(),'%s')]" % ps
+        #         else:
+        #             p = "*[starts-with(name(),'%s') and parent::%s]" % (ps, p)
+        #     rule = p
+        # else:
+
+        # not sure we need this now...
+        if not paths:
             path = nodeName.split('|')[-1]
             path = path.split(':')[-1]
             p = "*[starts-with(name(),'%s')]" % path
@@ -746,68 +875,74 @@ class maya( _genericAssetClass ) :
 
         return rule
 
-
     @staticmethod
     def rule2node(rule):
         return rule.lstrip('/').replace('/','|')
 
     @staticmethod
     def createDinamicRules(nodes=[], message='Attaching shaders...'):
-        import maya.cmds as m
-        dr = maya.prmanDinamicRules()
-        # dr.fromScene()
-        # pb = progressBar(len(nodes), message)
+        try:
+            import maya.cmds as m
+        except:
+            m = None
+        if m:
+            dr = maya.prmanDinamicRules()
+            # dr.fromScene()
+            # pb = progressBar(len(nodes), message)
 
-        # add extra node which have SAM_DR attributes to create dinamic rules
-        extra = []
-        for each in m.ls("|*", type='transform'):
-            attrList = m.listAttr(each, ud=1)
-            if attrList and [ a for a in attrList if 'SAM_D' in a ]:
-                extra += [each]
-            meshs = m.listRelatives(each,c=1,f=1, type='mesh')
-            if meshs:
-                for mesh in meshs:
-                    attrList = m.listAttr(mesh, ud=1)
-                    if attrList and [ a for a in attrList if 'SAM_D' in a ]:
-                        extra += [mesh]
+            # add extra node which have SAM_DR attributes to create dinamic rules
+            extra = []
+            for each in m.ls("|*", type='transform'):
+                attrList = m.listAttr(each, ud=1)
+                if attrList and [ a for a in attrList if 'SAM_D' in a ]:
+                    extra += [each]
+                meshs = m.listRelatives(each,c=1,f=1, type='mesh')
+                if meshs:
+                    for mesh in meshs:
+                        attrList = m.listAttr(mesh, ud=1)
+                        if attrList and [ a for a in attrList if 'SAM_D' in a ]:
+                            extra += [mesh]
 
-        # remove duplicates
-        nodes = list(set(nodes+extra))
-        for shader in nodes:
-            # pb.step()
+            # remove duplicates
+            nodes = list(set(nodes+extra))
+            for shader in nodes:
+                # ignore geo that shouldn't be exported
+                if '|CTRLS|' in shader:
+                    continue
+                if 'Orig' in shader[-8:]:
+                    continue
 
-            # atach to nodes matching naming map
-            n = m.ls(shader, dag=1, visible=1, ni=1, l=1, type='shape')
-            connections = m.listConnections(n,  type="shadingEngine")
-            if connections:
-                cleanup = {}
-                for x in connections:
-                    cleanup[x] = 1
-                for sg in cleanup.keys():
-                    if m.objExists( shader + '.SAM_ORIGINAL_NODE' ):
-                        try:
-                            nodeToAttach = m.getAttr( shader + '.SAM_ORIGINAL_NODE' ).split('|')[-1]
-                            # m.sets( m.ls("*"+nodeToAttach), e=True, forceElement=sg )
-                            dr.addRule(nodeToAttach, sg)
-                        except:
-                            sys.stderr.write( "SAM WARNIG: can't attach shadingGroup %s to node %s\n" % ( sg, nodeToAttach ) )
-                            # traceback.print_last()
-                    else:
-                        # print nodes, connections
-                        # dr.addRule(n[0].split('|')[-1], sg)
-                        for node in n:
-                            rule = node
-                            if m.objExists('%s.SAM_DINAMIC_RULE' % node):
-                                rule = m.getAttr('%s.SAM_DINAMIC_RULE' % node).strip('/')
-                            elif m.objExists('%s.SAM_DYNAMIC_RULE' % node):
-                                rule = m.getAttr('%s.SAM_DYNAMIC_RULE' % node).strip('/')
-                            elif m.objExists('%s.SAM_DR' % node):
-                                rule = m.getAttr('%s.SAM_DR' % node).strip('/')
-                            if rule.strip():
-                                dr.addRule( maya.node2rule( rule ), sg, node )
-        dr.toScene()
-        # pb.close()
-
+                # atach to nodes matching naming map
+                n = m.ls(shader, dag=1, visible=1, ni=1, l=1, type='shape')
+                connections = m.listConnections(n,  type="shadingEngine")
+                if connections:
+                    cleanup = {}
+                    for x in connections:
+                        cleanup[x] = 1
+                    for sg in cleanup.keys():
+                        if m.objExists( shader + '.SAM_ORIGINAL_NODE' ):
+                            try:
+                                nodeToAttach = m.getAttr( shader + '.SAM_ORIGINAL_NODE' ).split('|')[-1]
+                                # m.sets( m.ls("*"+nodeToAttach), e=True, forceElement=sg )
+                                dr.addRule(nodeToAttach, sg)
+                            except:
+                                sys.stderr.write( "SAM WARNIG: can't attach shadingGroup %s to node %s\n" % ( sg, nodeToAttach ) )
+                                # traceback.print_last()
+                        else:
+                            # print nodes, connections
+                            # dr.addRule(n[0].split('|')[-1], sg)
+                            for node in n:
+                                rule = node
+                                if m.objExists('%s.SAM_DINAMIC_RULE' % node):
+                                    rule = m.getAttr('%s.SAM_DINAMIC_RULE' % node).strip('/')
+                                elif m.objExists('%s.SAM_DYNAMIC_RULE' % node):
+                                    rule = m.getAttr('%s.SAM_DYNAMIC_RULE' % node).strip('/')
+                                elif m.objExists('%s.SAM_DR' % node):
+                                    rule = m.getAttr('%s.SAM_DR' % node).strip('/')
+                                if rule.strip():
+                                    dr.addRule( maya.node2rule( rule ), sg, node )
+            dr.toScene()
+            # pb.close()
 
     @staticmethod
     def _attachShaders(lazyRefresh=False):
@@ -826,8 +961,6 @@ class maya( _genericAssetClass ) :
             maya.applyCustomRules()
             nodes = m.ls("SAM_SHADER_*", type='transform')
             maya.createDinamicRules(nodes)
-
-
 
     @staticmethod
     def _cleanUnusedShadingNodes(force=False):
@@ -873,12 +1006,13 @@ class maya( _genericAssetClass ) :
 
     @staticmethod
     def cleanUnusedShadingNodes(force=False):
-        if force:
-            def __cleanUnusedShadingNodesForce():
-                maya._cleanUnusedShadingNodes(True)
-                assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__cleanUnusedShadingNodesForce )
-        else:
-            assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._cleanUnusedShadingNodes )
+        maya._cleanUnusedShadingNodes(True)
+        # if force:
+        #     def __cleanUnusedShadingNodesForce():
+        #         maya._cleanUnusedShadingNodes(True)
+        #         assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__cleanUnusedShadingNodesForce )
+        # else:
+        #     assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya._cleanUnusedShadingNodes )
 
     @staticmethod
     def cleanNodes(nodes, msg='Cleaning up nodes...'):
@@ -933,7 +1067,15 @@ class maya( _genericAssetClass ) :
             textureNode = m.getAttr('%s.filename' % node)
         if m.objExists('%s.file' % node):
             textureNode = m.getAttr('%s.file' % node)
-        return str(textureNode)
+
+        tmp = ma.general.fileTexturePathResolver.findAllFilesForPattern(textureNode,0)
+        for each in range(1001,1020):
+            tmp += ma.general.fileTexturePathResolver.findAllFilesForPattern(textureNode.replace(str(each),'<UDIM>'),0)
+
+        tmp.sort()
+        textureNode = list(set(tmp))
+
+        return textureNode
 
 
     @staticmethod
@@ -981,8 +1123,10 @@ class maya( _genericAssetClass ) :
             import pymel.core as pm
             __files={}
             for ntype in nodeTypes:
-                for node in pm.listHistory(node, type=ntype):
-                    each = node.nodeName()
+                print ntype, node
+                for n in pm.listHistory(node, type=ntype):
+                    each = n.nodeName()
+                    print "\t\t", each
                     __files[each] = maya.getFileTexture(each)
             return __files
 
@@ -1008,15 +1152,153 @@ class maya( _genericAssetClass ) :
         return shadingMap, shadingGroups, shadingNodes, displacementNodes, textures
 
 
-    def _extraFiles( self ):
-        if 'extraFiles' not in self.data:
-            self.data['extraFiles'] = []
-        for node in self.data['meshPrimitives']:
+
+    @staticmethod
+    def setOneNucleus(start=None):
+        ''' make sure all ncloth/nrigid are using just one solver! '''
+        nObjs = m.ls(type='nCloth', dag=1, l=1)+m.ls(type='nRigid', dag=1, l=1)
+        if nObjs:
+            n = m.ls(type='nucleus', dag=1, l=1)
+            if not n:
+                # if no nucleus, create one!
+                m.select(nObjs)
+                n += [m.createNode('nucleus')]
+                # set a high colision interactions just to be on the safe side!
+                m.setAttr("%s.subSteps" % n[0], 4)
+                m.setAttr("%s.maxCollisionIterations" % n[0], 100)
+
+            # set the initial frame on the simulation to the timeslider start range frame!
+            startFrame = start
+            if startFrame:
+                m.playbackOptions( e=1, minTime=startFrame )
+            else:
+                startFrame = float(m.playbackOptions( q=1, minTime=1 ))
+            for _n in n:
+                m.setAttr("%s.startFrame" % _n, startFrame)
+            m.select(nObjs)
+            try:
+                meval('assignNSolver "%s"' % n[0])
+            except:
+                pass
+            # if len(n)>1:
+            #     m.delete(n[1:])
+
+    @staticmethod
+    def getAnimLength(node):
+        '''return the minimum and maximum keyframe of the animation in a node'''
+        # A set is like a list but can't hold duplicates (Pyhton set, not Maya set)
+        keyframeSet=set()
+        # Loop through all keyframe time values from control points on anim curves
+        k = m.keyframe(node, query=True, controlPoints=True)
+        if k:
+            for keyTimeValue in k:
+                keyframeSet.add(keyTimeValue)
+
+            # Return result
+            return min(keyframeSet), max(keyframeSet)
+        return None
+
+    @staticmethod
+    def getAllNodesMinMax( fatherNodes, filter='' ):
+        ''' check animation on all nodes children of fatherNode that match the
+        filter and return then min/max keyframes.'''
+        _min=[]
+        _max=[]
+        if type(fatherNodes) != type([]):
+            fatherNode = [fatherNodes]
+        for fatherNode in fatherNodes:
+            for each in m.ls(fatherNode+'*', dag=1, l=1):
+                # if filter in each:
+                    animLength =  maya.getAnimLength(each)
+                    # print each, animLength
+                    if animLength:
+                        _min += [animLength[0]]
+                        _max += [animLength[1]]
+
+        if len(_min)<1:
+            print fatherNodes, _min, _max
+            # print m.ls(fatherNode[:-2]+'*', dag=1, l=1)
+            # print m.ls(fatherNode+'*',  l=1)
+            return None
+        return min(_min), max(_max)
+
+    @staticmethod
+    def setTimeSliderRangeToAvailableAnim(node=""):
+        # set the time slider to the range in the alembic nodes!!
+        start=[]
+        end=[]
+        se = maya.getAllNodesMinMax(node)
+        if se:
+            start += [se[0]]
+            end += [se[1]]
+        for c in m.ls(dag=1,l=1,type='AlembicNode'):
+            if 'AlembicNode' in m.nodeType(c):
+                s = float(m.getAttr(c+'.startFrame'))
+                e = float(m.getAttr(c+'.endFrame'))
+                if s+e != 0:
+                    start += [s]
+                    end += [e]
+
+        if start:
+            print "playbackOptions", min(start), max(end)
+            m.playbackOptions( e=1, minTime=min(start), maxTime=max(end) )
+
+        # set nucleus after correcting time range, so we can pick up the start from from the range!
+        maya.setOneNucleus()
+
+    @staticmethod
+    def frameRange(V3f=False, V3fData=False):
+        range = (0,0,0)
+        if m:
+            startFrame = math.floor(float(m.playbackOptions( q=1, minTime=1 )))
+            endFrame = math.ceil(float(m.playbackOptions( q=1, maxTime=1 )))+1
+            by = float(m.playbackOptions(by=1))
+            range = (startFrame, endFrame, by)
+
+        elif Gaffer:
+            range = (0,0,0)
+
+        if V3fData or V3f:
+            range = IECore.V3f( range[0], range[1], range[2] )
+            if V3fData:
+                range = IECore.V3fData( range )
+
+        return range
+
+    @staticmethod
+    def setupCryptomatte():
+        for each in pm.ls(type="PxrCryptomatte"):
+            pm.delete(each)
+        node = pm.shadingNode("PxrCryptomatte",asTexture=1)
+        m.connectAttr(node.name()+".message", "renderManRISGlobals.rman__samplefilters[0]", f=1)
+        node.setAttr('filename', 'cryptomatte.${F4}.exr')
+
+
+    @staticmethod
+    def extraFiles( data, filename='' ):
+        if 'extraFiles' not in data:
+            data['extraFiles'] = []
+        for node in data['meshPrimitives']:
             for n in m.ls(node, dag=1):
+                # find all extra filenames that needed to be published with the maya asset
                 for attr in [ (n+'.'+a, str(m.getAttr(n+'.'+a)).strip()) for a in  m.listAttr(n, w=1, se=1, usedAsFilename=1) if m.getAttr(n+'.'+a) ]:
                     if attr[1]:
-                        self.data['extraFiles'] += [attr[1]]
-                        m.setAttr( attr[0],  "%s/%s" % ( self.data['publishPath'], os.path.basename( attr[1] ) ), type='string' )
+                        data['extraFiles'] += [attr[1]]
+                        m.setAttr( attr[0],  "%s/%s" % ( data['publishPath'], os.path.basename( attr[1] ) ), type='string' )
+
+        maya.exportXgen(data, filename)
+
+    def _extraFiles( self, filename='' ):
+        maya.extraFiles( self.data, filename )
+
+        # backup the shading groups orignal names, so we can put then back if
+        # they are tracesets in renderman
+        for n in pm.ls(type='shadingEngine'):
+            if n.hasAttr("rman__torattr___traceSet"):
+                if not n.hasAttr("SAM_ORIGINAL_NODE_NAME"):
+                    n.addAttr( "SAM_ORIGINAL_NODE_NAME",dt="string")
+                if not n.getAttr("SAM_ORIGINAL_NODE_NAME"):
+                    n.setAttr( "SAM_ORIGINAL_NODE_NAME", str(n.name()), type="string" )
 
     def doPublishMayaExport(self, fileName, operands):
         '''
@@ -1045,11 +1327,11 @@ class maya( _genericAssetClass ) :
             self.data['assetPath'] = "%s/data/%%s" % m.workspace(q=1, rd=1) + mayaExt
             self.data['multipleFiles'] = ['asset']
 
-            self._extraFiles()
 
             for each in self.data['multipleFiles']:
                 scene = self.data['assetPath'] % each
 
+                self._extraFiles(scene)
                 self.doPublishMayaExport(scene, operands)
 
             m.file(s=1)
@@ -1057,10 +1339,84 @@ class maya( _genericAssetClass ) :
             return True
         return False
 
+    @staticmethod
+    def exportXgen(data, filename=''):
+        for node in data['meshPrimitives']:
+            # XGEN
+            # find all extra xgen files to publish
+            data['xgenNodes'] = {}
+            for n in m.ls(node, type='xgmPalette', dag=1, l=0):
+                xgen_file_base = "%s__%s.xgen" % (os.path.splitext(os.path.basename(m.file(q=1,sn=1)))[0], n)
+                xgen_file_node = str(m.workspace(q=True, dir=True, rd=True )+'/scenes/'+m.getAttr(n+'.xgFileName')).strip()
+                xgen_file = str(m.workspace(q=True, dir=True, rd=True )+'/scenes/'+xgen_file_base)
+                if not os.path.exists( xgen_file_node ):
+                    print "XGEN PUBLISH ERROR: Can't find xgen collention file %s for node %s! Can't publish xgen." % (xgen_file_node, n)
+                else:
+                    if xgen_file_node != xgen_file:
+                        os.system( 'cp -rf "%s" "%s"' % (xgen_file_node, xgen_file) )
+                    m.setAttr(n+'.xgFileName', xgen_file_base, type='string')
+                    new_xgen_file = ''
+                    xgProjectPath = ''
+                    xgDataPath = []
+                    for line in open(xgen_file,'r'):
+                        if 'xgDataPath' in line:
+                            xgDataPath += [line.split('xgDataPath')[-1].strip()]
+
+                        if 'xgProjectPath' in line:
+                            xgProjectPath = line.split('xgProjectPath')[-1].strip()
+                            new_xgen_file += "\txgProjectPath\t<SAM_PROJECT>\n"
+                        else:
+                            new_xgen_file += line
+
+                    if not xgProjectPath:
+                        print "XGEN PUBLISH ERROR: Can't find project path in xgen file %s!" % xgen_file
+                    else:
+                        # expand xgDataPath paths and add to extraFiles to be published!
+                        for each in xgDataPath:
+                                data['extraFiles'] += [each.replace('${PROJECT}', '%s/' % xgProjectPath)]
+
+                    data['xgenNodes'][n]  = (filename+'.xgen', xgen_file)
+                    f = open(data['xgenNodes'][n][0],'w')
+                    f.write(new_xgen_file)
+                    f.close()
+
+                    data['extraFiles'] += data['xgenNodes'][n]
+
+                # now we need to find all extra data that needs to be published as well.
+
+    @staticmethod
+    def importXgen(data):
+        ''' copy the xgen files from the publish directory to the user project '''
+        if 'extraFiles' in data:
+            for each in data['extraFiles']:
+                if 'xgen' in each:
+                    samFile  = os.path.dirname(data['publishFile'])+'/'+os.path.basename(each)
+                    userFile = m.workspace(q=True, dir=True, rd=True)+'/'.join(each.split('maya')[1:])
+                    # xgen files need to be copied to the user maya folder and adjusted before importing the scene
+                    if os.path.splitext(each)[-1] in ['.xgen']:
+                        for node in [ x for x in data['xgenNodes'] if os.path.basename(each) in data['xgenNodes'][x][1] ]:
+                            xgen_metadata = str(m.workspace(q=True, dir=True, rd=True)+'/scenes/'+os.path.basename(data['xgenNodes'][node][1]))
+                            print xgen_metadata
+                            w=open(xgen_metadata,'w')
+                            r=open(samFile,'r')
+                            for line in r:
+                                if 'xgProjectPath' in line:
+                                    line = '\txgProjectPath\t%s\n' % str(m.workspace(q=True, dir=True, rd=True)+'/')
+                                w.write(line)
+                            w.close()
+                    else:
+                        cmd = 'mkdir -p "%s" ; cp -rvf "%s" "%s"' % ( os.path.dirname(userFile), samFile, userFile )
+                        if os.path.isdir(samFile):
+                            cmd = 'mkdir -p "%s" ; cp -rvf %s/* "%s"' % ( os.path.dirname(userFile), samFile, userFile )
+                        print each, cmd
+                        os.system( cmd  )
+
 
     def doImportMaya( self, filename, nodeName ):
         # maya import code!
         if m:
+            self.importXgen(self.data)
+
             old_groups = m.ls('|*', type='transform')
             m.file(filename, i=1, gr=1 )
             for groups in [ g for g in m.ls('|*', type='transform') if g not in old_groups ]:
@@ -1068,8 +1424,21 @@ class maya( _genericAssetClass ) :
                     newNodeName = m.rename( groups, nodeName)
                     # m.lockNode(newNodeName, l=1)
 
+            # restore shadingGroup names if they are tracesets!
+            for n in pm.ls(type='shadingEngine'):
+                if n.hasAttr("rman__torattr___traceSet"):
+                    if n.hasAttr("SAM_ORIGINAL_NODE_NAME"):
+                        name = n.getAttr("SAM_ORIGINAL_NODE_NAME")
+                        if name:
+                            n.rename( name )
+
             maya.attachShaders()
             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=maya.attachShaders )
+
+            # set the timeslider range to the start/end of available keyframes and alembic range.
+            maya.setTimeSliderRangeToAvailableAnim()
+
+
 
             return True
         return False
@@ -1091,6 +1460,14 @@ class alembic(  _genericAssetClass ) :
         self.setSubDivMeshesMask(None)
         self.__setImportAsGPU = False
 
+    @staticmethod
+    def fixRIGMeshCTRLS(grp='|CTRLS|'):
+        _genericAssetClass.fixRIGMeshCTRLS(grp)
+        # we delete whatever is in the RibControl group, since alembic doesn't need it!
+        if m:
+            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x and '|SAM' in x and '_alembic_' in x ]:
+                m.delete(n)
+
     def meshOnly(self):
         # publish renderable geo only, with UV map
         self.setAbcExtra( '-renderableOnly -uvWrite -writeUVSets' )
@@ -1111,94 +1488,136 @@ class alembic(  _genericAssetClass ) :
         return file
 
     @staticmethod
-    def shaveRibExport( frame=1, outRIB = '/tmp/shave.%04d.rib', selection=[] ):
+    def shaveRibExport( frame=1, outRIB = '/tmp/shave.%04d.rib', selection=[], END=False ):
+        ''' per frame callback to export shave as cob files'''
         import time
-        conection = {}
-        selectedShave  = m.ls(selection,dag=1,type='shaveHair')
-        selectedShave += list(set(m.listConnections(m.ls(selection, dag=1, type='mesh'), type='shaveHair', sh=1)))
-        selectedShave = list(set(selectedShave))
-        # selectedShave = [ str(x) for x in selectedShave ]
-        globals()['self'].pb.step()
-        print '*'*200
-        print 'Shave exporting', selectedShave
-        print '*'*200
-        if not m.pluginInfo('shaveCortexWriter', q=1, l=1):
-            m.loadPlugin('shaveCortexWriter')
+        if not END:
+            # if we don't have shave loaded, don't do anything!
+            if 'shaveHair' not in m.ls(nodeTypes=1):
+                return
 
-        for each in m.ls(dag=1,type='shaveHair'):
-            if m.getAttr( each + '.active', l=1 ):
-                m.setAttr( each + '.active', l=0 )
-            conection[each] = m.listConnections( "%s.active" % each , p=1, c=1 )
-            if conection[each]:
-                m.disconnectAttr(conection[each][1],conection[each][0])
+            selectedShave  = m.ls(selection,dag=1,type='shaveHair')
+            connectedShaveNodes = m.listConnections(m.ls(selection, dag=1, type='mesh'), type='shaveHair', sh=1)
+            selectedShave += list(set(connectedShaveNodes if connectedShaveNodes!=None else []))
+            selectedShave  = list(set(selectedShave))
+            # selectedShave = [ str(x) for x in selectedShave ]
+            globals()['self'].pb.step()
+            print '*'*200
+            print 'Shave exporting', selectedShave
+            print '*'*200
+            if not hasattr(globals()['self'], 'conection'):
+                globals()['self'].conection = {}
+                if not m.pluginInfo('shaveCortexWriter', q=1, l=1):
+                    m.loadPlugin('shaveCortexWriter')
+
+                for each in m.ls(dag=1,type='shaveHair'):
+                    if m.getAttr( each + '.active', l=1 ):
+                        m.setAttr( each + '.active', l=0 )
+                    globals()['self'].conection[each] = m.listConnections( "%s.active" % each , p=1, c=1 )
+                    if globals()['self'].conection[each]:
+                        m.disconnectAttr(globals()['self'].conection[each][1],globals()['self'].conection[each][0])
+                    else:
+                        del globals()['self'].conection[each]
+                    # print '='*200
+                    # print each + '.active', each in selectedShave
+                    # print '='*200
+                    m.setAttr( each + '.active', each in selectedShave )
+
+                    # export all extra attributes in the shavenode, if any exists!
+                    if each in selectedShave:
+                        if 'shave' not in globals()['self'].data:
+                            globals()['self'].data['shave'] = {}
+
+                        cobIndex = each.replace('|','')
+                        if cobIndex not in globals()['self'].data:
+                            globals()['self'].data['shave'][cobIndex] = {}
+
+                        listAttrs = m.listAttr(each, ud=1)
+                        if listAttrs:
+                            for attr in listAttrs:
+                                if 'SAM_' in attr:
+                                    globals()['self'].data['shave'][cobIndex][attr.replace('SAM_','')] = m.getAttr("%s.%s" % (each, attr))
+
+            for each in selectedShave:
+                each = str(each)
+                outCOB = os.path.splitext( os.path.abspath(outRIB % frame) )[0]
+                outCOBPrefix = '%s.%s' % ( os.path.splitext(outCOB)[0], each.replace('|','') )
+                outCOB = "%s%s.cob" % ( outCOBPrefix, os.path.splitext(outCOB)[1] )
+                # outDRA = outRIB.replace('.rib', '.dra')
+                tmpRIB = '%s.cob' % tempfile.mkstemp()[1]
+                t=time.time()
+                #meval('shaveWriteRib("%s")' % tmpRIB )
+                # if os.path.exists(tmpRIB):
+                #     t=time.time()
+                #     f = open(outRIB, 'w')
+                #     removeHeader = True
+                #     for line in open(tmpRIB, 'r').readlines():
+                #         if removeHeader and 'TransformBegin' not in line:
+                #             continue
+                #         removeHeader = False
+                #         f.write(line)
+                #     print 'filtered rib in %d seconds...' % (time.time()-t)
+                #     f.close()
+                print 'shaveCortexWriter -e "%s" "%s"' % (outCOB, each)
+                # m.shaveCortexWriter(outCOB, each, e=1)
+                meval('shaveCortexWriter -e "%s" "%s"' % (outCOB, each) )
+                print pipe.bcolors.bcolors.GREEN+'shave rib gen took %d seconds to export...' % (time.time()-t) +pipe.bcolors.bcolors.END
+
+                if os.path.exists(outCOB):
+                    if 'extraFiles' not in globals()['self'].data:
+                        globals()['self'].data['extraFiles'] = []
+                    globals()['self'].data['extraFiles'] += [outCOB]
+
+                    if 'extraFilesDelete' not in globals()['self'].data:
+                        globals()['self'].data['extraFilesDelete'] = []
+                    globals()['self'].data['extraFilesDelete'] += [outCOB]
+
+                    if 'shaveNodes' not in globals()['self'].data:
+                        globals()['self'].data['shaveNodes'] = {}
+                    if each not in globals()['self'].data['shaveNodes']:
+                         globals()['self'].data['shaveNodes'][each] = []
+                    if outCOB not in globals()['self'].data['shaveNodes'][each]:
+                        globals()['self'].data['shaveNodes'][each] += [outCOB]
+                else:
+                    print pipe.bcolors.bcolors.RED+'%s (%s) failed to export!!!' % (outCOB,each) +pipe.bcolors.bcolors.END
+
             else:
-                del conection[each]
-            print '='*200
-            print each + '.active', each in selectedShave
-            print '='*200
-            m.setAttr( each + '.active', each in selectedShave )
-
-            # export all extra attributes in the shavenode, if any exists!
-            if each in selectedShave:
-                if 'shave' not in globals()['self'].data:
-                    globals()['self'].data['shave'] = {}
-
-                cobIndex = each.replace('|','')
-                if cobIndex not in globals()['self'].data:
-                    globals()['self'].data['shave'][cobIndex] = {}
-
-                listAttrs = m.listAttr(each, ud=1)
-                if listAttrs:
-                    for attr in listAttrs:
-                        if 'SAM_' in attr:
-                            globals()['self'].data['shave'][cobIndex][attr.replace('SAM_','')] = m.getAttr("%s.%s" % (each, attr))
-
-        for each in selectedShave:
-            each = str(each)
-            outCOB = os.path.splitext( os.path.abspath(outRIB % frame) )[0]
-            outCOBPrefix = '%s.%s' % ( os.path.splitext(outCOB)[0], each.replace('|','') )
-            outCOB = "%s%s.cob" % ( outCOBPrefix, os.path.splitext(outCOB)[1] )
-            # outDRA = outRIB.replace('.rib', '.dra')
-            tmpRIB = '%s.cob' % tempfile.mkstemp()[1]
-            t=time.time()
-            #meval('shaveWriteRib("%s")' % tmpRIB )
-            # if os.path.exists(tmpRIB):
-            #     t=time.time()
-            #     f = open(outRIB, 'w')
-            #     removeHeader = True
-            #     for line in open(tmpRIB, 'r').readlines():
-            #         if removeHeader and 'TransformBegin' not in line:
-            #             continue
-            #         removeHeader = False
-            #         f.write(line)
-            #     print 'filtered rib in %d seconds...' % (time.time()-t)
-            #     f.close()
-            print outCOB
-            meval('shaveCortexWriter -e "%s" "%s"' % (outCOB, each) )
-            print pipe.bcolors.bcolors.GREEN+'shave rib gen took %d seconds to export...' % (time.time()-t) +pipe.bcolors.bcolors.END
-
-            if os.path.exists(outCOB):
-                if 'extraFiles' not in globals()['self'].data:
-                    globals()['self'].data['extraFiles'] = []
-                globals()['self'].data['extraFiles'] += [outCOB]
-
-                if 'extraFilesDelete' not in globals()['self'].data:
-                    globals()['self'].data['extraFilesDelete'] = []
-                globals()['self'].data['extraFilesDelete'] += [outCOB]
-
-            for each in conection:
-                m.setAttr( each + '.active', 0 )
-                try:
-                    m.connectAttr(conection[each][1],conection[each][0])
-                except:
-                    print pipe.bcolors.bcolors.WARNING, 'WARNING (SAM SHAVE EXPORT): Cant restore connection from %s to %s!' % (conection[each][1],conection[each][0]), pipe.bcolors.bcolors.END
+                for each in globals()['self'].conection:
+                    m.setAttr( each + '.active', 0 )
+                    try:
+                        m.connectAttr(globals()['self'].conection[each][1],globals()['self'].conection[each][0])
+                    except:
+                        print pipe.bcolors.bcolors.WARNING, 'WARNING (SAM SHAVE EXPORT): Cant restore connection from %s to %s!' % (globals()['self'].conection[each][1],globals()['self'].conection[each][0]), pipe.bcolors.bcolors.END
 
         print '*'*200
+
 
     @staticmethod
-    def perFrameCallback(frame, outRIB, sl):
-        alembic.shaveRibExport( frame, outRIB, sl )
+    def _perFrameCallback(frame, outRIB, selection, tmpfile=None):
+        ''' wrapper function just to take care of passing data back to asset '''
+        data = alembic.perFrameCallback(frame, outRIB, selection)
 
+        # write the collected data to tempfile
+        if tmpfile:
+            f = open(tmpfile,'a')
+            f.write( "%d %s\n" % (frame, str(data)) )
+            f.close()
+
+    @staticmethod
+    def perFrameCallback(frame, outRIB, selection):
+        ''' a frame callback function to execute extra exporting
+        during alembic export '''
+        data = {}
+
+        # xgen ribarchive!
+        data['shave'] = alembic.shaveRibExport( frame, outRIB, selection )
+
+        # xgen export!
+        data['xgen'] = samXgen.xgen_export_for_ribbox( selection, frame )
+
+        data['extraFiles'] = [ x[0] for x in data['xgen'] ]
+
+        return data
         # Special callback information:
         # On the callbacks, special tokens are replaced with other data, these tokens
         # and what they are replaced with are as follows:
@@ -1213,12 +1632,11 @@ class alembic(  _genericAssetClass ) :
         # array form.
         # In Mel: {minX, minY, minZ, maxX, maxY, maxZ}
         # In Python: [minX, minY, minZ, maxX, maxY, maxZ]
-        #
-        pass
 
     @viewportOff
     def AbcExport(self, mfile, start, end, sl, extra='-renderableOnly -uvWrite -writeUVSets', shaveTmp='/tmp/shave.%04d.cob'):
         if m:
+            import tempfile
             m.select( sl )
             slall = m.ls(sl=1,dag=1)
             cleanup = []
@@ -1266,21 +1684,26 @@ class alembic(  _genericAssetClass ) :
                 extra = ''
             else:
                 if not self.__anyNode:
-                    meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
+                    meshes = m.ls( sl=1, dag=1, visible=1, ni=1, type='mesh' )
                     # convert rman attributos to a cleaner version
-                    attrs = [ a for a in attributesToExport if 'rman__torattr___' in a ]
+                    attrs  = [ a for a in attributesToExport if 'rman__torattr___' in a ]
                     pb = progressBar(len(attrs)*len(meshes)+1, 'setting up geometry for export...')
                     pb.step()
-                    for attr in attrs:
+                    for n in meshes:
                         pb.step()
-                        for n in meshes:
+                        for attr in attrs:
                             pb.step()
                             if m.objExists( '%s.%s' % (n, attr) ):
                                 cleanAttr = attr.replace('rman__torattr___','')
                                 if not m.objExists( '%s.%s' % (n, cleanAttr) ):
                                     m.addAttr( n, ln=cleanAttr, at="long" )
                                 m.setAttr( '%s.%s' % (n, cleanAttr), m.getAttr( '%s.%s' % (n, attr) ) )
-                                attributesToExport.append(cleanAttr)
+                                if cleanAttr not in attributesToExport:
+                                    attributesToExport.append(cleanAttr)
+
+                        for attr in [ a for a in m.listAttr(n) if 'rman_' in a ]:
+                            if attr not in attributesToExport:
+                                attributesToExport += [attr]
 
                     pb.close()
 
@@ -1296,18 +1719,52 @@ class alembic(  _genericAssetClass ) :
 
             className = str(self.__class__).split('.')[-1]
             root = ' '.join([ '-root '+x for x in sl ])
+
+            # just make sure we have the extra keys we need.
+            if 'frameCallback' not in self.data:
+                self.data['frameCallback'] = {}
+            if 'extraFiles' not in self.data:
+                self.data['extraFiles'] = []
+
+            # create a temp file so frameCallback can generate data to input
+            # into asset data file. The temp file will contain a str(dict) so
+            # we can just read it and eval() the content of the file.
+            ftmp = tempfile.mkstemp()
+            os.close( ftmp[0] )
+            ftmp = ftmp[1]
+
             abcJob = "%s %s  -step %s -wv -fr %s %s %s -file %s" % (
                 extra,
-                '''-pythonPerFrameCallback "print globals().keys();import genericAsset;genericAsset.alembic.perFrameCallback(#FRAME#, '%s', %s )"''' % (shaveTmp,sl),
+                '''-pythonPerFrameCallback "import genericAsset;genericAsset.alembic._perFrameCallback(#FRAME#, '%s', %s, '%s' )"''' % (shaveTmp,sl,ftmp),
                 1.0,
                 start,
                 end,
                 root,
                 mfile,
             )
-
+            # we have to call the callback here since it seems it won't call if just one frame is being exported
+            if start==end:
+                alembic._perFrameCallback(start, shaveTmp, sl, ftmp )
             print "m.AbcExport( j=abcJob) : ", abcJob ; sys.stdout.flush()
             m.AbcExport( j=abcJob)
+
+            # retrieve temp file data and pipe into asset data file.
+            f = open(ftmp,'r')
+            for line in f.readlines():
+                # for each line, theres a frame, and the dict for that frame!
+                l = line.split(' ')
+                frame = int(l[0])
+                data = eval(' '.join(l[1:]))
+                # store it in the asset data
+                self.data['frameCallback'][frame] = data
+                self.data['extraFiles'] += data['extraFiles']
+
+            f.close()
+            os.remove(ftmp)
+
+            alembic.shaveRibExport(END=True)
+
+            # finishing touch!
             maya.cleanNodes(cleanup)
 
     def doPublishMaya( self, operands ):
@@ -1319,10 +1776,9 @@ class alembic(  _genericAssetClass ) :
             self.pb = progressBar(3 + (int(frameRange[1])-int(frameRange[0])), 'Publishing alebic geometry...')
             self.pb.step()
 
-            shaveTmp = '%s/data/shave.%%04d.cob'  % m.workspace(q=1, rd=1)
-
-            os.system('mkdir -p /usr/tmp/%s_cob/' % os.environ['USER'])
-            shaveTmp = '/usr/tmp/%s_cob/shave.%%04d.cob'  % os.environ['USER']
+            tmp = '%s/data/sam_tmp/'  % m.workspace(q=1, rd=1)
+            os.system('mkdir -p %s/%s_cob/' % (tmp, os.environ['USER']))
+            shaveTmp = '%s/%s_cob/shave.%%04d.cob'  % (tmp, os.environ['USER'])
 
             self.data['assetPath'] = "%s/data/%%s.abc" % m.workspace(q=1, rd=1)
             self.AbcExport(
@@ -1356,8 +1812,10 @@ class alembic(  _genericAssetClass ) :
             #     ))
 
 
+            maya.extraFiles(self.data, self.data['assetPath'] % "asset")
             m.file(s=1)
             self.pb.close()
+
 
             return True
         return False
@@ -1401,9 +1859,11 @@ class alembic(  _genericAssetClass ) :
         pb.close()
 
 
-    def doImportMaya(self, filename, nodeName ):
+    def doImportMaya(self, filename, nodeName, gpucache=False ):
         if m:
-            node = alembic.importAlembic( filename, nodeName, self.__setImportAsGPU, self.data )
+            # print self.__setImportAsGPU
+            # print gpucache
+            node = alembic.importAlembic( filename, nodeName, self.__setImportAsGPU or gpucache, self.data )
 
             if 'shadingMap' in self.data:
                 m.addAttr( node, ln="SAM_SHADINGMAP", dt="string" )
@@ -1427,6 +1887,7 @@ class alembic(  _genericAssetClass ) :
                     nodes = m.ls(node,  dag=1, visible=1, ni=1, type='mesh' )
                     pb = progressBar(len(nodes)+1, 'Updating subdiv prman attributes...')
                     for n in nodes:
+                        pb.step()
                         if m.objExists( '%s.subdivScheme' % n ):
                             if not m.objExists(n + '.rman__torattr___subdivScheme'):
                                 m.addAttr( n, ln="rman__torattr___subdivScheme", at="long" )
@@ -1437,11 +1898,14 @@ class alembic(  _genericAssetClass ) :
                                 m.addAttr( n, ln="rman__torattr___subdivFacevaryingInterp", at="long" )
                             m.setAttr( n + '.rman__torattr___subdivFacevaryingInterp',  m.getAttr( '%s.subdivFacevaryingInterp' % n )  )
 
+                    pb.close()
+
 
             # m.scriptJob( runOnce=True,  idleEvent=idleSetup )
+            # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=alembic.fixDefaultUVSet() )
             maya.attachShadersLazy()
             alembic.fixDefaultUVSet()
-            # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=alembic.fixDefaultUVSet() )
+            maya.setTimeSliderRangeToAvailableAnim()
 
             idleSetup()
             return True
@@ -1458,68 +1922,102 @@ class alembic(  _genericAssetClass ) :
                 if data:
                     # gather all shave caches in this asset, if any!
                     cobs = {}
-                    for each in data['extraFiles']:
-                        if 'shave.' in each:
-                            nodeName = '.'.join( each.split('.')[:-2] )
-                            if nodeName not in cobs:
-                                cobs[ nodeName ] = []
-                            cobs[ nodeName ] += [each]
+                    has_shaveNodes = 'shaveNodes' in data
+                    if not has_shaveNodes:
+                        for each in data['extraFiles']:
+                            if 'shave.' in each:
+                                nodeName = '.'.join( each.split('.')[:-2] )
+                                if nodeName not in cobs:
+                                    cobs[ nodeName ] = []
+                                cobs[ nodeName ] += [each]
+                    else:
+                        cobs = data['shaveNodes']
 
-                    for shave in cobs:
-                        import IECore, IECoreMaya
-                        # c = IECore.ClassLoader.defaultLoader( "IECORE_PROCEDURAL_PATHS" )
-                        # c.refresh()
-                        # shaveNode = m.createNode( "ieProceduralHolder" )
-                        # fnPH = IECoreMaya.FnProceduralHolder( shaveNode )
-                        # fnPH.setParameterised( c.load('shave')(), 1 )
-                        fnPH = IECoreMaya.FnProceduralHolder.create( "__shave__", "shave" )
-                        fileAttr = fnPH.parameterPlugPath( fnPH.getProcedural()["path"] )
-                        shaveNode = fnPH.name()
-                        transform = m.listRelatives(shaveNode,p=1)[0]
+                    if cobs:
+                        nodeHair = m.createNode( "transform", n='HAIR')
+                        nodeHair = m.parent( nodeHair, node )
+                        for shave in cobs:
+                            import IECore, IECoreMaya
+                            # c = IECore.ClassLoader.defaultLoader( "IECORE_PROCEDURAL_PATHS" )
+                            # c.refresh()
+                            # shaveNode = m.createNode( "ieProceduralHolder" )
+                            # fnPH = IECoreMaya.FnProceduralHolder( shaveNode )
+                            # fnPH.setParameterised( c.load('shave')(), 1 )
+                            fnPH = IECoreMaya.FnProceduralHolder.create( "__shave__", "shave" )
+                            fileAttr = fnPH.parameterPlugPath( fnPH.getProcedural()["path"] )
+                            shaveNode = fnPH.name()
+                            transform = m.listRelatives(shaveNode,p=1)[0]
 
-                        m.select(shaveNode)
-                        m.sets( e=1, forceElement='initialShadingGroup' )
-                        m.select(cl=1)
+                            m.select(shaveNode)
+                            m.sets( e=1, forceElement='initialShadingGroup' )
+                            m.select(cl=1)
 
 
-                        shaveCache = os.path.splitext(os.path.splitext(cobs[shave][0])[0])[0]+'.####.cob'
-                        shaveCache = '%s/%s' % (data['publishPath'], os.path.basename(shaveCache))
-                        m.setAttr( fileAttr, shaveCache, type='string' )
+                            shaveCache = os.path.splitext( os.path.splitext( cobs[shave][0] )[0] )[0]+'.####.cob'
+                            shaveCache = '%s/%s' % (data['publishPath'], os.path.basename(shaveCache))
+                            m.setAttr( fileAttr, shaveCache, type='string' )
 
-                        m.setAttr("%s.visibleInReflections" % fnPH.name(), 1)
-                        m.setAttr("%s.visibleInRefractions" % fnPH.name(), 1)
+                            m.setAttr("%s.visibleInReflections" % fnPH.name(), 1)
+                            m.setAttr("%s.visibleInRefractions" % fnPH.name(), 1)
 
-                        name = 'shaveShape'
-                        count=1
-                        while m.objExists('|%s|%s' % (transform, name)):
-                            name = name.split('_')[0]+'_'+str(count)
-                            count+=1
+                            if has_shaveNodes:
+                                name = shave
+                                new_transform = shave.replace("Shape", "")
+                                idpassName = shave.split("Shape")[0]
+                            else:
+                                name = 'shaveShape'
+                                new_transform = data['assetName']+'_shave'
+                                idpassName = shaveCache.split('/shave.')[1].split('.')[0]
+                            count=1
+                            while m.objExists('|%s|%s' % (transform, name)):
+                                name = name.split('_')[0]+'_'+str(count)
+                                count+=1
 
-                        m.rename( '|%s|%s' % (transform, fnPH.name()), name)
-                        transform = m.rename( transform, data['assetName']+'_shave')
-                        m.parent( transform, node )
+                            m.rename( '|%s|%s' % (transform, fnPH.name()), name)
+                            transform = m.rename( transform, new_transform)
+                            m.parent( transform, nodeHair )
 
-                        # set the IDPrimvarName to the shaveNode name used in the cob sequence name
-                        try:
-                            attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["IDPrimvarName"] )
-                            idpassName = shaveCache.split('/shave.')[1].split('.')[0]
-                            m.setAttr( attrName, idpassName, type='string' )
-                        except:
-                            pass
+                            # set the IDPrimvarName to the shaveNode name used in the cob sequence name
+                            try:
+                                attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["shaveName"] )
+                                m.setAttr( attrName, idpassName, type='string' )
 
-                        # if we have attributes for this cache, apply it
-                        if 'shave' in data:
-                            cobIndex = shave.split('shave.')[-1].split('.')[0]
-                            if cobIndex in data['shave']:
-                                for attr in data['shave'][cobIndex]:
-                                    try: attrPar = fnPH.parameterPlugPath( fnPH.getProcedural()[attr] )
-                                    except: attrPar = None
-                                    if attrPar:
-                                        print data['shave'][cobIndex][attr], type(data['shave'][cobIndex][attr])
-                                        if type(data['shave'][cobIndex][attr]) in [str, unicode]:
-                                            m.setAttr( attrPar, data['shave'][cobIndex][attr], type="string" )
-                                        else:
-                                            m.setAttr( attrPar, data['shave'][cobIndex][attr] )
+                                attrName = fnPH.parameterPlugPath( fnPH.getProcedural()["IDPrimvarName"] )
+                                m.setAttr( attrName, idpassName, type='string' )
+                            except:
+                                pass
+
+                            # if we have attributes for this cache, apply it
+                            if 'shave' in data:
+                                cobIndex = shave.split('shave.')[-1].split('.')[0]
+                                if cobIndex in data['shave']:
+                                    for attr in data['shave'][cobIndex]:
+                                        try: attrPar = fnPH.parameterPlugPath( fnPH.getProcedural()[attr] )
+                                        except: attrPar = None
+                                        if attrPar:
+                                            print data['shave'][cobIndex][attr], type(data['shave'][cobIndex][attr])
+                                            if type(data['shave'][cobIndex][attr]) in [str, unicode]:
+                                                m.setAttr( attrPar, data['shave'][cobIndex][attr], type="string" )
+                                            else:
+                                                m.setAttr( attrPar, data['shave'][cobIndex][attr] )
+
+                    # print data
+                    if 'frameCallback' in data:
+                        frames = data['frameCallback'].keys()
+                        if frames and 'xgen' in data['frameCallback'][frames[0]]:
+                            for c in data['frameCallback'][frames[0]]['xgen']:
+                                abc = filename
+                                xgen_path = data['publishPath']
+                                collection = c[1]
+                                description = c[2]
+                                patch_name = c[3]
+                                samXgen.xgen_create_ribbox(collection, description, abc, patch_name, xgen_path)
+                                print "11111111111111111"
+                                print collection, description, patch_name
+                                print "11111111111111111"
+
+
+
             else:
                 ribNode = m.createNode('RenderManArchive')
                 ribNode = m.rename( m.listRelatives(ribNode, p=1), nodeName+'_rib')
@@ -1535,6 +2033,8 @@ class alembic(  _genericAssetClass ) :
                 node = gpu
 
             return node
+
+
 
 
 
@@ -1617,7 +2117,7 @@ class gaffer( _genericAssetClass ):
             maya.cleanNodes( nodes+self.childrenNodes(nodes) )
 
             # cleanup shader leftovers
-            maya.cleanUnusedShadingNodes()
+            # maya.cleanUnusedShadingNodes()
 
             maya.cleanNodes( m.ls("SAMIMPORT*") )
 

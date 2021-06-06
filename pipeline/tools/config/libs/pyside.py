@@ -23,6 +23,8 @@
 class pyside(baseLib):
     def environ(self):
         self['LD_PRELOAD'] = ':'.join([
-            pipe.findLibrary('libstdc++.so.6'),
-            pipe.findLibrary('libgcc_s.so.1'),
+            pipe.latestGCCLibrary("libstdc++.so.6"),
+            pipe.latestGCCLibrary("libgcc_s.so.1"),
         ])
+        self['LD_LIBRARY_PATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR')
+        self['PYTHONPATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages')

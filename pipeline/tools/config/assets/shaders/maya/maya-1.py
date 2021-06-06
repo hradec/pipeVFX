@@ -18,6 +18,9 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+# import maya.app
+# maya.app.general.fileTexturePathResolver.findAllFilesForPattern("/BTRFS10TB/atomo/jobs/0704.hi_chew/assets/sala/users/iinaja/maya/sourceimages/personagem_maca/textura/corpo/Base_maca_Color_<UDIM>.png",0)
+
 
 import IECore, pipe, tempfile
 from glob import glob
@@ -42,7 +45,7 @@ class maya( genericAsset.maya ) :
         import samPrman
         samPrman.setRenderScripts()
         m.setAttr( "defaultRenderGlobals.preMel", "python(\"import genericAsset;genericAsset.maya._attachShaders()\")", type="string" )
-        genericAsset.maya.cleanUnusedShadingNodes()
+        # genericAsset.maya.cleanUnusedShadingNodes()
         genericAsset.maya.attachShadersLazy()
 
     def publishMayaShadersAndTextures(self, shadingFile,  operands):
@@ -88,30 +91,40 @@ class maya( genericAsset.maya ) :
         def processTextures(n1, n2, cores, pb, tmpFolder):
             # tmpFolder = '%s/renderman/sam' % m.workspace(q=1, rd=1)
             for node in self.data['textures'].keys()[n1:n2+1]:
-                if not os.path.exists(self.data['textures'][node]) and os.path.exists(os.path.splitext(self.data['textures'][node])[0]):
-                    self.data['textures'][node] = os.path.splitext(self.data['textures'][node])[0]
+                textures = self.data['textures'][node]
+                if type(textures) == type(str):
+                    textures = [self.data['textures'][node]]
 
-                # fileName = '%s/sourceimages/%s' % ( m.workspace(q=1, rd=1), os.path.basename( self.data['textures'][text] ) )
-                ext = os.path.splitext( self.data['textures'][node] )[-1].lower()
-                if 1: #'/sam/' not in self.data['textures'][node] or ext != '.tex':
-                    publishedText = "%s/%s" % ( self.data['publishPath'], os.path.basename( self.data['textures'][node] ) )
-                    tex = '%s.tex' % os.path.basename( cleanFileName(self.data['textures'][node]) )
 
-                    # by adding to extraFiles, the texture will be published to the asset folder
-                    self.data['extraFiles'].append( self.data['textures'][node] )
+                for t in textures:
+                    if not os.path.exists(t) and os.path.exists(os.path.splitext(t)[0]):
+                        t = os.path.splitext(t)[0]
 
-                    # convert to tex file
-                    # if m.nodeType(node) in ['file', 'PxrTexture']:
-                    if ext != '.tex':
-                        cmd ='LD_LIBRARY_PATH=$RMANTREE/lib/ $RMANTREE/bin/txmake -newer -resize down -t:%s -mode periodic "%s" %s/%s' % ( cores, self.data['textures'][node], tmpFolder, tex )
+                    # fileName = '%s/sourceimages/%s' % ( m.workspace(q=1, rd=1), os.path.basename( self.data['textures'][text] ) )
+                    ext = os.path.splitext( t )[-1].lower()
+                    if 1: #'/sam/' not in t or ext != '.tex':
+                        publishedText = "%s/%s" % ( self.data['publishPath'], os.path.basename( t ) )
+
+                        # by adding to extraFiles, the texture will be published to the asset folder
+                        if ext != '.tex':
+                            tex = '%s.tex' % os.path.basename( cleanFileName(t) )
+                            self.data['extraFiles'].append( t )
+                        else:
+                            tex = os.path.basename( cleanFileName(t) )
+
+                        # convert to tex file
+                        # if ext == '.tex':
+                        #     self.data['extraFiles'].append( t )
+                        # else:
+                        cmd  = "mkdir -p %s/ ;" % ( tmpFolder )
+                        cmd += "rm -rf %s/%s ;" % ( tmpFolder, tex )
+                        cmd +='LD_LIBRARY_PATH=$RMANTREE/lib/ $RMANTREE/bin/txmake -resize down -t:%s -mode periodic "%s" %s/%s' % ( cores, t, tmpFolder, tex )
                         print cmd
                         os.popen( cmd ).readlines()
                         self.data['extraFiles'].append( '%s/%s' % (tmpFolder, tex) )
                         publishedText = "%s/%s" % ( self.data['publishPath'], tex )
-                    else:
-                        self.data['extraFiles'].append( self.data['textures'][node] )
 
-                    self.data['publishedTextures'][node] = publishedText
+                        self.data['publishedTextures'][node] = publishedText
 
                 # now we set maya texture node to use the published texture!
                 # print '===>', publishedText
@@ -127,10 +140,15 @@ class maya( genericAsset.maya ) :
         # progress bar
         pb = genericAsset.progressBar( len(self.data['textures'].keys())+int(math.ceil(cores))+1, "Pre-converting textures for publishing...")
 
-        for n in range( int(math.ceil(cores)) ):
-            n *= batches+1
+        # for n in range( int(math.ceil(cores)) ):
+        #     n *= batches+1
+        #     # print n, n+batches
+        #     threads.append(  Thread( target=processTextures, args=(n,n+batches,cores,pb,tmpFolder,) ) )
+        #     threads[-1].start()
+
+        for n in range( len( self.data['textures'].keys() ) ):
             # print n, n+batches
-            threads.append(  Thread( target=processTextures, args=(n,n+batches,cores,pb,tmpFolder,) ) )
+            threads.append(  Thread( target=processTextures, args=(n,n,cores,pb,tmpFolder,) ) )
             threads[-1].start()
 
         # wait for the convertion to finish

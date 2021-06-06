@@ -43,10 +43,11 @@ def installRoot(args={}):
     os.system("mkdir -p %s" % dev)
     return dev
 
-def buildFolder(args={}):
+def buildFolder(args={},extra=''):
     build = '.build'
 
     if args.has_key('BUILD_FOLDER'):
         build = args['BUILD_FOLDER']
 
-    return build
+    ret = os.path.join(build, extra).replace('//','/')
+    return ret

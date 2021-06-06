@@ -113,15 +113,6 @@ elif LIN in sys.platform.lower():
 
 
 
-__ldconfigLog = map(lambda x: x.strip(), os.popen('/sbin/ldconfig -p').readlines())
-ldconfig = {
-   'x86_64' :  filter( lambda x: 'x86-64' in x,  __ldconfigLog ),
-   'x86_32' :  filter( lambda x: 'x86-64' not in x,  __ldconfigLog ),
-}
-def findSharedLibrary(libname):
-    libs = filter( lambda x: libname in x, ldconfig[arch] )
-    return map(lambda x: x.split(' => ')[-1].strip(), libs)
-
 
 def depotRoot(forceScan=False):
     root = os.path.dirname(__file__)
@@ -210,6 +201,21 @@ class roots:
             root = roots.apps(plat)
 
         return os.path.abspath( '%s/pipeline/tags/%s' % (root, subpath) )
+
+
+global _latestGCC
+_latestGCC=[]
+__ldconfigLog = map(lambda x: x.strip(), os.popen('/sbin/ldconfig -p').readlines())
+ldconfig = {
+   'x86_64' :  filter( lambda x: 'x86-64' in x,  __ldconfigLog ),
+   'x86_32' :  filter( lambda x: 'x86-64' not in x,  __ldconfigLog ),
+}
+def findSharedLibrary(libname):
+    global _latestGCC
+    libs = filter( lambda x: libname in x, ldconfig[arch]+_latestGCC )
+    return map(lambda x: x.split(' => ')[-1].strip(), libs)
+
+
 
 
 # hardcoded for now!!

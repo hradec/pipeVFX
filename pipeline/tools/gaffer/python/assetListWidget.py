@@ -24,7 +24,8 @@
 ############################################################################
 
 
-
+# TODO: Add a vertical toolbar with custom buttons for generic tools and
+#       project specific tools.
 
 import os
 import sys
@@ -41,11 +42,32 @@ import pipe
 import assetUtils
 import genericAsset
 
+# backward compatibility
+import imath
+for c in [ x for x in dir(imath) if 'V' in x[0] or 'C' in x[0] ]:
+    exec( 'IECore.%s=imath.%s' % (c,c) )
+
+
 if assetUtils.m:
     reload(assetUtils)
     reload(genericAsset)
 
 import bundleListWidget
+
+# add a custom folder to search path, so we can add custom functionality
+tools = [ '%s/config/assets/' % x for x in pipe.apps.gaffer().toolsPaths() ]
+tools.reverse()
+for tool in tools:
+    if tool not in sys.path:
+        sys.path.insert(0,tool)
+
+try:
+    import custom
+    reload(custom)
+except:
+    class custom:
+        pass
+
 
 # import GafferSceneUI # for alembic previews
 # import GafferCortexUI # for alembic previews
@@ -58,20 +80,28 @@ import bundleListWidget
 # import samEditor
 # import timelineImage
 
+QtCore, QtGui = pipe.importQt()
 
-QtGui = GafferUI._qtImport( "QtGui" )
-QtCore = GafferUI._qtImport( "QtCore" )
 
 
 _search = IECore.SearchPath(os.environ['GAFFERUI_IMAGE_PATHS'], ':')
 
 def getMayaWindow():
+    """
+    Get the main Maya window as a QtGui.QMainWindow instance
+    @return: QtGui.QMainWindow instance of the top level Maya windows
+    """
     if assetUtils.m:
-        import sip
-        import maya.OpenMayaUI as mui
-        import maya.cmds as cmds
-        ptr = mui.MQtUtil.mainWindow()
-        return sip.wrapinstance(long(ptr), QtCore.QObject)
+        if 'pyside' in pipe.whatQt():
+            import shiboken2
+            import maya.OpenMayaUI as apiUI
+            ptr = apiUI.MQtUtil.mainWindow()
+            return shiboken2.wrapInstance(long(ptr), QtGui.QMainWindow)
+        else:
+            import sip
+            import maya.OpenMayaUI as mui
+            ptr = mui.MQtUtil.mainWindow()
+            return sip.wrapinstance(long(ptr), QtCore.QObject)
     return None
 
 def toQtObject(mayaName):
@@ -81,15 +111,26 @@ def toQtObject(mayaName):
     If the object does not exist, returns None
     '''
     if assetUtils.m:
-        import sip
-        import maya.OpenMayaUI as apiUI
-        ptr = apiUI.MQtUtil.findControl(mayaName)
-        if ptr is None:
-            ptr = apiUI.MQtUtil.findLayout(mayaName)
-        if ptr is None:
-            ptr = apiUI.MQtUtil.findMenuItem(mayaName)
-        if ptr is not None:
-            return sip.wrapinstance(long(ptr), QtCore.QObject)
+        if 'pyside' in pipe.whatQt():
+            import shiboken2
+            import maya.OpenMayaUI as apiUI
+            ptr = apiUI.MQtUtil.findControl(mayaName)
+            if ptr is None:
+                ptr = apiUI.MQtUtil.findLayout(mayaName)
+            if ptr is None:
+                ptr = apiUI.MQtUtil.findMenuItem(mayaName)
+            if ptr is not None:
+                return shiboken2.wrapInstance(long(ptr), QtGui.QMainWindow)
+        else:
+            import sip
+            import maya.OpenMayaUI as apiUI
+            ptr = apiUI.MQtUtil.findControl(mayaName)
+            if ptr is None:
+                ptr = apiUI.MQtUtil.findLayout(mayaName)
+            if ptr is None:
+                ptr = apiUI.MQtUtil.findMenuItem(mayaName)
+            if ptr is not None:
+                return sip.wrapinstance(long(ptr), QtCore.QObject)
     return None
 
 
@@ -112,8 +153,9 @@ class SAMPanel( GafferUI.EditorWidget ):
         self.__buttons = []
         self.__buttonsSignals = []
         with self.layout:
+          with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Vertical ):
             with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Vertical ):
-                with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Horizontal ) as toolbar:
+                with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Horizontal ):
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "samShelfPanelx20.png", toolTip="Refresh the panel from the most up-to-date data"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
@@ -210,6 +252,7 @@ class assetListWidget( GafferUI.EditorWidget ):
     __expansionChangedSignal = GafferUI.WidgetSignal()
     __filter = ''
 
+
     def assetFilter(self, textWidget):
         self.__filter =  textWidget.getText()
         self.refresh()
@@ -260,6 +303,9 @@ class assetListWidget( GafferUI.EditorWidget ):
 
     def __init__(self, scriptNode=None, hostApp='gaffer', **kw):
         from GafferUI.PathListingWidget import _TreeView
+
+        if not scriptNode:
+            scriptNode = Gaffer.ScriptNode()
 
         __toolTip__maya__=''
         if assetUtils.m:
@@ -383,7 +429,8 @@ class assetListWidget( GafferUI.EditorWidget ):
         self._qtWidget().setUniformRowHeights( True )
         self._qtWidget().setEditTriggers( QtGui.QTreeView.NoEditTriggers )
         self._qtWidget().activated.connect( Gaffer.WeakMethod( self.__activated ) )
-        self._qtWidget().header().setMovable( False )
+        if 'pyqt' in pipe.whatQt():
+            self._qtWidget().header().setMovable( False )
         self._qtWidget().header().setSortIndicator( 0, QtCore.Qt.AscendingOrder )
         self._qtWidget().setSortingEnabled( True )
         self._qtWidget().setExpandsOnDoubleClick( False )
@@ -423,11 +470,12 @@ class assetListWidget( GafferUI.EditorWidget ):
             self.timer.singleShot( 60*1000,forceRefresh)
 
         # self.timer.singleShot( 60*1000,forceRefresh)
-
-        self._qtWidget().connect(self._qtWidget(), QtCore.SIGNAL("selectionChangedSignal(PyQt_PyObject)"), self.handleValue)
+        if 'pyqt' in pipe.whatQt():
+            self._qtWidget().connect(self._qtWidget(), QtCore.SIGNAL("selectionChangedSignal(PyQt_PyObject)"), self.handleValue)
         # bundleListWidget.bundleListWidget._selectionChangedSignal().connect( Gaffer.WeakMethod( self.handleValue ) )
 
         # genericAsset.updateCurrentLoadedAssets(True)
+        genericAsset.updateCurrentLoadedAssets()
 
     def __buttonDoubleClick(self, *args):
         # import time
@@ -483,7 +531,8 @@ class assetListWidget( GafferUI.EditorWidget ):
              def __SAM_assetList_mayaNodeDeleted_IDLE__():
                 genericAsset.updateCurrentLoadedAssets()
                 self._mayaNodeDeleted(forceRefresh)
-             assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_mayaNodeDeleted_IDLE__ )
+             __SAM_assetList_mayaNodeDeleted_IDLE__()
+             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_mayaNodeDeleted_IDLE__ )
 
         assetUtils.mayaLazyScriptJob( runOnce=False,  deleteEvent=__SAM_assetList_mayaNodeDeleted__ )
         assetUtils.mayaLazyScriptJob( runOnce=False,  event=['deleteAll',lambda: __SAM_assetList_mayaNodeDeleted__(True)] )
@@ -531,7 +580,8 @@ class assetListWidget( GafferUI.EditorWidget ):
             # if selection is "importable" in the current app
             selected_canImport  = True #if [ x for x in selectedPathsOP if x.canImport() ] else False
 
-            canImport = not selectedPathsEditable and selected_canImport #selected_source_exists_in_host and selected_canImport
+            # canImport = not selectedPathsEditable and selected_canImport #selected_source_exists_in_host and selected_canImport
+            canImport = True
 
             # renderSettings can ALLWAYS be imported, even if they are publishable as well!
             if len(selectedPaths)==1:
@@ -583,8 +633,16 @@ class assetListWidget( GafferUI.EditorWidget ):
                     menuDefinition.append( "/publish new asset of type %s" % t.replace('/','_'), { "command" : IECore.curry(createNewAsset, selectedPaths, t) } )
 
 
-        menuDefinition.append( "/ " , { } )
+
+
+        if hasattr( custom, 'assetListRightClickMenu' ):
+            menuDefinition = custom.assetListRightClickMenu( self, pathListing, menuDefinition )
+
+
+        menuDefinition.append( "/     " , { } )
         menuDefinition.append( "/update all assets", { "command" :  IECore.curry( self.updateAllAssetsInScene) } )
+
+        menuDefinition.append( "/--- " , { } )
 
     	self.__menu = GafferUI.Menu( menuDefinition )
     	if len( menuDefinition.items() ) :
@@ -604,9 +662,13 @@ class assetListWidget( GafferUI.EditorWidget ):
                     # print path
                     op = assetUtils.assetOP( path , self.hostApp() )
                     op.doImport( )
+
                 pb.step()
                 pb.close()
                 self._mayaNodeDeleted()
+
+                if hasattr( custom, 'assetListAssetImport' ):
+                    custom.assetListAssetImport(  )
                 # print op, path
             __SAM_assetList_doImport__()
             # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__SAM_assetList_doImport__)
@@ -619,9 +681,14 @@ class assetListWidget( GafferUI.EditorWidget ):
                 pb.step()
                 if not checkIfNodeIsUpToDate(n):
                     n = n.split('_')
-                    op = assetUtils.assetOP( '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4])), self.hostApp() )
+                    path = '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4]))
+                    op = assetUtils.assetOP( path, self.hostApp() )
                     print '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4])), op.path, op.data
                     op.doImport()
+                    # run custom code, if any!
+
+            if hasattr( custom, 'assetListAssetImport' ):
+                custom.assetListAssetImport(  )
             pb.step()
             pb.close()
 
@@ -1279,6 +1346,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         def compIcons(img, img2=_search.find('check_box32.png'), height=10, width=10, x=0, y=0, scale2=1):
             image = QtGui.QImage(img).scaledToHeight(height)
             imag2 = QtGui.QImage(img2).scaledToHeight(height*scale2)
+
             painter = QtGui.QPainter()
             painter.begin(image)
             painter.drawImage(x, y, imag2)
@@ -1286,7 +1354,10 @@ class TreeModel(QtCore.QAbstractItemModel):
             return QtGui.QPixmap.fromImage( image )
 
         for each in data.keys():
-            typeIcon = QtGui.QPixmap(_search.find('assets/%s-15.png' % each))
+            if 'pyqt' in pipe.whatQt():
+                typeIcon = QtGui.QPixmap(_search.find('assets/%s-15.png' % each))
+            else:
+                typeIcon = QtGui.QImageReader(_search.find('assets/%s-15.png' % each)).read()
             x, y = 5,5
             self.assetMainTypes[each] = {
                 'plain' : typeIcon,
@@ -1296,7 +1367,10 @@ class TreeModel(QtCore.QAbstractItemModel):
                 'edit'  : compIcons( typeIcon, _search.find('edit-alpha-20.png')    , 15, 30, x, y, 0.75),
             }
             for each2 in data[each].keys():
-                subTypeIcon = QtGui.QPixmap(_search.find('assets/%s.png' % each2)).scaledToHeight(14)
+                if 'pyqt' in pipe.whatQt():
+                    subTypeIcon = QtGui.QPixmap(_search.find('assets/%s.png' % each2)).scaledToHeight(14)
+                else:
+                    subTypeIcon = QtGui.QImageReader(_search.find('assets/%s.png' % each2)).read().scaledToHeight(14)
                 self.assetTypes[each2] = {
                     'plain' : subTypeIcon,
                     'green' : compIcons( subTypeIcon, _search.find('greenlight_alpha.png') , 14, 30, x, y, 0.75),

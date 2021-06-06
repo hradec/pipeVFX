@@ -32,6 +32,8 @@
 // #include "IECore/CompoundParameter.h"
 #include "IECore/Writer.h"
 #include "IECore/Group.h"
+#include "IECore/SceneCache.h"
+#include "IECore/SceneInterface.h"
 
 // #include "IECore/CurvesPrimitive.h"
 // #include "IECore/SimpleTypedData.h"
@@ -45,6 +47,9 @@
 // #include "IECore/Timer.h"
 
 #include "OpenEXR/ImathRandom.h"
+
+
+#include "OpenEXR/ImathVec.h"
 
 #include <algorithm>
 #include <fstream>
@@ -357,24 +362,24 @@ void shaveAPITestCmd::displayHairInfo(
         shaveAPI::HairInfo* hairInfo, bool instances, MString fileName, MString command
 ) const
 {
-    // cout << "BUM 1\n";
+    cout << "BUM 1\n"; cout.flush();
     const char *strandName = (instances ? "face" : "strand");
     // cout << "BUM 1\n";
-    char     buff[200];
-    // cout << hairInfo->numHairs << " BUM 1\n";
+    char     buff[2048];
+    cout << hairInfo->numHairs << " BUM 2\n"; cout.flush();
 
-    sprintf(buff, "  %d %ss", hairInfo->numHairs, strandName);
+    sprintf(buff, "  %d %ss\n", hairInfo->numHairs, strandName);
     // MGlobal::displayInfo(buff);
     // cout << "BUM 1\n";
     // cout << buff << "\n";
 
-    sprintf(buff, "  %d vertices", hairInfo->numVertices);
+    sprintf(buff, "  %d vertices\n", hairInfo->numVertices);
     // MGlobal::displayInfo(buff);
     // cout << buff << "\n";
 
-    sprintf(buff, "  %d %s vertices", hairInfo->numHairVertices, strandName);
-    // MGlobal::displayInfo(buff);
-    // cout << buff << "\n";
+    sprintf(buff, "  %d %s vertices\n", hairInfo->numHairVertices, strandName);
+    MGlobal::displayInfo(buff);
+    cout << buff << "\n"; cout.flush();
 
 
 
@@ -396,7 +401,7 @@ void shaveAPITestCmd::displayHairInfo(
     FloatVectorDataPtr u( new FloatVectorData );
 
 
-    // cout << "BUM 1\n";
+    cout << "BUM 1\n"; cout.flush();
 
     //
     // Dump out some details for the first three strands, if there are that
@@ -409,23 +414,24 @@ void shaveAPITestCmd::displayHairInfo(
     for (strand = 0; (strand < hairInfo->numHairs); strand++)
     {
 
-    	// sprintf(
-    	//     buff,
-    	//     "  %s %d: root colour (%f, %f, %f)  tip colour (%f, %f, %f)"
-    	// 	"  surface normal (%f, %f, %f)",
-        //         strandName,
-    	//     strand,
-        //         hairInfo->rootColors[strand].r,
-        //         hairInfo->rootColors[strand].g,
-        //         hairInfo->rootColors[strand].b,
-        //         hairInfo->tipColors[strand].r,
-        //         hairInfo->tipColors[strand].g,
-        //         hairInfo->tipColors[strand].b,
-        //         hairInfo->surfaceNormals[strand].x,
-        //         hairInfo->surfaceNormals[strand].y,
-        //         hairInfo->surfaceNormals[strand].z
-        //     );
-    	// MGlobal::displayInfo(buff);
+    	sprintf(
+    	    buff,
+    	    "  %s %d: root colour (%f, %f, %f)  tip colour (%f, %f, %f)"
+    		"  surface normal (%f, %f, %f)",
+                strandName,
+    	    strand,
+                hairInfo->rootColors[strand].r,
+                hairInfo->rootColors[strand].g,
+                hairInfo->rootColors[strand].b,
+                hairInfo->tipColors[strand].r,
+                hairInfo->tipColors[strand].g,
+                hairInfo->tipColors[strand].b,
+                hairInfo->surfaceNormals[strand].x,
+                hairInfo->surfaceNormals[strand].y,
+                hairInfo->surfaceNormals[strand].z
+            );
+    	MGlobal::displayInfo(buff);
+
 
         numCVs = hairInfo->hairEndIndices[strand] - hairInfo->hairStartIndices[strand];
 
@@ -521,7 +527,7 @@ void shaveAPITestCmd::displayHairInfo(
       // curves->variables[ "P" ] = PrimitiveVariable( PrimitiveVariable::Vertex, pData );
       // curves->variables[ "tipRadii" ] = PrimitiveVariable( PrimitiveVariable::Varying, tipRadiiData );
       // curves->variables[ "rootRadii" ] = PrimitiveVariable( PrimitiveVariable::Varying, rootRadiiData );
-      // curves->variables[ "width" ] = PrimitiveVariable( PrimitiveVariable::Varying, widthData );
+      curves->variables[ "width" ] = PrimitiveVariable( PrimitiveVariable::Varying, widthData );
     }
     curves->variables[ "rootColor" ] = PrimitiveVariable( PrimitiveVariable::Uniform, rootColorData );
     curves->variables[ "tipColor" ] = PrimitiveVariable( PrimitiveVariable::Uniform, tipColorData );
@@ -530,6 +536,21 @@ void shaveAPITestCmd::displayHairInfo(
 
     GroupPtr group = new Group();
     group->addChild(curves);
+
+    // SceneInterfacePtr scene = SceneCache::create("/tmp/test.scc", IndexedIO::Write );
+    // SceneInterfacePtr shave = scene->createChild("shave");
+    // shave->writeBound( Imath::Box3d(
+    //     Imath::V3d(
+    //         group->bound().min.x,
+    //         group->bound().min.y,
+    //         group->bound().min.z
+    //     ),Imath::V3d(
+    //         group->bound().max.x,
+    //         group->bound().max.y,
+    //         group->bound().max.z
+    //     )), 0.0 );
+	// shave->writeObject( group.get(), 0.0 );
+
 
     WriterPtr writer = Writer::create( curves, fileName.asChar() );
     writer->write();

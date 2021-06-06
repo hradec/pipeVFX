@@ -75,7 +75,8 @@ class cgru(baseApp):
 
 
         natron.addon(self, plugins=self.path('plugins/natron'))
-
+        blender.addon(self, plugin=self.path('plugins/blender'))
+        blender.addon(self, plugin=self.path('plugins/blender/addons'))
 
         #sys.stderr.write('CGRU_VERSION %s : %s\n' %  (self.version(), self.path()))
         #self.update( python() )

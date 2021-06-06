@@ -23,17 +23,24 @@
 class usd(baseLib):
     def versions(self):
         if self.parent() in ['usd']:
-            pipe.libs.version.set( oiio='1.6.15' )
+            # pipe.libs.version.set( oiio='1.6.15' )
+            pipe.libs.version.set( opensubdiv='3.4.0' )
+            pipe.libs.version.set( ptex='2.0.42' )
+
+        if pipe.versionMajor(pipe.libs.version.get('usd')) < 20.0:
             pipe.libs.version.set( opensubdiv='3.4.0' )
             pipe.libs.version.set( ptex='2.0.42' )
 
     def environ(self):
         self['PYTHONPATH'] = self.path('lib/python')
 
+        self.update( pipe.libs.opensubdiv() )
+        self.update( pipe.libs.alembic() )
+        self.update( pipe.libs.ptex() )
+
         if self.parent() in ['usd']:
             self.update( pipe.libs.pyside() )
             self.update( pipe.libs.oiio() )
-            self.update( pipe.libs.ptex() )
 
         pipe.apps.maya.addon ( self,
             plugin     = self.path('maya.$MAYA_VERSION/third_party/maya/plugin'),

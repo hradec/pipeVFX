@@ -19,9 +19,52 @@
 # =================================================================================
 
 
-import os, glob, sys
+from __future__ import print_function
+import os, glob, sys, traceback
+
 # avoid creating .pyc since it can cause trouble between Intel and AMD
 sys.dont_write_bytecode = True
+
+global _Qt
+global _QtCore
+global _QtGui
+global _QtWidgets
+
+def importQt(ret=None):
+    global _Qt
+    global _QtCore
+    global _QtGui
+    global _QtWidgets
+    try:
+        import Qt
+        from Qt import QtCore, QtGui, QtWidgets
+        for c in [ x for x in dir(QtWidgets) if x[0]=='Q' ]:
+            exec( 'QtGui.%s = QtWidgets.%s' % (c, c) )
+        QtCore.SIGNAL = QtCore.Signal
+        _Qt        = Qt
+        _QtCore    = QtCore
+        _QtGui     = QtGui
+        _QtWidgets = QtWidgets
+    except:
+        import GafferUI
+        QtGui = GafferUI._qtImport( "QtGui" )
+        QtCore = GafferUI._qtImport( "QtCore" )
+        _Qt        = None
+        _QtCore    = QtCore
+        _QtGui     = QtGui
+        _QtWidgets = None
+
+    if ret:
+        if 'QtWidgets' in ret:
+            return _QtWidgets
+
+    return QtCore, QtGui
+
+
+def whatQt():
+    if _Qt:
+        return "pyside"
+    return "pyqt"
 
 
 if not hasattr(sys,'argv'):
@@ -42,15 +85,13 @@ for each in glob.glob('%s/*.py' %  moduleRootPath):
 os.chdir(curdir)
 '''
 
-from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name
+from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name, findSharedLibrary
 
 
-def findLibrary(libname):
-    import os
-    # '%s/gcc/4.8.5/lib64/libstdc++.so.6' % pipe.build.install(),
-    # '%s/gcc/4.8.5/lib64/libgcc_s.so.1' % pipe.build.install(),
-    return ''.join(os.popen( 'ldconfig -p | grep %s' % libname ).readlines()).strip().split(' ')[-1]
-
+def versionMajor(versionString):
+    if not versionString:
+        return 0.0
+    return float('.'.join(versionString.split('.')[:2]))
 
 
 def versionSort(versions):
@@ -65,8 +106,8 @@ def versionSort(versions):
 if osx:
     # we only set brew pythonpath if running system python!
     if sys.executable == '/usr/bin/python':
-        sys.path.insert(0, '/usr/local/lib/python2.7/site-packages/gtk-2.0/')
-        sys.path.insert(0, '/usr/local/lib/python2.7/site-packages/')
+        sys.path.insert(0, '/usr/local/lib/python$PYTHON_VERSION_MAJOR/site-packages/gtk-2.0/')
+        sys.path.insert(0, '/usr/local/lib/python$PYTHON_VERSION_MAJOR/site-packages/')
 
     # load dbus session, if needed!
     if not ''.join(os.popen('launchctl list | grep "dbus-session" 2>&1').readlines()).strip():
@@ -93,7 +134,34 @@ import frame
 import build
 
 
+def latestGCCLibrary(libname):
+    import os, libs
+    _lib = libs.gcc().path('lib/%s' % libname)
+    if not os.path.exists(_lib):
+        _lib = findSharedLibrary(libname)
+    return _lib
 
+
+def findLibrary(libname):
+    return findSharedLibrary(libname)
+    # import os
+    # # '%s/gcc/4.8.5/lib64/libstdc++.so.6' % pipe.build.install(),
+    # # '%s/gcc/4.8.5/lib64/libgcc_s.so.1' % pipe.build.install(),
+    # return ''.join(os.popen( "ldconfig -p | grep %s | grep $(uname -m | sed 's/_/-/g')" % libname ).readlines()).strip().split(' ')[-1]
+
+def _force_os_environ(print_traceback=None):
+    ''' this is a hack to restart a running python to account for a new os.environ
+    (mostly updates to LD_LIBRARY_PATH) but it can cause misbehavior compared to
+    having the environment properly set before running python.
+    So used it carefully!!!'''
+    if print_traceback:
+        print (traceback.print_exc())
+    import os
+    try:
+        os.execv(sys.argv[0], sys.argv)
+    except (Exception, exc):
+        print ('Failed re-exec:', exc)
+        sys.exit(1)
 
 def studio(name=None):
     import os
@@ -165,9 +233,10 @@ def alias(withlibs=True):
                     aliasScript.append('''alias %s='env LD_PRELOAD="" %s -c "import pipe;pipe.apps.%s().run(\\"%s\\")"' ''' % (each[0].replace(' ','_'), pythonBin, appname, each[1]) )
             except:
                 from bcolors import bcolors
-                sys.stderr.write(bcolors.FAIL)
-                sys.stderr.write("\nERROR: Application %s %s doesnt exist in the current job/shot!!\n" % (appname, appClass.version()))
-                sys.stderr.write(bcolors.END)
+                sys.stderr.write(bcolors.FAIL+"="*80)
+                sys.stderr.write("\n%s\n" % traceback.print_exc())
+                sys.stderr.write("\n\nERROR: Application %s %s doesnt exist in the current job/shot!!\n\n" % (appname, appClass.version()))
+                sys.stderr.write("="*80+bcolors.END)
 
 
     return '\n'.join(aliasScript)
@@ -214,7 +283,7 @@ def init():
         paths = glob.glob( '%s/python-dbus/*' % roots.libs() )
         if paths:
             paths.sort()
-            pythonpath += ':%s/lib/python2.6/site-packages/' % paths[-1]
+            pythonpath += ':%s/lib/python$PYTHON_VERSION_MAJOR/site-packages/' % paths[-1]
 
     # add central bin/scripts folders
     path += '%s/bin:%s/scripts' % (root,root)
@@ -330,7 +399,7 @@ def go():
             if '-h' in args:
                 id=0-len(argsHist)
                 for each in argsHist:
-                    print >>sys.stderr,'\t%d = go %s' % (id, ' '.join(each[1:]))
+                    sys.stderr.write('\t%d = go %s\n' % (id, ' '.join(each[1:])))
                     id += 1
                 return ''
 
@@ -366,8 +435,8 @@ def go():
         if lines:
             for each in lines[-20:]:
                 if str(args) != each.strip():
-                    print >>f, each.strip()
-        print >>f, args
+                    f.write("%s\n" % each.strip())
+        f.write("%s\n" % args)
         f.close()
     except:
         pass

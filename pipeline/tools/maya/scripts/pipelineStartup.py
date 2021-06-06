@@ -19,11 +19,44 @@
 # =================================================================================
 
 import os, sys
-sys.path.insert( 0, "%s/lib/python%s.zip" % ( os.environ["MAYA_ROOT"], os.environ['PYTHON_VERSION_MAJOR'].replace(".","") ) )
-
 import maya
 import maya.cmds as m
 from maya.mel import eval as meval
+if 'DISPLAY' in os.environ:
+    try:
+        m.scriptEditorInfo(wh=True, hfn='/dev/stderr')
+    except: pass
+
+
+print "Loading Pipeline Startup from %s" % __file__
+
+
+# import alembic here to prevent problems when prman import it
+# we add alembic/imath pythonpath to the top of sys.path here so maya will use
+# our version!
+import pipe
+
+def prependPythonPath( libs ):
+    if type(libs) != type([]):
+        libs = [libs]
+    for lib in libs:
+        p = lib['PYTHONPATH']
+        if type(p) == type(""):
+            p = [p]
+        for x in p:
+            sys.path.insert( 0, os.path.expandvars(x) )
+
+
+
+# now we add maya pythonpath to the top!
+if float(os.environ["MAYA_VERSION"]) > 2017:
+    prependPythonPath(pipe.apps.maya())
+    if not m.about(batch=1):
+        # force PySide2 to load from maya folder!
+        import PySide2
+        import shiboken2
+        reload(PySide2)
+        reload(shiboken2)
 
 # fix the F key, just in case!
 meval('optionVar  -fv "defaultFitFactor" 0.99')
@@ -34,11 +67,11 @@ from time import time
 
 startTime = time()
 
-if 'DISPLAY' in os.environ:
-    try:
-        m.scriptEditorInfo(wh=True, hfn='/dev/stderr')
-    except: pass
 print 'Pipeline Startup...'
+sys.stdout.flush()
+
+
+
 
 #
 if 'MAYA_USE_VRAY' in os.environ:
@@ -58,6 +91,7 @@ def pipeIdleStartup():
     import traceback
 
     print 'PipeIdleStartup...'
+    sys.stdout.flush()
     # if we're in a job/shot, set workspace current to the
     # current user maya folder
     j = pipe.admin.job.current()
@@ -66,33 +100,50 @@ def pipeIdleStartup():
         user = j.shot.user()
         m.workspace( user.path('maya'), o=1 )
 
+
+    plugs=[]
+    if float(os.environ["MAYA_VERSION"]) > 2017:
+        prependPythonPath([
+            pipe.libs.pyilmbase(),
+            pipe.libs.alembic(),
+            pipe.libs.openvdb(),
+            pipe.libs.usd(),
+        ])
+        import imath
+        import alembic
+        plugs += ['RenderMan_for_Maya.py']
+    else:
+        plugs += ['RenderMan_for_Maya']
+
     # if user is 3d, add qube ui!
     # if os.environ['USER'] == '3d':
     #     meval('qube_addUI();')
 
     # force auto-load of these plugins at startup!
-    plugs=[
+    plugs+=[
         # 'slumMayaPlugin.py',
-        'ieCore',
-        'RenderMan_for_Maya',
-        'OpenVDB',
         'AbcImport',
         'AbcExport',
         'gpuCache',
+        'ieCore',
         'houdiniEngine',
+        'OpenVDB',
 #        '3delight_for_maya%s' % os.environ['MAYA_VERSION_MAJOR'],
     ]
+
     if plugs:
         for each in plugs:
             print '='*80
             print 'PIPE: auto-loading %s plugin...\n' % each
+            sys.stdout.flush()
             try:
                 m.loadPlugin( each )
             except:
                 print "Can't load %s plugin!!" % each
                 traceback.print_exc()
         print '='*80
-
+        print "Finished plugin auto-loading..."
+        sys.stdout.flush()
 
     # re-initialize cortex menu to filter out admin ops!
     try:
@@ -100,6 +151,7 @@ def pipeIdleStartup():
     except:
         IECore=None
         IECoreMaya=None
+
 
     if IECore:
         def __createOp( className ) :
@@ -120,12 +172,13 @@ def pipeIdleStartup():
             return menu
 
         menu = IECore.MenuDefinition()
-        menu.append(
-            "/Create Procedural",
-            {
-                "subMenu" : IECoreMaya.Menus.proceduralCreationMenuDefinition,
-            }
-        )
+        if hasattr(IECoreMaya.Menus, 'proceduralCreationMenuDefinition'):
+            menu.append(
+                "/Create Procedural",
+                {
+                    "subMenu" : IECoreMaya.Menus.proceduralCreationMenuDefinition,
+                }
+            )
 
         menu.append(
             "/Create Op",
@@ -142,7 +195,10 @@ def pipeIdleStartup():
 
             #create our custom one!
             global __cortexMenu
-            __cortexMenu = IECoreMaya.createMenu( menu, "MayaWindow", "Cortex" )
+            try:
+                __cortexMenu = IECoreMaya.createMenu( menu, "MayaWindow", "Cortex" )
+            except:
+                __cortexMenu = IECoreMaya.Menus.createMenu( "Cortex", menu, "MayaWindow" )
 
 
     # force unload of Alembic plugins!!
@@ -196,7 +252,7 @@ def loadAssetManager():
     except:
         IECore = None
 
-    if IECore:
+    if IECore :
         def __publishRender() :
             __publish('render','maya')
             # import maya.cmds as m
@@ -327,35 +383,39 @@ def loadAssetManager():
 
 
             #create our custom one!
-            global __cortexMenu
-            __cortexMenu = IECoreMaya.createMenu( menu, "MayaWindow", "SAM" )
+            global __cortexMenuSAM
+            try:
+                __cortexMenuSAM = IECoreMaya.createMenu( menu, "MayaWindow", "SAM" )
+            except:
+                __cortexMenuSAM = IECoreMaya.Menus.createMenu( "SAM", menu, "MayaWindow" )
 
-    if float(os.environ["MAYA_VERSION"]) < 2018:
+
+    if float(os.environ["MAYA_VERSION"]) <= 2020:
         import atomoShelfs
         if not m.about(batch=1):
             atomoShelfs.buildShelf()
 
 
-    def AESamMenu(arg1, arg2):
-        AEmenu = meval('global string $gAEMenuBarLayoutName;$__samAEMenu=$gAEMenuBarLayoutName')
-        m.setParent( AEmenu )
-        m.setParent( "AESamMenu", menu=1 )
-        m.menu( "AESamMenu", edit=1, deleteAllItems=1 )
-        m.menuItem( divider=1 )
-        m.ls(sl=1)
-        node = meval('global string $gAECurrentTab;$__samAEMenuSelected=$gAECurrentTab')
-        if node:
-            if m.nodeType( node ) == 'shaveHair':
-                m.menuItem( l="Add SAM shave attributes", c=lambda x: AESamShaveNameAttr(node,x) )
-            elif m.nodeType( node ) in ['mesh']:
-                m.menuItem( l="Add SAM Dynamic Rule attribute", c=lambda x: AESamDRAttr(node,x) )
+            def AESamMenu(arg1, arg2):
+                AEmenu = meval('global string $gAEMenuBarLayoutName;$__samAEMenu=$gAEMenuBarLayoutName')
+                m.setParent( AEmenu )
+                m.setParent( "AESamMenu", menu=1 )
+                m.menu( "AESamMenu", edit=1, deleteAllItems=1 )
+                m.menuItem( divider=1 )
+                m.ls(sl=1)
+                node = meval('global string $gAECurrentTab;$__samAEMenuSelected=$gAECurrentTab')
+                if node:
+                    if m.nodeType( node ) == 'shaveHair':
+                        m.menuItem( l="Add SAM shave attributes", c=lambda x: AESamShaveNameAttr(node,x) )
+                    elif m.nodeType( node ) in ['mesh']:
+                        m.menuItem( l="Add SAM Dynamic Rule attribute", c=lambda x: AESamDRAttr(node,x) )
 
-    # add SAM menu to attribute editor
-    AEmenu = meval('global string $gAEMenuBarLayoutName;$__samAEMenu=$gAEMenuBarLayoutName')
-    m.setParent( AEmenu )
-    if "AESamMenu" not in m.menuBarLayout( AEmenu, q=1, menuArray=1 ):
-        m.menu("AESamMenu", label="SAM", pmc=AESamMenu)
-    m.menu("AESamMenu", e=1, pmc=AESamMenu)
+            # add SAM menu to attribute editor
+            AEmenu = meval('global string $gAEMenuBarLayoutName;$__samAEMenu=$gAEMenuBarLayoutName')
+            m.setParent( AEmenu )
+            if "AESamMenu" not in m.menuBarLayout( AEmenu, q=1, menuArray=1 ):
+                m.menu("AESamMenu", label="SAM", pmc=AESamMenu)
+            m.menu("AESamMenu", e=1, pmc=AESamMenu)
 
 
     print 'loadAssetManager() done: %.02f secs' % (time()-startTime)
@@ -390,19 +450,27 @@ def RMS_setup():
 if m.about(batch=1):
     pipeIdleStartup()
     loadAssetManager()
-    RMS_setup()
+    if float(os.environ["MAYA_VERSION"]) < 2018:
+        RMS_setup()
 else:
     def __runAll__():
-        if float(os.environ["MAYA_VERSION"]) < 2018:
+        # if float(os.environ["MAYA_VERSION"]) < 2018:
             import genericAsset
-        pb = genericAsset.progressBar(3,"Finishing maya startup... ")
-        pb.step()
-        pipeIdleStartup()
-        pb.step()
-        loadAssetManager()
-        pb.step()
-        if float(os.environ["MAYA_VERSION"]) < 2018:
-            RMS_setup()
-        pb.close()
-    __runAll__()
-    # m.scriptJob( runOnce=True,  idleEvent=__runAll__ )
+            pb = genericAsset.progressBar(3,"Finishing maya startup... ")
+            pb.step()
+            pipeIdleStartup()
+            pb.step()
+            loadAssetManager()
+            pb.step()
+            print float(os.environ["MAYA_VERSION"])
+            if float(os.environ["MAYA_VERSION"]) < 2018:
+                RMS_setup()
+            pb.close()
+    # __runAll__()
+    m.scriptJob( runOnce=True,  idleEvent=__runAll__ )
+
+
+# import pipe
+# for classes in [ "pipe.apps.%s" % x for x in dir(pipe.apps) if "startup" in eval("dir(pipe.apps.%s)" % x)]:
+#     print "Running startup method of %s..." % classes
+#     eval("%s().startup()" % classes)

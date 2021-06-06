@@ -166,7 +166,7 @@ class job(baseFarmJobClass):
         return self._renderNodeOperation(name, 'delete')
 
     def _renderEjectAll(self, name=''):
-        ''' delete a render node '''
+        ''' eject all tasks in a render node '''
         return self._renderNodeOperation(name, 'eject_tasks')
 
 
@@ -244,6 +244,10 @@ class job(baseFarmJobClass):
                 # print( json )
                 self._runJSON(json)
 #{"action":{"user_name":"coord","host_name":"pc","type":"renders","ids":[21],"params":{"capacity":1200}}}
+#{"action":{"user_name":"coord","host_name":"pc","type":"renders","ids":[8],"params":{"NIMBY":true}}}
+
+    def _renderNodeNIMBY(self, name, bool=''):
+        self._renderNodeSetParameter(name, 'NIMBY', bool)
 
     def _renderNodeDelete(self, name):
         #{"action":{"user_name":"coord","host_name":"pc","type":"renders","ids":[29],"operation":{"type":"delete"}}}
@@ -271,7 +275,7 @@ class job(baseFarmJobClass):
             j = self.list(jobID)
 
         assert( j )
-        assert( len(j) is 1 )
+        assert( len(j) == 1 )
 
         jobID = j[0]['id']
 
@@ -318,7 +322,7 @@ class job(baseFarmJobClass):
             j = self.list(jobID)
 
         assert( j )
-        assert( len(j) is 1 )
+        assert( len(j) == 1 )
 
 
         firstFrame = j[0]['blocks'][blockID]['frame_first']
@@ -394,7 +398,7 @@ class job(baseFarmJobClass):
                 n += 1
 
 
-            if hasattr( self, "postCmd" ):
+            if hasattr( self, "postCmd" ) and self.postCmd:
                 block2 = af.Block( self.postCmd['name'] )
                 block2.setDependMask( "main" )
                 #block2.setTasksDependMask( "main" )
@@ -409,6 +413,8 @@ class job(baseFarmJobClass):
 
 
             for b in blocks:
+                if hasattr( self, "capacity" ) and self.capacity:
+                    b.setCapacity(self.capacity)
                 job.blocks.append(b)
 
             print( '='*80 )
@@ -500,7 +506,8 @@ class job(baseFarmJobClass):
                 _job.setAnnotation( self.asset )
 
             print( '='*80 )
-            print( _job.output(1) )
+            try: print( _job.output(1) )
+            except: print( _job.output() )
             print( '='*80 )
 
             return _job.send()

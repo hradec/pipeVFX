@@ -28,6 +28,8 @@ class maya(baseApp):
             self['PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/plug-ins/translators/'
+
+
         # maya needs csh, libXp6 and libtiff3 installed to run!
         mv = float(self.version().split('.')[0])
         if mv <= 2016:
@@ -36,6 +38,13 @@ class maya(baseApp):
             #(fix "word too long" error on some systems, like debian!!)
             self['LD_LIBRARYN32_PATH'] = self.path("lib")
             self['libn32'] = '1'
+
+            # pipeline alembic plugins!
+            self.update( pipe.libs.alembic() )
+        else:
+            self['PYTHONHOME'] = self.path()
+        self['PYTHONHOME'] = self.path()
+
 
 
         # self['MAYA_SHELF_PATH'] =
@@ -58,14 +67,17 @@ class maya(baseApp):
         # log.debug( "@@@@@ %s, %s %s" % ( 'MAYA_USE_VRAY' in os.environ, mv > 2016, allPlugs ) )
         # plugins
         if allPlugs:
+            self.update( studiolibrary() )
             self.update( prman() )
             self.update( cortex() )
             self.update( gaffer() )
             self.update( golaem() )
             self.update( shave() )
             self.update( substance() )
-            self.update( redshift() )
             self.update( pipe.libs.usd() )
+
+            if 'PIPE_REDSHIFT' in os.environ and os.environ['PIPE_REDSHIFT']=='1':
+                self.update( redshift() )
 
             if 'PIPE_MAYA_ZYNC' in os.environ and os.environ['PIPE_MAYA_ZYNC']=='1':
                 self.update( zync() )
@@ -107,25 +119,12 @@ class maya(baseApp):
             self['PYTHONPATH'] = '%s/maya/plugins' % each
             self['PYTHONPATH'] = '%s/maya/scripts' % each
 
-        # pipeline alembic plugins!
-        self.update( pipe.libs.alembic() )
-        try:
-            # pipeline openvdb plugins!
-            if float(pipe.version.get('prman')) < 21.0:
-                # pipe.libs.version.set( openvdb = '3.2.0' )
-                openvdb = pipe.libs.openvdb()
-                maya.addon( self,
-                    plugin = openvdb.path('maya/$MAYA_VERSION/plugins'),
-                    script = openvdb.path('maya/$MAYA_VERSION/scripts'),
-                    icon   = openvdb.path('maya/$MAYA_VERSION/icons'),
-                    lib = [
-                        openvdb.path('maya/lib'),
-                    ],
-                )
-            else:
-                self.ignorePipeLib( "openvdb" )
-        except:
-            pass
+        # don't use pipe openvdb since prman 21 comes with its own.
+        prman_version = float(pipe.version.get('prman'))
+        if prman_version >= 21.0 and prman_version < 22.0:
+            self.ignorePipeLib( "openvdb" )
+        else:
+            self.update(pipe.libs.openvdb())
 
 
         # add this only to the global one (last)
@@ -163,11 +162,21 @@ class maya(baseApp):
                 if self.parent() in ['maya']:
                     self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
 
+        if self.parent() in ['maya']:
+            if mv > 2017:
+                self.ignorePipeLib( "qt" )
+                self.ignorePipeLib( "pyqt" )
+                self.ignorePipeLib( "sip" )
+                self.ignorePipeLib( "pyside" )
+                # self.update(pipe.libs.pyside())
+                # pipe.libs.version.set( pyqt = '5.12.0' )
+                self.ignorePipeLib( "fontconfig" )
 
-        # set the proper sip/pyqt so gaffer works
-        if mv > 2015:
-            pipe.libs.version.set( sip  = '4.16.7.maya%s' % self.version() )
-            pipe.libs.version.set( pyqt = '4.11.4.maya%s' % self.version() )
+            # set the proper sip/pyqt so gaffer works
+            elif mv > 2015:
+                pipe.libs.version.set( sip  = '4.16.7.maya%s' % self.version() )
+                pipe.libs.version.set( pyqt = '4.11.4.maya%s' % self.version() )
+
 
         # xgen libraries
         self['XGEN_GLOBAL'] = self.path('plug-ins/xgen/')
@@ -212,21 +221,36 @@ class maya(baseApp):
 </AdlmSettings>\n''' % mv )
             Adlm.close()
 
+        pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
         if self.parent() in ['maya','arnold']:
             # or else we see a error on os module were it can't find urandom!!
             # we need this to force maya to read its own python distribution files
-            pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
 
             self.insert('PYTHONPATH',0, self.path('support/python/2.7.11/'))
             self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
             self.insert('PYTHONPATH',0, self.path('lib/python%s/site-packages/' % pythonVer))
             self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
             self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
+
             self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
 
-            if mv > 2017:
-                self['PYTHONHOME'] = self.path()
-
+        # we run this to make sure Asset module works when importing IECore
+        # for maya 2018 and up, since it comes with pyilmbase, which doens't match
+        # the version we use in pipeVFX.
+        if mv >= 2018:
+            # as maya comes with pyilmbase, we want to force it to load ours instead, so IECore works,
+            # as well alembic and pyalembic latest versions.
+            from sys import path as pythonpath
+            os.environ['PYTHON_VERSION_MAJOR'] = pythonVer
+            os.environ['BOOST_VERSION'] = pipe.libs.version.get( 'boost' )
+            os.environ['LD_LIBRARY_PATH'] = ''
+            for p in [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]:
+                pythonpath.insert(0, p)
+            for p in [ os.path.expandvars(x) for x in pipe.libs.boost()['LD_LIBRARY_PATH'] ]:
+                pythonpath.insert(0, p)
+                os.environ['LD_LIBRARY_PATH'] += ':'+p
+            del os.environ['PYTHON_VERSION_MAJOR']
+            del os.environ['BOOST_VERSION']
 
         self['EDITOR'] = 'atom'
 
@@ -259,23 +283,26 @@ class maya(baseApp):
         if '--debug' in sys.argv:
             self['MAYA_DEBUG_NO_SIGNAL_HANDLERS'] = '1'
 
+        pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
+        self.insert('LD_LIBRARY_PATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
+        self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer))
         cmd = app.split(' ')
 
         if 'Render' not in app and 'mayapy' not in app and os.path.exists(m):
             baseApp.run( self, os.path.basename(m) + '  ' + ' '.join(cmd[1:]) )
-        # elif 'mayapy' in app:
-        #     # it seems these are no set by default when running in mayapy
-        #     for p in glob.glob( self.path('plug-ins/*') ):
-        #         maya.addon(self
-        #             plugin = "%s/plug-ins" % p,
-        #             script = "%s/scripts" % p,
-        #             lib = "%s/lib" % p,
-        #             preset = "%s/presets" % p,
-        #             icon = "%s/icons" % p,
-        #         )
-        #         self['PATH'] = "%s/bin" % p
-        #         self['PYTHONPATH'] = "%s/scripts" % p
-        #     baseApp.run( self, app )
+        elif 'mayapy' in app:
+            # it seems these are no set by default when running in mayapy
+            for p in glob.glob( self.path('plug-ins/*') ):
+                maya.addon(self,
+                    plugin = "%s/plug-ins" % p,
+                    script = "%s/scripts" % p,
+                    lib = "%s/lib" % p,
+                    preset = "%s/presets" % p,
+                    icon = "%s/icons" % p,
+                )
+                self['PATH'] = "%s/bin" % p
+                self['PYTHONPATH'] = "%s/scripts" % p
+            baseApp.run( self, app )
         else:
             baseApp.run( self, app )
 
@@ -306,14 +333,15 @@ class maya(baseApp):
                 icon = map( lambda x: x+"/%B", icon )
             else:
                 icon = icon+"/%B"
-        caller['MAYA_PLUG_IN_PATH']     = plugin
-        caller['MAYA_SCRIPT_PATH']      = script
-        caller['XBMLANGPATH']           = icon
-        caller['MAYA_RENDER_DESC_PATH'] = renderDesc
-        caller['LD_LIBRARY_PATH']       = lib
-        caller['MAYA_PRESET_PATH']      = preset
-        caller['MAYA_MODULE_PATH']      = module
-        caller['MAYA_SHELF_PATH']       = shelves
+        caller['MAYA_PLUG_IN_PATH']         = plugin
+        caller['MAYA_SCRIPT_PATH']          = script
+        caller['PYTHONPATH']                = script
+        caller['XBMLANGPATH']               = icon
+        caller['MAYA_RENDER_DESC_PATH']     = renderDesc
+        caller['LD_LIBRARY_PATH']           = lib
+        caller['MAYA_PRESET_PATH']          = preset
+        caller['MAYA_MODULE_PATH']          = module
+        caller['MAYA_SHELF_PATH']           = shelves
         caller['MAYA_CUSTOM_TEMPLATE_PATH'] = templates
 
 
@@ -321,10 +349,19 @@ class maya(baseApp):
         if self.parent() in ['maya','arnold']:
             mv = float(self.version().split('.')[0])
             if mv >= 2018:
-                # or else we see a error on os module were it can't find urandom!!
-                # we need this to force maya to read its own python distribution files
+                top = []
+                # as maya comes with pyilmbase and alembic python, we want to
+                # force it to load ours instead, so IECore and renderman works,
+                # as well alembic and pyalembic latest versions.
+                top += [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]
+                top += [ os.path.expandvars(x) for x in pipe.libs.alembic()['PYTHONPATH'] ]
                 pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
-                os.environ['PYTHONPATH'] = self.path('lib/python%s.zip:' % pythonVer.replace('.','')) + os.environ['PYTHONPATH']
+                os.environ['PYTHONPATH'] = ':'.join(top+[
+                    # we need this to force maya to read its own python distribution files
+                    # or else we see a error on os module were it can't find urandom!!
+                    self.path('lib/python%s.zip:' % pythonVer.replace('.','')),
+                    os.environ['PYTHONPATH']
+                ])
 
         return cmd
 
@@ -340,6 +377,17 @@ class maya(baseApp):
             '.dpx',
         ]
         images=[]
+
+        # list of substrings to find files in the same folder where
+        # images that appear in the logs are.
+        # (for those images that don't show up in the log!)
+        extra_images_filesystem_search = [
+            # as cryptomate in renderman doesn't show up in the log, we have to look
+            # for it in the same path where rendered images are.
+            # we assume they have a filename that contains "cryptomate" in it!
+            'cryptomate',
+            'cryptomatte',
+        ]
 
         # publish output log
         if hasattr(self, 'asset'):
@@ -413,6 +461,12 @@ class maya(baseApp):
 
                 images = filtered + unfiltered
 
+        # after we have some images from the log, we can look on the same
+        # paths where they are, looking for extra images that may not show up
+        # in the logs (like cryptomate in renderman!)
+        for path in set([ os.path.dirname(x) for x in images ]):
+            for substr in extra_images_filesystem_search:
+                images += glob.glob( "%s/*%s*" % (path, substr) )
 
         # run our pipe.frame.check generic frame check for the gathered image list
         if images:
@@ -474,6 +528,7 @@ class maya(baseApp):
                 'OpenEXR exception',
                 '* CRASHED',
                 'render terminating early:  received abort signal',
+                'Maya exited with status',
         ]
         for s in fatalErrors:
             if s in str(returnLog):

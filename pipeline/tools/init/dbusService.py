@@ -24,7 +24,12 @@ import sys, os, traceback, time, subprocess
 sys.path.insert(0, os.path.abspath( "%s/../python" % os.path.dirname( __file__ ) ) )
 import pipe
 
-import gobject
+try:
+	import gobject
+except:
+	from gi.repository import GLib
+	gobject = GLib
+
 import pwd
 import dbus
 import dbus.service

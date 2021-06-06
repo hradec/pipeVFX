@@ -16,20 +16,27 @@
 #
 #    You should have received a copy of the GNU Lesser General Public License
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
-# =================================================================================
+# ===============================
 
 from  SCons.Environment import *
 from  SCons.Builder import *
 from  SCons.Action import *
 from  SCons.Script import *
 import os, traceback, sys, inspect, re, time
-
-
-
 from devRoot import *
 import pipe
 from pipe.bcolors import bcolors
 from glob import glob
+
+
+def versionMajor(versionString):
+    return float('.'.join(versionString.split('.')[:2]))
+
+DB={}
+def spitDBout( target, source, env ):
+    from pprint import pprint
+    pprint(DB)
+finish_command = Command( 'finish', [], spitDBout )
 
 crtl_file_build   = '.build'
 crtl_file_install = '.install'
@@ -69,7 +76,7 @@ def _print(*args):
         l = ' '.join([ str(x) for x in args])
         if '[' in l[:20] and ']' in l[:20]:
             p = True
-        if os.environ['TRAVIS']=='0' or not os.environ['TRAVIS'].strip():
+        if os.environ['TRAVIS']!='1':
             if [ x for x in ['processing', 'building', 'Download', 'md5'] if x in l ]:
                 p = True
         if 'touch' in l[:15]:
@@ -147,7 +154,10 @@ __pkgInstalled__={}
 
 # initialize CORES and DCORES(double cores) env var based on the number of cores
 # the host machine has
+print "=====> SCONS ARGUMENTS:",ARGUMENTS,"<======"
 CORES=int(multiprocessing.cpu_count())
+if 'CORES' in ARGUMENTS:
+    CORES = int(ARGUMENTS['CORES'])
 os.environ['DCORES'] = '%d' % (2*CORES)
 os.environ['CORES']  = '%d' % CORES
 os.environ['HCORES'] = '%d' % (CORES/2)
@@ -296,6 +306,8 @@ class generic:
 
         self.spinnerCount = 0
 
+        DB[name] = {}
+
         self.args     = args
         self.name     = name
         self.download = download
@@ -330,6 +342,7 @@ class generic:
         self.GCCFLAGS = GCCFLAGS
         self.args = args
         self.error = None
+        self._os_environ = {}
         self.os_environ = {}
 
         # cleanup tmp folders
@@ -535,7 +548,10 @@ class generic:
 
 
                 # build all versions of the package specified by the download parameter
+                dependOnBackup = {}.update(self.dependOn)
+                self._dependOnByVersion = {}
                 for n in range(len(download)):
+
                     # os.environ['GCC_VERSION'] can override the gcc version set in the installRoot
                     self.installPath = installRoot(self.args)
 
@@ -544,6 +560,7 @@ class generic:
                         targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.zip',pythonDependency))
                     if '.rpm' in download[n][1]:
                         targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.rpm',pythonDependency))
+
                     installpath = os.path.join( self.installPath,  self.name, download[n][2] )
                     # print "%s/install.*.done" % installpath, glob( "%s/install.*.done" % installpath )
 
@@ -620,6 +637,11 @@ class generic:
                                 if dependOn._depend[kk][depend_n] not in source:
                                     source.append( dependOn._depend[kk][depend_n] )
 
+
+
+                    self._dependOnByVersion[download[n][2]] = {}
+                    self._dependOnByVersion[download[n][2]].update(self.dependOn)
+
                     # add dependency to uncompress
                     self.env.Depends(s, source)
                     source = [s]+source
@@ -630,6 +652,7 @@ class generic:
                     # call the install builder, in case a class need to do custom installation
                     t = self.install( install, [b,source[0]] )
 
+
                     self._depend[p].append(t)
                     self.installAll.append(t)
                     self.env.Default(self.env.Alias( 'install', t ))
@@ -637,6 +660,9 @@ class generic:
                         # print pkgs
                         self.env.Default(self.env.Alias( 'download', pkgs ))
                     self.env.Alias( 'build-%s' % name, t )
+
+                    self.env.Depends( finish_command, t )
+                    self.env.Default( self.env.Alias( 'install', finish_command ) )
 
 
     def registerSconsBuilder(self, *args):
@@ -678,8 +704,10 @@ class generic:
                 n
             ) )
             _print( bcolors.WARNING+": " )
-            d=[ '.'.join(str(x).split(os.path.sep)[-3:-1]) for x in source[1:] if '-' not in str(x).split(os.path.sep)[-1] ]
+            # print '===================>',  [ '.'.join(os.path.dirname(str(x)).split('/')[-2:]) for x in source ]
+            d=[ '.'.join(str(x).split(os.path.sep)[-3:-1]) for x in source[1:] ]
             _print( bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0]) )
+            d=list(set(d))
             d.sort()
             for n in range(0,len(d),6):
                 _print( bcolors.WARNING+": "+bcolors.BLUE+"           %s" % ', '.join(d[n:n+6]) )
@@ -739,6 +767,7 @@ class generic:
     def shouldBuild(self, target, source, cmd=None):
         lastlogFile = self.__lastlog(target[0])
         lastlog = self.__check_target_log__( lastlogFile, stage='pre-build' )
+        # _print( '=====>',target[0], lastlogFile,  lastlog)
 
         if lastlog==0:
             os.popen("touch %s" % str(target[0])).readlines()
@@ -768,10 +797,6 @@ class generic:
         ''' the generic builder method, used by all classes
         it simple executes all commands specified by self.cmd list '''
 
-        # here we check if the last build was finished suscessfully
-        if not self.shouldBuild( target, source ):
-            return
-
         # put all CMD vars into a dict
         # filter only the ones that belong to this class type!
         v = {}
@@ -790,6 +815,10 @@ class generic:
 
         if cmdz:
             self.runCMD(' && '.join(cmdz), target, source, env)
+
+        # here we check if the last build was finished suscessfully
+        if not self.shouldBuild( target, source ):
+            return
 
         # if building for multiple python versions
         if len(str(target[0]).split('.python')) > 1:
@@ -810,7 +839,7 @@ class generic:
 
 
 
-    def depend_n(self,dependOn, target, dependencyList=None, baseLib=None):
+    def depend_n(self,dependOn, target, dependencyList=None, baseLib=None, debug=False):
         ''' support function to find the same version of a depency
         # look in the dependency download list if we have
         # the same version number as the current package.
@@ -821,13 +850,19 @@ class generic:
         '''
         # by default, use the latest version
         depend_n = -1
+        if debug:
+            print '\t',target, dependOn.name, self.dependOn[ dependOn ]
         if dependOn.name in ['gcc', 'python'] and not dependOn.targetSuffix:
             # or the oldest if it's gcc or python
             depend_n = 0
 
-        # we have to use the same gcc version as the current python build used.
+        # target can be version or target path...
+        # (called when constructing nodes to build)
         currVersion = target
+        # in case it's a target path, we figure out the version from it.
+        # (called at runtime!!)
         if len(target.split('/'))>2:
+            # we have to use the same gcc version as the current python build used.
             currVersion = target.split('/')[-2]
 
             if '.python' in os.path.basename(target):
@@ -842,26 +877,28 @@ class generic:
                                 # and set it
                                 self.dependOn[ dependOn ] = gcc_version[4][ dependOn ]
                                 # print  currVersion,dependOn.name,currVersion, pythonVersion, gcc_version[4][ dependOn ]
+
                     if 'python' in dependOn.name:
                         self.dependOn[ dependOn ] = pythonVersion
 
                 else:
                     self.dependOn[ dependOn ] = dependOn.downloadList[depend_n][2]
                     if 'python' in dependOn.name:
-                        self.os_environ['PYTHON_VERSION'] = dependOn.downloadList[depend_n][2]
+                        self._os_environ_(target)['PYTHON_VERSION'] = dependOn.downloadList[depend_n][2]
 
 
         dependOnVersion = self.dependOn[dependOn]
-        # grab dependency version from download list
-        for download in filter(lambda x: x[2] == currVersion, self.downloadList):
+        # grab dependency version override from download list, if any!
+        for download in self.downloadVersion(currVersion):
             if len(download)>4: # 5th element is a dependency list with version
-                if dependOn in download[4]:
-                    dependOnVersion = download[4][dependOn]
+                override = [ x for x in download[4].keys() if dependOn.name == x.name ]
+                if override:
+                    dependOnVersion = download[4][override[0]]
 
-        # set version dependency to be the same as the current package version
-        # for openexr/ilmbase
-        for each in range(len(dependOn.downloadList)):
-            if dependOnVersion:
+        # find the index of the dependency download version in the dependency
+        # download list, and return it!
+        if dependOnVersion:
+            for each in range(len(dependOn.downloadList)):
                 if dependOn.downloadList[each][2] == dependOnVersion:
                     # we have the version specified in the download
                     # print "download version",dependOn.name,self.dependOn[dependOn], currVersion, dependOnVersion
@@ -873,7 +910,7 @@ class generic:
     def __check_target_log__(self,target, install=None, stage=''):
         ret=0
         if os.path.exists(target):
-            lines = ''.join( open(target).readlines() )
+            lines = ''.join( [ x for x in open(target).readlines() if '@runCMD_ERROR@ $?' not in x ] )
             # check if ld failed
             msg="__check_target_log__(%s): " % '/'.join(target.split('/')[-3:])
             if len(lines) < 35:
@@ -898,7 +935,8 @@ class generic:
                     _print( msg+"the build didn't finish suscessfully - rebuilding..." )
                 return  254
             if "@runCMD_ERROR@" in lines:
-                code =  int(lines.split("@runCMD_ERROR@")[-2].strip())
+                code = lines.split("@runCMD_ERROR@")[1].strip()
+                code = int(code)
                 if code and 'pre-build' in stage:
                     _print( msg+"last build finished with error code: %d"  % code )
                 return  code
@@ -907,9 +945,23 @@ class generic:
 
         return ret
 
+    def _os_environ_(self, target, value=None):
+        t = str(target[0])
+        if value != None:
+            self._os_environ[ t ] = value
+        if t not in self._os_environ:
+            self._os_environ[ t ] = {}
+        return self._os_environ[ t ]
 
-    def runCMD(self, cmd , target, source, env):
+    def runCMD(self, cmd , target_original, source, env):
         ''' the main method to run system calls, like configure, make, cmake, etc  '''
+
+        target = str(target_original[0])
+
+        # here we check if the last build was finished suscessfully
+        __shouldBuild__ =  self.shouldBuild( target_original, source )
+
+
         # for each in  source:
         #     print str(each)
         global buildCounter, _spinnerCount
@@ -918,7 +970,7 @@ class generic:
 
         # restore original environment before ruuning anything.
         os_environ = {}
-        os_environ.update( self.os_environ )
+        os_environ.update( self._os_environ_(target_original) )
 
         # first, cleanup pipe gcc/bin folder from path, if any
         os_environ['PYTHON_TARGET_FOLDER'] = os.environ['PYTHON_TARGET_FOLDER']
@@ -929,8 +981,6 @@ class generic:
         os_environ['DCORES'] = os.environ['DCORES']
         os_environ['HCORES'] = os.environ['HCORES']
 
-
-        target=str(target[0])
         pkgVersion = os.path.basename(os.path.dirname(target))
         pkgName    = os.path.basename(os.path.dirname(os.path.dirname(target)))
         installDir = os.path.abspath(os.path.dirname(target))
@@ -1060,7 +1110,14 @@ class generic:
         }
         dependList={}
         sourceList = map(lambda x: os.path.basename(os.path.dirname(os.path.dirname(str(x)))), source)
-        for dependOn in self.dependOn:
+        # pkgVersion
+        __d = self.dependOn
+        if pkgVersion in self._dependOnByVersion:
+            if self._dependOnByVersion[pkgVersion]:
+                __d = self._dependOnByVersion[pkgVersion]
+                # print pkgVersion, __d
+
+        for dependOn in __d:
             if dependOn and dependOn.name not in dependList and  dependOn.do_not_use==False:
                 # if not in the source list, skip it
                 if dependOn.name not in target and dependOn.name not in self.env['ENVIRON_DEPEND'].split(' '):
@@ -1080,7 +1137,11 @@ class generic:
                         os_environ['PYTHON_ROOT'] = tmp[0]
 
                 # grab the index for the version needed
-                depend_n = self.depend_n(dependOn, target)
+                debug=0
+                # if 'oiio' in target:
+                #     print pkgVersion.replace('.','_')
+                #     debug=1
+                depend_n = self.depend_n(dependOn, target, debug=debug)
                 k = dependOn.targetFolder.keys()
                 p = pythonVersion
 
@@ -1100,9 +1161,22 @@ class generic:
                         depend_n = 0
                     dependList[dependOn.name] = dependOn.targetFolder[p][depend_n]
 
+
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
-                    os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
+                    # os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
+                    os_environ['%s_VERSION' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].strip('/').split('/')[-1]
                     os_environ['%s_ROOT' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()]
+
+                    if os_environ['VERSION'] not in DB[self.name]:
+                        DB[self.name][os_environ['VERSION']] = {}
+                    DB[self.name][os_environ['VERSION']][dependOn.name] = os_environ['%s_VERSION' % dependOn.name.upper()]
+
+                    if not hasattr(dependOn, 'dontUseTargetSuffixForFolders'):
+                        if dependOn.targetSuffix:
+                            os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = '/'.join([
+                                os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].rstrip('/'),
+                                dependOn.targetSuffix
+                            ])
 
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
@@ -1160,7 +1234,10 @@ class generic:
                     ]
 
                     # set PATH searchpath for dependencies binaries
-                    PATH += [ "%s/bin/" % (dependOn.targetFolder[p][depend_n]) ]
+                    PATH += [
+                        "%s/bin/" % (dependOn.targetFolder[p][depend_n]),
+                        "%s/lib/" % (dependOn.targetFolder[p][depend_n]),
+                    ]
 
                     # pull env vars from dependency classes
                     # we add all searchpaths from dependencies as well.
@@ -1184,6 +1261,10 @@ class generic:
                     #         else:
                     #             os_environ[each] = cleanV
 
+
+        # here we check if the last build was finished suscessfully
+        if not __shouldBuild__:
+            return
 
         # fix PYTHON_VERSION_MAJOR based on PYTHON_VERSION
         # from dependent classes
@@ -1294,12 +1375,12 @@ class generic:
 
         # set os_environ in self so overridable funtions can pick it up and change,
         # since dicts in python behave like pointers!
-        self.os_environ = os_environ
+        self._os_environ_(target_original, value = os_environ )
         # if the build has apps setup, add their env vars to the build
-        self.setApps()
+        self.setApps(target_original)
+
         # run customizable fixCMD() which is used to fix the command line
         cmd = self.fixCMD(cmd, os_environ)
-
 
         # apply patches, if any!
         if hasattr(self, 'patch'):
@@ -1307,9 +1388,9 @@ class generic:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
 
         cmd = cmd.replace('"','\"') #.replace('$','\$')
-        _print( bcolors.WARNING+':'+bcolors.BLUE+'\tCORES: '+bcolors.WARNING+os.environ['CORES'], \
-                 bcolors.BLUE+', DCORES: '+bcolors.WARNING+os.environ['DCORES'], \
-                 bcolors.BLUE+', HCORES: '+bcolors.WARNING+os.environ['HCORES'] )
+        _print( bcolors.WARNING+':'+bcolors.BLUE+'\tCORES: '+bcolors.WARNING+os_environ['CORES'], \
+                 bcolors.BLUE+', DCORES: '+bcolors.WARNING+os_environ['DCORES'], \
+                 bcolors.BLUE+', HCORES: '+bcolors.WARNING+os_environ['HCORES'] )
         _print( bcolors.WARNING+':' )
         _print( bcolors.WARNING+':\ttarget : %s%s' % (bcolors.GREEN, target) )
         _print( bcolors.WARNING+":\tinstall: %s%s" % (bcolors.GREEN, os_environ['INSTALL_FOLDER']) )
@@ -1328,7 +1409,7 @@ class generic:
         if DEBUG():
             showLog = ' | tee -a '
         pipeFile = ' 2>&1 \
-            | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors \
+            | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors \
             | tee -a  %s %s %s.err ' % (lastlog, showLog, lastlog)
         # cmd = cmd.replace( '&&', ' %s && ' % pipeFile )
 
@@ -1432,7 +1513,7 @@ class generic:
 
         # we need LLVM search path before anything else, since
         # there are name clash of headers between LLVM and GCC
-        if 'LLVM_TARGET_FOLDER' in os_environ:
+        if 'LLVM_TARGET_FOLDER' in os_environ and not hasattr(self, 'dontAddLLVMtoEnviron'):
             os_environ['PATH'] = ':'.join([
                 '%s/bin/' % os_environ['LLVM_TARGET_FOLDER'],
                 os_environ['PATH'],
@@ -1476,12 +1557,24 @@ class generic:
 
         # add  options last, so we can add includes before and after the bunch
         # https://gcc.gnu.org/onlinedocs/gcc-4.1.2/cpp/Invocation.html#Invocation
-        # -nostdinc     Do not search the standard system directories for header files. Only the directories you have specified with -I options (and the directory of the current file, if appropriate) are searched.
-        # -nostdinc++   Do not search for header files in the C++-specific standard directories, but do still search the other standard directories. (This option is used when building the C++ library.)
-        # -isystem dir  Search dir for header files, after all directories specified by -I but before the standard system directories. Mark it as a system directory, so that it gets the same special treatment as is applied to the standard system directories. See System Headers.
+        # -nostdinc     Do not search the standard system directories for header
+        # files. Only the directories you have specified with -I options (and
+        # the directory of the current file, if appropriate) are searched.
+        # -nostdinc++   Do not search for header files in the C++-specific standard
+        # directories, but do still search the other standard directories. (This
+        # option is used when building the C++ library.)
+        # -isystem dir  Search dir for header files, after all directories
+        # specified by -I but before the standard system directories.
+        # Mark it as a system directory, so that it gets the same special
+        # treatment as is applied to the standard system directories. See System Headers.
         os_environ['CFLAGS']   = ' -O2 -fPIC -w -nostdinc  -Wno-error ' + os_environ['CFLAGS']
-        os_environ['CXXFLAGS'] = ' -O2 -fPIC -w -nostdinc++ -Wno-error ' + os_environ['CXXFLAGS']
+        os_environ['CXXFLAGS'] = ' -O2 -fPIC -w -nostdinc -nostdinc++ -Wno-error ' + os_environ['CXXFLAGS']
         os_environ['LDFLAGS']  = ' -fPIC ' + os_environ['LDFLAGS']
+
+        if 'GCC_VERSION' in os_environ and versionMajor(os_environ['GCC_VERSION'])>=6.3:
+            os_environ['CFLAGS']   = ' -D_GLIBCXX_USE_CXX11_ABI=0 ' + os_environ['CFLAGS']
+            os_environ['CXXFLAGS'] = ' -D_GLIBCXX_USE_CXX11_ABI=0 ' + os_environ['CXXFLAGS']
+
 
         # since we're using -nostdinc, we have to setup the system folders by hand
         system_includes = [
@@ -1527,6 +1620,7 @@ class generic:
         if '/gcc/' not in target:
             os_environ['LD_LIBRARY_PATH'] = '$SOURCE_FOLDER/:'+os_environ['LD_LIBRARY_PATH']+':.'
             os_environ['LIBRARY_PATH'] = '$SOURCE_FOLDER/:'+os_environ['LIBRARY_PATH']+':.'
+
 
         # expand variables in os_environ
         for each in os_environ:
@@ -1580,6 +1674,8 @@ class generic:
 
 
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
+        # LD_RUN_PATH should do the same as specifying -Wl,-rpath,<path> for
+        # each library path in the command line. Need testing though!
         if '/gcc/' not in target:
             os_environ['LD_RUN_PATH'] = os_environ['LIBRARY_PATH']
             # os_environ['LD_LIBRARY_PATH'] = os_environ['LIBRARY_PATH']
@@ -1594,7 +1690,7 @@ class generic:
 
         # keep giving feedback about the build.
         while proc.poll() is None:
-            tail = os.popen('tail -n 100 %s | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
+            tail = os.popen('tail -n 100 %s | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
             if not tail:
                 tail=['']
             _elapsed = time.gmtime(time.time()-_start)
@@ -1636,6 +1732,10 @@ class generic:
             if not hasattr(self, 'noMinTime') or not self.noMinTime:
                 ret=666
 
+        f = open(lastlog,'a')
+        f.write("\n\n"+cmd+"\n\n")
+        f.close()
+
         # finished without errors!!
         if ret == 0:
             f = open(target,'a')
@@ -1655,7 +1755,7 @@ class generic:
             if not self.travis and not sconsParallel:
                 _print(  '-'*tcols )
                 if not DEBUG():
-                    os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="" source-highlight -f esc -s errors' % lastlog )
+                    os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors' % lastlog )
                 #for each in open("%s.err" % lastlog).readlines() :
                 #    print '::\t%s' % each.strip()
                 _print( ret )
@@ -1686,8 +1786,15 @@ class generic:
         if keep_source and keep_source[0][1].strip() != '1':
             os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
 
+        self.installer(target, source, os_environ)
+
         _print( bcolors.END, )
 
+    def installer(self, target, source, os_environ): # noqa
+        ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.
+        this method is called after the build (not at install), since we want to provide the os_environ env var to run shell commands
+        in the same environment as the build'''
+        pass
 
     def setAppsInit(self):
         '''
@@ -1725,14 +1832,14 @@ class generic:
                             # so we either modify or add the depency version here
                             each[4][dependency_class[0]] = pipe.libs.version.get(lib)
 
-    def setApps(self):
+    def setApps(self, target):
         '''
         update the build environment with all the enviroment variables
         specified in apps argument!
         '''
         if hasattr(self, 'apps'):
-            pipe.version.set(python=self.os_environ['PYTHON_VERSION'])
-            pipe.versionLib.set(python=self.os_environ['PYTHON_VERSION'])
+            pipe.version.set(python=self._os_environ_(target) ['PYTHON_VERSION'])
+            pipe.versionLib.set(python=self._os_environ_(target) ['PYTHON_VERSION'])
             for (app, version) in self.apps:
                 className = str(app).split('.')[-1].split("'")[0]
                 pipe.version.set({className:version})
@@ -1748,46 +1855,42 @@ class generic:
                         v = _app[each]
                         if type(v) == str:
                             v=[v]
-                        if each not in self.os_environ:
-                            self.os_environ[each] = ''
+                        if each not in self._os_environ_(target) :
+                            self._os_environ_(target) [each] = ''
                         # if var value is paths
                         if 'ROOT' in each:
-                            self.os_environ[each] = v[0]
+                            self._os_environ_(target) [each] = v[0]
                         elif '/' in str(v):
-                            self.os_environ[each] = "%s:%s" % (self.os_environ[each], ':'.join(v))
+                            self._os_environ_(target) [each] = "%s:%s" % (self._os_environ_(target) [each], ':'.join(v))
                         else:
-                            self.os_environ[each] = ' '.join(v)
+                            self._os_environ_(target) [each] = ' '.join(v)
 
             # remove python paths that are not the same version, just in case!
-            # for each in self.os_environ:
+            # for each in self._os_environ_(target) :
             #     if '/' in str(v):
             #         cleanSearchPath = []
-            #         for path in self.os_environ[each].split(':'):
+            #         for path in self._os_environ_(target) [each].split(':'):
             #             if not path.strip():
             #                 continue
-            #             if '/python' in path and self.os_environ['PYTHON_TARGET_FOLDER'] not in path:
+            #             if '/python' in path and self._os_environ_(target) ['PYTHON_TARGET_FOLDER'] not in path:
             #                 pathVersion1 = path.split('/python/')[-1].split('/')[0].strip()
             #                 pathVersion2 = path.split('/python')[-1].split('/')[0].strip()
-            #                 # print each, pathVersion1+'='+pathVersion2, path, self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self.os_environ['PYTHON_VERSION_MAJOR']
+            #                 # print each, pathVersion1+'='+pathVersion2, path, self._os_environ_(target) ['PYTHON_VERSION_MAJOR'], path.split('/python/')[-1].split('/')[0] != self._os_environ_(target) ['PYTHON_VERSION_MAJOR'], path.split('/python')[-1].split('/')[0] != self._os_environ_(target) ['PYTHON_VERSION_MAJOR']
             #                 if pathVersion1:
-            #                     if pathVersion1 != self.os_environ['PYTHON_VERSION']:
+            #                     if pathVersion1 != self._os_environ_(target) ['PYTHON_VERSION']:
             #                         continue
             #                 if pathVersion2:
-            #                     if pathVersion2 != self.os_environ['PYTHON_VERSION_MAJOR']:
+            #                     if pathVersion2 != self._os_environ_(target) ['PYTHON_VERSION_MAJOR']:
             #                         continue
             #             cleanSearchPath.append(path)
-            #         self.os_environ[each] = ':'.join(cleanSearchPath)
+            #         self._os_environ_(target) [each] = ':'.join(cleanSearchPath)
 
-        # self.os_environ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-        # self.os_environ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
-        #self.os_environ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self.os_environ['LD_LIBRARY_PATH']
+        # self._os_environ_(target) ['LD_PRELOAD'] = ''.join(os.popen("ldconfig -p | grep libstdc++.so.6 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+        # self._os_environ_(target) ['LD_PRELOAD'] += ':'+''.join(os.popen("ldconfig -p | grep libgcc_s.so.1 | grep x86-64 | cut -d'>' -f2").readlines()).strip()
+        #self._os_environ_(target) ['LD_LIBRARY_PATH'] = '/usr/lib/:%s' % self._os_environ_(target) ['LD_LIBRARY_PATH']
 
     def setInstaller(self, method):
         self.installer = method
-
-    def installer(self, target, source, env): # noqa
-        ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.'''
-        pass
 
     def _installer(self, target, source, env):
         ''' a wrapper class to create target in case installer method is suscessfull!
@@ -1797,7 +1900,8 @@ class generic:
 
         from glob import glob
 
-        ret = self.installer( target, source, env )
+        ret = None
+        # ret = self.installer( target, source, env )
         f=open(str(target[0]),'w')
         if ret:
             f.write(''.join(ret))
@@ -1923,7 +2027,8 @@ class generic:
                                 source[n],
                             )
                         else:
-                            cmd = "wget --timeout=15 '%s' -O %s >%s.log 2>&1" % (url[0], download_file, source[n])
+                            _download_cmd = "wget --timeout=15 '$url' -O $save >$log.log 2>&1"
+                            cmd = _download_cmd.replace('$url', url[0]).replace('$save', download_file).replace('$log', source[n])
 
                         # print cmd
                         os.popen(cmd).readlines()
@@ -2031,6 +2136,9 @@ class generic:
                     _print( "\n\nCouldn't find the uncompressed folder name from the list: %s\n\n" % str(self.kargs['uncompressed_path']) )
                 else:
                     _print( "\n\nMore than one match for path %s: %s\n\n" % (path, str(k)) )
+
+        # if hasattr(self, 'targetSuffix'):
+        #     path = os.path.join(path, self.targetSuffix)
         return path
 
 
@@ -2190,6 +2298,24 @@ class generic:
             f.close()
             ret.append('cat %s | patch -p1 ; echo %s' % (patchName, patchName))
         return ';'.join(ret)
+
+    def downloadVersion(self, v, compare = '=='):
+        ''' return the download array with just download packages for
+        the specified version.
+        if v is a string, it will return just one version matching the exact version in the strings.
+        if v is float, it will return all versions matching the versionMajor specified in the float.
+        compare is the logical operation to do between versionMajor and v. ex '==','>','<=', etc
+        '''
+        # print type(v), v, self.download
+        _download=[]
+        if type(v)==type(""):
+            _download = [ x for x in self.download if x[2] == v ]
+        elif type(v)==type(float):
+            _download = [ x for x in self.download if eval('versionMajor(x[2]) %s v' % compare) ]
+        else:
+            raise exception("Error returning the download (%s) for the version specied - %s" % (self.name,v))
+        return []+_download
+
 
 
 def pkg(download, pkg, version=None):

@@ -28,9 +28,13 @@ class realflow(baseApp):
         if self.version()=="2012" and os.path.exists( self.path('bin/realflow.bin') ) :
             self['LD_PRELOAD'] = self.p.path('lib/libpython$PYTHON_VERSION_MAJOR.so.1.0')
             self['LD_PRELOAD'] = '/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/pyside/1.1.2/lib/libpyside-python$PYTHON_VERSION_MAJOR.so.1.1'
+        else:
+            self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
+            self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
 
         self[ 'RF_%s_PATH' % self.version().split('.')[0] ] = self.path()
 
+        self['MAXWELL4_ROOT'] = self.path('maxwell')
 
     def bins(self):
         ret = [('realflow', 'realflow.bin')]
@@ -52,6 +56,9 @@ class realflow(baseApp):
         self['nextlimit_LICENSE']=os.environ['PIPE_REALFLOW_LICENSE']
         self['NL_LICENSE_MANAGER_ADDRESS']=os.environ['PIPE_REALFLOW_LICENSE'].split('@')[-1]
 
+        # need this to use eval!
+        self['http_proxy']  = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
+        self['https_proxy'] = 'http://%s' % os.environ['PIPE_PROXY_SERVER']
 
     def userSetup(self, jobuser):
         self['RFSCENESPATH'] = jobuser.path('realflow/')

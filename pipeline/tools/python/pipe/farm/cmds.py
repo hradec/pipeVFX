@@ -19,13 +19,16 @@
 # =================================================================================
 
 import pipe.apps
-import current
+from pipe.farm import current
 import os
 
 
 class cmds(current.engine):
-    def __init__(self, name='', cmds=[], files=[], postCmd={}, CPUS=0, priority=9999, group='pipe'):
+    def __init__(self, name='', cmds=[], files=[], postCmd={}, CPUS=0, priority=9999, group='pipe', capacity=1000, description=None):
         current.engine.__init__(self, "", name=name, CPUS=CPUS, priority=priority, group=group)
         self.cmd = cmds
         self.files = files
         self.postCmd = postCmd
+        self.capacity = capacity
+        if description:
+            self.description = description

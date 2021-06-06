@@ -39,11 +39,10 @@ import IECore
 
 import Gaffer
 import GafferUI
+import pipe
 import math
 
-QtCore = GafferUI._qtImport( "QtCore" )
-QtGui = GafferUI._qtImport( "QtGui" )
-
+QtCore, QtGui = pipe.importQt()
 
 
 ## The NumericSlider extends the slider class to provide a mapping between the positions

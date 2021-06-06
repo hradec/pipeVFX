@@ -47,7 +47,14 @@ import GafferUI
 import Asset
 # reload(Asset)
 
-QtCore = GafferUI._qtImport( "QtCore" )
+QtCore, QtGui = pipe.importQt()
+
+
+if not hasattr(IECore, 'V2i'):
+    from imath import *
+else:
+    from IECore import V2i
+
 
 # from assetChooserWidget import *
 
@@ -84,7 +91,7 @@ class SamEditor( GafferUI.BrowserEditor ) :
                 # add a job/shot label
                 header = GafferUI.GridContainer( 0, 0 )
                 header.addChild( GafferUI.Label( "<img src='%s/gaffer/graphics/atomo/opa.png'>" %  ( pipe.roots.tools() ) ), (0,0) )
-                header.addChild( GafferUI.Spacer(IECore.V2i(10,10)), (1,0) )
+                header.addChild( GafferUI.Spacer(V2i(10,10)), (1,0) )
                 header.addChild( GafferUI.Label( '<h1 style="text-align: right;color:#202020;font-family:sans-serif;font-style:italic;">%s  </h1>' %  ( '/ job / '+self._jobShot.replace('/',' / ') ) ), (2,0) )
                 samIcons = glob( '%s/gaffer/graphics/sam-??.png' %  pipe.roots.tools() )
                 imgSize = 80

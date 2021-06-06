@@ -1,6 +1,6 @@
 #!/atomo/pipeline/tools/scripts/run python
 
-import psutil, time
+import psutil, time, os
 
 while True:
     for p in psutil.process_iter():
@@ -41,3 +41,6 @@ while True:
 
     # run every 3 seconds
     time.sleep(3)
+
+    # force nimby on/off depending on the idle time of X11 - keyboard and mouse!
+    os.system('/atomo/pipeline/tools/scripts/nimby.sh')

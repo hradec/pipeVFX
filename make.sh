@@ -32,8 +32,10 @@ while getopts hdsbpe: option ; do
         b) BUILD=1;;
         p) PKGS=1;;
         e) EXTRA="${OPTARG}";;
+        # v) EXTRA_VARS="${OPTARG}";;
     esac
 done
+
 
 
 if [ "$HELP" != "" ] ; then
@@ -41,8 +43,10 @@ if [ "$HELP" != "" ] ; then
     echo -e "\t-h   : show this help"
     echo -e "\t-d   : run the build in debug mode (show the build log)"
     echo -e "\t-e   : add extra attributes which will be passed to scons"
+    echo -e "\t-v   : add extra environment variable which will be passed to the docker container that runs scons"
     echo -e "\t-s   : run a interactive shell in the docker build container"
     echo -e "\t-b   : build and upload the docker image"
+    echo -e "\t-p   : build the package cache image and upload to docker hub"
     echo ''
 else
     # use real apps folder if we have one!
@@ -52,6 +56,12 @@ else
     fi
     if [ -e /atomo/jobs ] ; then
         APPS_MOUNT=" $APPS_MOUNT -v /atomo/jobs:/atomo/jobs "
+    fi
+
+    if [ "$EXTRA_VARS" != "" ] ; then
+        for e in $EXTRA_VARS ; do
+            EXTRA_ENVS=" $EXTRA_ENVS -e $e "
+        done
     fi
 
     latest_tag=$(echo $base_image | awk -F':' '{print $1}'):$(
@@ -86,31 +96,33 @@ else
     #     BUILD=1
     # fi
 
+    if [ "$PKGS" == "1" ] ; then
+        echo -e "\n\nusing base_image:$previous_tag \nto build new_tag:$latest_tag\n"
+        # packages download
+        docker build \
+            -f $CD/docker/Dockerfile.pkgs \
+            $CD/ \
+            -t $latest_tag \
+            --pull \
+            --compress \
+            --rm \
+            --build-arg http="$http_proxy" \
+            --build-arg https="$https_proxy" \
+            # --build-arg BASE_IMAGE="$previous_tag"
+
+        if [ $? -ne 0 ] ; then
+            echo ERROR!!
+            exit -1
+        fi
+        docker image tag $latest_tag $pkg_image_tag
+        docker push $latest_tag
+        docker push $pkg_image_tag
+        exit 0
+    fi
+
     # if no image in docker hub or we used -b to force a build, build it
     # and push it to docker hub!
     if [ "$BUILD" == "1" ] ; then
-        if [ "$PKGS" == "1" ] ; then
-            echo -e "\n\nusing base_image:$previous_tag \nto build new_tag:$latest_tag\n"
-            # packages download
-            docker build \
-                -f $CD/docker/Dockerfile.pkgs \
-                $CD/ \
-                -t $latest_tag \
-                --pull \
-                --compress \
-                --rm \
-                --build-arg http="$http_proxy" \
-                --build-arg https="$https_proxy" \
-                --build-arg BASE_IMAGE="$previous_tag"
-
-            if [ $? -ne 0 ] ; then
-                echo ERROR!!
-                exit -1
-            fi
-            docker image tag $latest_tag $pkg_image_tag
-            docker push $latest_tag
-            docker push $pkg_image_tag
-        fi
 
         # build image!
         echo -e "\nusing base_image:$base_image\npackage image:$latest_tag\n\n"
@@ -123,16 +135,14 @@ else
             --rm \
             --build-arg http="$http_proxy" \
             --build-arg https="$https_proxy" \
-            --build-arg PACKAGES="$latest_tag" \
-            --build-arg BASE_IMAGE="$base_image"
+            # --build-arg PACKAGES="$latest_tag" \
+            # --build-arg BASE_IMAGE="$base_image"
 
         if [ $? -ne 0 ] ; then
             echo ERROR!!
             exit -1
         fi
         docker push $build_image
-    else
-        docker pull $build_image
     fi
 
     # use wget proxy setup if it exists
@@ -147,12 +157,41 @@ else
 
     X11=""
     if [ "$SHELL" == "1" ] ; then
-        X11=" -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix  " #--runtime 'nvidia' "
+        X11=" -v /tmp/.X0-lock:/tmp/.X0-lock:rw -v /tmp/.X11-unix:/tmp/.X11-unix:rw -e QT_X11_NO_MITSHM=1 -e DISPLAY -e XAUTHORITY  "
+        # if [ "$(which nvidia-smi)" != "" ] ; then
+        #     X11="$X11 --runtime=nvidia -e NVIDIA_DRIVER_CAPABILITIES=all "
+        # fi
+
+        # instead of using just nvidia custom runtime, we choosed to use the host systems
+        # GL libraries, by mounting then to the docker image. This way, the docker
+        # image will use libraries compatible with the host video driver, no matter
+        # what video driver/manufacturer it is!
+        # this seems to work fine with NVidia drivers on arch linux!
+        # need more testing on other distros/video board setups.
+        # this mode only works if we run the docker container with --privileged!
+        extra_libs1=$(ldconfig -p | grep libGL | grep -v GLU |  grep x86 | awk  '{print $NF}' | while read p ; do [ "$p" != "" ] && pp=$(readlink -f $p) && echo -v $pp:/lib64/$(basename $p):ro ; done)
+        if [ "$(which nvidia-smi 2>/dev/null)" != "" ] ; then
+            extra_libs2=$(ldconfig -p | grep libnvidia | grep $(nvidia-smi | grep SMI | awk '{print $6}') | grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
+            if [ -e /opt/cuda ] ; then
+                extra_libs3=$(ldconfig -p | grep cuda | grep -v opt | grep x86 | awk  '{print "-v "$NF":/lib64/"$1":ro"}')
+                extra_libs4=" -v /opt/cuda:/opt/cuda "
+            fi
+        fi
+        X11=" $X11 $extra_libs1 $extra_libs2 $extra_libs3 $extra_libs4 "
+        # X11=" $X11 --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket "
+
+        # and let X accept connections no matter what
+        xhost +
     fi
 
     # create lib folder
     mkdir -p "$CD/pipeline/libs/"
     mkdir -p "$CD/pipeline/build/.build/"
+
+    # this one liner creates the _uid, _user, _gid and _group env vars, so we can
+    # pass it on to the docker container.
+    # as it uses the id command, it should work on any host distro that has id command
+    eval $(echo $(for n in $(id) ; do echo $n | tr '()' ' ' | egrep 'gid|uid' ; done  | awk -F'=' '{print $2}') | awk '{print "export _uid="$1,"; export _user="$2,"; export _gid="$3,"; export _group="$4}')
 
     # now we can finally run a build!
     cmd="docker rm -f pipevfx_make >/dev/null 2>&1 ; \
@@ -164,15 +203,22 @@ else
         -v $CD/pipeline/build/.build/:/atomo/pipeline/build/.build/ \
         -v $CD/docker/run.sh:/run.sh \
         -v $CD/.root:/atomo/.root \
+        -v $HOME:/home/$USER/ \
         $APPS_MOUNT \
+        -e _UID=$_uid \
+        -e _USER=$_user \
+        -e _GID=$_gid \
+        -e _GROUP=$_group \
         -e RUN_SHELL=$SHELL \
         -e EXTRA=\"$EXTRA\" \
         -e DEBUG=\"$DEBUG\" \
         -e TRAVIS=\"$TRAVIS\" \
         -e http_proxy=\"$http_proxy\" \
         -e https_proxy=\"$https_proxy\" \
+        $EXTRA_ENVS \
         -e MEMGB=\"$(grep MemTotal /proc/meminfo | awk '{print $(NF-1)}')\" \
         $X11 \
+        --network=host \
         --privileged \
         $build_image"
 

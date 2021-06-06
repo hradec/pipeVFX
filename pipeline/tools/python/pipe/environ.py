@@ -33,11 +33,24 @@ except:
 
 
 class environ(dict):
+    ''' base class for apps and libraries, which handle environment setup '''
+    # set what envs cannot have more than one value!
+    # if a value is assigned to a _SINGLE_ env that already has a value,
+    # it will replace the old value.
+    _SINGLE_=[]
+    # set what envs cannot be updated after being set for the first time.
+    # we need this for envs that should only be updated by the main app class
+    _CANT_UPDATE_=[]
+    _PARENT_ONLY_=[]
     def __init__(self, anotherEnviron={}, **args):
         dict.__init__(self)
         self.clear()
         args.update(anotherEnviron)
         environ.update(self, args )
+
+    def parent(self):
+        ''' return the top wrapper class called by the user '''
+        return os.environ['PARENT_BASE_CLASS']
 
     def getList(self, key):
         v = dict.__getitem__(self,key)
@@ -61,8 +74,28 @@ class environ(dict):
             all keys are lists.
             if a key already exists, the passed value is append to the list.
         '''
-        if not key in self:
+        # get the real name of the class
+        if hasattr(self, 'className'):
+            className = self.className
+        else:
+            className = str(self.__class__).split('.')[-1].strip("'>")
+
+        # only the main parent can set the variable!!
+        if key in self._PARENT_ONLY_ and self.parent() != className:
+            log.debug( bcolors.WARNING+"WARNING: key [%s] can only be set in the main [%s] class (and currently has value [%s]), and it's being set by class [%s] with value [%s]!" % (key, self.parent(), self[key], className, v) + bcolors.END )
+            return
+
+        # if the key doesn't exist, or the key is in the _SINGLE_ list
+        # (only one value) make sure to create the key with and empty list!
+        if not key in self or key in self._SINGLE_:
             dict.__setitem__(self,key,[])
+
+        # if the env already has a value, and can't be updated,
+        # don't do anything!
+        if dict.__getitem__(self,key) and key in self._CANT_UPDATE_:
+            log.debug( bcolors.WARNING+"key %s already has a value %s and can't be updated with value %s" % (key, dict.__getitem__(self,key), v) + bcolors.END)
+            return
+
         if not type(v)==list:
             v = [v]
         for each in v:
@@ -96,7 +129,7 @@ class environ(dict):
         if enable:
             e.update(environClass)
             for each in e.keys():
-                self[each] = e[each]
+                self.__setitem__(each, e[each])
 
     def replace(self, environClass={}, **e):
         '''

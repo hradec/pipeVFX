@@ -18,11 +18,13 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+from __future__ import print_function
+
 import pipe
 import os,sys, time
-import tempfile
+import tempfile, filecmp
 
-PIPE_DISABLE_THREADS=1
+PIPE_DISABLE_THREADS=0
 if 'PIPE_DISABLE_THREADS' in os.environ:
     PIPE_DISABLE_THREADS = int(os.environ['PIPE_DISABLE_THREADS'])
 
@@ -193,45 +195,50 @@ def publish(frames, assetPath):
                             basename = p.split('/')[-1]
 
                 # publish the file!!
-                target = "%s%s" % (imagePath, basename)
+                target = "%s%s" % (imagePath, basename.lstrip('_'))
                 published_images[ basename ] = target
                 print( "\n@IMAGE!@\"%s\"" % target )
                 print( "\n@IMAGE@\"%s\""  % target )
                 sys.stdout.flush()
                 time.sleep(1)
                 sucess=False
-                fileTemp = tempfile.mktemp()
+                sudo = pipe.admin.sudo()
                 for tries in range(5):
+                    fileTemp = tempfile.mktemp()
                     if tries>1:
                         print( "\t\t trying to copy again..." )
                         time.sleep(tries*tries)
 
                     # this is were we publish our images.
-                    sudo = pipe.admin.sudo()
                     # sudo.rm( target )
-                    sudo.cp( os.path.abspath(images[n]), fileTemp )
-                    sudo.cp( fileTemp, target )
-                    cmd = ""
-
-                    # generate jpg preview images
-                    for cmd in webplayer(images[n], '%s/.webplayer' % imagePath, montageImages ):
-                        sudo.cmd( cmd )
-
-                    # execute commands as root
+                    # sudo.cp( os.path.abspath(images[n]), fileTemp )
+                    # sudo.cp( fileTemp, target )
+                    # sudo.mv( os.path.abspath(images[n]), target )
+                    sudo.cpmvlink( os.path.abspath(images[n]), target, pipe.admin.username(), 'root' )
                     print( sudo.run() )
+                    break
+
+                    # cmd = ""
+                    # generate jpg preview images
+                    # for cmd in webplayer(images[n], '%s/.webplayer' % imagePath, montageImages ):
+                    #     sudo.cmd( cmd )
+
+                # execute commands as root
+                # we don't check anymore, since now we use cpmvlink (it moves
+                # the file, and creates a symlink were the original was)
 
                     # check if publish was done suscessfuly
-                    if os.path.exists( target ):
-                        if filecmp.cmp( os.path.abspath(images[n]), target ):
-                            sucess=True
-                            break
+                    # if os.path.exists( target ):
+                    #     if filecmp.cmp( os.path.abspath(images[n]), target ):
+                    #         sucess=True
+                    #         break
 
 
-                sudo = pipe.admin.sudo()
-                sudo.rm( fileTemp )
-                print( sudo.run() )
-                if not sucess:
-                    threads_return.put(False)
+                # sudo = pipe.admin.sudo()
+                # sudo.rm( fileTemp )
+                # print( sudo.run() )
+                # if not sucess:
+                #     threads_return.put(False)
 
 
 
@@ -267,66 +274,66 @@ def publish(frames, assetPath):
                 raise Exception("SAM Error: Can't publish image since destination folder is unavailable")
 
 
-        # if we have at least one filtered images, use only then for montage!
-        onlyFiltered = filter(lambda img: 'filtered' in img, montageImages)
-        if onlyFiltered:
-            montageImages = onlyFiltered
-
-        montageImages.sort()
-
-        def __threadedSudoCmd__(cmd):
-            sudo = pipe.admin.sudo()
-            sudo.cmd( cmd )
-            print( sudo.run() )
+        # # if we have at least one filtered images, use only then for montage!
+        # onlyFiltered = filter(lambda img: 'filtered' in img, montageImages)
+        # if onlyFiltered:
+        #     montageImages = onlyFiltered
+        #
+        # montageImages.sort()
+        #
+        # def __threadedSudoCmd__(cmd):
+        #     sudo = pipe.admin.sudo()
+        #     sudo.cmd( cmd )
+        #     print( sudo.run() )
 
         # run montage commands as root
-        if PIPE_DISABLE_THREADS:
-            # single thread
-            for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
-                __threadedSudoCmd__(cmd)
-
-            # fix filenames for webplayer
-            for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
-                __threadedSudoCmd__(cmd)
-
-            # remove montageImages
-            for each in montageImages:
-                __threadedSudoCmd__("rm -rf %s" % each)
-        else:
-            #multi thread
-            threads = []
-            for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
-                threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
-                threads[-1].start()
-
-                # wait so only maxThreads at a time!!
-                while len([ x for x in threads if x.isAlive() ]) >= threadMax:
-                    time.sleep(1)
-
-
-            # fix filenames for webplayer
-            for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
-                threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
-                threads[-1].start()
-                # wait so only maxThreads at a time!!
-                while len([ x for x in threads if x.isAlive() ]) >= threadMax:
-                    time.sleep(1)
-
-            print( "Waiting threads to finish..." )
-            for t in threads:
-                t.join()
-
-            # remove montageImages after all threads have finished!
-            for each in montageImages:
-                threads += [ Thread(target=__threadedSudoCmd__, args=("rm -rf %s" % each,)) ]
-                threads[-1].start()
-                # wait so only maxThreads at a time!!
-                while len([ x for x in threads if x.isAlive() ]) >= threadMax:
-                    time.sleep(1)
-
-            print( "Waiting threads to finish..." )
-            for t in threads:
-                t.join()
+        # if PIPE_DISABLE_THREADS:
+        #     # single thread
+        #     for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
+        #         __threadedSudoCmd__(cmd)
+        #
+        #     # fix filenames for webplayer
+        #     for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
+        #         __threadedSudoCmd__(cmd)
+        #
+        #     # remove montageImages
+        #     for each in montageImages:
+        #         __threadedSudoCmd__("rm -rf %s" % each)
+        # else:
+        #     #multi thread
+        #     threads = []
+        #     for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
+        #         threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
+        #         threads[-1].start()
+        #
+        #         # wait so only maxThreads at a time!!
+        #         while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+        #             time.sleep(1)
+        #
+        #
+        #     # fix filenames for webplayer
+        #     for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
+        #         threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
+        #         threads[-1].start()
+        #         # wait so only maxThreads at a time!!
+        #         while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+        #             time.sleep(1)
+        #
+        #     print( "Waiting threads to finish..." )
+        #     for t in threads:
+        #         t.join()
+        #
+        #     # remove montageImages after all threads have finished!
+        #     for each in montageImages:
+        #         threads += [ Thread(target=__threadedSudoCmd__, args=("rm -rf %s" % each,)) ]
+        #         threads[-1].start()
+        #         # wait so only maxThreads at a time!!
+        #         while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+        #             time.sleep(1)
+        #
+        #     print( "Waiting threads to finish..." )
+        #     for t in threads:
+        #         t.join()
 
 
         # check if frame was copied suscessfully and remove it from original folder!
@@ -357,8 +364,7 @@ def publish(frames, assetPath):
 
 
 def publishLog(log, assetPath, className):
-    import Asset, pipe, filecmp
-    import tempfile
+    import Asset
     asset = Asset.AssetParameter(assetPath)
     # if we have asset data, means this maya scene is an asset, so
     # we move the images to its folder
@@ -379,9 +385,9 @@ def publishLog(log, assetPath, className):
         print( "\nstoring render log at %s" % logFile )
         sudo = pipe.admin.sudo()
         sudo.mkdir( logPath )
-        sudo.cp( file, logFile )
+        sudo.cpmvlink( file, logFile, pipe.admin.username(), 'root' )
+        sudo.rm(file)
         sudo.run()
-        os.remove(file)
         print( '\n','='*300 )
 
         # store pixar statisc job file
@@ -523,3 +529,92 @@ def fixFilenamesForWebplayer(montageImages, imagePath):
             cmd += [ "rm -rf %s" % webPlayer_image ]
             cmd += [ "ln -s %s %s" % (image, webPlayer_image) ]
     return cmd
+
+
+
+def _makeMontage(montageImages, imagePath):
+    from threading import Thread
+    from Queue import Queue
+    import multiprocessing
+
+    threadMax=multiprocessing.cpu_count()
+
+    # if we have at least one filtered images, use only then for montage!
+    onlyFiltered = filter(lambda img: 'filtered' in img, montageImages)
+    if onlyFiltered:
+        montageImages = onlyFiltered
+
+    montageImages.sort()
+
+    def __threadedSudoCmd__(cmd):
+        print( cmd )
+        sudo = pipe.admin.sudo()
+        sudo.cmd( cmd )
+        print( sudo.run() )
+
+    # run montage commands as root
+    if PIPE_DISABLE_THREADS:
+        # single thread
+        for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
+            __threadedSudoCmd__(cmd)
+
+        # fix filenames for webplayer
+        for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
+            __threadedSudoCmd__(cmd)
+
+        # remove montageImages
+        # for each in montageImages:
+        #     __threadedSudoCmd__("rm -rf %s" % each)
+    else:
+        #multi thread
+        threads = []
+        for cmd in webplayerMontage(montageImages, '%s/.webplayer_montage' % imagePath):
+            threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
+            threads[-1].start()
+
+            # wait so only maxThreads at a time!!
+            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                time.sleep(1)
+
+
+        # fix filenames for webplayer
+        for cmd in fixFilenamesForWebplayer(montageImages, imagePath):
+            threads += [ Thread(target=__threadedSudoCmd__, args=(cmd,)) ]
+            threads[-1].start()
+            # wait so only maxThreads at a time!!
+            while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+                time.sleep(1)
+
+        print( "Waiting threads to finish..." )
+        for t in threads:
+            t.join()
+
+        # remove montageImages after all threads have finished!
+        # for each in montageImages:
+        #     threads += [ Thread(target=__threadedSudoCmd__, args=("rm -rf %s" % each,)) ]
+        #     threads[-1].start()
+        #     # wait so only maxThreads at a time!!
+        #     while len([ x for x in threads if x.isAlive() ]) >= threadMax:
+        #         time.sleep(1)
+
+        print( "Waiting threads to finish..." )
+        for t in threads:
+            t.join()
+
+
+def makeMontage(path):
+    from pprint import pprint
+    from glob import glob
+    files = [ x for x in glob(path) if os.path.isfile(x) ]
+    montageImages=[]
+    frames = {}
+    for f in files:
+        print( f )
+        frame = os.path.splitext(os.path.splitext(f)[0])[1][1:]
+        if frame not in frames:
+            frames[ frame ] = []
+        frames[ frame ] += [f]
+        # webplayer(f, '%s/.webplayer' % os.path.dirname(path), montageImages )
+
+    for f in frames:
+        _makeMontage(frames[f], os.path.dirname(path))

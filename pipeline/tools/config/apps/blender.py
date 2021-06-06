@@ -31,8 +31,33 @@ class blender(baseApp):
         self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/lib-dynload/'))
         self.insert('LD_LIBRARY_PATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/lib-dynload/'))
 
+        for each in self.toolsPaths():
+            blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/' % each)
+            blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/addons/' % each)
+            blender.addon(self, python='%s/blender/$BLENDER_VERSION_MAJOR/python/' % each)
+            blender.addon(self, plugin='%s/blender/' % each)
+            blender.addon(self, plugin='%s/blender/addons/' % each)
+            blender.addon(self, python='%s/blender/python/' % each)
+
+        self.update(cgru())
         self.update(cortex())
         self.update(gaffer())
+
+    @staticmethod
+    def addon(caller, plugin="", script="", icon="", lib='', python=''):
+        ''' the addon method MUST be implemented for all classes so other apps can set up
+        searchpaths for this app. For example, another app which has plugins for this one!'''
+        caller['BLENDER_USER_SCRIPTS']      = plugin
+        caller['BLENDER_USER_SCRIPTS']      = script
+        caller['LD_LIBRARY_PATH']           = lib
+        caller['PYTHONPATH']                = python
+
+    def bins(self):
+        ret = [
+            # ('blender', 'blender --python-use-system-env'),
+            ('blender', 'blender'),
+        ]
+        return ret
 
     def preRun(self, cmd):
         l=os.environ['LD_LIBRARY_PATH'].split(':')
@@ -43,46 +68,30 @@ class blender(baseApp):
 
         return cmd
 
+    def postRun(self, cmd, returnCode, returnLog=""):
+        ''' this is called after a binary of this class has exited.
+        it's the perfect method to do post render frame checks, for example!'''
+        error = returnCode!=0
+        images=[]
+
+        # if Render in cmd
+        if 'blender' in cmd and '-b' in cmd:
+
+            # and 'Writing' in the log, do a frame check!
+            if 'Saved:' in returnLog:
+
+                # collect image files from output log
+                images = [ x.split('Saved: ')[-1].strip().split("'")[1] for x in returnLog.split('\n') if 'Saved:' in x]
+
+        # run our pipe.frame.check generic frame check for the gathered image list
+        if images:
+            error = pipe.frame.check( images )
+
+        # return a posix error code if we got an error, so the farm engine
+        # will get a proper error!
+        return int(error)*255
+
     def userSetup(self, jobuser):
         ''' this method is implemented when we want to do especial folder structure creation and setup
         for a user in a shot'''
         # self['XDG_CONFIG_HOME'] = jobuser.path()
-
-
-
-        # self.ignorePipeLib( "tiff" )
-        # self.ignorePipeLib( "libpng" )
-        # self.ignorePipeLib( "jpeg" )
-        # self.ignorePipeLib( "log4cplus" )
-        # self.ignorePipeLib( "libraw" )
-        # self.ignorePipeLib( "tbb" )
-        # self.ignorePipeLib( "qt" )
-        # self.ignorePipeLib( "oiio" )
-        # self.ignorePipeLib( "ocio" )
-        # self.ignorePipeLib( "python" )
-        # self.ignorePipeLib( "jasper" )
-        # self.ignorePipeLib( "gmp" )
-        # self.ignorePipeLib( "osl" )
-        # self.ignorePipeLib( "openvdb" )
-        # self.ignorePipeLib( "cortex" )
-        # self.ignorePipeLib( "glfw" )
-        # self.ignorePipeLib( "glew" )
-        # self.ignorePipeLib( "freeglut" )
-        # self.ignorePipeLib( "openssl" )
-        # self.ignorePipeLib( "hdf5" )
-        # self.ignorePipeLib( "mpc" )
-        # self.ignorePipeLib( "llvm" )
-        # self.ignorePipeLib( "flex" )
-        # self.ignorePipeLib( "icu" )
-        # self.ignorePipeLib( "mpfr" )
-        # self.ignorePipeLib( "ilmbase" )
-        # self.ignorePipeLib( "openexr" )
-        # self.ignorePipeLib( "freetype" )
-        # self.ignorePipeLib( "libaudio" )
-        # self.ignorePipeLib( "gaffer" )
-        # self.ignorePipeLib( "boost" )
-
-
-    # def bg(self, cmd, bin):
-    #     ''' return True if a cmd or binary should run in background '''
-    #     return True
