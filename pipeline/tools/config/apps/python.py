@@ -35,7 +35,7 @@ class python(baseLib):
         if self.parent() not in ['nuke']:
             self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
             self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
-            
+
         # if nuke version < 8.0 or gaffer, force to load our libpython shared lib
         if parent in ['nuke','gaffer']:
             sharedLib = self.path('lib/libpython%s.so.1.0' % pipe.libs.version.get('python')[:3])
@@ -69,7 +69,7 @@ class python(baseLib):
             self.update( qube() )
             self.update( cgru() )
 
-        self['PYTHONPATH'] = self.path('/lib/python2.7/lib-dynload/')
+        self['PYTHONPATH'] = self.path('/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/')
 
         if self.parent() in ['maya']:
             for each in glob('%s/lib/python*/site-packages/*.egg' % self.path()):
