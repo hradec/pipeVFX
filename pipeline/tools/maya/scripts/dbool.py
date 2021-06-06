@@ -176,7 +176,7 @@ def traverse(script):
 
             for mesh in meshes:
                 if m.objExists(mesh):
-                    m.polyMergeVertex( mesh, d=0.01, am=1, ch=1 )
+                    m.polyMergeVertex( mesh, d=0.001, am=1, ch=1 )
             # m.select(cl=1)
 
     return meshes
