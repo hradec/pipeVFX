@@ -88,7 +88,7 @@ class gaffer(baseLib):
                     self['LD_PRELOAD'] = each
 
             self.update( pipe.libs.pyside() )
-            # self.update( pipe.libs.qtpy() )
+            self.update( pipe.libs.qtpy() )
             self.update( pipe.libs.python() )
             self.update( pipe.apps.prman() )
             self.ignorePipeLib( "openxer" )
