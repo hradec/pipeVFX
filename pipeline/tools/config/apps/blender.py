@@ -31,17 +31,26 @@ class blender(baseApp):
         self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/lib-dynload/'))
         self.insert('LD_LIBRARY_PATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/lib-dynload/'))
 
+        for each in self.toolsPaths():
+            blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/' % each)
+            blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/addons/' % each)
+            blender.addon(self, python='%s/blender/$BLENDER_VERSION_MAJOR/python/' % each)
+            blender.addon(self, plugin='%s/blender/' % each)
+            blender.addon(self, plugin='%s/blender/addons/' % each)
+            blender.addon(self, python='%s/blender/python/' % each)
+
         self.update(cgru())
         self.update(cortex())
         self.update(gaffer())
 
     @staticmethod
-    def addon(caller, plugin="", script="", icon="", lib=''):
+    def addon(caller, plugin="", script="", icon="", lib='', python=''):
         ''' the addon method MUST be implemented for all classes so other apps can set up
         searchpaths for this app. For example, another app which has plugins for this one!'''
         caller['BLENDER_USER_SCRIPTS']      = plugin
         caller['BLENDER_USER_SCRIPTS']      = script
         caller['LD_LIBRARY_PATH']           = lib
+        caller['PYTHONPATH']                = python
 
     def bins(self):
         ret = [
