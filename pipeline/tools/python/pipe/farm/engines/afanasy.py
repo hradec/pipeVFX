@@ -79,7 +79,7 @@ class job(baseFarmJobClass):
     def runningJobsFramesToFinish(self, filter='', need_os='google'):
         ret = 0
         for x in self.runningJobs(filter):
-            if x.has_key('need_os') and need_os in x['need_os']:
+            if not need_os or ( x.has_key('need_os') and need_os in x['need_os']):
                 for b in x['blocks']:
                     ret +=  int(b['frame_last']) \
                             - int(b['frame_first']) \
