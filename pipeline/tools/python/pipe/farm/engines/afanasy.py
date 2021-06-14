@@ -81,9 +81,8 @@ class job(baseFarmJobClass):
         for x in self.runningJobs(filter):
             if not need_os or ( x.has_key('need_os') and need_os in x['need_os']):
                 for b in x['blocks']:
-                    ret +=  int(b['frame_last']) \
-                            - int(b['frame_first']) \
-                            - int(b['p_tasks_done']) \
+                    ret +=  (int(b['frame_last']) - int(b['frame_first']) + 1 ) \
+                            - int(b['p_tasks_done'])
                             #- int(b['running_tasks_counter'])
         if ret<0:
             ret = 0
