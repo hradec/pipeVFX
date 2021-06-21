@@ -174,12 +174,16 @@ class appsDB(dict):
 
 
     def __macfix(self):
-        ret = {
+        if hasattr(self, '_macfix_recursion_prevent'):
+            if self._macfix_recursion_prevent:
+                return self._macfix_recursion_prevent
+        self._macfix_recursion_prevent = {
             'subpath' : '',
         }
         if hasattr(self, 'macfix'):
-            macfix(ret) # noqa
-        return ret
+            self.macfix(self._macfix_recursion_prevent) # noqa
+
+        return self._macfix_recursion_prevent
 
     def parent(self):
         ''' returns the name of the main class running this instance '''
@@ -282,8 +286,8 @@ class appsDB(dict):
         '''
         self.setApp(appName)
         ret = self.path(subPath='bin')
-        if not os.path.exists(ret):
-            ret = self.path()
+        # if not os.path.exists(ret):
+        #     ret = self.path()
         return ret
 
 
@@ -640,6 +644,9 @@ class baseApp(_environ):
             self.DB_EnvVar = DB_EnvVar
             self.appFromDB = self.DB(self.className, platform, arch)
             self.path = self.appFromDB.path
+            if hasattr(self, 'macfix'):
+                self.appFromDB.macfix = self.macfix
+
             if self.version( self.globalVersion.get(self.className) ):
                 _environ.__init__(self,
                     LIB                 = self.appFromDB.lib(),

@@ -20,6 +20,13 @@
 
 
 class maya(baseApp):
+
+    def macfix(self, macfixData):
+        if not os.path.exists(self.path("bin")) and os.path.exists(self.path("usr")):
+            macfixData['subpath'] = 'usr/autodesk/maya$MAYA_VERSION_MAJOR/'
+            if not os.path.exists(self.path("bin/maya")):
+                self.maya_bin="maya$MAYA_VERSION_MAJOR"
+
     def environ(self, allPlugs=True):
         ''' this is the main method in a class to setup environment variables for an app.
         if not implemented, the pipe will try to figure it automatically from the folder structure'''
@@ -44,6 +51,9 @@ class maya(baseApp):
         else:
             self['PYTHONHOME'] = self.path()
         self['PYTHONHOME'] = self.path()
+
+        # set the python version to use with maya
+        self['MAYA_PYTHON_VERSION'] = "2"
 
 
 
@@ -225,14 +235,15 @@ class maya(baseApp):
         if self.parent() in ['maya','arnold']:
             # or else we see a error on os module were it can't find urandom!!
             # we need this to force maya to read its own python distribution files
+            if int(self['MAYA_PYTHON_VERSION']) == 2:
+                self.insert('PYTHONPATH',0, self.path('support/python/2.7.11/'))
+                self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
+                self.insert('PYTHONPATH',0, self.path('lib/python%s/site-packages/' % pythonVer))
+                self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
+                self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
 
-            self.insert('PYTHONPATH',0, self.path('support/python/2.7.11/'))
-            self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
-            self.insert('PYTHONPATH',0, self.path('lib/python%s/site-packages/' % pythonVer))
-            self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
-            self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
-
-            self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
+            if mv < 2022:
+                self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
 
         # we run this to make sure Asset module works when importing IECore
         # for maya 2018 and up, since it comes with pyilmbase, which doens't match
@@ -288,8 +299,9 @@ class maya(baseApp):
         self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer))
         cmd = app.split(' ')
 
+        __run = app
         if 'Render' not in app and 'mayapy' not in app and os.path.exists(m):
-            baseApp.run( self, os.path.basename(m) + '  ' + ' '.join(cmd[1:]) )
+            __run = os.path.basename(m) + '  ' + ' '.join(cmd[1:])
         elif 'mayapy' in app:
             # it seems these are no set by default when running in mayapy
             for p in glob.glob( self.path('plug-ins/*') ):
@@ -302,9 +314,21 @@ class maya(baseApp):
                 )
                 self['PATH'] = "%s/bin" % p
                 self['PYTHONPATH'] = "%s/scripts" % p
-            baseApp.run( self, app )
+
+            # if we are running version 2, and there's a mayapy2,
+            # set mayapy to mayapy2
+            if int(self['MAYA_PYTHON_VERSION']) == 2:
+                if os.path.exists(self.path('bin/mayapy2')):
+                    __run = app.replace('mayapy', 'mayapy2')
+
         else:
-            baseApp.run( self, app )
+            if hasattr(self, 'maya_bin'):
+                __run = app.replace('maya', self.maya_bin)
+
+
+        # if 'mayapy' not in app and float(self.version().split('.')[0]) >= 2022:
+        #     __run += ' -pythonver 2'
+        baseApp.run( self, __run )
 
 
     def license(self):
