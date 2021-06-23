@@ -1756,6 +1756,10 @@ class all: # noqa
             noMinTime=True,
         )
         self.qt = qt
+        self.rpath( [
+            '$QT_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+        ] )
+        self.qt_rpath_environ = self.rpath_environ()
         # allDepend += [qt]
 
 
@@ -2044,6 +2048,9 @@ class all: # noqa
             },
             # baseLibs=[python],
             depend=[qt, gcc]+allDepend,
+            environ={
+                'LDFLAGS' : '$LDFLAGS '+self.qt_rpath_environ['LDFLAGS']
+            },
             cmd = [
                 build.pythonSetup.cmd[0]+' --jobs=$DCORES  --prefix=$INSTALL_FOLDER',
                 # create symbolic links of the libraries in the correct place,
@@ -2051,7 +2058,7 @@ class all: # noqa
                 # code to avoid picking up maya version of those libraries.
                 'ln -s $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/PySide2/lib* '
                       '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/'
-            ]
+            ],
         )
         self.pyside = pyside
         # allDepend += [pyside]

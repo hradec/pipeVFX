@@ -51,7 +51,7 @@ class baseFarmJobClass(object):
 
         # add pipe job/shot setup before the command line (run go)
         self.cmd = ' '.join([
-            'source /atomo/pipeline/tools/scripts/go %s %s %s && export FRAME_NUMBER=%s && ' % (self.job, self.shot[0], self.shot[1], self.frameNumber()),
+            'source %s/scripts/go %s %s %s && export FRAME_NUMBER=%s && ' % (pipe.roots().tools(), self.job, self.shot[0], self.shot[1], self.frameNumber()),
             self.cmd,
         ])
 

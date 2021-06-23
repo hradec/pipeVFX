@@ -328,7 +328,7 @@ def init():
     # if running in Qube, set PIPE_FARM_USER
     if os.environ.has_key('QBJOBID'):
         user = ''
-        for line in os.popen('/atomo/apps/linux/x86_64/qube/current/qube-core/local/pfx/qube/bin/qbjobs --expression "id==%s" --user "" ' % os.environ['QBJOBID']).readlines():
+        for line in os.popen('%s/qube/current/qube-core/local/pfx/qube/bin/qbjobs --expression "id==%s" --user "" ' % (pipe.roots().apps(), os.environ['QBJOBID']).readlines()):
             if os.environ['QBJOBID'] in line:
                 user = line.split()[6].strip()
         envs += '\nexport PIPE_FARM_USER=%s' % user
@@ -561,7 +561,7 @@ def __go(args):
     # if running in Qube, set PIPE_FARM_USER
     if os.environ.has_key('QBJOBID'):
         user = ''
-        for line in os.popen('/atomo/apps/linux/x86_64/qube/current/qube-core/local/pfx/qube/bin/qbjobs --expression "id==%s" --user "" ' % os.environ['QBJOBID']).readlines():
+        for line in os.popen('%s/qube/current/qube-core/local/pfx/qube/bin/qbjobs --expression "id==%s" --user "" ' % (pipe.roots().apps(), os.environ['QBJOBID']).readlines()):
             if os.environ['QBJOBID'] in line:
                 user = line[38:48].strip()
         env.append( 'export PIPE_FARM_USER=%s' % user )

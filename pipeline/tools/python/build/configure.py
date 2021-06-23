@@ -565,6 +565,7 @@ class python(configure):
     cmd = [
         'env',
         # 'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
+        'export PYTHON=$INSTALL_FOLDER/bin/python',
         'export LD_PRELOAD=$SOURCE_FOLDER/libpython$PYTHON_VERSION_MAJOR.so.1.0',
         './configure  --enable-shared --with-lto  --enable-unicode=ucs4 --with-openssl=$OPENSSL_TARGET_FOLDER  --with-bz2', # --enable-optimizations',
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
@@ -574,18 +575,21 @@ class python(configure):
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config || true)',
         '( [ ! -e  $INSTALL_FOLDER/bin/easy_install ] && '
-            'unzip ../../.download/setuptools-33.1.1.zip && '
-            'cd setuptools-33.1.1 && '
+            'curl -L -O https://github.com/pypa/setuptools/archive/refs/tags/v45.3.0.tar.gz && '
+            'tar xf v45.3.0.tar.gz && '
+            'cd setuptools-* && '
+            '$PYTHON ./bootstrap.py && '
             '$PYTHON ./setup.py build && '
             '$PYTHON ./setup.py install --prefix=$INSTALL_FOLDER '
         ')',
-        "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/easy_install hashlib || true)",
+        # "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/easy_install hashlib || true)",
         '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip==20 || true)',
         '(ln -s pip$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/pip || true)',
         "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/pip install  readline || true)",
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         # '$INSTALL_FOLDER/bin/easy_install scons',
     ]
+
     def fixCMD(self, cmd, os_environ):
         cmd = configure.fixCMD(self,cmd, os_environ)
         if self.kargs.has_key('easy_install'):

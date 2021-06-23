@@ -45,7 +45,7 @@ LOCATE_DEPENDENCY_LIBPATH=[]
 
 
 libs = os.path.dirname( INSTALL_PREFIX )
-apps = '/atomo/apps/linux/x86_64/'
+apps = pipe.roots().apps()
 
 # OSLHOME=os.environ['OSL_TARGET_FOLDER']
 
