@@ -158,19 +158,19 @@ class TreeModel(QtCore.QAbstractItemModel):
         self.rootItem = TreeItem(("Asset", ))
         self.setupModelData(data, self.rootItem)
 
-        self.line = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/dot.png').scaled(200,1,QtCore.Qt.IgnoreAspectRatio)
+        self.line = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/dot.png').scaled(200,1,QtCore.Qt.IgnoreAspectRatio)
 
         self.assetTypes = {}
         for each in data:
-            # self.assetTypes[each] = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/%s.png' % each).scaledToHeight(30)
+            # self.assetTypes[each] = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/%s.png' % each).scaledToHeight(30)
             for each2 in data[each]:
-                self.assetTypes[each2] = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/%s.png' % each2).scaledToHeight(15)
+                self.assetTypes[each2] = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/%s.png' % each2).scaledToHeight(15)
 
         self.lights = [
-            QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/blanklight.png').scaledToHeight(10),
-            QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/greenlight.png').scaledToHeight(10),
-            QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/yellowlight.png').scaledToHeight(10),
-            QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/redlight.png').scaledToHeight(10),
+            QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/blanklight.png').scaledToHeight(10),
+            QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/greenlight.png').scaledToHeight(10),
+            QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/yellowlight.png').scaledToHeight(10),
+            QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/redlight.png').scaledToHeight(10),
         ]
         self.colors = [
             QtGui.QColor(150,150,180,50),
@@ -212,9 +212,9 @@ class TreeModel(QtCore.QAbstractItemModel):
             # if '---' in item.data(0):
             #     ret = self.line
             # if 'maya' == item.data(0):
-            #     ret = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/maya.png').scaledToHeight(20)
+            #     ret = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/maya.png').scaledToHeight(20)
             # if 'alembic' == item.data(0):
-            #     ret = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/alembic.png').scaledToHeight(20)
+            #     ret = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/alembic.png').scaledToHeight(20)
             return ret
         elif role == QtCore.Qt.BackgroundRole:
             # if '---' in item.data(0):

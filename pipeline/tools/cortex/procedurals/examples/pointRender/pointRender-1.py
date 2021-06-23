@@ -33,15 +33,16 @@
 
 import IECoreMaya
 import maya.cmds as m
+import pipe
 
-execfile( "/atomo/pipeline/tools/cortex/procedurals/examples/pointRender/pointRender-1.py" )
+execfile( pipe.roots().tools()+"/cortex/procedurals/examples/pointRender/pointRender-1.py" )
 m.delete( [ m.listRelatives(x, p=1)[0] for x in m.ls(type="ieProceduralHolder") ] )
 p = m.createNode( "ieProceduralHolder" )
 fp = IECoreMaya.FnProceduralHolder( "ieProceduralHolder1" )
 fp.setParameterised( pointRender() )
 
 # =================================================================================
-'''
+''' 
 
 import os
 from IECore import *

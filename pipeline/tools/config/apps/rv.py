@@ -23,8 +23,9 @@ class rv(baseApp):
     def environ(self):
         ''' as this is a python application, we don't have to setup anything
             since python is already setting it for us! '''
+        import pipe
 
-        self['RV_LUT_PATH']='/atomo/pipeline/tools/ocio/imageworks-OpenColorIO-Configs-f931d77/nuke-default/luts/'
+        self['RV_LUT_PATH']='%s/ocio/imageworks-OpenColorIO-Configs-f931d77/nuke-default/luts/' % pipe.roots().tools()
         self['RV_LICENSE_DEBUG']='1'
         # RV_PREFS_OVERRIDE_PATH
         # RV_PREFS_CLOBBER_PATH

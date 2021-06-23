@@ -54,28 +54,28 @@ class studiolibrary(baseApp):
                         '',
                         'Global Shared Library',
                         cmd='import studiolibrary;studiolibrary.main(name="Global Shared Library", path="%s" )' % globalShared,
-                        icon='/atomo/pipeline/tools/maya/icons/slglobal.bmp',
+                        icon='%s/maya/icons/slglobal.bmp' % pipe.roots().tools(),
                         # menu=[('RELOAD SHELF', 'import pipe;reload(pipe.apps);pipe.apps.studiolibrary().startup()')]
                     )
                     self.addShelfButton(
                         '',
                         'Job Shared Library',
                         cmd='import studiolibrary;studiolibrary.main(name="Job Shared Library", path="%s" )' % jobShared,
-                        icon='/atomo/pipeline/tools/maya/icons/sljob.bmp',
+                        icon='%s/maya/icons/sljob.bmp' % pipe.roots().tools(),
                         # menu=[('RELOAD SHELF', 'import pipe;reload(pipe.apps);pipe.apps.studiolibrary().startup()')]
                     )
                     self.addShelfButton(
                         '',
                         'Shot/Asset Shared Library',
                         cmd='import studiolibrary;studiolibrary.main(name="Shot/Asset Shared Library", path="%s" )' % shotShared,
-                        icon='/atomo/pipeline/tools/maya/icons/slshot.bmp',
+                        icon='%s/maya/icons/slshot.bmp' % pipe.roots().tools(),
                         # menu=[('RELOAD SHELF', 'import pipe;reload(pipe.apps);pipe.apps.studiolibrary().startup()')]
                     )
                     self.addShelfButton(
                         '',
                         'Global User Library',
                         cmd='import studiolibrary;studiolibrary.main(name="Global User Library", path="%s" )' % userLib,
-                        icon='/atomo/pipeline/tools/maya/icons/sluser.bmp',
+                        icon='%s/maya/icons/sluser.bmp' % pipe.roots().tools(),
                         # menu=[('RELOAD SHELF', 'import pipe;reload(pipe.apps);pipe.apps.studiolibrary().startup()')]
                     )
                     self.create()

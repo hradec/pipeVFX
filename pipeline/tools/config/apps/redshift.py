@@ -75,7 +75,7 @@ class redshift(baseApp):
         import os, sys, glob, time, socket
         from pipe.bcolors import bcolors as b
 
-        licenses=[ [ l for l in x.split('/') if '.local' in l ][0] for x in glob.glob("/atomo/pipeline/tools/licenses/redshift/*/*/") ]
+        licenses=[ [ l for l in x.split('/') if '.local' in l ][0] for x in glob.glob("%s/licenses/redshift/*/*/" % pipe.roots().tools()) ]
         if not licenses:
             print ("\n\nRedshift is not currently licensed on any machine!\n\n")
         else:
@@ -87,7 +87,7 @@ class redshift(baseApp):
 
                 if '--force' not in sys.argv:
                     print (b.END+"\nRun this tool again with "+b.GREEN+" --force "+b.END+" to force open the license tool to reset the license.")
-                    print (b.WARNING+"(avoid using --force or else we will have to manually erase the license found at /atomo/pipeline/tools/licenses/redshift/%s)\n\n%s" % (licenses[0], b.END))
+                    print (b.WARNING+"(avoid using --force or else we will have to manually erase the license found at %s/licenses/redshift/%s)\n\n%s" % (pipe.roots().tools(), licenses[0], b.END))
                     sys.exit(-1)
 
         if 'redshiftLicensingTool' in app:

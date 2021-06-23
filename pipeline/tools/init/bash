@@ -1,4 +1,7 @@
-#!/bin/bash  -i -l
+#!/bin/bash -i -l
+
+CD=$(dirname $(readlink -f $BASH_SOURCE))
+export PIPE_TOOLS=$( readlink -f "$CD/../")
 
 export PYTHONDONTWRITEBYTECODE=1
 

@@ -27,7 +27,7 @@ class realflow(baseApp):
         self['PYTHONPATH'] = self.p.path('lib/python$PYTHON_VERSION_MAJOR')
         if self.version()=="2012" and os.path.exists( self.path('bin/realflow.bin') ) :
             self['LD_PRELOAD'] = self.p.path('lib/libpython$PYTHON_VERSION_MAJOR.so.1.0')
-            self['LD_PRELOAD'] = '/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/pyside/1.1.2/lib/libpyside-python$PYTHON_VERSION_MAJOR.so.1.1'
+            self['LD_PRELOAD'] = '%s/../libs/linux/x86_64/gcc-4.1.2/pyside/1.1.2/lib/libpyside-python$PYTHON_VERSION_MAJOR.so.1.1' % pipe.roots().tools()
         else:
             self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
             self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")

@@ -123,7 +123,7 @@ class _StatePlugValueWidget( GafferUI.PlugValueWidget ) :
         f.write('''python("exec(''.join(open('/tmp/xx.py').readlines()))");\n\n''')
         f.close()
 
-        self.mayaRunning = subprocess.Popen("bash -l -c 'source /atomo/pipeline/tools/scripts/go && run maya -script \"%s\"     '" % os.path.abspath(scriptName), shell=True )
+        self.mayaRunning = subprocess.Popen("bash -l -c 'source %s/scripts/go && run maya -script \"%s\"     '" % (pipe.roots().tools(), os.path.abspath(scriptName)), shell=True )
 
         # os.system( 'run maya -script "%s" & ' %  scriptName )
 

@@ -66,7 +66,7 @@ class gaffer(baseLib):
 
             # our standard OCIO color space
             if self.parent() in ["gaffer", 'maya', 'houdini']:
-                self['OCIO'] = '/atomo/pipeline/tools/ocio/config.ocio'
+                self['OCIO'] = '%s/ocio/config.ocio' % pipe.roots().tools()
 
         # self.update( pipe.libs.openvdb() )
         # self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")

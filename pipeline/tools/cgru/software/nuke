@@ -1,5 +1,8 @@
 #!/bin/bash
 
+CD=$(dirname $(readlink -f $BASH_SOURCE))
+export TOOLS=$( readlink -f "$CD/../../")
+
 #source $CGRU_LOCATION/software_setup/setup_nuke.sh
 
 #$APP_EXE "$@"
@@ -7,7 +10,7 @@
 
 export USER=$(/bin/python2 -c "import sys;print ''.join(sys.argv).split('/users/')[-1].split('/nuke/')[0]" "$@")
 
-source /atomo/pipeline/tools/init/bash
+source $TOOLS/init/bash
 
 export PIPE_FARM_USER=$USER
 
@@ -15,12 +18,12 @@ export PIPE_JOB=$(/bin/python2 -c "import sys;print ''.join(sys.argv).split('/jo
 export PIPE_SHOT=$(/bin/python2 -c "import sys;print '@'.join(''.join(sys.argv).split('/$PIPE_JOB/')[-1].split('/')[:2]).replace('s@','@')" "$@")
 
 
-export src="source /atomo/pipeline/tools/scripts/go $PIPE_JOB   $(/bin/python2 -c "import sys;print ' '.join('$PIPE_SHOT'.split('@'))" "$@")"
+export src="source $TOOLS/scripts/go $PIPE_JOB   $(/bin/python2 -c "import sys;print ' '.join('$PIPE_SHOT'.split('@'))" "$@")"
 
 #env | grep PIPE
 
 args="$(echo "$@" | sed 's/-i//')"
-cmd=$(echo runuser -l $USER -c "\" source /atomo/pipeline/tools/init/bash && $src && run nuke --log-level verbose -V 2  $args\"")
+cmd=$(echo runuser -l $USER -c "\" source $TOOLS/init/bash && $src && run nuke --log-level verbose -V 2  $args\"")
 echo "HOST: $(hostname)"
 echo $cmd
 eval "$cmd  ; echo $?"

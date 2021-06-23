@@ -265,7 +265,7 @@ class delight(baseApp):
         ex: export PIPE_DELIGHT_LICENSE_SERVERS="server1 server2 server3" '''
 
         # list of license servers to query for available licenses
-        licenseServers = ['atomoweb.local']
+        licenseServers = ['licenserver.local']
         if os.environ.has_key('PIPE_DELIGHT_LICENSE_SERVERS'):
             licenseServers = os.environ['PIPE_DELIGHT_LICENSE_SERVERS'].split()
 
@@ -276,7 +276,7 @@ class delight(baseApp):
         serverz={}
         for each in licenseServers:
             # check if server is running
-            if os.popen(" ping -c 1 -t 5  192.168.0.249 | grep ' 0%'").readlines():
+            if os.popen(" ping -c 1 -t 5 "+licenseServers+" | grep ' 0%'").readlines():
                 running = os.popen('%s serverstatus @%s' % (self.path('bin/licutils'), each) ).readlines()
                 if filter(lambda x: 'running' in x, running):
 

@@ -1,9 +1,11 @@
 #!/bin/bash
 
+CD=$(dirname $(readlink -f $BASH_SOURCE))
+export TOOLS=$( readlink -f "$CD/../../")
 
 export USER=$(/bin/python2 -c "import sys;print ''.join(sys.argv).split('/users/')[-1].split('/houdini/')[0]" "$@")
 
-source /atomo/pipeline/tools/init/bash
+source $TOOLS/init/bash
 
 export PIPE_FARM_USER=$USER
 
@@ -11,12 +13,12 @@ export PIPE_JOB=$(/bin/python2 -c "import sys;print ''.join(sys.argv).split('/jo
 export PIPE_SHOT=$(/bin/python2 -c "import sys;print '@'.join(''.join(sys.argv).split('/$PIPE_JOB/')[-1].split('/')[:2]).replace('s@','@')" "$@")
 
 
-export src="source /atomo/pipeline/tools/scripts/go $PIPE_JOB   $(/bin/python2 -c "import sys;print ' '.join('$PIPE_SHOT'.split('@'))" "$@")"
+export src="source $TOOLS/scripts/go $PIPE_JOB   $(/bin/python2 -c "import sys;print ' '.join('$PIPE_SHOT'.split('@'))" "$@")"
 
 #env | grep PIPE
 
-#cmd=$(echo runuser -l $USER -c "\" source /atomo/pipeline/tools/init/bash && $src && run hython \$HOUDINI_CGRU_PATH/hrender_af.py $@\"")
-cmd=$(echo runuser -l $USER -c "\" source /atomo/pipeline/tools/init/bash && $src && run hython /atomo/pipeline/tools/cgru/plugins/houdini/hrender_af.py $@\"")
+#cmd=$(echo runuser -l $USER -c "\" source $TOOLS/init/bash && $src && run hython \$HOUDINI_CGRU_PATH/hrender_af.py $@\"")
+cmd=$(echo runuser -l $USER -c "\" source $TOOLS/init/bash && $src && run hython $TOOLS/cgru/plugins/houdini/hrender_af.py $@\"")
 echo "HOST: $(hostname)"
 echo $cmd
 eval $cmd

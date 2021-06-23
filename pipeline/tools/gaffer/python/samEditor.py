@@ -90,7 +90,7 @@ class SamEditor( GafferUI.BrowserEditor ) :
             with GafferUI.ListContainer( GafferUI.ListContainer.Orientation.Horizontal, spacing = 6 ) as layout:
                 # add a job/shot label
                 header = GafferUI.GridContainer( 0, 0 )
-                header.addChild( GafferUI.Label( "<img src='%s/gaffer/graphics/atomo/opa.png'>" %  ( pipe.roots.tools() ) ), (0,0) )
+                header.addChild( GafferUI.Label( "<img src='%s/gaffer/graphics/%s/opa.png'>" %  ( pipe.roots.tools(), pipe.studio() ) ), (0,0) )
                 header.addChild( GafferUI.Spacer(V2i(10,10)), (1,0) )
                 header.addChild( GafferUI.Label( '<h1 style="text-align: right;color:#202020;font-family:sans-serif;font-style:italic;">%s  </h1>' %  ( '/ job / '+self._jobShot.replace('/',' / ') ) ), (2,0) )
                 samIcons = glob( '%s/gaffer/graphics/sam-??.png' %  pipe.roots.tools() )

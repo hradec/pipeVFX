@@ -612,21 +612,21 @@ class TreeModel(QtCore.QAbstractItemModel): #assetListWidget.TreeModel):
         self.rootItem = TreeItem(("Shots|Assets", ))
         self.setupModelData(data, self.rootItem)
 
-        self.line = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/dot.png').scaled(200,1,QtCore.Qt.IgnoreAspectRatio)
+        self.line = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/dot.png').scaled(200,1,QtCore.Qt.IgnoreAspectRatio)
 
         self.assetTypes = {}
         for each in data:
-            # self.assetTypes[each] = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/%s.png' % each).scaledToHeight(30)
+            # self.assetTypes[each] = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/%s.png' % each).scaledToHeight(30)
             for each2 in data[each]:
-                self.assetTypes[each2] = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/%s.png' % each2).scaledToHeight(15)
+                self.assetTypes[each2] = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/%s.png' % each2).scaledToHeight(15)
 
         self.lights = {
-            'blank'  : QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/blanklight.png').scaledToHeight(10),
-            'green'  : QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/greenlight.png').scaledToHeight(10),
-            'yellow' : QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/yellowlight.png').scaledToHeight(10),
-            'red'    : QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/redlight.png').scaledToHeight(10),
-            'warning': QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/warning-20.png').scaledToHeight(10),
-            'edit'   : QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/edit-20.png').scaledToHeight(10),
+            'blank'  : QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/blanklight.png').scaledToHeight(10),
+            'green'  : QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/greenlight.png').scaledToHeight(10),
+            'yellow' : QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/yellowlight.png').scaledToHeight(10),
+            'red'    : QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/redlight.png').scaledToHeight(10),
+            'warning': QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/warning-20.png').scaledToHeight(10),
+            'edit'   : QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/edit-20.png').scaledToHeight(10),
         }
         self.colors = {
             'sourceExists': QtGui.QColor(230,230,110,50),
@@ -634,7 +634,7 @@ class TreeModel(QtCore.QAbstractItemModel): #assetListWidget.TreeModel):
         }
 
         def compCheckbox(img):
-            checkbox = QtGui.QImage('/atomo/pipeline/tools/gaffer/graphics/check_box32.png').scaledToHeight(10)
+            checkbox = QtGui.QImage(pipe.roots().tools()+'/gaffer/graphics/check_box32.png').scaledToHeight(10)
             image = QtGui.QImage(img).scaledToHeight(10)
             painter = QtGui.QPainter()
             painter.begin(image)
@@ -643,9 +643,9 @@ class TreeModel(QtCore.QAbstractItemModel): #assetListWidget.TreeModel):
             return QtGui.QPixmap.fromImage( image )
 
         self.lightCurrent = {
-            self.lights['green'] : compCheckbox('/atomo/pipeline/tools/gaffer/graphics/greenlight.png'),
-            self.lights['blank'] : compCheckbox('/atomo/pipeline/tools/gaffer/graphics/blanklight.png'),
-            self.lights['red']   : compCheckbox('/atomo/pipeline/tools/gaffer/graphics/yellowlight.png'),
+            self.lights['green'] : compCheckbox(pipe.roots().tools()+'/gaffer/graphics/greenlight.png'),
+            self.lights['blank'] : compCheckbox(pipe.roots().tools()+'/gaffer/graphics/blanklight.png'),
+            self.lights['red']   : compCheckbox(pipe.roots().tools()+'/gaffer/graphics/yellowlight.png'),
         }
         self.n = 0
         self.extraData = None
@@ -723,9 +723,9 @@ class TreeModel(QtCore.QAbstractItemModel): #assetListWidget.TreeModel):
             # if '---' in item.data(0):
             #     ret = self.line
             # if 'maya' == item.data(0):
-            #     ret = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/maya.png').scaledToHeight(20)
+            #     ret = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/maya.png').scaledToHeight(20)
             # if 'alembic' == item.data(0):
-            #     ret = QtGui.QPixmap('/atomo/pipeline/tools/gaffer/graphics/assets/alembic.png').scaledToHeight(20)
+            #     ret = QtGui.QPixmap(pipe.roots().tools()+'/gaffer/graphics/assets/alembic.png').scaledToHeight(20)
             if self.extraData:
                 ret = self.extraData(index, role)
             return ret

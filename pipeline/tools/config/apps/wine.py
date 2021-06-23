@@ -111,7 +111,7 @@ class wine(baseApp):
                     os.makedirs(wineTMP)
                 os.makedirs('%s/dosdevices' % prefix)
                 os.symlink('%s/drive_c' % prefix, '%s/dosdevices/c:' % prefix)
-                os.symlink('/atomo/jobs', '%s/dosdevices/j:' % prefix)
+                os.symlink( % pipe.roots().jobs(), '%s/dosdevices/j:' % prefix)
                 os.symlink('/mnt', '%s/dosdevices/m:' % prefix)
                 os.symlink(os.environ['HOME'], '%s/dosdevices/h:' % prefix)
                 os.symlink(wineTMP, '%s/dosdevices/z:' % prefix)

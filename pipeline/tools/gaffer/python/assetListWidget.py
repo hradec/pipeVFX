@@ -81,7 +81,7 @@ except:
 # import timelineImage
 
 QtCore, QtGui = pipe.importQt()
-
+__tools__ = pipe.roots().tools()
 
 
 _search = IECore.SearchPath(os.environ['GAFFERUI_IMAGE_PATHS'], ':')
@@ -317,7 +317,7 @@ class assetListWidget( GafferUI.EditorWidget ):
                     <td>= EDIT MODE AND PRESENT IN THE SCENE - <b>This mode is only allowed for renderSettings assets.</b> It indicates the asset
                             is present in the scene as an asset, but also can publish a new version!
                            </td>
-                  </tr>''' % '/atomo/pipeline/tools/gaffer/graphics/edit-green-20.png'
+                  </tr>''' % '%s/gaffer/graphics/edit-green-20.png' % __tools__
 
 
         __toolTip__ ='''
@@ -392,10 +392,10 @@ class assetListWidget( GafferUI.EditorWidget ):
             </table>
             <br>
         ''' % (
-            '/atomo/pipeline/tools/gaffer/graphics/blanklight.png',
-            '/atomo/pipeline/tools/gaffer/graphics/greenlight.png',
-            '/atomo/pipeline/tools/gaffer/graphics/redlight.png',
-            '/atomo/pipeline/tools/gaffer/graphics/edit-20.png',
+            '%s/gaffer/graphics/blanklight.png'  % __tools__,
+            '%s/gaffer/graphics/greenlight.png' % __tools__,
+            '%s/gaffer/graphics/redlight.png' % __tools__,
+            '%s/gaffer/graphics/edit-20.png' % __tools__,
             __toolTip__maya__,
         )
 
@@ -701,7 +701,7 @@ class assetListWidget( GafferUI.EditorWidget ):
 
     def mayaImportDependency(self, paths = None):
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
-            icon = '/atomo/pipeline/tools/gaffer/graphics/Autodesk-maya-icon_48.jpg'
+            icon = '%s/gaffer/graphics/Autodesk-maya-icon_48.jpg' % __tools__
             if not paths:
                 paths = self.getSelectedColumns()['assetFullPath']
 
@@ -1933,7 +1933,7 @@ class SAMShelf(assetUtils.shelf):
             '',
             'Open/Refresh SAM panel',
             cmd='import assetListWidget;reload(assetListWidget);assetListWidget.SAMPanelUI()',
-            icon='/atomo/pipeline/tools/gaffer/graphics/samShelfPanelx32.png',
+            icon='%s/gaffer/graphics/samShelfPanelx32.png' % __tools__,
             menu=[('RELOAD SHELF', 'import assetListWidget;reload(assetListWidget);assetListWidget.SAMShelf()')]
         )
 
@@ -1941,7 +1941,7 @@ class SAMShelf(assetUtils.shelf):
             '',
             'Open SAM Browser',
             cmd='import IECore;c = IECore.ClassLoader.defaultLoader( "GAFFER_APP_PATHS" );a = c.load( "sam" )();a.run()',
-            icon='/atomo/pipeline/tools/gaffer/graphics/samShelfx32.png',
+            icon='%s/gaffer/graphics/samShelfx32.png' % __tools__,
             menu=[('RELOAD SHELF', 'import assetListWidget;reload(assetListWidget);assetListWidget.SAMShelf()')]
         )
 
@@ -1949,7 +1949,7 @@ class SAMShelf(assetUtils.shelf):
             '',
             'Get the name of the selected node and use as a prefix for all the nodes in the shader network. Use this to make the shading network nodes be unique!',
             cmd='import assetListWidget;reload(assetListWidget);assetListWidget.shaderUniqueNames()',
-            icon='/atomo/pipeline/tools/gaffer/graphics/samShelfx32.png',
+            icon='%s/gaffer/graphics/samShelfx32.png' % __tools__,
             menu=[('RELOAD SHELF', 'import assetListWidget;reload(assetListWidget);assetListWidget.SAMShelf()')]
         )
 

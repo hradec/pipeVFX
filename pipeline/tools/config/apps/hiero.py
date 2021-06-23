@@ -77,9 +77,9 @@ class hiero(baseApp):
             > $HOME/.hiero/uistate.ini
             echo ' ' >> $HOME/.hiero/uistate.ini
             echo '[FileBrowser]' >> $HOME/.hiero/uistate.ini
-            echo 'DirectoryBrowser.directory=/atomo/pipeline/tools/scripts/run nuke' >> $HOME/.hiero/uistate.ini
+            echo 'DirectoryBrowser.directory=%s/scripts/run nuke' >> $HOME/.hiero/uistate.ini
             echo '[General]' >> $HOME/.hiero/uistate.ini
-            echo 'nukePathLinux=/atomo/pipeline/tools/scripts/nukeHiero/nukeHiero' >> $HOME/.hiero/uistate.ini
-            echo 'nukePathOSX=/atomo/pipeline/tools/scripts/nukeHiero' >> $HOME/.hiero/uistate.ini
+            echo 'nukePathLinux=%s/scripts/nukeHiero/nukeHiero' >> $HOME/.hiero/uistate.ini
+            echo 'nukePathOSX=%s/scripts/nukeHiero' >> $HOME/.hiero/uistate.ini
 
-        ''')
+        ''' % ( pipe.roots().tools(), pipe.roots().tools(), pipe.roots().tools() ) )

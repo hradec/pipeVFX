@@ -70,7 +70,7 @@ class model( IECore.Op ) :
                     defaultValue = currentUser.path(),
                     userData = {
                         "UI": {
-                            "defaultPath": IECore.StringData( "/atomo/jobs/" ),
+                            "defaultPath": IECore.StringData( pipe.roots().jobs() ),
                             "obeyDefaultPath" : IECore.BoolData(True),
                         },
                         # this UD flags this parameter to publish use to construct the asset filename

@@ -79,10 +79,8 @@ class qube(baseApp):
                 preload=''
                 if tmp:
                     preload = 'LD_PRELOAD=%s ' % tmp[0].strip()
-#                    preload = 'LD_PRELOAD=/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/freetype/2.4.4/lib/libfreetype.so.6 '
                     if 'arch' in platform.release().lower():
-#                        preload += '; export LD_PRELOAD=/usr/lib/libpng12.so:$LD_PRELOAD ; '
-                        preload += 'LD_LIBRARY_PATH=/atomo/pipeline/libs/linux/x86_64/gcc-4.1.2/libpng/1.4.0/lib:/usr/lib/:$LD_LIBRARY_PATH '
+                        preload += 'LD_LIBRARY_PATH=%s/../libs/linux/x86_64/gcc-4.1.2/libpng/1.4.0/lib:/usr/lib/:$LD_LIBRARY_PATH '  % pipe.roots().tools()
                     print( preload )
                 if os.path.exists(qube):
                     if 'arch' not in platform.release().lower():
