@@ -1,40 +1,49 @@
 #!/bin/bash 
 
-r=$(/bin/python2 -c 'for n in range(8): print n,')
-echo $r
-
+smart="smart-$(basename $1).log"
 run="1"
+CD=$(dirname $(readlink -f $BASH_SOURCE))
+echo start
 while [ "$run" == "1" ]  ; do
-	smartctl -t long $1 > /tmp/null
-	smartctl -a $1 > /tmp/smart
-	echo "$(cat /tmp/smart | grep '# 1 ' | grep 'in progress')" 
-#	while [ "$(cat /tmp/smart | grep '# 1 ' | grep 'in progress')" != "" ] ; do
-#		cat /tmp/smart | tail -10 | grep progress
-#		sleep 5
-#		smartctl -a $1 > /tmp/smart
-#		cat /tmp/smart | grep '# 1 '
-#	done
-#	while [ "$(cat /tmp/smart | grep 'Self-test execution status:' | grep -v 'The previous self-test routine completed$')" != "" ] ; do
-#		cat /tmp/smart | tail -10 | grep completed
-#		sleep 5
-#		smartctl -a $1 > /tmp/smart
-#		cat /tmp/smart | grep 'Self-test execution status:' -A1
-#	done
+	
+	# if last test has an error, fix it... 
+	smartctl -l xselftest -d sat $1 > $CD/$smart
+	cat $CD/$smart | egrep '# .*read fail' | while read l ; do
+		echo $l
+		bad=$(echo $l | awk '{print $(NF)}')
+		if [ "$bad" != "-" ] ; then
+			echo $bad
+			echo $CD/fixhdd.py -a -o $(( $bad - 100 )) -n 200  $1 #| grep -v ignoring
+			$CD/fixhdd.py -a -o $(( $bad - 100 )) -n 200  $1 #| grep -v ignoring
+		fi
+	done
+	
+	# and start a new test!
+	smartctl -t long -d sat $1 > /dev/null
+	smartctl -l xselftest -d sat $1 > $CD/$smart
 
-	bad=$(echo $(cat /tmp/smart |grep "# 1 ") | cut -d" " -f10)
-	echo $bad 
-	if [ "$bad" != "-" ] ; then
-		for n in $r ; do
-			let b1=$bad+$n
-			echo hdparm --repair-sector $b1  --yes-i-know-what-i-am-doing  $1
-			hdparm --repair-sector $b1  --yes-i-know-what-i-am-doing  $1 >> /tmp/smart_repaired.log
-		done
-		tail -n 60 /tmp/smart_repaired.log | grep writing | tail -n 20
-		grep '#' /tmp/smart | head -5
-		hdparm -I $1 > /tmp/hdparm
-		sleep 5
-	else
-		run=0
+
+	# check if test is running, and wait if it is... 
+	while [ "$(cat $CD/$smart | grep '# 1 ' | grep 'in progress')" != "" ] ; do
+		echo -n "$(date) | " ; cat $CD/$smart | grep '# 1 '
+		sleep 1200
+		smartctl -l xselftest -d sat $1 > $CD/$smart
+	done
+
+	while [ "$(cat $CD/$smart | grep 'Self_test_in_progress')" != "" ] ; do
+		echo -n "$(date) | " ; cat $CD/$smart | grep 'Self_test_in_progress'
+		sleep 1200
+		smartctl -l xselftest -d sat $1 > $CD/$smart
+	done
+
+	while [ "$(cat $CD/$smart | grep 'The previous self-test')" == "" ] ; do
+		sleep 1200
+		smartctl -x -d sat $1 > $CD/$smart
+		echo -n "$(date) | " ; cat $CD/$smart | grep 'Self-test execution status:' -A1
+	done
+
+	# stop if no more errors...
+	if [ "$(cat $CD/$smart | grep 'The previous self-test' -A1 | grep failed)" == "" ] ; then
+		break
 	fi
 done
-
