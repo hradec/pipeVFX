@@ -22,10 +22,31 @@
 class maya(baseApp):
 
     def macfix(self, macfixData):
+        # new format for maya folder structure, introduced in maya 2022
+        # now we put the same folder structure extracted from maya RPM files
+        # this makes it simple to install new versions of maya.
         if not os.path.exists(self.path("bin")) and os.path.exists(self.path("usr")):
+            # we have to set the modules path before we set macfix['subpath'], since
+            # the module paths are outside the maya root folder.
+            from glob import glob
+            mv = self.version().split('.')[0]
+            self.MAYA_MODULE_PATH = [
+                self.path("opt/Allegorithmic/Substance_in_Maya/%s/" % mv),
+                self.path("usr/autodesk/modules/maya/%s/" % mv)
+            ]
+            self.MAYA_MODULE_PATH += glob(self.path("usr/autodesk/bifrost/maya%s/*" % mv))
+            self.MAYA_MODULE_PATH += glob(self.path("usr/autodesk/mayausd/maya%s/*" % mv))
+
+            modules = []
+            for each in self.MAYA_MODULE_PATH:
+                modules += glob( "%s/*.mod" % each )
+            print modules
+
+            # now we can set maya root properly.
             macfixData['subpath'] = 'usr/autodesk/maya$MAYA_VERSION_MAJOR/'
             if not os.path.exists(self.path("bin/maya")):
                 self.maya_bin="maya$MAYA_VERSION_MAJOR"
+
 
     def environ(self, allPlugs=True):
         ''' this is the main method in a class to setup environment variables for an app.
@@ -35,7 +56,6 @@ class maya(baseApp):
             self['PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
             self['LD_LIBRARY_PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/plug-ins/translators/'
-
 
         # maya needs csh, libXp6 and libtiff3 installed to run!
         mv = float(self.version().split('.')[0])
