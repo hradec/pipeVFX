@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -22,17 +22,17 @@
 class wine(baseApp):
     def environ(self):
         from sys import argv
-        
+
         # disable cache by specifying --nocache on the command line!
         # usefull to configure default settings for wine apps
         if '--nocache' in argv:
             self['NOCACHE']='1'
             del argv[argv.index('--nocache')]
-        
+
         # this is a NVidia var. It disables VBLANK, which
         # seems to make opengl apps more stable under wine.
         self['__GL_SYNC_TO_VBLANK'] = '0'
-        
+
         # we need to set this to force wine to use our wine instead
         # of system wine, if it needs to spaw another process.
         self['WINELOADER'] = self.path('bin/wine')
@@ -42,7 +42,7 @@ class wine(baseApp):
             # if not, disables wintab32, so wine won't show up
             # the annoying wintab warning dialog!
             self['WINEDLLOVERRIDES'] = 'wintab32=n'
-        
+
     def versions(self):
         if os.environ.has_key('WINE_VERSION'):
             pipe.version.set( wine = os.environ['WINE_VERSION'] )
@@ -58,14 +58,14 @@ class wine(baseApp):
         the wine local cache in some way! '''
 #        return '/tmp/pipe_%s/%s' % ( os.environ['USER'], p.split('apps/')[1])
         return '%s/wine/cache/%s/' % ( os.environ['HOME'], p.split('apps/')[1])
-        
+
     def localCache(self, binFullName):
-        # we must have a local copy since wine needs the files 
-        # owned by the user 
+        # we must have a local copy since wine needs the files
+        # owned by the user
         from glob import glob
         import shutil
-        
-        if os.environ.has_key('WINEPREFIX'):                
+
+        if os.environ.has_key('WINEPREFIX'):
             prefixFrom = os.environ['WINEPREFIX']
             if '/apps/' in prefixFrom and 'NOCACHE' not in os.environ:
                 if not os.environ.has_key('WINEDEBUG'):
@@ -80,7 +80,7 @@ class wine(baseApp):
                 wineHome = '%s/wine/users' % os.environ['HOME']
                 if not os.path.exists(wineHome):
                     os.makedirs(wineHome)
-                
+
                 # we create the local cache for the current WINEPREFIX
                 # inside ~/wine/cache, as returned by wine.prefix()
                 if not os.path.exists('%s/drive_c' % prefix):
@@ -95,7 +95,7 @@ class wine(baseApp):
                             shutil.copy2( each, '%s/%s' % (prefix, beach) )
                         elif os.path.isdir(each) and beach not in dontSymlink:
                              os.symlink(each, '%s/%s' % (prefix, beach) )
-                
+
                 # make a symlink in this cache to our global users folder in ~/wine/users
                 if not os.path.exists('%s/drive_c/users' % prefix):
                     os.symlink(wineHome, '%s/drive_c/users' % prefix)
@@ -111,13 +111,13 @@ class wine(baseApp):
                     os.makedirs(wineTMP)
                 os.makedirs('%s/dosdevices' % prefix)
                 os.symlink('%s/drive_c' % prefix, '%s/dosdevices/c:' % prefix)
-                os.symlink( % pipe.roots().jobs(), '%s/dosdevices/j:' % prefix)
+                os.symlink( pipe.roots().jobs(), '%s/dosdevices/j:' % prefix)
                 os.symlink('/mnt', '%s/dosdevices/m:' % prefix)
                 os.symlink(os.environ['HOME'], '%s/dosdevices/h:' % prefix)
                 os.symlink(wineTMP, '%s/dosdevices/z:' % prefix)
-                
+
                 # cache everything in "c:/Program Files" as symlink
-                # if one is not already there. 
+                # if one is not already there.
                 progFiles = '%s/drive_c/Program Files/' % prefix
                 if not os.path.exists(progFiles):
                     os.makedirs(progFiles)
@@ -133,7 +133,7 @@ class wine(baseApp):
                 copy = ['system32']
                 for each in glob('%s/drive_c/windows/*' % prefixFrom):
                     beach = os.path.basename( each )
-                    if not os.path.exists( win+beach ): 
+                    if not os.path.exists( win+beach ):
                         if beach not in copy:
                             os.symlink( each, win+beach )
                         else:
@@ -141,25 +141,24 @@ class wine(baseApp):
 
                 # fix binFullName to the local cache
                 binFullName = binFullName.replace(os.environ['WINEPREFIX'], prefix)
-                
+
                 # point WINEPREFIX to the local cache as well
                 os.environ['WINEPREFIX'] = prefix
-                
-                # we need to preload wineserver here or else 
+
+                # we need to preload wineserver here or else
                 # wine will load the system one!
                 binFullName = '%s/bin/wineserver -d 3 -k -p1 \n ' % self.path() + binFullName
-                
+
                 # now return the local cache binFullName
                 log.debug( 'cached binary path name: %s' % binFullName )
-        return  binFullName    
-    
+        return  binFullName
+
     def bins(self):
-        return [('wine', 'wine')]    
+        return [('wine', 'wine')]
 
     def extraCommandLine(self, binName):
-        
+
         # add this for vglrun since wine uses
         # 32bit opengl libraries, we need to sign
         # virtualGL to intercept 32 bit opengl libs
         return ['-32']
-
