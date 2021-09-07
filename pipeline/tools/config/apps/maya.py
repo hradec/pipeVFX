@@ -45,7 +45,7 @@ class maya(baseApp):
             # now we can set maya root properly.
             macfixData['subpath'] = 'usr/autodesk/maya$MAYA_VERSION_MAJOR/'
             if not os.path.exists(self.path("bin/maya")):
-                self.maya_bin="maya$MAYA_VERSION_MAJOR"
+                self.maya_bin="bin/maya$MAYA_VERSION_MAJOR"
 
 
     def environ(self, allPlugs=True):
@@ -104,6 +104,7 @@ class maya(baseApp):
             self.update( golaem() )
             self.update( shave() )
             self.update( substance() )
+            self.update( mgear() )
             self.update( pipe.libs.usd() )
 
             if 'PIPE_REDSHIFT' in os.environ and os.environ['PIPE_REDSHIFT']=='1':
@@ -168,9 +169,15 @@ class maya(baseApp):
         # force the load of the support libraries that come with maya
         # this fixes problems in python with hashlib/md5!!
         if self.parent() in ['maya']:
-            self['LD_PRELOAD'] = self.path('support/openssl/libcrypto.so.6')
-            self['LD_PRELOAD'] = self.path('support/openssl/libssl.so.6')
-            self['LD_PRELOAD'] = '/usr/lib/libjpeg.so.62'
+            if float(self.version()) > 2019:
+                self['LD_PRELOAD'] = self.path('../../libs/libcrypto.so.10')
+                self['LD_PRELOAD'] = self.path('../../libs/libfontconfig.so.1')
+                self['LD_PRELOAD'] = self.path('../../libs/libharfbuzz.so.0')
+
+            else:
+                self['LD_PRELOAD'] = self.path('support/openssl/libcrypto.so.6')
+                self['LD_PRELOAD'] = self.path('support/openssl/libssl.so.6')
+                self['LD_PRELOAD'] = '/usr/lib/libjpeg.so.62'
 
 
         # our custom zlib give some error messages at startup of
@@ -201,6 +208,9 @@ class maya(baseApp):
                 # self.update(pipe.libs.pyside())
                 # pipe.libs.version.set( pyqt = '5.12.0' )
                 self.ignorePipeLib( "fontconfig" )
+                if self.parent() in ['maya']:
+                    if mv < 2022:
+                        self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
 
             # set the proper sip/pyqt so gaffer works
             elif mv > 2015:
@@ -261,9 +271,10 @@ class maya(baseApp):
                 self.insert('PYTHONPATH',0, self.path('lib/python%s/site-packages/' % pythonVer))
                 self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
                 self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
+                self.insert('LD_LIBRARY_PATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
 
-            if mv < 2022:
-                self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
+            # if mv < 2022:
+            self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
 
         # we run this to make sure Asset module works when importing IECore
         # for maya 2018 and up, since it comes with pyilmbase, which doens't match
@@ -274,12 +285,12 @@ class maya(baseApp):
             from sys import path as pythonpath
             os.environ['PYTHON_VERSION_MAJOR'] = pythonVer
             os.environ['BOOST_VERSION'] = pipe.libs.version.get( 'boost' )
-            os.environ['LD_LIBRARY_PATH'] = ''
+            # os.environ['LD_LIBRARY_PATH'] = ''
             for p in [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]:
                 pythonpath.insert(0, p)
             for p in [ os.path.expandvars(x) for x in pipe.libs.boost()['LD_LIBRARY_PATH'] ]:
                 pythonpath.insert(0, p)
-                os.environ['LD_LIBRARY_PATH'] += ':'+p
+                # os.environ['LD_LIBRARY_PATH'] = p+":"+os.environ['LD_LIBRARY_PATH']
             del os.environ['PYTHON_VERSION_MAJOR']
             del os.environ['BOOST_VERSION']
 
@@ -341,6 +352,7 @@ class maya(baseApp):
                 if os.path.exists(self.path('bin/mayapy2')):
                     __run = app.replace('mayapy', 'mayapy2')
 
+            __run = app.replace('mayapy','bin/mayapy')
         else:
             if hasattr(self, 'maya_bin'):
                 __run = app.replace('maya', self.maya_bin)

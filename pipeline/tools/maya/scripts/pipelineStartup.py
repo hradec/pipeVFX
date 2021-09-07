@@ -19,6 +19,14 @@
 # =================================================================================
 
 import os, sys
+# if float(os.environ["MAYA_VERSION"]) > 2017:
+#     # make sure md5 works!!
+#     def python2_fixMD5():
+#         import _hashlib
+#         import hashlib
+#         reload(hashlib)
+#     python2_fixMD5()
+
 import maya
 import maya.cmds as m
 from maya.mel import eval as meval
@@ -57,6 +65,11 @@ if float(os.environ["MAYA_VERSION"]) > 2017:
         import shiboken2
         reload(PySide2)
         reload(shiboken2)
+
+    # prependPythonPath(pipe.libs.alembic())
+    # import alembic
+
+
 
 # fix the F key, just in case!
 meval('optionVar  -fv "defaultFitFactor" 0.99')
