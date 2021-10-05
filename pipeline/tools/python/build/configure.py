@@ -574,6 +574,7 @@ class python(configure):
         'export PYTHONHOME=$INSTALL_FOLDER',
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config || true)',
+        # install easy_install version 45
         '( [ ! -e  $INSTALL_FOLDER/bin/easy_install ] && '
             'curl -L -O https://github.com/pypa/setuptools/archive/refs/tags/v45.3.0.tar.gz && '
             'tar xf v45.3.0.tar.gz && '
@@ -583,7 +584,7 @@ class python(configure):
             '$PYTHON ./setup.py install --prefix=$INSTALL_FOLDER '
         ')',
         # "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/easy_install hashlib || true)",
-        '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip==20 || true)',
+        '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip==9 || true)',
         '(ln -s pip$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/pip || true)',
         "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/pip install  readline || true)",
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
