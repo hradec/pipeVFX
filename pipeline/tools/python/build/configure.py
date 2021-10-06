@@ -134,8 +134,9 @@ class gccBuild(configure):
                 cmd = ';'.join([
                     # here we have to use $TARGET_FOLDER since version 4.1.2  has a targetSuffix -pre, but we don't want to use it as a subfolder.
                     'cp -ruvf ./* $TARGET_FOLDER/',
-                    'mkdir -p /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/',
-                    'rm -rf /atomo/home/rhradec/dev/pipevfx.git/pipeline/build/linux/x86_64/gcc-6.2.120160830/gcc/4.1.2',
+                    'mkdir -p $TARGET_FOLDER/../../../gcc-6.2.120160830/gcc/',
+                    'rm -rf $TARGET_FOLDER/../../../gcc-6.2.120160830/gcc/4.1.2',
+                    '''grep 'gcc-multi' $TARGET_FOLDER/* -R 2>/dev/null | awk -F':' '{print $1}' | while read p ; do cp "$p" "$p.bak" ; cat "$p.bak" | sed 's/gcc.multi/pipevfx.5.0.0/g' > "$p" ; done''',
                     "echo 'output something so we dont trigger a no-log error!!'",
                 ])
             else:
