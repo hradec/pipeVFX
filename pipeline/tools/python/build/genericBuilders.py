@@ -627,7 +627,8 @@ class generic:
                                         continue
 
                             # now, add all dependencies needed!
-                            depend_n = self.depend_n(dependOn, download[n][2])
+                            depend_n, dependOnOverride = self.depend_n(dependOn, download[n][2])
+                            dependOn = dependOnOverride
                             k = dependOn._depend.keys()
                             if p in k:
                                 if dependOn._depend[p][depend_n] not in source:
@@ -887,13 +888,17 @@ class generic:
                         self._os_environ_(target)['PYTHON_VERSION'] = dependOn.downloadList[depend_n][2]
 
 
+
         dependOnVersion = self.dependOn[dependOn]
+        dependOnOverride = dependOn
         # grab dependency version override from download list, if any!
         for download in self.downloadVersion(currVersion):
             if len(download)>4: # 5th element is a dependency list with version
                 override = [ x for x in download[4].keys() if dependOn.name == x.name ]
                 if override:
+                    dependOnOverride = override[0]
                     dependOnVersion = download[4][override[0]]
+
 
         # find the index of the dependency download version in the dependency
         # download list, and return it!
@@ -905,7 +910,7 @@ class generic:
                     depend_n = each
                     break
 
-        return depend_n
+        return depend_n, dependOnOverride
 
     def __check_target_log__(self,target, install=None, stage=''):
         ret=0
@@ -1126,6 +1131,16 @@ class generic:
                 if dependOn.name=='gcc'  and dependOn.targetSuffix:
                     continue
 
+                # grab the index for the version needed
+                debug=0
+                # if 'oiio' in target:
+                #     print pkgVersion.replace('.','_')
+                #     debug=1
+                depend_n, dependOnOverride = self.depend_n(dependOn, target, debug=debug)
+
+                # override dependOn with the one set in downloads
+                dependOn = dependOnOverride
+
                 # deal with python dependency
                 # the noBaseLib key holds all the paths for the python versions being built
                 if 'python' in dependOn.name:
@@ -1136,12 +1151,6 @@ class generic:
                         dependOn.targetFolder[os.path.basename(tmp[0])] = [tmp[0]]
                         os_environ['PYTHON_ROOT'] = tmp[0]
 
-                # grab the index for the version needed
-                debug=0
-                # if 'oiio' in target:
-                #     print pkgVersion.replace('.','_')
-                #     debug=1
-                depend_n = self.depend_n(dependOn, target, debug=debug)
                 k = dependOn.targetFolder.keys()
                 p = pythonVersion
 
@@ -1161,7 +1170,6 @@ class generic:
                         depend_n = 0
                     dependList[dependOn.name] = dependOn.targetFolder[p][depend_n]
 
-
                     os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = os.path.abspath(dependOn.targetFolder[p][depend_n])
                     # os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].strip('/').split('/')[-1]
@@ -1172,6 +1180,11 @@ class generic:
                     DB[self.name][os_environ['VERSION']][dependOn.name] = os_environ['%s_VERSION' % dependOn.name.upper()]
 
                     if not hasattr(dependOn, 'dontUseTargetSuffixForFolders'):
+                        # if 'pyilmbase' == dependOn.name:
+                        #     if 'alembic' == self.name:
+                        #         print(dependOn, dependOn.targetSuffix)
+
+
                         if dependOn.targetSuffix:
                             os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = '/'.join([
                                 os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].rstrip('/'),
@@ -1260,6 +1273,8 @@ class generic:
                     #             ])
                     #         else:
                     #             os_environ[each] = cleanV
+
+
 
 
         # here we check if the last build was finished suscessfully
@@ -1686,6 +1701,10 @@ class generic:
         # run the build!!
         from subprocess import Popen
         _start = time.time()
+
+        # if 'alembic' == self.name:
+        #     print(os_environ['PYILMBASE_TARGET_FOLDER'])
+
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
 
         # keep giving feedback about the build.
