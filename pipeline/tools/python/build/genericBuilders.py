@@ -500,8 +500,9 @@ class generic:
             if type(v)==type(""):
                 v=[kargs[each]]
             if type(v) not in [int, float, bool, dict]:
-                for n in range(len(v)):
-                    self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
+                if v:
+                    for n in range(len(v)):
+                        self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
 
 
         # adjust versions according to app used in the build
@@ -876,8 +877,8 @@ class generic:
                             # find the gcc version used for the current python version
                             for gcc_version in [ x for x in python.downloadList if x[2] ==  pythonVersion ]:
                                 # and set it
+                                # print  currVersion,dependOn.name,currVersion, pythonVersion, gcc_version[4]
                                 self.dependOn[ dependOn ] = gcc_version[4][ dependOn ]
-                                # print  currVersion,dependOn.name,currVersion, pythonVersion, gcc_version[4][ dependOn ]
 
                     if 'python' in dependOn.name:
                         self.dependOn[ dependOn ] = pythonVersion
@@ -1856,7 +1857,7 @@ class generic:
         update the build environment with all the enviroment variables
         specified in apps argument!
         '''
-        if hasattr(self, 'apps'):
+        if hasattr(self, 'apps') and self.apps:
             pipe.version.set(python=self._os_environ_(target) ['PYTHON_VERSION'])
             pipe.versionLib.set(python=self._os_environ_(target) ['PYTHON_VERSION'])
             for (app, version) in self.apps:

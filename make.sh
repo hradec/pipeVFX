@@ -220,7 +220,10 @@ else
         $X11 \
         --network=host \
         --privileged \
-        $build_image"
+        $build_image "
+
+        # --entrypoint /bin/bash \
+        # $build_image  -c \"mv /atomo /$STUDIO ; cp /run.sh /run.bak ; cat /run.bak | sed 's/atomo/$STUDIO/g' > /run.sh ; chmod a+x /run.sh ; /run.sh \" "
 
     echo $cmd
     eval $cmd

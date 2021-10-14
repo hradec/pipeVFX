@@ -286,8 +286,8 @@ class appsDB(dict):
         '''
         self.setApp(appName)
         ret = self.path(subPath='bin')
-        # if not os.path.exists(ret):
-        #     ret = self.path()
+        if not os.path.exists(ret):
+            ret = self.path()
         return ret
 
 

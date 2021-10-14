@@ -86,7 +86,7 @@ class browser( Gaffer.Application ) :
 
 		self.root()["scripts"]["script1"] = Gaffer.ScriptNode()
 
-		with GafferUI.Window( "Atomo Gaffer Browser" ) as window :
+		with GafferUI.Window( "Gaffer Browser" ) as window :
 			browser = BrowserEditorAtomo( self.root()["scripts"]["script1"] )
 
 		if args["initialPath"].value :

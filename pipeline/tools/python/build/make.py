@@ -288,6 +288,8 @@ class alembic(cmake):
                 cmd = cmd.replace('cmake','cmake '+each+' ')
 
         return cmake.fixCMD(self, cmd, os_environ, [
+            'export CORES=2',
+            'export DCORES=4',
             'export PRMAN_ROOT=$PRMAN_ROOT/RenderManProServer-$PRMAN_VERSION'
         ])
 

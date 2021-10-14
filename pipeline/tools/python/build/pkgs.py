@@ -456,11 +456,19 @@ class all: # noqa
                 'numpy',
                 'dbus-python',
                 'scons',
-                'jinja2', # needed by USD
+                # 'jinja2', # needed by USD
+                # 'six', # needed by IECore 10
             ]
         )
         self.python = python
         allDepend += [python]
+
+        # install extra python modules using pip, for all python versions
+        # installed by python build.
+        self.pip = [
+            build.pip( ARGUMENTS, 'jinja2', self.python ),  # needed by USD
+        ]
+        allDepend += self.pip
 
         tbb = build.tbb(
             ARGUMENTS,
@@ -811,7 +819,7 @@ class all: # noqa
                 '428b7a9e7e2d154a7ceb3e13536283e4',
             )],
             baseLibs=[python],
-            depend=[gcc, python, openssl]+allDepend,
+            depend=[python, openssl]+allDepend,
             environ = { 'LD' : 'ld' },
         )
         self.dbus = dbus
@@ -1429,14 +1437,14 @@ class all: # noqa
                         '1.8.10',
                         'a129a4caa39d7ad79aa1a3dc60cb0418',
                         { gcc : gcc_version, boost : boost_version, python: '2.7.16',}
-                        # { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16',}
+                        # { gcc : '6.3.1', boost : bv, python: '2.7.16',}
                     ],[
                         'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                         'oiio-Release-2.0.11.tar.gz',
                         '2.0.11',
                         '4fa0ce4538fb2d7eb72f54f4036972d5',
                         { gcc : gcc_version, boost : boost_version, python: '2.7.16',}
-                        # { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16',}
+                        # { gcc : '6.3.1', boost : bv, python: '2.7.16',}
                 ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
@@ -1764,981 +1772,1001 @@ class all: # noqa
 
 
         # =============================================================================================================================================
-        bv='1.61.0'
-        environ = self.exr_rpath_environ.copy()
-        environ.update( {
-                # to be able to use gcc and llvm togheter, we have to add
-                # GCC search paths in CC/CXX/LD env vars, since LLVM
-                # search path is added by the system first than GCC.
-                # As we're using -nostdinc, we have to tell GCC where the
-                # correct includes are!
-                # we add the main system one for last!
-                # we also use -isystem so these come before any *_INCLUDE_PATH
-                # env vars searchpath.
-                # We only have to do this with OSL, since it's the only one
-                # that uses gcc and llvm on the same build!
-                'CXX':  'g++ '
-                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
-                            ' -isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
-                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
-                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
-                            ' -isystem /usr/include',
-                'CC' :  'gcc '
-                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem /usr/include',
-                'LD' :  'g++ '
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ' + self.exr_rpath_environ['LDFLAGS'],
+        # from now on, we build all packages for boost version > 1.60
+        # for bv in [ x for x in self.boost.versions if build.versionMajor(x) > 1.60 ]:
+        for bv in ['1.66.0']:
+            environ = self.exr_rpath_environ.copy()
+            environ.update( {
+                    # to be able to use gcc and llvm togheter, we have to add
+                    # GCC search paths in CC/CXX/LD env vars, since LLVM
+                    # search path is added by the system first than GCC.
+                    # As we're using -nostdinc, we have to tell GCC where the
+                    # correct includes are!
+                    # we add the main system one for last!
+                    # we also use -isystem so these come before any *_INCLUDE_PATH
+                    # env vars searchpath.
+                    # We only have to do this with OSL, since it's the only one
+                    # that uses gcc and llvm on the same build!
+                    'CXX':  'g++ '
+                                ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                                ' -isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                                ' -isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+                                ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                                ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+                                ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+                                ' -isystem /usr/include',
+                    'CC' :  'gcc '
+                                ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                                ' -isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                                ' -isystem /usr/include',
+                    'LD' :  'g++ '
+                                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ' + self.exr_rpath_environ['LDFLAGS'],
 
-                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ' + self.exr_rpath_environ['LDFLAGS'],
-        })
-        osl = build.cmake(
-            ARGUMENTS,
-            'osl',
-            sed = {
-                '0.0.0' : {
-                    'CMakeLists.txt' : [
-                        ('add_definitions.*Wno.error=strict.overflow','#add_definitions ("-Wno-error=strict-overflow")'),
-                    ],
-                    'src/cmake/externalpackages.cmake' : [
-                        ('--libfiles', '--libfiles --system-libs'),
-                        ('string (REPLACE " " ";" LLVM_LIBRARY ${LLVM_LIBRARY})', 'string (REPLACE "\\\\\\n" " " LLVM_LIBRARY ${LLVM_LIBRARY})\nstring (REPLACE " " ";" LLVM_LIBRARY ${LLVM_LIBRARY})'),
-                    ]
+                    'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ' + self.exr_rpath_environ['LDFLAGS'],
+            })
+            osl = build.cmake(
+                ARGUMENTS,
+                'osl',
+                sed = {
+                    '0.0.0' : {
+                        'CMakeLists.txt' : [
+                            ('add_definitions.*Wno.error=strict.overflow','#add_definitions ("-Wno-error=strict-overflow")'),
+                        ],
+                        'src/cmake/externalpackages.cmake' : [
+                            ('--libfiles', '--libfiles --system-libs'),
+                            ('string (REPLACE " " ";" LLVM_LIBRARY ${LLVM_LIBRARY})', 'string (REPLACE "\\\\\\n" " " LLVM_LIBRARY ${LLVM_LIBRARY})\nstring (REPLACE " " ";" LLVM_LIBRARY ${LLVM_LIBRARY})'),
+                        ]
+                    },
+                    '1.10.0' : {
+                    },
                 },
-                '1.10.0' : {
+                download=[(
+                    'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.10.7.tar.gz',
+                    'OpenShadingLanguage-Release-1.10.7.tar.gz',
+                    '1.10.7',
+                    '53f66e12c3e29c62dc51b070f027a0ad',
+                    {llvm : "7.1.0", gcc: "6.3.1", boost: bv,
+                    self.ilmbase['boost.%s' % bv]: exr_version,
+                    self.openexr['boost.%s' % bv]: exr_version,
+                    self.oiio   ['boost.%s' % bv]: "1.8.10", }
+                # ),(
+                #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.9.9.tar.gz',
+                #     'OpenShadingLanguage-Release-1.9.9.tar.gz',
+                #     '1.9.9',
+                #     '53f66e12c3e29c62dc51b070f027a0ad',
+                #     {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.55.0"},
+                # ),(
+                #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
+                #     'OpenShadingLanguage-Release-1.7.5.tar.gz',
+                #     '1.7.5',
+                #     '8b15d13c3fa510b421834d32338304c8',
+                #     {oiio: "1.6.15", llvm : "3.9.1", gcc: "4.8.5", boost: "1.51.0"},
+                )],
+                depend=[llvm, boost, icu, cmake, pugixml, freetype, openssl, bzip2, libraw]+allDepend,
+                cmd = [
+                    # we have to use the devtoolset-6 gcc
+                    # 'source scl_source enable devtoolset-6',
+                    'make '#'-j $DCORES '
+                    'USE_CPP11=1 '
+                    'INSTALLDIR=$INSTALL_FOLDER '
+                    'INSTALL_PREFIX=$INSTALL_FOLDER '
+                    'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
+                    'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
+                    'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
+                    'BOOST_ROOT=$BOOST_TARGET_FOLDER '
+                    'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
+                    'LLVM_STATIC=0 '
+                    'PARTIO_HOME="" '
+                    'STOP_ON_WARNING=0 '
+                    'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
+                    'OPENEXR_HOME=$OPENEXR_TARGET_FOLDER '
+                    'BOOST_HOME=$BOOST_TARGET_FOLDER '
+                    'USE_LIBCPLUSPLUS=0 '
+                    'HIDE_SYMBOLS=0 '
+                    # 'install '
+                ],
+                environ = environ,
+                verbose=1,
+            )
+            self.osl = osl
+
+            # qt packages
+            # =============================================================================================================================================
+            qtpy = build.download(
+                ARGUMENTS,
+                'qtpy',
+                download=[(
+                    'https://github.com/mottosso/Qt.py/archive/1.1.0.b3.tar.gz',
+                    'Qt.py-1.1.0.b3.tar.gz',
+                    '1.1.0.b3',
+                    '5c1acbf9bdec2359d414cc7d2a2b6b7f',
+                )],
+                cmd = [
+                    'rm -rf $INSTALL_FOLDER/*',
+                    'mkdir -p $INSTALL_FOLDER/lib/python/site_packages/src',
+                    'ln -s python $INSTALL_FOLDER/lib/python2.6',
+                    'ln -s python $INSTALL_FOLDER/lib/python2.7',
+                    'ln -s python $INSTALL_FOLDER/lib/python3.5',
+                    'ln -s python $INSTALL_FOLDER/lib/python3.6',
+                    'ln -s python $INSTALL_FOLDER/lib/python3.7',
+                    'ln -s python $INSTALL_FOLDER/lib/python3.8',
+                    'ln -s lib $INSTALL_FOLDER/lib64',
+                    'cp -rf ./Qt.py $INSTALL_FOLDER/lib/python/site_packages/',
+                    'cp -rf ./* $INSTALL_FOLDER/lib/python/site_packages/src/',
+                    'echo "This build was done suscessfully!!"',
+                ],
+                src = 'Qt.py',
+                noMinTime=True,
+            )
+            self.qtpy = qtpy
+
+            sip = build.pythonSetup(
+                ARGUMENTS,
+                'sip',
+                download=[(
+                    'https://sourceforge.net/projects/pyqt/files/sip/sip-4.15.5/sip-4.15.5.tar.gz',
+                    'sip-4.15.5.tar.gz',
+                    '4.15.5',
+                    '4c95447c7b0391b7f183cf9f92ae9bc6',
+                    { gcc : '4.1.2', qt : '4.8.7' }
+                ),(
+                    'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
+                    'sip-4.16.7.tar.gz',
+                    '4.16.7',
+                    '32abc003980599d33ffd789734de4c36',
+                    { gcc : '4.1.2', qt : '4.8.7' }
+                ),(
+                    'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.4/sip-4.16.4.tar.gz',
+                    'sip-4.16.4.tar.gz',
+                    '4.16.4',
+                    'a9840670a064dbf8f63a8f653776fec9',
+                    { gcc : '4.1.2', qt : '4.8.7' }
+                ),(
+                    'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18/sip-4.18.tar.gz',
+                    'sip-4.18.tar.gz',
+                    '4.18.0',
+                    '78724bf2a79878201c3bc81a1d8248ea',
+                    { gcc : '4.8.5', qt : '5.6.0' }
+                ),(
+                    'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18.1/sip-4.18.1.tar.gz',
+                    'sip-4.18.1.tar.gz',
+                    '4.18.1',
+                    '9d664c33e8d0eabf1238a7ff44a399e9',
+                    { gcc : '4.8.5', qt : '5.12.0' }
+                # ),(
+                #     'https://sourceforge.net/project/pyqt/files/sip/sip-4.19.13/sip-4.19.13.tar.gz',
+                #     'sip-4.19.13.tar.gz',
+                #     '4.19.13',
+                #     '9124cb8978742685747a5415179a9890',
+                #     { gcc : '4.1.2' }
+                )],
+                baseLibs=[python],
+                src = 'configure.py',
+                cmd = [
+                    # 'python configure.py --sysroot=$INSTALL_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+                    # '( [ "$(basename $TARGET_FOLDER)" == "4.16.7" ]',
+                    'python configure.py '
+                    '-b $INSTALL_FOLDER/bin '
+                    '-d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+                    '-e $INSTALL_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
+                    '-v $INSTALL_FOLDER/share/sip/ '
+                    'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+                    'mv specs specs__ ',
+                    'make -j $DCORES && make -j $DCORES install'
+                    # ' ) || echo -e "\n\nnot building sip for qt 5 for now!!\n\n" ',
+                ],
+                depend = allDepend+[qt],
+                noMinTime=True,
+            )
+            self.sip = sip
+
+            pyqt = build.pythonSetup(
+                ARGUMENTS,
+                'pyqt',
+                download=[(
+                    # CY 2014-2015
+                    'http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz',
+                    'PyQt-x11-gpl-4.11.4.tar.gz',
+                    '4.11.4',
+                    '2fe8265b2ae2fc593241c2c84d09d481',
+                    { qt:'4.8.7', sip: '4.16.7', gcc : '4.1.2'},
+                ),(
+                    # CY 2016-2018
+                    'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.6/PyQt5_gpl-5.6.tar.gz',
+                    'PyQt5_gpl-5.6.tar.gz',
+                    '5.6.0',
+                    'dbfc885c0548e024ba5260c4f44e0481',
+                    { qt:'5.6.1', sip: '4.18.0', gcc : '4.8.5' },
+                ),(
+                    # CY 2019-2020
+                    'https://www.riverbankcomputing.com/static/Downloads/PyQt5/5.12/PyQt5_gpl-5.12.tar.gz',
+                    'PyQt5_gpl-5.12.tar.gz',
+                    '5.12.0',
+                    '0d839c6218a4287d51bf79d6195016f0',
+                    { qt:'5.12.0', sip: '4.18.1', gcc : '4.8.5' },
+                )],
+                baseLibs=[python],
+                depend=[sip, qt, gcc]+allDepend,
+                src = 'configure.py',
+                cmd = [
+                    '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
+                            'python configure.py --confirm-license --assume-shared --protected-is-public  CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                            '-b $INSTALL_FOLDER/bin -d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages '
+                            '-p $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/plugins '
+                            '&& make -j $DCORES '
+                                'CFLAGS="$CFLAGS -DPYTHON_LIB=\\\\\\\"libpython$PYTHON_VERSION_MAJOR.so\\\\\\\"" '
+                                'CXXFLAGS="$CXXFLAGS -DPYTHON_LIB=\\\\\\\"libpython$PYTHON_VERSION_MAJOR.so\\\\\\\"" '
+                            '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
+                        # =======================================================
+                        # TODO: PyQt5 is failing to build, not sure why.
+                        # for now, we will be using PySide2 for maya 2018 and up,
+                        # since it build without problems!
+                        # =======================================================
+                        # '|| '
+                        #     'python configure.py --confirm-license --verbose --no-designer-plugin -w --protected-is-public  --sysroot=$INSTALL_FOLDER '
+                        #     '-b $INSTALL_FOLDER/bin '
+                        #     '-d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+                        #     "-v $INSTALL_FOLDER/share/sip/PyQt$(echo $QT_VERSION | awk -F'.' '{print $1}') "
+                        #     'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        #     '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+                        #     '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
+                    ')'
+                    # we return true if pyqt 5 since we want to download
+                    # the pkgs to keep then around, but not build then.
+                    ' || echo -e "\n\n NOT BUILDING PYQT5 FOR NOW! (more info in pkgs.py)\n\n"'
+                ],
+                noMinTime=True,
+            )
+            self.pyqt = pyqt
+            # allDepend += [pyqt]
+
+            pyside = build.pythonSetup(
+                ARGUMENTS,
+                'pyside',
+                # install is broken in pyside2, and it won't install sub-modules.
+                # this patch fixes that, and USD can be built now!
+                sed = { '2.0.18' : { './setup.py' : [
+                    ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2'\]'''),
+                    ('OPTION_VERSION = ','OPTION_VERSION = False #'),
+                # ]}, '2.0.19' : { './setup.py' : [
+                #     ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2', 'pyside2uic.port_v3'\]'''),
+                ]}},
+                download=[(
+                   # CY 2016-2018 (maya 2018.4)
+                   'https://www.autodesk.com/content/dam/autodesk/www/Company/files/pyside2-maya2018.4.zip',
+                   'pyside2-maya2018.4.zip',
+                   '2.0.18',
+                   'aa93469f528db7ce9a596f36828102dc',
+                   { qt:'5.6.1', gcc : '4.8.5', python: '2.7.16' },
+                ),(
+                   # CY 2016-2018 (maya 2018.6 and maya 2019.1)
+                   'https://www.autodesk.com/content/dam/autodesk/www/Company/files/PySide2-Maya-2018_6.tgz',
+                   'pyside2-maya2018.6.tar.gz',
+                   '2.0.19',
+                   '84558ad5952c5d86a648f319978413e9',
+                   { qt:'5.6.1', gcc : '4.8.5', python: '2.7.16' },
+                )],
+                # since booth files create the same path, we have to instruct the
+                # decompressor to use the same folder name for booth.
+                uncompressed_path = {
+                    'pyside2-maya2018.4' : 'pyside-setup',
+                    'pyside2-maya2018.6' : 'pyside-setup',
                 },
-            },
-            download=[(
-                'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.10.7.tar.gz',
-                'OpenShadingLanguage-Release-1.10.7.tar.gz',
-                '1.10.7',
-                '53f66e12c3e29c62dc51b070f027a0ad',
-                {llvm : "7.1.0", gcc: "6.3.1", boost: bv,
-                self.ilmbase['boost.%s' % bv]: exr_version,
-                self.openexr['boost.%s' % bv]: exr_version,
-                self.oiio   ['boost.%s' % bv]: "1.8.10", }
-            # ),(
-            #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.9.9.tar.gz',
-            #     'OpenShadingLanguage-Release-1.9.9.tar.gz',
-            #     '1.9.9',
-            #     '53f66e12c3e29c62dc51b070f027a0ad',
-            #     {oiio: "2.0.11", llvm : "7.1.0", gcc: "4.8.5", boost: "1.55.0"},
-            # ),(
-            #     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.7.5.tar.gz',
-            #     'OpenShadingLanguage-Release-1.7.5.tar.gz',
-            #     '1.7.5',
-            #     '8b15d13c3fa510b421834d32338304c8',
-            #     {oiio: "1.6.15", llvm : "3.9.1", gcc: "4.8.5", boost: "1.51.0"},
-            )],
-            depend=[llvm, boost, icu, cmake, pugixml, freetype, openssl, bzip2, libraw]+allDepend,
-            cmd = [
-                # we have to use the devtoolset-6 gcc
-                # 'source scl_source enable devtoolset-6',
-                'make '#'-j $DCORES '
-                'USE_CPP11=1 '
-                'INSTALLDIR=$INSTALL_FOLDER '
-                'INSTALL_PREFIX=$INSTALL_FOLDER '
-                'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
-                'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
-                'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
-                'BOOST_ROOT=$BOOST_TARGET_FOLDER '
-                'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
-                'LLVM_STATIC=0 '
-                'PARTIO_HOME="" '
-                'STOP_ON_WARNING=0 '
-                'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
-                'OPENEXR_HOME=$OPENEXR_TARGET_FOLDER '
-                'BOOST_HOME=$BOOST_TARGET_FOLDER '
-                'USE_LIBCPLUSPLUS=0 '
-                'HIDE_SYMBOLS=0 '
-                # 'install '
-            ],
-            environ = environ,
-            verbose=1,
-        )
-        self.osl = osl
-
-        # qt packages
-        # =============================================================================================================================================
-        qtpy = build.download(
-            ARGUMENTS,
-            'qtpy',
-            download=[(
-                'https://github.com/mottosso/Qt.py/archive/1.1.0.b3.tar.gz',
-                'Qt.py-1.1.0.b3.tar.gz',
-                '1.1.0.b3',
-                '5c1acbf9bdec2359d414cc7d2a2b6b7f',
-            )],
-            cmd = [
-                'rm -rf $INSTALL_FOLDER/*',
-                'mkdir -p $INSTALL_FOLDER/lib/python/site_packages/src',
-                'ln -s python $INSTALL_FOLDER/lib/python2.6',
-                'ln -s python $INSTALL_FOLDER/lib/python2.7',
-                'ln -s python $INSTALL_FOLDER/lib/python3.5',
-                'ln -s python $INSTALL_FOLDER/lib/python3.6',
-                'ln -s python $INSTALL_FOLDER/lib/python3.7',
-                'ln -s python $INSTALL_FOLDER/lib/python3.8',
-                'ln -s lib $INSTALL_FOLDER/lib64',
-                'cp -rf ./Qt.py $INSTALL_FOLDER/lib/python/site_packages/',
-                'cp -rf ./* $INSTALL_FOLDER/lib/python/site_packages/src/',
-                'echo "This build was done suscessfully!!"',
-            ],
-            src = 'Qt.py',
-            noMinTime=True,
-        )
-        self.qtpy = qtpy
-
-        sip = build.pythonSetup(
-            ARGUMENTS,
-            'sip',
-            download=[(
-                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.15.5/sip-4.15.5.tar.gz',
-                'sip-4.15.5.tar.gz',
-                '4.15.5',
-                '4c95447c7b0391b7f183cf9f92ae9bc6',
-                { gcc : '4.1.2', qt : '4.8.7' }
-            ),(
-                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
-                'sip-4.16.7.tar.gz',
-                '4.16.7',
-                '32abc003980599d33ffd789734de4c36',
-                { gcc : '4.1.2', qt : '4.8.7' }
-            ),(
-                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.4/sip-4.16.4.tar.gz',
-                'sip-4.16.4.tar.gz',
-                '4.16.4',
-                'a9840670a064dbf8f63a8f653776fec9',
-                { gcc : '4.1.2', qt : '4.8.7' }
-            ),(
-                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18/sip-4.18.tar.gz',
-                'sip-4.18.tar.gz',
-                '4.18.0',
-                '78724bf2a79878201c3bc81a1d8248ea',
-                { gcc : '4.8.5', qt : '5.6.0' }
-            ),(
-                'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18.1/sip-4.18.1.tar.gz',
-                'sip-4.18.1.tar.gz',
-                '4.18.1',
-                '9d664c33e8d0eabf1238a7ff44a399e9',
-                { gcc : '4.8.5', qt : '5.12.0' }
-            # ),(
-            #     'https://sourceforge.net/project/pyqt/files/sip/sip-4.19.13/sip-4.19.13.tar.gz',
-            #     'sip-4.19.13.tar.gz',
-            #     '4.19.13',
-            #     '9124cb8978742685747a5415179a9890',
-            #     { gcc : '4.1.2' }
-            )],
-            baseLibs=[python],
-            src = 'configure.py',
-            cmd = [
-                # 'python configure.py --sysroot=$INSTALL_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
-                # '( [ "$(basename $TARGET_FOLDER)" == "4.16.7" ]',
-                'python configure.py '
-                '-b $INSTALL_FOLDER/bin '
-                '-d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-                '-e $INSTALL_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
-                '-v $INSTALL_FOLDER/share/sip/ '
-                'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
-                'mv specs specs__ ',
-                'make -j $DCORES && make -j $DCORES install'
-                # ' ) || echo -e "\n\nnot building sip for qt 5 for now!!\n\n" ',
-            ],
-            depend = allDepend+[qt],
-            noMinTime=True,
-        )
-        self.sip = sip
-
-        pyqt = build.pythonSetup(
-            ARGUMENTS,
-            'pyqt',
-            download=[(
-                # CY 2014-2015
-                'http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz',
-                'PyQt-x11-gpl-4.11.4.tar.gz',
-                '4.11.4',
-                '2fe8265b2ae2fc593241c2c84d09d481',
-                { qt:'4.8.7', sip: '4.16.7', gcc : '4.1.2'},
-            ),(
-                # CY 2016-2018
-                'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.6/PyQt5_gpl-5.6.tar.gz',
-                'PyQt5_gpl-5.6.tar.gz',
-                '5.6.0',
-                'dbfc885c0548e024ba5260c4f44e0481',
-                { qt:'5.6.1', sip: '4.18.0', gcc : '4.8.5' },
-            ),(
-                # CY 2019-2020
-                'https://www.riverbankcomputing.com/static/Downloads/PyQt5/5.12/PyQt5_gpl-5.12.tar.gz',
-                'PyQt5_gpl-5.12.tar.gz',
-                '5.12.0',
-                '0d839c6218a4287d51bf79d6195016f0',
-                { qt:'5.12.0', sip: '4.18.1', gcc : '4.8.5' },
-            )],
-            baseLibs=[python],
-            depend=[sip, qt, gcc]+allDepend,
-            src = 'configure.py',
-            cmd = [
-                '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
-                        'python configure.py --confirm-license --assume-shared --protected-is-public  CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
-                        '-b $INSTALL_FOLDER/bin -d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages '
-                        '-p $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/plugins '
-                        '&& make -j $DCORES '
-                            'CFLAGS="$CFLAGS -DPYTHON_LIB=\\\\\\\"libpython$PYTHON_VERSION_MAJOR.so\\\\\\\"" '
-                            'CXXFLAGS="$CXXFLAGS -DPYTHON_LIB=\\\\\\\"libpython$PYTHON_VERSION_MAJOR.so\\\\\\\"" '
-                        '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
-                    # =======================================================
-                    # TODO: PyQt5 is failing to build, not sure why.
-                    # for now, we will be using PySide2 for maya 2018 and up,
-                    # since it build without problems!
-                    # =======================================================
-                    # '|| '
-                    #     'python configure.py --confirm-license --verbose --no-designer-plugin -w --protected-is-public  --sysroot=$INSTALL_FOLDER '
-                    #     '-b $INSTALL_FOLDER/bin '
-                    #     '-d $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-                    #     "-v $INSTALL_FOLDER/share/sip/PyQt$(echo $QT_VERSION | awk -F'.' '{print $1}') "
-                    #     'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
-                    #     '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
-                    #     '&& make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install '
-                ')'
-                # we return true if pyqt 5 since we want to download
-                # the pkgs to keep then around, but not build then.
-                ' || echo -e "\n\n NOT BUILDING PYQT5 FOR NOW! (more info in pkgs.py)\n\n"'
-            ],
-            noMinTime=True,
-        )
-        self.pyqt = pyqt
-        # allDepend += [pyqt]
-
-        pyside = build.pythonSetup(
-            ARGUMENTS,
-            'pyside',
-            # install is broken in pyside2, and it won't install sub-modules.
-            # this patch fixes that, and USD can be built now!
-            sed = { '2.0.18' : { './setup.py' : [
-                ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2'\]'''),
-                ('OPTION_VERSION = ','OPTION_VERSION = False #'),
-            # ]}, '2.0.19' : { './setup.py' : [
-            #     ('packages.....PySide2.*pyside2uic.\]','''packages = \['PySide2', 'pyside2uic', 'pyside2uic.Compiler', 'pyside2uic.port_v2', 'pyside2uic.port_v3'\]'''),
-            ]}},
-            download=[(
-               # CY 2016-2018 (maya 2018.4)
-               'https://www.autodesk.com/content/dam/autodesk/www/Company/files/pyside2-maya2018.4.zip',
-               'pyside2-maya2018.4.zip',
-               '2.0.18',
-               'aa93469f528db7ce9a596f36828102dc',
-               { qt:'5.6.1', gcc : '4.8.5', python: '2.7.16' },
-            ),(
-               # CY 2016-2018 (maya 2018.6 and maya 2019.1)
-               'https://www.autodesk.com/content/dam/autodesk/www/Company/files/PySide2-Maya-2018_6.tgz',
-               'pyside2-maya2018.6.tar.gz',
-               '2.0.19',
-               '84558ad5952c5d86a648f319978413e9',
-               { qt:'5.6.1', gcc : '4.8.5', python: '2.7.16' },
-            )],
-            # since booth files create the same path, we have to instruct the
-            # decompressor to use the same folder name for booth.
-            uncompressed_path = {
-                'pyside2-maya2018.4' : 'pyside-setup',
-                'pyside2-maya2018.6' : 'pyside-setup',
-            },
-            # baseLibs=[python],
-            depend=[qt, gcc]+allDepend,
-            environ={
-                'LDFLAGS' : '$LDFLAGS '+self.qt_rpath_environ['LDFLAGS']
-            },
-            cmd = [
-                build.pythonSetup.cmd[0]+' --jobs=$DCORES  --prefix=$INSTALL_FOLDER',
-                # create symbolic links of the libraries in the correct place,
-                # so pipeVFX can find it - this is needed when building maya related
-                # code to avoid picking up maya version of those libraries.
-                'ln -s $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/PySide2/lib* '
-                      '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/'
-            ],
-        )
-        self.pyside = pyside
-        # allDepend += [pyside]
-
-        log4cplus = build.configure(
-            ARGUMENTS,
-            'log4cplus',
-            download=[(
-                'https://github.com/log4cplus/log4cplus/archive/REL_1_2_0.tar.gz',
-                'log4cplus-REL_1_2_0.tar.gz',
-                '1.2.0',
-                'b39900d6b504726a20819f2ad73f5877',
-                { gcc : '4.1.2' }
-            )],
-            depend=[gcc]+allDepend,
-        )
-        self.log4cplus = log4cplus
-        allDepend += [log4cplus]
-
-        blosc = build.cmake(
-            ARGUMENTS,
-            'blosc',
-            download=[(
-                'https://github.com/Blosc/c-blosc/archive/1.15.1.tar.gz',
-                'c-blosc-1.15.1.tar.gz',
-                '1.15.1',
-                'ff2f5a0fe5c7a8a9e2eb0c6f224e2823',
-                { gcc : '4.1.2' }
-            )],
-            depend=[gcc]+allDepend,
-            flags=['-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '],
-            environ = { 'LD' : 'ld', 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/:$LD_LIBRARY_PATH'  },
-        )
-        self.blosc = blosc
-        allDepend += [blosc]
-
-        ptex = build.cmake(
-            ARGUMENTS,
-            'ptex',
-            sed = {},
-            download=[(
-                # CY 2020
-                'https://github.com/wdas/ptex/archive/v2.3.2.tar.gz',
-                'ptex-2.3.2.tar.gz',
-                '2.3.2',
-                'd409eecde96f89517bc271b1d4909bc5',
-                { cmake: '3.8.2', gcc : '6.3.1' }
-            ),(
-                # CY 2019
-                'https://github.com/wdas/ptex/archive/v2.1.33.tar.gz',
-                'ptex-2.1.33.tar.gz',
-                '2.1.33',
-                'ce1f1af2a151a2bf1057e0456c91dbb6',
-                { cmake: '3.8.2', gcc : '4.1.2' }
-            ),(
-                # CY 2017-2018
-                'https://github.com/wdas/ptex/archive/v2.1.28.tar.gz',
-                'ptex-2.1.28.tar.gz',
-                '2.1.28',
-                'ce4eb665f686f8391968fa137113bc69',
-                { cmake: '3.8.2', gcc : '4.1.2' }
-            ),(
-                # CY 2016
-                'https://github.com/wdas/ptex/archive/v2.0.42.tar.gz',
-                'ptex-2.0.42.tar.gz',
-                '2.0.42',
-                '09450bd49dab3db878504a6e51c0745d',
-                { cmake: '3.8.2', gcc : '4.1.2' }
-            )],
-            depend=allDepend,
-            src = 'README',
-            environ={
-                'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
-                'CPLUS_INCLUDE_PATH' : '$CPLUS_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
-                'LDFLAGS'            : '$LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
-            },
-            cmd = [
-                '( [ "$(basename $TARGET_FOLDER)" == "2.0.42" ] ',
-                    'cd src',
-                    'make',
-                    'cp -rfuv ../install/* $INSTALL_FOLDER/',
-                    'cp $INSTALL_FOLDER/lib/* $INSTALL_FOLDER/lib64/'
-                ' ) || ( '+\
-                    ' && '.join(build.cmake.cmd).replace('cmake','cmake -DPTEX_VER=$(basename $TARGET_FOLDER)'),
-                    'cp $INSTALL_FOLDER/lib64/* $INSTALL_FOLDER/lib/'
-                ' )'
-            ]
-        )
-        self.ptex = ptex
-        allDepend += [ptex]
-
-        openvdb = build.cmake(
-            ARGUMENTS,
-            'openvdb',
-            download=[(
-            #     # CY 2020
-            #     'https://github.com/AcademySftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
-            #     'openvdb-7.0.0.tar.gz',
-            #     '7.0.0',
-            #     'd409eecde96f89517bc271b1d4909bc5',
-            #     { gcc : '4.8.5', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
-            #     self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version, }
-            # ),(
-                # CY 2019
-                'https://github.com/AcademySoftwareFoundation/openvdb/archive/v6.0.0.tar.gz',
-                'openvdb-6.0.0.tar.gz',
-                '6.0.0',
-                '43604208441b1f3625c479ef0a36d7ad',
-                { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
-                self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
-            ),(
-                # CY 2018
-                'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
-                'openvdb-5.0.0.tar.gz',
-                '5.0.0',
-                '9ba08c29dda60ec625acb8a5928875e5',
-                { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
-                self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
-            ),(
-                # CY 2017
-                'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
-                'openvdb-4.0.0.tar.gz',
-                '4.0.0',
-                'c56d8a1a460f1d3327f2568e3934ca6a',
-                { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6',
-                self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version,  self.pyilmbase['boost.1.61.0']: exr_version,}
-            ),(
-                # CY 2015-2016
-                'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
-                'openvdb-3.0.0.tar.gz',
-                '3.0.0',
-                '3ca8f930ddf759763088e265654f4084',
-                { gcc : '6.3.1', boost : "1.61.0", python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
-                self.ilmbase['boost.1.61.0']: exr_version, self.openexr['boost.1.61.0']: exr_version, self.pyilmbase['boost.1.61.0']: exr_version, }
-            )],
-            depend=allDepend+[glfw],
-            src = "README.md",
-            environ={
-                'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
-                'CPLUS_INCLUDE_PATH' : '$CPLUS_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
-                'LDFLAGS'            : '$LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
-                # 'LD'                 : '$LD '+self.exr_rpath_environ['LDFLAGS'],
-            },
-            cmd = [
-            "cd openvdb",
-            " make install -j $DCORES"
-			" DESTDIR=$INSTALL_FOLDER"
-			" BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include"
-			" BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
-			" BOOST_PYTHON_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
-			" BOOST_PYTHON_LIB=-lboost_python"
-			" EXR_INCL_DIR=$OPENEXR_TARGET_FOLDER/include"
-			" EXR_LIB_DIR=$OPENEXR_TARGET_FOLDER/lib"
-			" TBB_INCL_DIR=$TBB_TARGET_FOLDER/include/tbb"
-			" TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib"
-			" PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
-			" PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include"
-			" PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib"
-			" BLOSC_INCL_DIR=$BLOSC_TARGET_FOLDER/include"
-			" BLOSC_LIB_DIR=$BLOSC_TARGET_FOLDER/lib"
-			" NUMPY_INCL_DIR="
-			" CONCURRENT_MALLOC_LIB="
-			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
-			" LOG4CPLUS_INCL_DIR="
-			" EPYDOC= ",
-            "cp $INSTALL_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $INSTALL_FOLDER/python",
-		    "cp $INSTALL_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $INSTALL_FOLDER/include",
-            ]
-        )
-        self.openvdb = openvdb
-        allDepend += [openvdb]
-
-        # build alembic without apps plugins
-        print self.ilmbase
-        alembic = build.alembic(
-            ARGUMENTS,
-            'alembic',
-            sed = {'1.5.8' : {
-                'lib/AbcOpenGL/Foundation.h' : [
-                    ('.include .GL.glext.h.',''),
+                # baseLibs=[python],
+                depend=[qt, gcc]+allDepend,
+                environ={
+                    'LDFLAGS' : '$LDFLAGS '+self.qt_rpath_environ['LDFLAGS']
+                },
+                cmd = [
+                    build.pythonSetup.cmd[0]+' --jobs=$DCORES  --prefix=$INSTALL_FOLDER',
+                    # create symbolic links of the libraries in the correct place,
+                    # so pipeVFX can find it - this is needed when building maya related
+                    # code to avoid picking up maya version of those libraries.
+                    'ln -s $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/PySide2/lib* '
+                          '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/'
                 ],
-                'CMakeLists.txt' : [
-                    ('/alembic-${VERSION}',' '),
-                    ('.std.c..11',''),
-                ],
-                'build/AlembicBoost.cmake' : [
-                    ('SET. Boost_USE_STATIC_LIBS ', '#SET. Boost_USE_STATIC_LIBS '),
+            )
+            self.pyside = pyside
+            # allDepend += [pyside]
+
+            log4cplus = build.configure(
+                ARGUMENTS,
+                'log4cplus',
+                download=[(
+                    'https://github.com/log4cplus/log4cplus/archive/REL_1_2_0.tar.gz',
+                    'log4cplus-REL_1_2_0.tar.gz',
+                    '1.2.0',
+                    'b39900d6b504726a20819f2ad73f5877',
+                    { gcc : '4.1.2' }
+                )],
+                depend=[gcc]+allDepend,
+            )
+            self.log4cplus = log4cplus
+            allDepend += [log4cplus]
+
+            blosc = build.cmake(
+                ARGUMENTS,
+                'blosc',
+                download=[(
+                    'https://github.com/Blosc/c-blosc/archive/1.15.1.tar.gz',
+                    'c-blosc-1.15.1.tar.gz',
+                    '1.15.1',
+                    'ff2f5a0fe5c7a8a9e2eb0c6f224e2823',
+                    { gcc : '4.1.2' }
+                )],
+                depend=[gcc]+allDepend,
+                flags=['-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '],
+                environ = { 'LD' : 'ld', 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/:$LD_LIBRARY_PATH'  },
+            )
+            self.blosc = blosc
+            allDepend += [blosc]
+
+            ptex = build.cmake(
+                ARGUMENTS,
+                'ptex',
+                sed = {},
+                download=[(
+                    # CY 2020
+                    'https://github.com/wdas/ptex/archive/v2.3.2.tar.gz',
+                    'ptex-2.3.2.tar.gz',
+                    '2.3.2',
+                    'd409eecde96f89517bc271b1d4909bc5',
+                    { cmake: '3.8.2', gcc : '6.3.1' }
+                ),(
+                    # CY 2019
+                    'https://github.com/wdas/ptex/archive/v2.1.33.tar.gz',
+                    'ptex-2.1.33.tar.gz',
+                    '2.1.33',
+                    'ce1f1af2a151a2bf1057e0456c91dbb6',
+                    { cmake: '3.8.2', gcc : '4.1.2' }
+                ),(
+                    # CY 2017-2018
+                    'https://github.com/wdas/ptex/archive/v2.1.28.tar.gz',
+                    'ptex-2.1.28.tar.gz',
+                    '2.1.28',
+                    'ce4eb665f686f8391968fa137113bc69',
+                    { cmake: '3.8.2', gcc : '4.1.2' }
+                ),(
+                    # CY 2016
+                    'https://github.com/wdas/ptex/archive/v2.0.42.tar.gz',
+                    'ptex-2.0.42.tar.gz',
+                    '2.0.42',
+                    '09450bd49dab3db878504a6e51c0745d',
+                    { cmake: '3.8.2', gcc : '4.1.2' }
+                )],
+                depend=allDepend,
+                src = 'README',
+                environ={
+                    'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                    'CPLUS_INCLUDE_PATH' : '$CPLUS_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                    'LDFLAGS'            : '$LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
+                },
+                cmd = [
+                    '( [ "$(basename $TARGET_FOLDER)" == "2.0.42" ] ',
+                        'cd src',
+                        'make',
+                        'cp -rfuv ../install/* $INSTALL_FOLDER/',
+                        'cp $INSTALL_FOLDER/lib/* $INSTALL_FOLDER/lib64/'
+                    ' ) || ( '+\
+                        ' && '.join(build.cmake.cmd).replace('cmake','cmake -DPTEX_VER=$(basename $TARGET_FOLDER)'),
+                        'cp $INSTALL_FOLDER/lib64/* $INSTALL_FOLDER/lib/'
+                    ' )'
                 ]
-            },'1.7.0' : {}
-            },
-            download=[(
-                # CY2014 - CY2016
-                'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
-                'alembic-1.5.8.tar.gz',
-                '1.5.8',
-                'a70ba5f2e80b47d346d15d797c28731a',
-                {gcc: '4.1.2', boost: '1.51.0', hdf5: '1.8.11',
-                self.ilmbase  ['boost.1.51.0']: exr_version,
-                self.openexr  ['boost.1.51.0']: exr_version,
-                self.pyilmbase['boost.1.51.0']: exr_version },
-            ),(
-                # CY2017
-                'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
-                'alembic-1.6.1.tar.gz',
-                '1.6.1',
-                'e1f9f2cbe1899d3d55b58708b9307482',
-                {gcc: '4.8.5', boost: '1.55.0', hdf5: '1.8.11',
-                self.ilmbase  ['boost.1.55.0']: exr_version,
-                self.openexr  ['boost.1.55.0']: exr_version,
-                self.pyilmbase['boost.1.55.0']: exr_version },
-            ),(
-                # CY2018 - CY2020
-                'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
-                'alembic-1.7.11.tar.gz',
-                '1.7.11',
-                'e156568a8d8b48c4da4fe2496386243d',
-                {gcc: '6.3.1', boost: '1.61.0', hdf5: '1.8.11',
-                self.ilmbase  ['boost.1.61.0']: exr_version,
-                self.openexr  ['boost.1.61.0']: exr_version,
-                self.pyilmbase['boost.1.61.0']: exr_version },
-            ),(
-                # CY2018 - CY2020 (USD Version)
-                'https://github.com/alembic/alembic/archive/1.7.1.tar.gz',
-                'alembic-1.7.1.tar.gz',
-                '1.7.1',
-                'c8e2c8f951af09cfdacb2ca1fd5823a5',
-                {gcc: '6.3.1', boost: '1.61.0', hdf5: '1.8.11',
-                self.ilmbase  ['boost.1.61.0']: exr_version,
-                self.openexr  ['boost.1.61.0']: exr_version,
-                self.pyilmbase['boost.1.61.0']: exr_version },
-            )],
-            # baseLibs=[python],
-            depend=allDepend+[hdf5],
-            environ = {
-                # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
-                'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib -lhdf5_hl $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
-                'LD_PRELOAD': ':'.join([
-                    '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
-                    '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
-                ]),
-            },
-        )
-        self.alembic = alembic
+            )
+            self.ptex = ptex
+            allDepend += [ptex]
+
+            openvdb = build.cmake(
+                ARGUMENTS,
+                'openvdb',
+                download=[(
+                #     # CY 2020
+                #     'https://github.com/AcademySftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
+                #     'openvdb-7.0.0.tar.gz',
+                #     '7.0.0',
+                #     'd409eecde96f89517bc271b1d4909bc5',
+                #     { gcc : '4.8.5', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                #     self.ilmbase['boost.%s' % bv']: exr_version, self.openexr['boost.%s' % bv']: exr_version, }
+                # ),(
+                    # CY 2019
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v6.0.0.tar.gz',
+                    'openvdb-6.0.0.tar.gz',
+                    '6.0.0',
+                    '43604208441b1f3625c479ef0a36d7ad',
+                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
+                ),(
+                    # CY 2018
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
+                    'openvdb-5.0.0.tar.gz',
+                    '5.0.0',
+                    '9ba08c29dda60ec625acb8a5928875e5',
+                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
+                ),(
+                    # CY 2017
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
+                    'openvdb-4.0.0.tar.gz',
+                    '4.0.0',
+                    'c56d8a1a460f1d3327f2568e3934ca6a',
+                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
+                ),(
+                    # CY 2015-2016
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
+                    'openvdb-3.0.0.tar.gz',
+                    '3.0.0',
+                    '3ca8f930ddf759763088e265654f4084',
+                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
+                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version, self.pyilmbase['boost.%s' % bv]: exr_version, }
+                )],
+                depend=allDepend+[glfw],
+                src = "README.md",
+                environ={
+                    'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                    'CPLUS_INCLUDE_PATH' : '$CPLUS_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+                    'LDFLAGS'            : '$LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
+                    # 'LD'                 : '$LD '+self.exr_rpath_environ['LDFLAGS'],
+                },
+                cmd = [
+                "cd openvdb",
+                " make install -j $DCORES"
+    			" DESTDIR=$INSTALL_FOLDER"
+    			" BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include"
+    			" BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+    			" BOOST_PYTHON_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+    			" BOOST_PYTHON_LIB=-lboost_python"
+    			" EXR_INCL_DIR=$OPENEXR_TARGET_FOLDER/include"
+    			" EXR_LIB_DIR=$OPENEXR_TARGET_FOLDER/lib"
+    			" TBB_INCL_DIR=$TBB_TARGET_FOLDER/include/tbb"
+    			" TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib"
+    			" PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
+    			" PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include"
+    			" PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib"
+    			" BLOSC_INCL_DIR=$BLOSC_TARGET_FOLDER/include"
+    			" BLOSC_LIB_DIR=$BLOSC_TARGET_FOLDER/lib"
+    			" NUMPY_INCL_DIR="
+    			" CONCURRENT_MALLOC_LIB="
+    			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
+    			" LOG4CPLUS_INCL_DIR="
+    			" EPYDOC= ",
+                "cp $INSTALL_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $INSTALL_FOLDER/python",
+    		    "cp $INSTALL_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $INSTALL_FOLDER/include",
+                ]
+            )
+            self.openvdb = openvdb
+            allDepend += [openvdb]
+
+            # import sys
+            # print (self.pyilmbase['boost.1.51.0'], self.pyilmbase['boost.1.51.0'].targetSuffix)
+            # sys.stdout.flush()
+            # print (self.pyilmbase['boost.%s' % bv], self.pyilmbase['boost.%s' % bv].targetSuffix)
+            # sys.stdout.flush()
+
+            # build alembic without apps plugins
+            alembic = build.alembic(
+                ARGUMENTS,
+                'alembic',
+                sed = {'1.5.8' : {
+                    'lib/AbcOpenGL/Foundation.h' : [
+                        ('.include .GL.glext.h.',''),
+                    ],
+                    'CMakeLists.txt' : [
+                        ('/alembic-${VERSION}',' '),
+                        ('.std.c..11',''),
+                    ],
+                    'build/AlembicBoost.cmake' : [
+                        ('SET. Boost_USE_STATIC_LIBS ', '#SET. Boost_USE_STATIC_LIBS '),
+                    ]
+                },'1.7.0' : {}
+                },
+                download=[(
+                    # CY2014 - CY2016
+                    'https://github.com/alembic/alembic/archive/1.5.8.tar.gz',
+                    'alembic-1.5.8.tar.gz',
+                    '1.5.8',
+                    'a70ba5f2e80b47d346d15d797c28731a',
+                    {gcc: '4.1.2', boost: '1.51.0', hdf5: '1.8.11',
+                    self.ilmbase  ['boost.1.51.0']: exr_version,
+                    self.openexr  ['boost.1.51.0']: exr_version,
+                    self.pyilmbase['boost.1.51.0']: exr_version },
+                ),(
+                    # CY2017
+                    'https://github.com/alembic/alembic/archive/1.6.1.tar.gz',
+                    'alembic-1.6.1.tar.gz',
+                    '1.6.1',
+                    'e1f9f2cbe1899d3d55b58708b9307482',
+                    {gcc: '4.8.5', boost: '1.55.0', hdf5: '1.8.11',
+                    self.ilmbase  ['boost.1.55.0']: exr_version,
+                    self.openexr  ['boost.1.55.0']: exr_version,
+                    self.pyilmbase['boost.1.55.0']: exr_version },
+                ),(
+                    # CY2018 - CY2020
+                    'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
+                    'alembic-1.7.11.tar.gz',
+                    '1.7.11',
+                    'e156568a8d8b48c4da4fe2496386243d',
+                    {gcc: '6.3.1', boost: bv, hdf5: '1.8.11',
+                    self.ilmbase  ['boost.%s' % bv]: exr_version,
+                    self.openexr  ['boost.%s' % bv]: exr_version,
+                    self.pyilmbase['boost.%s' % bv]: exr_version },
+                ),(
+                    # CY2018 - CY2020 (USD Version)
+                    'https://github.com/alembic/alembic/archive/1.7.1.tar.gz',
+                    'alembic-1.7.1.tar.gz',
+                    '1.7.1',
+                    'c8e2c8f951af09cfdacb2ca1fd5823a5',
+                    {gcc: '6.3.1', boost: bv, hdf5: '1.8.11',
+                    self.ilmbase  ['boost.%s' % bv]: exr_version,
+                    self.openexr  ['boost.%s' % bv]: exr_version,
+                    self.pyilmbase['boost.%s' % bv]: exr_version },
+                )],
+                # baseLibs=[python],
+                depend=allDepend+[hdf5],
+                environ = {
+                    # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
+                    'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib -lhdf5_hl $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
+                    'LD_PRELOAD': ':'.join([
+                        '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                        '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                    ]),
+                },
+            )
+            self.alembic = alembic
 
 
-        clew = build.cmake(
-            ARGUMENTS,
-            'clew',
-            download=[(
-                'https://github.com/hradec/clew.git',
-                'clew-0.10.2016.zip',
-                '0.10.2016',
-                None,
-                {gcc: '4.8.5', boost: '1.61.0'},
-            )],
-            depend=allDepend+[boost, glfw, glew],
-            verbose=1,
-            environ = { 'LD' : 'ld' },
-            flags = [
-                '-DBUILD_SHARED_LIBRARY=1',
-                '-DINSTALL_CL_HEADER=1',
-            ],
-            noMinTime=True,
-        )
-        self.clew = clew
-        allDepend += [clew]
+            clew = build.cmake(
+                ARGUMENTS,
+                'clew',
+                download=[(
+                    'https://github.com/hradec/clew.git',
+                    'clew-0.10.2016.zip',
+                    '0.10.2016',
+                    None,
+                    {gcc: '4.8.5', boost: bv},
+                )],
+                depend=allDepend+[boost, glfw, glew],
+                verbose=1,
+                environ = { 'LD' : 'ld' },
+                flags = [
+                    '-DBUILD_SHARED_LIBRARY=1',
+                    '-DINSTALL_CL_HEADER=1',
+                ],
+                noMinTime=True,
+            )
+            self.clew = clew
+            allDepend += [clew]
 
-        # build alembic without apps plugins
-        opensubdiv = build.cmake(
-            ARGUMENTS,
-            'opensubdiv',
-            # fix for cuda 10
-            sed = { '0.0.0' : { 'opensubdiv/osd/CMakeLists.txt' : [
-                ('compute_11','compute_30'),
-            ], './opensubdiv/CMakeLists.txt' : [
-                ('compute_11','compute_30'),
-            ], './CMakeLists.txt' : [
-                ('compute_20','compute_30'),
-            ]}},
-            download=[(
-                # CY 2014
-                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_3_3.tar.gz',
-                'OpenSubdiv-2_3_3.tar.gz',
-                '2.3.3',
-                'b7312b63bf6dfb38b49b17f15c976849',
-                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42', tbb: '4.4.6'},
-            ),(
-                # CY 2015
-                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_5_1.tar.gz',
-                'OpenSubdiv-2_5_1.tar.gz',
-                '2.5.1',
-                '73da98bdb1e944b3ec5b046b3d8008d6',
-                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
-            ),(
-                # CY 2016
-                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_0_5.tar.gz',
-                'OpenSubdiv-3_0_5.tar.gz',
-                '3.0.5',
-                'f16fa309b3fa3d400e6dcbf59d316dfe',
-                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
-            ),(
-                # CY 2017
-                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_1_1.tar.gz',
-                'OpenSubdiv-3_1_1.tar.gz',
-                '3.1.1',
-                '0f50e6aaca1d174d6b878433d13faa7f',
-                {gcc: '4.8.5', boost: '1.51.0', ptex: '2.1.28'},
-            ),(
-                # CY 2018-2019
-                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_3_3.tar.gz',
-                'OpenSubdiv-3_3_3.tar.gz',
-                '3.3.3',
-                '29c79dc01ef616aab02670bed5544ddd',
-                {gcc: '4.8.5', boost: '1.55.0', ptex: '2.1.33'},
-            ),(
-                # CY 2020
-                'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz',
-                'OpenSubdiv-3_4_0.tar.gz',
-                '3.4.0',
-                '2eea21ef2d85bcbbcee94e287c34a07e',
-                {gcc: '6.3.1', boost: '1.61.0', ptex: '2.3.2'},
-            )],
-            # baseLibs=[python],
-            depend=allDepend+[hdf5, glfw, glew],
-            flags=[
-                "-DGLEW_LOCATION=$GLEW_TARGET_FOLDER/",
-                "-DVERBOSE=1",
-            ],
-            environ = {
-                'CFLAGS'    : ' -fopenmp $CFLAGS ',
-                'CXXFLAGS'  : ' -fopenmp $CXXFLAGS ',
-                'LDFLAGS'   : ' -lX11 -lclew -lPtex $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'] ,
-            },
-            verbose=1,
-        )
-        self.opensubdiv = opensubdiv
-
-
-        # build USD without applications plugins
-        # dependency version table:
-        # https://github.com/PixarAnimationStudios/USD/blob/master/VERSIONS.md
-        usd = build.cmake(
-            ARGUMENTS,
-            'usd',
-            download=[(
-                # theres no CY for USD - not in VFX Platform yet.
-                # so lets build the one in Gaffer dependencies
-            #     'https://github.com/PixarAnimationStudios/USD/archive/v18.09.tar.gz',
-            #     'USD-18.09.tar.gz',
-            #     '18.9.0',
-            #     '10a06767c6a9c69733bb5f9fbadcb52a',
-            #     {gcc: '4.8.5', opensubdiv: '3.3.3', alembic: '1.6.1',
-            #     hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
-            #     boost: '1.55.0',
-            #     self.ilmbase['boost.1.55.0']: exr_version,
-            #     self.openexr['boost.1.55.0']: exr_version,
-            #     self.oiio['boost.1.55.0']: '1.6.15' },
-            # ),(
-                # this is the latest for now - nov/2019
-                'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
-                'USD-19.07.tar.gz',
-                '19.7.0',
-                '8d274089364cfed23004ae52fa3d258f',
-                {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
-                cmake: '3.18.2', tbb: '4.4.6',
-                boost: '1.61.0',
-                self.ilmbase['boost.1.61.0']: exr_version,
-                self.openexr['boost.1.61.0']: exr_version,
-                self.oiio   ['boost.1.61.0']: '1.8.10'},
-
-            ),(
-                # this is the latest for now - sept/2020
-                'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
-                'USD-20.08.tar.gz',
-                '20.8.0',
-                'e7f31719ef2359c939d23871333a763a',
-                {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
-                cmake: '3.18.2', tbb: '4.4.6',
-                boost: '1.61.0',
-                self.ilmbase['boost.1.61.0']: exr_version,
-                self.openexr['boost.1.61.0']: exr_version,
-                self.oiio   ['boost.1.61.0']: '1.8.10'},
-            )],
-            # baseLibs=[python],
-            depend=[
-                boost, alembic, opensubdiv, materialx, ocio, icu,
-                openvdb, osl, hdf5, glfw, glew, ptex, pyside, qt, python
-            ]+allDepend,
-            cmd = [
-                "mkdir build",
-                "cd build",
-                "cmake"
-                " -D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER"
-                " -D CMAKE_PREFIX_PATH=$INSTALL_FOLDER"
-                " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
-                " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
-                " -D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
-                " -D Boost_NO_SYSTEM_PATHS=ON"
-                " -D Boost_NO_BOOST_CMAKE=ON"
-                " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER"
-                " -D HDF5_LOCATION=$HDF5_TARGET_FOLDER"
-                " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
-                " -D GLEW_LOCATION=$GLEW_TARGET_FOLDER/"
-                " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
-                " -D OIIO_LOCATION=$OIIO_TARGET_FOLDER"
-                " -D OSL_LOCATION=$OSL_TARGET_FOLDER"
-                " -D PTEX_LOCATION=$PTEX_TARGET_FOLDER"
-                " -D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER"
-                " -D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/"
-                " -D PXR_BUILD_TESTS=OFF"
-                # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
-                # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
-                " --build --target install --parallel $DCORES ..",
-                "make -j $DCORES",
-                "make -j $DCORES install",
-                "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
-            ],
-            flags=[
-                # enable plugins
-                "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
-                "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
-                "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
-                "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
-                "-D PXR_BUILD_IMAGING=ON",
-                "-D PXR_BUILD_USD_IMAGING=ON",
-
-                # enable support to different components.
-                " -D PXR_ENABLE_HDF5_SUPPORT=ON",
-                " -D PXR_ENABLE_OSL_SUPPORT=ON",
-                " -D PXR_ENABLE_PTEX_SUPPORT=ON",
-                " -D VERBOSE=1",
-                " -D CMAKE_CXX_STANDARD=11",
-                " -D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
-                " -D_GLIBCXX_USE_CXX11_ABI=0",
-            ],
-            environ = {
-                # we need boost first of everything else since icu also has regex.h
-                'CFLAGS'    : ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost  '+ self.exr_rpath_environ['CFLAGS'],
-                'CXXFLAGS'  : ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options '+ self.exr_rpath_environ['CXXFLAGS'],
-                'LD'        : 'ld',
-                'LDFLAGS'   : '$LDFLAGS -lboost_regex -lboost_program_options' + self.exr_rpath_environ['LDFLAGS'],
-                'LD_PRELOAD': ':'.join([
-                    '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
-                    '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
-                ]),
-            },
-            # verbose=1,
-        )
-        self.usd = usd
-
-        # =============================================================================================================================================
-        # APPLESEED, a open source ray tracer that works in gaffer
-        # =============================================================================================================================================
-        environ = self.exr_rpath_environ.copy()
-        lz4 = build.make(
-            ARGUMENTS,
-            'lz4',
-            download=[(
-                'https://github.com/lz4/lz4/archive/v1.9.2.tar.gz',
-                'lz4-1.9.2.tar.gz',
-                '1.9.2',
-                '3898c56c82fb3d9455aefd48db48eaad',
-                { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
-                qt: '5.6.1', boost: '1.61.0', },
-            )],
-            depend = allDepend+[python],
-            cmd=[
-                'make',
-                'mkdir -p $INSTALL_FOLDER/bin/',
-                'mkdir -p $INSTALL_FOLDER/lib/',
-                'mkdir -p $INSTALL_FOLDER/lib64/',
-                'mkdir -p $INSTALL_FOLDER/include/',
-                'find . -name "*.h" -exec cp -rf {} $INSTALL_FOLDER/include/ \;',
-                'cp -rf lib/lib* $INSTALL_FOLDER/lib/',
-                'cp -rf lz4 $INSTALL_FOLDER/bin/',
-            ],
-            environ = environ,
-        )
-        self.lz4 = lz4
-        seexpr = build.cmake(
-            ARGUMENTS,
-            'seexpr',
-            download=[(
-            #     'https://github.com/appleseedhq/SeExpr/archive/v2.0-beta.2.tar.gz',
-            #     'SeExpr-2.0-beta.2.tar.gz',
-            #     '2.0.0.beta2',
-            #     '528037ccab6034504a057e68cb455bd8',
-            #     { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
-            #     qt: '5.6.1', boost: '1.61.0', },
-            # ),(
-            #     'https://github.com/appleseedhq/SeExpr/archive/v2.11.tar.gz',
-            #     'SeExpr-2.11.tar.gz',
-            #     '2.11.0',
-            #     '9c3c98c1c988c7901200600b8a542cc9',
-            #     { gcc: 6.3.1', cmake: '3.9.0', tbb: '4.4.6',
-            #     qt: '5.6.1', boost: '1.61.0', },
-            # ),(
-                'https://github.com/appleseedhq/SeExpr/archive/appleseed-qt5.zip',
-                'SeExpr-appleseed-qt5.zip',
-                '2.1.0.beta',
-                'c73820b50ebb15ce8a5affcab60722a2',
-                { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
-                qt: '5.6.1', boost: '1.61.0', },
-            )],
-            depend = allDepend+[python, qt],
-            flags = [
-                '-Wno-error',
-                '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
-                '-DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=0',
-            ],
-            cmd=[
-                # not sure why, but the build doesn't create this folder and fails.
-                # creating it before starting sorts out the problem.
-                'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER',
-                'make $MAKE_PARALLEL $MAKE_VERBOSE',
-                'touch $SOURCE_FOLDER/src/doc/html',
-                'touch  $SOURCE_FOLDER/src/doc/SeExpr',
-                'mkdir -p $INSTALL_FOLDER/share/doc/SeExpr',
-                'make install',
-            ],
-            environ = environ,
-        )
-        self.seexpr = seexpr
-        xerces = build.cmake(
-            ARGUMENTS,
-            'xerces',
-            download=[(
-                'https://github.com/apache/xerces-c/archive/v3.2.2.tar.gz',
-                'xerces-c-3.2.2.tar.gz',
-                '3.2.2',
-                'bd91a5583212e77035a5d524eda17555',
-                { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
-                qt: '5.6.1', boost: '1.61.0', },
-            )],
-            depend = allDepend+[python],
-            flags = [
-                '-Wno-error',
-                '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
-                '-DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=0',
-            ],
-            environ = environ,
-        )
-        self.xerces = xerces
-
-        embree = build.download(
-            ARGUMENTS,
-            'embree',
-            src='embree-config.cmake',
-            download=[(
-                'https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.linux.tar.gz',
-                'embree-3.5.2.x86_64.linux.tar.gz',
-                '3.5.2',
-                '67c768858956f1257ac71cfeb5d607cf',
-            ),(
-                'https://github.com/embree/embree/releases/download/v3.6.1/embree-3.6.1.x86_64.linux.tar.gz',
-                'embree-3.6.1.x86_64.linux.tar.gz',
-                '3.6.1',
-                '3b6012add9dfc9ea8137ada5e0bd27b9',
-            )],
-            environ = environ,
-        )
-        self.embree = embree
+            # build alembic without apps plugins
+            opensubdiv = build.cmake(
+                ARGUMENTS,
+                'opensubdiv',
+                # fix for cuda 10
+                sed = { '0.0.0' : { 'opensubdiv/osd/CMakeLists.txt' : [
+                    ('compute_11','compute_30'),
+                ], './opensubdiv/CMakeLists.txt' : [
+                    ('compute_11','compute_30'),
+                ], './CMakeLists.txt' : [
+                    ('compute_20','compute_30'),
+                ]}},
+                download=[(
+                    # CY 2014
+                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_3_3.tar.gz',
+                    'OpenSubdiv-2_3_3.tar.gz',
+                    '2.3.3',
+                    'b7312b63bf6dfb38b49b17f15c976849',
+                    {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42', tbb: '4.4.6'},
+                ),(
+                    # CY 2015
+                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_5_1.tar.gz',
+                    'OpenSubdiv-2_5_1.tar.gz',
+                    '2.5.1',
+                    '73da98bdb1e944b3ec5b046b3d8008d6',
+                    {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
+                ),(
+                    # CY 2016
+                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_0_5.tar.gz',
+                    'OpenSubdiv-3_0_5.tar.gz',
+                    '3.0.5',
+                    'f16fa309b3fa3d400e6dcbf59d316dfe',
+                    {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
+                ),(
+                    # CY 2017
+                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_1_1.tar.gz',
+                    'OpenSubdiv-3_1_1.tar.gz',
+                    '3.1.1',
+                    '0f50e6aaca1d174d6b878433d13faa7f',
+                    {gcc: '4.8.5', boost: '1.51.0', ptex: '2.1.28'},
+                ),(
+                    # CY 2018-2019
+                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_3_3.tar.gz',
+                    'OpenSubdiv-3_3_3.tar.gz',
+                    '3.3.3',
+                    '29c79dc01ef616aab02670bed5544ddd',
+                    {gcc: '4.8.5', boost: '1.55.0', ptex: '2.1.33'},
+                ),(
+                    # CY 2020
+                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz',
+                    'OpenSubdiv-3_4_0.tar.gz',
+                    '3.4.0',
+                    '2eea21ef2d85bcbbcee94e287c34a07e',
+                    {gcc: '6.3.1', boost: bv, ptex: '2.3.2'},
+                )],
+                # baseLibs=[python],
+                depend=allDepend+[hdf5, glfw, glew],
+                flags=[
+                    "-DGLEW_LOCATION=$GLEW_TARGET_FOLDER/",
+                    "-DVERBOSE=1",
+                ],
+                environ = {
+                    'CFLAGS'    : ' -fopenmp $CFLAGS ',
+                    'CXXFLAGS'  : ' -fopenmp $CXXFLAGS ',
+                    'LDFLAGS'   : ' -lX11 -lclew -lPtex $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'] ,
+                },
+                verbose=1,
+            )
+            self.opensubdiv = opensubdiv
 
 
-        # environ = self.exr_rpath_environ.copy()
-        # environ.update({
-        #     # as we use the embree tarball, it comes with it's only tbb,
-        #     # so we put it to the top of the list
-        #     # so the linker uses embree's one instead of pipeVFX one.
-        #     # we need to see if things will work OK with this.
-        #     'LIBRARY_PATH' : '$EMBREE_TARGET_FOLDER/lib:$LIBRARY_PATH',
-        #     'LDFLAGS' : ' -lembree3 -lSeExpr -ltbb '+ self.exr_rpath_environ['LDFLAGS'],
-        #     'LDSHAREDFLAGS' : ' -lembree3 -lSeExpr -ltbb '+self.exr_rpath_environ['LDFLAGS'],
-        # })
-        # appleseed = build.cmake(
-        #     ARGUMENTS,
-        #     'appleseed',
-        #     download=[(
-        #     #     'https://github.com/appleseedhq/appleseed/archive/2.1.0-beta.tar.gz',
-        #     #     'appleseed-2.1.0-beta.tar.gz',
-        #     #     '2.1.0.beta',
-        #     #     '4413d83ee8d6fc379f4a914381f1c7a4',
-        #     #     { gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11',
-        #     #     hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '5.6.1',
-        #     #     self.boost: '1.61.0', embree: '3.6.1',
-        #     #     self.ilmbase['boost.1.61.0']: exr_version,
-        #     #     self.openexr['boost.1.61.0']: exr_version,
-        #     #     self.oiio['boost.1.61.0']: '1.8.10' },
-        #     # ),(
-        #         'https://github.com/appleseedhq/appleseed/archive/2.0.5-beta.tar.gz',
-        #         'appleseed-2.0.5-beta.tar.gz',
-        #         '2.0.5.beta',
-        #         '8fd84ddd180abc8fba75163b67419e3e',
-        #         { gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11',
-        #         hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '4.8.7',
-        #         self.boost: '1.61.0', embree: '3.5.2',
-        #         self.ilmbase['boost.1.61.0']: exr_version,
-        #         self.openexr['boost.1.61.0']: exr_version,
-        #         self.oiio   ['boost.1.61.0']: '1.8.10' },
-        #     )],
-        #     depend=allDepend+[usd, seexpr, lz4, osl, xerces, python,  ocio],
-        #     flags = [
-        #         '-Wno-error',
-        #         '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
-        #         '-DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=0',
-        #         '-DWITH_DISNEY_MATERIAL=ON',
-        #         '-DWITH_EMBREE=ON',
-        #         '-DUSE_SSE42=ON',
-        #         '-DUSE_SSE=ON',
-        #         '-DUSE_STATIC_BOOST=OFF',
-        #         '-DBOOST_INCLUDEDIR=$BOOST_TARGET_FOLDER/include/',
-        #         '-DBOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
-        #         '-DBoost_NO_SYSTEM_PATHS=ON',
-        #         # '-DBoost_ATOMIC_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_atomic-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_CHRONO_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_chrono-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_DATE_TIME_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_date_time-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_FILESYSTEM_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_filesystem-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_PYTHON_LIBRARY=$APPLESEED_DEPENDENCIES/lib/libboost_python-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_PYTHON_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_python-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_REGEX_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_regex-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_SYSTEM_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_system-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_THREAD_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_thread-gcc63-mt-1_61.so.1.61.0',
-        #         # '-DBoost_WAVE_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_wave-gcc63-mt-1_61.so.1.61.0',
-        #         '-DEMBREE_INCLUDE_DIR=$EMBREE_TARGET_FOLDER/include',
-        #         '-DEMBREE_LIBRARY=$EMBREE_TARGET_FOLDER/lib/libembree3.so',
-        #         '-DLZ4_INCLUDE_DIR=$LZ4_TARGET_FOLDER/include',
-        #         '-DLZ4_LIBRARY=$LZ4_TARGET_FOLDER/lib/liblz4.so',
-        #         '-DOPENIMAGEIO_OIIOTOOL=$OIIO_TARGET_FOLDER/bin/oiiotool',
-        #         '-DOPENIMAGEIO_IDIFF=$OIIO_TARGET_FOLDER/bin/idiff',
-        #         '-DOSL_COMPILER=$OSL_TARGET_FOLDER/bin/oslc',
-        #         '-DOSL_MAKETX=$OIIO_TARGET_FOLDER/bin/maketx',
-        #         '-DOSL_QUERY_INFO=$OSL_TARGET_FOLDER/bin/oslinfo',
-        #         '-DSEEXPR_INCLUDE_DIR=$SEEXPR_TARGET_FOLDER/include',
-        #         '-DSEEXPR_LIBRARY=$SEEXPR_TARGET_FOLDER/lib/libSeExpr.so',
-        #         '-DSEEXPREDITOR_INCLUDE_DIR=$SEEXPR_TARGET_FOLDER/include',
-        #         '-DSEEXPREDITOR_LIBRARY=$SEEXPR_TARGET_FOLDER/lib/libSeExprEditor.so',
-        #         '-DPYTHON_EXECUTABLE=$PYTHON_ROOT/bin/python',
-        #         " -D USE_STATIC_BOOST=OFF",
-    	# 		" -D USE_STATIC_OIIO=OFF",
-    	# 		" -D USE_STATIC_OSL=OFF",
-    	# 		" -D USE_EXTERNAL_ZLIB=ON",
-    	# 		" -D USE_EXTERNAL_EXR=ON",
-    	# 		" -D USE_EXTERNAL_PNG=ON",
-    	# 		" -D USE_EXTERNAL_XERCES=ON",
-    	# 		" -D USE_EXTERNAL_OSL=ON",
-    	# 		" -D USE_EXTERNAL_OIIO=ON",
-        #         " -D WITH_CLI=ON",
-        #         " -D WITH_STUDIO=OFF",
-    	# 		" -D WITH_TOOLS=OFF",
-    	# 		" -D WITH_TESTS=OFF",
-    	# 		" -D WITH_PYTHON=ON",
-        #         ' -D WARNINGS_AS_ERRORS=OFF',
-        #     ],
-        #     cmd = [
-        #         'mkdir -p $SOURCE_FOLDER/build',
-        #         'cd $SOURCE_FOLDER/build',
-        #         'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER',
-        #         # not sure why, but version 2.0.5.beta needs libSeExpr,
-        #         # libembree3 and libtbb added to the link.txt file or else it
-        #         # fails linking.
-        #         # '( '
-        #         # '   c=$(cat src/appleseed.cli/CMakeFiles/appleseed.cli.dir/link.txt | tr -d "\\n") ;'
-        #         # '   echo "$c -lembree3 -lSeExpr -ltbb" > src/appleseed.cli/CMakeFiles/appleseed.cli.dir/link.txt '
-        #         # ')',
-        #         # after this patch, we can build and everything works.
-        #         'make $MAKE_PARALLEL $MAKE_VERBOSE &&  make install',
-        #         'ln -s $APPLESEED_TARGET_FOLDER/include/foundation/utility/version.h $APPLESEED_TARGET_FOLDER/include/renderer/api/version.h || true',
-        #     ],
-        #     environ = environ,
-        # )
-        # self.appleseed = appleseed
-        # =============================================================================================================================================
+            # build USD without applications plugins
+            # dependency version table:
+            # https://github.com/PixarAnimationStudios/USD/blob/master/VERSIONS.md
+            usd = build.cmake(
+                ARGUMENTS,
+                'usd',
+                download=[(
+                    # theres no CY for USD - not in VFX Platform yet.
+                    # so lets build the one in Gaffer dependencies
+                #     'https://github.com/PixarAnimationStudios/USD/archive/v18.09.tar.gz',
+                #     'USD-18.09.tar.gz',
+                #     '18.9.0',
+                #     '10a06767c6a9c69733bb5f9fbadcb52a',
+                #     {gcc: '4.8.5', opensubdiv: '3.3.3', alembic: '1.6.1',
+                #     hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
+                #     boost: '1.55.0',
+                #     self.ilmbase['boost.1.55.0']: exr_version,
+                #     self.openexr['boost.1.55.0']: exr_version,
+                #     self.oiio['boost.1.55.0']: '1.6.15' },
+                # ),(
+                    # this is the latest for now - nov/2019
+                    'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
+                    'USD-19.07.tar.gz',
+                    '19.7.0',
+                    '8d274089364cfed23004ae52fa3d258f',
+                    {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                    cmake: '3.18.2', tbb: '4.4.6',
+                    boost: bv,
+                    self.ilmbase['boost.%s' % bv]: exr_version,
+                    self.openexr['boost.%s' % bv]: exr_version,
+                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
 
-        # if all build is done correctly, make install folder ready!
-        # SCons.Script.Alias( 'install',
-        #     SCons.Script.Command(
-        #         target = os.path.join( devRoot.installRoot(ARGUMENTS), '.done'),
-        #         source = self.qt.installAll + self.osl.installAll + self.boost.installAll ,
-        #         action = "touch $TARGET"
-        #     )
-        # )
+                ),(
+                    # this is the latest for now - sept/2020
+                    'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
+                    'USD-20.08.tar.gz',
+                    '20.8.0',
+                    'e7f31719ef2359c939d23871333a763a',
+                    {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                    cmake: '3.18.2', tbb: '4.4.6',
+                    boost: bv,
+                    self.ilmbase['boost.%s' % bv]: exr_version,
+                    self.openexr['boost.%s' % bv]: exr_version,
+                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
+                ),(
+                    # this is the latest for now - sept/2020
+                    'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
+                    'USD-21.05.tar.gz',
+                    '21.5.0',
+                    'f63736f66fe7f81d17c7a046cb6dbc39',
+                    {gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                    cmake: '3.18.2', tbb: '4.4.6',
+                    boost: bv,
+                    self.ilmbase['boost.%s' % bv]: exr_version,
+                    self.openexr['boost.%s' % bv]: exr_version,
+                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
+                )],
+                # baseLibs=[python],
+                depend=[
+                    boost, alembic, opensubdiv, materialx, ocio, icu,
+                    openvdb, osl, hdf5, glfw, glew, ptex, pyside, qt, python
+                ]+allDepend,
+                cmd = [
+                    "mkdir build",
+                    "cd build",
+                    "cmake"
+                    " -D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER"
+                    " -D CMAKE_PREFIX_PATH=$INSTALL_FOLDER"
+                    " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
+                    " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
+                    " -D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+                    " -D Boost_NO_SYSTEM_PATHS=ON"
+                    " -D Boost_NO_BOOST_CMAKE=ON"
+                    " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER"
+                    " -D HDF5_LOCATION=$HDF5_TARGET_FOLDER"
+                    " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
+                    " -D GLEW_LOCATION=$GLEW_TARGET_FOLDER/"
+                    " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
+                    " -D OIIO_LOCATION=$OIIO_TARGET_FOLDER"
+                    " -D OSL_LOCATION=$OSL_TARGET_FOLDER"
+                    " -D PTEX_LOCATION=$PTEX_TARGET_FOLDER"
+                    " -D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER"
+                    " -D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/"
+                    " -D PXR_BUILD_TESTS=OFF"
+                    " -D PXR_BUILD_GPU_SUPPORT=ON"
+                    # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
+                    # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
+                    " --build --target install --parallel $DCORES ..",
+                    "make -j $DCORES",
+                    "make -j $DCORES install",
+                    "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
+                ],
+                flags=[
+                    # enable plugins
+                    "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
+                    "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
+                    "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
+                    "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
+                    "-D PXR_BUILD_IMAGING=ON",
+                    "-D PXR_BUILD_USD_IMAGING=ON",
+
+                    # enable support to different components.
+                    " -D PXR_ENABLE_HDF5_SUPPORT=ON",
+                    " -D PXR_ENABLE_OSL_SUPPORT=ON",
+                    " -D PXR_ENABLE_PTEX_SUPPORT=ON",
+                    " -D VERBOSE=1",
+                    " -D CMAKE_CXX_STANDARD=11",
+                    " -D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
+                    " -D_GLIBCXX_USE_CXX11_ABI=0",
+                ],
+                environ = {
+                    # we need boost first of everything else since icu also has regex.h
+                    'CFLAGS'    : ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost  '+ self.exr_rpath_environ['CFLAGS'],
+                    'CXXFLAGS'  : ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options '+ self.exr_rpath_environ['CXXFLAGS'],
+                    'LD'        : 'ld',
+                    'LDFLAGS'   : '$LDFLAGS -lboost_regex -lboost_program_options' + self.exr_rpath_environ['LDFLAGS'],
+                    'LD_PRELOAD': ':'.join([
+                        '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                        '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                    ]),
+                },
+                # verbose=1,
+            )
+            self.usd = usd
+
+            # =============================================================================================================================================
+            # APPLESEED, a open source ray tracer that works in gaffer
+            # =============================================================================================================================================
+            environ = self.exr_rpath_environ.copy()
+            lz4 = build.make(
+                ARGUMENTS,
+                'lz4',
+                download=[(
+                    'https://github.com/lz4/lz4/archive/v1.9.2.tar.gz',
+                    'lz4-1.9.2.tar.gz',
+                    '1.9.2',
+                    '3898c56c82fb3d9455aefd48db48eaad',
+                    { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
+                    qt: '5.6.1', boost: bv, },
+                )],
+                depend = allDepend+[python],
+                cmd=[
+                    'make',
+                    'mkdir -p $INSTALL_FOLDER/bin/',
+                    'mkdir -p $INSTALL_FOLDER/lib/',
+                    'mkdir -p $INSTALL_FOLDER/lib64/',
+                    'mkdir -p $INSTALL_FOLDER/include/',
+                    'find . -name "*.h" -exec cp -rf {} $INSTALL_FOLDER/include/ \;',
+                    'cp -rf lib/lib* $INSTALL_FOLDER/lib/',
+                    'cp -rf lz4 $INSTALL_FOLDER/bin/',
+                ],
+                environ = environ,
+            )
+            self.lz4 = lz4
+            seexpr = build.cmake(
+                ARGUMENTS,
+                'seexpr',
+                download=[(
+                #     'https://github.com/appleseedhq/SeExpr/archive/v2.0-beta.2.tar.gz',
+                #     'SeExpr-2.0-beta.2.tar.gz',
+                #     '2.0.0.beta2',
+                #     '528037ccab6034504a057e68cb455bd8',
+                #     { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
+                #     qt: '5.6.1', boost: bv, },
+                # ),(
+                #     'https://github.com/appleseedhq/SeExpr/archive/v2.11.tar.gz',
+                #     'SeExpr-2.11.tar.gz',
+                #     '2.11.0',
+                #     '9c3c98c1c988c7901200600b8a542cc9',
+                #     { gcc: 6.3.1', cmake: '3.9.0', tbb: '4.4.6',
+                #     qt: '5.6.1', boost: bv, },
+                # ),(
+                    'https://github.com/appleseedhq/SeExpr/archive/appleseed-qt5.zip',
+                    'SeExpr-appleseed-qt5.zip',
+                    '2.1.0.beta',
+                    'c73820b50ebb15ce8a5affcab60722a2',
+                    { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
+                    qt: '5.6.1', boost: bv, },
+                )],
+                depend = allDepend+[python, qt],
+                flags = [
+                    '-Wno-error',
+                    '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
+                    '-DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=0',
+                ],
+                cmd=[
+                    # not sure why, but the build doesn't create this folder and fails.
+                    # creating it before starting sorts out the problem.
+                    'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER',
+                    'make $MAKE_PARALLEL $MAKE_VERBOSE',
+                    'touch $SOURCE_FOLDER/src/doc/html',
+                    'touch  $SOURCE_FOLDER/src/doc/SeExpr',
+                    'mkdir -p $INSTALL_FOLDER/share/doc/SeExpr',
+                    'make install',
+                ],
+                environ = environ,
+            )
+            self.seexpr = seexpr
+            xerces = build.cmake(
+                ARGUMENTS,
+                'xerces',
+                download=[(
+                    'https://github.com/apache/xerces-c/archive/v3.2.2.tar.gz',
+                    'xerces-c-3.2.2.tar.gz',
+                    '3.2.2',
+                    'bd91a5583212e77035a5d524eda17555',
+                    { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
+                    qt: '5.6.1', boost: bv, },
+                )],
+                depend = allDepend+[python],
+                flags = [
+                    '-Wno-error',
+                    '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
+                    '-DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=0',
+                ],
+                environ = environ,
+            )
+            self.xerces = xerces
+
+            embree = build.download(
+                ARGUMENTS,
+                'embree',
+                src='embree-config.cmake',
+                download=[(
+                    'https://github.com/embree/embree/releases/download/v3.5.2/embree-3.5.2.x86_64.linux.tar.gz',
+                    'embree-3.5.2.x86_64.linux.tar.gz',
+                    '3.5.2',
+                    '67c768858956f1257ac71cfeb5d607cf',
+                ),(
+                    'https://github.com/embree/embree/releases/download/v3.6.1/embree-3.6.1.x86_64.linux.tar.gz',
+                    'embree-3.6.1.x86_64.linux.tar.gz',
+                    '3.6.1',
+                    '3b6012add9dfc9ea8137ada5e0bd27b9',
+                )],
+                environ = environ,
+            )
+            self.embree = embree
+
+
+            # environ = self.exr_rpath_environ.copy()
+            # environ.update({
+            #     # as we use the embree tarball, it comes with it's only tbb,
+            #     # so we put it to the top of the list
+            #     # so the linker uses embree's one instead of pipeVFX one.
+            #     # we need to see if things will work OK with this.
+            #     'LIBRARY_PATH' : '$EMBREE_TARGET_FOLDER/lib:$LIBRARY_PATH',
+            #     'LDFLAGS' : ' -lembree3 -lSeExpr -ltbb '+ self.exr_rpath_environ['LDFLAGS'],
+            #     'LDSHAREDFLAGS' : ' -lembree3 -lSeExpr -ltbb '+self.exr_rpath_environ['LDFLAGS'],
+            # })
+            # appleseed = build.cmake(
+            #     ARGUMENTS,
+            #     'appleseed',
+            #     download=[(
+            #     #     'https://github.com/appleseedhq/appleseed/archive/2.1.0-beta.tar.gz',
+            #     #     'appleseed-2.1.0-beta.tar.gz',
+            #     #     '2.1.0.beta',
+            #     #     '4413d83ee8d6fc379f4a914381f1c7a4',
+            #     #     { gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11',
+            #     #     hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '5.6.1',
+            #     #     self.boost: bv, embree: '3.6.1',
+            #     #     self.ilmbase['boost.%s' % bv]: exr_version,
+            #     #     self.openexr['boost.%s' % bv]: exr_version,
+            #     #     self.oiio['boost.%s' % bv]: '1.8.10' },
+            #     # ),(
+            #         'https://github.com/appleseedhq/appleseed/archive/2.0.5-beta.tar.gz',
+            #         'appleseed-2.0.5-beta.tar.gz',
+            #         '2.0.5.beta',
+            #         '8fd84ddd180abc8fba75163b67419e3e',
+            #         { gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11',
+            #         hdf5: '1.8.11', cmake: '3.9.6', tbb: '4.4.6',  qt: '4.8.7',
+            #         self.boost: bv, embree: '3.5.2',
+            #         self.ilmbase['boost.%s' % bv]: exr_version,
+            #         self.openexr['boost.%s' % bv]: exr_version,
+            #         self.oiio   ['boost.%s' % bv]: '1.8.10' },
+            #     )],
+            #     depend=allDepend+[usd, seexpr, lz4, osl, xerces, python,  ocio],
+            #     flags = [
+            #         '-Wno-error',
+            #         '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
+            #         '-DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=0',
+            #         '-DWITH_DISNEY_MATERIAL=ON',
+            #         '-DWITH_EMBREE=ON',
+            #         '-DUSE_SSE42=ON',
+            #         '-DUSE_SSE=ON',
+            #         '-DUSE_STATIC_BOOST=OFF',
+            #         '-DBOOST_INCLUDEDIR=$BOOST_TARGET_FOLDER/include/',
+            #         '-DBOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+            #         '-DBoost_NO_SYSTEM_PATHS=ON',
+            #         # '-DBoost_ATOMIC_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_atomic-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_CHRONO_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_chrono-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_DATE_TIME_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_date_time-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_FILESYSTEM_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_filesystem-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_PYTHON_LIBRARY=$APPLESEED_DEPENDENCIES/lib/libboost_python-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_PYTHON_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_python-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_REGEX_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_regex-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_SYSTEM_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_system-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_THREAD_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_thread-gcc63-mt-1_61.so.1.61.0',
+            #         # '-DBoost_WAVE_LIBRARY_RELEASE=$APPLESEED_DEPENDENCIES/lib/libboost_wave-gcc63-mt-1_61.so.1.61.0',
+            #         '-DEMBREE_INCLUDE_DIR=$EMBREE_TARGET_FOLDER/include',
+            #         '-DEMBREE_LIBRARY=$EMBREE_TARGET_FOLDER/lib/libembree3.so',
+            #         '-DLZ4_INCLUDE_DIR=$LZ4_TARGET_FOLDER/include',
+            #         '-DLZ4_LIBRARY=$LZ4_TARGET_FOLDER/lib/liblz4.so',
+            #         '-DOPENIMAGEIO_OIIOTOOL=$OIIO_TARGET_FOLDER/bin/oiiotool',
+            #         '-DOPENIMAGEIO_IDIFF=$OIIO_TARGET_FOLDER/bin/idiff',
+            #         '-DOSL_COMPILER=$OSL_TARGET_FOLDER/bin/oslc',
+            #         '-DOSL_MAKETX=$OIIO_TARGET_FOLDER/bin/maketx',
+            #         '-DOSL_QUERY_INFO=$OSL_TARGET_FOLDER/bin/oslinfo',
+            #         '-DSEEXPR_INCLUDE_DIR=$SEEXPR_TARGET_FOLDER/include',
+            #         '-DSEEXPR_LIBRARY=$SEEXPR_TARGET_FOLDER/lib/libSeExpr.so',
+            #         '-DSEEXPREDITOR_INCLUDE_DIR=$SEEXPR_TARGET_FOLDER/include',
+            #         '-DSEEXPREDITOR_LIBRARY=$SEEXPR_TARGET_FOLDER/lib/libSeExprEditor.so',
+            #         '-DPYTHON_EXECUTABLE=$PYTHON_ROOT/bin/python',
+            #         " -D USE_STATIC_BOOST=OFF",
+        	# 		" -D USE_STATIC_OIIO=OFF",
+        	# 		" -D USE_STATIC_OSL=OFF",
+        	# 		" -D USE_EXTERNAL_ZLIB=ON",
+        	# 		" -D USE_EXTERNAL_EXR=ON",
+        	# 		" -D USE_EXTERNAL_PNG=ON",
+        	# 		" -D USE_EXTERNAL_XERCES=ON",
+        	# 		" -D USE_EXTERNAL_OSL=ON",
+        	# 		" -D USE_EXTERNAL_OIIO=ON",
+            #         " -D WITH_CLI=ON",
+            #         " -D WITH_STUDIO=OFF",
+        	# 		" -D WITH_TOOLS=OFF",
+        	# 		" -D WITH_TESTS=OFF",
+        	# 		" -D WITH_PYTHON=ON",
+            #         ' -D WARNINGS_AS_ERRORS=OFF',
+            #     ],
+            #     cmd = [
+            #         'mkdir -p $SOURCE_FOLDER/build',
+            #         'cd $SOURCE_FOLDER/build',
+            #         'cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER',
+            #         # not sure why, but version 2.0.5.beta needs libSeExpr,
+            #         # libembree3 and libtbb added to the link.txt file or else it
+            #         # fails linking.
+            #         # '( '
+            #         # '   c=$(cat src/appleseed.cli/CMakeFiles/appleseed.cli.dir/link.txt | tr -d "\\n") ;'
+            #         # '   echo "$c -lembree3 -lSeExpr -ltbb" > src/appleseed.cli/CMakeFiles/appleseed.cli.dir/link.txt '
+            #         # ')',
+            #         # after this patch, we can build and everything works.
+            #         'make $MAKE_PARALLEL $MAKE_VERBOSE &&  make install',
+            #         'ln -s $APPLESEED_TARGET_FOLDER/include/foundation/utility/version.h $APPLESEED_TARGET_FOLDER/include/renderer/api/version.h || true',
+            #     ],
+            #     environ = environ,
+            # )
+            # self.appleseed = appleseed
+            # =============================================================================================================================================
+
+            # if all build is done correctly, make install folder ready!
+            # SCons.Script.Alias( 'install',
+            #     SCons.Script.Command(
+            #         target = os.path.join( devRoot.installRoot(ARGUMENTS), '.done'),
+            #         source = self.qt.installAll + self.osl.installAll + self.boost.installAll ,
+            #         action = "touch $TARGET"
+            #     )
+            # )
 
         self.allDepend = allDepend

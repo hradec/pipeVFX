@@ -1,14 +1,23 @@
 #!/bin/bash -l
 
+if [ "$STUDIO" == "" ] ; then
+    export STUDIO=atomo
+else
+    mkdir -p /$STUDIO
+    mount -o bind /atomo /$STUDIO
+fi
+export STUDIO
+
+echo STUDIO=$STUDIO
 
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
-cd /atomo/pipeline/build/
+cd /$STUDIO/pipeline/build/
 
 if [ "$TRAVIS" == "1" ] ; then
-    rm -rf "/atomo/pipeline/libs/*"
+    rm -rf "/$STUDIO/pipeline/libs/*"
     EXTRA="-j 8 $EXTRA"
 fi
-mkdir -p /atomo/pipeline/libs/
+mkdir -p /$STUDIO/pipeline/libs/
 
 export TERM=xterm-256color
 
@@ -27,7 +36,7 @@ if [ "$RUN_SHELL" == "1" ] ; then
     # now we can start dbusService.py, which is the way pipeVFX execute commands as root,
     # to create new folders automatically for the current user in a struture which the
     # user has no rights to do it.
-    /atomo/pipeline/tools/init/dbusService.py > /var/log/dbusService.log 2>&1 &
+    /$STUDIO/pipeline/tools/init/dbusService.py > /var/log/dbusService.log 2>&1 &
     # when running in shell mode, we create the user/group equivalent to the one
     # setup in the distro, so the container runs under the same user and home folder.
     groupadd -g $_GID $_GROUP
@@ -35,7 +44,7 @@ if [ "$RUN_SHELL" == "1" ] ; then
     # put user in the sudoers file, without requiring passwd
     echo -e "\n$_USER ALL=(ALL) NOPASSWD: ALL\n" >> /etc/sudoers
     # set pipeVFX init bash script
-    echo -e '\n. /atomo/pipeline/tools/init/bash' >> /etc/profile.d/pipevfx.sh
+    echo -e "\n. /$STUDIO/pipeline/tools/init/bash" >> /etc/profile.d/pipevfx.sh
     echo "PS1='pVFX[\u@\h \W]\$ '" >> /etc/profile.d/pipevfx.sh
     echo "export DISPLAY=$DISPLAY" >> /etc/profile.d/pipevfx.sh
     echo "export XAUTHORITY=$XAUTHORITY" >> /etc/profile.d/pipevfx.sh
@@ -51,7 +60,7 @@ else
     # as the .build folder to speed up the build! (and if not running in parallel)
     if [ $(( $MEMGB / 1024 / 1024 )) -gt 28 ] && [ "$(echo $EXTRA | grep '\-j ')" == "" ] ; then
         echo "Building in ramdisk!!! $EXTRA"
-        mount -t tmpfs tmpfs /atomo/pipeline/build/.build
+        mount -t tmpfs tmpfs /$STUDIO/pipeline/build/.build
     fi
 
     # remove boost libraries to avoid building against then.

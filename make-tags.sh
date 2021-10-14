@@ -3,6 +3,7 @@
 server=192.168.0.12
 
 CD=$(dirname $(readlink -f $BASH_SOURCE))
+mkdir -p $CD/pipeline/tags/
 cd $CD/pipeline/tags/
 
 # loop over tags and creates the tag folders pulling the tar file from the github releases

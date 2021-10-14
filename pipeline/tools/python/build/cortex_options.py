@@ -88,8 +88,8 @@ openexr  = os.environ['OPENEXR_VERSION']
 ilmbase  = os.environ['ILMBASE_VERSION']
 glew     = os.environ['GLEW_VERSION']
 glut     = os.environ['FREEGLUT_VERSION']
-abc      = os.environ['ALEMBIC_VERSION']
-hdf5     = os.environ['HDF5_VERSION']
+abc      = app_environ('ALEMBIC_VERSION')
+hdf5     = app_environ('HDF5_VERSION')
 prman    = app_environ('PRMAN_VERSION')
 maya     = app_environ('MAYA_VERSION')
 nuke     = app_environ('NUKE_VERSION')
@@ -101,6 +101,8 @@ popPrint('Versions being used to build cortex...')
 import build
 if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 4.2:
     CXXSTD = "c++11"
+if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 6.0:
+    CXXSTD = "c++14"
 
 # python
 # =============================================================================================================================================================
@@ -220,8 +222,8 @@ BOOST_LIB_SUFFIX        = ""
 
 ALEMBIC_LIB_SUFFIX      = ''
 ALEMBIC_EXTRA_LIBS      = []
-if versionMajor(os.environ['ALEMBIC_VERSION']) < 1.6:
-    for x in glob( "%s/lib/*.so" % os.environ['ALEMBIC_TARGET_FOLDER'] ):
+if versionMajor(app_environ('ALEMBIC_VERSION')) < 1.6:
+    for x in glob( "%s/lib/*.so" % app_environ('ALEMBIC_TARGET_FOLDER') ):
         ALEMBIC_EXTRA_LIBS += [ os.path.basename(x.replace('lib','').replace('.so','')) ]
 
 ALEMBIC_EXTRA_LIBS = ' '.join(ALEMBIC_EXTRA_LIBS)
@@ -289,7 +291,7 @@ if "APPLESEED_TARGET_FOLDER" in os.environ:
     LOCATE_DEPENDENCY_APPLESEED_SEARCHPATH = os.environ["APPLESEED_TARGET_FOLDER"]
 
 if pipe.versionMajor(os.environ['BOOST_VERSION']) >= 1.61:
-    CXXSTD = 'c++11'
+    CXXSTD = 'c++14'
 
 # installation paths
 # =============================================================================================================================================================
@@ -322,11 +324,11 @@ INSTALL_PYTHON_DIR              = "$INSTALL_PREFIX%s/lib%s/python%s/site-package
 INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/lib%s/$IECORE_NAME" % (abc, extraInstallPath)
 INSTALL_ALEMBICPYTHON_DIR       = "$INSTALL_PREFIX/alembic/%s/lib%s/python%s/site-packages" % (abc, extraInstallPath, PYTHON_MAJOR_VERSION)
 
-INSTALL_VDBLIB_NAME             = "$INSTALL_PREFIX/openvdb/%s/lib%s/$IECORE_NAME" % (os.environ['OPENVDB_VERSION'], extraInstallPath)
-INSTALL_VDBPYTHON_DIR           = "$INSTALL_PREFIX/openvdb/%s/lib%s/python%s/site-packages" % (os.environ['OPENVDB_VERSION'], extraInstallPath, PYTHON_MAJOR_VERSION)
+INSTALL_VDBLIB_NAME             = "$INSTALL_PREFIX/openvdb/%s/lib%s/$IECORE_NAME" % (app_environ('OPENVDB_VERSION'), extraInstallPath)
+INSTALL_VDBPYTHON_DIR           = "$INSTALL_PREFIX/openvdb/%s/lib%s/python%s/site-packages" % (app_environ('OPENVDB_VERSION'), extraInstallPath, PYTHON_MAJOR_VERSION)
 
-INSTALL_USDLIB_NAME             = "$INSTALL_PREFIX/usd/%s/lib%s/$IECORE_NAME" % (os.environ['USD_VERSION'], extraInstallPath)
-INSTALL_USDPYTHON_DIR           = "$INSTALL_PREFIX/usd/%s/lib%s/python%s/site-packages" % (os.environ['USD_VERSION'], extraInstallPath, PYTHON_MAJOR_VERSION)
+INSTALL_USDLIB_NAME             = "$INSTALL_PREFIX/usd/%s/lib%s/$IECORE_NAME" % (app_environ('USD_VERSION'), extraInstallPath)
+INSTALL_USDPYTHON_DIR           = "$INSTALL_PREFIX/usd/%s/lib%s/python%s/site-packages" % (app_environ('USD_VERSION'), extraInstallPath, PYTHON_MAJOR_VERSION)
 
 if APPLESEED_VERSION:
     INSTALL_APPLESEEDLIB_NAME          = "$INSTALL_PREFIX/appleseed/%s/lib/$IECORE_NAME" % (APPLESEED_VERSION)
@@ -401,6 +403,8 @@ if houdini != '0.0.0':
                 os.environ['HOUDINI_CXX_FLAGS'] = os.environ['HOUDINI_CXX_FLAGS'].replace('-Wno-unused-local-typedefs','')
             elif os.environ['GCC_VERSION'] == '4.8.5':
                 os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++11 -fexceptions "
+            elif os.environ['GCC_VERSION'] == '6.3.1':
+                os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++14 -fexceptions "
 
         os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
         os.environ['HOUDINI_LINK_FLAGS'] += ' '+' '.join([
@@ -495,9 +499,9 @@ LINKFLAGS.append('-L%s' % os.environ['SOURCE_FOLDER'] )
 # different components, and we patch it to NOT waste time rebuilding what's already done!
 LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost%s'          % os.environ['BOOST_VERSION'] ]) )
 LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost%s/python%s' % (os.environ['BOOST_VERSION'],os.environ['PYTHON_VERSION_MAJOR']) ]) )
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'alembic/%s/lib%s/'    % (os.environ['ALEMBIC_VERSION'], extraInstallPath) ]) )
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'openvdb/%s/lib%s/'    % (os.environ['OPENVDB_VERSION'], extraInstallPath) ]) )
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'usd/%s/lib%s/'        % (os.environ['OPENVDB_VERSION'], extraInstallPath) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'alembic/%s/lib%s/'    % (app_environ('ALEMBIC_VERSION'), extraInstallPath) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'openvdb/%s/lib%s/'    % (app_environ('OPENVDB_VERSION'), extraInstallPath) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'usd/%s/lib%s/'        % (app_environ('OPENVDB_VERSION'), extraInstallPath) ]) )
 
 # CC = os.environ['CC']
 # CPP = os.environ['CPP']

@@ -69,6 +69,51 @@ class wait4dependencies(configure):
         configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure' )
 
 
+class pip(configure):
+    cmd = ["./build.sh"]
+    noMinTime=True
+    dontUseTargetSuffixForFolders = 1
+    do_not_use=True
+    def __init__(self, args, pip_pkg, python, python_versions=None ):
+        self.pip_pkg = pip_pkg
+
+        # create the download list from the python dowload list
+        download = [ (None,"python.%s.%s.%s" % (python.name,pip_pkg,x[2]),x[2],None,dict({python: x[2]}, **x[4])) for x in python.download ]
+        if python_versions:
+            download = [
+                (None,"python.%s.%s.%s" % (python.name,pip_pkg,x[2]),x[2],None,dict({python: x[2]}, **x[4]))
+                for x in python.download
+                if x[2] in python_versions
+            ]
+
+        # now we setup the builder using configure.__init__ class
+        configure.__init__(self,
+            args,
+            python.name,
+            download,
+            src='build.sh',
+            targetSuffix=pip_pkg, # we need this to build on top of an already built pkg
+            apps=None, # we need this so building on top of an already built pkg won't delete the target folder!
+            depend=python.depend+[python]
+        )
+
+    def fixCMD(self, cmd, os_environ):
+        # now we setup the source folder as if it was already downloaded, and
+        # create a build.sh script that will be used to run pip install!
+        # the command that will run when building this package
+
+        os.system("mkdir -p '%s'" % os_environ['SOURCE_FOLDER'])
+        f = open("%s/build.sh" % os_environ['SOURCE_FOLDER'], 'w')
+        build_sh = 'PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/pip install "%s"' % self.pip_pkg
+        f.write("#!/bin/bash\n\n"+build_sh+"\n")
+        f.close()
+        os.system('chmod a+x "%s/build.sh"' % os_environ['SOURCE_FOLDER'])
+
+        return cmd
+
+
+
+
 
 class gccBuild(configure):
     ''' build class designed to build differente versions of GCC '''
@@ -877,6 +922,7 @@ class cortex(configure):
                         ('vdbPythonModule = ','vdbPythonModule = [] #'),
                         ('usdLibrary = ','usdLibrary = [] #'),
                         ('usdPythonModule = ','usdPythonModule = [] #'),
+                        ('if haveUSD','if False'),
                         ('alembicLibrary = ','alembicLibrary = [] #'),
                         ('alembicPythonModule = ','alembicPythonModule = [] #'),
                         ('Default. coreLibrary','#Default( coreLibrary'),
@@ -914,14 +960,14 @@ class cortex(configure):
                 noIECoreSED[v][each].extend( self.sed[v][each] )
                 if each == 'SConstruct':
                     noIECoreSED[v][each] += [
-                        ('usdLibrary = ','usdLibrary = [] #'),
-                        ('usdPythonModule = ','usdPythonModule = [] #'),
+                        # ('usdLibrary = ','usdLibrary = [] #'),
+                        # ('usdPythonModule = ','usdPythonModule = [] #'),
+                        # ('Default. . usdLibrary','#Default( [ usdLibrary'),
                         ('alembicLibrary = ','alembicLibrary = [] #'),
                         ('alembicPythonModule = ','alembicPythonModule = [] #'),
+                        ('Default. . alembicLibrary,','#Default( [ alembicLibrary,'),
                         ('vdbLibrary = ','vdbLibrary = [] #'),
                         ('vdbPythonModule = ','vdbPythonModule = [] #'),
-                        ('Default. . usdLibrary','#Default( [ usdLibrary'),
-                        ('Default. . alembicLibrary,','#Default( [ alembicLibrary,'),
                         ('Default. vdbLibrary','#Default( vdbLibrary'),
                     ]
         return noIECoreSED
@@ -951,6 +997,7 @@ class cortex(configure):
                     ('Default. . glLibrary','#Default( [ glLibrary'),
                     ('Default. sceneLibrary','#Default( sceneLibrary'),
                     ('Default. . imageLibrary','#Default( [ imageLibrary'),
+                    ('sceneEnv.Alias( "installScene", vdbHeaderInstall )','sceneEnv.Alias( "installVDB", vdbHeaderInstall )'),
                     ('INSTALL_PYTHON_DIR/IECoreAlembic', 'INSTALL_ALEMBICPYTHON_DIR/IECoreAlembic'),
                     ('# Documentation options',
                         'o.Add("ALEMBIC_EXTRA_LIBS")\n'
