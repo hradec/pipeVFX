@@ -12,19 +12,37 @@
 #   author: rhradec april/2013
 #
 
-# grab boot command line parameters
-getarg(){
-    if [ "$(grep '$1' /proc/cmdline)" == "" ] ; then
-      [ "$1" == "studio" ] && echo atomo
-      [ "$1" == "liveInit" ] && echo "pipeline/tools/init/dracut/liveInit"
-    else
-      for each in $(echo $(cat /proc/cmdline)) ; do
-          [ "$(echo $each | cut -d'=' -f1)" = "$1" ] && echo $(echo $each | cut -d'=' -f2)
-      done
-    fi
-}
-export studio=$(getarg studio)
-export liveInit=$(getarg liveInit)
+# ========================================================================
+# figure out the distro and studio name
+# ========================================================================
+if [ -f /etc/fedora-release ] ; then
+    release=$(/usr/bin/python -c "x=open('/etc/fedora-release').readline().split(' ');print x[0].lower()+x[2]")
+    studio=$(ls  /*/.root | tail -1)
+
+elif [ -f /etc/debian_version ] ; then
+    release=debian$(cat /etc/debian_version)
+    studio=$(ls  /*/.root | tail -1)
+
+elif [ -f /etc/arch-release ] ; then
+    # ========================================================================
+    # legacy arch rc.local
+    # ========================================================================
+    release=arch
+
+    # grab boot command line parameters
+    getarg(){
+        if [ "$(grep '$1' /proc/cmdline)" == "" ] ; then
+          [ "$1" == "studio" ] && echo atomo
+          [ "$1" == "liveInit" ] && echo "pipeline/tools/init/dracut/liveInit"
+        else
+          for each in $(echo $(cat /proc/cmdline)) ; do
+              [ "$(echo $each | cut -d'=' -f1)" = "$1" ] && echo $(echo $each | cut -d'=' -f2)
+          done
+        fi
+    }
+    export studio=$(getarg studio)
+    export liveInit=$(getarg liveInit)
+fi
 
 # system arch
 export arch=$(uname -m)
@@ -36,8 +54,7 @@ export uname=$(echo $(uname -s) |  awk '{print tolower($0)}')
 export root=/$studio
 
 # get tools root path
-#export tools=$root/pipeline/tools
-export tools=$root/$(dirname $(dirname $(dirname $liveInit)))
+export tools=$root/pipeline/tools
 
 # get tools root path
 export apps=$root/apps/$uname/$arch
@@ -68,9 +85,9 @@ action(){
 
 
 
-#=========================================================================================================
+# ========================================================================
 # GENERIC rc.d INITIALIZATION
-#=========================================================================================================
+# ========================================================================
 echo -e "\nRunning $tools/init/rc.d/*"
 ls $tools/init/rc.d | while read line ; do
     path=$tools/init/rc.d/$line
@@ -80,24 +97,13 @@ done
 
 
 
-#=========================================================================================================
+# ========================================================================
 # PLATAFORM DEPENDENT INITIALIZATION
-#=========================================================================================================
+# ========================================================================
 
-#---------------------------------------------------------------------------------------------------------
-# if fedora, figure out the release name
-#---------------------------------------------------------------------------------------------------------
-if [ -f /etc/fedora-release ] ; then
-    release=$(/usr/bin/python -c "x=open('/etc/fedora-release').readline().split(' ');print x[0].lower()+x[2]")
-fi
-
-if [ -f /etc/debian_version ] ; then
-    release=debian$(cat /etc/debian_version)
-fi
-
-#---------------------------------------------------------------------------------------------------------
-# if we have a rc.local specific for the current running os distro release, run it!
-#---------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------
+# if we have scripts for the running os distro release, run then!
+# ------------------------------------------------------------------------
 # distro/release specific rc.local should initialize the following:
 #   1. timezone
 #   2. fstab

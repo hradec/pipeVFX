@@ -12,7 +12,7 @@ Conflicts=getty@tty1.service
 
 [Service]
 Type=simple
-#ExecStartPre=/bin/bash /atomo/pipeline/tools/init/rc.local
+ExecStartPre=/bin/bash /atomo/pipeline/tools/init/rc.local
 ExecStart=/bin/python2 /atomo/pipeline/tools/init/dbusService.py
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
