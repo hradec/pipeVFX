@@ -14,7 +14,7 @@ pipeHostname(){
     # make it compatible with OSX
     ip_tokenize=':'
     ether_tokenize="HWaddr"
-    if [ "$uname" == "darwin" ] || [ "$(cat /proc/version | grep ARCH)" != "" ]; then
+    if [ "$uname" == "darwin" ] || [ "$(cat /proc/version | grep ARCH)" != "" ] || [ "$(cat /proc/version | grep fedora)" != "" ]; then
         ip_tokenize=' '
         ether_tokenize="ether"
     fi
@@ -29,6 +29,8 @@ pipeHostname(){
             # grep ifconfig and grab mac addr
             if [ -f /etc/arch-release ] ; then
                 macAddres=$(echo $(ifconfig eth0 | grep ether) |  cut -d' ' -f2  |  awk '{print toupper($0)}')
+            elif [ -f /etc/fedora-release ] ; then
+                macAddres=$(echo $(ifconfig $getETH | grep $ether_tokenize) | awk '{print $2}' | awk '{print toupper($0)}')
             else
                 macAddres=$(echo $(ifconfig $getETH | grep $ether_tokenize) | rev | cut -d' ' -f1 | rev | awk '{print toupper($0)}')
             fi
@@ -65,7 +67,7 @@ pipeHostname(){
 avahi_start(){
     if [ "$(/bin/uname)" = "Linux" ] ; then
         # after updating hostname, start avahi-daemon (kill and restart if needed)
-        if [ -f /etc/debian_version ] || [ -f /etc/arch-release ] ; then
+        if [ -f /etc/debian_version ] || [ -f /etc/arch-release ] || [ -f /usr/lib/systemd/system/avahi-daemon.service ] ; then
             service avahi-daemon stop 1>&2
             pkill -9 avahi-daemon 1>&2
             sleep 20 && service avahi-daemon start 1>&2 &

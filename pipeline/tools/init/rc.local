@@ -13,16 +13,46 @@
 #
 
 # ========================================================================
+# generic action function to display [OK] or [FAILED] at startup!
+# ========================================================================
+mkdir -p /var/log/pipevfx/
+action_tab="%-59s"
+action(){
+    RESTORE='\033[0m'
+    RED='\033[00;31m'
+    GREEN='\033[00;32m'
+    printf $action_tab "$1"
+    mkdir -p /var/log/pipevfx/
+    $2 > /var/log/pipevfx/$(basename $2) 2>&1 
+    if [ $? -gt 0 ]; then
+        echo -e "[${RED}FAILED${RESTORE}]"
+    else
+        echo -e "[${GREEN}  OK  ${RESTORE}]"
+    fi
+}
+
+# ========================================================================
+# redirect output to /var/log/rc_local.log
+# ========================================================================
+rm -rf /var/log/pipevfx/rc-local.log
+# # Close STDOUT file descriptor
+exec 1<&-
+# # Close STDERR FD
+exec 2<&-
+# # Open STDOUT as $LOG_FILE file for read and write.
+exec 1<>/var/log/pipevfx/rc-local.log
+# # Redirect STDERR to STDOUT
+exec 2>&1
+# ========================================================================
+
+# ========================================================================
 # figure out the distro and studio name
 # ========================================================================
+studio=$(dirname $(ls -t /*/.root | tail -1))
 if [ -f /etc/fedora-release ] ; then
-    release=$(/usr/bin/python -c "x=open('/etc/fedora-release').readline().split(' ');print x[0].lower()+x[2]")
-    studio=$(ls  /*/.root | tail -1)
-
+    release=$(/usr/bin/python2 -c "x=open('/etc/fedora-release').readline().split(' ');print x[0].lower()+x[2]")
 elif [ -f /etc/debian_version ] ; then
     release=debian$(cat /etc/debian_version)
-    studio=$(ls  /*/.root | tail -1)
-
 elif [ -f /etc/arch-release ] ; then
     # ========================================================================
     # legacy arch rc.local
@@ -66,22 +96,6 @@ export BASH_SOURCE=$tools/init/rc.local
 echo "==================================================================="
 echo "Running Pipe inits..."
 echo "==================================================================="
-
-# generic action function to display [OK] or [FAILED] at startup!
-action_tab="%-59s"
-action(){
-    RESTORE='\033[0m'
-    RED='\033[00;31m'
-    GREEN='\033[00;32m'
-    printf $action_tab "$1"
-    mkdir -p /var/log/pipeBoot/
-    $2 2> /var/log/pipeBoot/$(basename $2)
-    if [ $? -gt 0 ]; then
-        echo -e "[${RED}FAILED${RESTORE}]"
-    else
-        echo -e "[${GREEN}  OK  ${RESTORE}]"
-    fi
-}
 
 
 
