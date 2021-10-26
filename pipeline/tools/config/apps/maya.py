@@ -43,7 +43,6 @@ class maya(baseApp):
 
             # now we can set maya root properly.
             macfixData['subpath'] = 'usr/autodesk/maya%s/' % mv
-            print self.path( 'bin/maya' )
             if not os.path.exists( self.path( 'bin/maya' ) ):
                 self.maya_bin = "bin/maya%s" % mv
 
@@ -501,16 +500,16 @@ class maya(baseApp):
                             if os.path.splitext(path)[-1].lower() in extensions:
                                 unfiltered += [path]
 
-                # unfiltered = map(lambda z: z.split('"')[1].strip(),
-                #                filter(lambda x: '(mode = ' in x,returnLog.split('\n')) )
 
-                # if using denoise, return the filtered images, not the rendered ones.
+                # if using denoise, return the filtered images.
+                # (if no error during denoise!)
                 filtered = []
-                if 'Filtering to produce ' in returnLog:
-                    filtered = map(lambda z: z.split('Filtering to produce ')[1].strip(),
-                                   filter(lambda x: 'Filtering to produce ' in x,returnLog.split('\n')) )
+                if "Error reading EXR 'renderman" not in returnLog:
+                    if 'Filtering to produce ' in returnLog:
+                        filtered = map(lambda z: z.split('Filtering to produce ')[1].strip(),
+                            filter(lambda x: 'Filtering to produce ' in x,returnLog.split('\n')) )
 
-                images = filtered + unfiltered
+                images = unfiltered + filtered
 
         # after we have some images from the log, we can look on the same
         # paths where they are, looking for extra images that may not show up
@@ -573,7 +572,7 @@ class maya(baseApp):
                 # 'Error: X00002 Plugin error: ',
                 "Error: T02001 Can't open texture ",
                 "Error: R50005 License error",
-                # "Error reading EXR 'renderman",
+                # "Error reading EXR 'renderman", # denoise error when prman crashes
                 'ERROR | [driver_exr]',
                 'H5FD_sec2_open',
                 'OpenEXR exception',
