@@ -18,39 +18,39 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-
 class maya(baseApp):
 
     def macfix(self, macfixData):
-        # new format for maya folder structure, introduced in maya 2022
-        # now we put the same folder structure extracted from maya RPM files
-        # this makes it simple to install new versions of maya.
+        '''
+        new format for maya folder structure
+        now we put the same folder structure extracted from maya RPM files
+        this makes it simple to install new versions of maya.
+        '''
         if not os.path.exists(self.path("bin")) and os.path.exists(self.path("usr")):
             # we have to set the modules path before we set macfix['subpath'], since
-            # the module paths are outside the maya root folder.
-            from glob import glob
+            # the module paths are outside the new maya root folder.
+
             mv = self.version().split('.')[0]
-            self.MAYA_MODULE_PATH = [
+            modules = [
                 self.path("opt/Allegorithmic/Substance_in_Maya/%s/" % mv),
                 self.path("usr/autodesk/modules/maya/%s/" % mv)
             ]
-            self.MAYA_MODULE_PATH += glob(self.path("usr/autodesk/bifrost/maya%s/*" % mv))
-            self.MAYA_MODULE_PATH += glob(self.path("usr/autodesk/mayausd/maya%s/*" % mv))
-
-            modules = []
-            for each in self.MAYA_MODULE_PATH:
-                modules += glob( "%s/*.mod" % each )
-            print modules
+            modules += glob.glob(self.path("usr/autodesk/bifrost/maya%s/*" % mv))
+            modules += glob.glob(self.path("usr/autodesk/mayausd/maya%s/*" % mv))
+            for each in modules:
+                maya.addon( self, module = glob.glob( "%s/*.mod" % each ) )
+            #print modules
 
             # now we can set maya root properly.
-            macfixData['subpath'] = 'usr/autodesk/maya$MAYA_VERSION_MAJOR/'
-            if not os.path.exists(self.path("bin/maya")):
-                self.maya_bin="bin/maya$MAYA_VERSION_MAJOR"
-
+            macfixData['subpath'] = 'usr/autodesk/maya%s/' % mv
+            print self.path( 'bin/maya' )
+            if not os.path.exists( self.path( 'bin/maya' ) ):
+                self.maya_bin = "bin/maya%s" % mv
 
     def environ(self, allPlugs=True):
         ''' this is the main method in a class to setup environment variables for an app.
-        if not implemented, the pipe will try to figure it automatically from the folder structure'''
+        if not implemented, the pipe will try to figure it automatically from the folder structure
+        '''
 
         if self.osx:
             self['PATH'] = '/Library/Application Support/DirectConnect/8.0/bin/Aruba/bin/'
@@ -70,29 +70,21 @@ class maya(baseApp):
             self.update( pipe.libs.alembic() )
         else:
             self['PYTHONHOME'] = self.path()
-        self['PYTHONHOME'] = self.path()
-
-        # set the python version to use with maya
-        self['MAYA_PYTHON_VERSION'] = "2"
-
-
-
-        # self['MAYA_SHELF_PATH'] =
-
-#        if pipe.OSX:
-#            self.replace( MAYA_LOCATION = self.path() )
-
-#        pipe.libs.version.set( qt = '4.8.4' )
-#        self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()
 
         # set the proper python version for the current maya version!
         if self.parent() in ['maya','arnold']:
             if mv >= 2014:
                 pipe.version.set( python = '2.7' )
                 pipe.libs.version.set( python = '2.7' )
+                # set the python version to use with maya
+                self['MAYA_PYTHON_VERSION'] = "2"
             else:
                 pipe.version.set( python = '2.6' )
                 pipe.libs.version.set( python = '2.6' )
+
+
+        # grab current python version
+        pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
 
         # log.debug( "@@@@@ %s, %s %s" % ( 'MAYA_USE_VRAY' in os.environ, mv > 2016, allPlugs ) )
         # plugins
@@ -150,17 +142,16 @@ class maya(baseApp):
             self['PYTHONPATH'] = '%s/maya/plugins' % each
             self['PYTHONPATH'] = '%s/maya/scripts' % each
 
+        # add this only to the global one (last 'each')
+        if float(self.version()) == 2016:
+            self['AUTODESK_ADLM_THINCLIENT_ENV'] = "%s/licenses/maya/2016_config.xml" % each
+
         # don't use pipe openvdb since prman 21 comes with its own.
         prman_version = float(pipe.version.get('prman'))
         if prman_version >= 21.0 and prman_version < 22.0:
             self.ignorePipeLib( "openvdb" )
         else:
             self.update(pipe.libs.openvdb())
-
-
-        # add this only to the global one (last)
-        if float(self.version()) == 2016:
-            self['AUTODESK_ADLM_THINCLIENT_ENV'] = "%s/licenses/maya/2016_config.xml" % each
 
         self['PYTHONPATH'] = self.path('scripts')
         self['PYTHONPATH'] = self.path('plugins')
@@ -169,16 +160,16 @@ class maya(baseApp):
         # force the load of the support libraries that come with maya
         # this fixes problems in python with hashlib/md5!!
         if self.parent() in ['maya']:
-            if float(self.version()) > 2019:
-                self['LD_PRELOAD'] = self.path('../../libs/libcrypto.so.10')
-                self['LD_PRELOAD'] = self.path('../../libs/libfontconfig.so.1')
-                self['LD_PRELOAD'] = self.path('../../libs/libharfbuzz.so.0')
-
-            else:
+            if os.path.exists(self.path('support/openssl/libcrypto.so.6')):
                 self['LD_PRELOAD'] = self.path('support/openssl/libcrypto.so.6')
                 self['LD_PRELOAD'] = self.path('support/openssl/libssl.so.6')
                 self['LD_PRELOAD'] = '/usr/lib/libjpeg.so.62'
-
+            elif os.path.exists(self.path('../../libs/libcrypto.so.10')):
+                self['LD_PRELOAD'] = self.path('../../libs/libcrypto.so.10')
+                self['LD_PRELOAD'] = self.path('../../libs/libfontconfig.so.1')
+                self['LD_PRELOAD'] = self.path('../../libs/libharfbuzz.so.0')
+                self['LD_LIBRARY_PATH'] = self.path('../../libs')
+        #
 
         # our custom zlib give some error messages at startup of
         # maya 2014!
@@ -196,8 +187,6 @@ class maya(baseApp):
 
                 # freetype setup
                 self.ignorePipeLib( "freetype" )
-                if self.parent() in ['maya']:
-                    self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
 
         if self.parent() in ['maya']:
             if mv > 2017:
@@ -208,8 +197,10 @@ class maya(baseApp):
                 # self.update(pipe.libs.pyside())
                 # pipe.libs.version.set( pyqt = '5.12.0' )
                 self.ignorePipeLib( "fontconfig" )
-                if self.parent() in ['maya']:
-                    if mv < 2022:
+
+                # maya 2022 doesn't need system freetype
+                if mv < 2022:
+                    if os.path.exists('/usr/lib/libfreetype.so.6'):
                         self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
 
             # set the proper sip/pyqt so gaffer works
@@ -217,6 +208,22 @@ class maya(baseApp):
                 pipe.libs.version.set( sip  = '4.16.7.maya%s' % self.version() )
                 pipe.libs.version.set( pyqt = '4.11.4.maya%s' % self.version() )
 
+
+        # force to use mayas python
+        if self.parent() in ['maya','arnold']:
+            # or else we see a error on os module were it can't find urandom!!
+            # we need this to force maya to read its own python distribution files
+            self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
+
+            if int(self['MAYA_PYTHON_VERSION']) == 2:
+                maya_support_python = glob.glob( self.path('support/python/%s*/' % pythonVer ) )
+                if maya_support_python:
+                    self.insert('PYTHONPATH',0, maya_support_python[0])
+                self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
+                self.insert('PYTHONPATH',0, self.path('lib/python%s/site-packages/' % pythonVer))
+                self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
+                self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
+                self.insert('LD_LIBRARY_PATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
 
         # xgen libraries
         self['XGEN_GLOBAL'] = self.path('plug-ins/xgen/')
@@ -229,8 +236,9 @@ class maya(baseApp):
             self['PATH'] = "%s/bin" % p
             self['PYTHONPATH'] = "%s/scripts" % p
 
-        ## Maya Camera Modifier Key
-        os.system('gsettings set org.gnome.desktop.wm.preferences mouse-button-modifier "<Super>"')
+        # change mouse window modifier to Super Key (Windows/apple cmd key) so ALT is free to be used by maya
+        if 'super' not in ''.join(os.popen('gsettings get org.gnome.desktop.wm.preferences mouse-button-modifier').readlines()).strip().lower():
+            os.system('gsettings set org.gnome.desktop.wm.preferences mouse-button-modifier "<Super>"')
 
         self['LC_ALL'] = 'C'
         self['MAYA_IP_TYPE'] = 'ipv4'
@@ -246,6 +254,7 @@ class maya(baseApp):
         # self['MAYA_USE_MALLOC'] = '1'
         # self['MAYA_DISABLE_CASCADING'] = '1'
         self['MAYA_LOCATION'] = self.path()
+
         if mv > 2014:
             self['MAYA_ALLOW_RENDER_LAYER_SWITCHING'] = '1'
             # this bellow prevents the privacy window to show up when starting maya or the firt time!
@@ -260,21 +269,6 @@ class maya(baseApp):
     </Section>
 </AdlmSettings>\n''' % mv )
             Adlm.close()
-
-        pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
-        if self.parent() in ['maya','arnold']:
-            # or else we see a error on os module were it can't find urandom!!
-            # we need this to force maya to read its own python distribution files
-            if int(self['MAYA_PYTHON_VERSION']) == 2:
-                self.insert('PYTHONPATH',0, self.path('support/python/2.7.11/'))
-                self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
-                self.insert('PYTHONPATH',0, self.path('lib/python%s/site-packages/' % pythonVer))
-                self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
-                self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
-                self.insert('LD_LIBRARY_PATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
-
-            # if mv < 2022:
-            self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
 
         # we run this to make sure Asset module works when importing IECore
         # for maya 2018 and up, since it comes with pyilmbase, which doens't match
@@ -306,7 +300,8 @@ class maya(baseApp):
 
     def bins(self):
         ''' we override this method to return the commands we want to be visible for the users
-        firt element is the command the user will type, and second is the command line executed'''
+        firt element is the command the user will type, and second is the command line executed
+        '''
         ret = [
             ('maya', 'maya'),
             ('mayapy', 'mayapy'),
@@ -578,7 +573,7 @@ class maya(baseApp):
                 # 'Error: X00002 Plugin error: ',
                 "Error: T02001 Can't open texture ",
                 "Error: R50005 License error",
-                "Error reading EXR 'renderman",
+                # "Error reading EXR 'renderman",
                 'ERROR | [driver_exr]',
                 'H5FD_sec2_open',
                 'OpenEXR exception',

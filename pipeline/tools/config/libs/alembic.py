@@ -35,4 +35,6 @@ class alembic(baseLib):
             lib = self.path('lib'),
         )
 
+        self['LD_PRELOAD'] = self.path('lib/libAlembic.so')
+
         self['HDF5_DISABLE_VERSION_CHECK'] = '1'

@@ -21,10 +21,8 @@
 
 class nuke(baseApp):
     def macfix(self, macfixData):
-        macfixData['subpath'] = self.path('Nuke%s.app/Contents/MacOS/' % self.version())
-
-    def environ(self):
-        if self.osx:
+        if pipe.osx:
+            macfixData['subpath'] = self.path('Nuke%s.app/Contents/MacOS/' % self.version())
             osxPath = self.mac()['subpath']
             self.replace(
                 NUKE_ROOT           = osxPath,
@@ -35,6 +33,7 @@ class nuke(baseApp):
                 INCLUDE             = '%s/include' % osxPath,
             )
 
+    def environ(self):
         nukeMajorVersion = int(self.version().split('.')[0])
         if self.parent() in ['nuke']:
             if nukeMajorVersion >= 8:
@@ -46,13 +45,16 @@ class nuke(baseApp):
 
             #self.update( hiero() )
 
+        # new in nuke12
+        # self['LD_LIBRARY_PATH'] = self.path("arri/GPU")
+        self['LD_LIBRARY_PATH'] = self.path("arri/CPUonly")
+
         self.update( python() )
 
         # we need this to force this app to read standard python from its installation
         # or else we see a error on os module were it can't find urandom!!
         self.insert('PYTHONPATH',0, self.path('lib/python$PYTHON_VERSION_MAJOR' ))
         self.insert('PYTHONPATH',0, self.path('lib/python$PYTHON_VERSION_MAJOR/lib-dynload/' ))
-
 
         # avoid setting nuke default plugins folder since it comes with
         # pyside and it breaks our own pyside implementation!!
@@ -78,7 +80,6 @@ class nuke(baseApp):
 
         self.update( keentools() )
         self.update( neat() )
-
 
         # rvNuke plugin needs this to find rv wrapper!
         self.update( rv() )

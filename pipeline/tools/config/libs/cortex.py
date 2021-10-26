@@ -176,6 +176,7 @@ class cortex(baseLib):
                 self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('openvdb/$OPENVDB_VERSION/python'),
                 self.path('usd/$USD_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('appleseed/$APPLESEED_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages'),
             ],
@@ -209,6 +210,9 @@ class cortex(baseLib):
         self['IECORE_PROCEDURAL_PRESET_PATHS'] = '%s/.config/cortex/preset' % os.environ['HOME']
 
         self.update( pipe.libs.pyilmbase() )
+        self.update( pipe.libs.openvdb() )
+        self.update( pipe.libs.alembic() )
+        self.update( pipe.libs.usd() )
 
     def bins(self):
         return [('cpython', 'cpython')]

@@ -32,5 +32,5 @@ class octane(baseApp):
         self['PATH'] = self.path('standalone')
 
     def license(self):
-        if not os.path.exists( '%s/.OctaneRender/thirdparty/cudnn_7_4_1/libcudnn.so.7.4.1' % os.environ['HOME'] ):
-            os.system( 'rsync -avpP  %s/.OctaneRender/ %s/.OctaneRender/' % (self.path(), os.environ['HOME']) )
+        if os.path.exists(self.path()) and not os.path.exists( '%s/.OctaneRender/thirdparty/cudnn_7_4_1/libcudnn.so.7.4.1' % os.environ['HOME'] ):
+            os.system( 'rsync -avpP  %s/.OctaneRender/ %s/.OctaneRender/ 2>&1' % (self.path(), os.environ['HOME']) )

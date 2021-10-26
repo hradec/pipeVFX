@@ -201,13 +201,18 @@ class gaffer(baseLib):
     def bins(self):
         ''' we make our wrapper without the .py just to keep
             things more professional! lol '''
+        gaffer_bin = 'gaffer.py'
+        if self.path('bin/gaffer'):
+            gaffer_bin = 'gaffer'
+
         return [
-            ('gaffer','gaffer.py'),
-            ('opa','gaffer.py opa -gui 1'),
-            ('browser','gaffer.py browser'),
-            ('sam','gaffer.py sam'),
-            ('bundle','gaffer.py test'),
+            ['gaffer',  gaffer_bin],
+            ['opa',     gaffer_bin+' opa -gui 1'],
+            ['browser', gaffer_bin+' browser'],
+            ['sam',     gaffer_bin+' sam'],
+            ['bundle',  gaffer_bin+' test'],
         ]
+
 
     def bg(self, cmd, bin):
         ''' return True if a cmd or binary should run in background '''
