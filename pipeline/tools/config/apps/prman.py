@@ -119,18 +119,19 @@ class prman(baseApp):
         #if self.parent  in ['nuke']:
         folders = [ x.strip() for x in folders ]
         for each in folders:
-            prman.addon(self,
-                python=[
-                    '%s/scripts'        % each,
-                    '%s/rfm'            % each,
-                    '%s/lib/it/python/' % each,
-                    '%s/lib/python2.7/' % each,
-                    '%s/lib/python2.7/site-packages' % each,
-                ],shader=[
-                    '%s/lib/shaders'     % each,
-                    '%s/lib/rsl/shaders' % each,
-                    '%s/lib/textures'    % each,
-            ])
+            if each:
+                prman.addon(self,
+                    python=[
+                        '%s/scripts'        % each,
+                        '%s/rfm'            % each,
+                        '%s/lib/it/python/' % each,
+                        '%s/lib/python2.7/' % each,
+                        '%s/lib/python2.7/site-packages' % each,
+                    ],shader=[
+                        '%s/lib/shaders'     % each,
+                        '%s/lib/rsl/shaders' % each,
+                        '%s/lib/textures'    % each,
+                ])
 
         # add tools paths
         self['CUSTOM_RENDERMAN_PATH'] = '%s/prman/'         % pipe.roots().tools()
