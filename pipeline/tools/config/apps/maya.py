@@ -67,8 +67,8 @@ class maya(baseApp):
 
             # pipeline alembic plugins!
             self.update( pipe.libs.alembic() )
-        else:
-            self['PYTHONHOME'] = self.path()
+        # else:
+        #     self['PYTHONHOME'] = self.path()
 
         # set the proper python version for the current maya version!
         if self.parent() in ['maya','arnold']:
@@ -96,7 +96,29 @@ class maya(baseApp):
             self.update( shave() )
             self.update( substance() )
             self.update( mgear() )
-            self.update( pipe.libs.usd() )
+
+            if hasattr(self, 'maya_bin'):
+                # setup maya usd that comes with maya!
+                for usdVersion in glob.glob(self.path('../mayausd/maya%d/*' % mv)):
+                    maya.addon(self,
+                        plugin = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/plugin",
+                        script = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/scripts",
+                        icon = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/icons",
+                    )
+                    maya.addon(self,
+                        plugin = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/maya",
+                        lib = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/",
+                        script = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/python/",
+                        icon = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/icons/",
+                    )
+                    self['PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/bin"
+                    self['LD_LIBRARY_PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/lib"
+                    self['LD_LIBRARY_PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/lib64"
+                    self['PXR_PLUGINPATH_NAME'] = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/usd"
+                    self['MAYAUSD_VERSION'] = '.'.join(os.path.basename(usdVersion).split('.')[:2])
+
+            else:
+                self.update( pipe.libs.usd() )
 
             if 'PIPE_REDSHIFT' in os.environ and os.environ['PIPE_REDSHIFT']=='1':
                 self.update( redshift() )
@@ -312,9 +334,13 @@ class maya(baseApp):
 
     def run(self, app):
         import os, sys, glob
+        mv = float(self.version().split('.')[0])
 
-        # m = self.path("bin/maya%s" % self.version())
         m = self.path('bin/maya.bin')
+        if hasattr(self, 'maya_bin'):
+            # m = app.replace('maya', self.maya_bin)
+            m = self.path(self.maya_bin)
+
 
         if '--debug' in sys.argv:
             self['MAYA_DEBUG_NO_SIGNAL_HANDLERS'] = '1'
@@ -348,9 +374,7 @@ class maya(baseApp):
 
             __run = app.replace('mayapy','bin/mayapy')
         else:
-            if hasattr(self, 'maya_bin'):
-                __run = app.replace('maya', self.maya_bin)
-
+            pass
 
         # if 'mayapy' not in app and float(self.version().split('.')[0]) >= 2022:
         #     __run += ' -pythonver 2'
