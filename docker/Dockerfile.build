@@ -8,8 +8,8 @@ ARG BASE_IMAGE
 ARG http
 ARG https
 
-#FROM $BASE_IMAGE
-FROM centos:7.6.1810
+FROM $BASE_IMAGE
+#FROM centos:7.6.1810
 
 
 ENV http_proxy=$http
@@ -29,25 +29,26 @@ RUN echo yum update -y && yum install -y csh tcsh xz \
     xorg-x11-server-Xorg xorg-x11-server-Xvfb xorg-x11-fonts* \
     libXinerama-devel libXext-devel libXrandr-devel libXi-devel \
     libXcursor-devel libXxf86vm-devel libXinerama \
-    mesa-utils mesa-libGL-devel mesa-libGLU  mesa-libGLU-devel SDL \
+    mesa-libGL-devel mesa-libGLU  mesa-libGLU-devel SDL \
     git gcc gcc-c++ make scons binutils elfutils dbus-devel glibc-devel \
     readline-devel dbus-glib-devel cmake yaml-cpp* tinyxml* enca \
-    tkinter ncurses ncurses-devel ncurses-static libcurl-devel \
+    ncurses ncurses-devel ncurses-static libcurl-devel \
     flex-devel sqlite-devel libdb-devel gdbm-devel \
-    gstreamer-plugins-base.x86_64 gamin zip wget \
-    freetype2 vulkan-devel python2-scons
+    zip wget vulkan-devel
+
+RUN  yum install -y mesa-utils tkinter gstreamer-plugins-base.x86_64 gamin freetype2 python2-scons || true
 
 # RUN yum groupinstall -y "X Window System" "Fonts"
 RUN yum groupinstall -y "Development Tools" && fc-cache
 
-RUN yum -y install epel-release
+RUN yum -y install epel-release | true
 # remove mirrors from epel or else it will fail if there are no mirrors
 # in the country the build machine is running
 # RUN cat /etc/yum.repos.d/epel.repo \
 #     | sed 's/.baseurl/baseurl/' \
 #     | sed 's/metalink/#metalink/' > /tmp/epel.repo && \
 #     /bin/mv /tmp/epel.repo /etc/yum.repos.d/epel.repo
-RUN yum -y install centos-release-scl devtoolset-6
+RUN yum -y install centos-release-scl devtoolset-6 || true
 
 RUN ln -s /lib64/libbz2.so.1 /lib64/libbz2.so.1.0 ; \
     ln -s libcrypto.so.1.0.2k /usr/lib64/libcrypto.so.10 ; \
@@ -75,8 +76,9 @@ RUN	yum install -y fontconfig-devel.x86_64
 RUN yum -y install xcb-util-wm-devel libxcb-devel.x86_64 \
     xcb-util-image-devel.x86_64 xcb-util-keysyms-devel.x86_64 \
     xcb-util-renderutil-devel.x86_64 xcb-util-wm-devel.x86_64 \
-    xkeyboard-config.noarch \
-    install xcb*devel
+    xkeyboard-config.noarch
+
+RUN yum -y install xcb*devel
 
 # opencl
 RUN yum -y install opencl-headers ocl-icd-devel
@@ -108,7 +110,7 @@ RUN yum -y install strace
 RUN yum -y install libXmu-devel
 
 # we need inkscape for gaffer
-RUN yum -y install inkscape python2-scons wget git zip
+RUN yum -y install inkscape wget git zip
 
 # we need pulseaudio to run maya
 RUN yum -y install pulseaudio
@@ -123,7 +125,10 @@ RUN yum -y install openldap-devel
 # maya needs this to run with audio
 RUN yum -y install audiofile-devel
 
-
+# install python2 scons
+RUN yum -y install python2
+RUN python2 -m ensurepip
+RUN python2 -m pip install SCons
 
 
 # to avoid clashing in osl

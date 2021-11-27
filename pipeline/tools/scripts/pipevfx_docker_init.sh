@@ -23,6 +23,8 @@ if [ "$TRAVIS" == "1" ] ; then
 fi
 mkdir -p /$STUDIO/pipeline/libs/
 
+[ ! -f /bin/python ] && ln -s /bin/python2 /bin/python
+
 export TERM=xterm-256color
 
 

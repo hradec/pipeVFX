@@ -499,8 +499,6 @@ pkgs.gaffer[ gaffer.targetSuffix ] = gaffer
 
 
 
-
-
 # ===========================================================================================
 # FROM HERE, WE DEAL WITH THIRDY-PARTIE APPS
 # ===========================================================================================
@@ -527,10 +525,14 @@ if canBuildCortexNow:
     houdini = pipe.apps.houdini()
 
     # grab version lists
-    mv = [ x for x in build.pkgs.versionSort( maya.versionList()  ) if float(x.split('.')[0])>2016 ]
-    pv = [ x for x in build.pkgs.versionSort( prman.versionList() ) if float(x.split('.')[0])>=21 ]
-    nv = [ x for x in build.pkgs.versionSort( nuke.versionList()  ) if float(x.split('.')[0])>=9 ]
-    hv = build.pkgs.versionSort( houdini.versionList() )[-2:]
+    try: pv = [ x for x in build.pkgs.versionSort( prman.versionList() ) if float(x.split('.')[0])>=21 ]
+    except: pv = []
+    try: mv = [ x for x in build.pkgs.versionSort( maya.versionList()  ) if float(x.split('.')[0])>2016 ]
+    except: mv = []
+    try: nv = [ x for x in build.pkgs.versionSort( nuke.versionList()  ) if float(x.split('.')[0])>=9 ]
+    except: nv = []
+    try: hv = build.pkgs.versionSort( houdini.versionList() )[-2:]
+    except: hv = []
 
     # disable arnold!
     #pipe.version.set(arnold='0.0.0')

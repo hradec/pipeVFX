@@ -10,21 +10,23 @@ if [ "$STUDIO" == "" ] ; then
 fi
 export STUDIO
 
+
 # base image from centos used
-base_centos=centos:7.6.1810
+#raw_image=centos:7.6.1810
+raw_image=fedora:35
 
 # base image name for pipeVFX images
 base=hradec/pipevfx
 
 # the image name for the image that holds package files (our pkg cache image!)
-base_image=${base}_pkgs:centos7
+pkg_image=${base}_pkgs:centos7
 
 # a tag name so the build image pulls the latest always
 pkg_image_tag=${base}_pkgs:centos7_latest
 
-
 # the build image name!
-build_image=${base}_build:centos7
+#build_image=${base}_build:centos7
+build_image=${base}_build:$(echo $raw_image | sed 's/://')
 
 SHELL=1
 PUSH=0
@@ -51,7 +53,7 @@ if [ "$HELP" != "" ] ; then
     echo -e "\t-d   : run the build in debug mode (show the build log)"
     echo -e "\t-e   : add extra attributes which will be passed to scons"
     echo -e "\t-v   : add extra environment variable which will be passed to the docker container that runs scons"
-    echo -e "\t-u   : build and upload the docker image"
+    echo -e "\t-u   : build and upload the build docker image"
     echo -e "\t-p   : build the package cache image and upload to docker hub"
     echo ''
 else
@@ -70,22 +72,22 @@ else
         done
     fi
 
-    latest_tag=$(echo $base_image | awk -F':' '{print $1}'):$(
+    latest_tag=$(echo $pkg_image | awk -F':' '{print $1}'):$(
         wget -q \
-        https://registry.hub.docker.com/v1/repositories/"$(echo $base_image | awk -F: '{print $1}')"/tags -O - \
+        https://registry.hub.docker.com/v1/repositories/"$(echo $pkg_image | awk -F: '{print $1}')"/tags -O - \
         | tr -d '[]" ' \
         | tr '}' '\n' \
         | awk -F: '{print $3}' \
         | grep -v latest \
         | sort -h | tail -1
     )
-    if [ "$latest_tag" == "$(echo $base_image | awk -F':' '{print $1}'):" ] ; then
-        latest_tag=$base_image
-        previous_tag=$base_centos
+    if [ "$latest_tag" == "$(echo $pkg_image | awk -F':' '{print $1}'):" ] ; then
+        latest_tag=$pkg_image
+        previous_tag=$raw_image
     else
         if [ "$PKGS" == "1" ] ; then
             tmp=$latest_tag
-            latest_tag=${base_image}_$(echo $latest_tag | awk -Fcentos7_ '{$2++;printf("%04d",$2)}')
+            latest_tag=${pkg_image}_$(echo $latest_tag | awk -Fcentos7_ '{$2++;printf("%04d",$2)}')
             previous_tag=$tmp
         fi
     fi
@@ -103,7 +105,7 @@ else
     # fi
 
     if [ "$PKGS" == "1" ] ; then
-        echo -e "\n\nusing base_image:$previous_tag \nto build new_tag:$latest_tag\n"
+        echo -e "\n\nusing pkg_image:$previous_tag \nto build new_tag:$latest_tag\n"
         # packages download
         docker build \
             -f $CD/docker/Dockerfile.pkgs \
@@ -131,7 +133,7 @@ else
     if [ "$UPLOAD" == "1" ] ; then
 
         # build image!
-        echo -e "\nusing base_image:$base_image\npackage image:$latest_tag\n\n"
+        echo -e "\nbuilding image:$build_image using $raw_image as base.\npackage image:$latest_tag\n\n"
         docker build \
             -f $CD/docker/Dockerfile.build \
             $CD/ \
@@ -141,8 +143,8 @@ else
             --rm \
             --build-arg http="$http_proxy" \
             --build-arg https="$https_proxy" \
-            # --build-arg PACKAGES="$latest_tag" \
-            # --build-arg BASE_IMAGE="$base_image"
+            --build-arg PACKAGES="$latest_tag" \
+            --build-arg BASE_IMAGE="$raw_image"
 
         if [ $? -ne 0 ] ; then
             echo ERROR!!

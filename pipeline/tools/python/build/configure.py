@@ -613,7 +613,7 @@ class python(configure):
         # 'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
         'export PYTHON=$INSTALL_FOLDER/bin/python',
         'export LD_PRELOAD=$SOURCE_FOLDER/libpython$PYTHON_VERSION_MAJOR.so.1.0',
-        './configure  --enable-shared --with-lto  --enable-unicode=ucs4 --with-openssl=$OPENSSL_TARGET_FOLDER  --with-bz2', # --enable-optimizations',
+        './configure  --enable-unicode=ucs4 --with-openssl=$OPENSSL_TARGET_FOLDER  --with-bz2  --with-lto --enable-shared ', # --enable-optimizations
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
         ' make -j $DCORES',
         ' make -j $DCORES install',
