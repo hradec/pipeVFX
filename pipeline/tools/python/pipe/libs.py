@@ -19,19 +19,19 @@
 # =================================================================================
 
 import pipe
-from baseApp import baseLib, libsDB
+from baseApp import baseLib, _libsDB
 from baseApp import versionLib as version
 from pipe.base import roots
 from pipe.bcolors import bcolors
 import os, glob
 import traceback
-
+import cached
 
 genericRegistry = [
     'class %s(baseLib):',
     '   pass',
 ]
-for each in libsDB():
+for each in _libsDB:
     # if each != 'gcc':
          exec( '\n'.join(genericRegistry) % each.replace('-','_').replace('+','_plus_') )
 
@@ -44,21 +44,18 @@ class allLibs(baseLib):
     In the case a library needs some special setup, we can allways create a
     new class for it, in the same molds of our apps classes!
     '''
+    force_enable = True
     def environ(self):
-        for each in libsDB():
+        for each in _libsDB:
             if each != 'gcc':
                 self.update( eval("%s()" % each.replace('-','_')) )
-
-
-
-
 
 
 # avoid getting duplicated files.
 libz = {}
 def sourceLibs( jconfig ):
     if os.path.exists( jconfig ):
-        for each in glob.glob("%s/*.py" % jconfig):
+        for each in cached.glob("%s/*.py" % jconfig):
             libz[ os.path.basename( each ) ] = each
 
 # go over the folder structure, and overwrite the files before sourcing then.

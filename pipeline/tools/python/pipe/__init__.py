@@ -21,16 +21,65 @@
 
 from __future__ import print_function
 import os, glob, sys, traceback
+import log
+import base
+from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot
+from base import getPackage, win, osx, lin, name
+from base import distro as gcc
+from base import distroName as distro
+import baseApp
+from baseApp import version, versionLib, appsDB, app, libsDB, lib
+from baseApp import baseLib, disable
+
+from output import output
+import frame
+import build
+import cached
+import farm
+import apps
+import libs
+try:
+    import admin
+except:
+    admin=None
+
 
 # avoid creating .pyc since it can cause trouble between Intel and AMD
 sys.dont_write_bytecode = True
 
+# make sure sys has argv
+if not hasattr(sys,'argv'):
+    sys.argv = []
+
+# set the folder of this source file at the top of pythonpath
+moduleRootPath = os.path.abspath( os.path.dirname(__file__) )
+sys.path.insert(0,moduleRootPath)
+
+# store the current dir, just in case
+curdir = os.getcwd()
+
+# read config files, like versions.py and license.py
+baseApp.baseApp.configFiles()
+
+
+# we need this in OSX to force setup brew pythonpath, just in case!
+if osx:
+    # we only set brew pythonpath if running system python!
+    if sys.executable == '/usr/bin/python':
+        sys.path.insert(0, '/usr/local/lib/python$PYTHON_VERSION_MAJOR/site-packages/gtk-2.0/')
+        sys.path.insert(0, '/usr/local/lib/python$PYTHON_VERSION_MAJOR/site-packages/')
+
+    # load dbus session, if needed!
+    if not ''.join(os.popen('launchctl list | grep "dbus-session" 2>&1').readlines()).strip():
+        os.system('launchctl load /usr/local/Cellar/d-bus/org.freedesktop.dbus-session.plist')
+
+# deal with QT
 global _Qt
 global _QtCore
 global _QtGui
 global _QtWidgets
-
 def importQt(ret=None):
+    ''' import QT from the system or from gaffer, if it's available '''
     global _Qt
     global _QtCore
     global _QtGui
@@ -62,92 +111,76 @@ def importQt(ret=None):
 
 
 def whatQt():
+    ''' return what python qt we're using '''
     if _Qt:
         return "pyside"
     return "pyqt"
 
 
-if not hasattr(sys,'argv'):
-    sys.argv = []
-
-moduleRootPath = os.path.abspath( os.path.dirname(__file__) )
-sys.path.insert(0,moduleRootPath)
-
-curdir = os.getcwd()
-'''
-os.chdir(moduleRootPath)
-#os.system('rm %s/*.pyc' % moduleRootPath)
-for each in glob.glob('%s/*.py' %  moduleRootPath):
-    module = os.path.splitext(os.path.basename(each))[0]
-    if module not in __file__:
-        exec( 'import %s;reload(%s);del %s' %  (module,module,module) )
-    del each, module
-os.chdir(curdir)
-'''
-
-from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot, getPackage, win, osx, lin, name, findSharedLibrary
-
-
 def versionMajor(versionString):
+    ''' return the version major of a normal version number '''
     if not versionString:
         return 0.0
     return float('.'.join(versionString.split('.')[:2]))
 
 
 def versionSort(versions):
+    ''' sort a list of versions properly (versions as ##.##.##) '''
     def method(v):
         v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
         return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
-    tmp =  sorted( versions, key=method, reverse=True )
-    # print tmp
-    return tmp
-
-# we need this in OSX to force setup brew pythonpath, just in case!
-if osx:
-    # we only set brew pythonpath if running system python!
-    if sys.executable == '/usr/bin/python':
-        sys.path.insert(0, '/usr/local/lib/python$PYTHON_VERSION_MAJOR/site-packages/gtk-2.0/')
-        sys.path.insert(0, '/usr/local/lib/python$PYTHON_VERSION_MAJOR/site-packages/')
-
-    # load dbus session, if needed!
-    if not ''.join(os.popen('launchctl list | grep "dbus-session" 2>&1').readlines()).strip():
-        os.system('launchctl load /usr/local/Cellar/d-bus/org.freedesktop.dbus-session.plist')
-
-import log
-from baseApp import version, versionLib, appsDB, app, libsDB, lib, baseLib, disable, roots
-from baseApp import baseApp as _baseApp
-try:
-    import admin
-except:
-    admin=None
-import apps
-import bcolors
-from base import distro as gcc
-from base import distroName as distro
-del os, glob
-import farm
-import frame
-
-import job
-from output import output
-import frame
-import build
+    return sorted( versions, key=method, reverse=True )
 
 
-def latestGCCLibrary(libname):
-    import os, libs
-    _lib = libs.gcc().path('lib/%s' % libname)
-    if not os.path.exists(_lib):
-        _lib = findSharedLibrary(libname)
-    return _lib
+class LD_PRELOAD:
+    ''' a class to setup LD_PRELOAD with some base shared libraries '''
+    from baseApp import baseLib
+    class gcc:
+        class latest(baseLib):
+            ''' use the latest gcc shared libraries from the pipe
+            we need this when the system libraries are lower version than
+            the latest pipe gcc '''
+            force_enable = True
+            def environ(self):
+                self['LD_PRELOAD'] = LD_PRELOAD.latestGCCLibrary("libstdc++.so.6")
+                self['LD_PRELOAD'] = LD_PRELOAD.latestGCCLibrary("libgcc_s.so.1")
 
+        class system(baseLib):
+            ''' use the system gcc shared libraries
+            we need this if the system gcc version is bigger than our latest
+            pipe gcc '''
+            force_enable = True
+            def environ(self):
+                self['LD_PRELOAD'] = LD_PRELOAD.systemGCCLibrary("libstdc++.so.6")
+                self['LD_PRELOAD'] = LD_PRELOAD.systemGCCLibrary("libgcc_s.so.1")
+
+    @staticmethod
+    def latestGCCLibrary(libname):
+        ''' return the path for the latest pipe gcc requested library '''
+        import os, libs
+        _lib = libs.gcc().path('lib/%s' % libname)
+        if not os.path.exists(_lib):
+            _lib = base.findSharedLibrary(libname)
+        return _lib
+
+    @staticmethod
+    def systemGCCLibrary(libname):
+        ''' return the path for the system gcc requested library '''
+        import os, log
+        extra = "(libc6)"
+        if os.uname()[-1] == 'x86_64':
+            extra = "x86-64"
+        if 'ldconfig' not in globals():
+            globals()['ldconfig'] = cached.popen("ldconfig -p").readlines()
+        l = [ x.strip().split()[-1] for x in globals()['ldconfig'] if libname in x.strip()[len(x.strip())-len(libname):] and extra in x ]
+        if not l:
+            log.error("can't find system library %s" % libname)
+            return ""
+        return l[0]
 
 def findLibrary(libname):
-    return findSharedLibrary(libname)
-    # import os
-    # # '%s/gcc/4.8.5/lib64/libstdc++.so.6' % pipe.build.install(),
-    # # '%s/gcc/4.8.5/lib64/libgcc_s.so.1' % pipe.build.install(),
-    # return ''.join(os.popen( "ldconfig -p | grep %s | grep $(uname -m | sed 's/_/-/g')" % libname ).readlines()).strip().split(' ')[-1]
+    ''' find a shared library '''
+    return base.findSharedLibrary(libname)
 
 def _force_os_environ(print_traceback=None):
     ''' this is a hack to restart a running python to account for a new os.environ
@@ -164,22 +197,24 @@ def _force_os_environ(print_traceback=None):
         sys.exit(1)
 
 def studio(name=None):
+    ''' studio is already set at initialization, based on .root file location!
+    it's actually $(basename $ROOT), were ROOT env var is the path of .root
+    file!'''
     import os
-    #os.environ['STUDIO'] = name
-    # studio is already set at initialization, based on .root file location!
-    # it's actually $(basename $ROOT), were ROOT env var is the path of .root file!
     return os.environ['STUDIO']
 
 def include(currentFile):
+    ''' need description!!! '''
     import os, sys
     version = currentFile.split('/')[-1].split('-')[-1].split('.')[0]
     f = ''.join( open( '%s/../include/%s.py' % ( os.path.dirname(currentFile), version ), 'r' ).readlines() )
     return f
 
-
 def alias(withlibs=True):
+    ''' returns bash aliases to initialze every binary executable in the pipe '''
     from glob import glob
     import os
+    import apps, libs
     SHLIB = [
         '.dylib',
         '.dll',
@@ -191,16 +226,14 @@ def alias(withlibs=True):
     aliasScript = []
 
     pythonBin = "/usr/bin/python2"
-#    if osx:
-#        import glob
-#        paths = glob.glob( '%s/python/2.6*' % roots.libs() )
-#        if paths:
-#            paths.sort()
-#            pythonBin = "%s/bin/python" % paths[-1]
+    if osx:
+        paths = cached.glob( '%s/python/2.*' % roots.libs() )
+        if paths:
+            paths.sort()
+            pythonBin = "%s/bin/python" % paths[-1]
 
 
-
-    for appname in libsDB():
+    for appname in baseApp._libsDB:
         classType = 'apps'
         try:
 #            sys.stderr.write("%s\n" % appname)
@@ -215,14 +248,11 @@ def alias(withlibs=True):
             except:
                 appClass = None
 
-#        import sys
-#        print >>sys.stderr, appname, classType
         if appClass:
             for each in appClass.bins():
-#                print >>sys.stderr, each
                 aliasScript.append('''alias %s='env LD_PRELOAD="" %s -c "import pipe;pipe.%s.%s().run(\\"%s\\")"' ''' % (each[0].replace(' ','_'), pythonBin, classType,appname, each[1]) )
 
-    for appname in appsDB():
+    for appname in baseApp._appsDB:
         try:
             appClass = eval("apps.%s()" % appname)
         except:
@@ -232,11 +262,16 @@ def alias(withlibs=True):
                 for each in appClass.bins():
                     aliasScript.append('''alias %s='env LD_PRELOAD="" %s -c "import pipe;pipe.apps.%s().run(\\"%s\\")"' ''' % (each[0].replace(' ','_'), pythonBin, appname, each[1]) )
             except:
-                from bcolors import bcolors
-                sys.stderr.write(bcolors.FAIL+"="*80)
-                sys.stderr.write("\n%s\n" % traceback.print_exc())
-                sys.stderr.write("\n\nERROR: Application %s %s doesnt exist in the current job/shot!!\n\n" % (appname, appClass.version()))
-                sys.stderr.write("="*80+bcolors.END)
+                log.error(
+                    log.traceback()+
+                    "\n\nERROR: Application %s %s doesnt exist in the current job/shot!!\n\n" % (appname, appClass.version())
+                )
+                # import bcolors
+                # from bcolors import bcolors
+                # sys.stderr.write(bcolors.FAIL+"="*80)
+                # sys.stderr.write("\n%s\n" % traceback.print_exc())
+                # sys.stderr.write("\n\nERROR: Application %s %s doesnt exist in the current job/shot!!\n\n" % (appname, appClass.version()))
+                # sys.stderr.write("="*80+bcolors.END)
 
 
     return '\n'.join(aliasScript)
@@ -571,6 +606,5 @@ def __go(args):
 
     return '%s \n %s' % (init(), '\n'.join(env))
 
-_baseApp.configFiles()
 
 sys.path.remove(moduleRootPath)

@@ -65,8 +65,8 @@ class houdini(baseApp):
                 self.ignorePipeLib( "tbb" )
                 self.ignorePipeLib( "hdf5" )
             else:
-                self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
-                self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
+                # self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
+                # self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
                 self.ignorePipeLib( "qt" )
                 self.ignorePipeLib( "openssl" )
                 self.ignorePipeLib( "tbb" )

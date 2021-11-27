@@ -18,7 +18,6 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import pipe.apps
 from pipe.farm import current
 import os
 
@@ -35,6 +34,7 @@ class maya(current.engine):
         self.description = description
 
     def cook(self):
+        import pipe.apps
         asset=''
         if self.asset:
             asset= '--asset "%s"' % self.asset

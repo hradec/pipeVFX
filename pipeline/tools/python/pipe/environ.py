@@ -81,7 +81,7 @@ class environ(dict):
             className = str(self.__class__).split('.')[-1].strip("'>")
 
         # only the main parent can set the variable!!
-        if key in self._PARENT_ONLY_ and self.parent() != className:
+        if key in self._PARENT_ONLY_ and self.parent() != className and className != 'allLibs':
             log.debug( bcolors.WARNING+"WARNING: key [%s] can only be set in the main [%s] class (and currently has value [%s]), and it's being set by class [%s] with value [%s]!" % (key, self.parent(), self[key], className, v) + bcolors.END )
             return
 
@@ -93,7 +93,7 @@ class environ(dict):
         # if the env already has a value, and can't be updated,
         # don't do anything!
         if dict.__getitem__(self,key) and key in self._CANT_UPDATE_:
-            log.debug( bcolors.WARNING+"key %s already has a value %s and can't be updated with value %s" % (key, dict.__getitem__(self,key), v) + bcolors.END)
+            log.debug( bcolors.WARNING+"WARNING: key [%s] already has a value [%s] and can't be updated with value [%s] from class [%s]" % (key, dict.__getitem__(self,key), v, className) + bcolors.END)
             return
 
         if not type(v)==list:
@@ -162,6 +162,17 @@ class environ(dict):
         #             tmp[each] = 1
         #     dict.__setitem__( self, VAR, tmp.keys() )
 
+        # mangle PATH so pipeline bin folders override system bin folders,
+        # but tools hierarchy override pipe libs/apps
+        PATH = [[],[]]
+        for v in os.environ["PATH"].split(os.pathsep):
+            if os.environ['STUDIO'] in v:
+                PATH[0] += [v]
+            else:
+                PATH[1] += [v]
+        os.environ["PATH"] = os.pathsep.join(PATH[0])
+
+
         for each in list(self.keys()):
             l = self[each]
             if not l:
@@ -181,13 +192,19 @@ class environ(dict):
                         os.environ[each]=''
 
                     p = value
+                    # if value is a path, and envvar is not named HOME
+                    # add the value to the end of the envvar, separated by pathsep
                     if p[0] in ['/'] and each not in ['HOME']:
                         p = expandvars(p)
                         if os.path.abspath(p) not in os.environ[each].split(os.pathsep):
                             os.environ[each] = os.pathsep.join([ os.environ[each], os.path.abspath( p ) ])
+
+                    # else, just override envvar with value!
                     else:
                         os.environ[each] = p
                     os.environ[each] = os.environ[each].strip(os.pathsep)
+
+        os.environ["PATH"] = os.pathsep.join([os.environ["PATH"]]+PATH[1])
 
 
         keys = list(self.keys())

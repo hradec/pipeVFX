@@ -6,7 +6,7 @@
 
 [Unit]
 Description=DBus PipeVFX  daemon
-After=network.target sshd-keygen.service multi-user.target autofs.service
+After=network.target sshd.service autofs.service
 Conflicts=getty@tty1.service
 
 

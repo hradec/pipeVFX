@@ -67,7 +67,7 @@ class cortex(baseLib):
             self['PYTHONPATH'].insert( 0, self.path('maya/$MAYA_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages') )
 
         # configure delight - crashes maya if no arnold in the searchpath!!
-        if parent in ['delight', 'maya', 'python'] and os.path.exists(self.path( 'delight/%s' % pipe.apps.version.get('delight') )):
+        if parent in ['delight', 'maya', 'python', 'gaffer'] and os.path.exists(self.path( 'delight/%s' % pipe.apps.version.get('delight') )):
             pipe.apps.delight.addon( self,
                 shader=self.path('delight/$DELIGHT_VERSION/rsl'),
                 rsl=self.path('delight/$DELIGHT_VERSION/rsl'),

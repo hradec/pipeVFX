@@ -20,19 +20,20 @@
 
 import pipe
 from pipe import log
-from pipe.baseApp import appsDB, baseApp, baseLib, root, version, wacom, cache, getMacAddress
+from pipe.baseApp import baseApp, baseLib, root, version, wacom
+from pipe.baseApp import cache, getMacAddress, _appsDB
 from pipe.base import roots
 from pipe.libs import allLibs
 from pipe.bcolors import bcolors
-import os, glob
+import pipe.cached as cached
+import os
 import traceback
-
 
 # avoid getting duplicated files.
 appz = {}
 def sourceApps( jconfig ):
     if os.path.exists( jconfig ):
-        for each in glob.glob("%s/*.py" % jconfig):
+        for each in cached.glob("%s/*.py" % jconfig):
             appz[ os.path.basename( each ) ] = each
 
 # go over the folder structure, and overwrite the files before sourcing then.
@@ -77,7 +78,7 @@ genericRegistry = [
     'class %s(baseApp):',
     '   pass',
 ]
-for each in appsDB():
+for each in _appsDB:
     if each.strip() not in  dir():
 #        if os.path.exists( '%s/%s/bin' % (roots.apps(), each) ):
             exec( '\n'.join(genericRegistry) % each )

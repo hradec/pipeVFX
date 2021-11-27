@@ -18,26 +18,41 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+from __future__ import print_function
 import sys
+from bcolors import bcolors
 
 logd = False
 if '--logd' in sys.argv:
     logd = True
 
-
 def __log(msg):
     print(msg)
-    pass
+    sys.stderr.flush()
 
 def info(msg):
-    __log(msg)
+    if logd:
+        __log(msg)
+
+def traceback():
+    import traceback
+    return ''.join(traceback.format_stack())
 
 def warning(msg):
-    __log(msg)
+    if logd:
+        W=bcolors.WARNING+bcolors.BOLD
+        WT=bcolors.END+bcolors.WARNING_DARK
+        __log(W+"WARNING: "+"="*120)
+        __log("WARNING:\t"+WT+(W+'\nWARNING:\t'+WT).join(str(msg).split('\n')))
+        __log(W+"WARNING: "+"="*120+bcolors.END)
 
 def error(msg):
-    __log(msg)
+    __log(bcolors.FAIL+"_"*120)
+    __log("ERROR:\t"+'\nERROR:\t'.join(str(msg).split('\n')))
+    __log("_"*120+bcolors.END)
 
 def debug(msg):
     if logd:
-        __log(msg)
+        D=bcolors.BOLD+bcolors.GREEN
+        DT=bcolors.END+bcolors.BLUE_DARK
+        __log(D+"DEBUG:\t"+DT+('\n'+D+'DEBUG:\t'+DT).join(str(msg).split('\n'))+bcolors.END)

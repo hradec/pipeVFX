@@ -18,7 +18,6 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import pipe.apps
 from pipe.farm import current
 import os
 
@@ -34,6 +33,7 @@ class houdini(current.engine):
         current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group)
 
     def cook(self):
+        import pipe.apps
 
         output_drivers = self.output_driver
         if type(self.output_driver) == type([]):

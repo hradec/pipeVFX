@@ -21,11 +21,11 @@
 
 class gaffer(baseLib):
     def versions(self):
-        if self.parent()  in ["gaffer"]:
+        if self.parent()  in ["gaffer","python"]:
             pipe.libs.version.set( python='2.7.6' )
             pipe.version.set( python='2.7.6' )
-            if float(pipe.libs.version.get('gaffer')[:4]) >= 0.55:
-                pipe.libs.version.set( cortex='10.0' )
+            if float('.'.join(pipe.libs.version.get('gaffer').split('.')[:2])) >= 0.55:
+                pipe.libs.version.set( cortex='10.2' )
                 pipe.libs.version.set( boost='1.61.0' )
                 pipe.libs.version.set( oiio='2.0.11' )
                 pipe.libs.version.set( tbb='2019_U9' )
@@ -48,7 +48,7 @@ class gaffer(baseLib):
         # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
         # self.ignorePipeLib( "freetype" )
 
-        self['PYTHONPATH'] = python().path('lib/python$PYTHON_VERSION_MAJOR/site-packages')
+        # self['PYTHONPATH'] = pipe.libs.python.path('lib/python$PYTHON_VERSION_MAJOR/site-packages')
         self['PYTHONPATH'] = self.path('python')
 
         if self.parent() not in ['maya']:
@@ -58,46 +58,45 @@ class gaffer(baseLib):
             for each in filter(lambda x: 'GAFFER' in x, os.environ.keys()):
                 del os.environ[each]
 
-            if hasattr( pipe.libs, 'ocio' ):
-                # self['LD_PRELOAD'] = pipe.libs.ocio().path('lib/libOpenColorIO.so.1')
-                self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
-                self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
-                self.insert( 'LD_LIBRARY_PATH', 0,  pipe.libs.ocio().path('lib/python$PYTHON_VERSION_MAJOR/site-packages') )
+            # if hasattr( pipe.libs, 'ocio' ):
+            #     # self['LD_PRELOAD'] = pipe.libs.ocio().path('lib/libOpenColorIO.so.1')
+            #     self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
+            #     self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
+            #     self.insert( 'LD_LIBRARY_PATH', 0,  pipe.libs.ocio().path('lib/python$PYTHON_VERSION_MAJOR/site-packages') )
 
             # our standard OCIO color space
             if self.parent() in ["gaffer", 'maya', 'houdini']:
                 self['OCIO'] = '%s/ocio/config.ocio' % pipe.roots().tools()
 
-        # self.update( pipe.libs.openvdb() )
         # self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
         # add all versions of OIIO libraries to search path
         for each in glob.glob( "%s/*" % os.path.dirname(pipe.libs.oiio().path()) ):
             # print each
             self['LD_LIBRARY_PATH'] = '%s/lib/' % each
 
-        self.update( pipe.libs.pyqt() )
         if self.parent() in ['gaffer','python']:
             if os.path.exists(self.path("lib/libtbb.so.2")):
                 self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
             else:
                 self['LD_PRELOAD'] = pipe.libs.tbb().path("lib/libtbb.so.2")
-
+            
             # preload Qt
             for each in glob.glob(pipe.libs.qt().path("lib/*.so*")):
                 if os.path.isfile(each):
                     self['LD_PRELOAD'] = each
 
             self.update( pipe.libs.pyside() )
-            self.update( pipe.libs.qtpy() )
-            self.update( pipe.libs.python() )
-            self.update( pipe.apps.prman() )
-            self.ignorePipeLib( "openxer" )
-            self.ignorePipeLib( "ilmbase" )
-            self.ignorePipeLib( "boost" )
-            self.ignorePipeLib( "cortex" )
+            # self.update( pipe.libs.qtpy() )
+            self.update( pipe.apps.python() )
+            # self.update( pipe.apps.prman() )
+            # self.ignorePipeLib( "openxer" )
+            # self.ignorePipeLib( "ilmbase" )
+            # self.ignorePipeLib( "boost" )
+            # self.ignorePipeLib( "cortex" )
             # self.update( pipe.libs.cortex() )
             # self.update( pipe.libs.appleseed() )
             # self.update( pipe.libs.alembic() )
+            # self.update( pipe.libs.openvdb() )
             # self.update( maya() )
 
             # hack to enable renderman in gaffer!
@@ -105,11 +104,10 @@ class gaffer(baseLib):
             # self.update( maya() )
             # self.ignorePipeLib( "qt" )
 
-            for boostPython in  ['lib','lib/python%s' % pipe.libs.version.get('python')[:3]]:
-                boostPython = "%s/libboost_python-mt.so" % pipe.libs.boost().path(boostPython)
-                if os.path.exists(boostPython):
-                    self['LD_PRELOAD'] = boostPython
-
+            # for boostPython in  ['lib','lib/python%s' % pipe.libs.version.get('python')[:3]]:
+            #     boostPython = "%s/libboost_python-mt.so" % pipe.libs.boost().path(boostPython)
+            #     if os.path.exists(boostPython):
+            #         self['LD_PRELOAD'] = boostPython
 
         self['GAFFERUI_IMAGECACHE_MEMORY'] = '2000'
         if pipe.versionMajor(self.version())>0.5 and pipe.versionMajor(self.version())<2.0:
@@ -119,15 +117,12 @@ class gaffer(baseLib):
         #     # any other version (old gaffer), uses PyQt4
         #     self['GAFFERUI_QT_BINDINGS'] = 'PyQt4'
 
-
         if self.parent() in ['maya']:
             if int(pipe.apps.version.get('maya').split('.')[0]) < 2014:
                 self['GAFFERUI_QT_BINDINGS'] = 'PySide'
                 if hasattr( pipe.libs, 'pyside' ):
                     self.insert( 'LD_LIBRARY_PATH', 0,  pipe.libs.pyside().path('lib') )
                     self.insert( 'PYTHONPATHPATH', 0,  pipe.libs.pyside().path('lib/python$PYTHON_VERSION_MAJOR/site-packages') )
-
-
 
         #add tools paths
         for each in self.toolsPaths():

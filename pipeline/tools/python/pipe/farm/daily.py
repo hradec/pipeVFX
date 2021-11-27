@@ -18,7 +18,6 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import pipe.apps
 from pipe.farm import current
 import os, sys
 
@@ -31,6 +30,7 @@ class daily(current.engine):
         return '1'
 
     def cook(self):
+        import pipe.apps
         d = pipe.apps.dailies()
         version = os.path.basename( os.path.realpath( d.path() ) )
         self.cmd = os.path.abspath( self.cmd )

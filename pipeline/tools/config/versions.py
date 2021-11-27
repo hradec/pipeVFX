@@ -32,8 +32,8 @@ os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 # ===================================================================
 pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
 pipe.version.set( maya      = '2016.5' )
-pipe.version.set( maya      = '2018' )
-pipe.version.set( maya      = '2022' )
+# pipe.version.set( maya      = '2018' )
+# pipe.version.set( maya      = '2022' )
 pipe.version.set( nuke      = '12.1v1' )
 pipe.version.set( houdini   = 'hfs17.5.173' )
 pipe.version.set( delight   = '11.0.12' )
@@ -50,7 +50,6 @@ pipe.version.set( keentools = '02.01.01' )
 # ===================================================================
 if 'GCC_VERSION' in os.environ:
     pipe.version.set( python        = '2.7' )
-    exr='2.0.0'
     exr='2.2.0'
     pipe.libs.version.set( python   = '2.7' )
     pipe.libs.version.set( freetype = '2.4.0' )
@@ -76,7 +75,7 @@ if mv < 2018:
     # maximum versions for maya below 2018
     # pipe.libs.version.set( alembic     = '1.5.8' )
     pipe.version.set( python        = '2.7' )
-    exr='2.0.0'
+    exr='2.2.0'
     pipe.libs.version.set( python   = '2.7' )
     pipe.libs.version.set( freetype = '2.4.0' )
     pipe.libs.version.set( boost    = '1.61' )
@@ -91,18 +90,17 @@ if mv < 2018:
         # maximum versions for maya 2014
         pipe.version.set( prman     = '20.11' )
 
-
-
 # gaffer and cortex version need to be tested toguether!
 # ===================================================================
-if 'GCC_VERSION' in os.environ:
-    # pipe.version.set( gaffer        = '0.59.6.0' )
-    # pipe.libs.version.set( gaffer   = '0.59.6.0' )
-    pipe.version.set( gaffer        = '0.55.0.0' )
-    pipe.libs.version.set( gaffer   = '0.55.0.0' )
-    pipe.libs.version.set( cortex   = '10.0' )
-    pipe.libs.version.set( appleseed= '2.0.5.beta' )
-else:
-    pipe.version.set( gaffer      = '2.0.0' )
-    pipe.libs.version.set( cortex = '9.0.0.git_Oct_10_2014' )
-    pipe.libs.version.set(  tbb   = '2.2.004' )
+# if 'GCC_VERSION' not in os.environ:
+#     pipe.version.set( gaffer      = '2.0.0' )
+#     pipe.libs.version.set( cortex = '9.0.0.git_Oct_10_2014' )
+#     pipe.libs.version.set(  tbb   = '2.2.004' )
+# else:
+#     if os.environ['GCC_VERSION'] == 'gcc-multi':
+#         # pipe.version.set( gaffer        = '0.59.6.0' )
+#         # pipe.libs.version.set( gaffer   = '0.59.6.0' )
+#         pipe.version.set( gaffer        = '0.55.0.0' )
+#         pipe.libs.version.set( gaffer   = '0.55.0.0' )
+#         pipe.libs.version.set( cortex   = '10.0' )
+#         pipe.libs.version.set( appleseed= '2.0.5.beta' )

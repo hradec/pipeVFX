@@ -18,7 +18,6 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import pipe.apps
 from pipe.farm import current
 import os
 
@@ -29,6 +28,7 @@ class nuke(current.engine):
         current.engine.__init__(self, scene, name, CPUS, extra, priority, range, group, maxRunTime=60*15) # max time to run a nuke task is 15 mins!
 
     def cook(self):
+        import pipe.apps
 
         writeNodes = self.writeNode
         if type(self.writeNode) == type([]):

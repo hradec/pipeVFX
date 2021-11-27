@@ -35,8 +35,6 @@ class prman(baseApp):
         import socket
         from glob import glob
 
-
-
         mayaPluginName = 'RenderManForMaya'
 
         folders=[]

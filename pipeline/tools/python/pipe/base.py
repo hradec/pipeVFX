@@ -20,6 +20,7 @@
 
 
 import os,sys,glob,shutil
+import cached
 
 def runProcess(exe):
     ''' run a shell command and captures the output at
@@ -75,8 +76,7 @@ def runProcess(exe):
     return (ret,log)
 
 
-
-bits = os.popen('uname -m').readlines()[0].strip().lower()
+bits = cached.popen('uname -m').readlines()[0].strip().lower()
 arch='x86_64'
 if bits[0]=='i':
     arch='x86_32'
@@ -90,8 +90,8 @@ if '--arch' in sys.argv:
 WIN='mingw'
 OSX='darwin'
 LIN='linux'
-taskset = ''.join(os.popen('which taskset 2>/dev/null').readlines()).strip()
-vglrun  = ''.join(os.popen('which vglrun 2>/dev/null').readlines()).strip()
+taskset = ''.join(cached.popen('which taskset 2>/dev/null').readlines()).strip()
+vglrun  = ''.join(cached.popen('which vglrun 2>/dev/null').readlines()).strip()
 
 osx=False
 lin=False
@@ -111,21 +111,24 @@ elif LIN in sys.platform.lower():
     lin=True
 
 
-
-
-
 def depotRoot(forceScan=False):
-    root = os.path.dirname(__file__)
-    if not 'ROOT' in os.environ or forceScan:
+    ''' find the root path of the pipe, by searching for .root file '''
+    import cached
+    def _depotRoot():
+        root = os.path.dirname(__file__)
         while(root.split('/')[1]):
             if os.path.exists( '%s/.root' % root ):
                 break
             root = os.path.dirname(root)
         if root=='/':
             raise Exception('missing .root file at the depot root!')
-    else:
+        return os.path.abspath(root)
+
+    if 'ROOT' in os.environ and not forceScan:
         root = os.environ['ROOT']
-    return os.path.abspath(root)
+    else:
+        root = cached.cache_func(_depotRoot, forceScan)
+    return root
 
 
 def name():
@@ -152,22 +155,25 @@ def crossCompileWin():
 
 
 class roots:
+    ''' returns the root path for different paths of the pipe '''
     @staticmethod
     def apps(plat=platform, arch=bits):
+        ''' app root path '''
         ret =  os.path.abspath( '%s/pipeline/apps/%s/%s' % (depotRoot(), plat, arch) )
         if not os.path.exists(ret):
             ret = os.path.abspath( '%s/apps/%s/%s' % (depotRoot(), plat, arch) )
         return ret
 
-
     @staticmethod
     def buildStuff(plat=platform, subpath=''):
+        ''' need description! '''
         if subpath:
             subpath = '/%s' % subpath
         return os.path.abspath( '%s/buildStuff%s' % (roots.apps(plat), subpath) )
 
     @staticmethod
     def libs(plat=platform, arch=bits, distro=None, subpath=''):
+        ''' libs root path '''
         if not distro:
             distro = getDistro()
         if subpath:
@@ -176,12 +182,14 @@ class roots:
 
     @staticmethod
     def jobs(subpath=''):
+        ''' jobs root path '''
         if subpath:
             subpath = '/%s' % subpath
         return os.path.abspath( '%s/jobs%s' % (depotRoot(), subpath) )
 
     @staticmethod
     def tools(plat=None, subpath=''):
+        ''' tools root path '''
         if subpath:
             subpath = '/%s' % subpath
 
@@ -193,6 +201,7 @@ class roots:
 
     @staticmethod
     def tags(plat=None, subpath=''):
+        ''' tools tags root path '''
         if subpath:
             subpath = '/%s' % subpath
 
@@ -205,7 +214,7 @@ class roots:
 
 global _latestGCC
 _latestGCC=[]
-__ldconfigLog = map(lambda x: x.strip(), os.popen('/sbin/ldconfig -p').readlines())
+__ldconfigLog = map(lambda x: x.strip(), cached.popen('ldconfig -p').readlines())
 ldconfig = {
    'x86_64' :  filter( lambda x: 'x86-64' in x,  __ldconfigLog ),
    'x86_32' :  filter( lambda x: 'x86-64' not in x,  __ldconfigLog ),
@@ -228,24 +237,12 @@ if pipe.admin:
                 exec( ''.join( [ p for p in open( each ).readlines() if 'os.environ[' in p ] ) )
 
 def getDistro(check=True):
+    ''' (deprecated) return the pipe main gcc version '''
     if platform == OSX:
         distro = 'gcc-llvm5.1'
     else:
         version = ['4.1.2']
         distro = 'gcc-%s' % version[-1]
-
-        # autodetect most up2date gcc version
-        # try:
-        #     version.append( filter( lambda x: x.isdigit() or x=='.', os.popen('gcc --version').readlines()[0] ) )
-        # except: pass
-        #
-        # if check:
-        #     version.sort()
-        #     for v in version:
-        #         if os.path.exists("%s/.ready" % roots.libs(distro='gcc-%s' % v)):
-        #             distro = 'gcc-%s' % v
-        # else:
-        #     distro = 'gcc-%s' % version[-1]
 
         # we can specify our current gcc version in versions.py, globally or on an per job/user basis!!
         if 'GCC_VERSION' in os.environ:

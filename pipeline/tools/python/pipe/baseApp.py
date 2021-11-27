@@ -27,6 +27,7 @@ import admin
 import os, sys, stat, shutil, traceback
 from glob import glob
 from multiprocessing import cpu_count
+import cached
 
 from bcolors import bcolors
 
@@ -44,16 +45,17 @@ libraries_with_versioned_names = [
 
 def wacom():
     ''' check if wacon is attached '''
-    return map( lambda x: x.strip(), os.popen('xsetwacom --list').readlines() )
+    return map( lambda x: x.strip(), cached.popen('xsetwacom --list').readlines() )
 
 def root(platform=platform, arch=arch):
     return roots.apps(platform, arch)
 
 def getMacAddress():
-    return os.popen( "echo $(ifconfig | grep -B1 eth0 | awk '{print toupper($0)}') | cut -d' ' -f5" ).readlines()[0].strip()
+    return cached.popen( "echo $(ifconfig | grep -B1 eth0 | awk '{print toupper($0)}') | cut -d' ' -f5" ).readlines()[0].strip()
 
 
 class cache:
+    ''' class used to deal with wine caches '''
     @staticmethod
     def rmtree(path):
         if os.path.exists( path ):
@@ -129,7 +131,17 @@ class appsDB(dict):
         app = '*'
         if self.app:
             app =  self.app
-        for app in glob('%s/%s' % (self.root(),app)):
+
+        # cache the glob result so we avoid doing thousands of globs
+        # CACHE='__CACHE_GLOB_%s__' % str(self.__class__).split('.')[-1].split("'")[0]
+        # if CACHE in os.environ:
+        #     globz = eval(os.environ[CACHE])
+        # else:
+        #     globz = glob('%s/%s' % (self.root(),app))
+        #     os.environ[CACHE] = str(globz)
+
+        globz = cached.glob('%s/%s' % (self.root(),app))
+        for app in globz:
             appDict = {
                 'defaultVersion' : None,
                 'versions' : [],
@@ -137,7 +149,7 @@ class appsDB(dict):
                 'environ' : [],
             }
             # look for all versions available and populate the app dict with then
-            for version in glob('%s/*' % app):
+            for version in cached.glob('%s/*' % app):
                 # get only the version, not the full path!
                 version = os.path.basename(version)
 
@@ -223,7 +235,7 @@ class appsDB(dict):
                 _subPath = '%s.%s/%s' % ( targetSuffix, parent_version, subPath )
                 # use glob instead of os.path.exists, since glob will
                 # resolve wildcards!
-                if glob( ret+'/'+_subPath ):
+                if cached.glob( ret+'/'+_subPath ):
                     subPath = _subPath
 
         if subPath:
@@ -231,31 +243,38 @@ class appsDB(dict):
 
         subPath = subPath.replace('//','/')
 
+        # sanity check: path shouldn't return folders at root path ever!
+        if str(ret+subPath)[0:4] in ['/lib','/bin','/inc','/usr','/opt']:
+            if self.app not in globals()['DBKEYS_FORCED']:
+                log.warning(log.traceback())
+                log.warning("%s - %s\n" % (self.app, str(ret+subPath)));sys.stderr.flush()
+            return ""
+
         return ret+subPath
 
     def pythonPath(self, appName=None):
         '''
-        returns a default python module path, if the app has one.
-        else returns Blank
+        returns a default python module path for each version (dict),
+        if the app has one or else returns a black dict
         '''
         self.setApp(appName)
         pythonPath = {}
-        for each in glob( self.path(subPath='lib/python*/site-packages/') ):
+        for each in cached.glob( self.path(subPath='lib/python*/site-packages/') ):
             version = each.split('/site-packages')[0].split('python')[-1]
             pythonPath[version] = [ each.replace(version,'$PYTHON_VERSION_MAJOR'),
                 '/'.join(each.replace(version,'$PYTHON_VERSION_MAJOR').split('/')[:-2]) ]
 
-        for each in glob( self.path(subPath='lib/python/*/site-packages/') ):
+        for each in cached.glob( self.path(subPath='lib/python/*/site-packages/') ):
             version = each.split('python/')[1].split('/')[0]
             pythonPath[version] = each.replace(version,'$PYTHON_VERSION_MAJOR')
 
-        for each in glob( self.path(subPath='lib/python/*/*/site-packages/') ):
+        for each in cached.glob( self.path(subPath='lib/python/*/*/site-packages/') ):
             version = each.split('/site-packages')[0].split('/')[-1]
             pythonPath[version] = each.replace(version,'$PYTHON_VERSION_MAJOR')
 
 
         if self.osx:
-            for each in glob( self.path(subPath='*/*/Frameworks/Python.framework/Versions/*/lib/python*/site-packages/') ):
+            for each in cached.glob( self.path(subPath='*/*/Frameworks/Python.framework/Versions/*/lib/python*/site-packages/') ):
                 version = each.split('/lib/python')[1].split('/')[0]
                 pythonPath[version] = each.replace(version,'$PYTHON_VERSION_MAJOR')
 
@@ -306,13 +325,13 @@ class appsDB(dict):
         self.setApp(appName)
         lib=self.path(subPath='lib')
         ret = []
-        if glob("%s/*%s" % (lib, self.so)):
+        if cached.glob("%s/*%s" % (lib, self.so)):
             ret += [self.path(subPath='lib')]
             ret += [self.path(subPath='lib/boost$BOOST_VERSION')]
         if platform==WIN:
             ret += [self.path(subPath='bin')]
 
-        if glob("%s/python*/*%s" % (lib,self.so) ):
+        if cached.glob("%s/python*/*%s" % (lib,self.so) ):
             ret += [self.path(subPath='lib/python$PYTHON_VERSION_MAJOR')]
             ret += [self.path(subPath='lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')]
 
@@ -349,20 +368,33 @@ def versionSort(versions):
         v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
         return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
     tmp =  sorted( versions, key=method, reverse=True )
-    # print tmp
     return tmp
 
 
-
 # initialize global cache of versions!
-if not '__DB_LATEST' in os.environ:
-    os.environ['__DB_LATEST'] = str(appsDB().latest)
+if '_appsDB' not in globals():
+    globals()['_appsDB'] = appsDB()
+if '__DB_LATEST' not in os.environ:
+        os.environ['__DB_LATEST'] = str(globals()['_appsDB'].latest)
+
 class version:
     '''
         a namespace class for initialization and access of the global __version database.
     '''
-    @staticmethod
-    def set( x={}, **args):
+    _DB_LATEST = '__DB_LATEST'
+    db = '_appsDB'
+    @classmethod
+    def __retrieve__(cls):
+        if cls._DB_LATEST not in globals():
+            globals()[cls._DB_LATEST] = eval(os.environ[cls._DB_LATEST])
+        return globals()[cls._DB_LATEST]
+
+    @classmethod
+    def __save__(cls, value):
+        os.environ[cls._DB_LATEST] = str(value)
+
+    @classmethod
+    def set(cls, x={}, **args):
         '''
             used to set apps version. One can specify the app name and version as
             parameters (like maya='2001', delight='9.0.0').
@@ -371,47 +403,29 @@ class version:
             If reset is passed as a parameter, the __version DB will be reset to the latest
             version of all available apps.
         '''
-        _version = eval(os.environ['__DB_LATEST'])
+        _version = cls.__retrieve__()
         args.update(x)
         if [ x for x in args.keys() if x.lower()=='reset' ]:
-            _version = appsDB().latest
+            _version = globals()[cls.db].latest
         else:
             for each in args:
-                # try:
-                #     v = appsDB()[each]['versions']
-                # except:
-                #     v = [args[each]]
-                # if args[each] not in v:
-                #     try:
-                #         vv = [ x for x in v if '.'.join(x.split('.')[:2]) == '.'.join(args[each].split('.')[:2]) ]
-                #     except:
-                #         try:
-                #             vv = [ x for x in v if args[each] in x ]
-                #         except: pass
-                #     if vv:
-                #         v = vv
-                #     versions = versionSort(v)
-                #     args[each] = versions[0]
                 _version[each] = args[each]
-        os.environ['__DB_LATEST'] = str(_version)
 
-    @staticmethod
-    def get( appName=None, all=False ): #noqa
+        cls.__save__(_version)
+
+    @classmethod
+    def get(cls, appName=None, all=False ): #noqa
         '''
             returns the version for the given app.
             if no app is specified, it will return a copy of the __version database dictionary
         '''
-        _version = eval(os.environ['__DB_LATEST'])
-#        # check for config files
-#        if os.path.exists( "%s/config/versions.py" % roots.tools() ):
-#            exec( ''.join(open( "%s/config/versions.py" % roots.tools() ).readlines()) )
-
+        _version = cls.__retrieve__()
         v = None
         if appName:
             if appName in _version:
                 v = _version[appName]
             if all: #noqa
-                v = appsDB()[appName]['versions']
+                v = globals()[cls.db][appName]['versions']
         else:
             v = _version
         return v
@@ -421,15 +435,19 @@ class version:
 
 
 # initialize global cache of lib versions!
-if not '__DB_LATEST_LIBS' in os.environ:
-    os.environ['__DB_LATEST_LIBS'] = str(libsDB().latest)
+if '_libsDB' not in globals():
+    globals()['_libsDB'] = libsDB()
+if '__DB_LATEST_LIBS' not in os.environ:
+    os.environ['__DB_LATEST_LIBS'] = str(globals()['_libsDB'].latest)
 
-class versionLib:
+class versionLib(version):
     '''
         a namespace class for initialization and access of the global __version database.
     '''
-    @staticmethod
-    def set( x={}, **args ):
+    _DB_LATEST = '__DB_LATEST_LIBS'
+    db = '_libsDB'
+    @classmethod
+    def set(cls, x={}, **args ):
         '''
             used to set apps version. One can specify the app name and version as
             parameters (like maya='2001', delight='9.0.0').
@@ -438,14 +456,14 @@ class versionLib:
             If reset is passed as a parameter, the __version DB will be reset to the latest
             version of all available apps.
         '''
-        _versionLib = eval(os.environ['__DB_LATEST_LIBS'])
+        _versionLib = versionLib.__retrieve__()
         args.update(x)
         if filter( lambda x: x.lower()=='reset', args.keys() ):
-            _versionLib = libsDB().latest
+            _versionLib = globals()[cls.db].latest
         else:
             for each in args:
                 try:
-                    v = libsDB()[each]['versions']
+                    v = globals()[cls.db][each]['versions']
                 except:
                     v = [args[each]]
                 if args[each] not in v:
@@ -461,28 +479,24 @@ class versionLib:
                     args[each] = versions[0]
 
                 _versionLib[each] = args[each]
-        os.environ['__DB_LATEST_LIBS'] = str(_versionLib)
+        versionLib.__save__(_versionLib)
 
-    @staticmethod
-    def get( appName=None, all=False ): #noqa
-        '''
-            returns the version for the given app.
-            if no app is specified, it will return a copy of the __version database dictionary
-        '''
-        # check for config files
-#        if os.path.exists( "%s/config/versions.py" % roots.tools() ):
-#            exec( ''.join(open( "%s/config/versions.py" % roots.tools() ).readlines()) )
-
-        _versionLib = eval(os.environ['__DB_LATEST_LIBS'])
-        v = None
-        if appName:
-            if appName in _versionLib:
-                v = _versionLib[appName]
-            if all: #noqa
-                v = libsDB()[appName]['versions']
-        else:
-            v = _versionLib
-        return v
+    # @staticmethod
+    # def get( appName=None, all=False ): #noqa
+    #     '''
+    #         returns the version for the given app.
+    #         if no app is specified, it will return a copy of the __version database dictionary
+    #     '''
+    #     _versionLib = versionLib.__retrieve__()
+    #     v = None
+    #     if appName:
+    #         if appName in _versionLib:
+    #             v = _versionLib[appName]
+    #         if all: #noqa
+    #             v = libsDB()[appName]['versions']
+    #     else:
+    #         v = _versionLib
+    #     return v
 
 
 def app(appName, v=None):
@@ -554,94 +568,140 @@ class baseApp(_environ):
             derivated class, for example:
                 for a "class maya", it will init self.appFromDB with all data for the app "maya"
         '''
-        # self._SINGLE_ += ['PYTHONHOME']
-        # self._CANT_UPDATE_ += ['PYTHONHOME']
+
+        # initialization we need to do, even if cached!
+        # =====================================================================
         self._PARENT_ONLY_ += ['PYTHONHOME']
-
-
+        self.DB_EnvVar = DB_EnvVar
+        self.globalVersion = versionClass
         if app:
             self.className = app
         else:
             className = str(self.__class__).split('.')
             self.className = className[len(className)-1].strip("'>")
 
-        # run job_config files before executing environment, so we can set flags
-        # to alter app configuration, like enable/disable plugins!
-        if '__executed_job_configs__' not in os.environ:
-            os.environ[ '__executed_job_configs__' ] = ""
-        job_config = [ "%s/config/job_config.py" % each for each in self.toolsPaths() ]
-        for each in job_config:
-            if each not in os.environ['__executed_job_configs__']:
-                os.environ[ '__executed_job_configs__' ] += " %s" % each
-                if os.path.exists(each):
-                    exec( ''.join( open(each,'r').readlines() ) )
+        # source config files in the search path
+        if not 'PARENT_BASE_CLASS' in os.environ:
+            os.environ['PARENT_BASE_CLASS'] = str(self.className)
+            # self.configFiles()
 
+        # initialize the ignorePipeLib env var
+        if 'USE_SYSTEM_LIBRARY' not in os.environ:
+            os.environ['USE_SYSTEM_LIBRARY'] = ''
+
+        # deal with situations that DISABLE the class!
+        # =====================================================================
         # Look for the --disable command line option, which disables packages
         # ex: maya --disable delight,prman
-        self.enable = True
         if '--disable' in sys.argv:
             id = sys.argv.index('--disable')
             for each in sys.argv[id+1].split(','):
                 if self.className==each:
                     self.enable = False
                     break
+            del sys.argv[id+1];sys.argv[id]
 
-        # source config files in the search path
-        self.DB_EnvVar=DB_EnvVar
-        if not 'PARENT_BASE_CLASS' in os.environ:
-            os.environ['PARENT_BASE_CLASS'] = str(self.className)
-            # self.configFiles()
+
+        # globals()['DBKEYS'] stores what's actually installed in the central
+        # disk, opposed to pipe.apps/libs.version() that returns what has been
+        # set via python
+        if 'DBKEYS' not in globals():
+            globals()['DBKEYS'] = globals()['_appsDB'].latest.keys() + \
+                                  globals()['_libsDB'].latest.keys() + ['allLibs']
+
+        if 'DBKEYS_FORCED' not in globals():
+            globals()['DBKEYS_FORCED'] = []
 
         # disable class if has being disabled in a config file
-        if disable.app( self.className, get=True ):
-            self.enable = False
+        self.enable = True
 
-        # stores all classes that update this one
-        self.updatedClasses = {}
+        # if class has force_enable, that's override any auto enable setup
+        if hasattr(self, 'force_enable'):
+            self.enable = self.force_enable
+            if self.enable:
+                globals()['DBKEYS_FORCED'] += [self.className]
+                globals()['DBKEYS'] += [self.className]
+        else:
+            if disable.app( self.className, get=True ):
+                self.enable = False
 
-        # current local machine/system info
-        from platform import platform as dist
-        self.platform = dist()[0].lower()
-        self.win = platform == WIN
-        self.osx = platform == OSX
-        self.linux = platform == LIN
-        self.arch = arch
-        self.py = py
-        self.DB = DB
-        self.globalVersion = versionClass
+            # so if app/lib class doesn't exist in disk, we just DISABLE it!
+            if self.className not in globals()['DBKEYS']:
+                self.enable = False
 
-        # evaluate the version method, if class have it!
-        if hasattr(self, 'versions'):
-            self.versions()
+        # dealing with cache
+        # =====================================================================
+        # a global cache for class objects, so we don't have to double-evaluate
+        self.__PIPEVFX_EVALUATE_CACHE__ = '__PIPEVFX_EVALUATE_CACHE_%s__' % DB_EnvVar
+        if self.__PIPEVFX_EVALUATE_CACHE__ not in globals():
+            globals()[self.__PIPEVFX_EVALUATE_CACHE__] = {}
 
         # eliminate recursion class creation by using a cache buffer for the classes we evaluate.
-        # we store the cache buffer as an extra argument of sys, so its global to the whole python environment!
-        recursionCache = {}
-        if hasattr(sys, 'recursionCache'):
-            if DB_EnvVar in sys.recursionCache:
-                recursionCache = sys.recursionCache[DB_EnvVar]
+        if self.className not in globals()[self.__PIPEVFX_EVALUATE_CACHE__]:
+            globals()[self.__PIPEVFX_EVALUATE_CACHE__][self.className] = self
+
+        # if the current class is cached and if the current version changed,
+        # we have to delete the cache and re-cache everything again!
+        elif self.globalVersion.get(self.className) != globals()[self.__PIPEVFX_EVALUATE_CACHE__][self.className]["%s_VERSION" % self.className.upper()]:
+            globals()[self.__PIPEVFX_EVALUATE_CACHE__][self.className] = self
         else:
-            sys.recursionCache = {}
-
-        # check if the current class is cached, and if the current version changed.
-        # if thats the case, we have to delete the cache and re-cache everything again!
-        if self.className in recursionCache:
-            if self.globalVersion.get(self.className) != recursionCache[self.className]["%s_VERSION" % self.className.upper()]:
-                sys.recursionCache[self.DB_EnvVar] = {}
-                recursionCache = sys.recursionCache[self.DB_EnvVar]
-
-        # retrieve a previous evaluated version of this class, if any
-        # so we don't waste time evaluating things more than once!
-        if self.className in recursionCache:
+            recursionCache = globals()[self.__PIPEVFX_EVALUATE_CACHE__]
             _environ.__init__(self)
             _environ.update(self, recursionCache[self.className])
-            self.appFromDB = recursionCache[self.className].appFromDB
-            self.path = recursionCache[self.className].path
+            self.appFromDB      = recursionCache[self.className].appFromDB
+            self.path           = recursionCache[self.className].path
             self.updatedClasses = recursionCache[self.className].updatedClasses
+            self.platform       = recursionCache[self.className].platform
+            self.win            = recursionCache[self.className].win
+            self.osx            = recursionCache[self.className].osx
+            self.linux          = recursionCache[self.className].linux
+            self.arch           = recursionCache[self.className].arch
+            self.py             = recursionCache[self.className].py
+            self.DB             = recursionCache[self.className].DB
+            log.debug("self.parent: %s -> cached self.className: %s " % (self.parent(), self.className))
+            return
 
-        # evaluate the class!
-        else:
-            self.DB_EnvVar = DB_EnvVar
+        # we only continue, if the class isen't disabled
+        if self.enable:
+            # from now on, this is the initialization we need
+            # to do if NOT cached!
+            # =====================================================================
+            log.debug("self.parent: %s -> live self.className: %s " % (self.parent(), self.className))
+            # sys.stderr.write("self.className: %s (%s)\n" % (self.className, self.parent()));sys.stderr.flush()
+            # if '--logd' in sys.argv:
+            #     sys.stderr.write("%25s " %  self.className)
+            #     sys.stderr.write("%-25s " %  self.globalVersion.get(self.className))
+            #     sys.stderr.write("python: %s\n" %  self.globalVersion.get('python'))
+
+
+            # run job_config files before executing environment, so we can set flags
+            # to alter app configuration, like enable/disable plugins!
+            if '__executed_job_configs__' not in os.environ:
+                os.environ[ '__executed_job_configs__' ] = ""
+            job_config = [ "%s/config/job_config.py" % each for each in self.toolsPaths() ]
+            for each in job_config:
+                if each not in os.environ['__executed_job_configs__']:
+                    os.environ[ '__executed_job_configs__' ] += " %s" % each
+                    if os.path.exists(each):
+                        exec( ''.join( open(each,'r').readlines() ) )
+
+            # stores all classes that update this one
+            self.updatedClasses = {}
+
+            # current local machine/system info
+            from platform import platform as dist
+            self.platform = dist()[0].lower()
+            self.win = platform == WIN
+            self.osx = platform == OSX
+            self.linux = platform == LIN
+            self.arch = arch
+            self.py = py
+            self.DB = DB
+
+            # evaluate the version method, if class have it!
+            if hasattr(self, 'versions'):
+                self.versions()
+
             self.appFromDB = self.DB(self.className, platform, arch)
             self.path = self.appFromDB.path
             if hasattr(self, 'macfix'):
@@ -653,71 +713,56 @@ class baseApp(_environ):
                     PATH                = self.appFromDB.bin(),
                     INCLUDE             = self.appFromDB.include(),
                     LD_LIBRARY_PATH     = self.appFromDB.LD_LIBRARY_PATH(),
-    #                    PYTHONPATH          = self.appFromDB.pythonPath(),
+                    # PYTHONPATH          = self.appFromDB.pythonPath(),
                 )
 
-            # store the class object into our recursionCache to prevent
-            # from evaluating the class more than once!!
-            recursionCache[self.className] = self
-            sys.recursionCache[self.DB_EnvVar] = recursionCache
+            if self.osx:
+                dotAppName = "%s.app" % self.className.title()
+                if hasattr(self, "dotAppName"):
+                    dotAppName = self.dotAppName()
 
-            if self.enable:
-                if self.osx:
-                    dotAppName = "%s.app" % self.className.title()
-                    if hasattr(self, "dotAppName"):
-                        dotAppName = self.dotAppName()
+                osxPath = self.path( '%s/Contents' % dotAppName )
+                self.replace( {"%s_ROOT" % self.className.upper(): osxPath } )
 
-                    osxPath = self.path( '%s/Contents' % dotAppName )
-                    self.replace( {"%s_ROOT" % self.className.upper(): osxPath } )
-
-                    macos = "%s/MacOS" % osxPath
-                    if not os.path.exists(macos):
-                        macos = "%s/MacOs" % osxPath
-                    bin = "%s/bin/" % osxPath
-                    if not os.path.exists(bin):
-                        bin = macos
-                    lib = "%s/lib/" % osxPath
-                    if not os.path.exists(lib):
-                        lib = macos
-                    include = "%s/include/" % osxPath
+                macos = "%s/MacOS" % osxPath
+                if not os.path.exists(macos):
+                    macos = "%s/MacOs" % osxPath
+                bin = "%s/bin/" % osxPath
+                if not os.path.exists(bin):
+                    bin = macos
+                lib = "%s/lib/" % osxPath
+                if not os.path.exists(lib):
+                    lib = macos
+                include = "%s/include/" % osxPath
+                if not os.path.exists(include):
+                    include = "%s/Frameworks/" % osxPath
                     if not os.path.exists(include):
-                        include = "%s/Frameworks/" % osxPath
-                        if not os.path.exists(include):
-                            include = macos
+                        include = macos
 
-                    self.osxPath = osxPath
-                    self.macos = macos
+                self.osxPath = osxPath
+                self.macos = macos
 
-                    self.replace( {"%s_BIN" % self.className.upper(): bin } )
-                    self.replace( LIB                 = lib )
-                    self.replace( LD_LIBRARY_PATH     = lib )
-                    self.replace( PATH                = bin )
-                    self.replace( INCLUDE             = include )
+                self.replace( {"%s_BIN" % self.className.upper(): bin } )
+                self.replace( LIB                 = lib )
+                self.replace( LD_LIBRARY_PATH     = lib )
+                self.replace( PATH                = bin )
+                self.replace( INCLUDE             = include )
 
-                # read the versions.py one and cache it!
-                # self.configFiles()
+            # read the versions.py one and cache it!
+            self.configFiles()
 
-                self.evaluate()
-#                # evaluate license method of all classes, just in case!
-#                if hasattr( self, 'license' ):
-#                    #only run if not root!
-#                    if os.getuid()>0:
-##                        log.debug(self.className)
-#                        self._license()
+            # evaluate license method of all classes
+            self.evaluate()
 
-
-            if 'USE_SYSTEM_LIBRARY' not in os.environ:
-                os.environ['USE_SYSTEM_LIBRARY'] = ''
-
-        # print self.className, versionLib.get('boost')
 
     @staticmethod
     def configFiles(self=None):
-        ''' Run over config files located in the pipeline and also in jobs '''
+        ''' Run over config files located in the pipeline and also in jobs
+        We cache it in globals(), so we ran it just once '''
 
         import sys
-        if not hasattr( sys, "versionsFile" ):
-            sys.versionsFile = []
+        if "versionsFile" not in globals():
+            globals()['versionsFile'] = []
 
             # check for root config files
             configs = [
@@ -746,87 +791,20 @@ class baseApp(_environ):
             for each in configs:
                 if os.path.exists( each ):
                     for line in [ x for x in open( each ).readlines() if x.strip() and x.strip()[0] != "#" ]:
-                        sys.versionsFile += [line]
+                        globals()['versionsFile'] += [line]
 
-        version_py = ''.join(sys.versionsFile)
-        exec( version_py )
+            version_py = ''.join(globals()['versionsFile'])
+            exec( version_py )
 
 
     def ignorePipeLib(self, libname ):
         ''' set library names to ignore using from the pipe version and use
         system or application default ones!'''
         if self.parent() == self.className:
-            if not 'USE_SYSTEM_LIBRARY' in os.environ:
-                os.environ['USE_SYSTEM_LIBRARY'] = ''
-            os.environ['USE_SYSTEM_LIBRARY'] += ' %s' % libname
+            if libname not in os.environ['USE_SYSTEM_LIBRARY']:
+                log.debug("ignorePipeLib: %s (%s)\n" % (libname, self.className))
+                os.environ['USE_SYSTEM_LIBRARY'] += ' %s' % libname
 
-
-    def updateLibs(self):
-        ''' update environment with pipeline library paths '''
-        # standard dependencies
-        if self.parent() == self.className:
-            from libs import allLibs, python
-            allLibs = allLibs()
-            libs={
-                'LD_LIBRARY_PATH':[],
-                'PYTHONPATH':[],
-                'INCLUDE':[],
-            }
-
-            # we use this variable to flag libraries that should be ignored!
-            if not 'USE_SYSTEM_LIBRARY' in os.environ:
-                os.environ['USE_SYSTEM_LIBRARY'] = ''
-
-            extraUpdates = {}
-            for lib in allLibs.updatedClasses:
-                if lib not in os.environ['USE_SYSTEM_LIBRARY'].split():
-                    # we check if a lib class has environ
-                    # if so, we need to update all its environment variables
-                    if hasattr(allLibs.updatedClasses[lib], 'environ'):
-                        for each in allLibs.updatedClasses[lib].keys():
-                            allLibs[each] = allLibs.updatedClasses[lib][each]
-                            extraUpdates[each] = 1
-
-                    # if not, just grab what we need!!
-                    allLibs['LD_LIBRARY_PATH'] = allLibs.updatedClasses[lib]['LD_LIBRARY_PATH']
-                    allLibs['PYTHONPATH'] = allLibs.updatedClasses[lib]['PYTHONPATH']
-                    allLibs['INCLUDE'] = allLibs.updatedClasses[lib]['INCLUDE']
-
-                # set lib versions no matter what!!
-                for each in [ x for x in allLibs.updatedClasses[lib] if 'VERSION' in x ]:
-                    allLibs[each] = allLibs.updatedClasses[lib][each]
-                    extraUpdates[each] = 1
-
-            self.insert('LD_LIBRARY_PATH', 0, allLibs['LD_LIBRARY_PATH'] )
-            self['PYTHONPATH'] = allLibs['PYTHONPATH']
-            self.insert('INCLUDE', 0, allLibs['INCLUDE'])
-            self.insert('LD_LIBRARY_PATH', 0, self.path('lib'))
-            self.insert('LD_LIBRARY_PATH', 0, self.path('lib/boost$BOOST_VERSION'))
-            self['LD_LIBRARY_PATH']=self.path('lib/python$PYTHON_VERSION_MAJOR')
-            self['LD_LIBRARY_PATH']=self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')
-
-            self['BOOST_VERSION'] = versionLib.get('boost')
-
-            def addTargetSuffix(lib, _suffix=['*/boost.*']):
-                # account for targetSuffix folders (boost for now!)
-                pv='.'.join(versionLib.get('python').split('.')[:2])
-                for suffix in _suffix:
-                    for each in glob( "%s/%s/%s/lib/python%s" % (roots.libs(), lib, suffix, pv) ):
-                        self['LD_LIBRARY_PATH'] = each
-                    for each in glob( "%s/%s/%s/lib" % (roots.libs(), lib, suffix) ):
-                        self['LD_LIBRARY_PATH'] = each
-
-            # account for all versions of theses packages!
-            for lib in libraries_with_versioned_names:
-                # add all targetSuffix version
-                addTargetSuffix(lib, [
-                    '*',
-                    '*/boost.*'
-                ])
-
-            # if we have extra variables, just update itself with it!
-            for each in extraUpdates:
-                self[each] = allLibs[each]
 
     def parent(self):
         ''' return the top wrapper class called by the user '''
@@ -835,11 +813,6 @@ class baseApp(_environ):
     def bin(self):
         '''returns the app bin folder (from appsDB)'''
         ret = self.appFromDB.bin()
-
-#        sys.stderr.write("%s\n" % str(ret))
-#        sys.stderr.flush()
-
-
         if '%s_BIN' % self.className.upper() in self:
             ret = self['%s_BIN' % self.className.upper()]
         return ret
@@ -863,7 +836,7 @@ class baseApp(_environ):
             '.txt',
         ]
         ret = []
-        for each in glob( '%s/*' %  self.bin()):
+        for each in cached.glob( '%s/*' %  self.bin()):
                 cmd = os.path.basename(each)
                 app = os.path.basename(each)
                 if filter(lambda x: x  in cmd.lower(), SHLIB):
@@ -890,30 +863,27 @@ class baseApp(_environ):
             is a virtual method that must be defined by each app class.
         '''
         appName = self.className.upper()
-        if not '%s_VERSION' % appName in self: # prevent from adding twice!
+        # if not '%s_VERSION' % appName in self.keys() and 'PARENT_BASE_CLASS_%s' % appName not in os.environ: # prevent from adding twice!
+        # os.environ['PARENT_BASE_CLASS_%s' % self.parent()]='1'
+
+        self.replace( {
+            '%s_VERSION' % appName : self.appFromDB.version(),
+            '%s_ROOT'    % appName : os.path.abspath( self.appFromDB.path()+'/' ),
+        } )
+        try:
             self.replace( {
-                '%s_VERSION' % appName : self.appFromDB.version(),
-                '%s_ROOT'    % appName : os.path.abspath( self.appFromDB.path()+'/' ),
-            } )
-            try:
-                self.replace( {
-                    '%s_VERSION_MAJOR' % appName : '.'.join( self.appFromDB.version().split('.')[0:2] ),
-                })
-            except: pass
+                '%s_VERSION_MAJOR' % appName : '.'.join( self.appFromDB.version().split('.')[0:2] ),
+            })
+        except: pass
 
-            if '--logd' in sys.argv:
-#                sys.stderr.write("%s \t " %  self.)
-                sys.stderr.write("%25s " %  self.className)
-                sys.stderr.write("%-25s " %  self.globalVersion.get(self.className))
-                sys.stderr.write("python: %s\n" %  self.globalVersion.get('python'))
-            py='.'.join( self.globalVersion.get('python').split('.')[:2] )
-            pythonPaths = self.pythonPath()
-            if py in pythonPaths:
-                self['PYTHONPATH'] = pythonPaths[py]
+        py='.'.join( self.globalVersion.get('python').split('.')[:2] )
+        pythonPaths = self.pythonPath()
+        if py in pythonPaths:
+            self['PYTHONPATH'] = pythonPaths[py]
 
-            # run the virtual environ() method of the app class, if any!
-            if hasattr(self, 'environ'):
-                self.environ()
+        # run the virtual environ() method of the app/lib class, if any!
+        if hasattr(self, 'environ'):
+            self.environ()
 
 
     def version(self, v=None):
@@ -935,7 +905,7 @@ class baseApp(_environ):
         __version = self.globalVersion.get(self.className)
         if __version:
             self.appFromDB.version( self.globalVersion.get(self.className) )
-#        return self.globalVersion.get(self.className)
+        # return self.globalVersion.get(self.className)
         if hasattr(self, 'versions'):
             self.versions()
 
@@ -952,7 +922,7 @@ class baseApp(_environ):
 
     def scanConfig(self):
         ''' scan for config files, like the ones in tools/config '''
-        for each in glob( '%s/tools/config/*.py' % depotRoot() ):
+        for each in cached.glob( '%s/tools/config/*.py' % depotRoot() ):
             module = os.path.splitext(os.path.basename(each))[0]
             dir = os.path.dirname( each )
             sys.path.append( dir )
@@ -962,19 +932,6 @@ class baseApp(_environ):
             del sys.path[ sys.path.index( dir ) ]
             del module
         self.version()
-
-    def expand(self, binName=None):
-        ''' expand all env vars in this class to the environment
-        if binName is specified, fullEnvironment will also run the license setup
-        '''
-        # here is were we actually update self with all updated
-        self.fullEnvironment(binName)
-        _environ.evaluate(self)
-
-        # update python itself with the newly created PYTHONPATH.
-        for each in os.environ['PYTHONPATH'].split(':'):
-            sys.path += [each]
-
 
     def toolsPaths(self):
         ''' return all the tools paths in the hierarqui, sorted correctly! '''
@@ -1022,17 +979,25 @@ class baseApp(_environ):
 
 
     def license(self):
-        ''' virtual method to be create to customize license setup in an app class
+        ''' virtual method to be created in app classes
+        to customize license setup
         '''
         self['LM_LICENSE_FILE'] = "%s/licenses/%s/%s" % (roots.tools(), self.className.lower(), self.appFromDB.version() )
 
     def _userSetup(self, binName=''):
+        ''' do the user setup needed before running an app.
+        If a app class has a userSetup() method, this method
+        will call it.'''
         ignore = [ 'python', 'xnview', 'chrome', 'rv', 'qube'  ]
 
-        # evaluate the noUserSetup() method, if one exists, to enable/disable
+        # if a class has needJob() method and it returns false,
+        # we don't do anything here!
+        if hasattr(self, 'needJob') and not self.needJob():
+            return
+
+        # evaluate the runUserSetup() method, if one exists, to enable/disable
         # user setup execution. Default is enabled!
         j = admin.job.current()
-
         if hasattr(self, 'runUserSetup'):
             bin = filter(lambda x: x[1] == binName, self.bins())
             if bin:
@@ -1077,8 +1042,19 @@ class baseApp(_environ):
 
                 \n%s''' % ('='*80, '='*80) +bcolors.END)
 
+    def inFarm(self):
+        ''' return TRUE if we're running on a farm machine! '''
+        ret =  'PIPE_FARM_USER' in os.environ
+        return ret
+
     def update(self, environClass={}, top={}, noIgnoreLibs=False, **e):
-        # recall all added classes to batch update later at RUN
+        ''' Recall all added classes to batch update later at RUN
+        When adding other apps/libs to an app/lib class in environ(),
+        instead of actually adding it, we cache it all to avoid
+        running things multiple times.
+        Things are actually updated by the expand() method!
+        '''
+
         useSystemLibs = []
         if 'USE_SYSTEM_LIBRARY' in os.environ and not noIgnoreLibs:
             useSystemLibs = os.environ['USE_SYSTEM_LIBRARY'].split()
@@ -1087,8 +1063,8 @@ class baseApp(_environ):
                 self.updatedClasses[environClass.className] = environClass
                 self.updatedClasses.update( environClass.updatedClasses )
                 # we need to mantain the recursionCache up2date!!
-                if environClass.className in sys.recursionCache[self.DB_EnvVar]:
-                    sys.recursionCache[self.DB_EnvVar][environClass.className].updatedClasses = self.updatedClasses
+                if self.className in globals()[self.__PIPEVFX_EVALUATE_CACHE__]:
+                    globals()[self.__PIPEVFX_EVALUATE_CACHE__][self.className].updatedClasses = self.updatedClasses
 
         # do 'e' update on the fly!
         if e:
@@ -1098,13 +1074,69 @@ class baseApp(_environ):
             for each in top:
                 self.insert(each,0, top[each])
 
-    def inFarm(self):
-        return False
-        ret =  'PIPE_FARM_USER' in os.environ
-#        if os.environ.has_key('PIPE_FARM_ENGINE'):
-#            if os.envion['PIPE_FARM_ENGINE'] == 'afanasy':
-#                ret=False
-        return ret
+    def updateLibs(self):
+        ''' update environment with pipeline library paths
+        this should run once, only for the main parent class before run()'''
+        # standard dependencies
+        if self.parent() == self.className:
+            from libs import allLibs, python
+            allLibs = allLibs()
+            libs={
+                'LD_LIBRARY_PATH':[],
+                'PYTHONPATH':[],
+                'INCLUDE':[],
+            }
+
+            extraUpdates = {}
+            for lib in allLibs.updatedClasses:
+                if lib not in os.environ['USE_SYSTEM_LIBRARY'].split():
+                    # we check if a lib class has environ
+                    # if so, we need to update all its environment variables
+                    if hasattr(allLibs.updatedClasses[lib], 'environ'):
+                        for each in allLibs.updatedClasses[lib].keys():
+                            allLibs[each] = allLibs.updatedClasses[lib][each]
+                            extraUpdates[each] = 1
+
+                    # if not, just grab what we need!!
+                    allLibs['LD_LIBRARY_PATH'] = allLibs.updatedClasses[lib]['LD_LIBRARY_PATH']
+                    allLibs['PYTHONPATH'] = allLibs.updatedClasses[lib]['PYTHONPATH']
+                    allLibs['INCLUDE'] = allLibs.updatedClasses[lib]['INCLUDE']
+
+                # set lib versions no matter what!!
+                for each in [ x for x in allLibs.updatedClasses[lib] if 'VERSION' in x ]:
+                    allLibs[each] = allLibs.updatedClasses[lib][each]
+                    extraUpdates[each] = 1
+
+            self.insert('LD_LIBRARY_PATH', 0, allLibs['LD_LIBRARY_PATH'] )
+            self['PYTHONPATH'] = allLibs['PYTHONPATH']
+            self.insert('INCLUDE', 0, allLibs['INCLUDE'])
+            self.insert('LD_LIBRARY_PATH', 0, self.path('lib'))
+            self.insert('LD_LIBRARY_PATH', 0, self.path('lib/boost$BOOST_VERSION'))
+            self['LD_LIBRARY_PATH']=self.path('lib/python$PYTHON_VERSION_MAJOR')
+            self['LD_LIBRARY_PATH']=self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR')
+
+            self['BOOST_VERSION'] = versionLib.get('boost')
+
+            def addTargetSuffix(lib, _suffix=['*/boost.*']):
+                # account for targetSuffix folders (boost for now!)
+                pv='.'.join(versionLib.get('python').split('.')[:2])
+                for suffix in _suffix:
+                    for each in cached.glob( "%s/%s/%s/lib/python%s" % (roots.libs(), lib, suffix, pv) ):
+                        self['LD_LIBRARY_PATH'] = each
+                    for each in cached.glob( "%s/%s/%s/lib" % (roots.libs(), lib, suffix) ):
+                        self['LD_LIBRARY_PATH'] = each
+
+            # account for all versions of theses packages!
+            for lib in libraries_with_versioned_names:
+                # add all targetSuffix version
+                addTargetSuffix(lib, [
+                    '*',
+                    '*/boost.*'
+                ])
+
+            # if we have extra variables, just update itself with it!
+            for each in extraUpdates:
+                self[each] = allLibs[each]
 
     def fullEnvironment(self, binName=None):
         '''
@@ -1117,8 +1149,8 @@ class baseApp(_environ):
         # add our pipe library collection
         self.updateLibs()
 
-        # only run if enviroment is set and not root!
-        if os.getuid()>0:
+        # only run if RUN_SHELL enviroment is set or not root!
+        if os.getuid()>0 or 'RUN_SHELL' in os.environ:
             # here is were we actually update self with all updated
             # classes - the ones we do 'self.update(classApp())' in environ method!
             for className in  self.updatedClasses.keys():
@@ -1135,8 +1167,23 @@ class baseApp(_environ):
         if binName:
             self._license(binName)
 
+    def expand(self, binName=None):
+        ''' Expand all env vars in this class to the environment.
+        This runs at the very end, before running the actual app
+        '''
+        # here is were we actually update self with all updated
+        # classes - the ones we do 'self.update(classApp())' in environ method!
+        self.fullEnvironment(binName)
+
+        # and _environ.evaluate actually sets os.environ!
+        _environ.evaluate(self)
+
+        # update python itself with the newly created PYTHONPATH.
+        for each in os.environ['PYTHONPATH'].split(':'):
+            sys.path += [each]
+
     def run(self, binName):
-        ''' the application!!! '''
+        ''' run the application!!! '''
         debug = ''
 
         # if one of the arguments is a file, and it exists, make it abspath!!
@@ -1145,8 +1192,6 @@ class baseApp(_environ):
             if os.path.exists( os.path.abspath(each) ):
                 sys.argv[n] = os.path.abspath(each)
 
-
-
         # dinamically add app classes to the current application environment
         # its a dinamic self.update( <app class> ) in command line!
         if '--with' in sys.argv:
@@ -1154,13 +1199,15 @@ class baseApp(_environ):
             import pipe
             for each in sys.argv[id+1].split(','):
                 self.update( eval("pipe.apps.%s()" % each) )
-            del sys.argv[id]
+            # remove from command line
+            del sys.argv[id+1]
             del sys.argv[id]
 
         # force a disable of a certain package, if --disable <package>
-        # TODO!!!
+        # TODO!!! (it does nothing at the moment!)
         if '--disable' in sys.argv:
             id = sys.argv.index('--disable')
+            # remove from command line
             del sys.argv[id+1]
             del sys.argv[id]
 
@@ -1199,32 +1246,24 @@ class baseApp(_environ):
             if 'PIPE_SHOT' in os.environ:
                 os.environ['SHOT'] = "%s/%s/users/" % ( os.environ['JOB'], os.environ['PIPE_SHOT'].replace('@','s/') )
 
-        # if we are in a job/shot, make sure
-        # the user has a writable folder to work!
-        self._userSetup(binName)
-
         # use /bin/sh to run apps...
         os.environ['SHELL'] = '/bin/sh'
 
+        # WIP: Windows apps using WINE
         # if the app is a wine app, set WINEPREFIX
         if os.path.exists( "%s/drive_c" % self.path() ):
             self['WINEPREFIX'] = self.path()
             self['WINE_VERSION'] = self.globalVersion.get('wine')
-#            self['WINEDEBUG']='+opengl'
+            # self['WINEDEBUG']='+opengl'
             # handles wine if extension of bin is .exe
             binNameExt = os.path.splitext( binName )[1].lower()
             if binNameExt == '.exe':
                 os.environ['SHELL'] = '/bin/bash'
                 debug = "run wine "
 
-
-        # only run if enviroment is set and not root!
-        if os.getuid()>0 or 'RUN_SHELL' in os.environ:
-            # here is were we actually update self with all updated
-            # classes - the ones we do 'self.update(classApp())' in environ method!
-            self.fullEnvironment(binName)
-
-
+        # if we are in a job/shot, make sure
+        # the user has a writable folder to work!
+        self._userSetup(binName)
 
         # expand all environment variables stored in this class to
         # actual os.environ vars
@@ -1238,8 +1277,25 @@ class baseApp(_environ):
         if hasattr( self, 'extraCommandLine'):
             sys.argv.extend( self.extraCommandLine(binName) )
 
-        # run the software in GDB, if --debug in command line
+        # SAM asset publishing support
+        # =====================================================================
+        # one can specify an assepath to create dependency that can be
+        # used by pre and post methods in apps
+        # for example, maya.py uses this in post to publish rendered frames
+        # into asset images folder!
+        self.asset = None
+        if '--asset' in sys.argv:
+            id = sys.argv.index('--asset')
+            self.asset = sys.argv[id+1]
+            del sys.argv[id+1];del sys.argv[id]
+
+        # GENERAL DEBUGGING
+        # =====================================================================
+        # we set here the apps that need to run with os.system because they
+        # need keyboard input
         runWithOsSystem = binName in ['python','houdini','prman','mayapy']
+
+        # run the software in GDB, if --debug in command line
         if '--debug' in sys.argv:
             # if self.className == 'maya':
             #     binName += ' -d gdb '
@@ -1256,17 +1312,6 @@ class baseApp(_environ):
                 debug = ' nemiver '
             del sys.argv[sys.argv.index('--gdebug')]
             runWithOsSystem = True
-
-        # one can specify an assepath to create dependency that can be
-        # used by pre and post methods in apps
-        # for example, maya.py uses this in post to publish rendered frames
-        # into asset images folder!
-        self.asset = None
-        if '--asset' in sys.argv:
-            id = sys.argv.index('--asset')
-            self.asset = sys.argv[id+1]
-            del sys.argv[id]
-            del sys.argv[id]
 
         # traces all opened shared libraries and display on a window, if --trace
         traceID = filter(lambda x: '--trace' in x, sys.argv)
@@ -1290,18 +1335,21 @@ class baseApp(_environ):
             del sys.argv[sys.argv.index('--logd')]
 
         # if binName is a python script, run with our pipeline current python
+        # =====================================================================
         # TODO: mangle it correctly for debugging!!
         extra = ""
         if os.path.splitext(binName.split(' ')[0])[-1].lower() == '.py':
             from libs import python
             extra =  python().path('../$PYTHON_VERSION/bin/python')
-#            if debug:
-#                if 'gdb' in debug:
-#                    extra += ' --debug'
-#                else:
-#                    extra += ' --gdebug'
-#                debug = ''
+            # if debug:
+            #    if 'gdb' in debug:
+            #        extra += ' --debug'
+            #    else:
+            #        extra += ' --gdebug'
+            #    debug = ''
 
+        # VIRTUAL GL SETUP (to run apps remotely)
+        # =====================================================================
         # -vgl32 is a vgl argument that forces vgl to intercept
         # 32bit opengl instead of 64bit default
         m32 = ''
@@ -1312,10 +1360,11 @@ class baseApp(_environ):
         # check if we have opengl hardware (local X11) or not (vnc/ssh)
         # if we don't, try running with virtualGL
         display=0
-        if 'DISPLAY' in os.environ:
+        if 'DISPLAY' in os.environ and ':' in os.environ['DISPLAY'].strip():
             display = float(os.environ['DISPLAY'].split(':')[-1])
         # we assume that ssh or any other remote connection will
         # have a DISPLAY bigger than 9 here, to detect if we need virtualGL or not!
+        # (or if running in DOCKER, use vglrun!)
         if ( display > 15 or 'DOCKER' in os.environ ) and vglrun:
             # debug = 'vglrun -c jpeg -q 30 %s %s' % (m32, debug)
             # find out what display is active
@@ -1335,45 +1384,58 @@ class baseApp(_environ):
             if d:
                 d = "-d %s" % d
             debug = '%s +v %s %s %s env LD_LIBRARY_PATH=$LD_LIBRARY_PATH' % (vglrun, d, m32, debug)
+        # if a display is below 15, we're running ssh connection, not xpra, so we use LIBGL_ALWAYS_INDIRECT instead of VirtualGL.
+        # this way, opengl applications will use the client GPU, not the host GPU.
+        # this allows to run hardware accelerated opengl applications in a GPUless HOST (software runs in the host,
+        # but uses GPU hardware from client!)
         elif display > 9:
             debug = 'xhost + ; env QT_X11_NO_MITSHM=1 QT_GRAPHICSSYSTEM=opengl LIBGL_ALWAYS_INDIRECT=1  %s ' % (debug)
 
+        # ???
+        # =====================================================================
+        if '--wine' in sys.argv:
+            del sys.argv[sys.argv.index('--wine')]
+            binFullName = ''
 
-        # construct the command line to run the software
+        # The --fix (or FIX env var) forces the virtual method postRun to run
+        # BEFORE running the app as well as after! Is postRun returns 0, the
+        # app won't run!
+        # We can use this to check if rendered frames exist on disk (which is
+        # what postrun does) and don't render if they do.
+        # it's a usefull workaround to retry all frames in a farm job, and have
+        # the pipeline render only the ones that are missing automatically!
+        # =====================================================================
+        fixit = 'FIX' in os.environ
+        if '--fix' in sys.argv:
+            del sys.argv[sys.argv.index('--fix')]
+            fixit = True
+
+        # just run a shell setup for the app, not the actual software!
+        # =====================================================================
+        shell = False
+        if '--shell' in sys.argv:
+            del sys.argv[sys.argv.index('--shell')]
+            shell = True
+
+        # FROM NOW ON, WE CONSTRUCT THE COMMAND LINE!
+        # =====================================================================
+        # if app binary name is a link, translate it to its target
         binFullName = '%s/%s' % (self.bin(), binName)
         if os.path.islink(binFullName):
             binFullName = '%s/%s' % ( self.bin(), os.readlink( binFullName ) )
             binFullName = binFullName.replace(' ','\\ ')
 
-        # ???
-        if '--wine' in sys.argv:
-            del sys.argv[sys.argv.index('--wine')]
-            binFullName = ''
-
-        # ???
-        fixit = False
-        if '--fix' in sys.argv:
-            del sys.argv[sys.argv.index('--fix')]
-            fixit = True
-
-        # construct cmd string!!
+        # construct command line string
         cmd = '%s %s %s %s' % (
             debug,
             extra,
             binFullName,
-            # now add all arguments passed by command line, but the ones intercept above
-            # which have being deleted from sys.argv!
+            # now add all arguments passed by command line, but the ones
+            #  intercept above which have being deleted from sys.argv!
             ' '.join( map(lambda x: '"%s"' % x.replace('"','\\"'), sys.argv[1:] ) )
         )
 
-#        # ????!!!!
-#        for each in filter(lambda x: '--' in x and '_version' not in x, sys.argv):
-#            if hasattr( self, each[2:] ):
-#                exec( 'self.%s()' % each[2:] )
-#                del sys.argv[ sys.argv.index(each) ]
-
-
-        # if we have a localCache method, call it to update/create the local cache
+        # if we have a localCache method (wine), call it to update/create the local cache
         # and mangle the cmd line accordingly
         if hasattr(self, 'localCache'):
             cmd = self.localCache(cmd)
@@ -1399,9 +1461,12 @@ class baseApp(_environ):
             cmd = "%s -c 0-%d " % (taskset, cpu_count()) + cmd
 
         # run preRun if it exists - returns the cmd to run!
+        # (preRun virtual method can modify cmd as it wants!)
         if hasattr( self, 'preRun'):
             cmd = self.preRun(cmd)
 
+        # LD_PRELOAD SETUP:
+        # =====================================================================
         # only preload if exists!
         _preload = []
         # workaround for centos 6.5
@@ -1423,9 +1488,10 @@ class baseApp(_environ):
                 log.debug("pipevfx dev warning: can't preload %s since it doesn't exist." % each)
 
         os.environ['LD_PRELOAD']=":".join(preload)
+        os.environ['_LD_PRELOAD']= os.environ['LD_PRELOAD']
 
 
-
+        # show cmd in debug log (--logd)
         log.debug(cmd)
 
         # remove TBB_VERSION to avoid TBB spitting out information!!
@@ -1433,9 +1499,10 @@ class baseApp(_environ):
             del os.environ['TBB_VERSION']
 
 
+        # NOW WE EXECUTE IT!
+        # =====================================================================
         # starup a shell instead of the software (usefull to debug environment)
-        if '--shell' in sys.argv:
-            del sys.argv[sys.argv.index('--shell')]
+        if shell:
             ret = os.system( 'env PS1=" >> " /bin/sh' )
 
         # run the software
@@ -1455,56 +1522,14 @@ class baseApp(_environ):
                 # the run script is the one responsavel to find out if its in the farm or not, and set this env var for the pipe!
                 # in this case, we use it to run the cmd line as that user, using dbus!
                 if self.inFarm():
-
-                    # # send all class env vars to sudo
-                    # allEnvs = self.keys()
-                    # go = ' echo %s ; ' % ('='*200)
-                    #
-                    # # if we're in a job, send it over too!
-                    # if os.environ.has_key('PIPE_JOB'):
-                    #     allEnvs.append('PIPE_JOB')
-                    #     allEnvs.append('PIPE_SHOT')
-                    # go = ' ; '.join(map(lambda x: 'export %s=\\"%s\\"' % (x,os.environ[x]), allEnvs ))
-                    #
-                    # go += ' ; echo %s ' % ('='*200)
-                    #
-                    # jobPath = filter(lambda x: '/jobs/%s/' % os.environ['PIPE_JOB'] in x, cmd.replace('"','\\"').split())
-                    # if jobPath:
-                    #     jobPath = jobPath[0]
-                    # else:
-                    #     jobPath = "No Job!!!"
-                    #
-                    # sudo = admin.sudo()
-                    # # construct the su cmd line.
-                    # sucmd = '''runuser -l %s -c '/bin/bash -l -c "echo %s ; %s ; %s ; %s 2>&1 " ' ''' % (
-                    #     os.environ['PIPE_FARM_USER'],
-                    #     jobPath,
-                    #     go,
-                    #     'export HOME=\\"%s\\"' % self['HOME'],
-                    #     cmd.replace('"','\\"')
-                    # )
-
                     print( "Running in farm as user: %s" % os.environ['PIPE_FARM_USER'] )
                     print( '='*80 )
-                    # print sucmd
-                    # # run it over dbusService!
-                    # sudo.cmd( sucmd )
-                    # try:
-                    #     returnLog = sudo.run()
-                    # except:
-                    #     returnLog = "\n\t".join(traceback.format_exc().split('\n'))
-                    #
-                    # print returnLog
-                    #
-                    # if 'error' in returnLog.lower() or 'StackTrace()' in returnLog:
-                    #     ret = 255
-                    # else:
-                    #     ret = 0
                     ret, returnLog = runProcess(cmd)
 
                 else:
-                    # as we need stdin for python, we use os.system for now until
-                    # we find a solution for runprocess to be able to work with stdin!!
+                    # when we need stdin for python, runWithOsSystem will be set
+                    # so we use os.system for it, until we find
+                    # a solution for runprocess to be able to work with stdin!!
                     if runWithOsSystem:
                         ret = os.system( cmd )
                     else:
@@ -1525,7 +1550,8 @@ class baseApp(_environ):
         sys.stdout.flush()
         sys.stderr.flush()
 
-        # fix for afanasy to report a failed frame!!
+        # if we got an error, return a parseable string so farm erro parser
+        # can be triggered!
         if ret:
             print( '[ PARSER ERROR ]' )
             ret = -2
@@ -1547,13 +1573,16 @@ class baseLib(baseApp):
     def __init__(self, lib=None, platform=platform, arch=arch):
         baseApp.__init__(self, lib, platform, arch, libsDB, versionLib, '__DB_LATEST_LIBS')
 
+    def needJob(self):
+        ''' all lib binaries can run without a job/shot set! '''
+        return False
 
     def LD_PRELOAD(self):
         pv = versionLib.get('python')
         bv = versionLib.get('boost')
         pvm = '.'.join(pv.split('.')[:2])
-        ret =  glob( self.path('lib/*.so') )
-        ret +=  glob( self.path('lib/python%s/*.so' % pvm) )
-        ret +=  glob( self.path('lib/boost%s/*.so' % bv) )
-        ret +=  glob( self.path('lib/boost%s/python%s/*.so' % (bv,pvm)) )
+        ret =  cached.glob( self.path('lib/*.so') )
+        ret +=  cached.glob( self.path('lib/python%s/*.so' % pvm) )
+        ret +=  cached.glob( self.path('lib/boost%s/*.so' % bv) )
+        ret +=  cached.glob( self.path('lib/boost%s/python%s/*.so' % (bv,pvm)) )
         return ret
