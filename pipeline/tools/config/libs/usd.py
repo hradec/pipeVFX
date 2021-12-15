@@ -50,3 +50,7 @@ class usd(baseLib):
                 self.path('maya.$MAYA_VERSION/third_party/maya/lib'),
             ],
         )
+
+        if self.parent() in ['gaffer','python']:
+            self['LD_PRELOAD'] = pipe.libs.ocio().LD_PRELOAD()
+            self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()

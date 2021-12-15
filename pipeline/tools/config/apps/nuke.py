@@ -113,6 +113,7 @@ class nuke(baseApp):
 
         # mari bridge
         self.update( mari() )
+        self.update( pipe.libs.qt() )
 
         # if 'CENTOS' in os.environ:
         #     self.ignorePipeLib( "freetype" )
@@ -189,7 +190,7 @@ class nuke(baseApp):
         nukeBin = glob('%s/Nuke*.*' % self.bin())
         if not nukeBin:
             raise Exception( "\n\nCan't find Nuke executable at %s. Are you sure Nuke %s is installed?\n" % ('%s/Nuke*.*' % self.bin(), self.version()) )
-            
+
         if int( self.version().split('.')[0] ) >= 10:
             cmd += ['--disable-nuke-frameserver']
 

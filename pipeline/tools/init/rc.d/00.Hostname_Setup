@@ -7,9 +7,20 @@
 # and appends it to $tools/init/hosts so we can edit it later.
 # As it turns out, this seems to be distro independent, so we can keep it here for now until
 # we find a distro that breaks it!
+
+setHostname(){
+    hn=$1
+    if [ "$(cat /proc/version | grep fedora)" != "" ] ; then
+        hostnamectl set-hostname $hn
+    else
+        hostname $hn
+    fi
+
+}
+
 pipeHostname(){
     # first set a dummy hostname so python can find the ip
-    hostname  dummy.local
+    setHostname  dummy.local
 
     # make it compatible with OSX
     ip_tokenize=':'
@@ -44,15 +55,15 @@ pipeHostname(){
                 hostRecord=$(cat $tools/init/hosts | grep "$macAddres" | grep -v '^#')
                 if [ "$hostRecord" != "" ] ; then
                     echo $hostRecord 1>&2
-                    echo hostname  $(echo $hostRecord | cut -d' ' -f2)
-                    hostname  $(echo $hostRecord | cut -d' ' -f2)
+                    echo setHostname  $(echo $hostRecord | cut -d' ' -f2)
+                    setHostname  $(echo $hostRecord | cut -d' ' -f2)
                     break
                 else
                     # if our mac is not in the list, check if this eth has an ip.
                     # if so, create a default name based on IP address and add to the host file
                     if [ "$ip" != "" ] ; then
                         # construct a default hostname based on the ip address
-                        hostname  $(/usr/bin/python2 -c "print 'vfxws-%03d.local' % int('$ip'.split('.')[-1])")
+                        setHostname  $(/usr/bin/python2 -c "print 'vfxws-%03d.local' % int('$ip'.split('.')[-1])")
                         # if the mac is not in the hosts file, add it with the default name
                         # so we can edit it later if we want!
                         echo "$macAddres             $hostName" >> $tools/init/hosts
@@ -81,7 +92,7 @@ avahi_start(){
 
 
 if [ "$GOOGLE_FARM"  != "" ] ; then
-    hostname "$GOOGLE_FARM"
+    setHostname "$GOOGLE_FARM"
 else
     pipeHostname
 fi

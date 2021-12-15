@@ -1,0 +1,50 @@
+#!/bin/bash
+
+
+# ============================================================================================
+# NVIDIA Driver Install at boot!
+# ============================================================================================
+if [ "$(lspci | grep 'NVIDIA' | grep VGA)" != "" ] ; then
+ 	systemctl stop gdm
+	rm -rf /etc/X11/xorg.conf
+	cp $tools/init/nvidiagpu/52*.conf /etc/X11/xorg.conf.d/
+	# ==============================================================================================
+ 	# the machine has a NVIDIA and the linux has no driver for it. Install the latest nvidia driver
+	# ==============================================================================================
+	if [ "$(dmesg | grep 'None of the NVIDIA graphics adapters were initialized')" != "" ]  ; then
+		driver=$(ls -lv $tools/init/nvidiagpu | tail -1 | awk '{print $(NF)}')
+       		time sh $tools/init/nvidiagpu/$driver -a  --no-x-check -s  --no-abi-note
+	  	nvidia-modprobe
+	# ==============================================================================================
+ 	# the machine has a NVIDIA GTX1070, so lets install the latest nvidia driver to keep it up2date
+	# ==============================================================================================
+	elif [ "$(lspci  | grep VGA.*GTX.*1070)" != "" ] ; then
+        	driver=$(ls -lv $tools/init/nvidiagpu | tail -1 | awk '{print $(NF)}')
+        	time sh $tools/init/nvidiagpu/$driver -a  --no-x-check -s  --no-abi-note
+	 	nvidia-modprobe
+    else
+        driver=$(ls -lv $tools/init/nvidiagpu | tail -1 | awk '{print $(NF)}')
+       		time sh $tools/init/nvidiagpu/$driver -a  --no-x-check -s  --no-abi-note
+	  	nvidia-modprobe
+ 	fi
+	# ===============================================================================================================
+	# set a fake monitor edid for xorg.conf so we can run X without a monitor connected. (and get 4k resolution)
+	# ===============================================================================================================
+	# if [ "$(hostname | egrep 'newfarm-029')" != "" ] ; then
+	# 	nvidia-xconfig -a --allow-empty-initial-configuration --use-display-device="DP-0" --connected-monitor="DP-0" --custom-edid="DP-0:$tools/init/edid.bin"
+	# fi
+	# ===============================================================================================================
+	# force 4k
+	# ===============================================================================================================
+	# if [ "$(hostname | egrep 'vfxws-029')" != "" ] ; then
+	# 	DISPLAY=:0 xrandr --fb 3840x2160
+	# fi
+	# ===============================================================================================================
+	# force 2k
+	# ===============================================================================================================
+	# if [ "$(hostname | egrep 'vfxws-031|vfxws-013')" != "" ] ; then
+	# 	DISPLAY=:0 xrandr --fb 1920x1080
+	# fi
+    systemctl restart gdm
+    systemctl start gdm
+fi

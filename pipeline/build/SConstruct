@@ -97,7 +97,7 @@ if os.path.exists( patchFile ):
 # CORTEX CORE for each boost
 # ===========================================================================================
 # build one version of IECore, IECorePython and IECoreGL libraries for each boost version
-print "pkgs.boost.versions:",pkgs.boost.versions
+# print "pkgs.boost.versions:",pkgs.boost.versions
 for boost_version in pkgs.boost.versions:
     core_sufix = "boost.%s" % boost_version
     _download = []
@@ -425,10 +425,10 @@ def buildGaffer(apps=[], boost='1.66.0', __download__=None):
     #     pkgs.oiio['boost.%s' % boost]: '1.8.10',
     #     }
     # ],[
-        'https://github.com/GafferHQ/gaffer/archive/refs/tags/0.60.8.0.tar.gz',
-        'gaffer-0.60.8.0.tar.gz',
-        '0.60.8.0',
-        '995bbd7a76f062f30e664b53bdf1584d',
+        'https://github.com/hradec/gaffer/archive/refs/tags/0.61.1.0-gaffercortex.tar.gz',
+        'gaffer-0.61.1.0.tar.gz',
+        '0.61.1.0',
+        '73008af5fd96f7ca46df0026849f02c0',
         {pkgs.alembic : "1.7.11", pkgs.ocio: '1.0.9',
         pkgs.pyside: '2.0.18', pkgs.pyqt: None,
         pkgs.openvdb: '6.0.0', pkgs.tbb: '2019_U6',
@@ -495,10 +495,6 @@ def buildGaffer(apps=[], boost='1.66.0', __download__=None):
 gaffer = buildGaffer()
 pkgs.gaffer[ gaffer.targetSuffix ] = gaffer
 
-
-
-
-
 # ===========================================================================================
 # FROM HERE, WE DEAL WITH THIRDY-PARTIE APPS
 # ===========================================================================================
@@ -506,7 +502,24 @@ pkgs.gaffer[ gaffer.targetSuffix ] = gaffer
 # we cant build app dependent packages.
 canBuildCortexNow = False
 try:
-    pipe.apps.maya()
+    # grab version lists
+    try: pv = [ x for x in build.pkgs.versionSort( prman.versionList() ) if float(x.split('.')[0])>=21 ]
+    except: pv = []
+    try: mv = [ x for x in build.pkgs.versionSort( maya.versionList()  ) if float(x.split('.')[0])>2016 ]
+    except: mv = []
+    try: nv = [ x for x in build.pkgs.versionSort( nuke.versionList()  ) if float(x.split('.')[0])>=9 ]
+    except: nv = []
+    try: hv = build.pkgs.versionSort( houdini.versionList() )[-2:]
+    except: hv = []
+
+    # we check if we can resolv the maya app class for the
+    # available maya versions we have.
+    for n in range(len(mv)):
+        version = 0
+        version = mv[0] if len(mv)<=n else mv[n]
+        pipe.version.set( maya  = version )
+        pipe.apps.maya().path('bin/maya.bin')
+
     canBuildCortexNow = True
 except:
     print '''
@@ -517,6 +530,7 @@ except:
     '''
     traceback.print_exc()
 
+print canBuildCortexNow
 # ok, so we do have the libraries built, so now lets do app dependent packages!!
 if canBuildCortexNow:
     nuke    = pipe.apps.nuke()
@@ -524,15 +538,7 @@ if canBuildCortexNow:
     prman   = pipe.apps.prman()
     houdini = pipe.apps.houdini()
 
-    # grab version lists
-    try: pv = [ x for x in build.pkgs.versionSort( prman.versionList() ) if float(x.split('.')[0])>=21 ]
-    except: pv = []
-    try: mv = [ x for x in build.pkgs.versionSort( maya.versionList()  ) if float(x.split('.')[0])>2016 ]
-    except: mv = []
-    try: nv = [ x for x in build.pkgs.versionSort( nuke.versionList()  ) if float(x.split('.')[0])>=9 ]
-    except: nv = []
-    try: hv = build.pkgs.versionSort( houdini.versionList() )[-2:]
-    except: hv = []
+
 
     # disable arnold!
     #pipe.version.set(arnold='0.0.0')
@@ -560,6 +566,9 @@ if canBuildCortexNow:
 
         iversion = int(build.versionMajor(version))
         targetSuffix = "maya.%s" % str(version)
+
+        print pipe.apps.maya().path('bin/maya.bin'), mv, targetSuffix
+
 
         # ===========================================================================================
         # build sip/pyqt for maya version!

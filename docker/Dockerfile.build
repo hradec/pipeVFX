@@ -97,12 +97,6 @@ RUN yum -y install opencl-headers ocl-icd-devel
 # to get colors in the build log.
 RUN yum -y install source-highlight
 
-# copy over the latest packages from the latest pkg TAG image!
-# this makes upload/download a large layer all the time,
-# but prevents this image from being rebuild all the time when we add
-# a new package.
-COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download/*  /atomo/pipeline/build/.download/
-
 # add strace
 RUN yum -y install strace
 
@@ -130,6 +124,13 @@ RUN yum -y install python2
 RUN python2 -m ensurepip
 RUN python2 -m pip install SCons
 
+# fedora expecific packages needed when building with fedora
+RUN [ -f /etc/fedora-release ] && yum -y install \
+    lbzip2 \
+    rsync \
+    expat-devel \
+    sphinx
+RUN pip install sphinx
 
 # to avoid clashing in osl
 RUN yum -y remove boost
@@ -139,5 +140,25 @@ RUN yum -y install sudo
 RUN yum -y install patchelf
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
+
+# copy over the latest packages from the latest pkg TAG image!
+# this makes upload/download a large layer all the time,
+# but prevents this image from being rebuild all the time when we add
+# a new package.
+RUN mkdir -p /atomo/pipeline/build/.download/
+COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download  /atomo/pipeline/build/.download/
+
 ENV TERM=xterm
 ENTRYPOINT "/run.sh"
+
+# download packages so the image contain all tarballs.
+# RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+#     export TERM=xterm && \
+#     export ftp_proxy=$http_proxy && \
+#     touch /atomo/.root && \
+#     mkdir -p /atomo/pipeline/build/ && \
+#     cd /atomo/pipeline/build && \
+#     ln -s $(which python2) /bin/python && \
+#     env && \
+#     PYTHONPATH=/atomo/pipeline/tools/python \
+#     scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 ))

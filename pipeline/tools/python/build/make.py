@@ -72,12 +72,12 @@ class make(generic):
 
         return cmd
 
-
 class cmake(make):
     ''' a class to handle cmake installs '''
+    cmake_prefix = None
     src = 'CMakeLists.txt'
     cmd = [
-        ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER && '
+        ' cmake $SOURCE_FOLDER && '
         ' make $MAKE_PARALLEL $MAKE_VERBOSE &&  make install'
     ]
     needed_flags=[
@@ -145,6 +145,13 @@ class cmake(make):
 
     def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         make.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
+        if self.cmake_prefix:
+            self.flags += [
+                "-DCMAKE_PREFIX_PATH=%s "  % self.cmake_prefix
+            ]
+        self.flags +=[
+            '-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
+        ]
 
     def fixCMD(self, cmd, os_environ, environ=[]):
         ''' cmake is kindy picky with environment variables and has lots of
@@ -163,17 +170,18 @@ class cmake(make):
             'export OPENIMAGEHOME=$OIIO_TARGET_FOLDER',
         ]
 
+        cmd = cmd.replace('/cmake/','/CMAKE/') # prevent replacing cmake string in paths
         for each in self.needed_flags+self.flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
-                cmd = cmd.replace('cmake','cmake '+each+' ')
+                cmd = cmd.replace('cmake ','cmake '+each+' ')
 
         if 'cmake' in cmd and os.environ.has_key('CMAKE_TARGET_FOLDER'):
-            cmd = cmd.replace('cmake','$CMAKE_TARGET_FOLDER/bin/cmake')
+            cmd = cmd.replace('cmake ','$CMAKE_TARGET_FOLDER/bin/cmake ')
 
+        cmd = cmd.replace('/CMAKE/','/cmake/') # prevent replacing cmake string in paths
         cmd = ' && '.join(environ)+" && "+cmd
         #cmd = 'find ./ -name CMakeCache.txt -exec rm -rf {} \; && '+cmd
         return cmd
-
 
 class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
@@ -293,7 +301,6 @@ class alembic(cmake):
             'export PRMAN_ROOT=$PRMAN_ROOT/RenderManProServer-$PRMAN_VERSION'
         ])
 
-
 class download(make):
     '''
     a simple class to download and uncompress packages, so they can be used by other packages for building
@@ -385,7 +392,12 @@ class tbb(make):
         targetFolder = os_environ['INSTALL_FOLDER']
         versionMajor = float( os_environ['VERSION_MAJOR'] )
         lines += os.popen( "rsync -avWpP %s/include/* %s/include/ 2>&1" % (sourceFolder, targetFolder)).readlines()
+        lines += os.popen( "rsync -avpPW %s/cmake/ %s/cmake/ 2>&1" % (sourceFolder, targetFolder) ).readlines()
         for SHLIBEXT in build.SHLIBEXT:
             lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (sourceFolder, SHLIBEXT, targetFolder) ).readlines()
             lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (sourceFolder, SHLIBEXT, targetFolder) ).readlines()
+
+        if os.path.exists('%s/cmake' % targetFolder):
+            lines += os.popen('LD_PRELOAD=/lib64/libstdc++.so.6 cmake -DTBB_ROOT=%s -DTBB_OS=Linux -P %s/cmake/tbb_config_generator.cmake' % (targetFolder, sourceFolder) )
+
         return lines

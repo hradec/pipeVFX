@@ -1585,4 +1585,8 @@ class baseLib(baseApp):
         ret +=  cached.glob( self.path('lib/python%s/*.so' % pvm) )
         ret +=  cached.glob( self.path('lib/boost%s/*.so' % bv) )
         ret +=  cached.glob( self.path('lib/boost%s/python%s/*.so' % (bv,pvm)) )
+        # d = {}
+        # for each in ret:
+        #     if os.path.isfile(each):
+        #         d['LD_PRELOAD'] = each
         return ret

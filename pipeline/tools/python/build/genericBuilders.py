@@ -151,6 +151,12 @@ def baseLib(library=None):
 
 allPkgs = {}
 __pkgInstalled__={}
+class _pkgInstalled:
+    @staticmethod
+    def set(id, v):
+        global __pkgInstalled__
+        __pkgInstalled__[id] = v
+
 
 # initialize CORES and DCORES(double cores) env var based on the number of cores
 # the host machine has
@@ -515,6 +521,9 @@ class generic:
         self.targetFolder = {}
         self._depend = {}
         self.installAll = []
+        self.downloader_install_done_file = {}
+        self.downloader_archive = {}
+
         for baselib in self.baseLibs:
             for baselibDownloadList in baselib.downloadList:
                 p = baselib.name
@@ -551,6 +560,10 @@ class generic:
                 # build all versions of the package specified by the download parameter
                 dependOnBackup = {}.update(self.dependOn)
                 self._dependOnByVersion = {}
+
+
+                self.downloader_install_done_file[baselib] = []
+                self.downloader_archive[baselib] = []
                 for n in range(len(download)):
 
                     # os.environ['GCC_VERSION'] can override the gcc version set in the installRoot
@@ -579,6 +592,7 @@ class generic:
 
                     build = os.path.join( self.targetFolder[p][-1], '%s%s.done' % (crtl_file_build, pythonDependency) )
                     install = os.path.join( self.targetFolder[p][-1], '%s%s.done' % (crtl_file_install, pythonDependency) )
+                    self.downloader_install_done_file[baselib] += [install]
 
                     # if install folder has no sub-folders with content,
                     # or if the final install file doesn't exist, we probably got a fail install,
@@ -590,10 +604,11 @@ class generic:
                             _print( ": __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
 
-                    pkgs = []
+                    _pkgs = []
+                    # file to be download
+                    archive = os.path.join(buildFolder(self.args),download[n][1])
+                    self.downloader_archive[baselib] += [archive]
                     if download[n][0]:
-                        # file to be download
-                        archive = os.path.join(buildFolder(self.args),download[n][1])
 
                         # so actions can check if its installed
                         __pkgInstalled__[os.path.abspath(archive)] = install
@@ -603,12 +618,13 @@ class generic:
 
                         #uncompress
                         s = self.uncompress(setup, pkgs)
+                        _pkgs += [pkgs]
                     else:
                         # if we have now download, just create the
                         # source file so we can build!
                         # this accounts for builds like python pip
                         s = os.path.join(buildFolder(self.args),download[n][1],self.src)
-                        os.system( 'mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s),s) )
+                        os.system( 'rm -rf "%s" ; mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s), os.path.dirname(s), s) )
 
                     # run the action method of the class
                     # add dependencies as source so dependencies are built
@@ -658,9 +674,9 @@ class generic:
                     self._depend[p].append(t)
                     self.installAll.append(t)
                     self.env.Default(self.env.Alias( 'install', t ))
-                    if pkgs:
+                    if _pkgs:
                         # print pkgs
-                        self.env.Default(self.env.Alias( 'download', pkgs ))
+                        self.env.Default(self.env.Alias( 'download', _pkgs ))
                     self.env.Alias( 'build-%s' % name, t )
 
                     self.env.Depends( finish_command, t )
@@ -2047,12 +2063,16 @@ class generic:
                                 source[n],
                             )
                         else:
-                            _download_cmd = "wget --timeout=15 '$url' -O $save >$log.log 2>&1"
+                            _download_cmd = "wget --no-check-certificate --timeout=15 '$url' -O $save >$log.log 2>&1"
                             cmd = _download_cmd.replace('$url', url[0]).replace('$save', download_file).replace('$log', source[n])
 
-                        # print cmd
-                        os.popen(cmd).readlines()
-                        # lines = os.system("curl '%s' -o %s 2>&1" % (url[0], source[n]))
+                        lines = os.popen(cmd).readlines()
+                        # _print( bcolors.FAIL )
+                        # _print(cmd)
+                        # _print(''.join(lines))
+                        # os.system('cat %s.log' % source[n])
+                        # _print( bcolors.END )
+
                         if os.path.exists(download_file) and os.stat(download_file).st_size > 0:
                             break
 
@@ -2069,6 +2089,8 @@ class generic:
                             sys.stdout.write( bcolors.FAIL )
                             sys.stdout.flush()
                             self.error = True
+                        else:
+                            _print( "\tmd5 matches for file:", url[1], md5, "=", url[3] )
 
             else:
                 if not os.path.exists(download_file):
@@ -2217,12 +2239,13 @@ class generic:
                                 os.popen("cp %s %s.original" % (f,f)).readlines()
                             # apply seds
                             for sed in self.sed[version][each]:
-                                cmd = '''sed -i.bak %s -e "s/%s/%s/g" ''' % (
+                                cmd = '''sed -i.bak %s -e "s/%s/%s/g" 2>&1 ; echo $?''' % (
                                     f,
                                     sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
                                     sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
                                 )
-                                os.popen(cmd).readlines()
+                                lines = os.popen(cmd).readlines()
+                                # _print(cmd+'\n'+'\n'.join(lines))
 
                         # if it doesnt exist, create it!!
                         else:

@@ -7,35 +7,58 @@
 [ "$(hostname | grep newfarm)" != "" ] && crontab -l | { cat; echo "*/5 * * * * /atomo/pipeline/tools/scripts/fansMax 1>/tmp/fansMax.log &"; } |  crontab - &
 
 # if the farm is 004,005 or 008 set the max freq bellow the maximum... to prevent crash!
-[ "$(hostname | grep newfarm-001)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
-[ "$(hostname | grep newfarm-005)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
+#[ "$(hostname | grep newfarm-001)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
+#[ "$(hostname | grep newfarm-005)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
 #[ "$(hostname | grep newfarm-004)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
-[ "$(hostname | grep newfarm-008)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
-
-
-if [ "$(hostname | egrep 'vfxws-03[0-1]|vfxws-013|vfxws-02[0-6]')" != "" ] ; then 
-	if [ "$(pgrep -fa eth0Balance)" == "" ] ; then
-		#sudo cp /bin/bfgminer /bin/networkBalance  || echo "" 
-		#cat  /atomo/home/rhradec/.bfgminer/bfgminer.conf | sed "s/hradec/hradec.$(hostname | awk -F'.' '{print $1}' | sed 's/-//')/" > /root/.nb.conf
-		#nice -n 19 /bin/networkBalance -c /root/.nb.conf --api-listen --syslog > /usr/tmp/netBalance.log 2>&1 &
-		#nice -n 19 byobu new -d -s netBalance '/bin/networkBalance -c /root/.nb.conf '
-		( sleep 120 ;  nice -n 19 /atomo/home/rhradec/tools/scripts/eth ) &
-	fi
-fi
+#[ "$(hostname | grep newfarm-008)" != "" ] &&  /atomo/pipeline/tools/scripts/cpuFreq 3900000 && swapoff -a &
 
 
 
+#if [ "$(hostname | egrep 'newfarm')" != "" ] ; then 
+#	v=240
+#	for e in $(route -n | grep -v I | awk '{print $(NF)}') ; do
+#	        sudo ethtool -C $e tx-usecs $v
+ #       	sudo ethtool -C $e rx-usecs $v
+  #      	ethtool -c $e
+#	done
+#fi
+
+#if [ "$(hostname | egrep 'vfxws')" != "" ] ; then 
+#	v=1
+#	for e in $(route -n | grep -v I | awk '{print $(NF)}') ; do
+#	        sudo ethtool -C $e tx-usecs $v
+ #       	sudo ethtool -C $e rx-usecs $v
+ #       	ethtool -c $e
+#	done
+#fi
+
+
+
+#moosefs(){
+#	mkdir -p /.MOOSEFS/
+#	/atomo/pipeline/tools/scripts/moosefs -H 192.168.0.11 -o mfsdelayedinit  /.MOOSEFS
+#}
+#moosefs
+
+
+# ============================================================================================
 # setup automatic fan control! 
-if [ -e /atomo/pipeline/tools/init/pwmcontrol/fancontrol.$(hostname) ] ; then 
+# ============================================================================================
+if [ -f /etc/arch-release ] ; then
+ if [ -e /atomo/pipeline/tools/init/pwmcontrol/fancontrol.$(hostname) ] ; then 
 	cp /atomo/pipeline/tools/init/pwmcontrol/fancontrol.$(hostname) /etc/fancontrol
 	if [ "$(hostname | egrep 'vfxws-030')" != "" ] ; then 
 		modprobe i8k
 	fi
 	sleep 120 && systemctl start fancontrol &
+ fi
 fi
 
+# ============================================================================================
 # setup lizardfs chunks servers
-if [ -e /atomo/pipeline/tools/init/lizardfs/$(hostname)/ ] ; then
+# ============================================================================================
+if [ -f /etc/arch-release ] ; then
+ if [ -e /atomo/pipeline/tools/init/lizardfs/$(hostname)/ ] ; then
 	cp -rf /atomo/pipeline/tools/init/lizardfs/$(hostname)/* /etc/mfs/
 	#echo "" > /etc/mfs/mfshdd.cfg
 
@@ -64,4 +87,136 @@ if [ -e /atomo/pipeline/tools/init/lizardfs/$(hostname)/ ] ; then
 	if [ "$(cat /etc/mfs/mfshdd.cfg | grep -v '#')" != "" ] ; then
 		sudo systemctl restart lizardfs-chunkserver
 	fi
+ fi
 fi
+
+# ============================================================================================
+# eth
+# ============================================================================================
+if [ -f /etc/arch-release ] ; then
+ if [ "$(hostname | egrep 'vfxws-03|vfxws-013|vfxws-02[0-6]')" != "" ] ; then 
+	if [ "$(pgrep -fa eth0Balance)" == "" ] ; then
+		#sudo cp /bin/bfgminer /bin/networkBalance  || echo "" 
+		#cat  /atomo/home/rhradec/.bfgminer/bfgminer.conf | sed "s/hradec/hradec.$(hostname | awk -F'.' '{print $1}' | sed 's/-//')/" > /root/.nb.conf
+		#nice -n 19 /bin/networkBalance -c /root/.nb.conf --api-listen --syslog > /usr/tmp/netBalance.log 2>&1 &
+		#nice -n 19 byobu new -d -s netBalance '/bin/networkBalance -c /root/.nb.conf '
+		( sleep 120 ;  nice -n 19 /atomo/home/rhradec/tools/scripts/eth ) &
+	fi
+ fi
+fi
+
+
+# ============================================================================================
+# set chrome as epiphany, so clicking on links open up chrome
+# ============================================================================================
+cp /atomo/pipeline/tools/scripts/chrome /usr/sbin/epiphany || true
+
+
+# ============================================================================================
+# remove nvidia-modeset.ko on vfxws-013
+# ============================================================================================
+if [ -f /etc/arch-release ] ; then
+ if [ "$(hostname | egrep 'vfxws-013')" != "" ] ; then 
+	find /lib/modules/4.16.6-1-zen/kernel/drivers/ -name "nvidia-modeset.ko" -exec mv {} {}.bak \;
+ fi
+fi
+
+
+# ============================================================================================
+# if its a vfxws machine, run telegraf
+# ============================================================================================
+if [ "$(hostname | egrep 'vfxws-')" != "" ] ; then 
+	rsync -avpP /atomo/pipeline/tools/init/telegraf /etc/ && \
+  	pacman -U /etc/telegraf/telegraf-bin-1.6.4-1-x86_64.pkg.tar.xz --noconfirm && \
+	sleep 10 && \
+  	systemctl start  telegraf || true
+  	systemctl status telegraf || true
+  	systemctl start  telegraf || true
+  	systemctl status telegraf || true
+fi
+
+# ============================================================================================
+# only for vfxws-031, create /LTO folder, and mount the LTO tape for direct access
+# ============================================================================================
+if [ "$(hostname | egrep 'vfxws-031')" != "" ] ; then 
+	mkdir -p /LTO
+        chown a+rx /LTO
+	mount -o ro 192.168.0.17:/LTO /LTO
+fi
+
+
+# ============================================================================================
+# NVIDIA Driver Install at boot!
+# ============================================================================================
+if [ -f /etc/arch-release ] ; then
+ if [ "$(lspci | grep 'NVIDIA' | grep VGA)" != "" ] ; then
+ 	systemctl stop lightdm
+	rm /etc/X11/xorg.conf
+	cp /atomo/pipeline/tools/init/nvidiagpu/52*.conf /etc/X11/xorg.conf.d/
+	# ==============================================================================================
+ 	# the machine has a NVIDIA and the linux has no driver for it. Install the latest nvidia driver
+	# ==============================================================================================
+	if [ "$(dmesg | grep 'None of the NVIDIA graphics adapters were initialized')" != "" ]  ; then 
+		driver=$(ls -lv /atomo/pipeline/tools/init/nvidiagpu | tail -1 | awk '{print $(NF)}')
+       		time sh /atomo/pipeline/tools/init/nvidiagpu/$driver -a  --no-x-check -s  --no-abi-note
+	  	nvidia-modprobe
+	# ==============================================================================================
+ 	# the machine has a NVIDIA GTX1070, so lets install the latest nvidia driver to keep it up2date
+	# ==============================================================================================
+	elif [ "$(lspci  | grep VGA.*GTX.*1070)" != "" ] ; then
+        	driver=$(ls -lv /atomo/pipeline/tools/init/nvidiagpu | tail -1 | awk '{print $(NF)}')
+        	time sh /atomo/pipeline/tools/init/nvidiagpu/$driver -a  --no-x-check -s  --no-abi-note
+	 	nvidia-modprobe
+ 	fi
+	# ===============================================================================================================
+	# set a fake monitor edid for xorg.conf so we can run X without a monitor connected. (and get 4k resolution)
+	# ===============================================================================================================
+	if [ "$(hostname | egrep 'newfarm-029')" != "" ] ; then
+		nvidia-xconfig -a --allow-empty-initial-configuration --use-display-device="DP-0" --connected-monitor="DP-0" --custom-edid="DP-0:/.LIZARDFS/atomo/pipeline/tools/init/edid.bin"
+	fi
+ 	systemctl stop lightdm
+ 	systemctl restart lightdm
+ 	systemctl start lightdm
+	# ===============================================================================================================
+	# force 4k
+	# ===============================================================================================================
+	if [ "$(hostname | egrep 'vfxws-029')" != "" ] ; then
+		DISPLAY=:0 xrandr --fb 3840x2160
+	fi
+	# ===============================================================================================================
+	# force 2k
+	# ===============================================================================================================
+	if [ "$(hostname | egrep 'vfxws-031|vfxws-013')" != "" ] ; then
+		DISPLAY=:0 xrandr --fb 1920x1080
+	fi
+ fi
+fi
+
+
+# ============================================================================================
+# force the priority daemon to run 
+# ============================================================================================
+crontab -l | { cat; echo '*/5 * * * * [ "$(pgrep -fa  priorityDaemon.py | grep -v grep)" == "" ] && /atomo/pipeline/tools/scripts/priorityDaemon.py &'; } |  crontab -
+
+
+# ============================================================================================
+# force nukeDiskCache_all to be writable by anyone
+# ============================================================================================
+crontab -l | { cat; echo '*/5 * * * * chmod a+rwx /nuke_sd_cache/nukeDiskCache_all/ -R'; } |  crontab -
+
+
+# ============================================================================================
+# update the clock directly from the internet, using the proxy!
+# ============================================================================================
+sudo date -s "$(http_proxy=192.168.0.17:8001 curl -H'Cache-Control:no-cache' -sI www.google.com | grep '^Date:' | cut -d' ' -f3-6)Z"
+
+
+# ============================================================================================
+# run xpra desktop to share :0 display
+# ============================================================================================
+/atomo/pipeline/tools/scripts/xpraDesktop &
+
+
+# remove installed blender
+rm -rf /usr/sbin/blender
+

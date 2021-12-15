@@ -57,6 +57,9 @@ if [ "$HELP" != "" ] ; then
     echo -e "\t-p   : build the package cache image and upload to docker hub"
     echo ''
 else
+    # copy docker init script to docker folder, so we keep the docker folder small and tidy!
+    # cp $CD/pipeline/tools/scripts/pipevfx_docker_init.sh $CD/docker/run.sh
+
     # use real apps folder if we have one!
     APPS_MOUNT=" -v $CD/apps:/$STUDIO/apps"
     if [ -e /$STUDIO/apps ] && [ "$TRAVIS" == "" ] ; then

@@ -35,10 +35,10 @@ class maya(baseApp):
                 self.path("opt/Allegorithmic/Substance_in_Maya/%s/" % mv),
                 self.path("usr/autodesk/modules/maya/%s/" % mv)
             ]
-            modules += glob.glob(self.path("usr/autodesk/bifrost/maya%s/*" % mv))
-            modules += glob.glob(self.path("usr/autodesk/mayausd/maya%s/*" % mv))
+            modules += cached.glob(self.path("usr/autodesk/bifrost/maya%s/*" % mv))
+            modules += cached.glob(self.path("usr/autodesk/mayausd/maya%s/*" % mv))
             for each in modules:
-                maya.addon( self, module = glob.glob( "%s/*.mod" % each ) )
+                maya.addon( self, module = cached.glob( "%s/*.mod" % each ) )
             #print modules
 
             # now we can set maya root properly.
@@ -99,7 +99,7 @@ class maya(baseApp):
 
             if hasattr(self, 'maya_bin'):
                 # setup maya usd that comes with maya!
-                for usdVersion in glob.glob(self.path('../mayausd/maya%d/*' % mv)):
+                for usdVersion in cached.glob(self.path('../mayausd/maya%d/*' % mv)):
                     maya.addon(self,
                         plugin = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/plugin",
                         script = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/scripts",
@@ -207,7 +207,7 @@ class maya(baseApp):
                     self.ignorePipeLib( "libpng" )
 
                 # freetype setup
-                self.ignorePipeLib( "freetype" )
+                # self.ignorePipeLib( "freetype" )
 
         if self.parent() in ['maya']:
             if mv > 2017:
@@ -237,7 +237,7 @@ class maya(baseApp):
             self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
 
             if int(self['MAYA_PYTHON_VERSION']) == 2:
-                maya_support_python = glob.glob( self.path('support/python/%s*/' % pythonVer ) )
+                maya_support_python = cached.glob( self.path('support/python/%s*/' % pythonVer ) )
                 if maya_support_python:
                     self.insert('PYTHONPATH',0, maya_support_python[0])
                 self.insert('PYTHONPATH',0, self.path('lib/python%s/' % pythonVer))
@@ -253,12 +253,12 @@ class maya(baseApp):
         maya.addon( self, icon=self.path('plug-ins/xgen/icons/') )
 
         # it seems these are no set by default when running in mayapy
-        for p in glob.glob( self.path('plug-ins/*') ):
+        for p in cached.glob( self.path('plug-ins/*') ):
             self['PATH'] = "%s/bin" % p
             self['PYTHONPATH'] = "%s/scripts" % p
 
         # change mouse window modifier to Super Key (Windows/apple cmd key) so ALT is free to be used by maya
-        if 'super' not in ''.join(os.popen('gsettings get org.gnome.desktop.wm.preferences mouse-button-modifier').readlines()).strip().lower():
+        if 'super' not in ''.join(cached.popen('gsettings get org.gnome.desktop.wm.preferences mouse-button-modifier').readlines()).strip().lower():
             os.system('gsettings set org.gnome.desktop.wm.preferences mouse-button-modifier "<Super>"')
 
         self['LC_ALL'] = 'C'
@@ -355,7 +355,7 @@ class maya(baseApp):
             __run = os.path.basename(m) + '  ' + ' '.join(cmd[1:])
         elif 'mayapy' in app:
             # it seems these are no set by default when running in mayapy
-            for p in glob.glob( self.path('plug-ins/*') ):
+            for p in cached.glob( self.path('plug-ins/*') ):
                 maya.addon(self,
                     plugin = "%s/plug-ins" % p,
                     script = "%s/scripts" % p,
@@ -540,7 +540,7 @@ class maya(baseApp):
         # in the logs (like cryptomate in renderman!)
         for path in set([ os.path.dirname(x) for x in images ]):
             for substr in extra_images_filesystem_search:
-                images += glob.glob( "%s/*%s*" % (path, substr) )
+                images += cached.glob( "%s/*%s*" % (path, substr) )
 
         # run our pipe.frame.check generic frame check for the gathered image list
         if images:

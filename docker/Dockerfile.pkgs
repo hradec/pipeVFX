@@ -7,7 +7,8 @@
 
 # ARG BASE_IMAGE
 # FROM $BASE_IMAGE
-FROM centos:7.6.1810
+# FROM centos:7.6.1810
+FROM hradec/pipevfx_pkgs:centos7_latest
 
 ARG http
 ARG https
@@ -15,26 +16,10 @@ ARG https
 ENV http_proxy=$http
 ENV https_proxy=$https
 
-# yum parallel download
-RUN [ ! -e /etc/yum/pluginconf.d/multithread.conf ] && \
-    curl -O https://raw.githubusercontent.com/mjschultz/yum-multithread/master/multithread.py && \
-    curl -O https://raw.githubusercontent.com/mjschultz/yum-multithread/master/multithread.conf && \
-    mv ./multithread.py /usr/lib/yum-plugins && \
-    mv ./multithread.conf /etc/yum/pluginconf.d/multithread.conf || \
-    echo "done"
 
-RUN [ ! -e /atomo/.root ] && yum clean all && yum makecache || echo done
-RUN [ ! -e /atomo/.root ] && yum -y install epel-release || echo done
-# remove mirrors from epel or else it will fail if there are no mirrors
-# in the country the build machine is running
-# RUN cat /etc/yum.repos.d/epel.repo \
-#     | sed 's/.baseurl/baseurl/' \
-#     | sed 's/metalink/#metalink/' > /tmp/epel.repo && \
-#     /bin/mv /tmp/epel.repo /etc/yum.repos.d/epel.repo
-RUN [ ! -e /atomo/.root ] && yum clean all && yum makecache && \
-    yum -y install python2-scons wget git zip || echo "done"
+#COPY docker/run.sh /run.sh
+COPY pipeline/tools/scripts/pipevfx_docker_init.sh /run.sh
 
-COPY docker/run.sh /run.sh
 ADD pipeline/tools/python /atomo/pipeline/tools/python
 ADD pipeline/tools/config /atomo/pipeline/tools/config
 COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
@@ -47,33 +32,23 @@ COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
 COPY docker/gcc-bin-4.1.2.tgz       /atomo/pipeline/build/.download/4.1.2.tar.gz
 COPY docker/setuptools-33.1.1.zip   /atomo/pipeline/build/.download/setuptools-33.1.1.zip
 
-# copy over the latest packages from the latest pkg TAG image!
-# this makes upload/download a large layer all the time,
-# but prevents this image from being rebuild all the time when we add
-# a new package.
-# By copying over, we don't run into the "max depth exced" docker build error for
-# having more than 125 layers, which happens a lot if we use the previous tag as base image.
-# after building this image, we tag it as centos7_latest, so next build will
-# pull the up2date cache from this build.
-#
-# WARNING: if building for the first time, comment this line out!
-COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download/*  /atomo/pipeline/build/.download/
-
-
 # download packages so the image contain all tarballs.
+RUN yum install -y python2-pip python3-pip
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    ( cat /etc/yum.repos.d/epel.repo \
-     | sed 's/.baseurl/baseurl/' \
-     | sed 's/metalink/#metalink/' > /tmp/epel.repo && \
-     /bin/mv /tmp/epel.repo /etc/yum.repos.d/epel.repo ) && \
     export TERM=xterm && \
     export ftp_proxy=$http_proxy && \
     touch /atomo/.root && \
     mkdir -p /atomo/pipeline/build/ && \
     cd /atomo/pipeline/build && \
     env && \
-    PYTHONPATH=/atomo/pipeline/tools/python \
-    scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) || true
+    ( ls -1 .download/*{.tar,.zip}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
+        do [ "$(egrep $p /tmp/xx)" == "" ] && rm -vrf ".download/$p" ; \
+        [ -d .download/$p ] && rm -vrf ".download/$p" ; \
+    done ; rm /tmp/xx ) && \
+    ls -l /atomo/pipeline/build/.download/ | wc -l && \
+    PYTHONPATH=/atomo/pipeline/tools/python scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) || true
+
+RUN ls -l /atomo/pipeline/build/.download/pip*/*/
 
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*

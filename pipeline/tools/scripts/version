@@ -9,7 +9,7 @@ if '-l' in sys.argv:
     title = 'Library Versions:'
 
 else:
-    classList = pipe.apps.appsDB().keys()
+    classList = pipe.appsDB().keys()
     baseClass = pipe.apps.baseApp
     title = 'Application Versions:'
 

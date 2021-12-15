@@ -1,0 +1,3 @@
+#!/bin/bash 
+
+sh $1  -a -s  --no-x-check -z --no-kernel-module -r --no-abi-note --skip-module-unload

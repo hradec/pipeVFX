@@ -24,6 +24,7 @@ from  SCons.Builder import *
 from  SCons.Defaults import *
 from devRoot import *
 from genericBuilders import *
+import genericBuilders
 import pipe
 import os,sys
 from pipe.bcolors import bcolors
@@ -68,13 +69,42 @@ class wait4dependencies(configure):
 
         configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure' )
 
-
 class pip(configure):
     cmd = ["./build.sh"]
     noMinTime=True
     dontUseTargetSuffixForFolders = 1
     do_not_use=True
+
+    def downloader(self, env, _source, _url=None):
+        #self.pip_pkg
+        import glob
+        self.error = None
+        pv = _source.lower().split(self.pip_pkg.lower()+'.')[-1]
+        pvv = pv.split('.')[0]
+        download_path=os.path.abspath(os.path.dirname(_source)+'/../.download/pip'+pvv+'/'+self.pip_pkg+'/')
+
+        # check if already downloaded:
+        os.environ['PYTHON_TARGET_FOLDER'] = "%s/%s" % (os.path.dirname(os.environ['PYTHON_TARGET_FOLDER']), pv)
+        downloaded = [ x for x in glob.glob("%s/*" % download_path) if self.pip_pkg.lower() in x.lower()]
+        # print downloaded
+        if not downloaded:
+            genericBuilders._print( bcolors.GREEN, "\tDownloading pip module %s for python version %s..." % (self.pip_pkg, pvv) )
+            genericBuilders._print( bcolors.END )
+
+            os.system("mkdir -p '%s'" % download_path)
+            cmd = '''cd '%s' && python%s -m pip download "%s" ''' % (download_path, pvv, self.pip_pkg)
+            print cmd
+            os.system(cmd)
+            if not glob.glob("%s/*" % download_path):
+                self.error = True
+
+        for n in glob.glob("%s/*" % download_path):
+            cmd = "ln -s '%s' '%s'" % (n, os.path.abspath(_source))
+            os.system(cmd)
+        return _source
+
     def __init__(self, args, pip_pkg, python, python_versions=None ):
+
         self.pip_pkg = pip_pkg
 
         # create the download list from the python dowload list
@@ -97,6 +127,19 @@ class pip(configure):
             depend=python.depend+[python]
         )
 
+        # setup the downloading here, since we're avoiding running the generic
+        # downloading code by setting package URL to None
+        pkgs = []
+        for baselib in self.baseLibs:
+            for n in range(len(download)):
+                archive = self.downloader_archive[baselib][n]
+                # so actions can check if its installed
+                genericBuilders._pkgInstalled.set(os.path.abspath(archive), self.downloader_install_done_file[baselib][n])
+                #download pkg
+                pkgs += [self._download(archive)]
+
+        self.env.Default(self.env.Alias( 'download', pkgs ))
+
     def fixCMD(self, cmd, os_environ):
         # now we setup the source folder as if it was already downloaded, and
         # create a build.sh script that will be used to run pip install!
@@ -104,16 +147,17 @@ class pip(configure):
 
         os.system("mkdir -p '%s'" % os_environ['SOURCE_FOLDER'])
         f = open("%s/build.sh" % os_environ['SOURCE_FOLDER'], 'w')
-        build_sh = 'PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/pip install "%s"' % self.pip_pkg
+        build_sh = '''
+            #download=$(PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip download "%s" | grep whl | awk -F'/' '{print $(NF)}' | head -1)
+            download=$(ls -1 | grep -i '%s-')
+            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install ./$download || \
+            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install %s
+        ''' % (self.pip_pkg, self.pip_pkg, self.pip_pkg)
         f.write("#!/bin/bash\n\n"+build_sh+"\n")
         f.close()
         os.system('chmod a+x "%s/build.sh"' % os_environ['SOURCE_FOLDER'])
 
         return cmd
-
-
-
-
 
 class gccBuild(configure):
     ''' build class designed to build differente versions of GCC '''
@@ -234,6 +278,7 @@ class gccBuild(configure):
                     # installing libiberty headers is broken
                     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56780#c6
                     # "sed -i -e 's/@target_header_dir@/libiberty/' 'libiberty/Makefile.in'",
+
                 ]
                 distroSpecificConfigure = ' '.join([
                     '--disable-libstdcxx-pch '
@@ -261,6 +306,13 @@ class gccBuild(configure):
                     "--without-system-zlib "
                 ])
 
+            # print "=====>>>>",pipe.distro, 'fedora' in pipe.distro
+            if 'fedora' in pipe.distro:
+                distroSpecific = [
+                    '''( for n in $(ls libgcc/config/*/linux-unwind.h) ; do sudo sed -i -e 's/struct.ucontext/ucontext_t/g' $n ; done )''',
+                    "sed -i.bak -e 's/fcntl.h./fcntl.h>\\n#include <signal.h>/' libsanitizer/asan/asan_linux.cc",
+                    "sed -i.bak -e 's/__res_state .statp . .__res_state..state/struct __res_state *statp = (struct __res_state*)state/'  libsanitizer/tsan/tsan_platform_linux.cc",
+                ]
 
             cmd = ' && '.join(distroSpecific+[
                 # "./contrib/download_prerequisites",
@@ -288,6 +340,7 @@ class gccBuild(configure):
                         '--mandir=$INSTALL_FOLDER/share/man '
                         "--program-suffix=$(basename $TARGET_FOLDER) "
                         "%s --prefix=$INSTALL_FOLDER " % distroSpecificConfigure,
+                # "sed -i -e 's/struct ucontext/ucontext_t/g' ./x86_64-pc-linux-gnu/libgcc/md-unwind-support.h || /bin/bash",
                 'make -j $DCORES',
                 'make install',
             ])
@@ -335,6 +388,14 @@ class gccBuild(configure):
             #         "--without-system-zlib "
             #     ])
 
+            if 'fedora' in pipe.distro:
+                distroSpecific = [
+                    '''( for n in $(ls gcc-6.3.1-20170216/libgcc/config/*/linux-unwind.h) ; do sudo sed -i -e 's/struct.ucontext/ucontext_t/g' $n ; done )''',
+                    "sed -i.bak -e 's/fcntl.h./fcntl.h>\\n#include <signal.h>/' gcc-6.3.1-20170216/libsanitizer/asan/asan_linux.cc",
+                    "sed -i.bak -e 's/__res_state .statp . .__res_state..state/struct __res_state *statp = (struct __res_state*)state/'  gcc-6.3.1-20170216/libsanitizer/tsan/tsan_platform_linux.cc",
+                    "sed -i.bak -e 's/.include..sys.ustat.h.//' gcc-6.3.1-20170216/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.cc"
+                ]
+
             cmd = ' && '.join(distroSpecific+[
                 # "./contrib/download_prerequisites",
                 "ls -lh",
@@ -344,6 +405,7 @@ class gccBuild(configure):
                 "cd build",
                 "ulimit -s 32768",
                 '../configure '
+                        '--disable-libsanitizer '
                         '--disable-multilib '
                         '--disable-werror '
                         '--disable-bootstrap '
@@ -414,7 +476,7 @@ class gccBuild(configure):
         ]
         cmd = ' && '.join([
             'export PATH="$INSTALL_FOLDER/../4.1.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/bin"',
-            'unset LD_LIBRARY_PATH',
+            # 'unset LD_LIBRARY_PATH',
             # set the system crtbegin.o path so the system gcc can build our gcc
             "export LIBRARY_PATH=$(echo $(find $INSTALL_FOLDER/../4.1.2/ -name crtbegin.o -exec dirname {} \;) | sed 's/ /:/g'):$LIBRARY_PATH",
             cmd
@@ -441,8 +503,6 @@ class gccBuild(configure):
             ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ar \\$@" > %s/bin/ar ; chmod a+x %s/bin/ar' % (targetFolder,targetFolder) ).readlines()
             ret += os.popen( 'echo "LD_LIBRARY_PATH=/usr/lib:\\$LD_LIBRARY_PATH /usr/sbin/ranlib \\$@" > %s/bin/ranlib ; chmod a+x %s/bin/ranlib' % (targetFolder,targetFolder) ).readlines()
         return ret
-
-
 
 class openssl(configure):
     ''' a make class to exclusively build openssl package
@@ -471,7 +531,6 @@ class openssl(configure):
         # ret += os.popen("ln -s libcrypto.so %s/lib/libcrypto.so.10" % targetFolder).readlines()
         return ret
 
-
 class freetype(configure):
     ''' a make class to exclusively build freetype package
     we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
@@ -483,8 +542,6 @@ class freetype(configure):
             if not os.path.exists( "%s/include/freetype" % t):
                 ret = os.popen("ln -s freetype2 %s/include/freetype" % t).readlines()
         return ret
-
-
 
 class boost(configure):
     ''' A build class to build different versions of BOOST library
@@ -587,8 +644,6 @@ class boost(configure):
     #     proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
     #     proc.wait()
 
-
-
 class python(configure):
     ''' a dedicated build class to build differente versions of python '''
     sed = {'0.0.0' :{
@@ -621,18 +676,19 @@ class python(configure):
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config || true)',
         # install easy_install version 45
-        '( [ ! -e  $INSTALL_FOLDER/bin/easy_install ] && '
-            'curl -L -O https://github.com/pypa/setuptools/archive/refs/tags/v45.3.0.tar.gz && '
-            'tar xf v45.3.0.tar.gz && '
-            'cd setuptools-* && '
-            '$PYTHON ./bootstrap.py && '
-            '$PYTHON ./setup.py build && '
-            '$PYTHON ./setup.py install --prefix=$INSTALL_FOLDER '
-        ')',
-        # "([ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/easy_install hashlib || true)",
-        '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip==9 || true)',
+        # '( [ ! -e  $INSTALL_FOLDER/bin/easy_install ] && '
+        #     'curl -L -O https://github.com/pypa/setuptools/archive/refs/tags/v45.3.0.tar.gz && '
+        #     'tar xf v45.3.0.tar.gz && '
+        #     'cd setuptools-* && '
+        #     '$PYTHON ./bootstrap.py && '
+        #     '$PYTHON ./setup.py build && '
+        #     '$PYTHON ./setup.py install --prefix=$INSTALL_FOLDER '
+        # ')',
+        # '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip==9 || true)',
+        'PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/python$PYTHON_VERSION_MAJOR -m ensurepip',
+        'PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/python$PYTHON_VERSION_MAJOR -m pip install setuptools',
         '(ln -s pip$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/pip || true)',
-        "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/pip install  readline || true)",
+        # "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/pip install  readline || true)",
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         # '$INSTALL_FOLDER/bin/easy_install scons',
     ]
@@ -654,7 +710,6 @@ class python(configure):
     #     for each in ['python', 'pip']:
     #             ret += os.popen( 'sudo ln -s %s$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/%s' % (each, each) ).readlines()
     #     return ret
-
 
 class cortex(configure):
     ''' a build class to exclusively build differente versions of cortex-vfx package
@@ -1009,8 +1064,6 @@ class cortex(configure):
 
     def fixCMD(self, cmd, os_environ):
             return cmd + " " + self.sconsInstall
-
-
 
 class gaffer(cortex):
     ''' a make class to exclusively build gaffer package

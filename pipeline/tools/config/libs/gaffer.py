@@ -68,10 +68,8 @@ class gaffer(baseLib):
             if self.parent() in ["gaffer", 'maya', 'houdini']:
                 self['OCIO'] = '%s/ocio/config.ocio' % pipe.roots().tools()
 
-        # self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
         # add all versions of OIIO libraries to search path
-        for each in glob.glob( "%s/*" % os.path.dirname(pipe.libs.oiio().path()) ):
-            # print each
+        for each in cached.glob( "%s/*" % os.path.dirname(pipe.libs.oiio().path()) ):
             self['LD_LIBRARY_PATH'] = '%s/lib/' % each
 
         if self.parent() in ['gaffer','python']:
@@ -79,35 +77,22 @@ class gaffer(baseLib):
                 self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
             else:
                 self['LD_PRELOAD'] = pipe.libs.tbb().path("lib/libtbb.so.2")
-            
+
             # preload Qt
-            for each in glob.glob(pipe.libs.qt().path("lib/*.so*")):
+            for each in cached.glob(pipe.libs.qt().path("lib/*.so*")):
                 if os.path.isfile(each):
                     self['LD_PRELOAD'] = each
 
             self.update( pipe.libs.pyside() )
-            # self.update( pipe.libs.qtpy() )
             self.update( pipe.apps.python() )
-            # self.update( pipe.apps.prman() )
-            # self.ignorePipeLib( "openxer" )
-            # self.ignorePipeLib( "ilmbase" )
-            # self.ignorePipeLib( "boost" )
-            # self.ignorePipeLib( "cortex" )
-            # self.update( pipe.libs.cortex() )
-            # self.update( pipe.libs.appleseed() )
-            # self.update( pipe.libs.alembic() )
-            # self.update( pipe.libs.openvdb() )
-            # self.update( maya() )
 
             # hack to enable renderman in gaffer!
             self['DELIGHT'] = '1'
-            # self.update( maya() )
-            # self.ignorePipeLib( "qt" )
 
-            # for boostPython in  ['lib','lib/python%s' % pipe.libs.version.get('python')[:3]]:
-            #     boostPython = "%s/libboost_python-mt.so" % pipe.libs.boost().path(boostPython)
-            #     if os.path.exists(boostPython):
-            #         self['LD_PRELOAD'] = boostPython
+            self['LD_PRELOAD'] = pipe.libs.ocio().LD_PRELOAD()
+            self['LD_PRELOAD'] = pipe.libs.oiio().LD_PRELOAD()
+            self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()
+
 
         self['GAFFERUI_IMAGECACHE_MEMORY'] = '2000'
         if pipe.versionMajor(self.version())>0.5 and pipe.versionMajor(self.version())<2.0:

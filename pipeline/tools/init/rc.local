@@ -23,7 +23,7 @@ action(){
     GREEN='\033[00;32m'
     printf $action_tab "$1"
     mkdir -p /var/log/pipevfx/
-    $2 > /var/log/pipevfx/$(basename $2) 2>&1 
+    $2 2>&1 > /var/log/pipevfx/$(basename $2)
     if [ $? -gt 0 ]; then
         echo -e "[${RED}FAILED${RESTORE}]"
     else
@@ -128,6 +128,11 @@ done
 if [ "$release" != "" ] ; then
     action_tab='\t%-51s'
     echo -e "\nRunning $release specific setup..."
+    ls $tools/init/$release/ | while read line ; do
+        path=$tools/init/$release/$line
+        action_tab='\t%-51s'
+        action $line $path
+    done
     rclocal=$tools/init/$release/rc.local
     # if the current release has an rc.local file, run it!
     if [ -f $rclocal ] ; then

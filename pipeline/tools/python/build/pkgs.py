@@ -21,7 +21,7 @@
 
 import build, devRoot
 import SCons, os
-from pipe import versionSort
+from pipe import versionSort, distro
 
 
 
@@ -42,6 +42,17 @@ SCons.Script.SetOption('warn', 'no-all')
 class all: # noqa
 
 
+    def cmake_prefix(self):
+        ret = []
+        ret += ['$OIIO_TARGET_FOLDER/cmake/Modules/']
+        ret += ['$OIIO_TARGET_FOLDER/share/cmake/Modules/']
+        ret += ['$PUGIXML_TARGET_FOLDER/lib64/cmake/pugixml/']
+        ret += ['$MATERIALX_TARGET_FOLDER/cmake/']
+        ret += ['$QT_TARGET_FOLDER/lib/cmake/']
+        ret += ['$QT_TARGET_FOLDER/lib/cmake/Qt5*/']
+        ret += ['$PTEX_TARGET_FOLDER/share/cmake/Ptex/']
+        return ':'.join(ret)
+
     def rpath( self, l ):
         self._rpath += l
 
@@ -53,7 +64,7 @@ class all: # noqa
     # because of that, we're adding it as default to rpath_environ, which
     # is used as a base environment on lots of packages!
     def rpath_environ( self ):
-        self.exr_rpath_environ = {
+        self._rpath_environ = {
             'LDFLAGS' : ' $LDFLAGS '
                 +' -L'+' -L'.join(self._rpath)
                 +' -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(self._rpath)
@@ -85,7 +96,7 @@ class all: # noqa
                 '$C_INCLUDE_PATH'
             ]),
         }
-        return self.exr_rpath_environ
+        return self._rpath_environ
 
     def __init__(self,ARGUMENTS):
         ''' Build all basic packages needed by pipeVFX, with multiple versions for each.
@@ -103,6 +114,7 @@ class all: # noqa
         To build a package with a specific version of GCC, just add gcc as a dependency to the package. (see python again!)
         '''
         self._rpath = []
+        self._rpath_environ = {}
 
         allDepend = []
 
@@ -248,13 +260,28 @@ class all: # noqa
             #     '2.17.1',
             #     '1d81edd0569de4d84091526fd578dd7b'
             # ),(
-            # so we're defaulting to 2.22.0 for now.
-            #     'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
-            #     'binutils-2.22.tar.gz',
-            #     '2.22.0',
-            #     '8b3ad7090e3989810943aa19103fdb83'
-            # ),(
-            # so we're defaulting to 2.22.0 for now.
+            # We need 2.20 to build glibc 2.17
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.20.1a.tar.bz2',
+                'binutils-2.20.1.tar.gz',
+                '2.20.1a',
+                '2b9dc8f2b7dbd5ec5992c6e29de0b764'
+            ),(
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.22.tar.gz',
+                'binutils-2.22.tar.gz',
+                '2.22.0',
+                '8b3ad7090e3989810943aa19103fdb83'
+            ),(
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.24.tar.gz',
+                'binutils-2.24.tar.gz',
+                '2.24.0',
+                'a5dd5dd2d212a282cc1d4a84633e0d88'
+            ),(
+                'https://mirror.its.dal.ca/gnu/binutils/binutils-2.27.tar.gz',
+                'binutils-2.27.tar.gz',
+                '2.27.0',
+                '41b053ed4fb2c6a8173ef421460fbb28'
+            ),(
+            # so we're defaulting to 2.33.1 for now.
                 'https://mirror.its.dal.ca/gnu/binutils/binutils-2.33.1.tar.gz',
                 'binutils-2.33.1.tar.gz',
                 '2.33.1',
@@ -411,6 +438,113 @@ class all: # noqa
         self.openssl = openssl
         # allDepend += [openssl]
 
+        # =============================================================================================================================================
+        # the main glibc used in all CY versions of VFX Platform
+        # =============================================================================================================================================
+        make = build.configure(
+            ARGUMENTS,
+            'make',
+            sed = { '0.0.0' : {
+                'glob/glob.c' : [
+                    ('_GNU_GLOB_INTERFACE_VERSION .. GLOB_INTERFACE_VERSION','_GNU_GLOB_INTERFACE_VERSION >= GLOB_INTERFACE_VERSION'),
+                ],
+            }},
+            download=[(
+                'http://ftp.gnu.org/gnu/make/make-3.79.tar.gz',
+                'make-3.79.tar.gz',
+                '3.79.0',
+                'a59cc0e5792474f6809131650d2fff5a',
+                { gcc : '4.1.2' }
+            ),(
+                'https://ftp.gnu.org/gnu/make/make-3.81.tar.gz',
+                'make-3.81.tar.gz',
+                '3.81.0',
+                'a4e9494ac6dc3f6b0c5ff75c5d52abba',
+                { gcc : '4.1.2' }
+            ),(
+                'https://ftp.gnu.org/gnu/make/make-3.82.tar.gz',
+                'make-3.82.tar.gz',
+                '3.82.0',
+                '7f7c000e3b30c6840f2e9cf86b254fac',
+                { gcc : '4.1.2' }
+            ),(
+                'https://ftp.gnu.org/gnu/make/make-4.0.tar.gz',
+                'make-4.0.tar.gz',
+                '4.0.0',
+                'b5e558f981326d9ca1bfdb841640721a',
+                { gcc : '4.1.2' }
+            )],
+            cmd = [
+                'mkdir -p build',
+                'cd build',
+                '../configure --prefix=$INSTALL_FOLDER',
+                'make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER',
+                'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
+                'rm -rf  $INSTALL_FOLDER/bin/gmake && ln -s make $INSTALL_FOLDER/bin/gmake',
+            ],
+            depend = allDepend,
+            noMinTime=True,
+        )
+        self.make = make
+        autoconf = build.configure(
+            ARGUMENTS,
+            'autoconf',
+            download=[(
+                'http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz',
+                'autoconf-2.71.tar.gz',
+                '2.71.0',
+                'f64e38d671fdec06077a41eb4d5ee476',
+                { gcc : '6.3.1' }
+            ),(
+                'http://ftp.gnu.org/gnu/autoconf/autoconf-2.68.tar.gz',
+                'autoconf-2.68.tar.gz',
+                '2.68.0',
+                'c3b5247592ce694f7097873aa07d66fe',
+                { gcc : '6.3.1' }
+            )],
+            cmd = [
+                'mkdir -p build',
+                'cd build',
+                '../configure --prefix=$INSTALL_FOLDER',
+                'make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER',
+                'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
+            ],
+            depend = allDepend,
+            noMinTime=True,
+        )
+        self.autoconf = autoconf
+        # allDepend += [autoconf]
+
+        glibc = build.configure(
+            ARGUMENTS,
+            'glibc',
+            sed = { '0.0.0' : {
+                'malloc/obstack.c' : [
+                    ('struct obstack ._obstack_compat','struct obstack *_obstack_compat=0'),
+                ],
+            }},
+            download=[(
+                'http://ftp.gnu.org/gnu/glibc/glibc-2.17.tar.gz',
+                'glibc-2.17.tar.gz',
+                '2.17.0',
+                '8a7f11b9ac5d0d5efa4c82175b5a9c1b',
+                { gcc : '6.3.1', autoconf : '2.68.0', make : '3.81.0' } #, binutils : '2.27.0'  }
+            )],
+            cmd = [
+                'mkdir -p build',
+                'cd build',
+                '''export LD_LIBRARY_PATH=$(echo $(echo $LD_LIBRARY_PATH | sed 's/:/\\n/g' | egrep -v 'build|^\.') | sed 's/ /:/g')''',
+                ''' ../configure --prefix=$INSTALL_FOLDER --with-binutils=$BINUTILS_TARGET''',
+                '''make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER''',
+                '''LD_LIBRARY_PATH=/lib64/:$/usr/lib64/:/lib/:/usr/lib/:$$LD_LIBRARY_PATH make -j $DCORES PREFIX=$INSTALL_FOLDER install''',
+            ],
+            depend = allDepend,
+        )
+        self.glibc = glibc
+        # allDepend += [glibc]
+        # =============================================================================================================================================
+
+
         python = build.python(
             ARGUMENTS,
             'python',
@@ -447,27 +581,24 @@ class all: # noqa
                 'LD' : 'ld',
             },
             depend = allDepend+[readline,bzip2,icu],
-            pip = [
-                'epydoc',
-                'PyOpenGL',
-                'PyOpenGL-accelerate',
-                'cython',
-                'subprocess32',
-                'numpy',
-                'dbus-python',
-                'scons',
-                # 'jinja2', # needed by USD
-                # 'six', # needed by IECore 10
-            ]
         )
         self.python = python
         allDepend += [python]
 
         # install extra python modules using pip, for all python versions
         # installed by python build.
-        self.pip = [
-            build.pip( ARGUMENTS, 'jinja2', self.python ),  # needed by USD
-        ]
+        self.pip = [ build.pip( ARGUMENTS, p, self.python ) for p in [
+            'readline',
+            'epydoc',
+            'PyOpenGL',
+            'PyOpenGL-accelerate',
+            'cython',
+            'subprocess32',
+            'numpy',
+            'scons',
+            'jinja2',   # needed by USD
+            'sphinx',   # needed by pyside
+        ]]
         allDepend += self.pip
 
         tbb = build.tbb(
@@ -509,12 +640,19 @@ class all: # noqa
                 None,
                 { gcc : '4.1.2', python: '2.7.16' }
             ),(
-                # CY2021 ?
+                # CY2021
                 'https://github.com/intel/tbb.git',
-                'tbb-2019_U9.zip',
-                '2019_U9',
+                'tbb-2020_U2.zip',
+                '2020_U2',
                 None,
-                { gcc : '4.1.2', python: '2.7.16' }
+                { gcc : '6.3.1', python: '2.7.16' }
+            ),(
+                # CY2022
+                'https://github.com/intel/tbb.git',
+                'tbb-2020_U3.zip',
+                '2020_U3',
+                None,
+                { gcc : '6.3.1', python: '2.7.16' }
             ),(
                 # USD / maya 2018
                 'https://github.com/intel/tbb/archive/4.4.6.tar.gz',
@@ -581,7 +719,8 @@ class all: # noqa
         self.cmake = cmake
         allDepend += [cmake]
 
-
+        # =============================================================================================================================================
+        # build all other generic packages
         glew = build.glew(
             ARGUMENTS,
             'glew',
@@ -689,6 +828,7 @@ class all: # noqa
                 # it seems there's UTF-8 characters in the source code, so we need to clena it up!
                 'cp src/../internal/libraw_x3f.cpp ./xx',
                 'iconv -f UTF-8 -t ASCII -c ./xx -o src/../internal/libraw_x3f.cpp',
+                'sed -i.bak /frankbarton/pipeline/build/.build/LibRaw-0.17.2.noBaseLib/internal/dcraw_common.cpp -e "s/powf64/dc_powf64/g"' if 'fedora' in distro else '',
                 'make install INSTALL="/usr/bin/install -D"',
             ],
             environ = { 'LD' : 'ld' },
@@ -783,11 +923,11 @@ class all: # noqa
             ARGUMENTS,
             'fontconfig',
             download=[(
-            #     'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.gz',
-            #     'fontconfig-2.13.92.tar.gz',
-            #     '2.13.92',
-            #     'eda1551685c25c4588da39222142f063'
-            # ),(
+                'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.gz',
+                'fontconfig-2.13.92.tar.gz',
+                '2.13.92',
+                'eda1551685c25c4588da39222142f063'
+            ) if 'fedora' in distro else (
                 'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.12.1.tar.gz',
                 'fontconfig-2.12.1.tar.gz',
                 '2.12.1',
@@ -798,6 +938,24 @@ class all: # noqa
         )
         self.fontconfig = fontconfig
         allDepend += [fontconfig]
+
+
+        doxigen = build.cmake(
+            ARGUMENTS,
+            'doxigen',
+            download=[(
+                'https://github.com/doxygen/doxygen/archive/refs/tags/Release_1_8_17.tar.gz',
+                'doxygen-Release_1_8_17.tar.gz',
+                '1.8.17',
+                '20c15411be1d11378bc7fae7a846df46',
+                { gcc: '6.3.1' }
+            )],
+            depend = allDepend,
+            environ = { 'LD' : 'ld' },
+        )
+        self.doxigen = doxigen
+        allDepend += [doxigen]
+
 
 
 
@@ -1042,6 +1200,95 @@ class all: # noqa
         ] )
         self.exr_rpath_environ = self.rpath_environ()
 
+
+        # =============================================================================================================================================
+        # build LLVM now so we can use it on all packages build from now
+
+        # use the download action as we only need this package to build llvm!
+        # download action will avoid installing this package!
+        # we also set keep_source_folder=True so the source folder is not
+        # deleted after the build ends.
+        clang = build.download(
+            ARGUMENTS,
+            'clang',
+            download=[(
+                'http://releases.llvm.org/9.0.0/cfe-9.0.0.src.tar.xz',
+                'cfe-9.0.0.src.tar.gz',
+                '9.0.0',
+                '0df6971e2f99b1e99e7bfb533e4067af',
+            ),(
+                'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/cfe-7.1.0.src.tar.xz',
+                'cfe-7.1.0.src.tar.gz',
+                '7.1.0',
+                '2a3651e54e1a9c512d4ee6bd84183cf6',
+            ),(
+                'http://releases.llvm.org/3.9.1/cfe-3.9.1.src.tar.xz',
+                'cfe-3.9.1.src.tar.gz',
+                '3.9.1',
+                '45713ec5c417ed9cad614cd283d786a1',
+
+            )],
+        )
+        self.clang = clang
+
+        # build llvm using clang source folder that has being
+        # just downloaded and uncompressed
+        _mem = int(mem)/1024/1024
+        llvm = build.cmake(
+            ARGUMENTS,
+            'llvm',
+            download=[(
+                'http://releases.llvm.org/3.9.1/llvm-3.9.1.src.tar.xz',
+                'llvm-3.9.1.src.tar.gz',
+                '3.9.1',
+                '3259018a7437e157f3642df80f1983ea',
+                { gcc : '6.3.1', clang : '3.9.1', boost: '1.61.0' }
+            ),(
+                'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/llvm-7.1.0.src.tar.xz',
+                'llvm-7.1.0.src.tar.gz',
+                '7.1.0',
+                '26844e21dbad09dc7f9b37b89d7a2e48',
+                { gcc : '6.3.1', clang : '7.1.0', boost: '1.61.0' }
+            ),(
+                'http://releases.llvm.org/9.0.0/llvm-9.0.0.src.tar.xz',
+                'llvm-9.0.0.src.tar.gz',
+                '9.0.0',
+                '0fd4283ff485dffb71a4f1cc8fd3fc72',
+                { gcc : '6.3.1', clang : '9.0.0', boost: '1.61.0'}
+            )],
+            sed = {
+                '3.5.2' : {
+                    # fix 3.5.2 with gcc 5!!
+                    'include/llvm/ADT/IntrusiveRefCntPtr.h' : [
+                        ('IntrusiveRefCntPtr.IntrusiveRefCntPtr.X.','friend class IntrusiveRefCntPtr;\ntemplate <class X> \nIntrusiveRefCntPtr(IntrusiveRefCntPtr<X>'),
+                    ],
+                },
+            },
+            depend=[python, boost, clang]+allDepend,
+            cmd = [
+                # mv clang to the tools folder so LLVM can automatically build it!
+                'mkdir -p $SOURCE_FOLDER/tools/clang/',
+                'cp -rfuv $CLANG_TARGET_FOLDER/* $SOURCE_FOLDER/tools/clang/',
+                'mkdir -p build && cd build',
+                # since llvm link uses lots of memory, we define the number
+                # of threads by dividing the ammount of memory in GB by 12
+                # 'export DCORES=%s' % (_mem/12 if _mem/12 >0 else 1),
+                # 'export MAKE_PARALLEL=" VERBOSE=1 "',
+                ' && '.join(build.cmake.cmd),
+            ],
+            flags = [
+                '-DCMAKE_BUILD_TYPE=Release',
+                '-DLLVM_ENABLE_RTTI=1',
+                '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1',
+                '-DLLVM_PARALLEL_COMPILE_JOBS=$DCORES',
+                '-DLLVM_PARALLEL_LINK_JOBS=2',
+                '-DGCC_INSTALL_PREFIX=$GCC_TARGET_FOLDER',
+            ]+build.cmake.flags,
+            environ = self.exr_rpath_environ.copy(),
+        )
+        self.llvm = llvm
+        # allDepend += [llvm]
+
         # ============================================================================================================================================
         # build ilmbase/openexr/pyilmbase for each version of boost.
         # we run one loop for each package, so if one package fails, we don't
@@ -1232,6 +1479,7 @@ class all: # noqa
             '$PTEX_TARGET_FOLDER/lib/',
             '$OIIO_TARGET_FOLDER/lib/',
             '$APPLESEED_TARGET_FOLDER/lib/',
+            '$TBB_TARGET_FOLDER/lib/',
             '$INSTALL_FOLDER/lib/',
         ] )
         self.exr_rpath_environ = self.rpath_environ()
@@ -1368,6 +1616,9 @@ class all: # noqa
         )
         self.ocio = ocio
 
+
+
+
         # =============================================================================================================================================
         # build one OIIO version for each boost version.
         exr_version = '2.2.0'
@@ -1422,14 +1673,15 @@ class all: # noqa
                     # { gcc : '4.1.2',  boost : "1.51.0", python: '2.7.16', }
                 ]]
             if build.versionMajor(boost_version) >= 1.51 and build.versionMajor(boost_version) < 1.70:
-                download += [[
-                        'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
-                        'oiio-Release-1.6.15.tar.gz',
-                        '1.6.15',
-                        '3fe2cef4fb5f7bc78b136d2837e1062f',
-                        { gcc : gcc_version, boost : boost_version, python: '2.7.16',}
-                        # { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16',}
-                ]]
+                if build.versionMajor(boost_version) != 1.54:
+                    download += [[
+                            'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
+                            'oiio-Release-1.6.15.tar.gz',
+                            '1.6.15',
+                            '3fe2cef4fb5f7bc78b136d2837e1062f',
+                            { gcc : gcc_version, boost : boost_version, python: '2.7.16',}
+                            # { gcc : '4.1.2', boost : "1.51.0", python: '2.7.16',}
+                    ]]
             if build.versionMajor(boost_version) > 1.53:
                 download += [[
                         'https://github.com/OpenImageIO/oiio/archive/Release-1.8.10.tar.gz',
@@ -1505,90 +1757,6 @@ class all: # noqa
 
 
 
-        # use the download action as we only need this package to build llvm!
-        # download action will avoid installing this package!
-        # we also set keep_source_folder=True so the source folder is not
-        # deleted after the build ends.
-        clang = build.download(
-            ARGUMENTS,
-            'clang',
-            download=[(
-                'http://releases.llvm.org/9.0.0/cfe-9.0.0.src.tar.xz',
-                'cfe-9.0.0.src.tar.gz',
-                '9.0.0',
-                '0df6971e2f99b1e99e7bfb533e4067af',
-            ),(
-                'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/cfe-7.1.0.src.tar.xz',
-                'cfe-7.1.0.src.tar.gz',
-                '7.1.0',
-                '2a3651e54e1a9c512d4ee6bd84183cf6',
-            ),(
-                'http://releases.llvm.org/3.9.1/cfe-3.9.1.src.tar.xz',
-                'cfe-3.9.1.src.tar.gz',
-                '3.9.1',
-                '45713ec5c417ed9cad614cd283d786a1',
-
-            )],
-        )
-        self.clang = clang
-
-        # build llvm using clang source folder that has being
-        # just downloaded and uncompressed
-        _mem = int(mem)/1024/1024
-        llvm = build.cmake(
-            ARGUMENTS,
-            'llvm',
-            download=[(
-                'http://releases.llvm.org/9.0.0/llvm-9.0.0.src.tar.xz',
-                'llvm-9.0.0.src.tar.gz',
-                '9.0.0',
-                '0fd4283ff485dffb71a4f1cc8fd3fc72',
-                { gcc : '6.3.1', clang : '9.0.0', boost: '1.61.0'}
-            ),(
-                'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/llvm-7.1.0.src.tar.xz',
-                'llvm-7.1.0.src.tar.gz',
-                '7.1.0',
-                '26844e21dbad09dc7f9b37b89d7a2e48',
-                { gcc : '6.3.1', clang : '7.1.0', boost: '1.61.0' }
-            ),(
-                'http://releases.llvm.org/3.9.1/llvm-3.9.1.src.tar.xz',
-                'llvm-3.9.1.src.tar.gz',
-                '3.9.1',
-                '3259018a7437e157f3642df80f1983ea',
-                { gcc : '6.3.1', clang : '3.9.1', boost: '1.61.0' }
-            )],
-            sed = {
-                '3.5.2' : {
-                    # fix 3.5.2 with gcc 5!!
-                    'include/llvm/ADT/IntrusiveRefCntPtr.h' : [
-                        ('IntrusiveRefCntPtr.IntrusiveRefCntPtr.X.','friend class IntrusiveRefCntPtr;\ntemplate <class X> \nIntrusiveRefCntPtr(IntrusiveRefCntPtr<X>'),
-                    ],
-                },
-            },
-            depend=[python, boost, clang]+allDepend,
-            cmd = [
-                # mv clang to the tools folder so LLVM can automatically build it!
-                'mkdir -p $SOURCE_FOLDER/tools/clang/',
-                'cp -rfuv $CLANG_TARGET_FOLDER/* $SOURCE_FOLDER/tools/clang/',
-                'mkdir -p build && cd build',
-                # since llvm link uses lots of memory, we define the number
-                # of threads by dividing the ammount of memory in GB by 12
-                'export DCORES=1',
-                'export MAKE_PARALLEL=" VERBOSE=1 "',
-                ' && '.join(build.cmake.cmd),
-            ],
-            flags = [
-                '-DCMAKE_BUILD_TYPE=Release',
-                '-DLLVM_ENABLE_RTTI=1',
-                '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1',
-                '-DLLVM_PARALLEL_COMPILE_JOBS=$DCORES',
-                '-DLLVM_PARALLEL_LINK_JOBS=2',
-                '-DGCC_INSTALL_PREFIX=$GCC_TARGET_FOLDER',
-            ]+build.cmake.flags,
-            environ = self.exr_rpath_environ.copy(),
-        )
-        self.llvm = llvm
-        # build.allDepend.append(llvm)
 
         # bison = build.configure(
         #     ARGUMENTS,
@@ -1681,20 +1849,32 @@ class all: # noqa
             ARGUMENTS,
             'materialx',
             download=[(
-                'https://github.com/materialx/MaterialX.git',
-                'MaterialX-v1.36.4.zip',
-                'v1.36.4',
-                None,
-                { gcc : '4.8.5', python: '3.7.5' },
+            #     'https://github.com/materialx/MaterialX.git',
+            #     'MaterialX-v1.36.4.zip',
+            #     'v1.36.4',
+            #     None,
+            #     { gcc : '6.3.1', python: '2.7.6' },
+            # ),(
+                'https://github.com/materialx/MaterialX/releases/download/v1.38.2/MaterialX-1.38.2.tar.gz',
+                'MaterialX-1.38.2.tar.gz',
+                '1.38.2',
+                '9916b1d732ffe43a6f1c6822e6da1d28',
+                { gcc : '6.3.1', python: '3.7.5' },
             )],
             depend=[python, freeglut]+allDepend,
             flags = [
+                '-DMATERIALX_BUILD_SHARED_LIBS=1', ## we need this to build in fedora!!
                 '-DMATERIALX_BUILD_PYTHON=1',
                 '-DMATERIALX_BUILD_VIEWER=1',
                 # Material X needs this to be compatible with gaffer strings
                 '-D_GLIBCXX_USE_CXX11_ABI=0',
+                '-DOpenGL_GL_PREFERENCE=GLVND',
+                '-DMATERIALX_PYTHON_EXECUTABLE=$PYTHONHOME/bin/python',
             ],
-            environ = { 'LD' : 'ld' },
+            environ = {
+                # 'LD' : 'ld',
+                'LD_LIBRARY_PATH' : '/lib64/:$/usr/lib64/:/lib/:/usr/lib/:$LD_LIBRARY_PATH',
+            },
         )
         self.materialx = materialx
 
@@ -1727,6 +1907,11 @@ class all: # noqa
                 { gcc : '4.8.5' }
 
             )],
+            sed = { '5.6.1' : {
+                'qtserialbus/src/plugins/canbus/socketcan/socketcanbackend.cpp': [
+                    ('.ifndef CANFD_MTU','#include <linux\/sockios.h>\\n\\n#ifndef CANFD_MTU')
+                ]
+            }} if 'fedora' in  distro else {},
             environ = {
                 'LD' : '$CXX -fPIC -L$SOURCE_FOLDER/lib/',
                 'CC' : '$CC -fPIC',
@@ -2096,7 +2281,7 @@ class all: # noqa
                     'c-blosc-1.15.1.tar.gz',
                     '1.15.1',
                     'ff2f5a0fe5c7a8a9e2eb0c6f224e2823',
-                    { gcc : '4.1.2' }
+                    { gcc : '4.8.5' }
                 )],
                 depend=[gcc]+allDepend,
                 flags=['-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '],
@@ -2160,18 +2345,35 @@ class all: # noqa
             self.ptex = ptex
             allDepend += [ptex]
 
-            openvdb = build.cmake(
-                ARGUMENTS,
-                'openvdb',
-                download=[(
-                #     # CY 2020
-                #     'https://github.com/AcademySftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
-                #     'openvdb-7.0.0.tar.gz',
-                #     '7.0.0',
-                #     'd409eecde96f89517bc271b1d4909bc5',
-                #     { gcc : '4.8.5', boost : bv, python: '2.7.16', tbb: '4.4.6',
-                #     self.ilmbase['boost.%s' % bv']: exr_version, self.openexr['boost.%s' % bv']: exr_version, }
-                # ),(
+            download_openvdb = []
+            if bv == "1.70.0":
+                download_openvdb += [(
+                    # CY 2022
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v9.0.0.tar.gz',
+                    'openvdb-9.0.0.tar.gz',
+                    '9.0.0',
+                    '684ce40c2f74f3a0c9cac530e1c7b07e',
+                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U3',
+                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
+                )]
+            elif bv == "1.66.0":
+                download_openvdb += [(
+                    # CY 2021
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v8.2.0.tar.gz',
+                    'openvdb-8.2.0.tar.gz',
+                    '8.2.0',
+                    '2852fe7176071eaa18ab9ccfad5ec403',
+                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U2',
+                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
+                ),(
+                    # CY 2020
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
+                    'openvdb-7.0.0.tar.gz',
+                    '7.0.0',
+                    'fd6c4f168282f7e0e494d290cd531fa8',
+                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
+                ),(
                     # CY 2019
                     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v6.0.0.tar.gz',
                     'openvdb-6.0.0.tar.gz',
@@ -2187,23 +2389,28 @@ class all: # noqa
                     '9ba08c29dda60ec625acb8a5928875e5',
                     { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
                     self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
-                ),(
-                    # CY 2017
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
-                    'openvdb-4.0.0.tar.gz',
-                    '4.0.0',
-                    'c56d8a1a460f1d3327f2568e3934ca6a',
-                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
-                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
-                ),(
-                    # CY 2015-2016
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
-                    'openvdb-3.0.0.tar.gz',
-                    '3.0.0',
-                    '3ca8f930ddf759763088e265654f4084',
-                    { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
-                    self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version, self.pyilmbase['boost.%s' % bv]: exr_version, }
-                )],
+                # ),(
+                #     # CY 2017
+                #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
+                #     'openvdb-4.0.0.tar.gz',
+                #     '4.0.0',
+                #     'c56d8a1a460f1d3327f2568e3934ca6a',
+                #     { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                #     self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version,  self.pyilmbase['boost.%s' % bv]: exr_version,}
+                # ),(
+                #     # CY 2015-2016
+                #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
+                #     'openvdb-3.0.0.tar.gz',
+                #     '3.0.0',
+                #     '3ca8f930ddf759763088e265654f4084',
+                #     { gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
+                #     self.ilmbase['boost.%s' % bv]: exr_version, self.openexr['boost.%s' % bv]: exr_version, self.pyilmbase['boost.%s' % bv]: exr_version, }
+                )]
+
+            openvdb = build.cmake(
+                ARGUMENTS,
+                'openvdb',
+                download=download_openvdb,
                 depend=allDepend+[glfw],
                 src = "README.md",
                 environ={
@@ -2212,30 +2419,38 @@ class all: # noqa
                     'LDFLAGS'            : '$LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
                     # 'LD'                 : '$LD '+self.exr_rpath_environ['LDFLAGS'],
                 },
+                cmake_prefix = self.cmake_prefix(),
                 cmd = [
-                "cd openvdb",
-                " make install -j $DCORES"
-    			" DESTDIR=$INSTALL_FOLDER"
-    			" BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include"
-    			" BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
-    			" BOOST_PYTHON_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
-    			" BOOST_PYTHON_LIB=-lboost_python"
-    			" EXR_INCL_DIR=$OPENEXR_TARGET_FOLDER/include"
-    			" EXR_LIB_DIR=$OPENEXR_TARGET_FOLDER/lib"
-    			" TBB_INCL_DIR=$TBB_TARGET_FOLDER/include/tbb"
-    			" TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib"
-    			" PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
-    			" PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include"
-    			" PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib"
-    			" BLOSC_INCL_DIR=$BLOSC_TARGET_FOLDER/include"
-    			" BLOSC_LIB_DIR=$BLOSC_TARGET_FOLDER/lib"
-    			" NUMPY_INCL_DIR="
-    			" CONCURRENT_MALLOC_LIB="
-    			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
-    			" LOG4CPLUS_INCL_DIR="
-    			" EPYDOC= ",
-                "cp $INSTALL_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $INSTALL_FOLDER/python",
-    		    "cp $INSTALL_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $INSTALL_FOLDER/include",
+                    "[ -d openvdb/openvdb ] "
+                    "&& ( "
+                        "mkdir build",
+                        "cd build",
+                        "cmake ../",
+                        "make -j $DCORES",
+                        "make -j $DCORES install"
+                    ") || ( cd openvdb ",
+                        " make install -j $DCORES"
+            			" DESTDIR=$INSTALL_FOLDER"
+            			" BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include"
+            			" BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+            			" BOOST_PYTHON_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+            			" BOOST_PYTHON_LIB=-lboost_python"
+            			" EXR_INCL_DIR=$OPENEXR_TARGET_FOLDER/include"
+            			" EXR_LIB_DIR=$OPENEXR_TARGET_FOLDER/lib"
+            			" TBB_INCL_DIR=$TBB_TARGET_FOLDER/include/tbb"
+            			" TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib"
+            			" PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
+            			" PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include"
+            			" PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib"
+            			" BLOSC_INCL_DIR=$BLOSC_TARGET_FOLDER/include"
+            			" BLOSC_LIB_DIR=$BLOSC_TARGET_FOLDER/lib"
+            			" NUMPY_INCL_DIR=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/"
+            			" CONCURRENT_MALLOC_LIB="
+            			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
+            			" LOG4CPLUS_INCL_DIR="
+            			" EPYDOC= ",
+                        "cp $INSTALL_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $INSTALL_FOLDER/python",
+            		    "cp $INSTALL_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $INSTALL_FOLDER/include )",
                 ]
             )
             self.openvdb = openvdb
@@ -2270,7 +2485,7 @@ class all: # noqa
                     'alembic-1.5.8.tar.gz',
                     '1.5.8',
                     'a70ba5f2e80b47d346d15d797c28731a',
-                    {gcc: '4.1.2', boost: '1.51.0', hdf5: '1.8.11',
+                    {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', boost: '1.51.0', hdf5: '1.8.11',
                     self.ilmbase  ['boost.1.51.0']: exr_version,
                     self.openexr  ['boost.1.51.0']: exr_version,
                     self.pyilmbase['boost.1.51.0']: exr_version },
@@ -2280,7 +2495,7 @@ class all: # noqa
                     'alembic-1.6.1.tar.gz',
                     '1.6.1',
                     'e1f9f2cbe1899d3d55b58708b9307482',
-                    {gcc: '4.8.5', boost: '1.55.0', hdf5: '1.8.11',
+                    {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', boost: '1.55.0', hdf5: '1.8.11',
                     self.ilmbase  ['boost.1.55.0']: exr_version,
                     self.openexr  ['boost.1.55.0']: exr_version,
                     self.pyilmbase['boost.1.55.0']: exr_version },
