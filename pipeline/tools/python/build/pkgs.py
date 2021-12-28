@@ -63,21 +63,23 @@ class all: # noqa
     # figure out!
     # because of that, we're adding it as default to rpath_environ, which
     # is used as a base environment on lots of packages!
-    def rpath_environ( self ):
+    def rpath_environ( self, rpath=[] ):
+        if not rpath:
+            rpath = self._rpath
         self._rpath_environ = {
             'LDFLAGS' : ' $LDFLAGS '
-                +' -L'+' -L'.join(self._rpath)
-                +' -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(self._rpath)
-                +' -Wl,-rpath,'+' -Wl,-rpath,'.join(self._rpath),
+                +' -L'+' -L'.join(rpath)
+                +' -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(rpath)
+                +' -Wl,-rpath,'+' -Wl,-rpath,'.join(rpath),
 
             'CFLAGS' : ' $CFLAGS '
                 +' -D_GLIBCXX_USE_CXX11_ABI=0 '
-                +' -isystem'+' -isystem'.join([ x.split('/lib')[0]+'/include' for x in self._rpath ])
+                +' -isystem'+' -isystem'.join([ x.split('/lib')[0]+'/include' for x in rpath ])
                 +' -isystem $BOOST_TARGET_FOLDER/include/boost ',
 
             'CXXFLAGS' : ' $CXXFLAGS '
                 +' -D_GLIBCXX_USE_CXX11_ABI=0 '
-                +' -isystem'+' -isystem'.join([ x.split('/lib')[0]+'/include' for x in self._rpath ])
+                +' -isystem'+' -isystem'.join([ x.split('/lib')[0]+'/include' for x in rpath ])
                 +' -isystem $BOOST_TARGET_FOLDER/include/boost ',
 
             # we need this to build with exr version below 2.2.0
@@ -115,8 +117,9 @@ class all: # noqa
         '''
         self._rpath = []
         self._rpath_environ = {}
+        self.all_env_vars = {}
 
-        allDepend = []
+        self.allDepend = []
 
         # we start by uncompressing a binary tarball of gcc 4.1.2, to use
         # as cold start compiler to build other gcc's
@@ -164,7 +167,7 @@ class all: # noqa
         #         '1c9f62f0778697a09d36121ead88e08e'
         #     )],
         # )
-        # allDepend += [zlib]
+        # self.allDepend += [zlib]
 
         # curl = build.configure(
         #        ARGUMENTS,
@@ -180,6 +183,9 @@ class all: # noqa
         # )
         # build.allDepend.append(curl)
 
+        # =============================================================================================================================================
+        # this is needed by gcc
+        # =============================================================================================================================================
         gmp = build.configure(
            ARGUMENTS,
            'gmp',
@@ -196,8 +202,9 @@ class all: # noqa
             )],
             depend = [self.gcc_4_1_2],
             environ = { 'LD' : 'ld' },
+            globalDependency = True,
         )
-        allDepend += [gmp]
+        self.allDepend += [gmp]
 
         mpfr = build.configure(
             ARGUMENTS,
@@ -210,8 +217,9 @@ class all: # noqa
             )],
             depend = [gmp, self.gcc_4_1_2],
             environ = { 'LD' : 'ld' },
+            globalDependency = True,
         )
-        allDepend += [mpfr]
+        self.allDepend += [mpfr]
 
         mpc = build.configure(
             ARGUMENTS,
@@ -224,8 +232,9 @@ class all: # noqa
             )],
             depend = [mpfr, gmp, self.gcc_4_1_2],
             environ = { 'LD' : 'ld' },
+            globalDependency = True,
         )
-        allDepend += [mpc]
+        self.allDepend += [mpc]
 
         flex = build.configure(
             ARGUMENTS,
@@ -238,11 +247,14 @@ class all: # noqa
             )],
             depend = [mpc, mpfr, gmp, self.gcc_4_1_2],
             environ = { 'LD' : 'ld' },
+            globalDependency = True,
         )
         self.flex = flex
-        allDepend += [flex]
+        self.allDepend += [flex]
 
-
+        # =============================================================================================================================================
+        # wee need to build gcc 4.8.5 to build glibc 2.17, which in turn we will use to build gcc 6.3.1
+        # =============================================================================================================================================
         binutils = build.configure(
             ARGUMENTS,
             'binutils',
@@ -288,34 +300,196 @@ class all: # noqa
                 '1a6b16bcc926e312633fcc3fae14ba0a'
 
             )],
-            depend = allDepend+[self.gcc_4_1_2],
+            depend = [self.gcc_4_1_2],
+            # globalDependency = True,
         )
         self.binutils = binutils
-        # # allDepend += [binutils]
+        # # self.allDepend += [binutils]
+
+        # self.gcc_4_8_5 = build.gccBuild(
+        #         ARGUMENTS,
+        #         'gcc',
+        #         targetSuffix='pre_glibc_gcc485',
+        #         download=[(
+        #             # CY2015
+        #             'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
+        #             'gcc-4.8.5.tar.gz',
+        #             '4.8.5',
+        #             'bfe56e74d31d25009c8fb55fd3ca7e01',
+        #             # { binutils : '2.22.0' }
+        #         )],
+        #         # depend = [self.gcc_4_1_2],
+        #         environ = { 'LD' : 'ld' },
+        #         dontUseTargetSuffixForFolders = 1,
+        # )
+        # self.gcc_6_3_1 = build.gccBuild(
+        #         ARGUMENTS,
+        #         'gcc',
+        #         targetSuffix='pre_glibc_gcc631',
+        #         download=[(
+        #             # CY2018 GCC 6.3.1 source code.
+        #            'http://vault.centos.org/7.5.1804/sclo/Source/rh/devtoolset-6/devtoolset-6-gcc-6.3.1-3.1.el7.src.rpm',
+        #            'gcc-6.3.1.rpm.tar.gz',
+        #            '6.3.1',
+        #            'f6f508c03da14106554604b1ad3a5aab',
+        #            { build.override.src: 'gcc.spec' } #, self.gcc_4_1_2: None }
+        #         )],
+        #         depend = [self.gcc_4_1_2],
+        #         environ = {"LD" : "ld"},
+        #         dontUseTargetSuffixForFolders = 1,
+        # )
 
 
+        # =============================================================================================================================================
+        # the main glibc used in all CY versions of VFX Platform
+        # =============================================================================================================================================
+        make = build.configure(
+            ARGUMENTS,
+            'make',
+            sed = { '0.0.0' : {
+                'glob/glob.c' : [
+                    ('_GNU_GLOB_INTERFACE_VERSION .. GLOB_INTERFACE_VERSION','_GNU_GLOB_INTERFACE_VERSION >= GLOB_INTERFACE_VERSION'),
+            ]}, '4.3.0' : {()}},
+            download=[(
+                'http://ftp.gnu.org/gnu/make/make-3.79.tar.gz',
+                'make-3.79.tar.gz',
+                '3.79.0',
+                'a59cc0e5792474f6809131650d2fff5a',
+            ),(
+                'https://ftp.gnu.org/gnu/make/make-3.80.tar.gz',
+                'make-3.80.tar.gz',
+                '3.80.0',
+                'c68540da9302a48068d5cce1f0099477',
+            ),(
+                'https://ftp.gnu.org/gnu/make/make-3.81.tar.gz',
+                'make-3.81.tar.gz',
+                '3.81.0',
+                'a4e9494ac6dc3f6b0c5ff75c5d52abba',
+            ),(
+                'https://ftp.gnu.org/gnu/make/make-3.82.tar.gz',
+                'make-3.82.tar.gz',
+                '3.82.0',
+                '7f7c000e3b30c6840f2e9cf86b254fac',
+            ),(
+                'https://ftp.gnu.org/gnu/make/make-4.0.tar.gz',
+                'make-4.0.tar.gz',
+                '4.0.0',
+                'b5e558f981326d9ca1bfdb841640721a',
+            # ),(
+            #     'https://ftp.gnu.org/gnu/make/make-4.3.tar.gz',
+            #     'make-4.3.tar.gz',
+            #     '4.3.0',
+            #     'fc7a67ea86ace13195b0bce683fd4469',
+            )],
+            cmd = [
+                'mkdir -p build',
+                'cd build',
+                '../configure --prefix=$INSTALL_FOLDER',
+                'make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER',
+                'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
+                'rm -rf  $INSTALL_FOLDER/bin/gmake && ln -s make $INSTALL_FOLDER/bin/gmake',
+            ],
+            depend = self.allDepend+[self.gcc_4_1_2],
+            noMinTime=True,
+            # globalDependency = True,
+        )
+        self.make = make
+        autoconf = build.configure(
+            ARGUMENTS,
+            'autoconf',
+            download=[(
+                'http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz',
+                'autoconf-2.71.tar.gz',
+                '2.71.0',
+                'f64e38d671fdec06077a41eb4d5ee476',
+            ),(
+                'http://ftp.gnu.org/gnu/autoconf/autoconf-2.68.tar.gz',
+                'autoconf-2.68.tar.gz',
+                '2.68.0',
+                'c3b5247592ce694f7097873aa07d66fe',
+            )],
+            cmd = [
+                'mkdir -p build',
+                'cd build',
+                '../configure --prefix=$INSTALL_FOLDER',
+                'make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER',
+                'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
+            ],
+            depend = self.allDepend+[self.gcc_4_1_2],
+            noMinTime=True,
+            # globalDependency = True,
+        )
+        self.autoconf = autoconf
+
+        # glibc = build.configure(
+        #     ARGUMENTS,
+        #     'glibc',
+        #     sed = { '0.0.0' : {
+        #         'malloc/obstack.c' : [
+        #             ('struct obstack ._obstack_compat','struct obstack *_obstack_compat=0'),
+        #         ],
+        #     }},
+        #     download=[(
+        #         'http://ftp.gnu.org/gnu/glibc/glibc-2.17.tar.gz',
+        #         'glibc-2.17.tar.gz',
+        #         '2.17.0',
+        #         '8a7f11b9ac5d0d5efa4c82175b5a9c1b',
+        #         { self.gcc_6_3_1: '6.3.1', autoconf : '2.68.0', make : '3.81.0', binutils : '2.27.0'  }
+        #     )],
+        #     cmd = [
+        #         'mkdir -p build',
+        #         'cd build',
+        #         '''export LD_LIBRARY_PATH=$(echo $(echo $LD_LIBRARY_PATH | sed 's/:/\\n/g' | egrep -v 'build|^\.') | sed 's/ /:/g')''',
+        #         ''' ../configure --prefix=$INSTALL_FOLDER --with-binutils=$_BINUTILS_TARGET_FOLDER ; echo "$(cat ./Makefile | sed 's/\f//g')" > Makefile''',
+        #         '''make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER ''',
+        #         '''LD_LIBRARY_PATH=/lib64/:$/usr/lib64/:/lib/:/usr/lib/:$$LD_LIBRARY_PATH make -j $DCORES PREFIX=$INSTALL_FOLDER install''',
+        #     ],
+        #     depend = [self.gcc_6_3_1],
+        #     environ = {
+        #         "LD" : "/usr/bin/ld"
+        #     },
+        #     globalDependency = True,
+        # )
+        # self.glibc = glibc
+        # # glibc_env_vars = self.rpath_environ(['$GLIBC_TARGET_FOLDER/lib/'])
+        # # self.all_env_vars.update(glibc_env_vars)
+        # # self.allDepend += [self.glibc]
+        #
+        # # we wait glibc to be build and remove pre gcc 4.8.5, so we can re-build it using the pipe glibc
+        # self.glibc_done = build.wait4dependencies( self.glibc, 'pos-glibc',
+        #     cmd = "echo rm -rf $GCC_TARGET_FOLDER/*",
+        #     depend = [self.gcc_4_8_5, self.gcc_6_3_1],
+        #     globalDependency = True,
+        #     noMinTime=False
+        # )
+        # # self.allDepend += [self.glibc_done]
+
+
+        # =============================================================================================================================================
+        # now we build GCC using glibc built above
+        # =============================================================================================================================================
         gcc = build.gccBuild(
                 ARGUMENTS,
                 'gcc',
                 download=[(
-                    # CY2014
-                    # although we have the URL for the source code of 4.1.2,
-                    # we are using a pre-build tarball done in arch since
-                    # building it in centos 7 breaks something, and some shared
-                    # libraries build with 4.1.2 will complain about needing
-                    # objects compiled with -fPIC, when they actually have being!
-                    # the pre-built tarball.
-                    # the bin tarball is already in the build docker image!
-                    # original source md5: 'dd2a7f4dcd33808d344949fcec87aa86',
-                    # origial source file: 'gcc-4.1.2.tar.gz',
-                    # bin tarball md5: 'bf35fabc47ead3b1f743492052296336',
-                    # bin tarball file: '4.1.2.tar.gz',
-                    '--ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
-                    '4.1.2.tar.gz',
-                    '4.1.2',
-                    '094fa468653d11cf65df94cc41fb257c',
-                    # { binutils : '2.22.0' }
-                ),(
+                #     # CY2014
+                #     # although we have the URL for the source code of 4.1.2,
+                #     # we are using a pre-build tarball done in arch since
+                #     # building it in centos 7 breaks something, and some shared
+                #     # libraries build with 4.1.2 will complain about needing
+                #     # objects compiled with -fPIC, when they actually have being!
+                #     # the pre-built tarball.
+                #     # the bin tarball is already in the build docker image!
+                #     # original source md5: 'dd2a7f4dcd33808d344949fcec87aa86',
+                #     # origial source file: 'gcc-4.1.2.tar.gz',
+                #     # bin tarball md5: 'bf35fabc47ead3b1f743492052296336',
+                #     # bin tarball file: '4.1.2.tar.gz',
+                #     '--ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.1.2/gcc-4.1.2.tar.gz',
+                #     '4.1.2.tar.gz',
+                #     '4.1.2',
+                #     '094fa468653d11cf65df94cc41fb257c',
+                #     # { binutils : '2.22.0' }
+                # ),(
                     # CY2015
                     'ftp://ftp.lip6.fr/pub/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.gz',
                     'gcc-4.8.5.tar.gz',
@@ -330,23 +504,24 @@ class all: # noqa
                    'f6f508c03da14106554604b1ad3a5aab',
                    { build.override.src: 'gcc.spec' } #, self.gcc_4_1_2: None }
                 )],
-                depend = allDepend+[self.gcc_4_1_2],
-                environ = { 'LD' : 'ld' },
-                # we need this since we're not building GCC 6.3.0
-                # without it the build would fail due to being less than 5 secs
-                noMinTime=True,
+                depend = [self.gcc_4_1_2],
+                environ = {"LD" : "ld"},
+                globalDependency = True,
         )
         self.gcc = gcc
-        allDepend = [self.gcc]+allDepend
+        # self.allDepend = [self.gcc]+self.allDepend
 
         # a dummy build that stalls until the passed build is done!
         # everythin will depend on this dummy post-gcc build, so everything
         # will wait for gcc to finish before start.
         # this is essential when building packages in parallel (scons -j)
-        self.gcc_wait = build.wait4dependencies(self.gcc, 'pos', version='4.8.5')
+        self.gcc_wait = build.wait4dependencies(self.gcc, 'pos', version='6.3.1', globalDependency = True)
         # lets use our own latest GCC to build everything!!!
-        allDepend += [self.gcc_wait]
+        # self.allDepend += [self.gcc_wait]
 
+        # =============================================================================================================================================
+        # wee need icu, bzip2, readline and openssl for python
+        # =============================================================================================================================================
         icu = build.configure(
             ARGUMENTS,
             'icu',
@@ -359,7 +534,7 @@ class all: # noqa
             )],
             src = 'icu4c.css',
             cmd = ['cd ./source/'] + build.configure.cmd,
-            depend = allDepend,
+            depend = self.allDepend,
             environ = {
                 'LD_PRELOAD': ':'.join([
                     '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
@@ -385,12 +560,13 @@ class all: # noqa
                 'make -j $DCORES -f Makefile-libbz2_so CFLAGS="$CFLAGS -O2 -fPIC" PREFIX=$INSTALL_FOLDER',
                 'cp -rfuv ./libbz2.so.* $INSTALL_FOLDER/lib64/'
             ],
-            depend = allDepend,
+            depend = self.allDepend,
             # bzip2 builds real fast!!
             noMinTime=True,
+            globalDependency = True,
         )
         self.bzip2 = bzip2
-        allDepend += [bzip2]
+        # self.allDepend += [bzip2]
 
         readline = build.configure(
             ARGUMENTS,
@@ -413,10 +589,11 @@ class all: # noqa
                 'make -j $DCORES SHLIB_LIBS="-lncurses" CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER',
                 'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
             ],
-            depend = allDepend,
+            # depend = self.allDepend,
+            globalDependency = True,
         )
         self.readline = readline
-        allDepend += [readline]
+        # self.allDepend += [readline]
 
         openssl = build.openssl(
             ARGUMENTS,
@@ -432,135 +609,20 @@ class all: # noqa
                 '1.0.2s',
                 '24886418211ec05e3f1c764a489b29c1',
             )],
-            depend = allDepend,
             parallel = 0,
+            # depend = self.allDepend,
+            globalDependency = True,
         )
         self.openssl = openssl
-        # allDepend += [openssl]
+        # self.allDepend += [openssl]
 
         # =============================================================================================================================================
-        # the main glibc used in all CY versions of VFX Platform
+        # build python now!
         # =============================================================================================================================================
-        make = build.configure(
-            ARGUMENTS,
-            'make',
-            sed = { '0.0.0' : {
-                'glob/glob.c' : [
-                    ('_GNU_GLOB_INTERFACE_VERSION .. GLOB_INTERFACE_VERSION','_GNU_GLOB_INTERFACE_VERSION >= GLOB_INTERFACE_VERSION'),
-                ],
-            }},
-            download=[(
-                'http://ftp.gnu.org/gnu/make/make-3.79.tar.gz',
-                'make-3.79.tar.gz',
-                '3.79.0',
-                'a59cc0e5792474f6809131650d2fff5a',
-                { gcc : '4.1.2' }
-            ),(
-                'https://ftp.gnu.org/gnu/make/make-3.81.tar.gz',
-                'make-3.81.tar.gz',
-                '3.81.0',
-                'a4e9494ac6dc3f6b0c5ff75c5d52abba',
-                { gcc : '4.1.2' }
-            ),(
-                'https://ftp.gnu.org/gnu/make/make-3.82.tar.gz',
-                'make-3.82.tar.gz',
-                '3.82.0',
-                '7f7c000e3b30c6840f2e9cf86b254fac',
-                { gcc : '4.1.2' }
-            ),(
-                'https://ftp.gnu.org/gnu/make/make-4.0.tar.gz',
-                'make-4.0.tar.gz',
-                '4.0.0',
-                'b5e558f981326d9ca1bfdb841640721a',
-                { gcc : '4.1.2' }
-            )],
-            cmd = [
-                'mkdir -p build',
-                'cd build',
-                '../configure --prefix=$INSTALL_FOLDER',
-                'make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER',
-                'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
-                'rm -rf  $INSTALL_FOLDER/bin/gmake && ln -s make $INSTALL_FOLDER/bin/gmake',
-            ],
-            depend = allDepend,
-            noMinTime=True,
-        )
-        self.make = make
-        autoconf = build.configure(
-            ARGUMENTS,
-            'autoconf',
-            download=[(
-                'http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz',
-                'autoconf-2.71.tar.gz',
-                '2.71.0',
-                'f64e38d671fdec06077a41eb4d5ee476',
-                { gcc : '6.3.1' }
-            ),(
-                'http://ftp.gnu.org/gnu/autoconf/autoconf-2.68.tar.gz',
-                'autoconf-2.68.tar.gz',
-                '2.68.0',
-                'c3b5247592ce694f7097873aa07d66fe',
-                { gcc : '6.3.1' }
-            )],
-            cmd = [
-                'mkdir -p build',
-                'cd build',
-                '../configure --prefix=$INSTALL_FOLDER',
-                'make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER',
-                'make -j $DCORES PREFIX=$INSTALL_FOLDER install',
-            ],
-            depend = allDepend,
-            noMinTime=True,
-        )
-        self.autoconf = autoconf
-        # allDepend += [autoconf]
-
-        glibc = build.configure(
-            ARGUMENTS,
-            'glibc',
-            sed = { '0.0.0' : {
-                'malloc/obstack.c' : [
-                    ('struct obstack ._obstack_compat','struct obstack *_obstack_compat=0'),
-                ],
-            }},
-            download=[(
-                'http://ftp.gnu.org/gnu/glibc/glibc-2.17.tar.gz',
-                'glibc-2.17.tar.gz',
-                '2.17.0',
-                '8a7f11b9ac5d0d5efa4c82175b5a9c1b',
-                { gcc : '6.3.1', autoconf : '2.68.0', make : '3.81.0' } #, binutils : '2.27.0'  }
-            )],
-            cmd = [
-                'mkdir -p build',
-                'cd build',
-                '''export LD_LIBRARY_PATH=$(echo $(echo $LD_LIBRARY_PATH | sed 's/:/\\n/g' | egrep -v 'build|^\.') | sed 's/ /:/g')''',
-                ''' ../configure --prefix=$INSTALL_FOLDER --with-binutils=$BINUTILS_TARGET''',
-                '''make -j $DCORES CFLAGS="$CFLAGS -fPIC" PREFIX=$INSTALL_FOLDER''',
-                '''LD_LIBRARY_PATH=/lib64/:$/usr/lib64/:/lib/:/usr/lib/:$$LD_LIBRARY_PATH make -j $DCORES PREFIX=$INSTALL_FOLDER install''',
-            ],
-            depend = allDepend,
-        )
-        self.glibc = glibc
-        # allDepend += [glibc]
-        # =============================================================================================================================================
-
-
         python = build.python(
             ARGUMENTS,
             'python',
             download=[(
-                #     'http://www.python.org/ftp/python/2.6.9/Python-2.6.9.tgz',
-                #     'Python-2.6.9.tar.gz',
-                #     '2.6.9',
-                #     'bddbd64bf6f5344fc55bbe49a72fe4f3',
-                #     { readline : '7.0.0', openssl : '1.0.2h' },
-                # ),(
-                #     'http://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
-                #     'Python-2.7.12.tar.gz',
-                #     '2.7.12',
-                #     '88d61f82e3616a4be952828b3694109d',
-                #     { readline : '7.0.0', openssl : '1.0.2s' },
-                # ),(
                     # CY2015 - CY2019
                     'http://www.python.org/ftp/python/2.7.16/Python-2.7.16.tgz',
                     'Python-2.7.16.tar.gz',
@@ -580,10 +642,11 @@ class all: # noqa
                 "PYTHONHTTPSVERIFY" : "0",
                 'LD' : 'ld',
             },
-            depend = allDepend+[readline,bzip2,icu],
+            depend = [readline,bzip2,icu],
+            globalDependency = True,
         )
         self.python = python
-        allDepend += [python]
+        # self.allDepend += [python]
 
         # install extra python modules using pip, for all python versions
         # installed by python build.
@@ -599,7 +662,7 @@ class all: # noqa
             'jinja2',   # needed by USD
             'sphinx',   # needed by pyside
         ]]
-        allDepend += self.pip
+        self.allDepend += self.pip
 
         tbb = build.tbb(
             ARGUMENTS,
@@ -661,10 +724,11 @@ class all: # noqa
                 '20e15206f70c2651bfc964e451a443a0',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend = allDepend,
+            # depend = self.allDepend,
+            globalDependency = True,
         )
         self.tbb = tbb
-        allDepend += [tbb]
+        # self.allDepend += [tbb]
 
         cmake = build.configure(
             ARGUMENTS,
@@ -711,13 +775,13 @@ class all: # noqa
                     ('/* If running inside emacs the terminal is not VT100.  Some emacs','return 1;'),
                 ],
             }},
-            depend=[gcc]+allDepend,
+            depend=[gcc]+self.allDepend,
             environ={
                 'LDFLAGS' : "-Wl,-rpath-link,/usr/lib64/ -Wl,-rpath,/usr/lib64/ $LDFLAGS",
                 'LD'      : 'ld',
             },        )
         self.cmake = cmake
-        allDepend += [cmake]
+        self.allDepend += [cmake]
 
         # =============================================================================================================================================
         # build all other generic packages
@@ -737,10 +801,10 @@ class all: # noqa
                 'b2ab12331033ddfaa50dc39345343980',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend = allDepend,
+            depend = self.allDepend,
         )
         self.glew = glew
-        allDepend += [glew]
+        self.allDepend += [glew]
 
         freeglut = build.configure(
             ARGUMENTS,
@@ -761,10 +825,10 @@ class all: # noqa
                 'LDFLAGS' : '$LDFLAGS -lm -lGL ',
                 'LD' : 'ld',
             },
-            depend = allDepend,
+            depend = self.allDepend,
         )
         self.freeglut = freeglut
-        allDepend += [freeglut]
+        self.allDepend += [freeglut]
 
         jpeg = build.configure(
             ARGUMENTS,
@@ -786,12 +850,12 @@ class all: # noqa
                 './configure --enable-shared --prefix=$INSTALL_FOLDER',
                 'make install INSTALL="/usr/bin/install -D"',
             ],
-            depend = allDepend,
+            depend = self.allDepend,
             environ = { 'LD' : 'ld' },
             noMinTime=True,
         )
         self.jpeg = jpeg
-        allDepend += [jpeg]
+        self.allDepend += [jpeg]
 
 
         jasper = build.configure(
@@ -804,11 +868,11 @@ class all: # noqa
                 'a342b2b4495b3e1394e161eb5d85d754',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend = allDepend,
+            depend = self.allDepend,
             environ = { 'LD' : 'ld' , 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/' },
         )
         self.jasper = jasper
-        allDepend += [jasper]
+        self.allDepend += [jasper]
 
         libraw = build.configure(
             ARGUMENTS,
@@ -821,7 +885,7 @@ class all: # noqa
                 '7de042bcffb58864fd93d5209620e08d',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend=[gcc]+allDepend,
+            depend=[gcc]+self.allDepend,
             cmd = [
                 './mkdist.sh',
                 './configure --enable-shared --prefix=$INSTALL_FOLDER',
@@ -858,12 +922,12 @@ class all: # noqa
                 'd1d2e940dea0b5ad435f21f03d96dd72',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend=[jpeg, libraw]+allDepend,
+            depend=[jpeg, libraw]+self.allDepend,
             environ = { 'LD' : 'ld', 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/'  },
             parallel=0,
         )
         self.tiff = tiff
-        allDepend += [tiff]
+        self.allDepend += [tiff]
 
         libpng = build.configure(
             ARGUMENTS,
@@ -875,11 +939,11 @@ class all: # noqa
                 '9b320a05ed4db1f3f0865c8a951fd9aa',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend = allDepend,
+            depend = self.allDepend,
             environ = { 'LD' : 'ld' },
         )
         self.libpng = libpng
-        allDepend += [libpng]
+        self.allDepend += [libpng]
 
         freetype = build.freetype(
             ARGUMENTS,
@@ -897,11 +961,11 @@ class all: # noqa
                 '58d56c9ad775326d6c9c5417c462a527',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend = allDepend,
+            depend = self.allDepend,
             environ = { 'LD' : 'ld' },
         )
         self.freetype = freetype
-        allDepend += [freetype]
+        self.allDepend += [freetype]
 
         gperf = build.configure(
             ARGUMENTS,
@@ -912,12 +976,12 @@ class all: # noqa
                 '3.1.0',
                 '9e251c0a618ad0824b51117d5d9db87e'
             )],
-            depend = allDepend,
+            depend = self.allDepend,
             noMinTime=True,
             environ = { 'LD' : 'ld' },
         )
         self.gperf = gperf
-        # allDepend += [gperf]
+        # self.allDepend += [gperf]
 
         fontconfig = build.configure(
             ARGUMENTS,
@@ -933,11 +997,11 @@ class all: # noqa
                 '2.12.1',
                 'ce55e525c37147eee14cc2de6cc09f6c'
             )],
-            depend = allDepend+[gperf],
+            depend = self.allDepend+[gperf],
             environ = { 'LD' : 'ld' },
         )
         self.fontconfig = fontconfig
-        allDepend += [fontconfig]
+        self.allDepend += [fontconfig]
 
 
         doxigen = build.cmake(
@@ -950,11 +1014,11 @@ class all: # noqa
                 '20c15411be1d11378bc7fae7a846df46',
                 { gcc: '6.3.1' }
             )],
-            depend = allDepend,
+            depend = self.allDepend,
             environ = { 'LD' : 'ld' },
         )
         self.doxigen = doxigen
-        allDepend += [doxigen]
+        self.allDepend += [doxigen]
 
 
 
@@ -977,11 +1041,11 @@ class all: # noqa
                 '428b7a9e7e2d154a7ceb3e13536283e4',
             )],
             baseLibs=[python],
-            depend=[python, openssl]+allDepend,
+            depend=[python, openssl]+self.allDepend,
             environ = { 'LD' : 'ld' },
         )
         self.dbus = dbus
-        allDepend += [dbus]
+        self.allDepend += [dbus]
 
         # cython = build.pythonSetup(
         #    ARGUMENTS,
@@ -1041,7 +1105,7 @@ class all: # noqa
                 'be2ba51f234270dec340f28f1695a95e'
             )],
             baseLibs=[python],
-            depend=[python]+allDepend,
+            depend=[python]+self.allDepend,
             noMinTime=True,
         )
         build.allDepend += [pycairo]
@@ -1055,7 +1119,7 @@ class all: # noqa
                 '1860bdb63c8db0826fb310444271e9b0'
             )],
             baseLibs=[python],
-            depend=[python]+allDepend,
+            depend=[python]+self.allDepend,
             environ={
                 # not sure why python is not importing cairo from it's egg, but
                 # adding the egg to PYTHONPATH seems to fix it.
@@ -1081,7 +1145,7 @@ class all: # noqa
                 { python: '2.7.6' }
             )],
             # baseLibs=[python],
-            depend=[python]+allDepend,
+            depend=[python]+self.allDepend,
             noMinTime=True,
         )
         build.allDepend += [pythonldap]
@@ -1116,7 +1180,7 @@ class all: # noqa
                     module,
                     download=simpleModules[module],
                     baseLibs=[python],
-                    depend=[python,pycairo]+allDepend,
+                    depend=[python,pycairo]+self.allDepend,
                 )
             )
         # add all builders to the global dependency at once here
@@ -1167,8 +1231,7 @@ class all: # noqa
                 'boost_1_61_0.tar.gz',
                 '1.61.0',
                 '874805ba2e2ee415b1877ef3297bf8ad',
-                # { gcc : '4.8.5' }
-                { gcc : '6.3.1' }
+                { gcc :  '6.3.1' if 'fedora' in distro else '4.8.5' }
             ),(
                 # CY2019
                 'http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.gz',
@@ -1185,7 +1248,7 @@ class all: # noqa
             #     { gcc :  '6.3.1' }
             )],
             baseLibs=[python],
-            depend=[python, openssl, bzip2, icu]+allDepend,
+            depend=[python, openssl, bzip2, icu]+self.allDepend,
         )
         self.boost = boost
         # build.allDepend.append(boost)
@@ -1264,7 +1327,7 @@ class all: # noqa
                     ],
                 },
             },
-            depend=[python, boost, clang]+allDepend,
+            depend=[python, boost, clang]+self.allDepend,
             cmd = [
                 # mv clang to the tools folder so LLVM can automatically build it!
                 'mkdir -p $SOURCE_FOLDER/tools/clang/',
@@ -1287,7 +1350,7 @@ class all: # noqa
             environ = self.exr_rpath_environ.copy(),
         )
         self.llvm = llvm
-        # allDepend += [llvm]
+        # self.allDepend += [llvm]
 
         # ============================================================================================================================================
         # build ilmbase/openexr/pyilmbase for each version of boost.
@@ -1335,7 +1398,7 @@ class all: # noqa
                 #     '354bf86de3b930ab87ac63619d60c860',
                 #     { gcc : '6.3.1', python: '2.7.16' }
                 )],
-                depend=[gcc, python, openssl]+allDepend,
+                depend=[gcc, python, openssl]+self.allDepend,
                 environ=environ,
                 cmd = [
                     './configure  --enable-shared ',
@@ -1387,7 +1450,7 @@ class all: # noqa
                 #     { gcc : '6.3.1', python: '2.7.16' }
                 )],
                 sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
-                depend=[gcc, python, openssl]+allDepend,
+                depend=[gcc, python, openssl]+self.allDepend,
                 environ=environ,
                 cmd = [
                     './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
@@ -1442,7 +1505,7 @@ class all: # noqa
                 #     { gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
                 )],
                 # baseLibs=[python],
-                depend=[python, gcc, python]+allDepend,
+                depend=[python, gcc, python]+self.allDepend,
                 environ=environ,
                 cmd = [
                     'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
@@ -1463,7 +1526,7 @@ class all: # noqa
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
-            # allDepend += [ pyilmbase ]
+            # self.allDepend += [ pyilmbase ]
 
         self.rpath( [
             '$LIBRAW_TARGET_FOLDER/lib/',
@@ -1497,11 +1560,11 @@ class all: # noqa
                 'fc9e586751ff789b34b1f21d572d96af',
                 { gcc : '4.1.2', python : '2.7.16'}
             )],
-            depend = allDepend,
+            depend = self.allDepend,
             environ = { 'LD' : 'ld' },
         )
         self.yasm = yasm
-        allDepend += [yasm]
+        self.allDepend += [yasm]
 
         hdf5 = build.configure(
             ARGUMENTS,
@@ -1527,7 +1590,7 @@ class all: # noqa
                 '7f2d3fd67106968eb45d133f5a22150f',
                 { gcc : '4.1.2', python: '2.7.16' }
             )],
-            depend = allDepend,
+            depend = self.allDepend,
             cmd = [
                 # './configure --enable-threadsafe --disable-hl --with-pthread=/usr/include',
                 './configure --enable-shared --enable-cxx --enable-production --with-pthread=/usr/include',
@@ -1605,7 +1668,7 @@ class all: # noqa
                 { gcc : '4.8.5' }
             )],
             baseLibs = [python],
-            depend   = [yasm,boost,gcc,python,self.binutils]+allDepend,
+            depend   = [yasm,boost,gcc,python,self.binutils]+self.allDepend,
             flags    = build.cmake.flags+[
                 '-DOCIO_BUILD_APPS=0',
                 '-D OCIO_USE_BOOST_PTR=1',
@@ -1650,7 +1713,7 @@ class all: # noqa
                     '61660c2400213ca9adbb3e17782cccfb',
                     field3d_dependency_versions,
                 )],
-                depend   = [icu]+allDepend,
+                depend   = [icu]+self.allDepend,
                 environ = environ,
             )
             self.field3d[sufix] = field3d
@@ -1736,7 +1799,7 @@ class all: # noqa
                     },
                 },
                 download = _download,
-                depend=[ocio, python, boost, freetype, gcc, icu, cmake, openssl, bzip2, libraw, libpng, tbb]+allDepend,
+                depend=[ocio, python, boost, freetype, gcc, icu, cmake, openssl, bzip2, libraw, libpng, tbb]+self.allDepend,
                 cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
                 flags = [
                     '-DUSE_PYTHON=0',
@@ -1786,7 +1849,7 @@ class all: # noqa
                 '0c208b0664c7fb822bf1b49ad035e8fd',
                 { gcc : '4.8.5', python: '2.7.16' },
             )],
-            depend = allDepend,
+            depend = self.allDepend,
             environ = { 'LD' : 'ld' },
         )
         self.pugixml = pugixml
@@ -1801,7 +1864,7 @@ class all: # noqa
                 '5be03812f5d109817e6558c3fab7bbe1',
                 { gcc : '4.1.2' },
             )],
-            depend=[python, glew]+allDepend,
+            depend=[python, glew]+self.allDepend,
             flags = [
                 '-DBUILD_SHARED_LIBS=1',
             ]+build.glfw.flags
@@ -1855,13 +1918,19 @@ class all: # noqa
             #     None,
             #     { gcc : '6.3.1', python: '2.7.6' },
             # ),(
+                'https://github.com/materialx/MaterialX/releases/download/v1.38.1/MaterialX-1.38.1.tar.gz',
+                'MaterialX-1.38.1.tar.gz',
+                '1.38.1',
+                None,
+                { gcc : '6.3.1', python: '2.7.6' },
+            ),(
                 'https://github.com/materialx/MaterialX/releases/download/v1.38.2/MaterialX-1.38.2.tar.gz',
                 'MaterialX-1.38.2.tar.gz',
                 '1.38.2',
                 '9916b1d732ffe43a6f1c6822e6da1d28',
                 { gcc : '6.3.1', python: '3.7.5' },
             )],
-            depend=[python, freeglut]+allDepend,
+            depend=[python, freeglut]+self.allDepend,
             flags = [
                 '-DMATERIALX_BUILD_SHARED_LIBS=1', ## we need this to build in fedora!!
                 '-DMATERIALX_BUILD_PYTHON=1',
@@ -1942,7 +2011,7 @@ class all: # noqa
             depend=[
                 tiff,jpeg,libpng,freetype,freeglut,glew,gcc,
                 # qtMaya, qtMayaDeclarative, qtMayaX11Extras,
-            ]+[ x for x in allDepend if python != x ],
+            ]+[ x for x in self.allDepend if python != x ],
             verbose=1,
             # we need this since we're not building QT 5.6.1 yet.
             # without it the build would fail due to being less than 5 secs
@@ -1953,7 +2022,7 @@ class all: # noqa
             '$QT_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
         ] )
         self.qt_rpath_environ = self.rpath_environ()
-        # allDepend += [qt]
+        # self.allDepend += [qt]
 
 
         # =============================================================================================================================================
@@ -2031,7 +2100,7 @@ class all: # noqa
                 #     '8b15d13c3fa510b421834d32338304c8',
                 #     {oiio: "1.6.15", llvm : "3.9.1", gcc: "4.8.5", boost: "1.51.0"},
                 )],
-                depend=[llvm, boost, icu, cmake, pugixml, freetype, openssl, bzip2, libraw]+allDepend,
+                depend=[llvm, boost, icu, cmake, pugixml, freetype, openssl, bzip2, libraw]+self.allDepend,
                 cmd = [
                     # we have to use the devtoolset-6 gcc
                     # 'source scl_source enable devtoolset-6',
@@ -2144,7 +2213,7 @@ class all: # noqa
                     'make -j $DCORES && make -j $DCORES install'
                     # ' ) || echo -e "\n\nnot building sip for qt 5 for now!!\n\n" ',
                 ],
-                depend = allDepend+[qt],
+                depend = self.allDepend+[qt],
                 noMinTime=True,
             )
             self.sip = sip
@@ -2175,7 +2244,7 @@ class all: # noqa
                     { qt:'5.12.0', sip: '4.18.1', gcc : '4.8.5' },
                 )],
                 baseLibs=[python],
-                depend=[sip, qt, gcc]+allDepend,
+                depend=[sip, qt, gcc]+self.allDepend,
                 src = 'configure.py',
                 cmd = [
                     '( [ "$(basename $TARGET_FOLDER)" == "4.11.4" ]  && '
@@ -2207,7 +2276,7 @@ class all: # noqa
                 noMinTime=True,
             )
             self.pyqt = pyqt
-            # allDepend += [pyqt]
+            # self.allDepend += [pyqt]
 
             pyside = build.pythonSetup(
                 ARGUMENTS,
@@ -2242,7 +2311,7 @@ class all: # noqa
                     'pyside2-maya2018.6' : 'pyside-setup',
                 },
                 # baseLibs=[python],
-                depend=[qt, gcc]+allDepend,
+                depend=[qt, gcc]+self.allDepend,
                 environ={
                     'LDFLAGS' : '$LDFLAGS '+self.qt_rpath_environ['LDFLAGS']
                 },
@@ -2256,7 +2325,7 @@ class all: # noqa
                 ],
             )
             self.pyside = pyside
-            # allDepend += [pyside]
+            # self.allDepend += [pyside]
 
             log4cplus = build.configure(
                 ARGUMENTS,
@@ -2268,10 +2337,10 @@ class all: # noqa
                     'b39900d6b504726a20819f2ad73f5877',
                     { gcc : '4.1.2' }
                 )],
-                depend=[gcc]+allDepend,
+                depend=[gcc]+self.allDepend,
             )
             self.log4cplus = log4cplus
-            allDepend += [log4cplus]
+            self.allDepend += [log4cplus]
 
             blosc = build.cmake(
                 ARGUMENTS,
@@ -2283,12 +2352,12 @@ class all: # noqa
                     'ff2f5a0fe5c7a8a9e2eb0c6f224e2823',
                     { gcc : '4.8.5' }
                 )],
-                depend=[gcc]+allDepend,
+                depend=[gcc]+self.allDepend,
                 flags=['-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '],
                 environ = { 'LD' : 'ld', 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/:$LD_LIBRARY_PATH'  },
             )
             self.blosc = blosc
-            allDepend += [blosc]
+            self.allDepend += [blosc]
 
             ptex = build.cmake(
                 ARGUMENTS,
@@ -2323,7 +2392,7 @@ class all: # noqa
                     '09450bd49dab3db878504a6e51c0745d',
                     { cmake: '3.8.2', gcc : '4.1.2' }
                 )],
-                depend=allDepend,
+                depend=self.allDepend,
                 src = 'README',
                 environ={
                     'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
@@ -2343,7 +2412,7 @@ class all: # noqa
                 ]
             )
             self.ptex = ptex
-            allDepend += [ptex]
+            self.allDepend += [ptex]
 
             download_openvdb = []
             if bv == "1.70.0":
@@ -2411,7 +2480,7 @@ class all: # noqa
                 ARGUMENTS,
                 'openvdb',
                 download=download_openvdb,
-                depend=allDepend+[glfw],
+                depend=self.allDepend+[glfw],
                 src = "README.md",
                 environ={
                     'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
@@ -2454,7 +2523,7 @@ class all: # noqa
                 ]
             )
             self.openvdb = openvdb
-            allDepend += [openvdb]
+            self.allDepend += [openvdb]
 
             # import sys
             # print (self.pyilmbase['boost.1.51.0'], self.pyilmbase['boost.1.51.0'].targetSuffix)
@@ -2521,7 +2590,7 @@ class all: # noqa
                     self.pyilmbase['boost.%s' % bv]: exr_version },
                 )],
                 # baseLibs=[python],
-                depend=allDepend+[hdf5],
+                depend=self.allDepend+[hdf5],
                 environ = {
                     # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
                     'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib -lhdf5_hl $LDFLAGS '+self.exr_rpath_environ['LDFLAGS'],
@@ -2544,7 +2613,7 @@ class all: # noqa
                     None,
                     {gcc: '4.8.5', boost: bv},
                 )],
-                depend=allDepend+[boost, glfw, glew],
+                depend=self.allDepend+[boost, glfw, glew],
                 verbose=1,
                 environ = { 'LD' : 'ld' },
                 flags = [
@@ -2554,7 +2623,7 @@ class all: # noqa
                 noMinTime=True,
             )
             self.clew = clew
-            allDepend += [clew]
+            self.allDepend += [clew]
 
             # build alembic without apps plugins
             opensubdiv = build.cmake(
@@ -2569,40 +2638,40 @@ class all: # noqa
                     ('compute_20','compute_30'),
                 ]}},
                 download=[(
-                    # CY 2014
-                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_3_3.tar.gz',
-                    'OpenSubdiv-2_3_3.tar.gz',
-                    '2.3.3',
-                    'b7312b63bf6dfb38b49b17f15c976849',
-                    {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42', tbb: '4.4.6'},
-                ),(
-                    # CY 2015
-                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_5_1.tar.gz',
-                    'OpenSubdiv-2_5_1.tar.gz',
-                    '2.5.1',
-                    '73da98bdb1e944b3ec5b046b3d8008d6',
-                    {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
-                ),(
-                    # CY 2016
-                    'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_0_5.tar.gz',
-                    'OpenSubdiv-3_0_5.tar.gz',
-                    '3.0.5',
-                    'f16fa309b3fa3d400e6dcbf59d316dfe',
-                    {gcc: '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
-                ),(
+                #     # CY 2014
+                #     'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_3_3.tar.gz',
+                #     'OpenSubdiv-2_3_3.tar.gz',
+                #     '2.3.3',
+                #     'b7312b63bf6dfb38b49b17f15c976849',
+                #     {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', boost: '1.51.0', ptex: '2.0.42', tbb: '4.4.6'},
+                # ),(
+                #     # CY 2015
+                #     'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v2_5_1.tar.gz',
+                #     'OpenSubdiv-2_5_1.tar.gz',
+                #     '2.5.1',
+                #     '73da98bdb1e944b3ec5b046b3d8008d6',
+                #     {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
+                # ),(
+                #     # CY 2016
+                #     'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_0_5.tar.gz',
+                #     'OpenSubdiv-3_0_5.tar.gz',
+                #     '3.0.5',
+                #     'f16fa309b3fa3d400e6dcbf59d316dfe',
+                #     {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', boost: '1.51.0', ptex: '2.0.42'},
+                # ),(
                     # CY 2017
                     'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_1_1.tar.gz',
                     'OpenSubdiv-3_1_1.tar.gz',
                     '3.1.1',
                     '0f50e6aaca1d174d6b878433d13faa7f',
-                    {gcc: '4.8.5', boost: '1.51.0', ptex: '2.1.28'},
+                    {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', boost: '1.51.0', ptex: '2.1.28'},
                 ),(
                     # CY 2018-2019
                     'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_3_3.tar.gz',
                     'OpenSubdiv-3_3_3.tar.gz',
                     '3.3.3',
                     '29c79dc01ef616aab02670bed5544ddd',
-                    {gcc: '4.8.5', boost: '1.55.0', ptex: '2.1.33'},
+                    {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', boost: '1.55.0', ptex: '2.1.33'},
                 ),(
                     # CY 2020
                     'https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_4_0.tar.gz',
@@ -2612,7 +2681,7 @@ class all: # noqa
                     {gcc: '6.3.1', boost: bv, ptex: '2.3.2'},
                 )],
                 # baseLibs=[python],
-                depend=allDepend+[hdf5, glfw, glew],
+                depend=self.allDepend+[hdf5, glfw, glew],
                 flags=[
                     "-DGLEW_LOCATION=$GLEW_TARGET_FOLDER/",
                     "-DVERBOSE=1",
@@ -2627,133 +2696,8 @@ class all: # noqa
             self.opensubdiv = opensubdiv
 
 
-            # build USD without applications plugins
-            # dependency version table:
-            # https://github.com/PixarAnimationStudios/USD/blob/master/VERSIONS.md
-            usd = build.cmake(
-                ARGUMENTS,
-                'usd',
-                download=[(
-                    # theres no CY for USD - not in VFX Platform yet.
-                    # so lets build the one in Gaffer dependencies
-                #     'https://github.com/PixarAnimationStudios/USD/archive/v18.09.tar.gz',
-                #     'USD-18.09.tar.gz',
-                #     '18.9.0',
-                #     '10a06767c6a9c69733bb5f9fbadcb52a',
-                #     {gcc: '4.8.5', opensubdiv: '3.3.3', alembic: '1.6.1',
-                #     hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
-                #     boost: '1.55.0',
-                #     self.ilmbase['boost.1.55.0']: exr_version,
-                #     self.openexr['boost.1.55.0']: exr_version,
-                #     self.oiio['boost.1.55.0']: '1.6.15' },
-                # ),(
-                    # this is the latest for now - nov/2019
-                    'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
-                    'USD-19.07.tar.gz',
-                    '19.7.0',
-                    '8d274089364cfed23004ae52fa3d258f',
-                    {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
-                    cmake: '3.18.2', tbb: '4.4.6',
-                    boost: bv,
-                    self.ilmbase['boost.%s' % bv]: exr_version,
-                    self.openexr['boost.%s' % bv]: exr_version,
-                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
-
-                ),(
-                    # this is the latest for now - sept/2020
-                    'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
-                    'USD-20.08.tar.gz',
-                    '20.8.0',
-                    'e7f31719ef2359c939d23871333a763a',
-                    {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
-                    cmake: '3.18.2', tbb: '4.4.6',
-                    boost: bv,
-                    self.ilmbase['boost.%s' % bv]: exr_version,
-                    self.openexr['boost.%s' % bv]: exr_version,
-                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
-                ),(
-                    # this is the latest for now - sept/2020
-                    'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
-                    'USD-21.05.tar.gz',
-                    '21.5.0',
-                    'f63736f66fe7f81d17c7a046cb6dbc39',
-                    {gcc: '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
-                    cmake: '3.18.2', tbb: '4.4.6',
-                    boost: bv,
-                    self.ilmbase['boost.%s' % bv]: exr_version,
-                    self.openexr['boost.%s' % bv]: exr_version,
-                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
-                )],
-                # baseLibs=[python],
-                depend=[
-                    boost, alembic, opensubdiv, materialx, ocio, icu,
-                    openvdb, osl, hdf5, glfw, glew, ptex, pyside, qt, python
-                ]+allDepend,
-                cmd = [
-                    "mkdir build",
-                    "cd build",
-                    "cmake"
-                    " -D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER"
-                    " -D CMAKE_PREFIX_PATH=$INSTALL_FOLDER"
-                    " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
-                    " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
-                    " -D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
-                    " -D Boost_NO_SYSTEM_PATHS=ON"
-                    " -D Boost_NO_BOOST_CMAKE=ON"
-                    " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER"
-                    " -D HDF5_LOCATION=$HDF5_TARGET_FOLDER"
-                    " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
-                    " -D GLEW_LOCATION=$GLEW_TARGET_FOLDER/"
-                    " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
-                    " -D OIIO_LOCATION=$OIIO_TARGET_FOLDER"
-                    " -D OSL_LOCATION=$OSL_TARGET_FOLDER"
-                    " -D PTEX_LOCATION=$PTEX_TARGET_FOLDER"
-                    " -D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER"
-                    " -D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/"
-                    " -D PXR_BUILD_TESTS=OFF"
-                    " -D PXR_BUILD_GPU_SUPPORT=ON"
-                    # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
-                    # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
-                    " --build --target install --parallel $DCORES ..",
-                    "make -j $DCORES",
-                    "make -j $DCORES install",
-                    "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
-                ],
-                flags=[
-                    # enable plugins
-                    "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
-                    "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
-                    "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
-                    "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
-                    "-D PXR_BUILD_IMAGING=ON",
-                    "-D PXR_BUILD_USD_IMAGING=ON",
-
-                    # enable support to different components.
-                    " -D PXR_ENABLE_HDF5_SUPPORT=ON",
-                    " -D PXR_ENABLE_OSL_SUPPORT=ON",
-                    " -D PXR_ENABLE_PTEX_SUPPORT=ON",
-                    " -D VERBOSE=1",
-                    " -D CMAKE_CXX_STANDARD=11",
-                    " -D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
-                    " -D_GLIBCXX_USE_CXX11_ABI=0",
-                ],
-                environ = {
-                    # we need boost first of everything else since icu also has regex.h
-                    'CFLAGS'    : ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost  '+ self.exr_rpath_environ['CFLAGS'],
-                    'CXXFLAGS'  : ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options '+ self.exr_rpath_environ['CXXFLAGS'],
-                    'LD'        : 'ld',
-                    'LDFLAGS'   : '$LDFLAGS -lboost_regex -lboost_program_options' + self.exr_rpath_environ['LDFLAGS'],
-                    'LD_PRELOAD': ':'.join([
-                        '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
-                        '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
-                    ]),
-                },
-                # verbose=1,
-            )
-            self.usd = usd
-
             # =============================================================================================================================================
-            # APPLESEED, a open source ray tracer that works in gaffer
+            # EMBREE and USD
             # =============================================================================================================================================
             environ = self.exr_rpath_environ.copy()
             lz4 = build.make(
@@ -2767,7 +2711,7 @@ class all: # noqa
                     { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
                     qt: '5.6.1', boost: bv, },
                 )],
-                depend = allDepend+[python],
+                depend = self.allDepend+[python],
                 cmd=[
                     'make',
                     'mkdir -p $INSTALL_FOLDER/bin/',
@@ -2806,7 +2750,7 @@ class all: # noqa
                     { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
                     qt: '5.6.1', boost: bv, },
                 )],
-                depend = allDepend+[python, qt],
+                depend = self.allDepend+[python, qt],
                 flags = [
                     '-Wno-error',
                     '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
@@ -2836,7 +2780,7 @@ class all: # noqa
                     { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
                     qt: '5.6.1', boost: bv, },
                 )],
-                depend = allDepend+[python],
+                depend = self.allDepend+[python],
                 flags = [
                     '-Wno-error',
                     '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
@@ -2860,12 +2804,168 @@ class all: # noqa
                     'embree-3.6.1.x86_64.linux.tar.gz',
                     '3.6.1',
                     '3b6012add9dfc9ea8137ada5e0bd27b9',
+                ),(
+                    'https://github.com/embree/embree/releases/download/v3.13.2/embree-3.13.2.x86_64.linux.tar.gz',
+                    'embree-3.6.1.x86_64.linux.tar.gz',
+                    '3.6.1',
+                    '3b6012add9dfc9ea8137ada5e0bd27b9',
                 )],
                 environ = environ,
             )
             self.embree = embree
 
+            # build USD without applications plugins
+            # dependency version table:
+            # https://github.com/PixarAnimationStudios/USD/blob/master/VERSIONS.md
+            usd = build.cmake(
+                ARGUMENTS,
+                'usd',
+                download=[(
+                    # theres no CY for USD - not in VFX Platform yet.
+                    # so lets build the one in Gaffer dependencies
+                #     'https://github.com/PixarAnimationStudios/USD/archive/v18.09.tar.gz',
+                #     'USD-18.09.tar.gz',
+                #     '18.9.0',
+                #     '10a06767c6a9c69733bb5f9fbadcb52a',
+                #     {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', opensubdiv: '3.3.3', alembic: '1.6.1',
+                #     hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
+                #     boost: '1.55.0',
+                #     self.ilmbase['boost.1.55.0']: exr_version,
+                #     self.openexr['boost.1.55.0']: exr_version,
+                #     self.oiio['boost.1.55.0']: '1.6.15' },
+                # ),(
+                #     # this is the latest for now - nov/2019
+                #     'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
+                #     'USD-19.07.tar.gz',
+                #     '19.7.0',
+                #     '8d274089364cfed23004ae52fa3d258f',
+                #     {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                #     cmake: '3.18.2', tbb: '4.4.6',
+                #     boost: bv,
+                #     self.ilmbase['boost.%s' % bv]: exr_version,
+                #     self.openexr['boost.%s' % bv]: exr_version,
+                #     self.oiio   ['boost.%s' % bv]: '1.8.10'},
+                #
+                # ),(
+                    # this is the latest for now - sept/2020
+                    'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
+                    'USD-20.08.tar.gz',
+                    '20.8.0',
+                    'e7f31719ef2359c939d23871333a763a',
+                    {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                    cmake: '3.18.2', tbb: '4.4.6', materialx : '1.38.1',
+                    boost: bv,
+                    self.ilmbase['boost.%s' % bv]: exr_version,
+                    self.openexr['boost.%s' % bv]: exr_version,
+                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
+                ),(
+                    # this is the latest for now - sept/2020
+                    'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
+                    'USD-21.05.tar.gz',
+                    '21.5.0',
+                    'f63736f66fe7f81d17c7a046cb6dbc39',
+                    {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                    cmake: '3.18.2', tbb: '4.4.6', materialx : '1.38.1',
+                    boost: bv,
+                    self.ilmbase['boost.%s' % bv]: exr_version,
+                    self.openexr['boost.%s' % bv]: exr_version,
+                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
+                ),(
+                    # this is the latest for now - sept/2020
+                    'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.11.tar.gz',
+                    'USD-21.11.tar.gz',
+                    '21.11.0',
+                    '7fe232df5c732fedf466d33ff431ce33',
+                    {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                    cmake: '3.18.2', tbb: '4.4.6', materialx : '1.38.1',
+                    boost: bv,
+                    self.ilmbase['boost.%s' % bv]: exr_version,
+                    self.openexr['boost.%s' % bv]: exr_version,
+                    self.oiio   ['boost.%s' % bv]: '1.8.10'},
+                )],
+                # baseLibs=[python],
+                depend=[
+                    boost, alembic, opensubdiv, materialx, ocio, icu, embree,
+                    openvdb, osl, hdf5, glfw, glew, ptex, pyside, qt, python
+                ]+self.allDepend,
+                cmd = [
+                    "mkdir build",
+                    "cd build",
+                    # "export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH" % os.popen("dirname $(ldconfig -p | grep libc.so.6 | awk '{print $(NF)}')").readlines()[0].strip(),
+                    # "echo $LD_LIBRARY_PATH",
+                    "cmake"
+                    " -D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER"
+                    " -D CMAKE_PREFIX_PATH=$INSTALL_FOLDER"
+                    " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
+                    " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
+                    " -D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+                    " -D Boost_NO_SYSTEM_PATHS=ON"
+                    " -D Boost_NO_BOOST_CMAKE=ON"
+                    " -D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER"
+                    " -D HDF5_LOCATION=$HDF5_TARGET_FOLDER"
+                    " -D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib"
+                    " -D GLEW_LOCATION=$GLEW_TARGET_FOLDER/"
+                    " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
+                    " -D OIIO_LOCATION=$OIIO_TARGET_FOLDER"
+                    " -D OSL_LOCATION=$OSL_TARGET_FOLDER"
+                    " -D PTEX_LOCATION=$PTEX_TARGET_FOLDER"
+                    " -D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER"
+                    " -D MATERIALX_LIB_DIRS=$MATERIALX_TARGET_FOLDER/lib/"
+                    " -D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/"
+                    " -D PXR_BUILD_TESTS=OFF"
+                    " -D PXR_BUILD_GPU_SUPPORT=ON"
+                    # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
+                    # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
+                    " --build --target install --parallel $DCORES ..",
+                    "make -j $DCORES",
+                    "make -j $DCORES install",
+                    "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
+                ],
+                flags=[
+                    # enable plugins
+                    "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
+                    "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
+                    "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
+                    "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
+                    "-D PXR_BUILD_IMAGING=ON",
+                    "-D PXR_BUILD_USD_IMAGING=ON",
 
+                    # enable support to different components.
+                    " -D PXR_ENABLE_HDF5_SUPPORT=ON",
+                    " -D PXR_ENABLE_OSL_SUPPORT=ON",
+                    " -D PXR_ENABLE_PTEX_SUPPORT=ON",
+                    " -D VERBOSE=1",
+                    " -D CMAKE_CXX_STANDARD=11",
+                    " -D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
+                    " -D_GLIBCXX_USE_CXX11_ABI=0",
+                ],
+                environ = {
+                    # we need boost first of everything else since icu also has regex.h
+                    'LD'        : 'ld',
+                    'CFLAGS'    : ' '.join([
+                        ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost  ',
+                        self.exr_rpath_environ['CFLAGS'],
+                    ]),
+                    'CXXFLAGS'  : ' '.join([
+                        ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w -isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options ',
+                        self.exr_rpath_environ['CXXFLAGS'],
+                    ]),
+                    'LDFLAGS'   : ' '.join([
+                        '$LDFLAGS -lboost_regex -lboost_program_options',
+                        self.exr_rpath_environ['LDFLAGS'],
+                    ]),
+                    'LD_PRELOAD': ':'.join([
+                        '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                        '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                    ]),
+                },
+                # verbose=1,
+            )
+            self.usd = usd
+
+            # =============================================================================================================================================
+            # APPLESEED, a open source ray tracer that works in gaffer
+            # =============================================================================================================================================
             # environ = self.exr_rpath_environ.copy()
             # environ.update({
             #     # as we use the embree tarball, it comes with it's only tbb,
@@ -2902,7 +3002,7 @@ class all: # noqa
             #         self.openexr['boost.%s' % bv]: exr_version,
             #         self.oiio   ['boost.%s' % bv]: '1.8.10' },
             #     )],
-            #     depend=allDepend+[usd, seexpr, lz4, osl, xerces, python,  ocio],
+            #     depend=self.allDepend+[usd, seexpr, lz4, osl, xerces, python,  ocio],
             #     flags = [
             #         '-Wno-error',
             #         '-DCMAKE_PREFIX_PATH=$QT_TARGET_FOLDER',
@@ -2984,4 +3084,4 @@ class all: # noqa
             #     )
             # )
 
-        self.allDepend = allDepend
+        self.allDepend = self.allDepend

@@ -53,11 +53,11 @@ class configure(generic):
         return cmd
 
 class wait4dependencies(configure):
-    cmd = ["echo Done!!!!!"]
     noMinTime=True
     dontUseTargetSuffixForFolders = 1
     do_not_use=True
-    def __init__(self, wait4, msg, version=None):
+    def __init__(self, wait4, msg, version=None, cmd=["echo Done!!!!!"], depend=[], **kargs):
+        self.cmd = cmd
         self.wait4 = wait4
         d = self.wait4.download
         if version:
@@ -67,7 +67,10 @@ class wait4dependencies(configure):
         for d in download:
             os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
 
-        configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure' )
+        configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
+
+
+
 
 class pip(configure):
     cmd = ["./build.sh"]
@@ -75,24 +78,52 @@ class pip(configure):
     dontUseTargetSuffixForFolders = 1
     do_not_use=True
 
+    def bootstrap_python_versions(self, env, _source):
+        import glob
+        pv = _source.lower().split(self.pip_pkg.lower()+'.')[-1]
+        pvv = pv.split('.')[0]
+        if 'DOCKER_PYTHON' in os.environ:
+            if not os.path.exists('%s/%s/bin' % (os.environ['DOCKER_PYTHON'], pv)):
+                download_path=os.path.abspath(os.path.dirname(_source)+'/../.download/pip'+pv+'/'+self.pip_pkg+'/')
+                downloaded_python=os.path.abspath('%s/../.download/Python-%s.tar.gz' % (os.path.dirname(_source), pv))
+                cmd = ' && '.join([
+                    'mkdir -p /%s/%s'                             % (os.environ['DOCKER_PYTHON'], pv),
+                    'cd /%s/%s'                                   % (os.environ['DOCKER_PYTHON'], pv),
+                    'tar xf %s'                                   % (downloaded_python),
+                    'cd %s'                                       % (os.path.basename(downloaded_python).split('.tar')[0]),
+                    './configure --enable-unicode=ucs4 '
+                        '--prefix %s/%s -with-ensurepip=install ' % (os.environ['DOCKER_PYTHON'], pv),
+                    'make -j $DCORES && make -j $DCORES install'
+                ])
+                genericBuilders._print(cmd)
+                os.system(cmd)
+
     def downloader(self, env, _source, _url=None):
         #self.pip_pkg
         import glob
+
+        # bootstrap python version to download pip packages
+        self.bootstrap_python_versions(env, _source)
+
         self.error = None
         pv = _source.lower().split(self.pip_pkg.lower()+'.')[-1]
         pvv = pv.split('.')[0]
-        download_path=os.path.abspath(os.path.dirname(_source)+'/../.download/pip'+pvv+'/'+self.pip_pkg+'/')
+        download_path=os.path.abspath(os.path.dirname(_source)+'/../.download/pip'+pv+'/'+self.pip_pkg+'/')
 
         # check if already downloaded:
         os.environ['PYTHON_TARGET_FOLDER'] = "%s/%s" % (os.path.dirname(os.environ['PYTHON_TARGET_FOLDER']), pv)
+        # print download_path, glob.glob("%s/*" % download_path)
         downloaded = [ x for x in glob.glob("%s/*" % download_path) if self.pip_pkg.lower() in x.lower()]
         # print downloaded
         if not downloaded:
             genericBuilders._print( bcolors.GREEN, "\tDownloading pip module %s for python version %s..." % (self.pip_pkg, pvv) )
             genericBuilders._print( bcolors.END )
 
-            os.system("mkdir -p '%s'" % download_path)
-            cmd = '''cd '%s' && python%s -m pip download "%s" ''' % (download_path, pvv, self.pip_pkg)
+            cmd  = "mkdir -p '%s' && " % download_path
+            cmd += "cd '%s' && " % download_path
+            cmd += 'PATH=$DOCKER_PYTHON/%s/bin:$PATH ' % pv
+            cmd += 'python%s -m pip download "%s" ' % (pvv, self.pip_pkg)
+            genericBuilders._print(cmd)
             print cmd
             os.system(cmd)
             if not glob.glob("%s/*" % download_path):
@@ -150,7 +181,7 @@ class pip(configure):
         build_sh = '''
             #download=$(PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip download "%s" | grep whl | awk -F'/' '{print $(NF)}' | head -1)
             download=$(ls -1 | grep -i '%s-')
-            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install ./$download || \
+            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install ./$download # || \
             PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install %s
         ''' % (self.pip_pkg, self.pip_pkg, self.pip_pkg)
         f.write("#!/bin/bash\n\n"+build_sh+"\n")
@@ -183,13 +214,10 @@ class gccBuild(configure):
     #     ],
     # }}
     # sed = {'4.8.3' : {
-    #     'gmp-4.3.2/configure.in' : [
-    #         ('M4.m4.not.required','M4=m4')
-    #     ],
-    #     'gmp-4.3.2/configure' : [
-    #         ('M4.m4.not.required','M4=m4')
-    #     ],
-    # }},
+    #     'gcc/system.h' : [
+    #         ('extern const char .strsignal','//extern const char strsignal')
+    #     ]}
+    # }
 
     def uncompressor( self, target, source, env):
         ''' we just need this for the 4.1.2 binary tarball!'''
@@ -339,6 +367,7 @@ class gccBuild(configure):
                         '--libexecdir="$INSTALL_FOLDER/lib" '
                         '--mandir=$INSTALL_FOLDER/share/man '
                         "--program-suffix=$(basename $TARGET_FOLDER) "
+                        "--disable-lto "
                         "%s --prefix=$INSTALL_FOLDER " % distroSpecificConfigure,
                 # "sed -i -e 's/struct ucontext/ucontext_t/g' ./x86_64-pc-linux-gnu/libgcc/md-unwind-support.h || /bin/bash",
                 'make -j $DCORES',
@@ -479,6 +508,11 @@ class gccBuild(configure):
             # 'unset LD_LIBRARY_PATH',
             # set the system crtbegin.o path so the system gcc can build our gcc
             "export LIBRARY_PATH=$(echo $(find $INSTALL_FOLDER/../4.1.2/ -name crtbegin.o -exec dirname {} \;) | sed 's/ /:/g'):$LIBRARY_PATH",
+            # "export C_INCLUDE_PATH=/usr/include:GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/ssp/",
+            # "export CPLUS_INCLUDE_PATH=/usr/include:GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/ssp/",
+            # "unset C_INCLUDE_PATH",
+            # "unset CPP_INCLUDE_PATH",
+            # "unset PKG_CONFIG_PATH",
             cmd
         ]+symlinks)
         return cmd
