@@ -5,10 +5,10 @@
 # we can also create new images based on this one to download new packages
 # without having to re-download the ones in this image!
 
-# ARG BASE_IMAGE
-# FROM $BASE_IMAGE
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 # FROM centos:7.6.1810
-FROM hradec/pipevfx_pkgs:centos7_latest
+# FROM hradec/pipevfx_pkgs:centos7_latest
 
 ARG http
 ARG https
@@ -32,8 +32,13 @@ COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
 COPY docker/gcc-bin-4.1.2.tgz       /atomo/pipeline/build/.download/4.1.2.tar.gz
 COPY docker/setuptools-33.1.1.zip   /atomo/pipeline/build/.download/setuptools-33.1.1.zip
 
+RUN yum install -y zlib-devel which
+RUN [ "$(which gcc)" == "" ] && yum group install -y "Development Tools" || true
+RUN yum install -y openssl-devel libffi-devel
+RUN yum clean all
+RUN rm -rf /var/cache/yum/*
+
 # download packages so the image contain all tarballs.
-RUN yum install -y python2-pip python3-pip
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     export TERM=xterm && \
     export ftp_proxy=$http_proxy && \
@@ -41,17 +46,25 @@ RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     mkdir -p /atomo/pipeline/build/ && \
     cd /atomo/pipeline/build && \
     env && \
+    rm -rf .download/pip? && \
     ( ls -1 .download/*{.tar,.zip}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
         do [ "$(egrep $p /tmp/xx)" == "" ] && rm -vrf ".download/$p" ; \
         [ -d .download/$p ] && rm -vrf ".download/$p" ; \
-    done ; rm /tmp/xx ) && \
+    done ; rm /tmp/xx ) ; \
+    rm -rfv .download/pip? ; \
     ls -l /atomo/pipeline/build/.download/ | wc -l && \
-    PYTHONPATH=/atomo/pipeline/tools/python scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) || true
+    export DOCKER_PYTHON=/python/ && \
+    PYTHONPATH=/atomo/pipeline/tools/python scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) || true && \
+    ( ls -1 .download/*{.tar,.zip}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
+        do [ "$(egrep $p /tmp/xx)" == "" ] && rm -vrf ".download/$p" ; \
+        [ -d .download/$p ] && rm -vrf ".download/$p" ; \
+    done ; rm /tmp/xx )
+
+#    rm -rfv /python ; rm -rfv .download/pip* ; rm -rf /atomo/pipeline/build/.download/pip*/*/ ; \
+
 
 RUN ls -l /atomo/pipeline/build/.download/pip*/*/
 
-RUN yum clean all
-RUN rm -rf /var/cache/yum/*
 RUN rm -rvf \
     /run.sh \
     /atomo/pipeline/tools/python \
