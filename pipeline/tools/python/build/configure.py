@@ -70,8 +70,6 @@ class wait4dependencies(configure):
         configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
 
 
-
-
 class pip(configure):
     cmd = ["./build.sh"]
     noMinTime=True

@@ -121,7 +121,7 @@ RUN yum -y install audiofile-devel
 
 # install python2 scons
 RUN yum -y install python2
-RUN python2 -m ensurepip
+RUN python2 -m ensurepip || yum -y install python2-pip
 RUN python2 -m pip install SCons
 
 # fedora expecific packages needed when building with fedora
@@ -129,8 +129,11 @@ RUN [ -f /etc/fedora-release ] && yum -y install \
     lbzip2 \
     rsync \
     expat-devel \
+    sphinx || yum -y install \
+    rsync \
+    expat-devel \
     sphinx
-RUN pip install sphinx
+RUN python2 -m pip install sphinx || true
 
 # to avoid clashing in osl
 RUN yum -y remove boost
@@ -147,6 +150,8 @@ RUN rm -rf /var/cache/yum/*
 # a new package.
 RUN mkdir -p /atomo/pipeline/build/.download/
 COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download  /atomo/pipeline/build/.download/
+
+RUN [ -f /etc/centos-release ] && yum -y install python2-scons || true
 
 ENV TERM=xterm
 ENTRYPOINT "/run.sh"
