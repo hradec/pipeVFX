@@ -15,6 +15,12 @@ export STUDIO
 #raw_image=centos:7.6.1810
 raw_image=fedora:35
 
+if [ "$IMAGE" == "centos" ] ; then
+    raw_image=centos:7.6.1810
+elif [ "$IMAGE" != "" ] ; then
+    raw_image=$IMAGE
+fi
+
 # base image name for pipeVFX images
 base=hradec/pipevfx
 
@@ -154,6 +160,7 @@ else
             exit -1
         fi
         docker push $build_image
+        exit $?
     fi
 
     # use wget proxy setup if it exists
