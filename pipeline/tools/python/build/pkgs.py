@@ -391,7 +391,7 @@ class all: # noqa
             ],
             depend = self.allDepend+[self.gcc_4_1_2],
             noMinTime=True,
-            # globalDependency = True,
+            globalDependency = True,
         )
         self.make = make
         autoconf = build.configure(
@@ -468,6 +468,7 @@ class all: # noqa
         # =============================================================================================================================================
         # now we build GCC using glibc built above
         # =============================================================================================================================================
+        # gcc 4.8.5 build fails in fedora 35
         gcc = build.gccBuild(
                 ARGUMENTS,
                 'gcc',
@@ -495,7 +496,7 @@ class all: # noqa
                     'gcc-4.8.5.tar.gz',
                     '4.8.5',
                     'bfe56e74d31d25009c8fb55fd3ca7e01',
-                    # { binutils : '2.22.0' }
+                    { binutils : '2.22.0' }
                 ),(
                     # CY2018 GCC 6.3.1 source code.
                    'http://vault.centos.org/7.5.1804/sclo/Source/rh/devtoolset-6/devtoolset-6-gcc-6.3.1-3.1.el7.src.rpm',

@@ -335,11 +335,31 @@ class gccBuild(configure):
                 ])
 
             # print "=====>>>>",pipe.distro, 'fedora' in pipe.distro
+            distroSpecific_pos_configure = []
             if 'fedora' in pipe.distro:
                 distroSpecific = [
                     '''( for n in $(ls libgcc/config/*/linux-unwind.h) ; do sudo sed -i -e 's/struct.ucontext/ucontext_t/g' $n ; done )''',
                     "sed -i.bak -e 's/fcntl.h./fcntl.h>\\n#include <signal.h>/' libsanitizer/asan/asan_linux.cc",
                     "sed -i.bak -e 's/__res_state .statp . .__res_state..state/struct __res_state *statp = (struct __res_state*)state/'  libsanitizer/tsan/tsan_platform_linux.cc",
+                    "sed -i.bak -e 's/extern const char .strsignal/\/\/ /' gcc/system.h",
+                    # "export PATH=/bin:/usr/bin:/sbin:/usr/sbin:$PATH",
+                    # "unset LD_LIBRARY_PATH",
+                    # "unset LIBRARY_PATH",
+                    # "unset C_INCLUDE_PATH",
+                    # "unset CPP_INCLUDE_PATH",
+                    # "unset CFLAGS",
+                    # "unset CXXFLAGS",
+                    # "unset CPPFLAGS",
+                    # "unset CPPCXXFLAGS",
+                    # "unset LDFLAGS",
+                    # "export CC=/bin/gcc",
+                    # "export CXX=/bin/g++",
+                    # "export LIBRARY_PATH=$(dirname $(find /usr/ -name crtbegin.o | grep -v '\/32\/'))",
+                ]
+                distroSpecific_pos_configure = [
+                    # '''sed -i.bak -e 's/...config.in.*$/#define LTOPLUGINSONAME "liblto_plugin.so"/' ../gcc/config.in ''',
+                    # '''ls  ../*/config.in | while read p ; do echo -e '\\n\\n#define GATHER_STATISTICS\\n' >> $p ; done''',
+                    # '''ls  ../*/config.in | while read p ; do echo -e '\\n\\n#define LTOPLUGINSONAME "liblto_plugin.so"\\n' >> $p ; done''',
                 ]
 
             cmd = ' && '.join(distroSpecific+[
@@ -347,10 +367,13 @@ class gccBuild(configure):
                 "mkdir -p build",
                 "cd build",
                 "ulimit -s 32768",
-                '../configure '
+                '''../configure '''
+                        '--target $(uname -m) '
+                        '--build $(uname -m) '
+                        '--host $(uname -m) '
                         '--disable-multilib '
                         '--disable-werror '
-                        '--disable-bootstrap '
+                        '--enable-bootstrap '
                         '--disable-install-libiberty '
                         '--disable-werror '
                         '--enable-__cxa_atexit '
@@ -367,9 +390,8 @@ class gccBuild(configure):
                         '--libexecdir="$INSTALL_FOLDER/lib" '
                         '--mandir=$INSTALL_FOLDER/share/man '
                         "--program-suffix=$(basename $TARGET_FOLDER) "
-                        "--disable-lto "
-                        "%s --prefix=$INSTALL_FOLDER " % distroSpecificConfigure,
-                # "sed -i -e 's/struct ucontext/ucontext_t/g' ./x86_64-pc-linux-gnu/libgcc/md-unwind-support.h || /bin/bash",
+                        "%s --prefix=$INSTALL_FOLDER " % distroSpecificConfigure
+            ] + distroSpecific_pos_configure + [
                 'make -j $DCORES',
                 'make install',
             ])
