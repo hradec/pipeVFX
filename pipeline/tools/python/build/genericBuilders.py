@@ -186,6 +186,7 @@ elif memGB < 8:
 # for the subsequent builds, including all versions build information
 # so we a build can pick and choose its dependency version, if needed!
 allDepend = []
+all_env_vars = {}
 
 
 # cleanup pythonpath env var!
@@ -215,6 +216,120 @@ if os.popen('''cat %s 2>&1 | grep "'/usr/lib'"''' % f).readlines():
             2. install a newer Nvidia driver, which fixes this (since it's their fault it seems newer drivers fix it!!)
 
     ''' % (f,f) + bcolors.END )
+
+
+def rpath_environ( rpath=[] ):
+    ''' create env vars to add rpath to gcc link, as well as include paths.
+    pass the lib folder of a package, and it will figure the include path'''
+    if type(rpath) == type(""):
+        rpath = [rpath]
+    includes = [ x.strip().replace('/lib', '/include') for x in rpath ]
+    _rpath_environ = {
+        'LDFLAGS' : ' $LDFLAGS '
+            +' -L'+' -L'.join(rpath)
+            +' -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(rpath)
+            +' -Wl,-rpath,'+' -Wl,-rpath,'.join(rpath)
+        ,
+        'CFLAGS' : ' $CFLAGS '
+            +' -D_GLIBCXX_USE_CXX11_ABI=0 -isystem./ '
+            +' -isystem'+' -isystem'.join(includes)
+        ,
+        'CXXFLAGS' : ' $CXXFLAGS '
+            +' -D_GLIBCXX_USE_CXX11_ABI=0 -isystem./ '
+            +' -isystem'+' -isystem'.join(includes)
+        ,
+        'CPPFLAGS' : ' $CPPFLAGS '
+            +' -D_GLIBCXX_USE_CXX11_ABI=0 -isystem./ '
+            +' -isystem'+' -isystem'.join(includes)
+        ,
+        'CPPCXXFLAGS' : ' $CPPCXXFLAGS '
+            +' -D_GLIBCXX_USE_CXX11_ABI=0 -isystem./ '
+            +' -isystem'+' -isystem'.join(includes)
+        ,
+        # we need this to build with exr version below 2.2.0
+        'CPLUS_INCLUDE_PATH' : ':'.join(includes+[
+            '$BOOST_TARGET_FOLDER/include/',
+            '$BOOST_TARGET_FOLDER/include/boost/',
+            '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
+            '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+            '$CPLUS_INCLUDE_PATH'
+        ]),
+        'C_INCLUDE_PATH' : ':'.join(includes+[
+            '$BOOST_TARGET_FOLDER/include/',
+            '$BOOST_TARGET_FOLDER/include/boost/',
+            '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
+            '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+            '$C_INCLUDE_PATH'
+        ]),
+    }
+    return removeDuplicatedEntriesEnvVars(_rpath_environ)
+
+# some env vars require : to divide paths
+PATH_ENV_VAR = [
+    'CPLUS_INCLUDE_PATH',
+    'C_INCLUDE_PATH',
+    'LIBRARY_PATH',
+    'LD_LIBRARY_PATH',
+    'LD_PRELOAD'
+    'PATH'
+]
+def removeDuplicatedEntriesEnvVars(data):
+    ''' remove duplicated entries in env vars '''
+    result = {}
+    clean_result = {}
+    result.update(data)
+    for _env in data:
+        cleanup = []
+        divisor=' '
+        if _env in PATH_ENV_VAR:
+            divisor=':'
+        for each in result[_env].split(divisor):
+            if each not in cleanup:
+                cleanup += [each]
+        clean_result[_env] = divisor.join(cleanup)
+
+    # remove double characters
+    for removeDoubles in ['  ', '::', '//']:
+        clean_result[_env] = clean_result[_env].replace(removeDoubles, removeDoubles[0])
+        clean_result[_env] = clean_result[_env].rstrip(removeDoubles[0])
+
+    return clean_result
+
+
+def update_environ_dict(dict1, dict2addingTo1):
+    ''' add a environ dictionary correctly to another, without
+    overriding key values'''
+    result = {}
+    clean_result = {}
+    result.update(dict1)
+    for _env in dict2addingTo1:
+        # make sure key exists in result dict
+        if _env not in result:
+            result[_env] = ''
+
+        # account for $ENVVAR in itself
+        # we always prepend the $ENVVAR to itself.
+        _ENV = ''
+        if _env not in ['LD','CC','CXX','CXXCPP','CPP']:
+            __ENV = '$%s' % _env.upper()
+            if __ENV in result[_env] or __ENV in dict2addingTo1[_env]:
+                _ENV = __ENV
+
+
+        divisor=' '
+        if _env in PATH_ENV_VAR:
+            divisor=':'
+
+        # now we add it correctly
+        result[_env] = divisor.join([
+            _ENV,
+            result[_env].replace(_ENV,''),
+            dict2addingTo1[_env].replace(_ENV,''),
+        ])
+
+    return removeDuplicatedEntriesEnvVars(result)
+
+
 
 class _parameter_override_:
     name='None'
@@ -289,6 +404,12 @@ class generic:
 
             cmd         = a list of commands to build the pkg and install!
 
+            noMinTime   = if True, won't assume a minimum time of 5 seconds for builds
+
+            globalDependency =  set the build as a dependency for all subsequent builds (so no need to add it in the depend list)
+                                if more than one version is available, the subsequent builds will use the last version in the download list!
+                                to set a specific version, set it in the last 5th line of the tupple in the download item. (see download above!)
+
     '''
     src   = ''
     cmd   = ''
@@ -302,6 +423,8 @@ class generic:
         global __pkgInstalled__
         global buildTotal
         global sconsParallel
+        global allDepend
+        global all_env_vars
 
         download = [ list(x) for x in download ]
 
@@ -372,6 +495,13 @@ class generic:
                 self.dependOn[d] = None
         self.set( "ENVIRON_DEPEND",  ' '.join([x.name for x in self.dependOn if hasattr(x, 'name')]) )
 
+        # add itself as a global dependency for all subsequent builds
+        if kargs.has_key('globalDependency'):
+            if kargs['globalDependency']:
+                allDepend += [self]
+                all_env_vars = update_environ_dict(all_env_vars, rpath_environ( '$%s_TARGET_FOLDER/lib' % self.name.upper() ))
+                # all_env_vars.update( rpath_environ( '%s_TARGET_FOLDER/lib' % self.name ) )
+
         # set gcc_version for instalation purposes
         gcc_version = None
         for each in self.dependOn:
@@ -411,8 +541,12 @@ class generic:
         # sed patches, per initial version
         if sed:
             self.sed  = sed
+
+        # se environment override
         if environ:
             self.environ  = environ
+            # add global env vars
+            self.environ = update_environ_dict(self.environ, all_env_vars)
 
         # cmds to build!
         self.kargs = kargs
@@ -1145,7 +1279,9 @@ class generic:
                 if dependOn.name not in target and dependOn.name not in self.env['ENVIRON_DEPEND'].split(' '):
                     continue
 
-                if dependOn.name=='gcc'  and dependOn.targetSuffix:
+                # specific rule to ignore pre-built gcc 4.1.2 binaries as dependency, since we add
+                # it down in this code in case no GCC is present as dependency.
+                if dependOn.name=='gcc'  and dependOn.targetSuffix=='pre':
                     continue
 
                 # grab the index for the version needed
@@ -1719,8 +1855,10 @@ class generic:
         from subprocess import Popen
         _start = time.time()
 
-        # if 'alembic' == self.name:
-        #     print(os_environ['PYILMBASE_TARGET_FOLDER'])
+        # prevent glibc from being in LD_LIBRARY_PATH!!
+        os_environ['LD_LIBRARY_PATH'] = ':'.join([x for x in os_environ['LD_LIBRARY_PATH'].split(':') if 'glibc' not in x])
+
+        os_environ = removeDuplicatedEntriesEnvVars(os_environ)
 
         proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
 
