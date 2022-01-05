@@ -11,6 +11,9 @@ if [ "$STUDIO" != "atomo" ] ; then
     mkdir -p /atomo/pipeline/libs
     mount -o bind /$STUDIO/pipeline/libs/ /atomo/pipeline/libs/
 fi
+if [ "$EXTRA" == "" ] ; then
+    export EXTRA=install all
+fi
 
 # echo STUDIO=$STUDIO
 
@@ -67,7 +70,8 @@ else
     env | egrep 'http|TRAVIS'
     # if we have more than 30GB on the machine, use tmpfs (ramdisk)
     # as the .build folder to speed up the build! (and if not running in parallel)
-    if [ $(( $MEMGB / 1024 / 1024 )) -gt 28 ] && [ "$(echo $EXTRA | grep '\-j ')" == "" ] ; then
+    # if [ $(( $MEMGB / 1024 / 1024 )) -gt 28 ] && [ "$(echo $EXTRA | grep '\-j ')" == "" ] ; then
+    if [ "$RAMDISK" != "" ] ; then
         echo "Building in ramdisk!!! $EXTRA"
         mount -t tmpfs tmpfs /$STUDIO/pipeline/build/.build
     fi
@@ -82,7 +86,8 @@ else
     # also, this accounts for the 2 stage build, when initially there's
     # no libs so we can't build any app dependent package, like cortex
     # for n in {1..3} ; do
-        /usr/bin/nice -n 19 scons install $EXTRA $DEBUG
+        echo /usr/bin/nice -n 19 scons $EXTRA $DEBUG
+        /usr/bin/nice -n 19 scons $EXTRA $DEBUG
     #     if [ $? -ne 0 ] ; then
     #         echo -e "\n\nERROR: Build did not finished correctly!!\n\n"
     #         break

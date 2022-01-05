@@ -37,15 +37,16 @@ build_image=${base}_build:$(echo $raw_image | sed 's/://')
 SHELL=1
 PUSH=0
 BUILD=0
-while getopts hbdupe: option ; do
+while getopts hsbdupe: option ; do
     case "${option}"
     in
-        h) HELP=1;;
-        b) SHELL=0;;
-        d) DEBUG="debug=1";;
-        u) UPLOAD=1;;
-        p) PKGS=1;;
-        e) EXTRA="${OPTARG}";;
+        h) export HELP=1;;
+        s) export SHELL=1;;
+        b) export SHELL=0;;
+        d) export DEBUG="debug=1";;
+        u) export UPLOAD=1;;
+        p) export PKGS=1;;
+        e) export EXTRA="${OPTARG}";;
         # v) EXTRA_VARS="${OPTARG}";;
     esac
 done
@@ -55,6 +56,7 @@ done
 if [ "$HELP" != "" ] ; then
     echo -e "\n$(basename $0) options:\n"
     echo -e "\t-h   : show this help"
+    echo -e "\t-s   : run a shell in the docker build image, with pipeVFX initialized"
     echo -e "\t-b   : build libraries"
     echo -e "\t-d   : run the build in debug mode (show the build log)"
     echo -e "\t-e   : add extra attributes which will be passed to scons"
@@ -235,6 +237,7 @@ else
         -e http_proxy=\"$http_proxy\" \
         -e https_proxy=\"$https_proxy\" \
         -e STUDIO=\"$STUDIO\" \
+        -e RAMDISK=\"$RAMDISK\" \
         $EXTRA_ENVS \
         -e MEMGB=\"$(grep MemTotal /proc/meminfo | awk '{print $(NF-1)}')\" \
         $X11 \
