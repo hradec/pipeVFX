@@ -21,14 +21,16 @@
 
 class gaffer(baseLib):
     def versions(self):
-        if self.parent()  in ["gaffer","python"]:
+        if self.parent()  in ["gaffer"]:
             pipe.libs.version.set( python='2.7.6' )
             pipe.version.set( python='2.7.6' )
-            if float('.'.join(pipe.libs.version.get('gaffer').split('.')[:2])) >= 0.55:
-                pipe.libs.version.set( cortex='10.2' )
-                pipe.libs.version.set( boost='1.61.0' )
-                pipe.libs.version.set( oiio='2.0.11' )
-                pipe.libs.version.set( tbb='2019_U9' )
+            gaffer_version = pipe.libs.version.get('gaffer')
+            if gaffer_version:
+                if float('.'.join(gaffer_version.split('.')[:2])) >= 0.55:
+                    pipe.libs.version.set( cortex='10.2' )
+                    pipe.libs.version.set( boost='1.61.0' )
+                    pipe.libs.version.set( oiio='2.0.11' )
+                    pipe.libs.version.set( tbb='2019_U9' )
             # if float(pipe.version.get('gaffer')[:3]) >= 2.0:
             #     pipe.libs.version.set( cortex='9.0.0.git_Oct_10_2014' )
 #        elif self.parent()  in ["maya", "houdini", "nuke"]:
