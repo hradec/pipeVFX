@@ -52,10 +52,10 @@ buildCounter=0
 buildStartTime=time.time()
 global sconsParallel
 sconsParallel='0'
-if 'TRAVIS' in os.environ:
-    sconsParallel='1' in os.environ['TRAVIS']
-else:
-    os.environ['TRAVIS']='0'
+# if 'TRAVIS' in os.environ:
+#     sconsParallel='1' in os.environ['TRAVIS']
+# else:
+#     os.environ['TRAVIS']='0'
 
 if 'EXTRA' in os.environ and '-j' in os.environ['EXTRA']:
     sconsParallel='1'
@@ -83,6 +83,12 @@ def _print(*args):
                 p = True
         if 'touch' in l[:15]:
             p = False
+
+    # dont print dinamic log line if running in CI
+    if os.environ['TRAVIS']=='1':
+        if l[-1] == '\r':
+            p=False
+
     if p:
         sys.stdout.write('\033[2K\033[1G')
         # if args[-1] == '\r':
@@ -90,6 +96,7 @@ def _print(*args):
         # else:
         #     print " ".join([str(x) for x in args])
         sys.stdout.write( l.strip() )
+
         if l[-1] != '\r':
             sys.stdout.write("\n")
     sys.stdout.flush()
