@@ -5,10 +5,10 @@
 # we can also create new images based on this one to download new packages
 # without having to re-download the ones in this image!
 
-# ARG BASE_IMAGE
-# FROM $BASE_IMAGE
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 # FROM centos:7.6.1810
-FROM hradec/pipevfx_pkgs:centos7_latest
+# FROM hradec/pipevfx_pkgs:centos7_latest
 
 ARG http
 ARG https
@@ -46,9 +46,10 @@ RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
         [ -d .download/$p ] && rm -vrf ".download/$p" ; \
     done ; rm /tmp/xx ) && \
     ls -l /atomo/pipeline/build/.download/ | wc -l && \
-    PYTHONPATH=/atomo/pipeline/tools/python scons download -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) || true
+    PYTHONPATH=/atomo/pipeline/tools/python scons download install -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) || true
 
 RUN ls -l /atomo/pipeline/build/.download/pip*/*/
+RUN ls -l /atomo/pipeline/build/.download/
 
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*

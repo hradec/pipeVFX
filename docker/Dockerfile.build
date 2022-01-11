@@ -136,7 +136,8 @@ RUN [ -f /etc/fedora-release ] && yum -y install \
 RUN python2 -m pip install sphinx || true
 
 # to avoid clashing in osl
-RUN yum -y remove boost
+# RUN yum -y remove boost
+# RUN yum -y reinstall boost-filesystem
 
 # cleanup
 RUN yum -y install sudo

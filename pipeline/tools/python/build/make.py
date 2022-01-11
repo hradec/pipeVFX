@@ -70,6 +70,11 @@ class make(generic):
             if 'make' in cmd and each.split('=')[0] not in cmd:
                 cmd = cmd.replace('make','make '+each+' ')
 
+        if 'parallel' not in self.kargs or self.kargs['parallel'] == 1:
+            if 'make' in cmd and 'cmake' not in cmd:
+                if not '-j' in cmd:
+                    cmd = cmd.replace('make', "make -j $DCORES")
+
         return cmd
 
 class cmake(make):
@@ -124,6 +129,7 @@ class cmake(make):
             '-DBOOST_ROOT=$BOOST_TARGET_FOLDER',
             '-DBOOST_INCLUDEDIR=$BOOST_TARGET_FOLDER/include',
             '''-DBOOST_LIBRARYDIR=$( if [ \"$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)\" == '' ] ; then ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 ; else echo $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi)/ ''',
+            '''-DBoost_LIBRARY_DIRS=$( if [ \"$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)\" == '' ] ; then ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 ; else echo $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi)/ ''',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
             '$CMAKE_VERBOSE ',
             # '-DMAYA_ROOT=$MAYA_ROOT',
@@ -181,6 +187,12 @@ class cmake(make):
         cmd = cmd.replace('/CMAKE/','/cmake/') # prevent replacing cmake string in paths
         cmd = ' && '.join(environ)+" && "+cmd
         #cmd = 'find ./ -name CMakeCache.txt -exec rm -rf {} \; && '+cmd
+
+        if 'parallel' not in self.kargs or self.kargs['parallel'] == 1:
+            if 'make' in cmd and 'cmake' not in cmd:
+                if not '-j' in cmd:
+                    cmd = cmd.replace('make', "make -j $DCORES")
+
         return cmd
 
 class alembic(cmake):

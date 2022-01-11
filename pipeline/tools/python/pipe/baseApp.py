@@ -883,7 +883,16 @@ class baseApp(_environ):
 
         # run the virtual environ() method of the app/lib class, if any!
         if hasattr(self, 'environ'):
-            self.environ()
+            try:
+                self.environ()
+            except:
+                # import inspect
+                # lines = inspect.getsource(self.environ)
+                print( bcolors.FAIL+'='*80 )
+                print(self.className)
+                print( "\n\t".join(traceback.format_exc().split('\n')) )
+                print( '='*80 + bcolors.END )
+
 
 
     def version(self, v=None):

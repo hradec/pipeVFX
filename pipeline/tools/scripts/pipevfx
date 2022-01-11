@@ -127,7 +127,7 @@ else
             --rm \
             --build-arg http="$http_proxy" \
             --build-arg https="$https_proxy" \
-            # --build-arg BASE_IMAGE="$previous_tag"
+            --build-arg BASE_IMAGE="$previous_tag"
 
         if [ $? -ne 0 ] ; then
             echo ERROR!!

@@ -1,0 +1,116 @@
+
+# boost (2h ws30)
+# cmake (1:30h ws30)
+# pyilmbase (1:46 ws30)
+name: CI
+
+on:
+  workflow_dispatch:
+    branches:
+      - '*'
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+  release:
+      types: [published]
+
+
+
+
+
+jobs:
+  runs-on: ubuntu-20.04
+  env:
+    DISPLAY: ":99.0"
+    ARNOLD_LICENSE_ORDER: none # Don't waste time looking for a license that doesn't exist
+    BUILD_DIR: "pipeline/build/"
+    CACHE_DIR: "pipeline/libs/"
+    STUDIO: "pipevfx"
+    CACHE_NAME: ${{ env.STUDIO }}-${{ github.sha }}
+
+  build:
+    strategy:
+      # cancel other jobs in the build matrix if one job fails.
+      fail-fast: true
+      matrix:
+        name: [
+          phase1,
+          phase2,
+          phase3,
+          phase4,
+          phase5,
+          phase6,
+          phase7,
+          phase8,
+          phase9,
+          phase10,
+          phase11,
+          phase12
+        ]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set Custom Variables
+      env:
+       GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       BUILD_VARIANT: ${{ matrix.name }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ${{ env.CACHE_DIR }}
+        key: |
+          ${{ env.STUDIO }}-${{ github.sha }}
+        restore-keys: |
+          ${{ env.STUDIO }}-${{ github.sha }}
+
+    - name: 'Install Python Modules'
+      run: pip install PyJWT==1.7.1 PyGitHub==1.45
+
+    - name: Build PipeVFX ${{ matrix.name }}
+      run: make build DOCKER=0 PKG=${{ matrix.name }}
+
+
+  package:
+    # - name: Validate
+    #   run: |
+    #     echo "::add-matcher::./.github/workflows/main/problemMatchers/validateRelease.json"
+    #     ./config/validateRelease.py --archive ${{ env.GAFFER_BUILD_NAME }}.tar.gz ${{ env.GAFFER_VALIDATE_EXTRA_FLAGS }}
+    #     echo "::remove-matcher owner=validateRelease::"
+    #   if: matrix.publish
+    steps:
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ${{ env.CACHE_DIR }}
+        key: |
+          ${{ env.STUDIO }}-${{ github.sha }}
+        restore-keys: |
+          ${{ env.STUDIO }}-${{ github.sha }}
+
+    - name: Publish Cache
+      run: tar -czf ${{ env.STUDIO }}-${{ github.sha }}.tar.gz ${{ env.STUDIO }}-${{ github.sha }}/
+
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
+        path: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
+
+    # - name: Publish Release
+    #   run: |
+    #     ./config/publishRelease.py --archive ${{ env.GAFFER_BUILD_NAME }}.tar.gz --repo ${{ github.repository }} --releaseId ${{ env.GAFFER_GITHUB_RELEASEID }}
+    #   if: matrix.publish && env.GAFFER_GITHUB_RELEASEID != ''
+    #   env:
+    #     GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # - name: Limit cache size
+    #   # GitHub has a limit of 5G for all caches in a repository. Because we write new
+    #   # files into `./sconsCache` with every build, we must trim its size to avoid
+    #   # unbounded growth. In practice, the archives that get uploaded are much smaller
+    #   # than the limit we apply here, because they're compressed.
+    #   run: ./.github/workflows/main/limitDirectorySize.py --directory ./sconsCache --megabytes ${{ matrix.sconsCacheMegabytes }} --verbose

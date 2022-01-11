@@ -8,25 +8,29 @@ PARALLEL?=
 RAMDISK?=
 CORES?=$(shell grep MHz /proc/cpuinfo  | wc -l)
 LLVM_CORES?=8
+OPENVDB_CORES?=$(shell grep MHz /proc/cpuinfo  | wc -l)
 
 all: help
 
 help:
 	@echo ""
-	@echo "make build	- build packages"
-	@echo "make shell	- run a shell inside the build container"
-	@echo "make upload	- make the package cache docker image, the build docker image and upload then"
-	@echo "make cache	- make the package cache docker image and upload it. Run it when new packages and versions are added."
-	@echo "make help	- display this help screen."
+	@echo "make build   - build packages"
+	@echo "make shell   - run a shell inside the build container"
+	@echo "make image   - make booth cache and build images and upload then."
+	@echo "               You should run this one when adding new packages, "
+	@echo "               so the build image is also done!"
+	@echo "make upload  - make the build docker image and upload"
+	@echo "make cache   - make the package cache docker image and upload it."
+	@echo "make help    - display this help screen."
 	@echo ""
 	@echo "optionals:"
-	@echo "  	make build DOCKER=0			- disable re-building the docker images. ex: make build DOCKER=0"
-	@echo "  	make build PKG=<pkg name>	- build just a specific package, instead of everything."
-	@echo "  	make build PARALLEL=#		- Run scons in parallel, with # number of jobs."
-	@echo "  	make build RAMDISK=1		- Use ramdisk to build packages."
-	@echo "  	make build LLVM_CORES=4		- set the number of parallel jobs when building LLVM."
-	@echo "  	                              on machines with high core number, LLVM can use too"
-	@echo "  	                              much memory to build. So we have to reduce the # of jobs."
+	@echo "     make build DOCKER=0        - disable re-building the docker images. ex: make build DOCKER=0"
+	@echo "     make build PKG=<pkg name>  - build just a specific package, instead of everything."
+	@echo "     make build PARALLEL=#      - Run scons in parallel, with # number of jobs."
+	@echo "     make build RAMDISK=1       - Use ramdisk to build packages."
+	@echo "     make build LLVM_CORES=4    - set the number of parallel jobs when building LLVM."
+	@echo "                                  on machines with high core number, LLVM can use too"
+	@echo "                                  much memory to build. So we have to reduce the # of jobs."
 	@echo ""
 
 
@@ -36,11 +40,14 @@ endif
 ifneq "${LLVM_CORES}" ""
 BUILD_EXTRA:=${BUILD_EXTRA} LLVM_CORES=${LLVM_CORES}
 endif
+ifneq "${OPENVDB_CORES}" ""
+BUILD_EXTRA:=${BUILD_EXTRA} OPENVDB_CORES=${OPENVDB_CORES}
+endif
 ifneq "${PARALLEL}" ""
 BUILD_EXTRA:=${BUILD_EXTRA} -j ${PARALLEL}
 endif
 ifneq "${PKG}" ""
-BUILD_EXTRA:=${BUILD_EXTRA} install-${PKG}
+BUILD_EXTRA:=${BUILD_EXTRA} ${PKG}
 else
 BUILD_EXTRA:=${BUILD_EXTRA} all
 endif
@@ -60,7 +67,7 @@ build_gcc: upload_centos
 shell: upload
 	@${CD}/pipeline/tools/scripts/pipevfx -s
 
-upload:
+upload: #cache
 	@[ "${DOCKER}" == "1" ] && ${CD}/pipeline/tools/scripts/pipevfx -u || echo "Not building docker image!"
 
 upload_centos:
@@ -68,6 +75,8 @@ upload_centos:
 
 cache:
 	@[ "${DOCKER}" == "1" ] && ${CD}/pipeline/tools/scripts/pipevfx -p || echo "Not building docker image!"
+
+image: cache upload
 
 hub_delete:
 	export USERNAME=myuser \

@@ -109,8 +109,8 @@ if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 6.0:
 PYTHON_ROOT 		    = os.environ['PYTHON_TARGET_FOLDER']
 PYTHON 			        = 'python'
 PYTHON_CONFIG 		    = '%s %s/bin/python-config' % (PYTHON, PYTHON_ROOT)
-PYTHON_INCLUDE_PATH 	= os.popen( '%s --includes' % PYTHON_CONFIG ).readlines()[0].strip().split(' ')[0][2:]
-PYTHON_LINK_FLAGS 	    = os.popen( '%s --ldflags' % PYTHON_CONFIG ).readlines()[0].strip()
+# PYTHON_INCLUDE_PATH 	= os.popen( '%s --includes' % PYTHON_CONFIG ).readlines()[0].strip().split(' ')[0][2:]
+# PYTHON_LINK_FLAGS 	    = os.popen( '%s --ldflags' % PYTHON_CONFIG ).readlines()[0].strip()
 cmd 			        = '%s -c "import sys;print sys.version[:3]"' % PYTHON
 PYTHON_MAJOR_VERSION 	= os.popen( cmd ).readlines()[0].strip()
 try:
@@ -118,6 +118,7 @@ try:
 except:
 #    PYTHON_LIB_PATH = '%s/config' % PYTHON_INCLUDE_PATH.replace('include','lib')
     PYTHON_LIB_PATH = '%s/lib' % PYTHON_ROOT
+    PYTHON_LINK_FLAGS 	    = os.popen( '%s --ldflags' % PYTHON_CONFIG ).readlines()[0].strip()
     PYTHON_LINK_FLAGS = '-L%s %s' % (PYTHON_LIB_PATH, PYTHON_LINK_FLAGS)
 
 PYTHON_MAJOR_VERSION=os.environ['PYTHON_VERSION_MAJOR']
@@ -197,8 +198,9 @@ HDF5_LIB_SUFFIX         = ''
 # create options automatically based on added dependencies
 for each in [ x for x in os.environ.keys() if '_TARGET_FOLDER' in x ]:
     name = each.split('_')[0]
-    exec( '%s_INCLUDE_PATH="%s/include"' % (name, os.environ[each]) )
-    exec( '%s_LIB_PATH = "%s/lib"' % (name, os.environ[each]) )
+    if name.lower() not in ['python']:
+        exec( '%s_INCLUDE_PATH="%s/include"' % (name, os.environ[each]) )
+        exec( '%s_LIB_PATH = "%s/lib"' % (name, os.environ[each]) )
 
 # specific cases which the name doesn't match or the path is not the default
 PNG_INCLUDE_PATH        = "%s/include" % os.environ['LIBPNG_TARGET_FOLDER']
@@ -220,18 +222,24 @@ BOOST_LIB_SUFFIX        = ""
 #     BOOST_LIB_SUFFIX        = "-mt"
 
 
-ALEMBIC_LIB_SUFFIX      = ''
-ALEMBIC_EXTRA_LIBS      = []
-if versionMajor(app_environ('ALEMBIC_VERSION')) < 1.6:
-    for x in glob( "%s/lib/*.so" % app_environ('ALEMBIC_TARGET_FOLDER') ):
-        ALEMBIC_EXTRA_LIBS += [ os.path.basename(x.replace('lib','').replace('.so','')) ]
+if ' alembic ' in os.environ['DEPEND']:
+    ALEMBIC_LIB_SUFFIX      = ''
+    ALEMBIC_EXTRA_LIBS      = []
+    if versionMajor(app_environ('ALEMBIC_VERSION')) < 1.6:
+        for x in glob( "%s/lib/lib*.so" % app_environ('ALEMBIC_TARGET_FOLDER') ):
+            ALEMBIC_EXTRA_LIBS += [ os.path.basename(x.replace('lib','').replace('.so','')) ]
 
-ALEMBIC_EXTRA_LIBS = ' '.join(ALEMBIC_EXTRA_LIBS)
+    ALEMBIC_EXTRA_LIBS = ' '.join(ALEMBIC_EXTRA_LIBS)
 
-# if 'ALEMBIC_TARGET_FOLDER' in os.environ:
-#     ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
-#     ALEMBIC_LIB_PATH        = "%s/lib" % os.environ['ALEMBIC_TARGET_FOLDER']
+    ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
+    ALEMBIC_LIB_PATH        = "%s/lib" % os.environ['ALEMBIC_TARGET_FOLDER']
 
+if ' usd ' in os.environ['DEPEND']:
+    WITH_USD_MONOLITHIC = os.path.exists("%s/lib/lib*_ms.so" % os.environ['USD_TARGET_FOLDER'])
+WITH_USD_MONOLITHIC = True
+
+if versionMajor(app_environ('USD_VERSION')) > 21.10:
+    USD_LIB_PREFIX = 'usd_'
 
 # for each in glob( '%s/../*' % os.environ['BOOST_TARGET_FOLDER'] ):
 #     os.environ['LIBRARY_PATH'] += ':%s/lib/python%s' % (each, os.environ['PYTHON_VERSION_MAJOR'])
@@ -398,13 +406,13 @@ if houdini != '0.0.0':
         print os.environ['HOUDINI_CXX_FLAGS']
 
         if 'GCC_VERSION' in os.environ:
-            if os.environ['GCC_VERSION'] == '4.1.2':
-                os.environ['HOUDINI_CXX_FLAGS'] += " -isystem %s/lib/gcc/x86_64-pc-linux-gnu/%s/include/c++/tr1/" % (os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION'])
-                os.environ['HOUDINI_CXX_FLAGS'] = os.environ['HOUDINI_CXX_FLAGS'].replace('-Wno-unused-local-typedefs','')
-            elif os.environ['GCC_VERSION'] == '4.8.5':
-                os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++11 -fexceptions "
-            elif os.environ['GCC_VERSION'] == '6.3.1':
-                os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++14 -fexceptions "
+            # if os.environ['GCC_VERSION'] == '4.1.2':
+            #     os.environ['HOUDINI_CXX_FLAGS'] += " -isystem %s/lib/gcc/x86_64-pc-linux-gnu/%s/include/c++/tr1/" % (os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION'])
+            #     os.environ['HOUDINI_CXX_FLAGS'] = os.environ['HOUDINI_CXX_FLAGS'].replace('-Wno-unused-local-typedefs','')
+            # elif os.environ['GCC_VERSION'] == '4.8.5':
+            #     os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++11 -fexceptions "
+            # elif os.environ['GCC_VERSION'] == '6.3.1':
+            os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++14 -fexceptions "
 
         os.environ['HOUDINI_CXX_FLAGS'] += ' -DDLLEXPORT= '
         os.environ['HOUDINI_LINK_FLAGS'] += ' '+' '.join([
@@ -506,9 +514,13 @@ LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'usd/%s/lib%s/
 # CC = os.environ['CC']
 # CPP = os.environ['CPP']
 # CXX = os.environ['CXX']
+#"-D'uint64_t=boost::ulong_long_type'"
 CXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-DAtUInt=AtUInt32', '-DCORTEX_HAS_NO_RSL']  + os.environ['CXXFLAGS'].split(' ')
-if boost == '1.51.0':
-    CXXFLAGS += ["-D__GLIBC_HAVE_LONG_LONG"]
+
+# if boost == '1.51.0':
+# this fixes uint64_t ambiquos problem with boost
+CXXFLAGS += ["-D__GLIBC_HAVE_LONG_LONG"]
+
 TESTCXXFLAGS = ['-pipe', '-Wall', '-O0'] + os.environ['CXXFLAGS'].split(' ')
 PYTHONCXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive'] + os.environ['CXXFLAGS'].split(' ')
 
@@ -524,10 +536,12 @@ os.environ['LD_LIBRARY_PATH'] = '%s:%s' % (BOOST_LIB_PATH, os.environ['LD_LIBRAR
 TEST_LIBPATH = ':'.join([PYTHON_LIB_PATH])
 
 
+popPrint('All Cortex Paths...')
+
 # install a cortexPython wrapper to simplify our lives!!
 # =============================================================================================================================================================
 if '/cortex/' in os.environ['TARGET_FOLDER']:
-    popPrint('All Cortex Paths...')
+
     cortexPython = '%s/bin/cortexPython%s' % (INSTALL_PREFIX,PYTHON_MAJOR_VERSION)
     os.system( 'rm -rf %s/bin' % INSTALL_PREFIX )
     os.system( 'mkdir -p %s/bin' % INSTALL_PREFIX )

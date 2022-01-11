@@ -35,6 +35,14 @@ class pythonSetup(generic):
         'python setup.py install  --prefix=$INSTALL_FOLDER',
     ]
 
+    # def __init__(self, args, name, download, baseLibs=None, env=None, depend=[], GCCFLAGS=[], sed=None, environ=None, compiler=gcc.pipe, **kargs):
+    #
+    #     for n in range(len(download)):
+    #         download[n][4]
+    #
+    #     generic.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
+    #     download = [ (None,"python.%s.%s.%s" % (python.name,pip_pkg,x[2]),x[2],None,dict({python: x[2]}, **x[4])) for x in python.download ]
+    
     # def uncompressor( self, target, source, env):
     #     ''' pyside2 has the same file name for all package versions - thanks autodesk!'''
     #     t = os.path.abspath(str(target[0]))

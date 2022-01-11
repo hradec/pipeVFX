@@ -41,7 +41,7 @@ def installRoot(args={}):
     if args.has_key('PREFIX'):
         dev = args['PREFIX']
     os.system("mkdir -p %s" % dev)
-    return dev
+    return os.path.abspath(dev)
 
 def buildFolder(args={},extra=''):
     build = '.build'
@@ -50,4 +50,4 @@ def buildFolder(args={},extra=''):
         build = args['BUILD_FOLDER']
 
     ret = os.path.join(build, extra).replace('//','/')
-    return ret
+    return os.path.abspath(ret)

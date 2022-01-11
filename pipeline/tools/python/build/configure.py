@@ -24,6 +24,7 @@ from  SCons.Builder import *
 from  SCons.Defaults import *
 from devRoot import *
 from genericBuilders import *
+
 import genericBuilders
 import pipe
 import os,sys
@@ -56,6 +57,7 @@ class wait4dependencies(configure):
     noMinTime=True
     dontUseTargetSuffixForFolders = 1
     do_not_use=True
+    globalDependency = True
     def __init__(self, wait4, msg, version=None, cmd=["echo Done!!!!!"], depend=[], **kargs):
         self.cmd = cmd
         self.wait4 = wait4
@@ -68,7 +70,8 @@ class wait4dependencies(configure):
             os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
 
         configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
-
+        # configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
+        self.env.Alias( msg, wait4.name )
 
 class pip(configure):
     cmd = ["./build.sh"]
@@ -93,7 +96,7 @@ class pip(configure):
                         '--prefix %s/%s -with-ensurepip=install ' % (os.environ['DOCKER_PYTHON'], pv),
                     'make -j $DCORES && make -j $DCORES install'
                 ])
-                genericBuilders._print(cmd)
+                genericBuilders.s_print(cmd)
                 os.system(cmd)
 
     def downloader(self, env, _source, _url=None):
@@ -114,22 +117,27 @@ class pip(configure):
         downloaded = [ x for x in glob.glob("%s/*" % download_path) if self.pip_pkg.lower() in x.lower()]
         # print downloaded
         if not downloaded:
-            genericBuilders._print( bcolors.GREEN, "\tDownloading pip module %s for python version %s..." % (self.pip_pkg, pvv) )
-            genericBuilders._print( bcolors.END )
+            genericBuilders.s_print( bcolors.GREEN, "\tDownloading pip module %s for python version %s..." % (self.pip_pkg, pvv) )
+            genericBuilders.s_print( bcolors.END )
 
             cmd  = "mkdir -p '%s' && " % download_path
             cmd += "cd '%s' && " % download_path
-            cmd += 'PATH=$DOCKER_PYTHON/%s/bin:$PATH ' % pv
+            cmd += 'export LD_LIBRARY_PATH=$DOCKER_PYTHON/%s/lib:$PYTHON_TARGET_FOLDER/lib/ && ' % pv
+            cmd += 'export PATH=$DOCKER_PYTHON/%s/bin:$PYTHON_TARGET_FOLDER/bin:$PATH && ' % pv
+            cmd += 'echo $PATH && '
+            # cmd += 'python%s -m pip install --upgrade pip &&' % (pvv)
             cmd += 'python%s -m pip download "%s" ' % (pvv, self.pip_pkg)
-            genericBuilders._print(cmd)
+            genericBuilders.s_print(cmd)
             print cmd
             os.system(cmd)
             if not glob.glob("%s/*" % download_path):
                 self.error = True
 
-        for n in glob.glob("%s/*" % download_path):
-            cmd = "ln -s '%s' '%s'" % (n, os.path.abspath(_source))
-            os.system(cmd)
+        # for n in glob.glob("%s/*" % download_path):
+        #     cmd = "ln -s '%s' '%s'" % (n, os.path.abspath(_source))
+        #     os.system(cmd)
+        cmd = "ln -s '%s' '%s/download'" % (download_path, os.path.abspath(_source))
+        os.system(cmd)
         return _source
 
     def __init__(self, args, pip_pkg, python, python_versions=None ):
@@ -163,11 +171,11 @@ class pip(configure):
             for n in range(len(download)):
                 archive = self.downloader_archive[baselib][n]
                 # so actions can check if its installed
-                genericBuilders._pkgInstalled.set(os.path.abspath(archive), self.downloader_install_done_file[baselib][n])
+                genericBuilders.pkgInstalled.set(os.path.abspath(archive), self.downloader_install_done_file[baselib][n])
                 #download pkg
                 pkgs += [self._download(archive)]
 
-        self.env.Default(self.env.Alias( 'download', pkgs ))
+        self.env.Alias( 'download', pkgs )
 
     def fixCMD(self, cmd, os_environ):
         # now we setup the source folder as if it was already downloaded, and
@@ -178,10 +186,11 @@ class pip(configure):
         f = open("%s/build.sh" % os_environ['SOURCE_FOLDER'], 'w')
         build_sh = '''
             #download=$(PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip download "%s" | grep whl | awk -F'/' '{print $(NF)}' | head -1)
-            download=$(ls -1 | grep -i '%s-')
-            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install ./$download # || \
+            cd ./download
+            d=$(ls -1 ./)
+            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install ./$d # || \
             PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install %s
-        ''' % (self.pip_pkg, self.pip_pkg, self.pip_pkg)
+        ''' % (self.pip_pkg, self.pip_pkg)
         f.write("#!/bin/bash\n\n"+build_sh+"\n")
         f.close()
         os.system('chmod a+x "%s/build.sh"' % os_environ['SOURCE_FOLDER'])
@@ -245,7 +254,9 @@ class gccBuild(configure):
             configure.uncompressor( self, target, source, env)
 
     def fixCMD(self, cmd, os_environ):
+        self.noMinTime = False
         if float(os_environ['VERSION_MAJOR']) == 4.1:
+            self.noMinTime = True
             if self.targetSuffix == 'pos':
                 return cmd
             if self.use_bin_tarball:
@@ -693,14 +704,15 @@ class python(configure):
         'CXXFLAGS'  : "$CXXFLAGS -I$OPENSSL_TARGET_FOLDER/include -I$OPENSSL_TARGET_FOLDER/include/openssl -I$BZIP2_TARGET_FOLDER/include ",
     }
     cmd = [
-        'env',
         # 'LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH wget "http://bootstrap.pypa.io/ez_setup.py"',
         'export PYTHON=$INSTALL_FOLDER/bin/python',
-        'export LD_PRELOAD=$SOURCE_FOLDER/libpython$PYTHON_VERSION_MAJOR.so.1.0',
         './configure  --enable-unicode=ucs4 --with-openssl=$OPENSSL_TARGET_FOLDER  --with-bz2  --with-lto --enable-shared ', # --enable-optimizations
         '''for mfile in $(find . -name 'Makefile'); do sed -i 's/SHLIB_LIBS =/SHLIB_LIBS = -ltinfo/g' "$mfile" ; done''',
-        ' make -j $DCORES',
-        ' make -j $DCORES install',
+        'export LD_PRELOAD=$SOURCE_FOLDER/libpython$PYTHON_VERSION_MAJOR.so.1.0',
+        '''(make -j $DCORES 2>/dev/null  || true ; [ "$(grep CONFIG_ARGS build/lib.linux-x86_64-2.7/_sysconfigdata.py)" == "" ] && cp build/lib.linux-x86_64-2.7/_sysconfigdata.py xx && cat xx | sed -e 's/build_time_vars = ./build_time_vars = {"CONFIG_ARGS": " --enable-unicode=ucs4 --with-openssl --with-bz2  --with-lto --enable-shared ",/' > build/lib.linux-x86_64-2.7/_sysconfigdata.py || true) ''',
+        'rm -rf build/*/_sysconfigdata.pyc',
+        'make -j $DCORES',
+        'make -j $DCORES install',
         'export PYTHONHOME=$INSTALL_FOLDER',
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config || true)',
@@ -775,6 +787,7 @@ class cortex(configure):
         ],
         # fixes to option vars being treated as strings or lists.
         'SConstruct' : [
+            # ('isystem','I'),
             ('houdiniEnv.Prepend( SHLINKFLAGS = "$HOUDINI_LINK_FLAGS" )', 'houdiniEnv.Prepend( SHLINKFLAGS = ["$HOUDINI_LINK_FLAGS"] )'),
             ('CPPFLAGS = "-DIECOREALEMBIC_WITH_OGAWA"', 'CPPFLAGS = ["-DIECOREALEMBIC_WITH_OGAWA"]'),
             ('testEnv.Prepend( CXXFLAGS = " ".join( dependencyIncludes ) )', 'testEnv.Prepend( CXXFLAGS = dependencyIncludes )'),

@@ -25,7 +25,8 @@ BUILD_TYPE="RELEASE"
 
 cortex = os.environ['CORTEX_VERSION']
 qt     = os.environ['QT_VERSION']
-pyqt   = os.environ['PYQT_VERSION']
+#pyqt   = os.environ['PYQT_VERSION']
+pyside = os.environ['PYSIDE_VERSION']
 oiio   = os.environ['OIIO_VERSION']
 ocio   = os.environ['OCIO_VERSION']
 # llvm   = os.environ['LLVM_VERSION']
@@ -119,8 +120,8 @@ if 'APPLESEED_VERSION' in os.environ:
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['QT_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['QT_TARGET_FOLDER'] ) )
 
-LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['PYQT_TARGET_FOLDER'] ) )
-LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['PYQT_TARGET_FOLDER'] ) )
+LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['PYSIDE_TARGET_FOLDER'] ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['PYSIDE_TARGET_FOLDER'] ) )
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['OIIO_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['OIIO_TARGET_FOLDER'] ) )
