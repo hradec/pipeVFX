@@ -17,24 +17,21 @@ on:
   release:
       types: [published]
 
-
-
-
+env:
+  DISPLAY: ":99.0"
+  TRAVIS: "1" # this triggers -t instead of -ti in docker run
+  ARNOLD_LICENSE_ORDER: none # Don't waste time looking for a license that doesn't exist
+  BUILD_DIR: "pipeline/build/"
+  CACHE_DIR: "pipeline/libs/"
+  STUDIO: "pipevfx"
+  GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  runs-on: ubuntu-20.04
-  env:
-    DISPLAY: ":99.0"
-    ARNOLD_LICENSE_ORDER: none # Don't waste time looking for a license that doesn't exist
-    BUILD_DIR: "pipeline/build/"
-    CACHE_DIR: "pipeline/libs/"
-    STUDIO: "pipevfx"
-    CACHE_NAME: ${{ env.STUDIO }}-${{ github.sha }}
-
   build:
     strategy:
       # cancel other jobs in the build matrix if one job fails.
       fail-fast: true
+      max-parallel: 1
       matrix:
         name: [
           phase1,
@@ -51,22 +48,19 @@ jobs:
           phase12
         ]
 
+    runs-on: ubuntu-20.04
+
     steps:
     - uses: actions/checkout@v2
-
-    - name: Set Custom Variables
-      env:
-       GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-       BUILD_VARIANT: ${{ matrix.name }}
 
     - name: Cache
       uses: actions/cache@v1
       with:
         path: ${{ env.CACHE_DIR }}
         key: |
-          ${{ env.STUDIO }}-${{ github.sha }}
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
-          ${{ env.STUDIO }}-${{ github.sha }}
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
 
     - name: 'Install Python Modules'
       run: pip install PyJWT==1.7.1 PyGitHub==1.45
@@ -76,30 +70,34 @@ jobs:
 
 
   package:
-    # - name: Validate
-    #   run: |
-    #     echo "::add-matcher::./.github/workflows/main/problemMatchers/validateRelease.json"
-    #     ./config/validateRelease.py --archive ${{ env.GAFFER_BUILD_NAME }}.tar.gz ${{ env.GAFFER_VALIDATE_EXTRA_FLAGS }}
-    #     echo "::remove-matcher owner=validateRelease::"
-    #   if: matrix.publish
+    needs: build
+
+    runs-on: ubuntu-20.04
+
     steps:
     - name: Cache
       uses: actions/cache@v1
       with:
         path: ${{ env.CACHE_DIR }}
         key: |
-          ${{ env.STUDIO }}-${{ github.sha }}
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
-          ${{ env.STUDIO }}-${{ github.sha }}
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
 
     - name: Publish Cache
       run: tar -czf ${{ env.STUDIO }}-${{ github.sha }}.tar.gz ${{ env.STUDIO }}-${{ github.sha }}/
-
 
     - uses: actions/upload-artifact@v2
       with:
         name: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
         path: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
+
+    # - name: Validate
+    #   run: |
+    #     echo "::add-matcher::./.github/workflows/main/problemMatchers/validateRelease.json"
+    #     ./config/validateRelease.py --archive ${{ env.GAFFER_BUILD_NAME }}.tar.gz ${{ env.GAFFER_VALIDATE_EXTRA_FLAGS }}
+    #     echo "::remove-matcher owner=validateRelease::"
+    #   if: matrix.publish
 
     # - name: Publish Release
     #   run: |
