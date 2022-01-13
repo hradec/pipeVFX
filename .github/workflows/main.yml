@@ -73,7 +73,31 @@ jobs:
       run: make build DOCKER=0 PKG=${{ matrix.name }}
 
 
-  package:
+  libs_cache:
+    needs: build
+    if: ${{ always() }}
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ${{ env.CACHE_DIR }}
+        key: |
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+
+    - name: Publish Cache
+      run: tar -czf ${{ env.STUDIO }}-${{ github.sha }}.tar.gz ${{ env.STUDIO }}-${{ github.sha }}/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
+        path: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
+
+  libs_release:
     needs: build
 
     runs-on: ubuntu-20.04

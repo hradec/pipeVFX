@@ -138,7 +138,7 @@ else
             echo ERROR!!
             exit -1
         fi
-        docker-squash -v $latest_tag
+        docker-squash  $latest_tag || true
         docker push $latest_tag
         docker image tag $latest_tag $pkg_image_tag
         docker push $pkg_image_tag
@@ -167,7 +167,7 @@ else
             echo ERROR!!
             exit -1
         fi
-        docker-squash -v $build_image
+        docker-squash $build_image || true
         docker push $build_image
         exit $?
     fi

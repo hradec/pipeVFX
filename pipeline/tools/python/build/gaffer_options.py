@@ -150,6 +150,14 @@ if 'PRMAN_ROOT' in os.environ:
 
 GAFFERCORTEX = True
 
+
+LOCATE_DEPENDENCY_PYTHONPATH = ':'.join([
+    '$CORTEX_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
+    '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
+    '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
+    '$CORTEX_TARGET_FOLDER/usd/$USD_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
+])
+
 popPrint('All Gaffer Paths...')
 
 

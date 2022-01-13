@@ -1444,7 +1444,7 @@ class all: # noqa
             'LD'      : 'ld',
         })
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
+            gcc_version = '6.3.1'
             sufix = "boost.%s" % boost_version
             ilmbase = build.configure(
                 ARGUMENTS,

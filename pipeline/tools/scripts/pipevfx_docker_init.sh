@@ -81,6 +81,14 @@ else
     mv /usr/lib64/libboost_* /root/source-highlight/libs/
     ldconfig
 
+    # fix inkscape after we removed the boost libraries from /lib64
+    mv /usr/bin/inkscape /usr/bin/inkscape_
+    echo '#!/bin/bash' > /usr/bin/inkscape
+    echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/source-highlight/libs/' >> /usr/bin/inkscape
+    echo '/usr/bin/inkscape_ "$@"' >> /usr/bin/inkscape
+    chmod a+x /usr/bin/inkscape
+
+
     # we run scons 3 times just in case, since pkgs using
     # cuda may fail to build at first, but build on a second try.
     # also, this accounts for the 2 stage build, when initially there's
