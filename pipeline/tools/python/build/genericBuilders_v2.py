@@ -51,14 +51,14 @@ buildTotal=0
 buildCounter=0
 buildStartTime=time.time()
 global sconsParallel
-sconsParallel='0'
+sconsParallel=0
 # if 'TRAVIS' in os.environ:
 #     sconsParallel='1' in os.environ['TRAVIS']
 # else:
 #     os.environ['TRAVIS']='0'
 
 if 'EXTRA' in os.environ and '-j' in os.environ['EXTRA']:
-    sconsParallel='1'
+    sconsParallel=1
 
 mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
 if 'MEMGB' in os.environ:
@@ -78,14 +78,14 @@ def _print(*args):
             p = True
         if '::' in l[0:20]:
             p = True
-        if os.environ['TRAVIS']!='1':
+        if 'TRAVIS' in os.environ and os.environ['TRAVIS']!='1':
             if [ x for x in ['processing', 'building', 'Download', 'md5'] if x in l ]:
                 p = True
         if 'touch' in l[:15]:
             p = False
 
     # dont print dinamic log line if running in CI
-    if os.environ['TRAVIS']=='1':
+    if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
         if l[-1] == '\r':
             p=False
 
@@ -324,6 +324,7 @@ def removeDuplicatedEntriesEnvVars(data):
     clean_result = {}
     result.update(data)
     for _env in data:
+        result[_env] = str(result[_env])
         cleanup = []
         divisor=' '
         if _env in PATH_ENV_VAR:

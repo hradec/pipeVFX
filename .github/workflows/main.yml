@@ -26,6 +26,10 @@ env:
   STUDIO: "pipevfx"
   GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+# concurrency:
+#   group: ${{ github.ref_name }}
+#   cancel-in-progress: true
+
 jobs:
   build:
     strategy:

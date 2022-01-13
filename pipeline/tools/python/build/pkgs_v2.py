@@ -1359,6 +1359,12 @@ class all: # noqa
             llvm_environ['CORES']  = str(int(ARGUMENTS['LLVM_CORES'])/2)
             llvm_environ['DCORES'] = ARGUMENTS['LLVM_CORES']
             llvm_environ['HCORES'] = str(int(ARGUMENTS['LLVM_CORES'])/4)
+            llvm_environ['LINK_CORES'] = 2
+        if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
+            llvm_environ['CORES']  = 1
+            llvm_environ['DCORES'] = 2
+            llvm_environ['HCORES'] = 1
+            llvm_environ['LINK_CORES'] = 1
         llvm = build.cmake(
             ARGUMENTS,
             'llvm',
@@ -1412,7 +1418,7 @@ class all: # noqa
                 '-DLLVM_ENABLE_RTTI=1',
                 '-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=1',
                 '-DLLVM_PARALLEL_COMPILE_JOBS=$DCORES',
-                '-DLLVM_PARALLEL_LINK_JOBS=2',
+                '-DLLVM_PARALLEL_LINK_JOBS=$LINK_CORES',
                 '-DGCC_INSTALL_PREFIX=$GCC_TARGET_FOLDER',
             ]+build.cmake.flags,
             environ = llvm_environ,
@@ -2778,6 +2784,7 @@ class all: # noqa
                     "[ -d openvdb/openvdb ] "
                     "&& ( "
                         "mkdir ./build",
+                        "cd ./build",
                         "cmake ../",
                         "make -j $DCORES",
                         "make -j $DCORES install"
