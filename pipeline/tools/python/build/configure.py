@@ -88,16 +88,19 @@ class pip(configure):
                 download_path=os.path.abspath(os.path.dirname(_source)+'/../.download/pip'+pv+'/'+self.pip_pkg+'/')
                 downloaded_python=os.path.abspath('%s/../.download/Python-%s.tar.gz' % (os.path.dirname(_source), pv))
                 cmd = ' && '.join([
-                    'mkdir -p /%s/%s'                             % (os.environ['DOCKER_PYTHON'], pv),
+                    '( mkdir -p /%s/%s'                             % (os.environ['DOCKER_PYTHON'], pv),
                     'cd /%s/%s'                                   % (os.environ['DOCKER_PYTHON'], pv),
                     'tar xf %s'                                   % (downloaded_python),
                     'cd %s'                                       % (os.path.basename(downloaded_python).split('.tar')[0]),
                     './configure --enable-unicode=ucs4 '
                         '--prefix %s/%s -with-ensurepip=install ' % (os.environ['DOCKER_PYTHON'], pv),
-                    'make -j $DCORES && make -j $DCORES install'
-                ])
+                    'make -j $DCORES && make -j $DCORES install )'
+                ]) + " 1>/tmp/python%s 2>&1" % pv
                 genericBuilders.s_print(cmd)
-                os.system(cmd)
+                ret = os.system(cmd)
+                if ret:
+                    os.system("cat /tmp/python%s | source-highlight -f esc -s errors" % pv)
+                    Exception("Python %s failed to build." %pv)
 
     def downloader(self, env, _source, _url=None):
         #self.pip_pkg

@@ -10,6 +10,9 @@ if [ "$STUDIO" == "" ] ; then
 fi
 export STUDIO
 
+if [ "$PRE_CMD" != "" ] ; then
+    export PRE_CMD
+fi
 
 # base image from centos used
 #raw_image=centos:7.6.1810
@@ -127,14 +130,17 @@ else
             --rm \
             --build-arg http="$http_proxy" \
             --build-arg https="$https_proxy" \
-            --build-arg BASE_IMAGE="$previous_tag"
+            --build-arg BASE_IMAGE="$previous_tag" \
+            --build-arg PRE_CMD="$PRE_CMD" \
+            --build-arg POS_CMD="$POS_CMD"
 
         if [ $? -ne 0 ] ; then
             echo ERROR!!
             exit -1
         fi
-        docker image tag $latest_tag $pkg_image_tag
+        docker-squash -v $latest_tag
         docker push $latest_tag
+        docker image tag $latest_tag $pkg_image_tag
         docker push $pkg_image_tag
         exit 0
     fi
@@ -161,6 +167,7 @@ else
             echo ERROR!!
             exit -1
         fi
+        docker-squash -v $build_image
         docker push $build_image
         exit $?
     fi

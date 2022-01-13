@@ -152,6 +152,9 @@ RUN rm -rf /var/cache/yum/*
 RUN mkdir -p /atomo/pipeline/build/.download/
 COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download  /atomo/pipeline/build/.download/
 
+RUN yum -y reinstall inkscape
+
+
 RUN [ -f /etc/centos-release ] && yum -y install python2-scons || true
 
 ENV TERM=xterm

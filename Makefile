@@ -9,6 +9,9 @@ RAMDISK?=
 CORES?=$(shell grep MHz /proc/cpuinfo  | wc -l)
 LLVM_CORES?=8
 OPENVDB_CORES?=$(shell grep MHz /proc/cpuinfo  | wc -l)
+PRE_CMD?=
+POS_CMD?=
+export STUDIO
 
 all: help
 
@@ -31,6 +34,9 @@ help:
 	@echo "     make build LLVM_CORES=4    - set the number of parallel jobs when building LLVM."
 	@echo "                                  on machines with high core number, LLVM can use too"
 	@echo "                                  much memory to build. So we have to reduce the # of jobs."
+	@echo "     make image PRE_CMD=<cmd>   - Run a command line before downloading pkgs. Use this to delete"
+	@echo "                                  pre-downloaded caches for re-download and cleanup."
+	@echo "                                  ex: make image PRE_CMD=\"rm -rf /atomo/pipeline/build/.downloads/pip*\""
 	@echo ""
 
 
@@ -74,7 +80,10 @@ upload_centos:
 	@[ "${DOCKER}" == "1" ] && IMAGE=centos ${CD}/pipeline/tools/scripts/pipevfx -u || echo "Not building docker image!"
 
 cache:
-	@[ "${DOCKER}" == "1" ] && ${CD}/pipeline/tools/scripts/pipevfx -p || echo "Not building docker image!"
+	@[ "${DOCKER}" == "1" ] && \
+	PRE_CMD='${PRE_CMD}' \
+	POS_CMD='${POS_CMD}' \
+	${CD}/pipeline/tools/scripts/pipevfx -p || echo "Not building docker image!"
 
 image: cache upload
 

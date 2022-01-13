@@ -15,7 +15,18 @@ ARG https
 
 ENV http_proxy=$http
 ENV https_proxy=$https
+ENV ftp_proxy=$http
 
+ARG PRE_CMD
+ENV _PRE_CMD=$PRE_CMD
+
+ARG POS_CMD
+ENV _POS_CMD=$POS_CMD
+
+# install gcc, git, wget, zip and scons so we can run sconstruct
+RUN yum groupinstall -y "Development Tools"
+RUN yum -y install python2-scons wget git zip zlib-devel openssl-devel libffi-dev
+RUN yum -y install source-highlight
 
 #COPY docker/run.sh /run.sh
 COPY pipeline/tools/scripts/pipevfx_docker_init.sh /run.sh
@@ -32,32 +43,61 @@ COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
 COPY docker/gcc-bin-4.1.2.tgz       /atomo/pipeline/build/.download/4.1.2.tar.gz
 COPY docker/setuptools-33.1.1.zip   /atomo/pipeline/build/.download/setuptools-33.1.1.zip
 
-# download packages so the image contain all tarballs.
-RUN yum install -y python2-pip python3-pip
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    export TERM=xterm && \
-    export ftp_proxy=$http_proxy && \
-    touch /atomo/.root && \
-    mkdir -p /atomo/pipeline/build/ && \
-    cd /atomo/pipeline/build && \
-    env && \
-    ( ls -1 .download/*{.tar,.zip}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
-        do [ "$(egrep $p /tmp/xx)" == "" ] && rm -vrf ".download/$p" ; \
-        [ -d .download/$p ] && rm -vrf ".download/$p" ; \
-    done ; rm /tmp/xx ) && \
-    ls -l /atomo/pipeline/build/.download/ | wc -l && \
-    PYTHONPATH=/atomo/pipeline/tools/python scons download install -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 )) || true
+# create the build folder, if one doesn't exist
+RUN mkdir -p /atomo/pipeline/build/
 
-RUN ls -l /atomo/pipeline/build/.download/pip*/*/
-RUN ls -l /atomo/pipeline/build/.download/
+# cleanup download folder
+RUN cd /atomo/pipeline/build && \
+    if [ -e /atomo/pipeline/build/.download ] ; then \
+        ls -1 .download/*{.tar,.zip}* > /tmp/xx ; \
+        ls -1 .download/ | grep -v pip | while read p ; do \
+            [ "$(egrep $p /tmp/xx)" == "" ] && rm -rf ".download/$p" ; \
+            [ -d .download/$p ] && rm -rf ".download/$p" ; \
+        done ; \
+        rm /tmp/xx ; \
+    fi
+
+# this triggers scons to build python from the pre-downloaded packages
+ENV DOCKER_PYTHON=/python/
+
+# download packages so the image contain all tarballs.
+# RUN yum install -y python2-pip python3-pip
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    touch /atomo/.root
+
+ENV TERM=xterm
+RUN cd /atomo/pipeline/build && if [ "$_PRE_CMD" != "" ] ; then \
+        echo "$_PRE_CMD" ; \
+        bash -c "$_PRE_CMD" ; \
+    fi
+
+RUN cd /atomo/pipeline/build && \
+    PYTHONPATH=/atomo/pipeline/tools/python \
+    scons install -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 ))
+
+RUN cd /atomo/pipeline/build && if [ "$_POS_CMD" != "" ] ; then \
+        echo "$_POS_CMD" ; \
+        bash -c "$_POS_CMD" ; \
+    fi
 
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
-RUN rm -rvf \
+RUN rm -rv \
     /run.sh \
     /atomo/pipeline/tools/python \
     /atomo/pipeline/tools/config \
     /atomo/pipeline/build/SConstruct \
     /atomo/pipeline/build/.build
+
+# cleanup download folder
+RUN cd /atomo/pipeline/build && [ -e /atomo/pipeline/build/.download ] && \
+    ( ls -1 .download/*{.tar,.zip}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
+        do [ "$(egrep $p /tmp/xx)" == "" ] && rm -rf ".download/$p" ; \
+        [ -d .download/$p ] && rm -rf ".download/$p" ; \
+    done ; rm /tmp/xx ) || true
+
+RUN ls -lh /atomo/pipeline/build/.download/pip*/*/ | egrep pipeline.build
+RUN ls -lh /atomo/pipeline/build/.download/
+
 
 RUN touch /atomo/.root
