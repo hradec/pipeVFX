@@ -1232,31 +1232,35 @@ class all: # noqa
                 'boost_1_54_0.tar.gz',
                 '1.54.0',
                 'efbfbff5a85a9330951f243d0a46e4b9',
+                { self.gcc : '4.8.5' },
             ),(
                 # CY2014
                 'http://downloads.sourceforge.net/project/boost/boost/1.53.0/boost_1_53_0.tar.gz',
                 'boost_1_53_0.tar.gz',
                 '1.53.0',
                 '57a9e2047c0f511c4dfcf00eb5eb2fbb',
+                { self.gcc : '4.8.5' },
             ),(
                 # CY2015 - CY2016
                 'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
                 'boost_1_55_0.tar.gz',
                 '1.55.0',
                 '93780777cfbf999a600f62883bd54b17',
+                { self.gcc : '4.8.5' },
             ),(
                 # we build this from before vfxplatform... for houdini 15
                 'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz',
                 'boost_1_56_0.tar.gz',
                 '1.56.0',
                 '8c54705c424513fa2be0042696a3a162',
+                { self.gcc : '4.8.5' },
             ),(
                 # CY2017 - CY2018
                 'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
                 'boost_1_61_0.tar.gz',
                 '1.61.0',
                 '874805ba2e2ee415b1877ef3297bf8ad',
-                { self.gcc :  '6.3.1' if 'fedora' in distro else '4.8.5' }
+                { self.gcc :  '6.3.1' }
             ),(
                 # CY2019
                 'http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.gz',
