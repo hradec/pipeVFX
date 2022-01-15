@@ -70,7 +70,7 @@ jobs:
       run: pip install PyJWT==1.7.1 PyGitHub==1.45
 
     - name: Build PipeVFX ${{ matrix.name }}
-      run: make build DOCKER=0 PKG=${{ matrix.name }}
+      run: mkdir -p pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; ls -l pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; make build DOCKER=0 PKG=${{ matrix.name }}
 
 
   libs_cache:
@@ -90,12 +90,12 @@ jobs:
           ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
 
     - name: Publish Cache
-      run: tar -czf ${{ env.STUDIO }}-${{ github.sha }}.tar.gz ${{ env.STUDIO }}-${{ github.sha }}/
+      run: tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}
 
     - uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
-        path: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
 
   libs_release:
     needs: build
@@ -113,12 +113,12 @@ jobs:
           ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
 
     - name: Publish Cache
-      run: tar -czf ${{ env.STUDIO }}-${{ github.sha }}.tar.gz ${{ env.STUDIO }}-${{ github.sha }}/
+      run: tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
 
     - uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
-        path: ${{ env.STUDIO }}-${{ github.sha }}.tar.gz
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
 
     # - name: Validate
     #   run: |

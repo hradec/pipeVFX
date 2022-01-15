@@ -19,11 +19,6 @@ fi
 
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 cd /$STUDIO/pipeline/build/
-
-if [ "$TRAVIS" == "1" ] ; then
-    rm -rf "/$STUDIO/pipeline/libs/*"
-    EXTRA="-j 8 $EXTRA"
-fi
 mkdir -p /$STUDIO/pipeline/libs/
 
 [ ! -f /bin/python ] && ln -s /bin/python2 /bin/python
@@ -94,8 +89,11 @@ else
     # also, this accounts for the 2 stage build, when initially there's
     # no libs so we can't build any app dependent package, like cortex
     # for n in {1..3} ; do
-        echo /usr/bin/nice -n 19 scons $EXTRA $DEBUG
-        /usr/bin/nice -n 19 scons $EXTRA $DEBUG
+        if [ "$TRAVIS" != "1" ] ; then
+            pre_nice="/usr/bin/nice -n 19"
+        fi
+        echo $pre_nice scons $EXTRA $DEBUG
+        $pre_nice scons $EXTRA $DEBUG
     #     if [ $? -ne 0 ] ; then
     #         echo -e "\n\nERROR: Build did not finished correctly!!\n\n"
     #         break

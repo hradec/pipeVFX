@@ -2,12 +2,12 @@
 
 CD:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 SHELL:=/bin/bash
-DOCKER?=1
+DOCKER?=0
 PKG?=
 PARALLEL?=
 RAMDISK?=
 CORES?=$(shell grep MHz /proc/cpuinfo  | wc -l)
-LLVM_CORES?=8
+LLVM_CORES?=$(shell [ ${CORES} -gt 8 ] && echo 8 || echo $(( ${CORES} / 2 )) )
 OPENVDB_CORES?=$(shell grep MHz /proc/cpuinfo  | wc -l)
 PRE_CMD?=
 POS_CMD?=
