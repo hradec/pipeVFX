@@ -185,6 +185,8 @@ class all: # noqa
             environ = { 'LD' : 'ld' },
             globalDependency = True,
         )
+        build.github_phase(gmp)
+
         mpfr = build.configure(
             ARGUMENTS,
             'mpfr',
@@ -198,6 +200,8 @@ class all: # noqa
             environ = { 'LD' : 'ld' },
             globalDependency = True,
         )
+        build.github_phase(mpfr)
+
         mpc = build.configure(
             ARGUMENTS,
             'mpc',
@@ -476,7 +480,7 @@ class all: # noqa
         # everythin will depend on this dummy post-gcc build, so everything
         # will wait for gcc to finish before start.
         # this is essential when building packages in parallel (scons -j)
-        self.phase1 = build.wait4dependencies(self.gcc, 'phase1', version='6.3.1')
+        build.github_phase(self.gcc, version='6.3.1')
 
 
         self.patchelf = build.configure(
@@ -779,9 +783,9 @@ class all: # noqa
         build.globalDependency(self.cmake)
 
         # ============================================================================================================================================
-        # phase 2 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase2 = build.wait4dependencies(self.cmake, 'phase2')
+        build.github_phase(self.cmake)
 
 
         # =============================================================================================================================================
@@ -1024,12 +1028,13 @@ class all: # noqa
             #     'dbus-python-0.84.0.tar.gz',
             #     '0.84.0',
             #     'fe69a2613e824463e74f10913708c88a',
-            #     { self.gcc : '4.1.2', python: '2.7.16' }
+            #     { self.gcc : '4.8.5', python: '2.7.16' }
             # ),(
                 'https://files.pythonhosted.org/packages/b6/85/7b46d31f15a970665533ad5956adee013f03f0ad4421c3c83304ae9c9906/dbus-python-1.2.12.tar.gz',
                 'dbus-python-1.2.12.tar.gz',
                 '1.2.12',
                 '428b7a9e7e2d154a7ceb3e13536283e4',
+                { self.gcc : '4.8.5' }
             )],
             baseLibs=[python],
             depend=[python, openssl],
@@ -1210,9 +1215,9 @@ class all: # noqa
         build.globalDependency(self.pythonldap)
 
         # ============================================================================================================================================
-        # phase 3 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase3 = build.wait4dependencies(self.pythonldap, 'phase3')
+        build.github_phase(self.pythonldap)
 
 
         # ============================================================================================================================================
@@ -1226,6 +1231,7 @@ class all: # noqa
                 'boost_1_51_0.tar.gz',
                 '1.51.0',
                 '6a1f32d902203ac70fbec78af95b3cf8',
+                { self.gcc : '4.8.5' },
             ),(
                 # we build this from before vfxplatform...
                 'http://downloads.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.gz',
@@ -1282,9 +1288,9 @@ class all: # noqa
         self.boost = boost
 
         # ============================================================================================================================================
-        # phase 4 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase4 = build.wait4dependencies(self.boost, 'phase4')
+        build.github_phase(self.boost)
 
 
         # =============================================================================================================================================
@@ -1430,9 +1436,10 @@ class all: # noqa
         self.llvm = llvm
 
         # ============================================================================================================================================
-        # phase 5 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase5 = build.wait4dependencies(self.llvm, 'phase5')
+        build.github_phase(self.llvm, version=['3.9.1', '7.1.0'])
+        build.github_phase(self.llvm, version=['9.0.0', '10.0.1'])
 
 
         # ============================================================================================================================================
@@ -1613,9 +1620,9 @@ class all: # noqa
             )
             self.pyilmbase[sufix] = pyilmbase
         # ============================================================================================================================================
-        # phase 6 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase6 = build.wait4dependencies(self.pyilmbase[sufix], 'phase6')
+        build.github_phase(self.pyilmbase[sufix])
 
 
 
@@ -1761,7 +1768,7 @@ class all: # noqa
 
         environ = self.exr_rpath_environ.copy()
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
+            gcc_version = '6.3.1'
             sufix = "boost.%s" % boost_version
 
             # build sony field3d used by oiio 2.x
@@ -1942,9 +1949,9 @@ class all: # noqa
         self.glfw = glfw
 
         # ============================================================================================================================================
-        # phase 7 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase7 = build.wait4dependencies(self.glfw, 'phase7')
+        build.github_phase(self.glfw)
 
 
         #
@@ -2074,9 +2081,9 @@ class all: # noqa
         self.qt_rpath_environ = self.rpath_environ()
 
         # ============================================================================================================================================
-        # phase 8 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase8 = build.wait4dependencies(self.qt, 'phase8')
+        build.github_phase(self.qt)
 
 
         # qt packages
@@ -2178,7 +2185,7 @@ class all: # noqa
                 'PyQt-x11-gpl-4.11.4.tar.gz',
                 '4.11.4',
                 '2fe8265b2ae2fc593241c2c84d09d481',
-                { qt:'4.8.7', sip: '4.16.7', self.gcc : '4.1.2'},
+                { qt:'4.8.7', sip: '4.16.7', self.gcc : '4.8.5'},
             ),(
                 # CY 2016-2018
                 'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.6/PyQt5_gpl-5.6.tar.gz',
@@ -2330,9 +2337,9 @@ class all: # noqa
         )
         self.pyside = pyside
         # ============================================================================================================================================
-        # phase 9 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase9 = build.wait4dependencies(self.pyside, 'phase9')
+        build.github_phase(self.pyside)
 
 
         log4cplus = build.configure(
@@ -2544,7 +2551,8 @@ class all: # noqa
                     'OpenShadingLanguage-Release-1.10.7.tar.gz',
                     '1.10.7',
                     '53f66e12c3e29c62dc51b070f027a0ad',
-                    { self.llvm: "7.1.0", self.gcc: "6.3.1", self.boost: bv,
+                    { self.llvm: "7.1.0", self.gcc: "6.3.1",
+                    self.boost: bv, self.qt: '5.6.1',
                     self.oiio[bsufix]:"1.8.10",
                     self.oiio[bsufix]["1.8.10"]['ilmbase'].obj:  self.oiio[bsufix]["1.8.10"]['ilmbase'],
                     self.oiio[bsufix]["1.8.10"]['openexr'].obj:  self.oiio[bsufix]["1.8.10"]['ilmbase']}
@@ -2553,13 +2561,14 @@ class all: # noqa
                     'OpenShadingLanguage-Release-1.11.14.1.tar.gz',
                     '1.11.14',
                     '1abd7ce40481771a9fa937f19595d2f2',
-                    { self.llvm: "7.1.0", self.gcc: "6.3.1", self.boost: bv,
+                    { self.llvm: "7.1.0", self.gcc: "6.3.1",
+                    self.boost: bv, self.qt: '5.15.2',
                     self.oiio[bsufix]:oiio_version,
                     self.oiio[bsufix][oiio_version]['ilmbase'].obj:  self.oiio[bsufix][oiio_version]['ilmbase'],
                     self.oiio[bsufix][oiio_version]['openexr'].obj:  self.oiio[bsufix][oiio_version]['ilmbase']}
                 )],
                 depend=[self.icu, self.cmake, self.pugixml, self.freetype,
-                        self.openssl, self.bzip2, self.libraw, self.qt],
+                        self.openssl, self.bzip2, self.libraw],
                 cmd = [
                     'make '
                     'USE_CPP11=1 '
@@ -2820,9 +2829,9 @@ class all: # noqa
             self.openvdb[bsufix] = openvdb
 
         # ============================================================================================================================================
-        # phase 10 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase10 = build.wait4dependencies(self.openvdb[sufix], 'phase10')
+        build.github_phase(self.openvdb[sufix])
 
 
         # =============================================================================================================================================
@@ -2912,9 +2921,9 @@ class all: # noqa
             )
             self.alembic[bsufix] = alembic
         # =============================================================================================================================================
-        # phase 11 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase11 = build.wait4dependencies(self.alembic[bsufix], 'phase11')
+        build.github_phase(self.alembic[bsufix])
 
 
         # =============================================================================================================================================
@@ -3347,9 +3356,9 @@ class all: # noqa
 
 
         # ============================================================================================================================================
-        # phase 12 point, to use as pkg target in github actions
+        # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        self.phase12 = build.wait4dependencies(self.usd[bsufix], 'phase12')
+        build.github_phase(self.usd[bsufix])
 
 
 

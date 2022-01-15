@@ -633,7 +633,11 @@ class generic:
                 self.dependOn[download_version].version = download_version
             for dependencyPkg in self.depend:
                 # set the latest version for each package in the depend list!
-                dependencyPkgLatestVersion = dependencyPkg.downloadList[-1][2]
+                defaultVersion = -1 #latest
+                # if the package is gcc, we try to default to the oldest
+                # if dependencyPkg.name == 'gcc':
+                #     defaultVersion = 0
+                dependencyPkgLatestVersion = dependencyPkg.downloadList[defaultVersion][2]
                 self.dependOn[download_version][dependencyPkg] = dependencyPkgLatestVersion
 
         # but download list retains individual versions of packages to build
@@ -1293,7 +1297,7 @@ class generic:
         # and the dependency obj (dependOnOverride)!
         return depend_n, dependOnOverride
 
-    def __check_target_log__(self,target, install=None, stage=''):
+    def __check_target_log__(self,target, install=None, stage='pre-build'):
         ret=0
         msg="__check_target_log__(%s): " % '/'.join(target.split('/')[-3:])
         if os.path.exists(target):
@@ -1633,12 +1637,12 @@ class generic:
 
                     # set python searchpath for dependencies
                     PYTHONPATH += [
-                        "$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/"                 %  dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/site-packages/"   %  dependOn.name.upper(),
-                        '$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/lib-dynload/'     %  dependOn.name.upper(),
                         "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"                   %  dependOn.name.upper(),
                         "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/"     %  dependOn.name.upper(),
                         '$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'       %  dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/"                   %  dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/"     %  dependOn.name.upper(),
+                        '$%s_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/lib-dynload/'       %  dependOn.name.upper(),
                     ]
 
                     # set PATH searchpath for dependencies binaries

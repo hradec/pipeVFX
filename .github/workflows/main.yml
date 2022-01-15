@@ -25,6 +25,7 @@ env:
   CACHE_DIR: "pipeline/libs/"
   STUDIO: "pipevfx"
   GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  PREVIOUS_MATRIX_NAME: "phase1"
 
 # concurrency:
 #   group: ${{ github.ref_name }}
@@ -49,7 +50,9 @@ jobs:
           phase9,
           phase10,
           phase11,
-          phase12
+          phase12,
+          phase14,
+          phase15
         ]
 
     runs-on: ubuntu-20.04
@@ -64,22 +67,56 @@ jobs:
         restore-keys: |
           ${{ env.STUDIO }}-${{ github.ref_name }}-docker
 
+    # we try to speed up things by checking out just once,
+    # and caching the phase1 root folder, so we don't have to
+    # checkout again.
     - uses: actions/checkout@v2
+      if: matrix.name == 'phase1'
 
     - name: Cache
       uses: actions/cache@v1
       with:
-        path: ${{ env.CACHE_DIR }}
+        path: ./
         key: |
           ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
           ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
 
-    - name: 'Install Python Modules'
-      run: pip install PyJWT==1.7.1 PyGitHub==1.45
+    # and we use artifacts to pass on the built packages from the previous
+    # job to the next!
+    - uses: actions/download-artifact@v2
+      if: matrix.name != 'phase1'
+      with:
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz
+
+    - name: Expand the previously saved libs folder so we can continue building...
+      if: matrix.name != 'phase1'
+      run: |
+        ls -l --color=yes ; \
+        tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz ; \
+        ls -l --color=yes ; \
+        ls -l --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
+
+    # - name: 'Install Python Modules'
+    #   run: pip install PyJWT==1.7.1 PyGitHub==1.45
 
     - name: Build PipeVFX ${{ matrix.name }}
-      run: mkdir -p pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; ls -l pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; make build DOCKER=0 PKG=${{ matrix.name }}
+      run: |
+        mkdir -p pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
+        ls -l pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
+        make build DOCKER=0 PKG=${{ matrix.name }}
+
+    - name: Save out pipeline/libs/ folder as artifact
+      run: |
+        export NEXT_MATRIX_NAME=$(echo $(expr $(echo ${{ matrix.name }} | sed 's/phase//') + 1) | awk '{print "phase"$1}')
+        echo "NEXT_MATRIX_NAME=$NEXT_MATRIX_NAME" >> $GITHUB_ENV
+        tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
+        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
+
 
 
   libs_cache:
@@ -117,9 +154,9 @@ jobs:
       with:
         path: ${{ env.CACHE_DIR }}
         key: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.PREVIOUS_MATRIX_NAME }}-${{ github.sha }}
         restore-keys: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.PREVIOUS_MATRIX_NAME }}-${{ github.sha }}
 
     - name: Publish Cache
       run: tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/

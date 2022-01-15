@@ -63,7 +63,9 @@ class wait4dependencies(configure):
         self.wait4 = wait4
         d = self.wait4.download
         if version:
-            d = [ x for x in wait4.download if x[2] == version ]
+            if type(version) == str:
+                version = [version]
+            d = [ x for x in wait4.download if x[2] in version ]
 
         download = [ (None,"wait4.%s.%s.%s" % (self.wait4.name,msg,x[2]),x[2],None,{self.wait4: x[2]}) for x in d ]
         for d in download:
@@ -72,6 +74,16 @@ class wait4dependencies(configure):
         configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
         # configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
         self.env.Alias( msg, wait4.name )
+
+
+
+globals()['github_phases']=0
+class github_phase(wait4dependencies):
+    def __init__(self, wait4,version=None, cmd=["echo Done!!!!!"], depend=[], **kargs):
+        globals()['github_phases'] += 1
+        alias = 'phase'+str(globals()['github_phases'])
+        genericBuilders.s_print( 'github phase: %s => %s(%s)' % (alias, wait4.name, version) )
+        wait4dependencies.__init__(self, wait4, alias, version=version, cmd=cmd, depend=depend, **kargs)
 
 class pip(configure):
     cmd = ["./build.sh"]
