@@ -1,6 +1,6 @@
 pipeVFX
 =======
-![jenkins](http://atomovfx.hradec.com/build/build.svg)
+[![CI](https://github.com/hradec/pipeVFX/actions/workflows/main.yml/badge.svg)](https://github.com/hradec/pipeVFX/actions/workflows/main.yml)
 
 A Visual Effects pipeline to manage jobs, shots and software assignment, with a "simple asset manager" called SAM.
 
