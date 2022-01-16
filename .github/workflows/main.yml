@@ -56,133 +56,223 @@ jobs:
         ]
 
     runs-on: ubuntu-20.04
-
     steps:
-    - name: DockerCache
-      uses: actions/cache@v1
-      with:
-        path: /var/lib/docker/
-        key: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-docker
-        restore-keys: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-docker
-
-    # we try to speed up things by checking out just once,
-    # and caching the phase1 root folder, so we don't have to
-    # checkout again.
-    - uses: actions/checkout@v2
-      if: matrix.name == 'phase1'
-
-    - name: Cache
-      uses: actions/cache@v1
-      with:
-        path: ./
-        key: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
-        restore-keys: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
-
-    # and we use artifacts to pass on the built packages from the previous
-    # job to the next!
-    - uses: actions/download-artifact@v2
-      if: matrix.name != 'phase1'
-      with:
-        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz
-
-    - name: Expand the previously saved libs folder so we can continue building...
-      if: matrix.name != 'phase1'
-      run: |
-        ls -l --color=yes ; \
-        tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz ; \
-        ls -l --color=yes ; \
-        ls -l --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
 
     # - name: 'Install Python Modules'
     #   run: pip install PyJWT==1.7.1 PyGitHub==1.45
 
-    - name: Build PipeVFX ${{ matrix.name }}
+    - uses: actions/checkout@v2
+
+    # - name: retrieve root folder cache
+    #   uses: actions/cache@v1
+    #   with:
+    #     path: ./docker/
+    #     key: |
+    #       ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+    #     restore-keys: |
+    #       ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+
+    # ================================================================================================================
+    # restore pipeline/libs from previous run
+    # ================================================================================================================
+    # and we use artifacts to pass on the built packages from the previous
+    # job to the next!
+    - name: download artifact from previous run
+      uses: actions/download-artifact@v2
+      if: matrix.name != 'phase1'
+      with:
+          name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz
+        # name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+
+    # extract pipeline/libs from the previous uploaded artifact
+    - name: expand the previously saved libs folder so we can continue building
+      if: matrix.name != 'phase1'
+      run: |
+        tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz ; \
+        ls -lh --color=yes ; \
+        ls -lh --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/
+
+    # ================================================================================================================
+    # restore docker image from first run
+    # ================================================================================================================
+    # from phase2 onwards, we can just import the docker image tar file that was
+    # cached on phase1.
+    # so docker won't try to pull it again from the internet.
+    - name: cleanup olde docker image artifact
+      uses: geekyeggo/delete-artifact@v1
+      if: matrix.name == 'phase1'
+      with:
+        failOnError: false
+        name: ${{ env.DOCKER_IMAGE_TAR }}
+
+    - name: download docker build image from artifact
+      uses: actions/download-artifact@v2
+      if: matrix.name != 'phase1'
+      with:
+          failOnError: false
+          name: ${{ env.DOCKER_IMAGE_TAR }}
+
+    - name: import docker build image from the cache, so we don't have to download again
+      if: matrix.name != 'phase1'
+      run: |
+        ls -l ./docker/ ;\
+        dockerImageTar=$(basename $(ls -1 ./docker/docker_*.tar* | head -1)) ;\
+        dockerImage=$(echo $(basename $dockerImageTar) | sed 's/docker_//' | sed '/.tar//' | awk -F'-' '{print $1"/"$2":"$3}') ;\
+        [ -e ./docker/$dockerImageTar ] && docker image import ./docker/$dockerImageTar $dockerImage
+
+    # ================================================================================================================
+    # run scons
+    # ================================================================================================================
+    # build packages
+    - name: build PipeVFX ${{ matrix.name }}
       run: |
         mkdir -p pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
         ls -l pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
         make build DOCKER=0 PKG=${{ matrix.name }}
 
-    - name: Save out pipeline/libs/ folder as artifact
+    # ================================================================================================================
+    # upload pipeline/libs to an artifact with the next phase name, so we can restore it on the next phase
+    # ================================================================================================================
+    # after building, we save the pipeline/libs folder as an artifact with the
+    # name of the next phase, so the next phase can download and extract!
+    - name: save out pipeline/libs/ folder as artifact
       run: |
-        export NEXT_MATRIX_NAME=$(echo $(expr $(echo ${{ matrix.name }} | sed 's/phase//') + 1) | awk '{print "phase"$1}')
-        echo "NEXT_MATRIX_NAME=$NEXT_MATRIX_NAME" >> $GITHUB_ENV
+        export NEXT_MATRIX_NAME=$(echo $(expr $(echo ${{ matrix.name }} | sed 's/phase//') + 1) | awk '{print "phase"$1}') ;\
+        echo "NEXT_MATRIX_NAME=$NEXT_MATRIX_NAME" >> $GITHUB_ENV ;\
         tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
 
-    - uses: actions/upload-artifact@v2
+    # upload next-phase artifact
+    - name: upload pipeline/libs as artifact
+      uses: actions/upload-artifact@v2
       with:
         name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
         path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
 
+    # ================================================================================================================
+    # docker image export to artifact
+    # ================================================================================================================
+    # export the docker build image to a tar on the phase1 job, so it can
+    # be cached for all the subsequent phases.
+    - name: Export build docker image so it's cached
+      if: matrix.name == 'phase1'
+      run: |
+        export dockerImage=$(docker images | grep pipevfx_build | head -1 | awk '{print $1":"$2}') ;\
+        export dockerImageTar=$(echo "docker_$dockerImage.tar" | sed 's/\//-/' | sed 's/:/-/') ;\
+        echo $dockerImage ;\
+        echo $dockerImageTar ;\
+        echo "DOCKER_IMAGE_TAR=$dockerImageTar" >> $GITHUB_ENV ;\
+        mkdir -p ./docker/ ;\
+        docker image save --output=./docker/$dockerImageTar $dockerImage ; \
+        ls -l ./docker/
 
-
-  libs_cache:
-    needs: build
-    if: ${{ always() }}
-
-    runs-on: ubuntu-20.04
-
-    steps:
-    - name: Cache
-      uses: actions/cache@v1
+    # upload next-phase artifact, which is the same as last, but has
+    # the docker image in it to be re-imported.
+    - name: upload docker build image as artifact, so we don't have to pull it everytime...
+      uses: actions/upload-artifact@v2
       with:
-        path: ${{ env.CACHE_DIR }}
-        key: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
-        restore-keys: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+        name: ${{ env.DOCKER_IMAGE_TAR }}
+        path: ./docker/${{ env.DOCKER_IMAGE_TAR }}
 
-    - name: Publish Cache
-      run: tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}
 
-    - uses: actions/upload-artifact@v2
+    # ================================================================================================================
+    # make sure we have a "last artifact" with all the built pkgs in pipeline/libs
+    # ================================================================================================================
+    # remove global last artifact
+    - name: cleanup last artifact
+      uses: geekyeggo/delete-artifact@v1
+      with:
+        failOnError: false
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+
+    # upload the last artifact, which holds all built packages up to the last
+    # susscessfully finished phase.
+    - name: upload pipeline/libs as last artifact as well
+      uses: actions/upload-artifact@v2
       with:
         name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
-        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
 
-  libs_release:
-    needs: build
+    # remove all tar archive files just in case
+    - name: Remove archive after upload so it won't be cached
+      run: rm -rf ./*.tar*
 
-    runs-on: ubuntu-20.04
+  # cleanup:
+  #   needs: build
+  #   if: ${{ always() }}
+  #   strategy:
+  #     # cancel other jobs in the build matrix if one job fails.
+  #     fail-fast: true
+  #     max-parallel: 1
+  #     matrix:
+  #       name: [
+  #         phase1,
+  #         phase2,
+  #         phase3,
+  #         phase4,
+  #         phase5,
+  #         phase6,
+  #         phase7,
+  #         phase8,
+  #         phase9,
+  #         phase10,
+  #         phase11,
+  #         phase12,
+  #         phase14,
+  #         phase15
+  #       ]
+  #
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #   - name: Cleanup artifacts we don't need!
+  #     uses: geekyeggo/delete-artifact@v1
+  #     with:
+  #       failOnError: false
+  #       name: |
+  #         ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name }}-${{ github.sha }}.tar.gz
 
-    steps:
-    - name: Cache
-      uses: actions/cache@v1
-      with:
-        path: ${{ env.CACHE_DIR }}
-        key: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.PREVIOUS_MATRIX_NAME }}-${{ github.sha }}
-        restore-keys: |
-          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.PREVIOUS_MATRIX_NAME }}-${{ github.sha }}
-
-    - name: Publish Cache
-      run: tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
-        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
-
-    # - name: Validate
-    #   run: |
-    #     echo "::add-matcher::./.github/workflows/main/problemMatchers/validateRelease.json"
-    #     ./config/validateRelease.py --archive ${{ env.GAFFER_BUILD_NAME }}.tar.gz ${{ env.GAFFER_VALIDATE_EXTRA_FLAGS }}
-    #     echo "::remove-matcher owner=validateRelease::"
-    #   if: matrix.publish
-
-    # - name: Publish Release
-    #   run: |
-    #     ./config/publishRelease.py --archive ${{ env.GAFFER_BUILD_NAME }}.tar.gz --repo ${{ github.repository }} --releaseId ${{ env.GAFFER_GITHUB_RELEASEID }}
-    #   if: matrix.publish && env.GAFFER_GITHUB_RELEASEID != ''
-    #   env:
-    #     GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    # - name: Limit cache size
-    #   # GitHub has a limit of 5G for all caches in a repository. Because we write new
-    #   # files into `./sconsCache` with every build, we must trim its size to avoid
-    #   # unbounded growth. In practice, the archives that get uploaded are much smaller
-    #   # than the limit we apply here, because they're compressed.
-    #   run: ./.github/workflows/main/limitDirectorySize.py --directory ./sconsCache --megabytes ${{ matrix.sconsCacheMegabytes }} --verbose
+  # libs_cache:
+  #   needs: build
+  #   if: ${{ always() }}
+  #
+  #   runs-on: ubuntu-20.04
+  #
+  #   steps:
+  #   - name: Cache
+  #     uses: actions/cache@v1
+  #     with:
+  #       path: ${{ env.CACHE_DIR }}
+  #       key: |
+  #         ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+  #       restore-keys: |
+  #         ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+  #
+  #   - name: Publish Cache
+  #     run: tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz /pipeline/libs/
+  #
+  #   - uses: actions/upload-artifact@v2
+  #     with:
+  #       name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+  #       path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+  #
+  # libs_release:
+  #   needs: build
+  #
+  #   runs-on: ubuntu-20.04
+  #
+  #   steps:
+  #   - name: Cache
+  #     uses: actions/cache@v1
+  #     with:
+  #       path: ${{ env.CACHE_DIR }}
+  #       key: |
+  #         ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.PREVIOUS_MATRIX_NAME }}-${{ github.sha }}
+  #       restore-keys: |
+  #         ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.PREVIOUS_MATRIX_NAME }}-${{ github.sha }}
+  #
+  #   - name: Publish Cache
+  #     run: tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
+  #
+  #   - uses: actions/upload-artifact@v2
+  #     with:
+  #       name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+  #       path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
