@@ -678,12 +678,15 @@ class baseApp(_environ):
             # to alter app configuration, like enable/disable plugins!
             if '__executed_job_configs__' not in os.environ:
                 os.environ[ '__executed_job_configs__' ] = ""
-            job_config = [ "%s/config/job_config.py" % each for each in self.toolsPaths() ]
-            for each in job_config:
-                if each not in os.environ['__executed_job_configs__']:
-                    os.environ[ '__executed_job_configs__' ] += " %s" % each
-                    if os.path.exists(each):
-                        exec( ''.join( open(each,'r').readlines() ) )
+
+            if self.parent() == self.className:
+                job_config = [ "%s/config/job_config.py" % each for each in self.toolsPaths() ]
+                for each in job_config:
+                    if each not in os.environ['__executed_job_configs__']:
+                        os.environ[ '__executed_job_configs__' ] += " %s" % each
+                        if os.path.exists(each):
+                            exec( ''.join( open(each,'r').readlines() ) )
+                            break
 
             # stores all classes that update this one
             self.updatedClasses = {}

@@ -22,45 +22,78 @@
 class vray(baseApp):
     def environ(self):
         # configure maya plugin/scripts/icons
-        maya.addon ( self,
-            module = self.path('autodesk/maya$MAYA_VERSION/VRayForMaya.module'),
-            plugin = [
-                self.path('autodesk/maya$MAYA_VERSION/plug-ins/'),
-                self.path('autodesk/maya$MAYA_VERSION/plug-ins/xgen/presets/plugins/'),
-                self.path('autodesk/maya$MAYA_VERSION/vray/plug-ins/'),
-            ],
-            script = [
-                self.path('autodesk/maya$MAYA_VERSION/scripts/others/'),
-                self.path('autodesk/maya$MAYA_VERSION/vray/scripts/'),
-            ],
-            icon   = [
-                self.path('autodesk/maya$MAYA_VERSION/vray/icons'),
-            ],
-            preset = self.path('autodesk/maya$MAYA_VERSION/presets'),
-            renderDesc = self.path('autodesk/maya$MAYA_VERSION/bin/rendererDesc/'),
-        )
+        if float(self.version().split('.')[0]) < 4:
+            maya.addon ( self,
+                module = self.path('autodesk/maya$MAYA_VERSION/VRayForMaya.module'),
+                plugin = [
+                    self.path('autodesk/maya$MAYA_VERSION/plug-ins/'),
+                    self.path('autodesk/maya$MAYA_VERSION/plug-ins/xgen/presets/plugins/'),
+                    self.path('autodesk/maya$MAYA_VERSION/vray/plug-ins/'),
+                ],
+                script = [
+                    self.path('autodesk/maya$MAYA_VERSION/scripts/others/'),
+                    self.path('autodesk/maya$MAYA_VERSION/vray/scripts/'),
+                ],
+                icon   = [
+                    self.path('autodesk/maya$MAYA_VERSION/vray/icons'),
+                ],
+                preset = self.path('autodesk/maya$MAYA_VERSION/presets'),
+                renderDesc = self.path('autodesk/maya$MAYA_VERSION/bin/rendererDesc/'),
+            )
 
-        mv = maya().version().replace('.','_')
-        self['VRAY_FOR_MAYA%s_MAIN_x64' % mv] = self.path('autodesk/maya$MAYA_VERSION/vray/')
-        self['VRAY_FOR_MAYA%s_PLUGINS_x64' % mv] = self.path('autodesk/maya$MAYA_VERSION/vray/vrayplugins/')
-        self['VRAY_OSL_PATH_MAYA%s_x64' % mv] = self.path('autodesk/maya$MAYA_VERSION/opensl/')
+            mv = maya().version().replace('.','_')
+            self['VRAY_FOR_MAYA%s_MAIN_x64' % mv] = self.path('autodesk/maya$MAYA_VERSION/vray/')
+            self['VRAY_FOR_MAYA%s_PLUGINS_x64' % mv] = self.path('autodesk/maya$MAYA_VERSION/vray/vrayplugins/')
+            self['VRAY_OSL_PATH_MAYA%s_x64' % mv] = self.path('autodesk/maya$MAYA_VERSION/opensl/')
 
-        self['PATH'] = self.path('autodesk/maya$MAYA_VERSION/bin/')
-        self['PATH'] = self.path('autodesk/maya$MAYA_VERSION/vray/bin/')
+            self['PATH'] = self.path('autodesk/maya$MAYA_VERSION/bin/')
+            self['PATH'] = self.path('autodesk/maya$MAYA_VERSION/vray/bin/')
 
-        self['LD_LIBRARY_PATH'] = self.path('autodesk/maya$MAYA_VERSION/lib/')
-        self['LD_LIBRARY_PATH'] = self.path('autodesk/maya$MAYA_VERSION/lib/linux_x64/gcc-4.4/')
+            self['LD_LIBRARY_PATH'] = self.path('autodesk/maya$MAYA_VERSION/lib/')
+            self['LD_LIBRARY_PATH'] = self.path('autodesk/maya$MAYA_VERSION/lib/linux_x64/gcc-4.4/')
 
-        self['PYTHONPATH'] = self.path('autodesk/maya$MAYA_VERSION/vray/scripts/')
+            self['PYTHONPATH'] = self.path('autodesk/maya$MAYA_VERSION/vray/scripts/')
+        else:
+            maya.addon ( self,
+                module = self.path('maya/$MAYA_VERSION/maya_root/modules/VRayForMaya.module'),
+                plugin = [
+                    self.path('maya/$MAYA_VERSION/maya_vray/plug-ins/'),
+                    self.path('maya/$MAYA_VERSION/maya_vray/vrscene_xgen/'),
+                ],
+                script = [
+                    self.path('maya/$MAYA_VERSION/maya_vray/scripts/vray'),
+                    self.path('maya/$MAYA_VERSION/maya_vray/scripts/'),
+                ],
+                icon   = [
+                    self.path('maya/$MAYA_VERSION/maya_vray/icons/'),
+                ],
+                preset = self.path('maya/$MAYA_VERSION/maya_vray/presets/'),
+                renderDesc = self.path('maya/$MAYA_VERSION/maya_vray/rendererDesc/'),
+            )
+
+            mv = maya().version().replace('.','_')
+            self['VRAY_FOR_MAYA%s_MAIN_x64' % mv] = self.path('maya/$MAYA_VERSION/maya_vray/')
+            self['VRAY_FOR_MAYA%s_PLUGINS_x64' % mv] = self.path('maya/$MAYA_VERSION/maya_vray/vrayplugins/')
+            self['VRAY_OSL_PATH_MAYA%s_x64' % mv] = self.path('maya/$MAYA_VERSION/maya_vray/opensl/')
+
+            self['PATH'] = self.path('maya/$MAYA_VERSION/maya_vray/vrayplugins/bin/')
+            self['PATH'] = self.path('maya/$MAYA_VERSION/maya_vray/vray/bin/')
+
+            self['LD_LIBRARY_PATH'] = self.path('maya/$MAYA_VERSION/maya_vray/vrayplugins/lib/')
+            self['LD_LIBRARY_PATH'] = self.path('maya/$MAYA_VERSION/vray/lib')
+
+            self['PYTHONPATH'] = self.path('maya/$MAYA_VERSION/maya_vray/scripts/')
+
 
         self['VRAY_OPENCL_PLATFORMS_x64']='gpu'
 
     def bins(self):
-        return [( 'vrayslave','/autodesk/maya2016.5/bin/vrayslave' )]
+        return [( 'vrayslave','/autodesk/maya$MAYA_VERSION/bin/vrayslave' )]
 
     def license( self ):
         # os.popen( '%s/autodesk/maya$MAYA_VERSION/vbin/setvrlservice -server=192.168.0.17 -port=30304' % self.path() )
         # f = os.popen( '%s/.ChaosGroup/vrlclient.xml' % os.environ["HOME"] )
         # os.popen( '%s/autodesk/maya%s/vray/bin/setvrlservice -server=192.168.0.17 -port=30304' % (self.path(), maya().version() ) ).readlines()
-        os.popen( '%s/autodesk/maya%s/vray/bin/setvrlservice -server=127.0.0.1 -port=30305 -server1=0.0.0.0 -port1=30306  -server2=192.168.0.17 -port2=30306' % (self.path(), maya().version() ) ).readlines()
-        os.system( '%s/docker/start.sh &' % self.path() )
+        if float(self.version().split('.')[0]) < 4:
+            os.popen( '%s/autodesk/maya%s/vray/bin/setvrlservice -server=127.0.0.1 -port=30305 -server1=0.0.0.0 -port1=30306  -server2=192.168.0.17 -port2=30306' % (self.path(), maya().version() ) ).readlines()
+            os.system( '%s/docker/start.sh &' % self.path() )

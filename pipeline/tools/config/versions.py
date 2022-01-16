@@ -44,6 +44,7 @@ pipe.version.set( arnold    = '5.1.0.1' )
 pipe.version.set( realflow  = '10.5.3.0189' )
 pipe.version.set( prman     = '23.4' )
 pipe.version.set( keentools = '02.01.01' )
+pipe.version.set( vray      = '5.2.31206' )
 
 
 

@@ -21,7 +21,7 @@
 
 
 os.environ['PIPE_MAYA_ARNOLD']       = '0'
-os.environ['PIPE_MAYA_VRAY']         = '0'
+os.environ['PIPE_MAYA_VRAY']         = '1'
 os.environ['PIPE_MAYA_ZYNC']         = '0'
 os.environ['PIPE_MAYA_FABRICENGINE'] = '1'
 os.environ['PIPE_MAYA_OCTANE']       = '1'
