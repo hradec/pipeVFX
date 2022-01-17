@@ -1633,6 +1633,8 @@ class generic:
                     # add extra folders inside dependency include folders
                     for each in glob("%s/include/*" % dependOn.targetFolder[p][depend_n]):
                         if os.path.isdir(each):
+                            if dependOn.name == 'tbb' and 'serial' in each:
+                                continue
                             C_INCLUDE_PATH += ["%s" % each]
 
                     # set python searchpath for dependencies
