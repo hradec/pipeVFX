@@ -66,7 +66,7 @@ jobs:
     # - name: retrieve root folder cache
     #   uses: actions/cache@v1
     #   with:
-    #     path: ./docker/
+    #     path: ./
     #     key: |
     #       ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
     #     restore-keys: |
@@ -92,33 +92,6 @@ jobs:
         ls -lh --color=yes ; \
         ls -lh --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/
 
-    # # ================================================================================================================
-    # # restore docker image from first run
-    # # ================================================================================================================
-    # # from phase2 onwards, we can just import the docker image tar file that was
-    # # cached on phase1.
-    # # so docker won't try to pull it again from the internet.
-    # - name: cleanup olde docker image artifact
-    #   uses: geekyeggo/delete-artifact@v1
-    #   if: matrix.name == 'phase1'
-    #   with:
-    #     failOnError: false
-    #     name: ${{ env.DOCKER_IMAGE_TAR }}
-    #
-    # - name: download docker build image from artifact
-    #   uses: actions/download-artifact@v2
-    #   if: matrix.name != 'phase1'
-    #   with:
-    #       failOnError: false
-    #       name: ${{ env.DOCKER_IMAGE_TAR }}
-    #
-    # - name: import docker build image from the cache, so we don't have to download again
-    #   if: matrix.name != 'phase1'
-    #   run: |
-    #     ls -l ./docker/ ;\
-    #     dockerImageTar=$(basename $(ls -1 ./docker/docker_*.tar* | head -1)) ;\
-    #     dockerImage=$(echo $(basename $dockerImageTar) | sed 's/docker_//' | sed '/.tar//' | awk -F'-' '{print $1"/"$2":"$3}') ;\
-    #     [ -e ./docker/$dockerImageTar ] && docker image import ./docker/$dockerImageTar $dockerImage
 
     # ================================================================================================================
     # run scons
@@ -148,49 +121,6 @@ jobs:
         name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
         path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
 
-    # # ================================================================================================================
-    # # docker image export to artifact
-    # # ================================================================================================================
-    # # export the docker build image to a tar on the phase1 job, so it can
-    # # be cached for all the subsequent phases.
-    # - name: Export build docker image so it's cached
-    #   if: matrix.name == 'phase1'
-    #   run: |
-    #     export dockerImage=$(docker images | grep pipevfx_build | head -1 | awk '{print $1":"$2}') ;\
-    #     export dockerImageTar=$(echo "docker_$dockerImage.tar" | sed 's/\//-/' | sed 's/:/-/') ;\
-    #     echo $dockerImage ;\
-    #     echo $dockerImageTar ;\
-    #     echo "DOCKER_IMAGE_TAR=$dockerImageTar" >> $GITHUB_ENV ;\
-    #     mkdir -p ./docker/ ;\
-    #     docker image save --output=./docker/$dockerImageTar $dockerImage ; \
-    #     ls -l ./docker/
-    #
-    # # upload next-phase artifact, which is the same as last, but has
-    # # the docker image in it to be re-imported.
-    # - name: upload docker build image as artifact, so we don't have to pull it everytime...
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: ${{ env.DOCKER_IMAGE_TAR }}
-    #     path: ./docker/${{ env.DOCKER_IMAGE_TAR }}
-
-
-    # ================================================================================================================
-    # make sure we have a "last artifact" with all the built pkgs in pipeline/libs
-    # ================================================================================================================
-    # remove global last artifact
-    - name: cleanup last artifact
-      uses: geekyeggo/delete-artifact@v1
-      with:
-        failOnError: false
-        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
-
-    # upload the last artifact, which holds all built packages up to the last
-    # susscessfully finished phase.
-    - name: upload pipeline/libs as last artifact as well
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
-        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
 
     # remove all tar archive files just in case
     - name: Remove archive after upload so it won't be cached
