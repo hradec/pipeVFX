@@ -152,7 +152,10 @@ RUN rm -rf /var/cache/yum/*
 RUN mkdir -p /atomo/pipeline/build/.download/
 COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download  /atomo/pipeline/build/.download/
 
-RUN yum -y reinstall  boost boost-filesystem inkscape
+RUN yum -y reinstall  boost boost-filesystem inkscape || true
+
+# qt 5.15 now needs these!!
+RUN yum -y install libxkbcommon-devel libxkbcommon-x11-devel || true
 
 
 RUN [ -f /etc/centos-release ] && yum -y install python2-scons || true
