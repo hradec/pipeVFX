@@ -440,5 +440,7 @@ class tbb(make):
         # install the whole intel advisor just for this include file.
         # this include file is a macro include only, so we don't
         # need anything else.
+        # it seems we need this include when building a package with TBB
+        # and GCC 6.3.1!! If we build with GCC 4.N.N we don't need it! 
         lines += os.popen('cp /.docker/2022.advisor-annotate.h %s/include/advisor-annotate.h' % targetFolder).readlines()
         return lines
