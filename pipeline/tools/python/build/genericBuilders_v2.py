@@ -2533,7 +2533,7 @@ class generic:
             raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
         if not self.shouldBuild( target, source ):
-            return
+            return False
         for n in range(len(source)):
             url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
             # print source[n]
@@ -2552,8 +2552,9 @@ class generic:
 
                 # if not os.path.exists(self.__lastlog(__pkgInstalled__[s],python)):
                 lastlog = self.__lastlog(__pkgInstalled__[s],python)
+                # print self.__check_target_log__( lastlog ), str(target[0]), str(source[0])
                 if self.__check_target_log__( lastlog ):
-                    # _print( ":: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
+                    # _print( "\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                     cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
@@ -2585,6 +2586,8 @@ class generic:
                     for updates in ['config.sub', 'config.guess']:
                         for file2update in os.popen('find %s -name %s 2>&1' % (os.path.dirname(t), updates) ).readlines():
                             os.popen( "cp %s/../.download/%s %s"   % (os.path.dirname(s), updates, file2update) )
+
+                    return True
                 else:
                     # os.mkdir(os.path.dirname(s))
                     # f=open(s, 'w')
@@ -2593,6 +2596,7 @@ class generic:
                     if not os.path.exists(os.path.dirname(t)):
                         os.mkdirs(os.path.dirname(t))
                         open(t, 'a').close()
+        return False
 
     def fix_uncompressed_path(self, path):
         if self.kargs.has_key('uncompressed_path'):

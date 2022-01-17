@@ -257,14 +257,14 @@ class gccBuild(configure):
         elif float(v) == 4.8:
             configure.uncompressor( self, target, source, env)
         elif float(v) == 6.3:
-            configure.uncompressor( self, target, source, env)
-            os.system( " && ".join([
-                "cd %s",
-                "tar xf ./gcc-6.3.1-20170216.tar.bz2",
-                "tar xf ./doxygen-1.8.0.src.tar.gz",
-                "tar xf ./isl-0.14.tar.bz2",
-                "tar xf ./mpc-0.8.1.tar.gz",
-            ]) % (os.path.dirname(t)) )
+            if configure.uncompressor( self, target, source, env):
+                os.system( " && ".join([
+                    "cd %s",
+                    "tar xf ./gcc-6.3.1-20170216.tar.bz2",
+                    "tar xf ./doxygen-1.8.0.src.tar.gz",
+                    "tar xf ./isl-0.14.tar.bz2",
+                    "tar xf ./mpc-0.8.1.tar.gz",
+                ]) % (os.path.dirname(t)) )
         else:
             configure.uncompressor( self, target, source, env)
 
