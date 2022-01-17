@@ -185,7 +185,6 @@ class all: # noqa
             environ = { 'LD' : 'ld' },
             globalDependency = True,
         )
-        build.github_phase(gmp)
 
         mpfr = build.configure(
             ARGUMENTS,
@@ -200,7 +199,6 @@ class all: # noqa
             environ = { 'LD' : 'ld' },
             globalDependency = True,
         )
-        build.github_phase(mpfr)
 
         mpc = build.configure(
             ARGUMENTS,
@@ -1441,8 +1439,8 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.llvm, version=['3.9.1', '7.1.0'])
-        build.github_phase(self.llvm, version=['9.0.0', '10.0.1'])
+        build.github_phase(self.llvm, version=['10.0.1', '7.1.0'])
+        # build.github_phase(self.llvm, version=['9.0.0', '3.9.1'])
 
 
         # ============================================================================================================================================
@@ -2058,11 +2056,16 @@ class all: # noqa
                     '-no-libudev -no-gstreamer -no-icu -qt-pcre -qt-xcb '
                     '-nomake examples -nomake tests -c++std c++11 '
                 '|| true ; [ "$(basename $TARGET_FOLDER)" == "5.15.2" ] && '
-                    './configure -plugindir $INSTALL_FOLDER/qt/plugins -release -opensource --confirm-license '
-                    # '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
-                    # '-no-libudev -no-gstreamer '
-                    '-qt-pcre -no-dbus '
+                    './configure -plugindir $INSTALL_FOLDER/qt/plugins '
+                    '-release -opensource --confirm-license '
+                    '-qpa xcb -xcb -xcb-xlib -xkbcommon '
                     '-nomake examples -nomake tests -c++std c++11 -sse2 -no-sse3 '
+                    '-qt-doubleconversion -qt-pcre -qt-zlib -qt-freetype '
+                    '-qt-harfbuzz -qt-libpng -qt-libjpeg -qt-sqlite '
+                    '-qt-tiff -qt-webp -qt-assimp -qt-webengine-icu '
+                    '-qt-webengine-ffmpeg -qt-webengine-webp -qt-webengine-opus'
+                    # '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
+                    # '-no-libudev -no-gstreamer -no-dbus '
                 '|| true )',
                 'make -j $DCORES',
                 'make -j $DCORES install',

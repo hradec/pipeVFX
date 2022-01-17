@@ -49,9 +49,7 @@ jobs:
           phase9,
           phase10,
           phase11,
-          phase12,
-          phase14,
-          phase15
+          phase12
         ]
 
     runs-on: ubuntu-20.04
