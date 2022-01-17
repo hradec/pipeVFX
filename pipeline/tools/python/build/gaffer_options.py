@@ -17,6 +17,8 @@ def get(var, value):
 sys.path.insert( 0, os.path.abspath( os.path.dirname(build.__file__) ) )
 from cortex_options import *
 
+pushPrint()
+
 BUILD_TYPE="RELEASE"
 
 # os.environ['LD_LIBRARY_PATH'] = '$GCC_TARGET_FOLDER/lib/'
@@ -151,13 +153,17 @@ if 'PRMAN_ROOT' in os.environ:
 GAFFERCORTEX = True
 
 
-LOCATE_DEPENDENCY_PYTHONPATH = ':'.join([
+LOCATE_DEPENDENCY_PYTHONPATH = [
     '$CORTEX_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
     '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
     '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
     '$CORTEX_TARGET_FOLDER/usd/$USD_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
-])
+    '$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
+]
+LOCATE_DEPENDENCY_PYTHONPATH = [ build.expandvars( x ) for x in LOCATE_DEPENDENCY_PYTHONPATH ]
 
+os.environ['PYTHONPATH'] = ':'.join(LOCATE_DEPENDENCY_PYTHONPATH+[os.environ['PYTHONPATH']])
+os.environ['GAFFER_JEMALLOC'] = '0'
 popPrint('All Gaffer Paths...')
 
 

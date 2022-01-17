@@ -690,7 +690,7 @@ class all: # noqa
                 'tbb-2019_U6.zip',
                 '2019_U6',
                 None,
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '6.3.1', python: '2.7.16' }
             ),(
                 # CY2021
                 'https://github.com/intel/tbb.git',
@@ -1145,27 +1145,30 @@ class all: # noqa
             noMinTime=True,
         )
 
-        # self.pybind = build.cmake(
-        #     ARGUMENTS,
-        #     'pybind',
-        #     download=[(
-        #         'https://github.com/pybind/pybind11/archive/v2.6.2.tar.gz',
-        #         'pybind11-2.6.2.tar.gz',
-        #         '2.6.2',
-        #         'c5ea9c4c57082e05efe14e4b34323bfd',
-        #     )],
-        #     flags = [
-        #         "-D CMAKE_INSTALL_PREFIX=$INSTALL_TARGET",
-        #         "-D PYBIND11_TEST=0",
-        #         "-D PYBIND11_FINDPYTHON=1",
-        #         "-D Python_ROOT_DIR=$PYTHON_TARGET_FOLDER",
-        #         "-D Python_FIND_STRATEGY=LOCATION bbbbbb",
-        #     ],
-        #     baseLibs=[python],
-        #     depend=[python],
-        #     # noMinTime=True,
-        # )
-        # build.globalDependency(self.pybind)
+        self.pybind = build.cmake(
+            ARGUMENTS,
+            'pybind',
+            download=[(
+                'https://github.com/pybind/pybind11/archive/v2.6.2.tar.gz',
+                'pybind11-2.6.2.tar.gz',
+                '2.6.2',
+                'c5ea9c4c57082e05efe14e4b34323bfd',
+            )],
+            flags = [
+                # "-D CMAKE_INSTALL_PREFIX=/atomo/pipeline/build/.build/OpenShadingLanguage-Release-1.11.14.1.noBaseLib-boost.1.66.0/ext/dist ",
+                "-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER",
+                "-D CMAKE_BUILD_TYPE=Release",
+                "-D PYBIND11_TEST=OFF",
+                "-D PYBIND11_FINDPYTHON=1",
+                "-D PYBIND11_PYTHON_VERSION=$PYTHON_VERSION_MAJOR",
+                "-D Python_ROOT_DIR=$PYTHON_TARGET_FOLDER",
+                "-D Python_FIND_STRATEGY=LOCATION",
+            ],
+            baseLibs=[python],
+            depend=[python],
+            noMinTime=True,
+        )
+        build.globalDependency(self.pybind)
 
 
 
@@ -2562,20 +2565,18 @@ class all: # noqa
                     '1.11.14',
                     '1abd7ce40481771a9fa937f19595d2f2',
                     { self.llvm: "7.1.0", self.gcc: "6.3.1",
-                    self.boost: bv, self.qt: '5.15.2',
+                    self.boost: bv, self.qt: '5.6.1',
                     self.oiio[bsufix]:oiio_version,
                     self.oiio[bsufix][oiio_version]['ilmbase'].obj:  self.oiio[bsufix][oiio_version]['ilmbase'],
                     self.oiio[bsufix][oiio_version]['openexr'].obj:  self.oiio[bsufix][oiio_version]['ilmbase']}
                 )],
                 depend=[self.icu, self.cmake, self.pugixml, self.freetype,
-                        self.openssl, self.bzip2, self.libraw],
+                        self.openssl, self.bzip2, self.libraw, self.pybind],
                 cmd = [
                     'make '
                     'USE_CPP11=1 '
                     'INSTALLDIR=$INSTALL_FOLDER '
                     'INSTALL_PREFIX=$INSTALL_FOLDER '
-                    'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
-                    'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                     'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
                     'BOOST_ROOT=$BOOST_TARGET_FOLDER '
                     'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
@@ -2584,6 +2585,7 @@ class all: # noqa
                     'OSL_SHADER_INSTALL_DIR=$INSTALL_FOLDER/shaders '
                     'Python_ROOT_DIR=$PYTHON_TARGET_FOLDER/ '
                     'Python_FIND_STRATEGY=LOCATION '
+                    'pybind11_ROOT=$PYBIND_TARGET_FOLDER/ '
                     'PARTIO_HOME="" '
                     'STOP_ON_WARNING=0 '
                     'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
@@ -2591,6 +2593,8 @@ class all: # noqa
                     'BOOST_HOME=$BOOST_TARGET_FOLDER '
                     'USE_LIBCPLUSPLUS=0 '
                     'HIDE_SYMBOLS=0 '
+                    'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
+                    'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                     # 'install '
                 ],
                 environ = environ,
@@ -2701,7 +2705,7 @@ class all: # noqa
                     'openvdb-8.2.0.tar.gz',
                     '8.2.0',
                     '2852fe7176071eaa18ab9ccfad5ec403',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U2',
+                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2019_U6',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
                     self.pyilmbase[bsufix]: exr_version,}
@@ -2755,7 +2759,8 @@ class all: # noqa
 
             openvdb_environ = {
                 # this fixes the problem with missing stdlib.h
-                'CXX':  'g++  -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                'CXX':  'g++'
+                            ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
                             ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
                             ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
                             ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
@@ -2798,8 +2803,8 @@ class all: # noqa
                     "&& ( "
                         "mkdir ./build",
                         "cd ./build",
-                        "cmake ../",
-                        "make -j $DCORES",
+                        "cmake ../ -DCONCURRENT_MALLOC=Jemalloc",
+                        "make -j $DCORES VERBOSE=1",
                         "make -j $DCORES install"
                     ") || ( cd openvdb ",
                         " make install -j $DCORES"

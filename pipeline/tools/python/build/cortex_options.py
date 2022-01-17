@@ -256,7 +256,9 @@ ENV_VARS_TO_IMPORT      = " ".join([ x for x in os.environ.keys() if
     'PATH' in x or
     'FLAGS' in x or
     'VERSION' in x or
-    'CORE' in x
+    'CORE' in x or
+    'JEMALLOC' in x or
+    'LD_PRELOAD' in x
 ])
 
 LINKFLAGS = os.environ['LDFLAGS'].split(' ')
