@@ -2060,7 +2060,8 @@ class all: # noqa
                 '|| true ; [ "$(basename $TARGET_FOLDER)" == "5.15.2" ] && '
                     './configure -plugindir $INSTALL_FOLDER/qt/plugins -release -opensource --confirm-license '
                     # '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
-                    # '-no-libudev -no-gstreamer -qt-pcre -no-dbus '
+                    # '-no-libudev -no-gstreamer '
+                    '-qt-pcre -no-dbus '
                     '-nomake examples -nomake tests -c++std c++11 -sse2 -no-sse3 '
                 '|| true )',
                 'make -j $DCORES',
@@ -2099,10 +2100,15 @@ class all: # noqa
                 'Qt.py-1.1.0.b3.tar.gz',
                 '1.1.0.b3',
                 '5c1acbf9bdec2359d414cc7d2a2b6b7f',
+            ),(
+                'https://github.com/mottosso/Qt.py/archive/1.2.5.tar.gz',
+                'Qt.py-1.2.5.tar.gz',
+                '1.2.5',
+                'a10bc14327d7c38fb3611b4d0daf58fb',
             )],
             cmd = [
                 'rm -rf $INSTALL_FOLDER/*',
-                'mkdir -p $INSTALL_FOLDER/lib/python/site_packages/src',
+                'mkdir -p $INSTALL_FOLDER/lib/python/site-packages/src',
                 'ln -s python $INSTALL_FOLDER/lib/python2.6',
                 'ln -s python $INSTALL_FOLDER/lib/python2.7',
                 'ln -s python $INSTALL_FOLDER/lib/python3.5',
@@ -2110,8 +2116,8 @@ class all: # noqa
                 'ln -s python $INSTALL_FOLDER/lib/python3.7',
                 'ln -s python $INSTALL_FOLDER/lib/python3.8',
                 'ln -s lib $INSTALL_FOLDER/lib64',
-                'cp -rf ./Qt.py $INSTALL_FOLDER/lib/python/site_packages/',
-                'cp -rf ./* $INSTALL_FOLDER/lib/python/site_packages/src/',
+                'cp -rf ./Qt.py $INSTALL_FOLDER/lib/python/site-packages/',
+                'cp -rf ./* $INSTALL_FOLDER/lib/python/site-packages/src/',
                 'echo "This build was done suscessfully!!"',
             ],
             src = 'Qt.py',
@@ -3200,7 +3206,7 @@ class all: # noqa
                     '20.8.0',
                     'e7f31719ef2359c939d23871333a763a',
                     {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                    self.tbb: '4.4.6', self.embree: '3.2.2',
+                    self.tbb: '2019_U6', self.embree: '3.2.2',
                     self.boost: bv,
                     self.opensubdiv[bsufix]: '3.4.0',
                     self.materialx[bsufix] : '1.37.4',

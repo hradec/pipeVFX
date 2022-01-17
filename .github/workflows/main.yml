@@ -25,7 +25,6 @@ env:
   CACHE_DIR: "pipeline/libs/"
   STUDIO: "pipevfx"
   GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  PREVIOUS_MATRIX_NAME: "phase1"
 
 # concurrency:
 #   group: ${{ github.ref_name }}
@@ -62,6 +61,8 @@ jobs:
     #   run: pip install PyJWT==1.7.1 PyGitHub==1.45
 
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     # - name: retrieve root folder cache
     #   uses: actions/cache@v1
