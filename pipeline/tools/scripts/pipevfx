@@ -225,6 +225,7 @@ else
     cmd="docker rm -f pipevfx_make >/dev/null 2>&1 ; \
         docker pull $build_image ; \
         docker run --rm $TI \
+        -v $CD/docker/:/.docker/ \
         -v $CD/pipeline/tools/:/$STUDIO/pipeline/tools/ \
         -v $CD/pipeline/libs/:/$STUDIO/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/$STUDIO/pipeline/build/SConstruct \

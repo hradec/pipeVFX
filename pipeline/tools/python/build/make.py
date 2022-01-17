@@ -394,6 +394,29 @@ class tbb(make):
     since we need to handle the installation by ourselfs, we override
     installer() method'''
     cmd = [' make -j $DCORES ']
+    environ = {
+    'CXX':  'g++ '
+                ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+                ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+                ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+                ' -isystem/usr/include',
+    'CC' :  'gcc -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                ' -isystem/usr/include',
+    'LD' :  'g++ '
+                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+
+    'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+    }
 
     def installer(self, target, source, os_environ):
         '''we use this method to do a custom tbb install
@@ -409,7 +432,13 @@ class tbb(make):
             lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/lib/ 2>&1" % (sourceFolder, SHLIBEXT, targetFolder) ).readlines()
             lines += os.popen( "rsync -aW --delete %s/build/*_release/*%s* %s/bin/ 2>&1" % (sourceFolder, SHLIBEXT, targetFolder) ).readlines()
 
+        # create the tbb_config.cmake file!
         if os.path.exists('%s/cmake' % targetFolder):
-            lines += os.popen('LD_PRELOAD=/lib64/libstdc++.so.6 cmake -DTBB_ROOT=%s -DTBB_OS=Linux -P %s/cmake/tbb_config_generator.cmake' % (targetFolder, sourceFolder) )
+            lines += os.popen('LD_PRELOAD=/lib64/libstdc++.so.6 cmake -DTBB_ROOT=%s -DTBB_OS=Linux -P %s/cmake/tbb_config_generator.cmake' % (targetFolder, sourceFolder) ).readlines()
 
+        # workaround for the missing advisor-annotate.h, so we don't have to
+        # install the whole intel advisor just for this include file.
+        # this include file is a macro include only, so we don't
+        # need anything else.
+        lines += os.popen('cp /.docker/2022.advisor-annotate.h %s/include/advisor-annotate.h' % targetFolder).readlines()
         return lines
