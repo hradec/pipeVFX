@@ -166,8 +166,10 @@ LOCATE_DEPENDENCY_PYTHONPATH = [ build.expandvars( x ) for x in LOCATE_DEPENDENC
 
 os.environ['PYTHONPATH'] = ':'.join(LOCATE_DEPENDENCY_PYTHONPATH+[os.environ['PYTHONPATH']])
 os.environ['GAFFER_JEMALLOC'] = '0'
-popPrint('All Gaffer Paths...')
+ENV_VARS_TO_IMPORT += ' GAFFER_JEMALLOC'
 
+
+popPrint('All Gaffer Paths...')
 
 # print os.environ['LD_LIBRARY_PATH']
 

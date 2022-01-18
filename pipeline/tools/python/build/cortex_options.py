@@ -249,7 +249,7 @@ if versionMajor(app_environ('USD_VERSION')) > 21.5:
 
 
 
-ENV_VARS_TO_IMPORT      = " ".join([ x for x in os.environ.keys() if
+ENV_VARS_TO_IMPORT = " ".join([ x for x in os.environ.keys() if
     'TARGET' in x or
     'LIB' in x or
     'INCLUDE' in x or
@@ -260,8 +260,9 @@ ENV_VARS_TO_IMPORT      = " ".join([ x for x in os.environ.keys() if
     'VERSION' in x or
     'CORE' in x or
     'JEMALLOC' in x or
-    'LD_PRELOAD' in x
+    'LD_PRELOAD' in x 
 ])
+
 
 LINKFLAGS = os.environ['LDFLAGS'].split(' ')
 LINKFLAGS += '-ltiff -lpng -ljpeg -lraw_r -lraw'.split(' ')
