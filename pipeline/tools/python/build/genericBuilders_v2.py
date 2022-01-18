@@ -230,19 +230,27 @@ if os.popen('''cat %s 2>&1 | grep "'/usr/lib'"''' % f).readlines():
 
     ''' % (f,f) + bcolors.END )
 
+def __add_boost_python_versioned_lib_folder(paths):
+    # make sure paths is a new list, not a pointer
+    ret = []+paths
+    # add extra rpath to account for boost versioned libs
+    if not [ x for x in paths if 'BOOST_VERSION' in x]:
+        for p in paths:
+            ret += [p+'/boost$BOOST_VERSION/']
+    # add extra rpath to account for python versioned libs
+    paths = []+ret
+    if not [ x for x in paths if 'PYTHON_VERSION_MAJOR' in x]:
+        for p in paths:
+            ret += [p+'/python$PYTHON_VERSION_MAJOR/']
+
+    return ret
 
 def rpath_environ( paths=[], disable="" ):
     ''' create env vars to add rpath to gcc link, as well as include paths.
     pass the lib folder of a package, and it will figure the include path'''
     if type(paths) == type(""):
         paths = [paths]
-
-    # add extra rpath to account for boost versioned libs
-    if not [ x for x in paths if 'BOOST_VERSION' in x]:
-        paths += [x+'/boost$BOOST_VERSION/']
-    # add extra rpath to account for python versioned libs
-    if not [ x for x in paths if 'PYTHON_VERSION_MAJOR' in x]:
-        paths += [x+'/python$PYTHON_VERSION_MAJOR/']
+    paths = __add_boost_python_versioned_lib_folder(paths)
 
     if 'NOBOOST' not in disable:
         paths += [
@@ -268,13 +276,7 @@ def lib_environ( paths=[], disable="" ):
     pass the lib folder of a package, and it will figure the include path'''
     if type(paths) == type(""):
         paths = [paths]
-
-    # add extra rpath to account for boost versioned libs
-    if not [ x for x in paths if 'BOOST_VERSION' in x]:
-        paths += [x+'/boost$BOOST_VERSION/']
-    # add extra rpath to account for python versioned libs
-    if not [ x for x in paths if 'PYTHON_VERSION_MAJOR' in x]:
-        paths += [x+'/python$PYTHON_VERSION_MAJOR/']
+    paths = __add_boost_python_versioned_lib_folder(paths)
 
     _environ = {
         'LDFLAGS' : ' $LDFLAGS '+' -L'+' -L'.join(paths),
