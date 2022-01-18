@@ -1439,8 +1439,10 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.llvm, version=['10.0.1', '7.1.0'])
-        # build.github_phase(self.llvm, version=['9.0.0', '3.9.1'])
+        build.github_phase(self.llvm, version='7.1.0')
+        build.github_phase(self.llvm, version='10.0.1')
+        # build.github_phase(self.llvm, version='3.9.1')
+        # build.github_phase(self.llvm, version='9.0.0')
 
 
         # ============================================================================================================================================
