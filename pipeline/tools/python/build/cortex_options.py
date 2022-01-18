@@ -191,9 +191,10 @@ OPENEXR_LIB_PATH 	    = "%s/lib"     % os.environ['OPENEXR_TARGET_FOLDER']
 ILMBASE_INCLUDE_PATH    = "%s/include" % os.environ['ILMBASE_TARGET_FOLDER']
 ILMBASE_LIB_PATH        = "%s/lib"     % os.environ['ILMBASE_TARGET_FOLDER']
 
-HDF5_INCLUDE_PATH       = "%s/include" % os.environ['HDF5_TARGET_FOLDER']
-HDF5_LIB_PATH           = "%s/lib"     % os.environ['HDF5_TARGET_FOLDER']
-HDF5_LIB_SUFFIX         = ''
+if 'HDF5_TARGET_FOLDER' in os.environ:
+    HDF5_INCLUDE_PATH       = "%s/include" % os.environ['HDF5_TARGET_FOLDER']
+    HDF5_LIB_PATH           = "%s/lib"     % os.environ['HDF5_TARGET_FOLDER']
+    HDF5_LIB_SUFFIX         = ''
 
 # create options automatically based on added dependencies
 for each in [ x for x in os.environ.keys() if '_TARGET_FOLDER' in x ]:
@@ -239,7 +240,7 @@ if ' usd ' in os.environ['DEPEND']:
     WITH_USD_MONOLITHIC = os.path.exists("%s/lib/lib*_ms.so" % os.environ['USD_TARGET_FOLDER'])
 WITH_USD_MONOLITHIC = True
 
-if versionMajor(app_environ('USD_VERSION')) > 21.10:
+if versionMajor(app_environ('USD_VERSION')) > 21.5:
     USD_LIB_PREFIX = 'usd_'
 
 # for each in glob( '%s/../*' % os.environ['BOOST_TARGET_FOLDER'] ):
