@@ -236,6 +236,14 @@ def rpath_environ( paths=[], disable="" ):
     pass the lib folder of a package, and it will figure the include path'''
     if type(paths) == type(""):
         paths = [paths]
+
+    # add extra rpath to account for boost versioned libs
+    if not [ x for x in paths if 'BOOST_VERSION' in x]:
+        paths += [x+'/boost$BOOST_VERSION/']
+    # add extra rpath to account for python versioned libs
+    if not [ x for x in paths if 'PYTHON_VERSION_MAJOR' in x]:
+        paths += [x+'/python$PYTHON_VERSION_MAJOR/']
+
     if 'NOBOOST' not in disable:
         paths += [
             '$BOOST_TARGET_FOLDER/lib/',
@@ -245,6 +253,7 @@ def rpath_environ( paths=[], disable="" ):
             '$OPENEXR_TARGET_FOLDER/lib/',
             '$ILMBASE_TARGET_FOLDER/lib/',
         ]
+
     _environ = {
         'LDFLAGS' : ' $LDFLAGS '
             +' -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(paths)
@@ -259,6 +268,14 @@ def lib_environ( paths=[], disable="" ):
     pass the lib folder of a package, and it will figure the include path'''
     if type(paths) == type(""):
         paths = [paths]
+
+    # add extra rpath to account for boost versioned libs
+    if not [ x for x in paths if 'BOOST_VERSION' in x]:
+        paths += [x+'/boost$BOOST_VERSION/']
+    # add extra rpath to account for python versioned libs
+    if not [ x for x in paths if 'PYTHON_VERSION_MAJOR' in x]:
+        paths += [x+'/python$PYTHON_VERSION_MAJOR/']
+
     _environ = {
         'LDFLAGS' : ' $LDFLAGS '+' -L'+' -L'.join(paths),
         'LIBRARYPATH' : ':'.join(paths+[
@@ -389,6 +406,23 @@ def globalDependency(classObj, RPATH=True, LIB=True, INCLUDE=True ):
     if INCLUDE:
         all_env_vars = update_environ_dict(all_env_vars, include_environ( '$%s_TARGET_FOLDER/include/' % classObj.name.upper() ))
 
+    # special case for cortex libraries.
+    if classObj.name.upper() == 'CORTEX':
+        extra = [
+        '$CORTEX_TARGET_FOLDER/lib/boost$BOOST_VERSION/',
+        '$CORTEX_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/',
+        '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/',
+        '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/',
+        '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost$BOOST_VERSION/',
+        '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
+        '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
+        '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
+        ]
+        for each in extra:
+            if RPATH:
+                all_env_vars = update_environ_dict(all_env_vars, rpath_environ( extra ))
+            if LIB:
+                all_env_vars = update_environ_dict(all_env_vars, lib_environ( extra ))
 
 
 
