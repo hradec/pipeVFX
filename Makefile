@@ -24,6 +24,7 @@ help:
 	@echo "               so the build image is also done!"
 	@echo "make upload  - make the build docker image and upload"
 	@echo "make cache   - make the package cache docker image and upload it."
+	@echo "make matrix  - display the github action matrix."
 	@echo "make help    - display this help screen."
 	@echo ""
 	@echo "optionals:"
@@ -72,6 +73,11 @@ build_gcc: upload_centos
 
 shell: upload
 	@${CD}/pipeline/tools/scripts/pipevfx -s
+
+matrix: upload
+	@${CD}/pipeline/tools/scripts/pipevfx -b | tee matrix.txt
+	@export phases=$$( cat matrix.txt | grep -v ARGUMENTS | egrep '=>' | awk -F'phase: ' '{print $$2}' | awk -F' =>' '{print "\""$$1"\","}' ) ;\
+	echo "{ \"name\": [ "$$(echo $$phases | sed 's/,$$//')" ] }"
 
 upload: #cache
 	@[ "${DOCKER}" == "1" ] && ${CD}/pipeline/tools/scripts/pipevfx -u || echo "Not building docker image!"

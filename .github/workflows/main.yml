@@ -31,28 +31,61 @@ env:
 #   cancel-in-progress: true
 
 jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - id: set-matrix
+        run: |
+            make matrix | tee output.txt
+            matrix=$(cat output.txt | grep name)
+            echo $matrix
+            echo $matrix | jq .
+            echo "::set-output name=matrix::$matrix"
+
+  check-matrix:
+    runs-on: ubuntu-latest
+    needs: matrix
+    steps:
+      - name: Install json2yaml
+        run: |
+          sudo npm install -g json2yaml
+
+      - name: Check matrix definition
+        run: |
+          matrix='${{ needs.matrix.outputs.matrix }}'
+          echo $matrix
+          echo $matrix | jq .
+          echo $matrix | json2yaml
+
   build:
+    needs: matrix
     strategy:
       # cancel other jobs in the build matrix if one job fails.
       fail-fast: true
       max-parallel: 1
-      matrix:
-        name: [
-          phase1,
-          phase2,
-          phase3,
-          phase4,
-          phase5,
-          phase6,
-          phase7,
-          phase8,
-          phase9,
-          phase10,
-          phase11,
-          phase12
-        ]
+      matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
+        # name: [
+        #   phase1,
+        #   phase2,
+        #   phase3,
+        #   phase4,
+        #   phase5,
+        #   phase6,
+        #   phase7,
+        #   phase8,
+        #   phase9,
+        #   phase10,
+        #   phase11,
+        #   phase12
+        # ]
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
 
     # - name: 'Install Python Modules'
@@ -150,7 +183,7 @@ jobs:
   #         phase15
   #       ]
   #
-  #   runs-on: ubuntu-20.04
+  #   runs-on: ubuntu-latest
   #   steps:
   #   - name: Cleanup artifacts we don't need!
   #     uses: geekyeggo/delete-artifact@v1
@@ -163,7 +196,7 @@ jobs:
   #   needs: build
   #   if: ${{ always() }}
   #
-  #   runs-on: ubuntu-20.04
+  #   runs-on: ubuntu-latest
   #
   #   steps:
   #   - name: Cache
@@ -186,7 +219,7 @@ jobs:
   # libs_release:
   #   needs: build
   #
-  #   runs-on: ubuntu-20.04
+  #   runs-on: ubuntu-latest
   #
   #   steps:
   #   - name: Cache
