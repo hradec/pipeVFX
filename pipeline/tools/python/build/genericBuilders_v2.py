@@ -2533,7 +2533,7 @@ class generic:
             raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
         if not self.shouldBuild( target, source ):
-            return False
+            return None
         for n in range(len(source)):
             url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
             # print source[n]
@@ -2596,7 +2596,7 @@ class generic:
                     if not os.path.exists(os.path.dirname(t)):
                         os.mkdirs(os.path.dirname(t))
                         open(t, 'a').close()
-        return False
+        return None
 
     def fix_uncompressed_path(self, path):
         if self.kargs.has_key('uncompressed_path'):
