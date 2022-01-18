@@ -222,8 +222,9 @@ BOOST_LIB_SUFFIX        = ""
 #     BOOST_LIB_SUFFIX        = "-mt"
 
 
+ALEMBIC_EXTRA_LIBS      = ''
+ALEMBIC_LIB_SUFFIX      = ''
 if ' alembic ' in os.environ['DEPEND']:
-    ALEMBIC_LIB_SUFFIX      = ''
     ALEMBIC_EXTRA_LIBS      = []
     if versionMajor(app_environ('ALEMBIC_VERSION')) < 1.6:
         for x in glob( "%s/lib/lib*.so" % app_environ('ALEMBIC_TARGET_FOLDER') ):

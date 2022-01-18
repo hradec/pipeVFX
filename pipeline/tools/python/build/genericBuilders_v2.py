@@ -727,7 +727,7 @@ class generic:
         self.env.AddMethod(self.downloader, 'downloader')
 
         # bld = Builder( action = Action( self.uncompressor, 'uncompress($SOURCE0 -> $TARGET)') )
-        bld = Builder( action = Action( self.uncompressor, self.sconsPrint) )
+        bld = Builder( action = Action( self._uncompressor, self.sconsPrint) )
         self.env.Append(BUILDERS = {'uncompressor' : bld})
 
         # make sure our build folder exists!
@@ -2525,15 +2525,19 @@ class generic:
 
         return _source
 
+    def _uncompressor( self, target, source, env):
+        self.uncompressor( target, source, env )
 
     def uncompressor( self, target, source, env):
         ''' this method is a builder responsible to uncompress the packages to be build '''
         global __pkgInstalled__
+        ret=None
         if self.error:
             raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
         if not self.shouldBuild( target, source ):
-            return None
+            return
+
         for n in range(len(source)):
             url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
             # print source[n]
@@ -2587,7 +2591,7 @@ class generic:
                         for file2update in os.popen('find %s -name %s 2>&1' % (os.path.dirname(t), updates) ).readlines():
                             os.popen( "cp %s/../.download/%s %s"   % (os.path.dirname(s), updates, file2update) )
 
-                    return True
+                    ret = True
                 else:
                     # os.mkdir(os.path.dirname(s))
                     # f=open(s, 'w')
@@ -2596,7 +2600,7 @@ class generic:
                     if not os.path.exists(os.path.dirname(t)):
                         os.mkdirs(os.path.dirname(t))
                         open(t, 'a').close()
-        return None
+        return ret
 
     def fix_uncompressed_path(self, path):
         if self.kargs.has_key('uncompressed_path'):

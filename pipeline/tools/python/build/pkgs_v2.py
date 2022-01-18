@@ -2062,7 +2062,7 @@ class all: # noqa
                     '-nomake examples -nomake tests -c++std c++11 -sse2 -no-sse3 '
                     '-qt-doubleconversion -qt-pcre -qt-zlib -qt-freetype '
                     '-qt-harfbuzz -qt-libpng -qt-libjpeg -qt-sqlite '
-                    '-qt-tiff -qt-webp -qt-assimp -qt-webengine-icu '
+                    '-qt-webp -qt-assimp -qt-webengine-icu '
                     '-qt-webengine-ffmpeg -qt-webengine-webp -qt-webengine-opus'
                     # '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
                     # '-no-libudev -no-gstreamer -no-dbus '
