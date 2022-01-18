@@ -271,7 +271,7 @@ for boost_version in pkgs.boost.versions:
                         depend = depend+[pkgs.python],
                         patch = devPatch,
                         dontUseTargetSuffixForFolders = 1,
-                        cmd = [build.cortex.cmd[0]+"installUSD"],
+                        cmd = [build.cortex.cmd[0]+"installUSD installVDB"],
                         environ = cortex_environ,
                         # environ = { 'LD' : 'ld' },
                     )
@@ -395,9 +395,9 @@ def buildGaffer(apps=[], boost='1.66.0', usd=None, __download__=None):
         ],
         apps = apps,
         cmd = [
-            "DCORES=$CORES "+build.gaffer.cmd[0],
-            "DCORES=$CORES "+build.gaffer.cmd[0]+' build',
-            "DCORES=$CORES "+build.gaffer.cmd[0]+' install',
+            build.gaffer.cmd[0],
+            build.gaffer.cmd[0]+' build',
+            build.gaffer.cmd[0]+' install',
         ],
         dontUseTargetSuffixForFolders = 1,
         dontAddLLVMtoEnviron = 1,
