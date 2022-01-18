@@ -1144,6 +1144,13 @@ class gaffer(cortex):
     }}
 
     def fixCMD(self, cmd, os_environ):
+        cmd = ' && '.join([
+            '(Xvfb :99 -screen 0 1280x1024x24 &)',
+            'export DISPLAY=:99',
+            cmd
+        ])
+
+
         # add all boost library versions to searchpath
         os_environ['LD_LIBRARY_PATH'] += ':'.join([os_environ['LD_LIBRARY_PATH']]+
             glob( '%s/../*/lib/python%s' % (os_environ['BOOST_TARGET_FOLDER'], os_environ['PYTHON_VERSION_MAJOR']) )
