@@ -75,7 +75,8 @@ shell: upload
 	@${CD}/pipeline/tools/scripts/pipevfx -s
 
 matrix: upload
-	@${CD}/pipeline/tools/scripts/pipevfx -b | tee matrix.txt
+	# @${CD}/pipeline/tools/scripts/pipevfx -b | tee matrix.txt
+	@cd pipeline/build/ ; scons install MATRIX=1 2>&1 | tee ${CD}/matrix.txt
 	@export phases=$$( cat matrix.txt | grep -v ARGUMENTS | egrep '=>' | awk -F'phase: ' '{print $$2}' | awk -F' =>' '{print "\""$$1"\","}' ) ;\
 	echo "{ \"name\": [ "$$(echo $$phases | sed 's/,$$//')" ] }"
 

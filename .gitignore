@@ -13,6 +13,8 @@ pipeline/build/build
 .svn
 pipeline/tags/*
 pipeline/libs/*
+pipeline/build/wait*
+pipeline/build/matrix*
 pipeline/build/.build
 pipeline/build/.download
 pipeline/tools/prman/ris/src/build

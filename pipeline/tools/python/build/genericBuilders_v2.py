@@ -148,8 +148,10 @@ def DEBUG():
     return ARGUMENTS.get('debug', 0)
 
 
-
-tcols = int(''.join(os.popen('tput cols').readlines()))-1
+try:
+    tcols = int(''.join(os.popen('tput cols').readlines()))-1
+except:
+    tcols = 120
 
 
 import multiprocessing
@@ -585,6 +587,10 @@ class generic:
             depend   = self.depend
             name     = self.name
 
+        self.github_matrix = False
+        if 'MATRIX' in self.args:
+            self.github_matrix = True
+
         # initialize a scons environment for this class object!
         if self.env is None:
             self.env = Environment()
@@ -923,7 +929,7 @@ class generic:
                     # so force re-build!
                     if not self._installer_final_check( [install], [build] ):
                         # if not installed, remove build folder!
-                        if os.path.exists(self.buildFolder[p][-1]):
+                        if os.path.exists(self.buildFolder[p][-1]) and not self.github_matrix:
                             cmd = "rm -rf "+self.buildFolder[p][-1]+" 2>/dev/null"
                             _print( ":: __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
@@ -953,7 +959,8 @@ class generic:
                         # by SCons
                         # this accounts for builds like python pip
                         s = os.path.join(buildFolder(self.args),download[n][1],self.src)
-                        os.system( 'rm -rf "%s" ; mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s), os.path.dirname(s), s) )
+                        if not self.github_matrix:
+                            os.system( 'rm -rf "%s" ; mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s), os.path.dirname(s), s) )
 
 
                     # add dependencies as source so dependencies are built
@@ -2384,6 +2391,9 @@ class generic:
     def _installer_final_check(self, target, source, env={}, ret=None):
         ''' check if something was installed
         this garantees things get installed!'''
+        if self.github_matrix:
+            return
+
         _TARGET = str(target[0])
         TARGET_FOLDER = os.path.dirname(_TARGET)
         _TARGET_SUFIX = ''
@@ -2562,7 +2572,8 @@ class generic:
         return _source
 
     def _uncompressor( self, target, source, env):
-        self.uncompressor( target, source, env )
+        if not self.github_matrix:
+            self.uncompressor( target, source, env )
 
     def uncompressor( self, target, source, env):
         ''' this method is a builder responsible to uncompress the packages to be build '''
@@ -2765,7 +2776,7 @@ class generic:
 
     def _download(self,target):
         ret = target
-        if self.downloader:
+        if self.downloader and not self.github_matrix:
             ret = self.env.downloader( target )
             self.env.Clean( ret, target )
         return ret
