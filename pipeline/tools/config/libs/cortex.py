@@ -144,6 +144,7 @@ class cortex(baseLib):
         #configure python
         self['PYTHONPATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages')
         self['PYTHONPATH'] = self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages')
+        self['PYTHONPATH'] = self.path('lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages')
         self['PYTHONPATH'] = self.path('alembic/$ALEMBIC_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages')
 
 
@@ -159,14 +160,19 @@ class cortex(baseLib):
             ],
             lib = [
                 self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR'),
+                self.path('lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR'),
                 self.path('lib/boost$BOOST_VERSION'),
+                self.path('lib/boost.$BOOST_VERSION'),
                 self.path('lib/python$PYTHON_VERSION_MAJOR'),
                 self.path('lib'),
                 self.path('alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/'),
+                self.path('alembic/$ALEMBIC_VERSION/lib/boost.$BOOST_VERSION/'),
                 self.path('alembic/$ALEMBIC_VERSION'),
                 self.path('openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/'),
+                self.path('openvdb/$OPENVDB_VERSION/lib/boost.$BOOST_VERSION/'),
                 self.path('openvdb/$OPENVDB_VERSION'),
                 self.path('usd/$USD_VERSION/lib/boost$BOOST_VERSION/'),
+                self.path('usd/$USD_VERSION/lib/boost.$BOOST_VERSION/'),
                 self.path('usd/$USD_VERSION'),
                 self.path('appleseed/$APPLESEED_VERSION/lib/'),
                 self.path('appleseed/$APPLESEED_VERSION'),
@@ -174,10 +180,14 @@ class cortex(baseLib):
             scripts = [
                 self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('alembic/$ALEMBIC_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('openvdb/$OPENVDB_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('openvdb/$OPENVDB_VERSION/python'),
                 self.path('usd/$USD_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
+                self.path('usd/$USD_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages'),
                 self.path('appleseed/$APPLESEED_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages'),
             ],
         )

@@ -1147,7 +1147,7 @@ class gaffer(cortex):
         cmd = ' && '.join([
             '(Xvfb :99 -screen 0 1280x1024x24 &)',
             'export DISPLAY=:99',
-            cmd
+            cmd +' || pkill -fc -9 Xvfb '
         ])
 
 

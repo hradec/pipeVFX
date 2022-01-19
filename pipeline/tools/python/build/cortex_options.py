@@ -260,7 +260,7 @@ ENV_VARS_TO_IMPORT = " ".join([ x for x in os.environ.keys() if
     'VERSION' in x or
     'CORE' in x or
     'JEMALLOC' in x or
-    'LD_PRELOAD' in x 
+    'LD_PRELOAD' in x
 ])
 
 
@@ -315,7 +315,7 @@ installRootPrman   = "/%s/%s" % (prmanName, prman)
 installRootArnold  = "/arnold/%s" % arnold
 installRootHoudini = "/houdini/%s" % houdini
 
-extraInstallPath   = '/boost%s' % os.environ['BOOST_VERSION']
+extraInstallPath   = '/boost.%s' % os.environ['BOOST_VERSION']
 
 # install prefixes with per package version numbers!
 # =============================================================================================================================================================
@@ -510,8 +510,8 @@ LINKFLAGS.append('-L%s' % os.environ['SOURCE_FOLDER'] )
 
 # we add the installation path to the library search path since we run the cortex build multiple times to build
 # different components, and we patch it to NOT waste time rebuilding what's already done!
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost%s'          % os.environ['BOOST_VERSION'] ]) )
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost%s/python%s' % (os.environ['BOOST_VERSION'],os.environ['PYTHON_VERSION_MAJOR']) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost.%s'          % os.environ['BOOST_VERSION'] ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost.%s/python%s' % (os.environ['BOOST_VERSION'],os.environ['PYTHON_VERSION_MAJOR']) ]) )
 LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'alembic/%s/lib%s/'    % (app_environ('ALEMBIC_VERSION'), extraInstallPath) ]) )
 LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'openvdb/%s/lib%s/'    % (app_environ('OPENVDB_VERSION'), extraInstallPath) ]) )
 LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'usd/%s/lib%s/'        % (app_environ('OPENVDB_VERSION'), extraInstallPath) ]) )

@@ -114,35 +114,6 @@ def expandvars(path, env=os.environ, default=None, skip_escaped=False):
     reVar = (r'(?<!\\)' if skip_escaped else '') + r'\$(\w+|\{([^}]*)\})'
     return re.sub(reVar, replace_var, path)
 
-def checkPathsExist( os_environ ):
-    '''' remove unexistent paths from a env vars dict '''
-    for each in os_environ.keys():
-        # check if the paths in the env vars exists.
-        # skip the ones that doesn't
-        if not [ x for x in ['TARGET', 'ROOT', 'proxy', 'CC', 'CXX', 'CPP', 'LD', 'PYTHONPATH'] if x in each ]:
-            if '-L' in os_environ[each] or '-I' in os_environ[each]:
-                # if it's a FLAGS env var
-                parts = []
-                for n in os_environ[each].split(' '):
-                    if n.strip():
-                        # check if we have a path,
-                        # so we can check if the path exists
-                        if n[0:2] in ['-L', '-I'] and not os.path.exists( n[2:] ):
-                            continue
-                        parts += [n]
-                os_environ[each] = ' '.join(parts)
-            else:
-                # or else, consider it a search path
-                parts = []
-                for n in os_environ[each].split(':'):
-                    if n.strip():
-                        # check if we have a path,
-                        # so we can check if the path exists
-                        if n[0] == '/' and not os.path.exists( n ) and 'http' not in n:
-                            continue
-                        parts += [n]
-                os_environ[each] = ':'.join(parts)
-
 
 def DEBUG():
     return ARGUMENTS.get('debug', 0)
@@ -236,14 +207,12 @@ def __add_boost_python_versioned_lib_folder(paths):
     # make sure paths is a new list, not a pointer
     ret = []+paths
     # add extra rpath to account for boost versioned libs
-    if not [ x for x in paths if 'BOOST_VERSION' in x]:
-        for p in paths:
-            ret += [p+'/boost$BOOST_VERSION/']
+    for p in [ x for x in paths if 'BOOST' not in x.upper()]:
+        ret += [p+'/boost.$BOOST_VERSION/']
     # add extra rpath to account for python versioned libs
     paths = []+ret
-    if not [ x for x in paths if 'PYTHON_VERSION_MAJOR' in x]:
-        for p in paths:
-            ret += [p+'/python$PYTHON_VERSION_MAJOR/']
+    for p in [ x for x in paths if 'PYTHON' not in x.upper()]:
+        ret += [p+'/python$PYTHON_VERSION_MAJOR/']
 
     return ret
 
@@ -263,6 +232,18 @@ def rpath_environ( paths=[], disable="" ):
             '$OPENEXR_TARGET_FOLDER/lib/',
             '$ILMBASE_TARGET_FOLDER/lib/',
         ]
+
+    # special case for cortex libraries.
+    paths += [
+        '$CORTEX_TARGET_FOLDER/lib/boost.$BOOST_VERSION/',
+        '$CORTEX_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/',
+        '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost.$BOOST_VERSION/',
+        '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost.$BOOST_VERSION/',
+        '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost.$BOOST_VERSION/',
+        '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
+        '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
+        '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
+    ]
 
     _environ = {
         'LDFLAGS' : ' $LDFLAGS '
@@ -410,23 +391,24 @@ def globalDependency(classObj, RPATH=True, LIB=True, INCLUDE=True ):
     if INCLUDE:
         all_env_vars = update_environ_dict(all_env_vars, include_environ( '$%s_TARGET_FOLDER/include/' % classObj.name.upper() ))
 
-    # special case for cortex libraries.
-    if classObj.name.upper() == 'CORTEX':
-        extra = [
-        '$CORTEX_TARGET_FOLDER/lib/boost$BOOST_VERSION/',
-        '$CORTEX_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/',
-        '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/',
-        '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/',
-        '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost$BOOST_VERSION/',
-        '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
-        '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
-        '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
-        ]
-        for each in extra:
-            if RPATH:
-                all_env_vars = update_environ_dict(all_env_vars, rpath_environ( extra ))
-            if LIB:
-                all_env_vars = update_environ_dict(all_env_vars, lib_environ( extra ))
+
+
+def checkPathsExist( os_environ ):
+    '''' remove unexistent paths from a env vars dict '''
+    for each in os_environ.keys():
+        # check if the paths in the env vars exists.
+        # skip the ones that doesn't
+        if each in PATH_ENV_VAR:
+            parts = []
+            for n in os_environ[each].split(':'):
+                if n.strip():
+                    # check if we have a path,
+                    # so we can check if the path exists
+                    if n[0] == '/' and not os.path.exists( n ) and 'http' not in n:
+                        continue
+                    parts += [n]
+            os_environ[each] = ':'.join(parts)
+
 
 
 
@@ -1467,14 +1449,14 @@ class generic:
 
         # set target folder and python folder for the current pkg
         target_folder = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
-        site_packages = '/'.join([
-            target_folder,
-            'lib/python%s/site-packages' % pythonVersion[:3]
-        ])
-        os_environ['PYTHONPATH'] = ':'.join( [
-            site_packages,
-            os_environ['PYTHONPATH'] ,
-        ])
+        # site_packages = '/'.join([
+        #     target_folder,
+        #     'lib/python%s/site-packages' % pythonVersion[:3]
+        # ])
+        # os_environ['PYTHONPATH'] = ':'.join( [
+        #     site_packages,
+        #     os_environ['PYTHONPATH'] ,
+        # ])
 
 
         prefix = ''
@@ -1685,15 +1667,17 @@ class generic:
                         "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"                   %  dependOn.name.upper(),
                         "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/"     %  dependOn.name.upper(),
                         '$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'       %  dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/"                   %  dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/"     %  dependOn.name.upper(),
-                        '$%s_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/lib-dynload/'       %  dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/"                   %  dependOn.name.upper(),
+                        "$%s_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/"     %  dependOn.name.upper(),
+                        '$%s_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/lib-dynload/'       %  dependOn.name.upper(),
                     ]
 
                     # set PATH searchpath for dependencies binaries
                     PATH += [
-                        "%s/bin/" % (dependOn.targetFolder[p][depend_n]),
-                        "%s/lib/" % (dependOn.targetFolder[p][depend_n]),
+                        # "%s/bin/" % (dependOn.targetFolder[p][depend_n]),
+                        # "%s/lib/" % (dependOn.targetFolder[p][depend_n]),
+                        "$%s_TARGET_FOLDER/bin/" % (dependOn.name.upper()),
+                        "$%s_TARGET_FOLDER/lib/" % (dependOn.name.upper()),
                     ]
 
                     # pull env vars from dependency classes
@@ -2136,12 +2120,6 @@ class generic:
 
         # cleanup paths that don't exist from the searchpath env vars!
         # checkPathsExist( os_environ )
-        # for var in [ 'CPLUS_INCLUDE_PATH', 'C_INCLUDE_PATH', 'LIBRARY_PATH', 'LD_LIBRARY_PATH', 'PYTHONPATH', 'PATH' ]:
-        #     _exist = []
-        #     for each in os_environ[var].split(':'):
-        #         if each.strip() and os.path.exists(each) and glob( '%s/*' % each ):
-        #             _exist += [each]
-        #     os_environ[var] = ':'.join(_exist)
 
 
         # set LD_RUN_PATH to be the same as LIBRARY_PATH
@@ -2230,33 +2208,32 @@ class generic:
 
         # error during build!!
         else:
+            _print(  '-'*tcols )
+            if not DEBUG():
+                os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors' % lastlog )
+            #for each in open("%s.err" % lastlog).readlines() :
+            #    print '::\t%s' % each.strip()
+            _print( ret )
+            #print '-'*tcols
+            #pprint(os_environ)
+            _print( '-'*tcols )
+            _print( bcolors.FAIL,
+                     traceback.format_exc(), #.print_exc()
+            bcolors.END )
+            _print( cmd )
+            _print( '-'*tcols )
+            _print( self.travis, self.__class__ )
+            if ret==666:
+                msg =  bcolors.FAIL+"\n\nERROR - BUILD WAS TOO FAST (%d secs)!!!! IF THIS IS CORRECT, SET noMinTime=True WHEN CREATING THE BUILD CLASS OBJECT!!%s\n\n" % (_elapsed.tm_sec,bcolors.END)
+                _print( msg )
+                f = open( lastlog, 'a' )
+                f.write( msg )
+                f.close()
+            sys.stdout.flush()
             if not self.travis and not sconsParallel:
-                _print(  '-'*tcols )
-                if not DEBUG():
-                    os.system( 'cat %s.err | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors' % lastlog )
-                #for each in open("%s.err" % lastlog).readlines() :
-                #    print '::\t%s' % each.strip()
-                _print( ret )
-                #print '-'*tcols
-                #pprint(os_environ)
-                _print( '-'*tcols )
-                _print( bcolors.FAIL,
-                         traceback.format_exc(), #.print_exc()
-                bcolors.END )
-                _print( cmd )
-                _print( '-'*tcols )
-                _print( self.travis, self.__class__ )
-                if ret==666:
-                    _print( bcolors.FAIL+"ERROR - BUILD WAS TOO FAST (%d secs)!!!! IF THIS IS CORRECT, SET noMinTime=True WHEN CREATING THE BUILD CLASS OBJECT!!%s" % (_elapsed.tm_sec,bcolors.END) )
-                sys.stdout.flush()
                 os.chdir(os_environ['SOURCE_FOLDER'])
                 proc=Popen("/bin/sh", bufsize=-1, shell=True, executable='/bin/sh', env=os_environ, close_fds=True)
                 proc.wait()
-            else:
-                if ret==666:
-                    f = open( lastlog, 'a' )
-                    f.write( bcolors.FAIL+"\n\nERROR - BUILD WAS TOO FAST (%d secs)!!!! IF THIS IS CORRECT, SET noMinTime=True WHEN CREATING THE BUILD CLASS OBJECT!!%s\n\n" % (_elapsed.tm_sec,bcolors.END) )
-                    f.close()
             raise Exception(bcolors.FAIL+':: Error [%d] during build of package %s.%s - check log file: %s' % (ret, pkgName, pkgVersion, lastlog) )
 
         # cleanup so we have space to build.
