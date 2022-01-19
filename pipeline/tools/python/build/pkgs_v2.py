@@ -1380,24 +1380,24 @@ class all: # noqa
             ARGUMENTS,
             'llvm',
             download=[(
-                'http://releases.llvm.org/3.9.1/llvm-3.9.1.src.tar.xz',
-                'llvm-3.9.1.src.tar.gz',
-                '3.9.1',
-                '3259018a7437e157f3642df80f1983ea',
-                { self.gcc : '6.3.1', clang : '3.9.1', boost: '1.61.0' }
-            ),(
+            #     'http://releases.llvm.org/3.9.1/llvm-3.9.1.src.tar.xz',
+            #     'llvm-3.9.1.src.tar.gz',
+            #     '3.9.1',
+            #     '3259018a7437e157f3642df80f1983ea',
+            #     { self.gcc : '6.3.1', clang : '3.9.1', boost: '1.61.0' }
+            # ),(
                 'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/llvm-7.1.0.src.tar.xz',
                 'llvm-7.1.0.src.tar.gz',
                 '7.1.0',
                 '26844e21dbad09dc7f9b37b89d7a2e48',
                 { self.gcc : '6.3.1', clang : '7.1.0', boost: '1.61.0' }
             ),(
-                'http://releases.llvm.org/9.0.0/llvm-9.0.0.src.tar.xz',
-                'llvm-9.0.0.src.tar.gz',
-                '9.0.0',
-                '0fd4283ff485dffb71a4f1cc8fd3fc72',
-                { self.gcc : '6.3.1', clang : '9.0.0', boost: '1.61.0'}
-            ),(
+            #     'http://releases.llvm.org/9.0.0/llvm-9.0.0.src.tar.xz',
+            #     'llvm-9.0.0.src.tar.gz',
+            #     '9.0.0',
+            #     '0fd4283ff485dffb71a4f1cc8fd3fc72',
+            #     { self.gcc : '6.3.1', clang : '9.0.0', boost: '1.61.0'}
+            # ),(
                 'https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.1/llvm-10.0.1.src.tar.xz',
                 'llvm-10.0.1.src.tar.gz',
                 '10.0.1',
@@ -1604,21 +1604,19 @@ class all: # noqa
                 depend=[python, gcc, python],
                 environ=environ,
                 cmd = [
-                    'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared --disable-boostpythontest ',
+                    'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared ', #'--disable-boostpythontest ',
                     # we have to forcely build libPyImath first, since the build
-                    # tries to build imathmodule with libPyImath before
-                    # libPyImath is done!
-                    # 'cd $SOURCE_FOLDER/PyIex && make -j $DCORES install',
-                    # 'sleep 30',
-                    # 'cd $SOURCE_FOLDER/PyImath && make libPyImath.la -j $DCORES',
-                    # 'sleep 30',
-                    # 'cd $SOURCE_FOLDER/PyImath && make imathmodule.la -j $DCORES',
-                    # 'sleep 30',
-                    # 'cd $SOURCE_FOLDER/ && make -j $DCORES ',
-                    # 'sleep 30',
+                    # in parallel builds imathmodule without libPyImath, since
+                    # it builds before libPyImath is done!
+                    'cd $SOURCE_FOLDER/PyIex   && make  LDFLAGS="$LDFLAGS" -j $DCORES install',
+                    'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" imathmodule_la_DEPENDENCIES=libPyImath.la -j $DCORES libPyImath.la install-libLTLIBRARIES',
+                    'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" imathmodule_la_DEPENDENCIES=libPyImath.la LIBS="-lpython2.7 -lPyImath" -j $DCORES install',
+                    'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" LIBS="-lpython2.7 -lPyImath" -j $DCORES install',
+                    'cd $SOURCE_FOLDER/ && make LDFLAGS="$LDFLAGS" -j $DCORES install',
                     # now we can build normaly and install!
-                    # 'export DCORES=2',
-                    'cd $SOURCE_FOLDER && make install -j $DCORES ; make install  -j $DCORES',
+                    'cd $SOURCE_FOLDER && make LDFLAGS="$LDFLAGS" -j $DCORES install',
+                    'find ./PyImath/ -name "imathmodule.so" -exec cp {} $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ \; ',
+                    'find ./PyImath/ -name "imathmodule.la" -exec cp {} $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ \; ',
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
