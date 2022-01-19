@@ -1608,15 +1608,23 @@ class all: # noqa
                     # we have to forcely build libPyImath first, since the build
                     # in parallel builds imathmodule without libPyImath, since
                     # it builds before libPyImath is done!
+                    'rm -rf $INSTALL_FOLDER/*',
                     'cd $SOURCE_FOLDER/PyIex   && make  LDFLAGS="$LDFLAGS" -j $DCORES install',
                     'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" imathmodule_la_DEPENDENCIES=libPyImath.la -j $DCORES libPyImath.la install-libLTLIBRARIES',
-                    'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" imathmodule_la_DEPENDENCIES=libPyImath.la LIBS="-lpython2.7 -lPyImath" -j $DCORES install',
+                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.so" -exec rm -f {} \; ',
+                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.la" -exec rm -f {} \; ',
+                    'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" imathmodule_la_DEPENDENCIES=libPyImath.la LIBS="-lpython2.7 -lPyImath -lPyIex" -j $DCORES install',
+                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.so" -exec rm -f {} \; ',
+                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.la" -exec rm -f {} \; ',
                     'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" LIBS="-lpython2.7 -lPyImath" -j $DCORES install',
                     'cd $SOURCE_FOLDER/ && make LDFLAGS="$LDFLAGS" -j $DCORES install',
                     # now we can build normaly and install!
                     'cd $SOURCE_FOLDER && make LDFLAGS="$LDFLAGS" -j $DCORES install',
                     'find ./PyImath/ -name "imathmodule.so" -exec cp {} $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ \; ',
                     'find ./PyImath/ -name "imathmodule.la" -exec cp {} $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ \; ',
+                    # check if imathmodule was linked correctly with booth PyImath and PyIex
+                    '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyImath)" == "" ] && error ',
+                    '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyIex)" == "" ] && error ',
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
@@ -2611,6 +2619,7 @@ class all: # noqa
             )
             self.osl[bsufix] = osl
             latest_osl = self.osl[bsufix][ self.osl[bsufix].keys()[-1] ]
+            self.latest_osl = latest_osl
 
             # materialx don't need boost.
             materialx = build.cmake(
