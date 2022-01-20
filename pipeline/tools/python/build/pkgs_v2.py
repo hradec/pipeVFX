@@ -1439,8 +1439,8 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.llvm, version='7.1.0')
         build.github_phase(self.llvm, version='10.0.1')
+        # build.github_phase(self.llvm, version='7.1.0')
         # build.github_phase(self.llvm, version='3.9.1')
         # build.github_phase(self.llvm, version='9.0.0')
 
@@ -1571,12 +1571,14 @@ class all: # noqa
             'LD'        : 'ld',
             'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -L$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
                           '-Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/ ',
-            'CPATH' : self.exr_rpath_environ['CPATH'],
-            'RPATH' : self.exr_rpath_environ['RPATH']+[
-                        '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/lib/',
-                        '$TARGET_FOLDER/lib/',
-                        '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/'
-            ],
+            'CPATH'     : ':'.join([ self.exr_rpath_environ['CPATH'],
+                          '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/',
+            ]),
+            'RPATH'     : ':'.join([ self.exr_rpath_environ['RPATH'],
+                          '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/lib/',
+                          '$TARGET_FOLDER/lib/',
+                          '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+            ]),
         })
 
         for boost_version in self.boost.versions:
