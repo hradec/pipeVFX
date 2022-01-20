@@ -3423,6 +3423,17 @@ class all: # noqa
                 '9cfd5b2607aeb2891626bad78e8838e2',
             )],
         )
+        self.gaffer_resources = build.download(
+            ARGUMENTS,
+            'gaffer_resources',
+            src='README.md',
+            download=[(
+                'https://github.com/GafferHQ/resources/archive/0.54.2.0.tar.gz',
+                'resources-0.54.2.0.tar.gz',
+                '0.54.2.0',
+                '3a9f6d615b7f96278fd18dfd028a7e1e',
+            )],
+        )
 
 
 

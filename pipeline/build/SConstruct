@@ -394,7 +394,7 @@ def buildGaffer(apps=[], boost='1.66.0', usd=None, __download__=None):
             pkgs.qt, pkgs.pyside, pkgs.osl,
             pkgs.oiio, pkgs.ocio, pkgs.llvm,
             pkgs.python, pkgs.qtpy, pkgs.fonts,
-            pkgs.ocio_profiles
+            pkgs.ocio_profiles, pkgs.gaffer_resources
         ],
         apps = apps,
         cmd = [
