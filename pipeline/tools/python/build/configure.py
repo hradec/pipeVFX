@@ -58,6 +58,7 @@ class wait4dependencies(configure):
     dontUseTargetSuffixForFolders = 1
     do_not_use=True
     globalDependency = True
+    no_folder_install_checking=True
     def __init__(self, wait4, msg, version=None, cmd=["echo Done!!!!!"], depend=[], **kargs):
         self.cmd = cmd
         self.wait4 = wait4
@@ -1129,7 +1130,7 @@ class gaffer(cortex):
     environ = {
     }
     cmd=[
-        ' scons OPTIONS=%s/gaffer_options.py -j $DCORES ' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/gaffer_options.py -j $DCORES BUILD_TYPE=RELEASE ' % os.path.abspath( os.path.dirname(__file__)),
         # ' scons OPTIONS=%s/gaffer_options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
     ]
     # disable Appleseed build since we don't have it building yet!
@@ -1147,6 +1148,10 @@ class gaffer(cortex):
         cmd = ' && '.join([
             '(Xvfb :99 -screen 0 1280x1024x24 &)',
             'export DISPLAY=:99',
+            'mkdir -p $INSTALL_FOLDER/fonts/',
+            'mkdir -p $INSTALL_FOLDER/openColorIO/',
+            'cp -rf $FONTS_TARGET_FOLDER/* $INSTALL_FOLDER/fonts/',
+            'cp -rf $OCIO_PROFILES_TARGET_FOLDER/aces/* $INSTALL_FOLDER/openColorIO/',
             cmd +' || pkill -fc -9 Xvfb '
         ])
 

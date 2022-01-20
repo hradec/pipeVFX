@@ -2382,7 +2382,7 @@ class generic:
                 TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ]).replace('//','/').rstrip('/')
 
         if not hasattr(self, 'apps'):
-            if not os.path.exists(_TARGET) or not glob( '%s/*/*' % TARGET_FOLDER ):
+            if not os.path.exists(_TARGET) or (not glob( '%s/*/*' % TARGET_FOLDER ) and not hasattr(self,'no_folder_install_checking')):
                 # if we have a log, show it!
                 if ret:
                     _print( bcolors.WARNING, '='*80, bcolors.FAIL )
@@ -2399,8 +2399,10 @@ class generic:
 
                 # if nothing was installed, cleanup source so we can rebuild it!
                 # if we don't cleanup sources, the build gets stuck!
+                path_exist = False
                 for each in [ str(x) for x in source ]:
                     if os.path.exists(os.path.dirname(each)):
+                        path_exist = True
                         cmd += [":: os.path.exists(%s): %s" % ( os.path.dirname(each), str(os.path.exists(os.path.dirname(each))) )]
                         # cmd += ["rm -rf %s/* 2>/dev/null" % os.path.dirname(each)]
                         cmd += ["rm -rf %s" % _TARGET]
@@ -2415,8 +2417,8 @@ class generic:
                 #     cmd += ["rm -rf %s/.lastlog.?.?%s.err" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
 
                 cmd = list(set(cmd))
-                if cmd and os.path.exists(os.path.dirname(each)):
-                    _print(     ":: _installer_final_check: error!" )
+                if cmd and path_exist:
+                    _print(     ":: _installer_final_check: error! (%s)" % _TARGET )
                     for c in cmd:
                         if c[0] == ':':
                             _print( c )
