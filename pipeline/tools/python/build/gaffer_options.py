@@ -3,7 +3,7 @@ from glob import glob
 from pprint import pprint
 import os,sys, pipe
 
-import pipe, build
+import pipe, build, genericBuilders
 
 # try to get an env var, if not exists return value
 def get(var, value):
@@ -158,10 +158,12 @@ GAFFERCORTEX = True
 
 
 LOCATE_DEPENDENCY_PYTHONPATH = [
-    '$CORTEX_TARGET_FOLDER/lib/boost$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
-    '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
-    '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
-    '$CORTEX_TARGET_FOLDER/usd/$USD_TARGET_FOLDER/lib/boost$BOOST_TARGET_FOLDER/python$PYTHON_VERSION_MAJOR/site-packages',
+    '$CORTEX_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
+    '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
+    '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
+    '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
+    '$USD_TARGET_FOLDER/python/',
+    '$OPENVDB_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
     '$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
     '$QTPY_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
     '$PYSIDE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
@@ -169,9 +171,14 @@ LOCATE_DEPENDENCY_PYTHONPATH = [
 ]
 LOCATE_DEPENDENCY_PYTHONPATH = [ build.expandvars( x ) for x in LOCATE_DEPENDENCY_PYTHONPATH ]
 
-os.environ['PYTHONPATH'] = ':'.join(LOCATE_DEPENDENCY_PYTHONPATH+[os.environ['PYTHONPATH']])
-os.environ['GAFFER_JEMALLOC'] = '0'
-ENV_VARS_TO_IMPORT += ' GAFFER_JEMALLOC DISPLAY '
+os.environ['PYTHONPATH'                     ] = ':'.join(LOCATE_DEPENDENCY_PYTHONPATH+[os.environ['PYTHONPATH']])
+os.environ['GAFFER_JEMALLOC'                ] = '0'
+# os.environ['OCIO'                           ] =  genericBuilders.expandvars('$OCIO_PROFILES_TARGET_FOLDER/aces/luts/rrt/rrt_v0_1_1_sRGB.spi3d', os.environ)
+os.environ['QT_QWS_FONTDIR'                 ] = genericBuilders.expandvars('$INSTALL_FOLDER/fonts/', os.environ)
+os.environ['QT_QPA_FONTDIR'                 ] = os.environ['QT_QWS_FONTDIR']
+os.environ['IECOREGL_SHADER_PATHS'          ] =  genericBuilders.expandvars('$CORTEX_TARGET_FOLDER/glsl', os.environ)
+os.environ['IECOREGL_SHADER_INCLUDE_PATHS'  ] = os.environ['IECOREGL_SHADER_PATHS']
+ENV_VARS_TO_IMPORT += ' GAFFER_JEMALLOC DISPLAY QT_QPA_FONTDIR QT_QWS_FONTDIR OCIO IECOREGL_SHADER_PATHS IECOREGL_SHADER_INCLUDE_PATHS '
 
 os.environ['PATH'] = ':'.join([
     '$OSL_TARGET_FOLDER/bin',
@@ -179,6 +186,7 @@ os.environ['PATH'] = ':'.join([
 ])
 
 popPrint('All Gaffer Paths...')
+
 
 # print os.environ['LD_LIBRARY_PATH']
 
