@@ -157,6 +157,9 @@ RUN yum -y reinstall  boost boost-filesystem inkscape || true
 # qt 5.15 now needs these!!
 RUN yum -y install libxkbcommon-devel libxkbcommon-x11-devel || true
 
+# we need mesa to build gaffer
+RUN yum -y install mesa-dri-drivers
+RUN yum -y install mesa-libGLw
 
 RUN [ -f /etc/centos-release ] && yum -y install python2-scons || true
 
