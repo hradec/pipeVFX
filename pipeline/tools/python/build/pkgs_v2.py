@@ -1555,14 +1555,28 @@ class all: # noqa
 
         environ = self.exr_rpath_environ.copy()
         environ.update({
+            # damn pyilmbase create broken imathmodule.so if built in parallel!!
+            'DCORES'    : "1",
             'LDFLAGS'   : "$LDFLAGS  -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/ ",
-            'CFLAGS'    : '$CFLAGS   -std=c++11 -I$BOOST_TARGET_FOLDER/include/boost/ -I$BOOST_TARGET_FOLDER/include/boost/python $CFLAGS ',
-            'CXXFLAGS'  : '$CXXFLAGS -std=c++11 -I$BOOST_TARGET_FOLDER/include/boost/ -I$BOOST_TARGET_FOLDER/include/boost/python $CXXFLAGS ',
+            'CFLAGS'    : '$CFLAGS   -std=c++11 '
+                          '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/ '
+                          '-I$BOOST_TARGET_FOLDER/include/boost/ '
+                          '-I$BOOST_TARGET_FOLDER/include/boost/python '
+                          '$CFLAGS ',
+            'CXXFLAGS'  : '$CXXFLAGS -std=c++11 '
+                          '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/ '
+                          '-I$BOOST_TARGET_FOLDER/include/boost/ '
+                          '-I$BOOST_TARGET_FOLDER/include/boost/python '
+                          '$CXXFLAGS ',
             'LD'        : 'ld',
             'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -L$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            + '-Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/ ',
+                          '-Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/ ',
             'CPATH' : self.exr_rpath_environ['CPATH'],
-            'RPATH' : self.exr_rpath_environ['RPATH'],
+            'RPATH' : self.exr_rpath_environ['RPATH']+[
+                        '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/lib/',
+                        '$TARGET_FOLDER/lib/',
+                        '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/'
+            ],
         })
 
         for boost_version in self.boost.versions:
@@ -1611,11 +1625,11 @@ class all: # noqa
                     'rm -rf $INSTALL_FOLDER/*',
                     'cd $SOURCE_FOLDER/PyIex   && make  LDFLAGS="$LDFLAGS" -j $DCORES install',
                     'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" imathmodule_la_DEPENDENCIES=libPyImath.la -j $DCORES libPyImath.la install-libLTLIBRARIES',
-                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.so" -exec rm -f {} \; ',
-                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.la" -exec rm -f {} \; ',
+                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.so" -exec rm -f {} \; || true ',
+                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.la" -exec rm -f {} \; || true ',
                     'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" imathmodule_la_DEPENDENCIES=libPyImath.la LIBS="-lpython2.7 -lPyImath -lPyIex" -j $DCORES install',
-                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.so" -exec rm -f {} \; ',
-                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.la" -exec rm -f {} \; ',
+                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.so" -exec rm -f {} \; || true ',
+                    'find $SOURCE_FOLDER/PyImath/ -name "imathmodule.la" -exec rm -f {} \; || true ',
                     'cd $SOURCE_FOLDER/PyImath && make  LDFLAGS="$LDFLAGS" LIBS="-lpython2.7 -lPyImath" -j $DCORES install',
                     'cd $SOURCE_FOLDER/ && make LDFLAGS="$LDFLAGS" -j $DCORES install',
                     # now we can build normaly and install!
@@ -1624,7 +1638,7 @@ class all: # noqa
                     'find ./PyImath/ -name "imathmodule.la" -exec cp {} $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ \; ',
                     # check if imathmodule was linked correctly with booth PyImath and PyIex
                     '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyImath)" == "" ] && error ',
-                    '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyIex)" == "" ] && error ',
+                    # '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyIex)" == "" ] && error ',
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
