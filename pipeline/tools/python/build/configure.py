@@ -1152,7 +1152,9 @@ class gaffer(cortex):
             'mkdir -p $INSTALL_FOLDER/openColorIO/',
             'cp -rf $FONTS_TARGET_FOLDER/* $INSTALL_FOLDER/fonts/',
             'cp -rf $OCIO_PROFILES_TARGET_FOLDER/aces/* $INSTALL_FOLDER/openColorIO/',
-            cmd +' || pkill -fc -9 Xvfb '
+            'cp -rf $GAFFER_RESOURCES_TARGET_FOLDER/* $INSTALL_FOLDER/',
+            'rm -f $INSTALL_FOLDER/README.md',
+            cmd+' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@"; pkill -fc -9 Xvfb '
         ])
 
 
