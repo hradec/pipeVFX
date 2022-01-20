@@ -185,6 +185,10 @@ os.environ['PATH'] = ':'.join([
     os.environ['PATH']
 ])
 
+# sphinx in python 2.7 can't build docs in gaffer anymore! 
+if os.environ['PYTHON_VERSION_MAJOR'] == '2.7':
+    SPHINX="none"
+
 popPrint('All Gaffer Paths...')
 
 
