@@ -1458,7 +1458,7 @@ class all: # noqa
             'LD'      : 'ld',
         })
         for boost_version in self.boost.versions:
-            gcc_version = '6.3.1'
+            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
             ilmbase = build.configure(
                 ARGUMENTS,
@@ -1502,7 +1502,7 @@ class all: # noqa
             self.ilmbase[sufix] = ilmbase
 
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
+            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
             openexr = build.configure(
                 ARGUMENTS,
@@ -1566,7 +1566,7 @@ class all: # noqa
         })
 
         for boost_version in self.boost.versions:
-            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1' #'4.8.5'
+            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
             pyilmbase = build.configure(
                 ARGUMENTS,
@@ -2066,14 +2066,16 @@ class all: # noqa
                 '|| true ; [ "$(basename $TARGET_FOLDER)" == "5.15.2" ] && '
                     './configure -plugindir $INSTALL_FOLDER/qt/plugins '
                     '-release -opensource --confirm-license '
-                    '-qpa xcb -xcb -xcb-xlib -xkbcommon '
+                    '-qpa xcb -xcb -xcb-xlib -xkbcommon -bundled-xcb-xinput '
                     '-nomake examples -nomake tests -c++std c++11 -sse2 -no-sse3 '
                     '-qt-doubleconversion -qt-pcre -qt-zlib -qt-freetype '
                     '-qt-harfbuzz -qt-libpng -qt-libjpeg -qt-sqlite '
                     '-qt-webp -qt-assimp -qt-webengine-icu '
                     '-qt-webengine-ffmpeg -qt-webengine-webp -qt-webengine-opus'
-                    # '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
-                    # '-no-libudev -no-gstreamer -no-dbus '
+                    # these are from gaffer dependencies
+                    "-skip qtconnectivity -skip qtwebengine -skip qt3d "
+        			"-skip qtdeclarative -skip qtwebchannel -no-libudev"
+        			"-no-icu -no-dbus "
                 '|| true )',
                 'make -j $DCORES',
                 'make -j $DCORES install',
@@ -2712,6 +2714,7 @@ class all: # noqa
                     '9.0.0',
                     '684ce40c2f74f3a0c9cac530e1c7b07e',
                     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U3',
+                    self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
                     self.pyilmbase[bsufix]: exr_version,}
@@ -2724,6 +2727,7 @@ class all: # noqa
                     '8.2.0',
                     '2852fe7176071eaa18ab9ccfad5ec403',
                     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2019_U6',
+                    self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
                     self.pyilmbase[bsufix]: exr_version,}
@@ -2734,6 +2738,7 @@ class all: # noqa
                     '7.0.0',
                     'fd6c4f168282f7e0e494d290cd531fa8',
                     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                    self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
                     self.pyilmbase[bsufix]: exr_version,}
@@ -2744,6 +2749,7 @@ class all: # noqa
                     '6.0.0',
                     '43604208441b1f3625c479ef0a36d7ad',
                     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                    self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
                     self.pyilmbase[bsufix]: exr_version,}
@@ -2754,6 +2760,7 @@ class all: # noqa
                     '5.0.0',
                     '9ba08c29dda60ec625acb8a5928875e5',
                     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                    self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
                     self.pyilmbase[bsufix]: exr_version,}
@@ -2821,7 +2828,12 @@ class all: # noqa
                     "&& ( "
                         "mkdir ./build",
                         "cd ./build",
-                        "cmake ../ -DCONCURRENT_MALLOC=Jemalloc",
+                        "cmake ../ "
+                            '-D OPENVDB_BUILD_PYTHON_MODULE=1 '
+                            '-D OPENVDB_BUILD_AX=1 '
+                            '-D OPENVDB_BUILD_AX_BINARIES=1 '
+                            '-D OPENVDB_ENABLE_RPATH=1 '
+                            '-D CONCURRENT_MALLOC=Jemalloc ',
                         "make -j $DCORES VERBOSE=1",
                         "make -j $DCORES install"
                     ") || ( cd openvdb ",
@@ -3382,6 +3394,36 @@ class all: # noqa
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
         build.github_phase(self.usd[bsufix])
+
+
+
+
+        # ============================================================================================================================================
+        # download stuff for gaffer
+        # ============================================================================================================================================
+        self.fonts = build.download(
+            ARGUMENTS,
+            'fonts',
+            src='local.conf',
+            download=[(
+                'https://ftp.gnome.org/pub/GNOME/sources/ttf-bitstream-vera/1.10/ttf-bitstream-vera-1.10.tar.gz',
+                'ttf-bitstream-vera-1.10.tar.gz',
+                '1.10.0',
+                '52559ed969e74f5fca83e527163156df',
+            )],
+        )
+        self.ocio_profiles = build.download(
+            ARGUMENTS,
+            'ocio_profiles',
+            src='README',
+            download=[(
+                'https://github.com/imageworks/OpenColorIO-Configs/archive/refs/tags/v1.0_r2.tar.gz',
+                'OpenColorIO-Configs-1.0_r2.tar.gz',
+                '1.0.2',
+                '9cfd5b2607aeb2891626bad78e8838e2',
+            )],
+        )
+
 
 
 
