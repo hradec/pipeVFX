@@ -85,6 +85,7 @@ class cmake(make):
         ' cmake $SOURCE_FOLDER && '
         ' make $MAKE_PARALLEL $MAKE_VERBOSE &&  make install'
     ]
+    # flags added no matter what!
     needed_flags=[
         '-DCMAKE_CC_FLAGS="$CFLAGS"',
         '-DCMAKE_CXX_FLAGS="$CXXFLAGS"',
@@ -93,6 +94,7 @@ class cmake(make):
         '-DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS"',
         '-DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS"',
         '-DCMAKE_STATIC_LINKER_FLAGS="$STATICFLAGS"',
+        '-DCMAKE_INSTALL_RPATH="$RPATH"',
     ]
     flags = [
             '-Wno-dev',
@@ -198,6 +200,9 @@ class cmake(make):
 class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
+        # force cmake to use our RPATH env var
+        ''' grep 'INSTALL_RPATH ' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak  -e 's/INSTALL_RPATH /INSTALL_RPATH \$ENV{RPATH}:/' $p ; done''',
+
         ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
         ' && '
         ' make $MAKE_PARALLEL $MAKE_VERBOSE  &&  make install',
@@ -320,8 +325,10 @@ class download(make):
     '''
     src='CMakeLists.txt'
     cmd=['mkdir -p $INSTALL_FOLDER ; cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/ && echo $? && echo Done']
+    no_folder_install_checking=True
     # this package will finih pretty fast!
     noMinTime=True
+
 
 class displayDB(make):
     '''
@@ -331,8 +338,6 @@ class displayDB(make):
     cmd=['mkdir -p $INSTALL_FOLDER ; cp -rfuv $SOURCE_FOLDER/* $INSTALL_FOLDER/ && echo $? && echo Done']
     # this package will finih pretty fast!
     noMinTime=True
-
-
 
 class glew(make):
     ''' a make class to exclusively build glew package
@@ -387,8 +392,6 @@ class glfw(cmake):
                 ret = os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
         return ret
 
-
-
 class tbb(make):
     ''' a make class to exclusively build intels TBB package
     since we need to handle the installation by ourselfs, we override
@@ -441,6 +444,6 @@ class tbb(make):
         # this include file is a macro include only, so we don't
         # need anything else.
         # it seems we need this include when building a package with TBB
-        # and GCC 6.3.1!! If we build with GCC 4.N.N we don't need it! 
+        # and GCC 6.3.1!! If we build with GCC 4.N.N we don't need it!
         lines += os.popen('cp /.docker/2022.advisor-annotate.h %s/include/advisor-annotate.h' % targetFolder).readlines()
         return lines
