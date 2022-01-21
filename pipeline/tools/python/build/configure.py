@@ -91,6 +91,7 @@ class pip(configure):
     noMinTime=True
     dontUseTargetSuffixForFolders = 1
     do_not_use=True
+    globalDependency = True
 
     def bootstrap_python_versions(self, env, _source):
         import glob
