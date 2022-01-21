@@ -1573,14 +1573,16 @@ class all: # noqa
             'LD'        : 'ld',
             'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -L$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
                           '-Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/ ',
-            'CPATH'     : ':'.join([ self.exr_rpath_environ['CPATH'],
+            'CPATH'     : ':'.join([
                           '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/',
                           '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/',
+                          self.exr_rpath_environ['CPATH'],
             ]),
-            'RPATH'     : ':'.join([ self.exr_rpath_environ['RPATH'],
+            'RPATH'     : ':'.join([
                           '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/lib/',
                           '$TARGET_FOLDER/lib/',
                           '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+                          self.exr_rpath_environ['RPATH'],
             ]),
         })
 
@@ -2612,30 +2614,36 @@ class all: # noqa
                 depend=[self.icu, self.cmake, self.pugixml, self.freetype,
                         self.openssl, self.bzip2, self.libraw, self.pybind],
                 cmd = [
-                    'make '
-                    'USE_CPP11=1 '
-                    'INSTALLDIR=$INSTALL_FOLDER '
-                    'INSTALL_PREFIX=$INSTALL_FOLDER '
-                    'OPENIMAGEHOME=$OIIO_TARGET_FOLDER'
-                    'BOOST_ROOT=$BOOST_TARGET_FOLDER '
-                    'LLVM_DIRECTORY=$LLVM_TARGET_FOLDER '
-                    'LLVM_STATIC=0 '
-                    'OSL_BUILD_MATERIALX=1 '
-                    'OSL_SHADER_INSTALL_DIR=$INSTALL_FOLDER/shaders '
-                    'Python_ROOT_DIR=$PYTHON_TARGET_FOLDER/ '
-                    'Python_FIND_STRATEGY=LOCATION '
-                    'pybind11_ROOT=$PYBIND_TARGET_FOLDER/ '
-                    'PARTIO_HOME="" '
-                    'STOP_ON_WARNING=0 '
-                    'ILMBASE_HOME=$ILMBASE_TARGET_FOLDER '
-                    'OPENEXR_HOME=$OPENEXR_TARGET_FOLDER '
-                    'BOOST_HOME=$BOOST_TARGET_FOLDER '
-                    'USE_LIBCPLUSPLUS=0 '
-                    'HIDE_SYMBOLS=0 '
-                    'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
-                    'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
-                    # 'install '
+                    'mkdir -p build',
+                    'cd build',
+                    'cmake ../',
+                    'make -j $DCORES ',
+                    'make -j $DCORES install',
                 ],
+                flags = [
+                    '-D USE_CPP11=1 ',
+                    '-D INSTALLDIR=$INSTALL_FOLDER ',
+                    '-D INSTALL_PREFIX=$INSTALL_FOLDER ',
+                    '-D OPENIMAGEHOME=$OIIO_TARGET_FOLDER ',
+                    '-D BOOST_ROOT=$BOOST_TARGET_FOLDER ',
+                    '-D LLVM_DIRECTORY=$LLVM_TARGET_FOLDER ',
+                    '-D LLVM_STATIC=0 ',
+                    '-D OSL_BUILD_MATERIALX=1 ',
+                    '-D OSL_SHADER_INSTALL_DIR=$INSTALL_FOLDER/shaders ',
+                    '-D Python_ROOT_DIR=$PYTHON_TARGET_FOLDER/ ',
+                    '-D Python_FIND_STRATEGY=LOCATION ',
+                    '-D pybind11_ROOT=$PYBIND_TARGET_FOLDER/ ',
+                    '-D PARTIO_HOME="" ',
+                    '-D STOP_ON_WARNING=0 ',
+                    '-D ILMBASE_HOME=$ILMBASE_TARGET_FOLDER ',
+                    '-D OPENEXR_HOME=$OPENEXR_TARGET_FOLDER ',
+                    '-D BOOST_HOME=$BOOST_TARGET_FOLDER ',
+                    '-D USE_LIBCPLUSPLUS=0 ',
+                    '-D HIDE_SYMBOLS=0 ',
+                    # 'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
+                    # 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
+                    # 'install '
+                ]+build.cmake.flags,
                 environ = environ,
                 verbose=1,
             )
