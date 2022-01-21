@@ -1559,11 +1559,13 @@ class all: # noqa
             'DCORES'    : "1",
             'LDFLAGS'   : "$LDFLAGS  -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/ ",
             'CFLAGS'    : '$CFLAGS   -std=c++11 '
+                          '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/ '
                           '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/ '
                           '-I$BOOST_TARGET_FOLDER/include/boost/ '
                           '-I$BOOST_TARGET_FOLDER/include/boost/python '
                           '$CFLAGS ',
             'CXXFLAGS'  : '$CXXFLAGS -std=c++11 '
+                          '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/ '
                           '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/ '
                           '-I$BOOST_TARGET_FOLDER/include/boost/ '
                           '-I$BOOST_TARGET_FOLDER/include/boost/python '
@@ -1572,6 +1574,7 @@ class all: # noqa
             'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -L$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
                           '-Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/ ',
             'CPATH'     : ':'.join([ self.exr_rpath_environ['CPATH'],
+                          '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/',
                           '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/',
             ]),
             'RPATH'     : ':'.join([ self.exr_rpath_environ['RPATH'],
@@ -2086,12 +2089,12 @@ class all: # noqa
                     '-qpa xcb -xcb -xcb-xlib -xkbcommon -bundled-xcb-xinput '
                     '-nomake examples -nomake tests -c++std c++11 -sse2 -no-sse3 '
                     '-qt-doubleconversion -qt-pcre -qt-zlib -qt-freetype '
-                    '-qt-harfbuzz -qt-libpng -qt-libjpeg -qt-sqlite '
-                    '-qt-webp -qt-assimp -qt-webengine-icu '
-                    '-qt-webengine-ffmpeg -qt-webengine-webp -qt-webengine-opus'
+                    '-qt-harfbuzz -qt-libpng -qt-libjpeg -qt-sqlite -qt-webp '
+                    # '-qt-assimp -qt-webengine-icu '
+                    # '-qt-webengine-ffmpeg -qt-webengine-webp -qt-webengine-opus '
                     # these are from gaffer dependencies
                     "-skip qtconnectivity -skip qtwebengine -skip qt3d "
-        			"-skip qtdeclarative -skip qtwebchannel -no-libudev"
+        			"-skip qtdeclarative -skip qtwebchannel -no-libudev "
         			"-no-icu -no-dbus "
                 '|| true )',
                 'make -j $DCORES',
