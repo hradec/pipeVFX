@@ -351,13 +351,6 @@ def buildGaffer(apps=[], boost='1.66.0', usd=None, __download__=None):
     cortex_build = "boost.%s.usd.%s" % (boost, usd_version)
     cortexOBJ = cortex[cortex_build][cortex10version]
 
-    # if building with a boost version that has a cortex built with appleseed, use it!
-    # [ x[2] for x in pkgs.appleseed.download if x[4][pkgs.boost] == boost ]
-    # av = ['2.0.5.beta']
-    # if av:
-    #     av = build.pkgs.versionSort( av )
-    #     cortex_build = "boost.%s.appleseed.%s" % (boost, av[-1])
-
     suffix = ".".join([ x for x in [cortex_build, suffix] if x])
 
     usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]

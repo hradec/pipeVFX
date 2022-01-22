@@ -1580,7 +1580,7 @@ class all: # noqa
             ]),
             'RPATH'     : ':'.join([
                           '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/lib/',
-                          '$TARGET_FOLDER/lib/',
+                          '$INSTALL_FOLDER/lib/',
                           '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
                           self.exr_rpath_environ['RPATH'],
             ]),
