@@ -3324,13 +3324,12 @@ class all: # noqa
                     "mv /usr/lib64/libtbb.so.2 /usr/lib64/__libtbb.so.2__",
                     # "export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH" % os.popen("dirname $(ldconfig -p | grep libc.so.6 | awk '{print $(NF)}')").readlines()[0].strip(),
                     # "echo $LD_LIBRARY_PATH",
-                    "cmake"
-                    " --build --target install --parallel $DCORES ..",
+                    "cmake --build --target install --parallel $CORES ..",
                     # patch generated files to remove any "-isystem /usr/include" from the build cmd lines, to avoid gcc errors!
                     "( grep '.isystem /usr/include' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak -e 's/.isystem .usr.include/-I \/usr\/include/g' $p ; done )",
                     # now we can build!
-                    "make -j $DCORES",
-                    "make -j $DCORES install",
+                    "make -j $CORES",
+                    "make -j $CORES install",
                     "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
                     # now we can return the system tbb back
                     "mv /usr/lib64/__libtbb.so.2__ /usr/lib64/libtbb.so.2",

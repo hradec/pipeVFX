@@ -11,6 +11,7 @@ LLVM_CORES?=$(shell [ ${CORES} -gt 8 ] && echo 8 || echo $(( ${CORES} / 2 )) )
 OPENVDB_CORES?=$(shell grep MHz /proc/cpuinfo  | wc -l)
 PRE_CMD?=
 POS_CMD?=
+CUSTOM_LIB_FOLDER?=
 export STUDIO
 
 all: help
@@ -35,6 +36,7 @@ help:
 	@echo "     make build LLVM_CORES=4    - set the number of parallel jobs when building LLVM."
 	@echo "                                  on machines with high core number, LLVM can use too"
 	@echo "                                  much memory to build. So we have to reduce the # of jobs."
+	@echo "     make build CUSTOM_LIB_FOLDER=<custom folder to put libs>"
 	@echo "     make image PRE_CMD=<cmd>   - Run a command line before downloading pkgs. Use this to delete"
 	@echo "                                  pre-downloaded caches for re-download and cleanup."
 	@echo "                                  ex: make image PRE_CMD=\"rm -rf /atomo/pipeline/build/.downloads/pip*\""
@@ -63,10 +65,13 @@ ifneq "${BUILD_EXTRA}" ""
 BUILD_EXTRA:= -e ' ${BUILD_EXTRA} install '
 endif
 
+ifneq "${CUSTOM_LIB_FOLDER}" ""
+_CUSTOM_LIB_FOLDER:=$(shell readlink -f ${CUSTOM_LIB_FOLDER})
+endif
 
 
 build: upload
-	${CD}/pipeline/tools/scripts/pipevfx -b ${BUILD_EXTRA}
+	export CUSTOM_LIB_FOLDER=${_CUSTOM_LIB_FOLDER} ; ${CD}/pipeline/tools/scripts/pipevfx -b ${BUILD_EXTRA}
 
 build_gcc: upload_centos
 	@IMAGE=centos ${CD}/pipeline/tools/scripts/pipevfx -b -e 'build-gcc'

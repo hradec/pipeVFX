@@ -211,9 +211,16 @@ else
         xhost + > /dev/null 2>&1
     fi
 
+    LIB_FOLDER="$CD/pipeline/libs/"
+    BUILD_FOLDER="$CD/pipeline/build/.build/"
+    if [ "$CUSTOM_LIB_FOLDER" != "" ] ; then
+        LIB_FOLDER="$CUSTOM_LIB_FOLDER"
+        BUILD_FOLDER="$CUSTOM_LIB_FOLDER/__BUILD__/"
+    fi
+
     # create lib folder
-    mkdir -p "$CD/pipeline/libs/"
-    mkdir -p "$CD/pipeline/build/.build/"
+    mkdir -p "$LIB_FOLDER"
+    mkdir -p "$BUILD_FOLDER"
 
     # this one liner creates the _uid, _user, _gid and _group env vars, so we can
     # pass it on to the docker container.
@@ -227,9 +234,9 @@ else
         docker run --rm $TI \
         -v $CD/docker/:/.docker/ \
         -v $CD/pipeline/tools/:/$STUDIO/pipeline/tools/ \
-        -v $CD/pipeline/libs/:/$STUDIO/pipeline/libs/ \
+        -v $LIB_FOLDER:/$STUDIO/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/$STUDIO/pipeline/build/SConstruct \
-        -v $CD/pipeline/build/.build/:/$STUDIO/pipeline/build/.build/ \
+        -v $BUILD_FOLDER:/$STUDIO/pipeline/build/.build/ \
         -v $CD/pipeline/tools/scripts/pipevfx_docker_init.sh:/run.sh \
         -v $CD/.root:/$STUDIO/.root \
         -v $HOME:/home/$USER/ \
