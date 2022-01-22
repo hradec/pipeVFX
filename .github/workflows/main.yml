@@ -31,10 +31,17 @@ env:
 #   cancel-in-progress: true
 
 jobs:
+  # ================================================================================================================
+  # This initial job just runs scons to define how many phases we have, so we can create the same amount of
+  # matrix elements.
+  # we do this since there's a 6 hour limit for each job in github, but there's a total of 72 hours limit
+  # for the whole workflow. Spliting the build in phases allows us to use the full 72 hours!
+  # ================================================================================================================
   matrix:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix_cleanup: ${{ steps.set-matrix.outputs.matrix_cleanup }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -53,9 +60,11 @@ jobs:
         run: |
             make matrix | tee output.txt
             matrix=$(cat output.txt | grep name)
+            matrix_cleanup=$(cat output.txt | grep name | sed 's/,..all.//')
             echo $matrix
             echo $matrix | jq .
             echo "::set-output name=matrix::$matrix"
+            echo "::set-output name=matrix_cleanup::$matrix_cleanup"
 
   check-matrix:
     runs-on: ubuntu-latest
@@ -68,10 +77,17 @@ jobs:
       - name: Check matrix definition
         run: |
           matrix='${{ needs.matrix.outputs.matrix }}'
+          matrix_cleanup='${{ needs.matrix.outputs.matrix_cleanup }}'
           echo $matrix
+          echo $matrix_cleanup
           echo $matrix | jq .
+          echo $matrix_cleanup | jq .
           echo $matrix | json2yaml
+          echo $matrix_cleanup | json2yaml
 
+  # ================================================================================================================
+  # the actual build!!
+  # ================================================================================================================
   build:
     needs: matrix
     strategy:
@@ -79,22 +95,11 @@ jobs:
       fail-fast: true
       max-parallel: 1
       matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
-        # name: [
-        #   phase1,
-        #   phase2,
-        #   phase3,
-        #   phase4,
-        #   phase5,
-        #   phase6,
-        #   phase7,
-        #   phase8,
-        #   phase9,
-        #   phase10,
-        #   phase11,
-        #   phase12
-        # ]
 
     runs-on: ubuntu-latest
+    outputs:
+      matrix_cleanup: ${{ steps.set-matrix.outputs.matrix_cleanup }}
+
     steps:
 
     # - name: 'Install Python Modules'
@@ -115,9 +120,9 @@ jobs:
 
     # ================================================================================================================
     # restore pipeline/libs from previous run
+    # we use artifacts to pass on the built packages from the previous job to the next!
+    # this allows us to continue building the libs folder during the whole workflow.
     # ================================================================================================================
-    # and we use artifacts to pass on the built packages from the previous
-    # job to the next!
     - name: download artifact from previous run
       uses: actions/download-artifact@v2
       if: matrix.name != 'phase1'
@@ -125,8 +130,7 @@ jobs:
           name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz
         # name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
 
-    # extract pipeline/libs from the previous uploaded artifact
-    - name: expand the previously saved libs folder so we can continue building
+    - name: extract pipeline/libs from the previous uploaded artifact so we can continue building
       if: matrix.name != 'phase1'
       run: |
         tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz ; \
@@ -135,9 +139,8 @@ jobs:
 
 
     # ================================================================================================================
-    # run scons
+    # run scons and do the actual building
     # ================================================================================================================
-    # build packages
     - name: build PipeVFX ${{ matrix.name }}
       run: |
         mkdir -p pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
@@ -167,39 +170,45 @@ jobs:
     - name: Remove archive after upload so it won't be cached
       run: rm -rf ./*.tar*
 
-  # cleanup:
-  #   needs: build
-  #   if: ${{ always() }}
-  #   strategy:
-  #     # cancel other jobs in the build matrix if one job fails.
-  #     fail-fast: true
-  #     max-parallel: 1
-  #     matrix:
-  #       name: [
-  #         phase1,
-  #         phase2,
-  #         phase3,
-  #         phase4,
-  #         phase5,
-  #         phase6,
-  #         phase7,
-  #         phase8,
-  #         phase9,
-  #         phase10,
-  #         phase11,
-  #         phase12,
-  #         phase14,
-  #         phase15
-  #       ]
-  #
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Cleanup artifacts we don't need!
-  #     uses: geekyeggo/delete-artifact@v1
-  #     with:
-  #       failOnError: false
-  #       name: |
-  #         ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name }}-${{ github.sha }}.tar.gz
+    # update matrix_cleanup for the cleanup step, with all the phases, but the
+    # last one!
+    - id: set-matrix
+      run: |
+        m='{ "name": [ '
+        n=$(( $(echo ${{ matrix.name }} | sed 's/phase//') - 1))
+        for each in $(seq 1 $n) ; do
+            m="$m \"phase$each\","
+        done
+        m="$m ] }"
+        matrix_cleanup=$(echo "$m" | sed 's/, ]/ ]/')
+        echo "$matrix_cleanup" | jq .
+        echo "::set-output name=matrix_cleanup::$matrix_cleanup"
+
+
+  # ================================================================================================================
+  # cleanup artifacts we dont need!
+  # ================================================================================================================
+  cleanup:
+    needs: build
+    if: ${{ always() }}
+    strategy:
+      # cancel other jobs in the build matrix if one job fails.
+      fail-fast: true
+      matrix:
+        # we retrieve matrix_cleanup from the build step, so we can only delete
+        # the artifacts that where actually uploaded, but the last one!
+        # since artifacts are incremental, there's no point on keep previous
+        # ones since the last will have everything.
+        name: ${{fromJson(needs.build.outputs.matrix_cleanup)}}
+
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Cleanup artifacts we don't need!
+      uses: geekyeggo/delete-artifact@v1
+      with:
+        failOnError: false
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name }}-${{ github.sha }}.tar.gz
 
   # libs_cache:
   #   needs: build
