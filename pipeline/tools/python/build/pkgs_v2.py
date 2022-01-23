@@ -637,7 +637,7 @@ class all: # noqa
 
         # install extra python modules using pip, for all python versions
         # installed by python build.
-        self.pip = [ build.pip( ARGUMENTS, p, self.python ) for p in [
+        self.pip = { p:build.pip( ARGUMENTS, p, self.python ) for p in [
             'readline',
             'epydoc',
             'PyOpenGL',
@@ -649,7 +649,7 @@ class all: # noqa
             'jinja2',   # needed by USD
             'sphinx',   # needed by pyside
             # 'pybind11[Global]',
-        ]]
+        ]}
 
         tbb = build.tbb(
             ARGUMENTS,
@@ -776,13 +776,14 @@ class all: # noqa
         self.cmake = cmake
 
         for pip in self.pip:
-            build.globalDependency(pip)
+            build.globalDependency(self.pip[pip])
         build.globalDependency(self.tbb)
         build.globalDependency(self.cmake)
 
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
+        build.github_phase(self.pip['numpy'])
         build.github_phase(self.cmake)
 
 
@@ -1572,16 +1573,19 @@ class all: # noqa
                           '$CXXFLAGS ',
             'LD'        : 'ld',
             'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -L$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                          '-Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/ ',
+                          '-Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/ '
+                          '-Wl,-rpath,$INSTALL_FOLDER/lib/ ',
             'CPATH'     : ':'.join([
                           '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/',
                           '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/',
+                          '$CPATH',
                           self.exr_rpath_environ['CPATH'],
             ]),
             'RPATH'     : ':'.join([
                           '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/lib/',
                           '$INSTALL_FOLDER/lib/',
                           '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+                          '$RPATH',
                           self.exr_rpath_environ['RPATH'],
             ]),
         })
@@ -1621,7 +1625,7 @@ class all: # noqa
                 #     '7ec7fef6f65594acd612bbe9fbefcea3',
                 #     { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
                 )],
-                # baseLibs=[python],
+                baseLibs=[python],
                 depend=[python, gcc, python],
                 environ=environ,
                 cmd = [
@@ -2354,8 +2358,8 @@ class all: # noqa
                 'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-                'RPATH'   : self.qt_rpath_environ['RPATH'],
-                'CPATH'   : self.qt_rpath_environ['CPATH'],
+                'RPATH'   : '$RPATH:'+self.qt_rpath_environ['RPATH'],
+                'CPATH'   : '$CPATH:'+self.qt_rpath_environ['CPATH'],
             },
             cmd = [
                 # we need to setup differently for pyside < 5
@@ -2462,8 +2466,8 @@ class all: # noqa
             environ={
                 'C_INCLUDE_PATH'     : '$C_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
                 'CPLUS_INCLUDE_PATH' : '$CPLUS_INCLUDE_PATH:$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
-                'CPATH' : self.exr_rpath_environ['CPATH'],
-                'RPATH' : self.exr_rpath_environ['RPATH'],
+                'CPATH' : '$CPATH:'+self.exr_rpath_environ['CPATH'],
+                'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
             },
             cmd = [
                 '( [ "$(basename $TARGET_FOLDER)" == "2.0.42" ] ',
@@ -2566,8 +2570,8 @@ class all: # noqa
                 'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-                'CPATH' : self.exr_rpath_environ['CPATH'],
-                'RPATH' : self.exr_rpath_environ['RPATH'],
+                'CPATH' : '$CPATH:'+self.exr_rpath_environ['CPATH'],
+                'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
         })
 
         for bv in ['1.66.0']:
@@ -2833,9 +2837,9 @@ class all: # noqa
                 'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-                'RPATH'     : self.exr_rpath_environ['RPATH'],
+                'RPATH'     : '$RPATH:'+self.exr_rpath_environ['RPATH'],
                 # we need to add the python$VERSION_MAJOR to include path for openvdb 7
-                'CPATH'     : '$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/:'+self.exr_rpath_environ['CPATH'],
+                'CPATH'     : '$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/:$CPATH:'+self.exr_rpath_environ['CPATH'],
             }
             if 'OPENVDB_CORES' in ARGUMENTS:
                 openvdb_environ['CORES']  = str(int(ARGUMENTS['OPENVDB_CORES'])/2)
@@ -2973,8 +2977,8 @@ class all: # noqa
                 depend=[hdf5],
                 environ = {
                     # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
-                    'CPATH' : self.exr_rpath_environ['CPATH'],
-                    'RPATH' : self.exr_rpath_environ['RPATH'],
+                    'CPATH' : '$CPATH:'+self.exr_rpath_environ['CPATH'],
+                    'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
                     'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib -lhdf5_hl $LDFLAGS ',
                     'LD_PRELOAD': ':'.join([
                         '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
@@ -3096,8 +3100,8 @@ class all: # noqa
                     'CFLAGS'        : ' -fopenmp $CFLAGS ',
                     'CXXFLAGS'      : ' -fopenmp $CXXFLAGS ',
                     'LDFLAGS'       : ' -lX11 -lclew -lPtex $LDFLAGS ',
-                    'CPATH'         : self.exr_rpath_environ['CPATH'],
-                    'RPATH'         : self.exr_rpath_environ['RPATH'],
+                    'CPATH'         : '$CPATH:'+self.exr_rpath_environ['CPATH'],
+                    'RPATH'         : '$RPATH:'+self.exr_rpath_environ['RPATH'],
                 },
                 verbose=1,
             )
@@ -3407,8 +3411,8 @@ class all: # noqa
                         '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
                         '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
                     ]),
-                    'CPATH' : self.exr_rpath_environ['CPATH'],
-                    'RPATH' : self.exr_rpath_environ['RPATH'],
+                    'CPATH' : '$CPATH:'+self.exr_rpath_environ['CPATH'],
+                    'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
                 },
                 # verbose=1,
             )
