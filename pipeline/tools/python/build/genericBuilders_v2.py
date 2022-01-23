@@ -233,6 +233,12 @@ def rpath_environ( paths=[], disable="" ):
             '$ILMBASE_TARGET_FOLDER/lib/',
         ]
 
+    # special case for OIIO and OCIO libraries.
+    paths += [
+        '$OIIO_TARGET_FOLDER/lib/',
+        '$OCIO_TARGET_FOLDER/lib/',
+    ]
+
     # special case for cortex libraries.
     paths += [
         '$CORTEX_TARGET_FOLDER/lib/boost.$BOOST_VERSION/',
@@ -268,6 +274,8 @@ def lib_environ( paths=[], disable="" ):
             '$BOOST_TARGET_FOLDER/lib/',
             '$OPENEXR_TARGET_FOLDER/lib',
             '$ILMBASE_TARGET_FOLDER/lib',
+            '$OIIO_TARGET_FOLDER/lib/',
+            '$OCIO_TARGET_FOLDER/lib/',
         ]),
     }
     return removeDuplicatedEntriesEnvVars(_environ)
@@ -382,7 +390,8 @@ def globalDependency(classObj, RPATH=True, LIB=True, INCLUDE=True ):
     # ==========================================================================
     global allDepend
     global all_env_vars
-    if not [ x for x in allDepend if x.name == classObj.name ]:
+    # if not [ x for x in allDepend if x.name == classObj.name and x.targetSuffix == classObj.targetSuffix]:
+    if not [ x for x in allDepend if x.name == classObj.name and x.targetSuffix == classObj.targetSuffix]:
         allDepend += [classObj]
     if RPATH:
         all_env_vars = update_environ_dict(all_env_vars, rpath_environ(   '$%s_TARGET_FOLDER/lib/'     % classObj.name.upper() ))
@@ -584,9 +593,9 @@ class generic:
         # with global dependency values!
         # ==============================================
         # add global dependency if not already in
-        self__dependNames = [ x.name for x in self.depend if hasattr(x, 'name') ]
-        if type(depend) == type([]):
-            self.depend += [x for x in allDepend if x.name not in self__dependNames]
+        self__dependNames = [ '%s%s' % (x.name, x.targetSuffix) for x in self.depend if hasattr(x, 'name') ]
+        if type(self.depend) == type([]):
+            self.depend += [x for x in allDepend if '%s%s' % (x.name, x.targetSuffix) not in self__dependNames]
         else:
             for d in allDepend:
                 if d not in self.depend:
@@ -655,9 +664,12 @@ class generic:
                 self.dependOn[download_version] = pkg_superdict()
                 self.dependOn[download_version].obj = self
                 self.dependOn[download_version].version = download_version
+
+            # now we finally update self.dependOn with self.depend
             for dependencyPkg in self.depend:
-                # set the latest version for each package in the depend list!
-                defaultVersion = -1 #latest
+                # set the last version on the download list for each package
+                #  in the self.depend list!
+                defaultVersion = -1
                 # if the package is gcc, we try to default to the oldest
                 # if dependencyPkg.name == 'gcc':
                 #     defaultVersion = 0
@@ -945,6 +957,7 @@ class generic:
                             os.system( 'rm -rf "%s" ; mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s), os.path.dirname(s), s) )
 
 
+
                     # add dependencies as source so dependencies are built
                     # first.
                     source = []
@@ -955,11 +968,24 @@ class generic:
                         # just a reminder:
                         # pkgDictKey is a package object, not a string!
                         for pkgDictKey in self.dependOn[download_version].keys():
+                            if not hasattr(pkgDictKey, 'download'):
+                                continue
+
                             # check if this dependency applies to this version of the package!
                             # if the version has the dependency as None, we should NOT depend on
                             # it for this version! (ex: openssl for python 2.6 and not for python 2.7)
                             if not self.dependOn[download_version][pkgDictKey]:
                                 continue
+
+                            # dependVersion = self.dependOn[download_version][pkgDictKey]
+                            # tmp = [ x for x in pkgDictKey.download if x[2] == dependVersion ]
+                            # if tmp:
+                            #     if self.name == 'pyilmbase':
+                            #         print pkgDictKey.name, dependVersion
+                            #     __source_install =  __pkgInstalled__[ os.path.join( buildFolder(self.args), [ x for x in pkgDictKey.download if x[2] == dependVersion ][0][1] ) ]
+                            #     if  __source_install not in source:
+                            #         source += [__source_install]
+                            # else:
 
                             # now, add dependencies to the source list
                             # so we can instruct scons to build the dependency
@@ -980,6 +1006,9 @@ class generic:
                                 if dependOn._depend[p][depend_n] not in source:
                                     # but it doesn't exist in the source list
                                     source.append( dependOn._depend[p][depend_n] )
+                                # else:
+                                #     if self.name == 'pyilmbase':
+                                #         print 1, depend_n, dependOn.name, ".%s." % dependOn.targetSuffix, p, k, dependOn._depend[p][depend_n]
 
                             # the baselib name+version doesnt exist in the
                             # dependency package obj _depend keys, but there
@@ -991,6 +1020,21 @@ class generic:
                                 kk=k[-1]
                                 if dependOn._depend[kk][depend_n] not in source:
                                     source.append( dependOn._depend[kk][depend_n] )
+                            #     else:
+                            #         if self.name == 'pyilmbase':
+                            #             print 2, depend_n, dependOn.name, ".%s." % dependOn.targetSuffix, p, k
+                            # else:
+                            #     print 3, depend_n, dependOn.name, ".%s." % dependOn.targetSuffix, p, k
+
+
+                    # _new_source=[]
+                    # for each in source:
+                    #     if self.name not in str(each):
+                    #         _new_source += [each]
+                    # source = [ x for x in source if self.name not in str(each) ]
+
+                    # source.sort()
+                    # source = list(set(source))
 
                     ENVIRON_DEPEND = []
                     for download_version in self.download_versions:
@@ -1031,12 +1075,17 @@ class generic:
 
                     aliasPkg     = self.env.Alias( self.name, t )
                     aliasInstall = self.env.Alias( 'all', t )
-                    #if 'cmake' in self.name:
+                    # if 'pyilmbase' in self.name and 'phase' not in str(t):
                     #     print '--------> %s' % (self.name), t
-                    #     print str(t)
-                    #    print self.env.get( "ENVIRON_DEPEND_VERSION" )
-                    #     print install
-                    #     print _pkgs
+                    #     z=[ str(x) for x in source ]
+                    #     z.sort()
+                    #     print '\n'.join(z)
+                    #     for download_version in self.download_versions:
+                    #         z = [ str(x.name)+":"+str(self.dependOn[download_version][x].version)+" "+str(x.targetSuffix) for x in self.dependOn[download_version].keys() ]
+                    #         z.sort()
+                    #         print download_version,'\n\t'.join(z)
+                    #
+                    #     print [ x.name+' '+x.targetSuffix for x in allDepend ]
 
                     # we always have to call 'scons install' so the target
                     # paths are full abspath!
