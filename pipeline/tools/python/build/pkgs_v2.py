@@ -2503,6 +2503,11 @@ class all: # noqa
                 '3d41fbf006e6ebffd489bdb304d009ae',
                 { self.gcc : '6.3.1' }
             )],
+            cmd = [
+                './configure  --enable-shared --disable-initial-exec-tls',
+                'make -j $DCORES',
+                'make -j $DCORES install',
+            ]
         )
 
         embree = build.download(
@@ -2632,16 +2637,19 @@ class all: # noqa
                     'cd build',
                     'cmake ../',
                     'make -j $DCORES ',
+                    # 'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
+                    # 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                     'make -j $DCORES install',
                 ],
                 flags = [
+                    # '-D CMAKE_CXX_STANDARD={c++Standard}',
                     '-D USE_CPP11=1 ',
                     '-D INSTALLDIR=$INSTALL_FOLDER ',
                     '-D INSTALL_PREFIX=$INSTALL_FOLDER ',
                     '-D OPENIMAGEHOME=$OIIO_TARGET_FOLDER ',
                     '-D BOOST_ROOT=$BOOST_TARGET_FOLDER ',
                     '-D LLVM_DIRECTORY=$LLVM_TARGET_FOLDER ',
-                    '-D LLVM_STATIC=0 ',
+                    '-D LLVM_STATIC=1 ',
                     '-D OSL_BUILD_MATERIALX=1 ',
                     '-D OSL_SHADER_INSTALL_DIR=$INSTALL_FOLDER/shaders ',
                     '-D Python_ROOT_DIR=$PYTHON_TARGET_FOLDER/ ',
@@ -2654,9 +2662,10 @@ class all: # noqa
                     '-D BOOST_HOME=$BOOST_TARGET_FOLDER ',
                     '-D USE_LIBCPLUSPLUS=0 ',
                     '-D HIDE_SYMBOLS=0 ',
-                    # 'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
-                    # 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
-                    # 'install '
+                    '-D ENABLERTTI=1 ',
+                    '-D PUGIXML_HOME=$PUGIXML_TARGET_FOLDER',
+                    '-D OSL_BUILD_CPP11=1',
+                    '-D STOP_ON_WARNING=0',
                 ]+build.cmake.flags,
                 environ = environ,
                 verbose=1,
