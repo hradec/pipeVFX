@@ -226,6 +226,7 @@ def rpath_environ( paths=[], disable="" ):
     if 'NOBOOST' not in disable:
         paths += [
             '$BOOST_TARGET_FOLDER/lib/',
+            '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
         ]
     if 'NOILM' not in disable:
         paths += [
@@ -1456,6 +1457,8 @@ class generic:
         installDir = os.path.abspath(os.path.dirname(target))
         os_environ['VERSION'] = pkgVersion
         os_environ['VERSION_MAJOR'] = ''.join([ c for c in '.'.join(pkgVersion.split('.')[:2]) if c.isdigit() or c=='.'])
+        os_environ['%s_VERSION' % self.name.upper()] = os_environ['VERSION']
+        os_environ['%s_VERSION_MAJOR' % self.name.upper()] = os_environ['VERSION_MAJOR']
 
 
         # set a python version if none is set
@@ -1583,6 +1586,11 @@ class generic:
             'c++' : 'c++',
             'cpp' : 'cpp',
         }
+
+        RPATH          += rpath_environ  ( "$%s_TARGET_FOLDER/lib/"     % self.name.upper() )['RPATH'].split(':')
+        C_INCLUDE_PATH += include_environ( '$%s_TARGET_FOLDER/include/' % self.name.upper() )['CPATH'].split(':')
+
+
         dependList={}
         sourceList = map(lambda x: os.path.basename(os.path.dirname(os.path.dirname(str(x)))), source)
 
@@ -1667,15 +1675,6 @@ class generic:
                         '%s/lib64/pkgconfig/:' % os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] ,
                         '%s/lib/pkgconfig/:' % os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] ,
                     ]
-                    # if dependency in explicit in GCCFLAGS or
-                    # if dependency doesn't have a lib/pkconfig/*.pc file,
-                    # include the dependency folders into CFLAGS(CPPFLAGS/CXXFLAGS) and LDFLAGS parameters
-                    # if dependOn in self.GCCFLAGS or not glob( "%s/lib/pkgconfig/*.pc" % dependOn.targetFolder[p][depend_n] ):
-                    # CFLAGS.append("-I%s/include/" % dependOn.targetFolder[p][depend_n])
-                    # LDFLAGS.append("-L%s/lib64/" % dependOn.targetFolder[p][depend_n])
-                    # LDFLAGS.append("-L%s/lib64/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
-                    # LDFLAGS.append("-L%s/lib/" % dependOn.targetFolder[p][depend_n])
-                    # LDFLAGS.append("-L%s/lib/python%s/" % (dependOn.targetFolder[p][depend_n], pythonVersion[:3]))
 
                     # include dependency search path in LIBRARY_PATH, so we don't
                     # have to populate LDFLAGS with a bunch of -L<dep path>
@@ -1689,11 +1688,14 @@ class generic:
                         '$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/lib-dynload/'     %  dependOn.name.upper(),
                     ]
 
-                    RPATH += [
-                        "$%s_TARGET_FOLDER/lib/"                               % dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"   % dependOn.name.upper(),
-                        '$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'     %  dependOn.name.upper(),
-                    ]
+                    _rpath = rpath_environ( "$%s_TARGET_FOLDER/lib/" % dependOn.name.upper() )
+                    RPATH += _rpath['RPATH'].split(':')
+                    LDFLAGS += _rpath['LDFLAGS'].split(' ')
+                    # RPATH += [
+                    #     "$%s_TARGET_FOLDER/lib/"                               % dependOn.name.upper(),
+                    #     "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"   % dependOn.name.upper(),
+                    #     '$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'     %  dependOn.name.upper(),
+                    # ]
 
                     # include dependency search path in *_INCLUDE_PATH, so we don't
                     # have to populate C*FLAGS with a bunch of -I<dep path>
@@ -1703,6 +1705,7 @@ class generic:
                     # from the gcc version used to build python, those will interfere with
                     # the gcc version used with USD.
                     C_INCLUDE_PATH += ["$%s_TARGET_FOLDER/include/" %  dependOn.name.upper()]
+                    C_INCLUDE_PATH += include_environ( '$%s_TARGET_FOLDER/include/' % dependOn.name.upper() )['CPATH'].split(':')
 
                     # add extra folders inside dependency include folders
                     for each in glob("%s/include/*" % dependOn.targetFolder[p][depend_n]):
@@ -1822,6 +1825,7 @@ class generic:
         # transfer all lists to env vars now
         os_environ['CPATH']     = ':'.join(C_INCLUDE_PATH+[os_environ['CPATH']])
         os_environ['RPATH']     = ':'.join(RPATH)
+        os_environ['LDFLAGS']   = ' '.join(LDFLAGS)
         # os_environ['C_INCLUDE_PATH']     = ':'.join(C_INCLUDE_PATH+[os_environ['C_INCLUDE_PATH']])
         # os_environ['CPLUS_INCLUDE_PATH'] = os_environ['C_INCLUDE_PATH']
         os_environ['INCLUDE']            = os_environ['CPATH']
