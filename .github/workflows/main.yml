@@ -192,8 +192,6 @@ jobs:
     needs: build
     if: ${{ always() }}
     strategy:
-      # cancel other jobs in the build matrix if one job fails.
-      fail-fast: true
       matrix:
         # we retrieve matrix_cleanup from the build step, so we can only delete
         # the artifacts that where actually uploaded, but the last one!
