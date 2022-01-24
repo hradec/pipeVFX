@@ -22,6 +22,7 @@
 
 import IECore
 import Gaffer
+import GafferCortex
 import GafferUI
 import pipe
 from opDialogue import OpDialogue
@@ -86,7 +87,7 @@ class OpaMode( GafferUI.BrowserEditor.Mode ) :
         self.__pathSelectedConnection = None
 
     def _initialPath( self ) :
-        return Gaffer.ClassLoaderPath( self.__classLoader, "/" )
+        return GafferCortex.ClassLoaderPath( self.__classLoader, "/" )
 
     def _initialDisplayMode( self ) :
         return GafferUI.PathListingWidget.DisplayMode.Tree
@@ -175,7 +176,7 @@ class OpaPathPreview( GafferUI.DeferredPathPreview ) :
 
     def isValid( self ) :
         path = self.getPath()
-        if not isinstance( path, Gaffer.ClassLoaderPath ) :
+        if not isinstance( path, GafferCortex.ClassLoaderPath ) :
             return False
 
         if hasattr( path.classLoader(), "classType" ) :
@@ -191,7 +192,7 @@ class OpaPathPreview( GafferUI.DeferredPathPreview ) :
 
     def _deferredUpdate( self, op ) :
         del self.__column[:]
-        self.__node = Gaffer.ParameterisedHolderNode()
+        self.__node = GafferCortex.ParameterisedHolderNode()
         self.__node.setParameterised( op )
 
         with self.__column :

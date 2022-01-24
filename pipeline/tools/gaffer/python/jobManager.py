@@ -27,6 +27,7 @@ import threading
 
 import IECore
 import Gaffer
+import GafferCortex
 import GafferUI
 import GafferSceneUI # for alembic previews
 
@@ -68,7 +69,7 @@ class jobPreview( GafferUI.DeferredPathPreview ) :
         GafferUI.DeferredPathPreview.__init__( self, self.__column, path )
         self._updateFromPath()
         self.__classLoader = IECore.ClassLoader.defaultOpLoader()
-        self.__node = Gaffer.ParameterisedHolderNode()
+        self.__node = GafferCortex.ParameterisedHolderNode()
         self.__op = self.__classLoader.load( 'admin/jobs/mkjob'  )()
         self.__node.setParameterised( self.__op )
         self.jobs = populateJobs()

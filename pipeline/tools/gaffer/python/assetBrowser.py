@@ -126,7 +126,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         self.__classLoader = IECore.ClassLoader.defaultOpLoader(  )
 #        self.__classLoader = IECore.ClassLoader.defaultLoader( "IECORE_ASSET_OP_PATHS" )
         self.jobs = populateAssets()[0]
-        # self.__node = Gaffer.ParameterisedHolderNode()
+        # self.__node = GafferCortex.ParameterisedHolderNode()
         # self.__op = self.__classLoader.load( "asset/gather" )()
         # self.__node.setParameterised( self.__op )
         self.job = None
@@ -569,7 +569,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
 
     def _deferredUpdateOPA( self, op ) :
         # del self.__column[:]
-        self.__node = Gaffer.ParameterisedHolderNode()
+        self.__node = GafferCortex.ParameterisedHolderNode()
         self.__node.setParameterised( op )
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
             with self._previewCollum :
