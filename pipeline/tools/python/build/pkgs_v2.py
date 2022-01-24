@@ -1993,7 +1993,14 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.glfw)
+        build.github_phase(self.glfw, depend=[
+            self.pugixml,
+            self.oiio[self.oiio.keys()[-1]],
+            self.field3d[self.field3d.keys()[-1]],
+            self.ocio,
+            self.hdf5,
+            self.yasm
+        ])
 
 
         #
