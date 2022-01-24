@@ -31,7 +31,8 @@ def runProcess(exe):
     log = ''
     ret = None
     p = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, close_fds=True,bufsize = 1)
-    prefix = 'pipeLog: '
+    # prefix = 'pipeLog: '
+    prefix = '| '
     if 'PIPE_FARM_USER' in os.environ:
         prefix = '\tpipeLog: '
 
@@ -40,6 +41,8 @@ def runProcess(exe):
       std, err = (None,None)
       for std in iter(p.stdout.readline,''):
           if std:
+              if '__feature__ could not be imported. This is an unsolved PyInstaller problem.' in std:
+                  continue
               if '%' in std:
                     if 'progr:' in std:
                         std = std.replace('progr:', 'PROGRESS:')
