@@ -254,8 +254,8 @@ def rpath_environ( paths=[], disable="" ):
 
     _environ = {
         'LDFLAGS' : ' $LDFLAGS '
-            +' -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(paths)
             +' -Wl,-rpath,'+' -Wl,-rpath,'.join(paths)
+            # +' -Wl,-rpath-link,'+' -Wl,-rpath-link,'.join(paths)
         ,
         'RPATH' : ':'.join(paths+['$RPATH'])
     }
@@ -2149,6 +2149,8 @@ class generic:
         # expand variables in os_environ
         for each in os_environ:
             os_environ[each] = expandvars(os_environ[each], env=os_environ)
+            if each == 'LDFLAGS':
+                os_environ[each] = os_environ[each].replace("$LDFLAGS", "")
 
         # add system includes for last
         os_environ['LIBRARY_PATH'] = ':'.join([
@@ -2165,10 +2167,10 @@ class generic:
         LD = os.path.basename(os_environ['LD'].split(' ')[0])
         if 'ENVIRON_LD' in self.env:
             LD = self.env['ENVIRON_LD']
-        if 'ld' in LD:
-            for each in set(os_environ['LIBRARY_PATH'].split(':')):
-                if os.path.exists(each) and glob( '%s/*' % each ):
-                    os_environ['LDFLAGS'] += ' -L%s' % os.path.abspath(each)
+        # if 'ld' in LD:
+        #     for each in set(os_environ['LIBRARY_PATH'].split(':')):
+        #         if os.path.exists(each) and glob( '%s/*' % each ):
+        #             os_environ['LDFLAGS'] += ' -L%s' % os.path.abspath(each)
 
 
         # cleanup paths that don't exist from the searchpath env vars!
