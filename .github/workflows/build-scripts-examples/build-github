@@ -1,0 +1,13 @@
+#!/bin/bash
+
+export STUDIO=pipevfx
+export CUSTOM_LIB_FOLDER=./pipevfx_libs/
+
+build() {
+  matrix=$(make matrix CUSTOM_LIB_FOLDER=$CUSTOM_LIB_FOLDER 2>&1 | grep name)
+  echo $matrix
+  for n in $(echo $matrix | awk -F'[' '{print $2}' | sed -e 's/"//g' -e 's/,//g' -e 's/ ].*//g' ) ; do
+        make build CUSTOM_LIB_FOLDER=$CUSTOM_LIB_FOLDER PKG=$n
+  done
+}
+time build

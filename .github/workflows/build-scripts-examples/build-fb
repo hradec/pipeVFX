@@ -1,0 +1,7 @@
+#!/bin/bash
+
+export STUDIO=frankbarton
+make build CUSTOM_LIB_FOLDER=./frankbarton_libs/
+if [ $? -ne 0 ] ; then
+    rsync -avpP --delete  ./frankbarton_libs/linux/x86_64/ 10.144.0.10:/mnt/pipevfx-qnap/root/pipeline/libs/linux/x86_64/
+fi
