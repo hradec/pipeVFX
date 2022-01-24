@@ -1224,17 +1224,11 @@ class all: # noqa
 
         # ============================================================================================================================================
         # boost build - this one is very important since there are multiple builds of other packages built for each version of boost.
-        boost = build.boost(
-            ARGUMENTS,
-            'boost',
-            download=[(
-                # we build this from before vfxplatform...
-                'http://downloads.sourceforge.net/project/boost/boost/1.51.0/boost_1_51_0.tar.gz',
-                'boost_1_51_0.tar.gz',
-                '1.51.0',
-                '6a1f32d902203ac70fbec78af95b3cf8',
-                { self.gcc : '4.8.5' },
-            ),(
+        download=[]
+        # if building in github, avoid build legacy versions that are not
+        # currently used to speed up build since we're time constrained.
+        if 'TRAVIS' not in os.environ or os.environ['TRAVIS'] != "1":
+            download += [(
                 # we build this from before vfxplatform...
                 'http://downloads.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.gz',
                 'boost_1_54_0.tar.gz',
@@ -1249,41 +1243,54 @@ class all: # noqa
                 '57a9e2047c0f511c4dfcf00eb5eb2fbb',
                 { self.gcc : '4.8.5' },
             ),(
-                # CY2015 - CY2016
-                'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
-                'boost_1_55_0.tar.gz',
-                '1.55.0',
-                '93780777cfbf999a600f62883bd54b17',
-                { self.gcc : '4.8.5' },
-            ),(
                 # we build this from before vfxplatform... for houdini 15
                 'http://downloads.sourceforge.net/project/boost/boost/1.56.0/boost_1_56_0.tar.gz',
                 'boost_1_56_0.tar.gz',
                 '1.56.0',
                 '8c54705c424513fa2be0042696a3a162',
                 { self.gcc : '4.8.5' },
-            ),(
-                # CY2017 - CY2018
-                'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
-                'boost_1_61_0.tar.gz',
-                '1.61.0',
-                '874805ba2e2ee415b1877ef3297bf8ad',
-                { self.gcc :  '6.3.1' }
-            ),(
-                # CY2019
-                'http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.gz',
-                'boost_1_66_0.tar.gz',
-                '1.66.0',
-                'd275cd85b00022313c171f602db59fc5',
-                { self.gcc : '6.3.1' }
-            # ),(
-            #     # CY2020
-            #     'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
-            #     'boost_1_70_0.tar.gz',
-            #     '1.70.0',
-            #     'fea771fe8176828fabf9c09242ee8c26',
-            #     { self.gcc :  '6.3.1' }
-            )],
+            )]
+
+        download += [(
+            # we build this from before vfxplatform...
+            'http://downloads.sourceforge.net/project/boost/boost/1.51.0/boost_1_51_0.tar.gz',
+            'boost_1_51_0.tar.gz',
+            '1.51.0',
+            '6a1f32d902203ac70fbec78af95b3cf8',
+            { self.gcc : '4.8.5' },
+        ),(
+            # CY2015 - CY2016
+            'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
+            'boost_1_55_0.tar.gz',
+            '1.55.0',
+            '93780777cfbf999a600f62883bd54b17',
+            { self.gcc : '4.8.5' },
+        ),(
+            # CY2017 - CY2018
+            'http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz',
+            'boost_1_61_0.tar.gz',
+            '1.61.0',
+            '874805ba2e2ee415b1877ef3297bf8ad',
+            { self.gcc :  '6.3.1' }
+        ),(
+            # CY2019
+            'http://downloads.sourceforge.net/project/boost/boost/1.66.0/boost_1_66_0.tar.gz',
+            'boost_1_66_0.tar.gz',
+            '1.66.0',
+            'd275cd85b00022313c171f602db59fc5',
+            { self.gcc : '6.3.1' }
+        # ),(
+        #     # CY2020
+        #     'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
+        #     'boost_1_70_0.tar.gz',
+        #     '1.70.0',
+        #     'fea771fe8176828fabf9c09242ee8c26',
+        #     { self.gcc :  '6.3.1' }
+        )]
+        boost = build.boost(
+            ARGUMENTS,
+            'boost',
+            download=download,
             baseLibs=[python],
             depend=[python, openssl, bzip2, icu],
         )
@@ -2618,6 +2625,9 @@ class all: # noqa
                 depend=[self.icu, self.cmake, self.pugixml, self.freetype,
                         self.openssl, self.bzip2, self.libraw, self.pybind],
                 cmd = [
+                    'if [ "$OSL_VERSION_MAJOR" == "1.10" ] ; then '
+                        "sed -i.bak -e 's/used when installing/\\nif (NOT CMAKE_INSTALL_RPATH)/' -e 's/    . add the automatically determined/endif () #/' src/cmake/install.cmak? ;"
+                    "fi",
                     'mkdir -p build',
                     'cd build',
                     'cmake ../',
