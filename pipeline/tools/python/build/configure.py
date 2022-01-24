@@ -604,6 +604,12 @@ class boost(configure):
     ''' A build class to build different versions of BOOST library
     the patch links can be found at: http://www.boost.org/patches/
     '''
+    environ = {
+        'RPATH' : ':'.join([
+            '$BOOST_TARGET_FOLDER/lib/',
+            '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+        ])
+    }
     src = './bootstrap.sh'
     def fixCMD(self, cmd, os_environ):
         # generic build command for versions 1.58 and up
