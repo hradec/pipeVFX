@@ -2872,6 +2872,11 @@ class all: # noqa
                 openvdb_environ['DCORES'] = ARGUMENTS['OPENVDB_CORES']
                 openvdb_environ['HCORES'] = str(int(ARGUMENTS['OPENVDB_CORES'])/4)
 
+            if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
+                openvdb_environ['CORES']  = "1"
+                openvdb_environ['DCORES'] = "1"
+                openvdb_environ['HCORES'] = "1"
+
             openvdb = build.cmake(
                 ARGUMENTS,
                 'openvdb',
@@ -3250,6 +3255,9 @@ class all: # noqa
             }
             usd_sed['21.5.0']  = usd_sed['20.8.0']
             usd_sed['21.11.0'] = usd_sed['20.8.0']
+            usd_CORES  = os.environ['CORES']
+            if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
+                usd_CORES  = "1"
             usd = build.cmake(
                 ARGUMENTS,
                 'usd',
@@ -3437,8 +3445,11 @@ class all: # noqa
                         '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
                         '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
                     ]),
-                    'CPATH' : '$CPATH:'+self.exr_rpath_environ['CPATH'],
-                    'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
+                    'CORES'  : usd_CORES,
+                    'DCORES' : usd_CORES,
+                    'HCORES' : usd_CORES,
+                    'CPATH'  : '$CPATH:'+self.exr_rpath_environ['CPATH'],
+                    'RPATH'  : '$RPATH:'+self.exr_rpath_environ['RPATH'],
                 },
                 # verbose=1,
             )

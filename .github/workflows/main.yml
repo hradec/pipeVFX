@@ -144,8 +144,10 @@ jobs:
         # du -shc /opt/* | sort -h
         # python3 -c "print('='*80)"
         # du -shc /mnt/* | sort -h
-        # python3 -c "print('='*80)"
+        python3 -c "print('='*80)"
         df -h
+        python3 -c "print('='*80)"
+        free -h
 
     # ================================================================================================================
     # restore pipeline/libs from previous run
@@ -174,7 +176,7 @@ jobs:
       run: |
         mkdir -p pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
         ls -l pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
-        make build DOCKER=0 PKG=${{ matrix.name }}
+        nice -n 19 make build DOCKER=0 PKG=${{ matrix.name }}
 
     # ================================================================================================================
     # upload pipeline/libs to an artifact with the next phase name, so we can restore it on the next phase
