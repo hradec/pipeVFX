@@ -44,6 +44,9 @@ def expandvars(path, env=os.environ, default=None, skip_escaped=False):
 def pushPrint(d=locals()):
     print '='*80
     globals()['oldDir'] = d.copy()
+    for each in globals()['oldDir'].keys():
+        if '_ROOT' in each:
+            del globals()['oldDir'][each]
 
 def popPrint(msg,dd=locals()):
     d = dd.copy()
@@ -284,16 +287,16 @@ apps                    = pipe.roots().apps()
 if "MAYA_ROOT" in os.environ:
     MAYA_ROOT               = apps+"/maya/%s/"   % maya
     CXXSTD = 'c++11'
-elif "PRMAN_ROOT" in os.environ:
+if "PRMAN_ROOT" in os.environ:
     RMAN_ROOT               = "%s/RenderManProServer-%s"  % (os.environ["PRMAN_ROOT"], os.environ["PRMAN_VERSION"])
-elif "NUKE_ROOT" in os.environ:
+if "NUKE_ROOT" in os.environ:
     NUKE_ROOT		        = os.environ["NUKE_ROOT"]
-elif "HOUDINI_ROOT" in os.environ:
+if "HOUDINI_ROOT" in os.environ:
     HOUDINI_ROOT	        = os.environ["HOUDINI_ROOT"]
-elif "ARNOLD_ROOT" in os.environ:
+if "ARNOLD_ROOT" in os.environ:
     ARNOLD_ROOT	        = os.environ["ARNOLD_ROOT"]
-    MTOA_ROOT               = ARNOLD_ROOT+"/mtoadeploy/%s/" % maya
-    MTOA_SOURCE_ROOT        = ARNOLD_ROOT+"/mtoadeploy/%s/scripts/mtoa/" % maya
+    # MTOA_ROOT               = ARNOLD_ROOT+"/mtoadeploy/%s/" % maya
+    # MTOA_SOURCE_ROOT        = ARNOLD_ROOT+"/mtoadeploy/%s/scripts/mtoa/" % maya
 
 if "APPLESEED_TARGET_FOLDER" in os.environ:
     APPLESEED_ROOT  = os.environ["APPLESEED_TARGET_FOLDER"]
@@ -308,7 +311,7 @@ if pipe.versionMajor(os.environ['BOOST_VERSION']) >= 1.61:
 
 # installation paths
 # =============================================================================================================================================================
-installRoot = "" #os.environ['TARGET_FOLDER']
+installRoot = "" #os.environ['INSTALL_FOLDER']
 installRootMaya    = "/maya/%s" % maya
 installRootNuke    = "/nuke/%s" % nuke
 installRootPrman   = "/%s/%s" % (prmanName, prman)
@@ -319,13 +322,13 @@ extraInstallPath   = '/boost.%s' % os.environ['BOOST_VERSION']
 
 # install prefixes with per package version numbers!
 # =============================================================================================================================================================
-INSTALL_PREFIX                  = os.environ['TARGET_FOLDER']
-os.environ['INSTALL_PREFIX']    = os.environ['TARGET_FOLDER']
+INSTALL_PREFIX                  = os.environ['INSTALL_FOLDER']
+os.environ['INSTALL_PREFIX']    = os.environ['INSTALL_FOLDER']
 
 # if houdini != '0.0.0':
 #     # if we're installing houdini, make installPrefix be the houdini folder+version
 #     # so we can build the whole IECore* libraries with the houdini dependency!
-#     INSTALL_PREFIX                  = os.environ['TARGET_FOLDER'] + '/houdini/%s' % houdini
+#     INSTALL_PREFIX                  = os.environ['INSTALL_FOLDER'] + '/houdini/%s' % houdini
 #     extraInstallPath                = ""
 
 
@@ -412,7 +415,7 @@ if houdini != '0.0.0':
 
         if 'GCC_VERSION' in os.environ:
             # if os.environ['GCC_VERSION'] == '4.1.2':
-            #     os.environ['HOUDINI_CXX_FLAGS'] += " -isystem %s/lib/gcc/x86_64-pc-linux-gnu/%s/include/c++/tr1/" % (os.environ['GCC_TARGET_FOLDER'], os.environ['GCC_VERSION'])
+            #     os.environ['HOUDINI_CXX_FLAGS'] += " -isystem %s/lib/gcc/x86_64-pc-linux-gnu/%s/include/c++/tr1/" % (os.environ['GCC_INSTALL_FOLDER'], os.environ['GCC_VERSION'])
             #     os.environ['HOUDINI_CXX_FLAGS'] = os.environ['HOUDINI_CXX_FLAGS'].replace('-Wno-unused-local-typedefs','')
             # elif os.environ['GCC_VERSION'] == '4.8.5':
             #     os.environ['HOUDINI_CXX_FLAGS'] += " -std=c++11 -fexceptions "
@@ -510,11 +513,11 @@ LINKFLAGS.append('-L%s' % os.environ['SOURCE_FOLDER'] )
 
 # we add the installation path to the library search path since we run the cortex build multiple times to build
 # different components, and we patch it to NOT waste time rebuilding what's already done!
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost.%s'          % os.environ['BOOST_VERSION'] ]) )
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'lib/boost.%s/python%s' % (os.environ['BOOST_VERSION'],os.environ['PYTHON_VERSION_MAJOR']) ]) )
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'alembic/%s/lib%s/'    % (app_environ('ALEMBIC_VERSION'), extraInstallPath) ]) )
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'openvdb/%s/lib%s/'    % (app_environ('OPENVDB_VERSION'), extraInstallPath) ]) )
-LINKFLAGS.append('-L%s' % '/'.join([ os.environ['TARGET_FOLDER'], 'usd/%s/lib%s/'        % (app_environ('OPENVDB_VERSION'), extraInstallPath) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['INSTALL_FOLDER'], 'lib/boost.%s'          % os.environ['BOOST_VERSION'] ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['INSTALL_FOLDER'], 'lib/boost.%s/python%s' % (os.environ['BOOST_VERSION'],os.environ['PYTHON_VERSION_MAJOR']) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['INSTALL_FOLDER'], 'alembic/%s/lib%s/'    % (app_environ('ALEMBIC_VERSION'), extraInstallPath) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['INSTALL_FOLDER'], 'openvdb/%s/lib%s/'    % (app_environ('OPENVDB_VERSION'), extraInstallPath) ]) )
+LINKFLAGS.append('-L%s' % '/'.join([ os.environ['INSTALL_FOLDER'], 'usd/%s/lib%s/'        % (app_environ('OPENVDB_VERSION'), extraInstallPath) ]) )
 
 # CC = os.environ['CC']
 # CPP = os.environ['CPP']
@@ -545,7 +548,7 @@ popPrint('All Cortex Paths...')
 
 # install a cortexPython wrapper to simplify our lives!!
 # =============================================================================================================================================================
-if '/cortex/' in os.environ['TARGET_FOLDER']:
+if '/cortex/' in os.environ['INSTALL_FOLDER']:
 
     cortexPython = '%s/bin/cortexPython%s' % (INSTALL_PREFIX,PYTHON_MAJOR_VERSION)
     os.system( 'rm -rf %s/bin' % INSTALL_PREFIX )

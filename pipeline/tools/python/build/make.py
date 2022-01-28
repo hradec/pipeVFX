@@ -95,6 +95,7 @@ class cmake(make):
         '-DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS"',
         '-DCMAKE_STATIC_LINKER_FLAGS="$STATICFLAGS"',
         '-DCMAKE_INSTALL_RPATH="$RPATH"',
+        '-DENABLERTTI=1',
     ]
     flags = [
             '-Wno-dev',
@@ -202,7 +203,6 @@ class alembic(cmake):
     cmd = [
         # force cmake to use our RPATH env var
         ''' grep 'INSTALL_RPATH ' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak  -e 's/INSTALL_RPATH /INSTALL_RPATH \$ENV{RPATH}:/' $p ; done''',
-
         ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
         ' && '
         ' make $MAKE_PARALLEL $MAKE_VERBOSE  &&  make install',

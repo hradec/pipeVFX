@@ -757,6 +757,11 @@ class generic:
             self.ramdisk = kargs['ramdisk']
             self.set( "BUILD_RAMDISK", self.ramdisk )
 
+        self.dontUseTargetSuffixForFolders = None
+        if kargs.has_key('dontUseTargetSuffixForFolders'):
+            self.dontUseTargetSuffixForFolders = kargs['dontUseTargetSuffixForFolders']
+
+
 #        bld = Builder(action = self.sed)
 #        self.env.Append(BUILDERS = {'sed' : bld})
 
@@ -814,6 +819,7 @@ class generic:
         if 'https_proxy' in os.environ:
             self.set("https_proxy", os.environ['https_proxy'])
             self.https_proxy = os.environ['https_proxy']
+
 
         # add all extra arguments as env vars!
         for each in kargs:
@@ -1037,6 +1043,7 @@ class generic:
                     # source.sort()
                     # source = list(set(source))
 
+
                     ENVIRON_DEPEND = []
                     for download_version in self.download_versions:
                         # set a DEPEND env var that contains all dependency names
@@ -1047,6 +1054,10 @@ class generic:
                     source_versions = [ '.'.join(str(x[0]).split(os.path.sep)[-3:-1])  for x in source ]
                     source_versions.sort()
                     self.set( "ENVIRON_DEPEND_VERSION",  ' '.join( source_versions ) )
+
+                    # we use this to inform the build python module when it's
+                    # been imported inside a running build
+                    self.set( "ENVIRON_BUILD_RUNNING",  '1' )
 
                     # print self.name, gcc_version
 
@@ -1654,12 +1665,10 @@ class generic:
                         DB[self.name][os_environ['VERSION']] = {}
                     DB[self.name][os_environ['VERSION']][dependOn.name] = os_environ['%s_VERSION' % dependOn.name.upper()]
 
-                    if not hasattr(dependOn, 'dontUseTargetSuffixForFolders'):
+                    if not dependOn.dontUseTargetSuffixForFolders:
                         # if 'pyilmbase' == dependOn.name:
                         #     if 'alembic' == self.name:
                         #         print(dependOn, dependOn.targetSuffix)
-
-
                         if dependOn.targetSuffix:
                             os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()] = '/'.join([
                                 os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].rstrip('/'),
@@ -1785,7 +1794,7 @@ class generic:
         os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
         os_environ['INSTALL_FOLDER'] = os_environ['TARGET_FOLDER']
-        if not hasattr(self, 'dontUseTargetSuffixForFolders'):
+        if not self.dontUseTargetSuffixForFolders:
             if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
                 os_environ['INSTALL_FOLDER'] = '/'.join([ os_environ['TARGET_FOLDER'], self.targetSuffix ]).replace('//','/')
 
@@ -2430,14 +2439,15 @@ class generic:
         TARGET_FOLDER = os.path.dirname(_TARGET)
         _TARGET_SUFIX = ''
         if '-' in _TARGET:
-            _TARGET_SUFIX = '-'+_TARGET.split('-')[1].split('.')[0]+'*'
-        if not hasattr(self, 'dontUseTargetSuffixForFolders'):
+            # _TARGET_SUFIX = '-'+_TARGET.split('-')[1].split('.')[0]+'*'
+            _TARGET_SUFIX = '-'+'-'.join( os.path.splitext(_TARGET)[0].split('-')[1:] )+'*'
+        if not self.dontUseTargetSuffixForFolders:
             if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
                 # TARGET_FOLDER becomes INSTALL_FOLDER here, if necessary
                 TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ]).replace('//','/').rstrip('/')
 
-        if not hasattr(self, 'apps'):
-            if not os.path.exists(_TARGET) or (not glob( '%s/*/*' % TARGET_FOLDER ) and not hasattr(self,'no_folder_install_checking')):
+        # if not hasattr(self, 'apps'):
+        if not os.path.exists(_TARGET) or (not glob( '%s/*/*' % TARGET_FOLDER ) and not hasattr(self,'no_folder_install_checking')):
                 # if we have a log, show it!
                 if ret:
                     _print( bcolors.WARNING, '='*80, bcolors.FAIL )

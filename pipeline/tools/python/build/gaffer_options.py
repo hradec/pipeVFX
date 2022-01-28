@@ -41,9 +41,9 @@ if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 4.2:
 if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 6.0:
     CXXSTD = "c++14"
 
-# INSTALL_DIR = os.environ['TARGET_FOLDER']
+# INSTALL_DIR = os.environ['INSTALL_FOLDER']
 BUILD_DIR='/tmp/build/gaffer-${GAFFER_MAJOR_VERSION}.${GAFFER_MINOR_VERSION}.${GAFFER_PATCH_VERSION}-${GAFFER_PLATFORM}-python'+'.'.join(python.split('.')[:2])
-BUILD_DIR=os.environ['TARGET_FOLDER']
+BUILD_DIR=os.environ['INSTALL_FOLDER']
 
 LOCATE_DEPENDENCY_CPPPATH=[]
 LOCATE_DEPENDENCY_LIBPATH=[]
@@ -185,7 +185,7 @@ os.environ['PATH'] = ':'.join([
     os.environ['PATH']
 ])
 
-# sphinx in python 2.7 can't build docs in gaffer anymore! 
+# sphinx in python 2.7 can't build docs in gaffer anymore!
 if os.environ['PYTHON_VERSION_MAJOR'] == '2.7':
     SPHINX="none"
 

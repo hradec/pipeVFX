@@ -1,5 +1,11 @@
 #!/bin/bash
+# ==============================================================================
+#
+#   Simulate a build in a github action, so we can debug faster!
+#
+# ==============================================================================
 
+export TRAVIS=1
 export STUDIO=pipevfx
 export CUSTOM_LIB_FOLDER=./pipevfx_libs/
 

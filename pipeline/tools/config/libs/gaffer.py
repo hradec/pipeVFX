@@ -20,28 +20,6 @@
 
 
 class gaffer(baseLib):
-    def versions(self):
-        if self.parent()  in ["gaffer"]:
-            pipe.libs.version.set( python='2.7.6' )
-            pipe.version.set( python='2.7.6' )
-            gaffer_version = pipe.libs.version.get('gaffer')
-            if gaffer_version:
-                if float('.'.join(gaffer_version.split('.')[:2])) >= 0.55:
-                    pipe.libs.version.set( cortex='10.2' )
-                    pipe.libs.version.set( boost='1.61.0' )
-                    pipe.libs.version.set( oiio='2.0.11' )
-                    pipe.libs.version.set( tbb='2019_U9' )
-            # if float(pipe.version.get('gaffer')[:3]) >= 2.0:
-            #     pipe.libs.version.set( cortex='9.0.0.git_Oct_10_2014' )
-#        elif self.parent()  in ["maya", "houdini", "nuke"]:
-#            if float(pipe.libs.version.get('python')[:3]) < 2.7:
-#                if float(pipe.version.get('gaffer')[:3]) >= 2.0:
-#                    pipe.version.set( gaffer='0.95.0')
-        # fix a wrong gaffer version
-        # if float(pipe.version.get('gaffer')[:3]) == 2.0:
-        #     pipe.version.set( gaffer='0.31')
-        #     pipe.libs.version.set( gaffer='0.31')
-
 
     def environ(self):
         ''' as this is a python application, we don't have to setup anything
@@ -73,28 +51,6 @@ class gaffer(baseLib):
         # add all versions of OIIO libraries to search path
         for each in cached.glob( "%s/*" % os.path.dirname(pipe.libs.oiio().path()) ):
             self['LD_LIBRARY_PATH'] = '%s/lib/' % each
-
-        if self.parent() in ['gaffer','python']:
-            if os.path.exists(self.path("lib/libtbb.so.2")):
-                self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
-            else:
-                self['LD_PRELOAD'] = pipe.libs.tbb().path("lib/libtbb.so.2")
-
-            # preload Qt
-            for each in cached.glob(pipe.libs.qt().path("lib/*.so*")):
-                if os.path.isfile(each):
-                    self['LD_PRELOAD'] = each
-
-            self.update( pipe.libs.pyside() )
-            self.update( pipe.apps.python() )
-
-            # hack to enable renderman in gaffer!
-            self['DELIGHT'] = '1'
-
-            self['LD_PRELOAD'] = pipe.libs.ocio().LD_PRELOAD()
-            self['LD_PRELOAD'] = pipe.libs.oiio().LD_PRELOAD()
-            self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()
-
 
         self['GAFFERUI_IMAGECACHE_MEMORY'] = '2000'
         if pipe.versionMajor(self.version())>0.5 and pipe.versionMajor(self.version())<2.0:
@@ -167,18 +123,59 @@ class gaffer(baseLib):
         )
 
         self['OSLHOME'] = self.path()
+        self['QT_QWS_FONTDIR'] = self.path('fonts')
+        self['QT_QPA_FONTDIR'] = self.path('fonts')
+
+
+        self.update( pipe.apps.arnold() )
+        pipe.apps.arnold.addon( self,
+            plugins = self.path('arnold/$ARNOLD_VERSION_MAJOR/arnoldPlugins'),
+        )
+        gaffer.addon(self,
+            libs = self.path('arnold/$ARNOLD_VERSION_MAJOR/lib'),
+            scripts = self.path('arnold/$ARNOLD_VERSION_MAJOR/python'),
+            startups = self.path('arnold/$ARNOLD_VERSION_MAJOR/startup'),
+        )
+
+
+        if self.parent() in ['gaffer','python']:
+            # if os.path.exists(self.path("lib/libtbb.so.2")):
+            #     self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
+            # else:
+            #     self['LD_PRELOAD'] = pipe.libs.tbb().path("lib/libtbb.so.2")
+
+            # preload Qt
+            # for each in cached.glob(pipe.libs.qt().path("lib/*.so*")):
+            #     if os.path.isfile(each):
+            #         self['LD_PRELOAD'] = each
+
+            self.update( top=pipe.libs.pyside() )
+            self.update( pipe.apps.python() )
+
+            # hack to enable renderman in gaffer!
+            self['DELIGHT'] = '0'
+
+            # self['LD_PRELOAD'] = pipe.libs.ocio().LD_PRELOAD()
+            # self['LD_PRELOAD'] = pipe.libs.oiio().LD_PRELOAD()
+            self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()
+
+            self['GAFFER_JEMALLOC'] = '0'
+
+
+
 
     # def runUserSetup(self, bin):
     #     ''' only create a user folder structure if it's the main gaffer app.'''
     #     return bin[0] in ['gaffer', 'bundle']
 
     @staticmethod
-    def addon(caller, ops="", procedurals="", apps="", graphics="", scripts="", startups="", shaders=""):
+    def addon(caller, ops="", procedurals="", apps="", graphics="", scripts="", startups="", shaders="", libs=""):
         caller['GAFFER_APP_PATHS'] = apps
         caller['GAFFERUI_IMAGE_PATHS'] = graphics
         caller['PYTHONPATH'] = scripts
         caller['GAFFER_STARTUP_PATHS'] = startups
         caller['OSL_SHADER_PATHS'] = shaders
+        caller['LD_LIBRARY_PATH'] = libs
 
     def bins(self):
         ''' we make our wrapper without the .py just to keep

@@ -12,7 +12,8 @@ OPENVDB_CORES?=$(shell grep MHz /proc/cpuinfo  | wc -l)
 PRE_CMD?=
 POS_CMD?=
 CUSTOM_LIB_FOLDER?=
-export STUDIO
+STUDIO?=$(shell echo $STUDIO)
+
 
 all: help
 
@@ -69,6 +70,11 @@ ifneq "${CUSTOM_LIB_FOLDER}" ""
 _CUSTOM_LIB_FOLDER:=$(shell readlink -f ${CUSTOM_LIB_FOLDER})
 endif
 
+ifeq "${STUDIO}" ""
+STUDIO="atomo"
+export STUDIO
+endif
+$(info ${STUDIO})
 
 build: upload
 	export CUSTOM_LIB_FOLDER=${_CUSTOM_LIB_FOLDER} ; ${CD}/pipeline/tools/scripts/pipevfx -b ${BUILD_EXTRA}

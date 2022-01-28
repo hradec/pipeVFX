@@ -25,6 +25,8 @@ from mayaPlugin import *
 from mayaPython import *
 from mayaPythonPlugin import *
 from configure import *
+from configure import cortex as _cortex
+from configure import gaffer as _gaffer
 from make import *
 from msl import *
 from pythonModule import *
@@ -32,7 +34,19 @@ from pythonSetup import *
 from sl import *
 from utils import *
 
+# pkgs will have all scons builds as its parameters
+# ex: to use boost, just add pkgs.boost as a dependency
 import pkgs
+
+
+# prevent importing build.gaffer when running inside a build
+# for example, cortex_options.py and gaffer_options.py import
+# this build module when running cortex and gaffer scons build.
+# we don't want to import the gaffer py in this situation.
+if 'BUILD_RUNNING' not in os.environ:
+    from gaffer import gaffer, cortex
+
+
 
 SHLIBEXT=[
     '.so',

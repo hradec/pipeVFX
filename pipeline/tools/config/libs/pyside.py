@@ -22,6 +22,5 @@
 
 class pyside(baseLib):
     def environ(self):
-        self.update(pipe.LD_PRELOAD.gcc.system())
         self['LD_LIBRARY_PATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR')
         self['PYTHONPATH'] = self.path('lib/python$PYTHON_VERSION_MAJOR/site-packages')

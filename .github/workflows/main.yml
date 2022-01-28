@@ -1,3 +1,22 @@
+# =================================================================================
+#    This file is part of pipeVFX.
+#
+#    pipeVFX is a software system initally authored back in 2006 and currently
+#    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
+#
+#    pipeVFX is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Lesser General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    pipeVFX is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public License
+#    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
+# =================================================================================
 
 # boost (2h ws30)
 # cmake (1:30h ws30)
@@ -109,14 +128,13 @@ jobs:
       with:
         fetch-depth: 0
 
-    # - name: retrieve root folder cache
-    #   uses: actions/cache@v1
-    #   with:
-    #     path: ./
-    #     key: |
-    #       ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
-    #     restore-keys: |
-    #       ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+    - uses: actions/cache@v1
+      with:
+        path: ./
+        key: |
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}
 
     # rm -rf /usr/local/lib/android # will release about 10 GB if you don't need Android
     # rm -rf /usr/share/dotnet ex# will release about 20GB if you don't need .NET

@@ -39,6 +39,7 @@ SCons.Script.SetOption('warn', 'no-all')
 #     return tmp
 
 
+
 class all: # noqa
     ''' a unique class to hold all packages and versions build in pipeVFX '''
 
@@ -646,6 +647,7 @@ class all: # noqa
             'subprocess32',
             'numpy',
             'scons',
+            'six',      # needed by CortexVFX > 10
             'jinja2',   # needed by USD
             'sphinx',   # needed by pyside
             # 'pybind11[Global]',
@@ -3502,6 +3504,9 @@ class all: # noqa
                 '3a9f6d615b7f96278fd18dfd028a7e1e',
             )],
         )
+
+
+
 
 
 

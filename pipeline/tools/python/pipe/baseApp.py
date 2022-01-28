@@ -1179,6 +1179,9 @@ class baseApp(_environ):
         if binName:
             self._license(binName)
 
+    def nice(self):
+        return 19
+        
     def expand(self, binName=None):
         ''' Expand all env vars in this class to the environment.
         This runs at the very end, before running the actual app
@@ -1471,6 +1474,9 @@ class baseApp(_environ):
         # in fedora 14/kernel 3.9.8. Could be an isolated problem only!
         if self.linux and taskset:
             cmd = "%s -c 0-%d " % (taskset, cpu_count()) + cmd
+
+        # set niceness!
+        cmd = "nice -n %s " % self.nice() + cmd
 
         # run preRun if it exists - returns the cmd to run!
         # (preRun virtual method can modify cmd as it wants!)

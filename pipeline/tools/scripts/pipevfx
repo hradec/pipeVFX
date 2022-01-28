@@ -1,5 +1,23 @@
 #!/bin/bash
+# =================================================================================
+#    This file is part of pipeVFX.
 #
+#    pipeVFX is a software system initally authored back in 2006 and currently
+#    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
+#
+#    pipeVFX is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Lesser General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    pipeVFX is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public License
+#    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
+# =================================================================================#
 # use this script to build all libraries used by pipeVFX, with all versions
 #
 
@@ -70,15 +88,6 @@ if [ "$HELP" != "" ] ; then
 else
     # copy docker init script to docker folder, so we keep the docker folder small and tidy!
     # cp $CD/pipeline/tools/scripts/pipevfx_docker_init.sh $CD/docker/run.sh
-
-    # use real apps folder if we have one!
-    APPS_MOUNT=" -v $CD/apps:/$STUDIO/apps"
-    if [ -e /$STUDIO/apps ] && [ "$TRAVIS" == "" ] ; then
-        APPS_MOUNT=" -v /$STUDIO/apps:/$STUDIO/apps "
-    fi
-    if [ -e /$STUDIO/jobs ] ; then
-        APPS_MOUNT=" $APPS_MOUNT -v /$STUDIO/jobs:/$STUDIO/jobs "
-    fi
 
     if [ "$EXTRA_VARS" != "" ] ; then
         for e in $EXTRA_VARS ; do
@@ -172,14 +181,23 @@ else
         exit $?
     fi
 
-    # use wget proxy setup if it exists
-    if [ -e $HOME/.wgetrc ] ; then
-        APPS_MOUNT="$APPS_MOUNT -v $HOME/.wgetrc:/root/.wgetrc"
-    fi
-
     TI=" -ti "
     if [ "$TRAVIS" == "1" ] ; then
         TI="-t"
+    else
+        # use real apps folder if we have one!
+        APPS_MOUNT=" -v $CD/apps:/$STUDIO/apps"
+        if [ -e /$STUDIO/apps ] && [ "$TRAVIS" == "" ] ; then
+            APPS_MOUNT=" -v /$STUDIO/apps:/$STUDIO/apps "
+        fi
+        if [ -e /$STUDIO/jobs ] ; then
+            APPS_MOUNT=" $APPS_MOUNT -v /$STUDIO/jobs:/$STUDIO/jobs "
+        fi
+    fi
+
+    # use wget proxy setup if it exists
+    if [ -e $HOME/.wgetrc ] ; then
+        APPS_MOUNT="$APPS_MOUNT -v $HOME/.wgetrc:/root/.wgetrc"
     fi
 
     X11=""
@@ -233,6 +251,7 @@ else
         docker pull $build_image ; \
         docker run --rm $TI \
         -v $CD/docker/:/.docker/ \
+        -v $CD/.github/:/.github/ \
         -v $CD/pipeline/tools/:/$STUDIO/pipeline/tools/ \
         -v $LIB_FOLDER:/$STUDIO/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/$STUDIO/pipeline/build/SConstruct \

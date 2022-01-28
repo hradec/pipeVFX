@@ -22,14 +22,7 @@
 
 class usd(baseLib):
     def versions(self):
-        if self.parent() in ['usd']:
-            # pipe.libs.version.set( oiio='1.6.15' )
-            pipe.libs.version.set( opensubdiv='3.4.0' )
-            pipe.libs.version.set( ptex='2.0.42' )
-
-        if pipe.versionMajor(pipe.libs.version.get('usd')) < 20.0:
-            pipe.libs.version.set( opensubdiv='3.4.0' )
-            pipe.libs.version.set( ptex='2.0.42' )
+        pipe.libs.version.set( ptex='2.0.42' )
 
     def environ(self):
         self['PYTHONPATH'] = self.path('lib/python')
@@ -52,5 +45,6 @@ class usd(baseLib):
         )
 
         if self.parent() in ['gaffer','python']:
-            self['LD_PRELOAD'] = pipe.libs.ocio().LD_PRELOAD()
-            self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()
+            self['LD_PRELOAD'] = pipe.libs.ptex().LD_PRELOAD()
+        #     self['LD_PRELOAD'] = pipe.libs.ocio().LD_PRELOAD()
+        #     self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()

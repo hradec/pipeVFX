@@ -25,17 +25,18 @@ class arnold(baseApp):
     def environ(self):
 
         self['PATH'] = self.path('mtoadeploy/$MAYA_VERSION/bin')
-        self['LD_LIBRARY_PATH'] = self.path('mtoadeploy/$MAYA_VERSION/bin')
         arnold.addon( self,
             script      = self.path('mtoadeploy/$MAYA_VERSION/scripts'),
             extensions  = self.path('mtoadeploy/$MAYA_VERSION/extensions'),
             shader      = self.path('mtoadeploy/$MAYA_VERSION/shaders'),
+            lib         =  [
+                self.path('bin'),
+                self.path('mtoadeploy/$MAYA_VERSION/bin'),
+            ]
         )
 
 
-        if self.parent() not in ['gaffer']:
-            # disable arnold for gaffer!
-            self['PYTHONPATH'] = self.path('python')
+        self['PYTHONPATH'] = self.path('python')
 
         if os.path.exists(self.path('mtoadeploy/%s/oldpipe' % maya().version())):
             self['MAYA_MODULE_PATH']=self.path('mtoadeploy/$MAYA_VERSION/oldpipe')
@@ -63,7 +64,8 @@ class arnold(baseApp):
                 lib         = '%s/shaders/arnold/%s/bin' % (each, self.version()),
             )
 
-        self.update( top=maya() )
+        if self.parent() in ['maya']:
+            self.update( top=maya() )
         self.update( cortex() )
 
 
@@ -74,7 +76,7 @@ class arnold(baseApp):
         ]
 
     @staticmethod
-    def addon( caller, script='', extensions='', procedurals='', shader='', display='', lib='' ):
+    def addon( caller, script='', extensions='', procedurals='', shader='', display='', lib='', plugins='' ):
         caller['MTOA_EXTENSIONS_PATH'] = extensions
         caller['MTOA_TEMPLATES_PATH'] = extensions
         caller['LD_LIBRARY_PATH'] = procedurals
@@ -82,6 +84,7 @@ class arnold(baseApp):
         caller['ARNOLD_PLUGIN_PATH'] = display
         caller['ARNOLD_PLUGIN_PATH'] = shader
         caller['ARNOLD_PLUGIN_PATH'] = procedurals
+        caller['ARNOLD_PLUGIN_PATH'] = plugins
         caller['PYTHONPATH'] = script
 
     def license(self):
