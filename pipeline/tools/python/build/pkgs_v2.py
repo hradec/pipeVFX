@@ -1139,7 +1139,7 @@ class all: # noqa
                 'python-ldap-2.4.19.tar.gz',
                 '2.4.19',
                 'b941bf31d09739492aa19ef679e94ae3',
-                { python: '2.7.6' }
+                { python: '2.7.16' }
             )],
             # baseLibs=[python],
             depend=[python],
@@ -2692,14 +2692,14 @@ class all: # noqa
                 #     'MaterialX-v1.36.4.zip',
                 #     'v1.36.4',
                 #     None,
-                #     { self.gcc : '6.3.1', python: '2.7.6' },
+                #     { self.gcc : '6.3.1', python: '2.7.16' },
                 # ),(
                     # used by USD 20.8
                     'https://github.com/materialx/MaterialX/releases/download/v1.37.4/MaterialX-1.37.4.tar.gz',
                     'MaterialX-1.37.4.tar.gz',
                     '1.37.4',
                     'fdc0efb49f3170fc1e7baaf714df3e31',
-                    { self.gcc : '6.3.1', python: '2.7.6', osl: '1.10.7',
+                    { self.gcc : '6.3.1', python: '2.7.16', osl: '1.10.7',
                     latest_osl['oiio'   ].obj: latest_osl['oiio'],
                     latest_osl['openexr'].obj: latest_osl['openexr'],
                     latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
@@ -2709,7 +2709,7 @@ class all: # noqa
                     'MaterialX-1.38.0.tar.gz',
                     '1.38.0',
                     'b8bc253454164b0c19600eb0f925d654',
-                    { self.gcc : '6.3.1', python: '2.7.6', osl: '1.10.7',
+                    { self.gcc : '6.3.1', python: '2.7.16', osl: '1.10.7',
                     latest_osl['oiio'   ].obj: latest_osl['oiio'],
                     latest_osl['openexr'].obj: latest_osl['openexr'],
                     latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
@@ -2719,7 +2719,7 @@ class all: # noqa
                     'MaterialX-1.38.1.tar.gz',
                     '1.38.1',
                     '578a1b63263281414e1594d44409b882',
-                    { self.gcc : '6.3.1', python: '2.7.6', osl: '1.10.7',
+                    { self.gcc : '6.3.1', python: '2.7.16', osl: '1.10.7',
                     latest_osl['oiio'   ].obj: latest_osl['oiio'],
                     latest_osl['openexr'].obj: latest_osl['openexr'],
                     latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
@@ -3505,6 +3505,37 @@ class all: # noqa
             )],
         )
 
+
+        cgru_boost_version = '1.61.0'
+        cgru_boost_sufix = 'boost.1.61.0'
+        self.cgru = build.configure(
+            build.ARGUMENTS,
+            'cgru',
+            src='build-hradec.sh',
+            download=[(
+                'https://github.com/hradec/cgru/archive/refs/tags/3.2.1-pipevfx.tar.gz',
+                'cgru-3.2.1-pipevfx.tar.gz',
+                '3.2.1',
+                '72930f0363a465e87e6730345982065e',
+                {   self.gcc : '6.3.1',
+                    self.boost: cgru_boost_version,
+                    self.ilmbase  [cgru_boost_sufix] : exr_version,
+                    self.pyilmbase[cgru_boost_sufix] : exr_version,
+                    self.openexr  [cgru_boost_sufix] : exr_version}
+            )],
+            cmd=[
+                'rm /bin/python*',
+                'cd utilities',
+                './get.sh',
+                './build.sh -j $DCORES > build.log 2>&1',
+                'cd ..',
+                '([ -e bin/convert ] || exit -1)',
+                './build-hradec.sh --afanasy',
+                'cp -rf ./* $INSTALL_FOLDER/',
+                'mkdir -p $INSTALL_FOLDER/../../../../../../../apps/linux/x86_64/cgru/',
+                'ln -s $INSTALL_FOLDER $INSTALL_FOLDER/../../../../../../../apps/linux/x86_64/cgru/$CGRU_VERSION'
+            ]
+        )
 
 
 
