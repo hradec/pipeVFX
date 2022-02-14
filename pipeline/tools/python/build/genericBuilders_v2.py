@@ -483,7 +483,7 @@ class pkg_superdict(dict):
                 # the obj for the given classname.
                 # this fixes the issue where we can endup having
                 # 2 dependencies of the same package, each with a diferent
-                # version. 
+                # version.
                 if key.name in _keynames.keys():
                     self[ _keynames[key.name] ] = d[key]
                 else:
@@ -671,6 +671,10 @@ class generic:
         self._os_environ = {}
         self.os_environ = {}
 
+        self.targetSuffix=""
+        if kargs.has_key('targetSuffix'):
+            self.targetSuffix = kargs['targetSuffix'] #.replace('.','_')
+
         # cleanup tmp folders
         os.popen("rm -rf %s/tmp.*" % buildFolder(args)).readlines()
 
@@ -704,9 +708,9 @@ class generic:
                 # set the last version on the download list for each package
                 #  in the self.depend list!
                 defaultVersion = -1
-                # if the package is gcc, we try to default to the oldest
-                # if dependencyPkg.name == 'gcc':
-                #     defaultVersion = 0
+                # if the package is python, we try to default to the oldest
+                if dependencyPkg.name == 'python':
+                    defaultVersion = 0
                 dependencyPkgLatestVersion = dependencyPkg.downloadList[defaultVersion][2]
                 self.dependOn[download_version][dependencyPkg] = dependencyPkgLatestVersion
 
@@ -727,7 +731,10 @@ class generic:
                     del self.dependOn[download_version][each]
                 if hasattr(self.dependOn[download_version][each].obj, 'download_versions'):
                     if self.dependOn[download_version][each].version not in self.dependOn[download_version][each].obj.download_versions:
-                        print "::==> deleting dependency for ",self.name,": ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!"
+                        ts=""
+                        if self.targetSuffix:
+                            ts=" (%s)" % self.targetSuffix
+                        print "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!"
                         del self.dependOn[download_version][each]
 
         # set gcc_version for instalation purposes
@@ -788,10 +795,6 @@ class generic:
         if kargs.has_key('keep_source_folder'):
             self.keep_source_folder = kargs['keep_source_folder']
             self.set( "KEEP_SOURCE_FOLDER", '1' if self.keep_source_folder else '0')
-
-        self.targetSuffix=""
-        if kargs.has_key('targetSuffix'):
-            self.targetSuffix = kargs['targetSuffix'] #.replace('.','_')
 
         self.userData = None
         if kargs.has_key('userData'):
@@ -1203,7 +1206,7 @@ class generic:
         #
         sys.stdout.write('\033[2K\033[1G')
         if 'builder' in  str(what):
-            if not self.shouldBuild( target, source ):
+            if not self.shouldBuild( target, source, env ):
                 return
             t=str(target[0])
             extra = []
@@ -1286,10 +1289,22 @@ class generic:
         return os.path.abspath( lastlogFile )
 
 
-    def shouldBuild(self, target, source, cmd=None):
+    def shouldBuild(self, target, source, env, cmd=None):
         lastlogFile = self.__lastlog(target[0])
         lastlog = self.__check_target_log__( lastlogFile, stage='pre-build' )
         # _print( '=====>',target[0], lastlogFile)
+
+        # double check if the dependency list changed!!
+        build_depend_list = "%s.depend" % lastlogFile
+        if os.path.exists(build_depend_list):
+            build_depend_list_content = [ x.strip() for x in open(build_depend_list ,'w').readlines() if x.strip() ]
+            for each in env['ENVIRON_DEPEND_VERSION'].split(' '):
+                each = each.split('.')
+                each = each[0]+'/'+'.'.join(each[1:])
+                if each not in build_depend_list_content:
+                    print ":: ==> dependency changed for", os.path.basename(lastlogFile)
+                    lastlog = 240
+
 
         if lastlog==0:
             os.popen( "touch %s" % str(target[0]) ).readlines()
@@ -1316,11 +1331,12 @@ class generic:
             if cmd.strip():
                 cmdz.append(cmd)
 
+        didBuild = False
         if cmdz:
-            self.runCMD(' && '.join(cmdz), target, source, env)
+            didBuild = self.runCMD(' && '.join(cmdz), target, source, env)
 
         # here we check if the last build was finished suscessfully
-        if not self.shouldBuild( target, source ):
+        if not didBuild:
             return
 
         # if building for multiple python versions
@@ -1479,10 +1495,6 @@ class generic:
         ''' the main method to run system calls, like configure, make, cmake, etc  '''
 
         target = str(target_original[0])
-
-        # here we check if the last build was finished suscessfully
-        __shouldBuild__ =  self.shouldBuild( target_original, source )
-        # print "========>", [str(x) for x in target_original], __shouldBuild__
 
 
         # for each in  source:
@@ -1811,9 +1823,11 @@ class generic:
 
 
 
+
         # here we check if the last build was finished suscessfully
+        __shouldBuild__ =  self.shouldBuild( target_original, source, env )
         if not __shouldBuild__:
-            return
+            return False
 
         # fix PYTHON_VERSION_MAJOR based on PYTHON_VERSION
         # from dependent classes
@@ -2354,6 +2368,9 @@ class generic:
 
         _print( bcolors.END, )
 
+        return True
+
+
     def installer(self, target, source, os_environ): # noqa
         ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.
         this method is called after the build (not at install), since we want to provide the os_environ env var to run shell commands
@@ -2671,7 +2688,7 @@ class generic:
         if self.error:
             raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
-        if not self.shouldBuild( target, source ):
+        if not self.shouldBuild( target, source, env ):
             return
 
         for n in range(len(source)):

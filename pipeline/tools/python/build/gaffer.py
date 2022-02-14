@@ -148,8 +148,8 @@ def legacy(pkgs):
 
             _download[n][4][ oiio.obj ] = oiio.version
             _download[n][4][ oiio['openexr'  ].obj ] = oiio['openexr'].version
-            _download[n][4][ oiio['ilmbase'  ].obj ] = oiio['ilmbase'].version
-            _download[n][4][ oiio['pyilmbase'].obj ] = oiio['pyilmbase'].version
+            _download[n][4][ oiio['ilmbase'  ].obj ] = oiio['openexr'].version
+            _download[n][4][ oiio['pyilmbase'].obj ] = oiio['openexr'].version
 
         if _download:
             __download = []+_download
@@ -200,9 +200,9 @@ def legacy(pkgs):
                             __download[n][4][ pkgs.boost               ] = boost_version
                             __download[n][4][ alembic.obj              ] = alembic.version
                             __download[n][4][ alembic['hdf5'].obj      ] = alembic['hdf5'].version
-                            __download[n][4][ alembic['ilmbase'].obj   ] = alembic['ilmbase'].version
-                            __download[n][4][ alembic['openexr'].obj   ] = alembic['ilmbase'].version
-                            __download[n][4][ alembic['pyilmbase'].obj ] = alembic['ilmbase'].version
+                            __download[n][4][ alembic['ilmbase'].obj   ] = alembic['openexr'].version
+                            __download[n][4][ alembic['openexr'].obj   ] = alembic['openexr'].version
+                            __download[n][4][ alembic['pyilmbase'].obj ] = alembic['openexr'].version
                             __download[n][4][ pkgs.cortex[cortex_sufix]     ] = __download[n][2]
 
                         # and build cortex
@@ -256,9 +256,9 @@ def legacy(pkgs):
                             __download[n][4][ alembic['hdf5' ].obj ] = alembic['hdf5'].version
                             __download[n][4][ usd['oiio'     ].obj ] = usd['oiio'     ].version
                             __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
-                            __download[n][4][ usd['ilmbase'  ].obj ] = usd['ilmbase'  ].version
-                            __download[n][4][ usd['openexr'  ].obj ] = usd['ilmbase'  ].version
-                            __download[n][4][ usd['pyilmbase'].obj ] = usd['ilmbase'  ].version
+                            __download[n][4][ usd['ilmbase'  ].obj ] = usd['openexr'  ].version
+                            __download[n][4][ usd['openexr'  ].obj ] = usd['openexr'  ].version
+                            __download[n][4][ usd['pyilmbase'].obj ] = usd['openexr'  ].version
                             __download[n][4][ pkgs.cortex[cortex_sufix] ] = __download[n][2]
 
                         # now build the version of cortex with the usd version
@@ -370,8 +370,8 @@ def cortex(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
 
         _download[n][4][ oiio.obj ] = oiio.version
         _download[n][4][ oiio['openexr'  ].obj ] = oiio['openexr'].version
-        _download[n][4][ oiio['ilmbase'  ].obj ] = oiio['ilmbase'].version
-        _download[n][4][ oiio['pyilmbase'].obj ] = oiio['pyilmbase'].version
+        _download[n][4][ oiio['ilmbase'  ].obj ] = oiio['openexr'].version
+        _download[n][4][ oiio['pyilmbase'].obj ] = oiio['openexr'].version
 
     cortex_environ = pkgs.exr_rpath_environ.copy()
 
@@ -410,9 +410,9 @@ def cortex(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
             __download[n][4][ alembic['hdf5' ].obj ] = alembic['hdf5'].version
             __download[n][4][ usd['oiio'     ].obj ] = usd['oiio'     ].version
             __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
-            __download[n][4][ usd['ilmbase'  ].obj ] = usd['ilmbase'  ].version
-            __download[n][4][ usd['openexr'  ].obj ] = usd['ilmbase'  ].version
-            __download[n][4][ usd['pyilmbase'].obj ] = usd['ilmbase'  ].version
+            __download[n][4][ usd['ilmbase'  ].obj ] = usd['openexr'  ].version
+            __download[n][4][ usd['openexr'  ].obj ] = usd['openexr'  ].version
+            __download[n][4][ usd['pyilmbase'].obj ] = usd['openexr'  ].version
             __download[n][4][ pkgs.cortex[cortex_sufix] ] = __download[n][2]
 
         # now build the version of cortex with the usd version
@@ -481,8 +481,8 @@ def gaffer(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
         cortexOBJ['alembic'  ].obj: cortexOBJ['alembic'  ].version,
         cortexOBJ['oiio'     ].obj: cortexOBJ['oiio'     ].version,
         cortexOBJ['openexr'  ].obj: cortexOBJ['openexr'  ].version,
-        cortexOBJ['ilmbase'  ].obj: cortexOBJ['ilmbase'  ].version,
-        cortexOBJ['pyilmbase'].obj: cortexOBJ['pyilmbase'].version}
+        cortexOBJ['ilmbase'  ].obj: cortexOBJ['openexr'  ].version,
+        cortexOBJ['pyilmbase'].obj: cortexOBJ['openexr'  ].version}
     ]]
     if __download__:
         gaffer_download=__download__

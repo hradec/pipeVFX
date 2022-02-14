@@ -34,11 +34,14 @@ pkgs = build.pkgs.all(ARGUMENTS) # noqa
 # get installed app versions using pipe
 import pipe
 
+USD_VERSION='21.5.0'
+BOOST_VERSION='1.66.0'
+
 # ===========================================================================================
 # build gaffer without any app support first!
 # ===========================================================================================
-cortex = build.cortex(boost='1.66.0', usd='21.5.0', pkgs=pkgs)
-gaffer = build.gaffer(boost='1.66.0', usd='21.5.0', pkgs=pkgs)
+cortex = build.cortex(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
+gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
 
 
 # ===========================================================================================
@@ -90,181 +93,172 @@ if canBuildCortexNow:
     # build cortex and arnold for gaffer
     for version in av:
         pipe.version.set( arnold  = version )
-        gaffer = build.gaffer(boost='1.66.0', usd='21.5.0', pkgs=pkgs, apps=[ (pipe.apps.arnold, version) ])
+        gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs, apps=[ (pipe.apps.arnold, version) ])
 
 
     # https://github.com/boberfly/GafferCycles/archive/refs/tags/0.24.0.tar.gz
 
-#     # disable arnold!
-#     #pipe.version.set(arnold='0.0.0')
-#
-#     # ===========================================================================================
-#     # MAYA
-#     # ===========================================================================================
-#     pkgs.maya_sip = {}
-#     pkgs.maya_pyqt = {}
-#     pkgs.maya_usd = {}
-#     pkgs.maya_alembic = {}
-#     pkgs.maya_openvdb = {}
-#     maya_dependency = {
-#         2016 : { pkgs.usd : 21 },
-#         2017 : { pkgs.usd : 21 },
-#         2018 : { pkgs.usd : 21 },
-#         2019 : { pkgs.usd : 21 },
-#         2022 : { pkgs.usd : 21 },
-#     }
-#     for n in range(len(mv)):
-#         version = 0
-#         if mv:
-#             version = mv[0] if len(mv)<=n else mv[n]
-#             pipe.version.set( maya  = version )
-#
-#         iversion = int(build.versionMajor(version))
-#         targetSuffix = "maya.%s" % str(version)
-#
-#         build.s_print( pipe.apps.maya().path('bin/maya.bin'), mv, targetSuffix )
-#
-#
-#         # ===========================================================================================
-#         # build sip/pyqt for maya version!
-#         # for maya 2018 we're building pyside using autodesk qt 5.6.1
-#         # so we don't need maya to build it!
-#         # ===========================================================================================
-#         if float(version) > 2016 and float(version) < 2018:
-#             pkgs.maya_sip.update({ targetSuffix : build.pythonSetup(
-#                 ARGUMENTS,
-#                 'sip',
-#                 targetSuffix = targetSuffix,
-#                 download=[(
-#                     'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
-#                     'sip-4.16.7.tar.gz',
-#                     '4.16.7',
-#                     '32abc003980599d33ffd789734de4c36',
-#                     { pkgs.gcc : '6.3.1' }
-#                 )],
-#                 src = 'configure.py',
-#                 apps = [ (pipe.apps.maya, version) ],
-#                 cmd = [
-#                     # 'export MAYA_LOCATION=$(/bin/python2 -c "import pipe;print pipe.roots.apps()")/maya/%s' % version,
-#                     'mayapy configure.py '
-#                     '-b $TARGET_FOLDER/bin '
-#                     '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-#                     '-e $TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
-#                     '-v $TARGET_FOLDER/share/sip/ '
-#                     'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
-#                     'make -j $DCORES && make -j $DCORES install',
-#                 ],
-#                 environ = {
-#                     'MAYA_EXECUTABLE' : pipe.apps.maya().path('bin/maya.bin'),
-#                     'MAYA_LOCATION' : pipe.apps.maya().path(),
-#                     'MAYA_ROOT' : pipe.apps.maya().path(),
-#                     'PATH' : '%s:$PATH' % pipe.apps.maya().path('bin'),
-#                 },
-#             )})
-#             pkgs.maya_pyqt.update({ targetSuffix : build.pythonSetup(
-#                 ARGUMENTS,
-#                 'pyqt',
-#                 targetSuffix = targetSuffix,
-#                 download=[(
-#                     'https://svwh.dl.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz',
-#                     'PyQt-x11-gpl-4.11.4.tar.gz',
-#                     '4.11.4',
-#                     '2fe8265b2ae2fc593241c2c84d09d481',
-#                     {pkgs.maya_sip[targetSuffix]: '4.16.7.maya%s' % version, pkgs.gcc : '6.3.1'},
-#                 )],
-#                 # baseLibs=[pkgs.python],
-#                 apps = [ (pipe.apps.maya, version) ],
-#                 src = 'configure-ng.py',
-#                 cmd = [
-#                     # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
-#                     '''export PYTHON_VERSION_MAJOR=$(mayapy --version 2>&1 | awk '{split($2,a,"."); print a[1] "." a[2] }')'''
-#                     'export QTDIR=$MAYA_LOCATION',
-#                     'export QMAKESPEC=$MAYA_LOCATION/mkspecs/linux-g++-64',
-#                     'export INCDIR_QT=$MAYA_LOCATION/include',
-#                     'export LIBDIR_QT=$MAYA_LOCATION/lib',
-#                     'export PATH=$MAYA_LOCATION/bin:$PATH',
-#                     'mayapy configure.py --confirm-license --assume-shared --verbose --no-designer-plugin '
-#                     '-b $TARGET_FOLDER/bin '
-#                     '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
-#                     '-v $TARGET_FOLDER/share/sip/PyQt4 '
-#                     'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
-#                     'LIBDIR_QT=$MAYA_LOCATION/lib INCDIR_QT=$MAYA_LOCATION/include MOC=$MAYA_LOCATION/bin/moc -w -g ',
-#                     'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
-#                     'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install',
-#                 ],
-#                 environ = {
-#                     'MAYA_EXECUTABLE' : pipe.apps.maya().path('bin/maya.bin'),
-#                     'MAYA_LOCATION' : pipe.apps.maya().path(),
-#                     'MAYA_ROOT' : pipe.apps.maya().path(),
-#                     'PATH' : '%s:$PATH' % pipe.apps.maya().path('bin'),
-#                 },
-#             )})
-#
-#         # build plugins
-#         if version:
-#             # ===========================================================================================
-#             # MAYA USD
-#             # ===========================================================================================
-#
-#             maya_environ = pkgs.usd.environ.copy()
-#             maya_environ.update({
-#                 'MAYA_EXECUTABLE'   : pipe.apps.maya().path('bin/maya.bin'),
-#                 'MAYA_LOCATION'     : pipe.apps.maya().path(),
-#                 'MAYA_ROOT'         : pipe.apps.maya().path(),
-#                 'LDFLAGS'           : pkgs.usd.environ['LDFLAGS'],
-#                 'CFLAGS'            : pkgs.usd.environ['CFLAGS'],
-#                 'CXXFLAGS'          : pkgs.usd.environ['CXXFLAGS'].replace('-lboost_program_options',''),
-#                 'LD'                : pkgs.usd.environ['LDFLAGS'],
-#                 'LD_PRELOAD'        : pkgs.usd.environ['LD_PRELOAD'],
-#                 'DCORES'            : '$CORES',
-#             })
-#             __download = [ x for x in pkgs.usd.download if build.versionMajor(x[2]) >= maya_dependency[iversion][pkgs.usd] ]
-#             # remove usd and alembic
-#             for n in range(len(__download)):
-#                 # set the version of openvdb for all versions of cortex.
-#                 __download[n][4] = __download[n][4].copy()
-#                 __download[n][4][ pkgs.gcc       ] = '6.3.1'
-#
-#             pkgs.maya_usd.update({ targetSuffix : build.cmake(
-#                 ARGUMENTS,
-#                 'usd',
-#                 sed = pkgs.usd.sed,
-#                 targetSuffix = targetSuffix,
-#                 download = __download,
-#                 depend = [ x for x in pkgs.usd.depend if x.name not in ['tbb'] ],
-#                 cmd = [ x.replace('make ', 'make VERBOSE=1 ') for x in pkgs.usd.cmd ],
-#                 apps = [ (pipe.apps.maya, str(version)) ],
-#                 environ = maya_environ,
-#                 flags=pkgs.usd.flags+[
-#                     '-D PXR_BUILD_MAYA_PLUGIN=ON',
-#                     '-D PXR_BUILD_MATERIALX_PLUGIN=ON',
-#                     '-D OpenGL_GL_PREFERENCE=GLVND',
-#                     '-D MAYA_EXECUTABLE="'+pipe.apps.maya().path('bin/maya.bin')+'"',
-#                     '-D MAYA_PY_EXECUTABLE="'+pipe.apps.maya().path('bin/mayapy')+'"',
-#                     '-D VERBOSE=1',
-#                 ],
-#             )})
-#             # pkgs.maya_usd.update({ targetSuffix : build.cmake(
-#             #     ARGUMENTS,
-#             #     'usd_brides',
-#             #     targetSuffix = targetSuffix,
-#             #     download = [(
-#             #         'https://github.com/Autodesk/maya-usd/archive/v0.0.2.tar.gz',
-#             #         'maya-usd-0.0.2.tar.gz',
-#             #         '0.0.2',
-#             #         '547214e0213dd9bac705b09d7a341e5f',
-#             #         # use usd dependency versions to build this
-#             #         pkgs.usd.download[-1][4].copy(),
-#             #     )],
-#             #     depend = pkgs.usd.depend+[pkgs.usd],
-#             #     apps = [ (pipe.apps.maya, str(version)) ],
-#             #     environ = maya_environ,
-#             #     flags = [
-#             #         '-DBUILD_AL_PLUGIN=0',
-#             #         '-DBUILD_PXR_PLUGIN=1',
-#             #         '-DPXR_USD_LOCATION=$USD_TARGET_FOLDER',
-#             #     ]
-#             # )})
+    # ===========================================================================================
+    # MAYA
+    # ===========================================================================================
+    pkgs.maya_sip = {}
+    pkgs.maya_pyqt = {}
+    pkgs.maya_usd = {}
+    pkgs.maya_alembic = {}
+    pkgs.maya_openvdb = {}
+    maya_dependency = {}
+    maya_dependency['2016.5'] = { 'usd' : USD_VERSION, 'boost' : '1.61.0' }
+    maya_dependency['2022'  ] = { 'usd' : USD_VERSION, 'boost' : '1.66.0' }
+    for mv in maya_dependency:
+        version = mv
+        pipe.version.set( maya  = version )
+
+        iversion = int(build.versionMajor(version))
+        targetSuffix = "maya.%s" % str(version)
+
+        build.s_print( pipe.apps.maya().path('bin/maya.bin'), mv, targetSuffix )
+
+        # # ===========================================================================================
+        # # build sip/pyqt for maya version!
+        # # for maya 2018 we're building pyside using autodesk qt 5.6.1
+        # # so we don't need maya to build it!
+        # # ===========================================================================================
+        # if iversion > 2016 and iversion < 2018:
+        #     pkgs.maya_sip.update({ targetSuffix : build.pythonSetup(
+        #         ARGUMENTS,
+        #         'sip',
+        #         targetSuffix = targetSuffix,
+        #         download=[(
+        #             'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
+        #             'sip-4.16.7.tar.gz',
+        #             '4.16.7',
+        #             '32abc003980599d33ffd789734de4c36',
+        #             { pkgs.gcc : '6.3.1' }
+        #         )],
+        #         src = 'configure.py',
+        #         apps = [ (pipe.apps.maya, version) ],
+        #         cmd = [
+        #             # 'export MAYA_LOCATION=$(/bin/python2 -c "import pipe;print pipe.roots.apps()")/maya/%s' % version,
+        #             'mayapy configure.py '
+        #             '-b $TARGET_FOLDER/bin '
+        #             '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+        #             '-e $TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/ '
+        #             '-v $TARGET_FOLDER/share/sip/ '
+        #             'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+        #             'make -j $DCORES && make -j $DCORES install',
+        #         ],
+        #         environ = {
+        #             'MAYA_EXECUTABLE'   : pipe.apps.maya().path('bin/maya.bin'),
+        #             'MAYA_LOCATION'     : pipe.apps.maya().path(),
+        #             'MAYA_ROOT'         : pipe.apps.maya().path(),
+        #             'PATH'              : '%s:$PATH' % pipe.apps.maya().path('bin'),
+        #         },
+        #     )})
+        #     pkgs.maya_pyqt.update({ targetSuffix : build.pythonSetup(
+        #         ARGUMENTS,
+        #         'pyqt',
+        #         targetSuffix = targetSuffix,
+        #         download=[(
+        #             'https://svwh.dl.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz',
+        #             'PyQt-x11-gpl-4.11.4.tar.gz',
+        #             '4.11.4',
+        #             '2fe8265b2ae2fc593241c2c84d09d481',
+        #             {pkgs.maya_sip[targetSuffix]: '4.16.7.maya%s' % version, pkgs.gcc : '6.3.1'},
+        #         )],
+        #         apps = [ (pipe.apps.maya, version) ],
+        #         # baseLibs=[pkgs.python],
+        #         # src = 'configure-ng.py',
+        #         # cmd = [
+        #         #     # 'python configure-ng.py --confirm-license --assume-shared --protected-is-public --designer-plugindir=$QT_TARGET_FOLDER/plugins/designer/ --sysroot=$TARGET_FOLDER CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"',
+        #         #     '''export PYTHON_VERSION_MAJOR=$(mayapy --version 2>&1 | awk '{split($2,a,"."); print a[1] "." a[2] }')'''
+        #         #     'export QTDIR=$MAYA_LOCATION',
+        #         #     'export QMAKESPEC=$MAYA_LOCATION/mkspecs/linux-g++-64',
+        #         #     'export INCDIR_QT=$MAYA_LOCATION/include',
+        #         #     'export LIBDIR_QT=$MAYA_LOCATION/lib',
+        #         #     'export PATH=$MAYA_LOCATION/bin:$PATH',
+        #         #     'mayapy configure.py --confirm-license --assume-shared --verbose --no-designer-plugin '
+        #         #     '-b $TARGET_FOLDER/bin '
+        #         #     '-d $TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/ '
+        #         #     '-v $TARGET_FOLDER/share/sip/PyQt4 '
+        #         #     'CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" '
+        #         #     'LIBDIR_QT=$MAYA_LOCATION/lib INCDIR_QT=$MAYA_LOCATION/include MOC=$MAYA_LOCATION/bin/moc -w -g ',
+        #         #     'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" ',
+        #         #     'make -j $DCORES CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" install',
+        #         # ],
+        #         environ = {
+        #             'MAYA_EXECUTABLE'   : pipe.apps.maya().path('bin/maya.bin'),
+        #             'MAYA_LOCATION'     : pipe.apps.maya().path(),
+        #             'MAYA_ROOT'         : pipe.apps.maya().path(),
+        #             'PATH'              : '%s:$PATH' % pipe.apps.maya().path('bin'),
+        #         },
+        #     )})
+
+        # build plugins
+        if iversion > 2017:
+            # ===========================================================================================
+            # MAYA USD
+            # ===========================================================================================
+            cortex_sufix = "boost.%s" % maya_dependency[version]['boost']
+            usd = pkgs.usd[cortex_sufix][maya_dependency[version]['usd']].obj
+            maya_environ = usd.environ.copy()
+            maya_environ.update({
+                'MAYA_EXECUTABLE'   : pipe.apps.maya().path('bin/maya.bin'),
+                'MAYA_LOCATION'     : pipe.apps.maya().path(),
+                'MAYA_ROOT'         : pipe.apps.maya().path(),
+                'LDFLAGS'           : usd.environ['LDFLAGS'],
+                'CFLAGS'            : usd.environ['CFLAGS'],
+                'CXXFLAGS'          : usd.environ['CXXFLAGS'].replace('-lboost_program_options',''),
+                'LD'                : usd.environ['LDFLAGS'],
+                'LD_PRELOAD'        : usd.environ['LD_PRELOAD'],
+                'DCORES'            : '$CORES',
+            })
+            __download = [ x for x in usd.download if build.versionMajor(x[2]) >= maya_dependency[version]['usd'] ]
+            # remove usd and alembic
+            for n in range(len(__download)):
+                # set the version of openvdb for all versions of cortex.
+                __download[n][4] = __download[n][4].copy()
+                __download[n][4][ pkgs.gcc       ] = '6.3.1'
+
+            pkgs.maya_usd.update({ targetSuffix : build.cmake(
+                ARGUMENTS,
+                'usd',
+                sed = usd.sed,
+                targetSuffix = targetSuffix,
+                download = __download,
+                depend = [ x for x in usd.depend if x.name not in ['tbb','pyside','ptex','opensubdiv'] ],
+                cmd = [ x.replace('make ', 'make VERBOSE=1 ') for x in usd.cmd ],
+                apps = [ (pipe.apps.maya, str(version)) ],
+                environ = maya_environ,
+                flags=usd.flags+[
+                    '-D PXR_BUILD_MAYA_PLUGIN=ON',
+                    '-D PXR_BUILD_MATERIALX_PLUGIN=ON',
+                    '-D OpenGL_GL_PREFERENCE=GLVND',
+                    '-D MAYA_EXECUTABLE="'+pipe.apps.maya().path('bin/maya.bin')+'"',
+                    '-D MAYA_PY_EXECUTABLE="'+pipe.apps.maya().path('bin/mayapy')+'"',
+                    '-D VERBOSE=1',
+                ],
+            )})
+            # pkgs.maya_usd.update({ targetSuffix : build.cmake(
+            #     ARGUMENTS,
+            #     'usd_brides',
+            #     targetSuffix = targetSuffix,
+            #     download = [(
+            #         'https://github.com/Autodesk/maya-usd/archive/v0.0.2.tar.gz',
+            #         'maya-usd-0.0.2.tar.gz',
+            #         '0.0.2',
+            #         '547214e0213dd9bac705b09d7a341e5f',
+            #         # use usd dependency versions to build this
+            #         usd.download[-1][4].copy(),
+            #     )],
+            #     depend = usd.depend+[usd],
+            #     apps = [ (pipe.apps.maya, str(version)) ],
+            #     environ = maya_environ,
+            #     flags = [
+            #         '-DBUILD_AL_PLUGIN=0',
+            #         '-DBUILD_PXR_PLUGIN=1',
+            #         '-DPXR_USD_LOCATION=$USD_TARGET_FOLDER',
+            #     ]
+            # )})
 #
 #
 #

@@ -1500,6 +1500,13 @@ class all: # noqa
                 #     '2.3.0',
                 #     '354bf86de3b930ab87ac63619d60c860',
                 #     { self.gcc : '6.3.1', python: '2.7.16' }
+                # ),(
+                #     # CY2020 -  *** A compiler with support for C++14 language features is required.
+                #     'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.4.0.tar.gz',
+                #     'ilmbase-2.4.0.tar.gz',
+                #     '2.4.0',
+                #     '354bf86de3b930ab87ac63619d60c860',
+                #     { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version }
                 )],
                 depend=[gcc, python, openssl],
                 environ=environ,
@@ -1510,6 +1517,65 @@ class all: # noqa
                 ],
             )
             self.ilmbase[sufix] = ilmbase
+
+
+        environ = self.exr_rpath_environ.copy()
+        environ.update({
+            # this fixes the problem with missing stdlib.h
+            'CXX':  'g++'
+                        ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                        ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                        ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                        ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+                        ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                        ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+                        ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+                        ' -isystem/usr/include',
+            'CC' :  'gcc -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                        ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                        ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                        ' -isystem/usr/include',
+            'LD' :  'g++ '
+                        ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                        ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                        ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+
+            'LDFLAGS'   : "$LDFLAGS  -Wl,-rpath-link,$OPENEXR_TARGET_FOLDER/lib/ "
+                          ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                          ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                          ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+            'CFLAGS'    : '$CFLAGS   -std=c++11 '
+                          '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/ '
+                          '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/ '
+                          '-I$BOOST_TARGET_FOLDER/include/boost/ '
+                          '-I$BOOST_TARGET_FOLDER/include/boost/python '
+                          '$CFLAGS ',
+            'CXXFLAGS'  : '$CXXFLAGS -std=c++11 '
+                          '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/ '
+                          '-I$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/ '
+                          '-I$BOOST_TARGET_FOLDER/include/boost/ '
+                          '-I$BOOST_TARGET_FOLDER/include/boost/python '
+                          '$CXXFLAGS ',
+            'LD'        : 'ld',
+            'LDFLAGS'   : '$LDFLAGS -L$TARGET_FOLDER/lib/ -L$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                          '-Wl,-rpath,$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ -L$SOURCE_FOLDER/PyImath/.libs/ '
+                          '-Wl,-rpath,$INSTALL_FOLDER/lib/ ',
+
+            'CPATH'     : ':'.join([
+                          '$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/',
+                          '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/',
+                          '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/',
+                          '$CPATH',
+                          self.exr_rpath_environ['CPATH'],
+            ]),
+            'RPATH'     : ':'.join([
+                          '$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/lib/',
+                          '$INSTALL_FOLDER/lib/',
+                          '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+                          '$RPATH',
+                          self.exr_rpath_environ['RPATH'],
+            ]),
+        })
 
         for boost_version in self.boost.versions:
             gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
@@ -1544,21 +1610,31 @@ class all: # noqa
                 #     '2.3.0',
                 #     'a157e8a46596bc185f2472a5a4682174',
                 #     { self.gcc : '6.3.1', python: '2.7.16' }
-                # ),(
-                #     # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
-                #     'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.0.tar.gz',
-                #     'openexr-2.4.0.tar.gz',
-                #     '2.4.0',
-                #     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
-                #     { self.gcc : '6.3.1', python: '2.7.16' }
+                ),(
+                    # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
+                    'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.0.tar.gz',
+                    'openexr-2.4.0.tar.gz',
+                    '2.4.0',
+                    '9e4d69cf2a12c6fb19b98af7c5e0eaee',
+                    { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version, build.override.src: 'CMakeLists.txt'  }
                 )],
                 sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
                 depend=[gcc, python, openssl],
                 environ=environ,
                 cmd = [
-                    './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
-                    'make -j $DCORES',
-                    'make -j $DCORES install',
+                    'mv /usr/include/numpy /usr/include/numpy.bak',
+                    '[ -e IlmBase ] && ('
+                        'mkdir build',
+                        'cd build',
+                        'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
+                        'make -j $DCORES ',
+                        'make -j $DCORES install'
+                    ') || ('
+                        './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
+                        'make -j $DCORES',
+                        'make -j $DCORES install'
+                    ') ',
+                    'mv /usr/include/numpy.bak /usr/include/numpy'
                 ],
             )
             self.openexr[sufix] = openexr
@@ -1633,6 +1709,12 @@ class all: # noqa
                 #     '2.3.0',
                 #     '7ec7fef6f65594acd612bbe9fbefcea3',
                 #     { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
+                # ),(
+                #     'https://github.com/openexr/openexr/releases/download/v2.4.0/pyilmbase-2.4.0.tar.gz',
+                #     'pyilmbase-2.4.0.tar.gz',
+                #     '2.4.0',
+                #     '7ec7fef6f65594acd612bbe9fbefcea3',
+                #     { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.4.0', openexr: '2.4.0', boost: "1.55.0" }
                 )],
                 baseLibs=[python],
                 depend=[python, gcc, python],
@@ -1805,7 +1887,7 @@ class all: # noqa
 
         # =============================================================================================================================================
         # build one OIIO version for each boost version.
-        exr_version = '2.2.0'
+        exr_version = '2.4.0'
         oiio_version = '2.0.11'
         self.oiio = {}
         self.field3d = {}
@@ -1854,8 +1936,9 @@ class all: # noqa
                     'oiio-Release-1.5.24.tar.gz',
                     '1.5.24',
                     '8c1f9a0ec5b55a18eeea76d33ca7a02c',
-                    { self.gcc : gcc_version,  boost : boost_version, python: '2.7.16', }
-                    # { self.gcc : '4.1.2',  boost : "1.51.0", python: '2.7.16', }
+                    { self.gcc : gcc_version,  boost : boost_version, python: '2.7.16',
+                    self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
+                    self.field3d[sufix]: '1.7.2'}
                 ]]
             if build.versionMajor(boost_version) >= 1.51 and build.versionMajor(boost_version) < 1.70:
                 if build.versionMajor(boost_version) != 1.54:
@@ -1864,8 +1947,9 @@ class all: # noqa
                             'oiio-Release-1.6.15.tar.gz',
                             '1.6.15',
                             '3fe2cef4fb5f7bc78b136d2837e1062f',
-                            { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',}
-                            # { self.gcc : '4.1.2', boost : "1.51.0", python: '2.7.16',}
+                            { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
+                            self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
+                            self.field3d[sufix]: '1.7.2'}
                     ]]
             if build.versionMajor(boost_version) > 1.53:
                 download += [[
@@ -1873,15 +1957,17 @@ class all: # noqa
                         'oiio-Release-1.8.10.tar.gz',
                         '1.8.10',
                         'a129a4caa39d7ad79aa1a3dc60cb0418',
-                        { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',}
-                        # { self.gcc : '6.3.1', boost : bv, python: '2.7.16',}
+                        { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
+                        self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
+                        self.field3d[sufix]: '1.7.2'}
                     ],[
                         'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                         'oiio-Release-2.0.11.tar.gz',
                         '2.0.11',
                         '4fa0ce4538fb2d7eb72f54f4036972d5',
-                        { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',}
-                        # { self.gcc : '6.3.1', boost : bv, python: '2.7.16',}
+                        { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
+                        self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
+                        self.field3d[sufix]: '1.7.2'}
                 ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
@@ -1894,10 +1980,10 @@ class all: # noqa
                 _download[n][4][ boost ] = boost_version
                 if build.versionMajor( _download[n][4][ gcc ] ) < 4.8:
                     _download[n][4][ gcc ] = '4.8.5'
-                _download[n][4][ self.ilmbase  [sufix] ] = exr_version
-                _download[n][4][ self.pyilmbase[sufix] ] = exr_version
-                _download[n][4][ self.openexr  [sufix] ] = exr_version
-                _download[n][4][ self.field3d  [sufix] ] = '1.7.2'
+                # _download[n][4][ self.ilmbase  [sufix] ] = exr_version
+                # _download[n][4][ self.pyilmbase[sufix] ] = exr_version
+                # _download[n][4][ self.openexr  [sufix] ] = exr_version
+                # _download[n][4][ self.field3d  [sufix] ] = '1.7.2'
 
             oiio = build.cmake(
                 ARGUMENTS,
@@ -2624,7 +2710,7 @@ class all: # noqa
                     self.boost: bv, self.qt: '5.6.1',
                     self.oiio[bsufix]:"1.8.10",
                     self.oiio[bsufix]["1.8.10"]['ilmbase'].obj:  self.oiio[bsufix]["1.8.10"]['ilmbase'],
-                    self.oiio[bsufix]["1.8.10"]['openexr'].obj:  self.oiio[bsufix]["1.8.10"]['ilmbase']}
+                    self.oiio[bsufix]["1.8.10"]['openexr'].obj:  self.oiio[bsufix]["1.8.10"]['openexr']}
                 ),(
                     'https://github.com/imageworks/OpenShadingLanguage/archive/Release-1.11.14.1.tar.gz',
                     'OpenShadingLanguage-Release-1.11.14.1.tar.gz',
@@ -2634,7 +2720,7 @@ class all: # noqa
                     self.boost: bv, self.qt: '5.6.1',
                     self.oiio[bsufix]:oiio_version,
                     self.oiio[bsufix][oiio_version]['ilmbase'].obj:  self.oiio[bsufix][oiio_version]['ilmbase'],
-                    self.oiio[bsufix][oiio_version]['openexr'].obj:  self.oiio[bsufix][oiio_version]['ilmbase']}
+                    self.oiio[bsufix][oiio_version]['openexr'].obj:  self.oiio[bsufix][oiio_version]['openexr']}
                 )],
                 depend=[self.icu, self.cmake, self.pugixml, self.freetype,
                         self.openssl, self.bzip2, self.libraw, self.pybind],
@@ -3308,8 +3394,8 @@ class all: # noqa
                     latest_osl.obj : latest_osl.version,
                     latest_osl['oiio'     ].obj: latest_osl['oiio'],
                     latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                    latest_osl['openexr'  ].obj: latest_osl['ilmbase'],
-                    self.pyilmbase[bsufix]     : latest_osl['ilmbase']}
+                    latest_osl['openexr'  ].obj: latest_osl['openexr'],
+                    self.pyilmbase[bsufix]     : latest_osl['openexr']}
                 ),(
                     # this is the latest for now - sept/2020
                     'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
@@ -3327,8 +3413,8 @@ class all: # noqa
                     latest_osl.obj : latest_osl.version,
                     latest_osl['oiio'     ].obj: latest_osl['oiio'],
                     latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                    latest_osl['openexr'  ].obj: latest_osl['ilmbase'],
-                    self.pyilmbase[bsufix]     : latest_osl['ilmbase']}
+                    latest_osl['openexr'  ].obj: latest_osl['openexr'],
+                    self.pyilmbase[bsufix]     : latest_osl['openexr']}
                 ),(
                     # this is the latest for now - sept/2020
                     'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.11.tar.gz',
@@ -3346,8 +3432,8 @@ class all: # noqa
                     latest_osl.obj : latest_osl.version,
                     latest_osl['oiio'     ].obj: latest_osl['oiio'],
                     latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                    latest_osl['openexr'  ].obj: latest_osl['ilmbase'],
-                    self.pyilmbase[bsufix]     : latest_osl['ilmbase']}
+                    latest_osl['openexr'  ].obj: latest_osl['openexr'],
+                    self.pyilmbase[bsufix]     : latest_osl['openexr']}
                 )],
                 # baseLibs=[python],
                 depend=[
