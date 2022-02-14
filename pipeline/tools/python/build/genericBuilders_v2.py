@@ -424,6 +424,8 @@ def checkPathsExist( os_environ ):
 
 class _parameter_override_:
     name='None'
+    real_name='None'
+    targetSuffix=''
     downloadList=[range(10)]
     _depend={}
     do_not_use=True
@@ -440,7 +442,7 @@ class pkg_superdict(dict):
         version=None
     def __getitem__(self, key):
         if type(key) == type(""):
-            v = [x for x in self.keys() if x.name.lower() == key.lower()]
+            v = [x for x in self.keys() if x.real_name == key.lower()]
             if v:
                 key = v[0]
 
@@ -460,19 +462,27 @@ class pkg_superdict(dict):
             ret.obj = None
             ret.version = str("0.0.0")
             ret.requested_key = key
+            print ":: WARNING: key",key,"doesn't exist"
         return ret
+
+    def __setitem__(self, key, v):
+        _keynames = self.keyNames()
+        if key.real_name in _keynames.keys():
+            dict.__setitem__(self, _keynames[key.real_name], v)
+        else:
+            dict.__setitem__(self, key, v)
 
     def __contains__(self,key):
         ''' check if a dependency pkg with name key exists '''
         if type(key) in [str]:
-            if [ x for x in self.keys() if x.name == key ]:
+            if [ x for x in self.keys() if x.real_name == key ]:
                 return True
         else:
             return key in self
         return False
 
     def keyNames(self):
-        return { x.name: x for x in self.keys() }
+        return { x.real_name: x for x in self.keys() }
 
     def update(self, d):
         _keynames = self.keyNames()
@@ -484,8 +494,8 @@ class pkg_superdict(dict):
                 # this fixes the issue where we can endup having
                 # 2 dependencies of the same package, each with a diferent
                 # version.
-                if key.name in _keynames.keys():
-                    self[ _keynames[key.name] ] = d[key]
+                if key.real_name in _keynames.keys():
+                    self[ _keynames[key.real_name] ] = d[key]
                 else:
                     self[key] = d[key]
 
@@ -597,6 +607,7 @@ class generic:
 
         self.args     = args
         self.name     = name
+        self.real_name= name
         self.download = download
         self.baseLibs = baseLibs
         self.env      = env
@@ -675,6 +686,9 @@ class generic:
         if kargs.has_key('targetSuffix'):
             self.targetSuffix = kargs['targetSuffix'] #.replace('.','_')
 
+        if kargs.has_key('real_name'):
+            self.real_name = kargs['real_name'] #.replace('.','_')
+
         # cleanup tmp folders
         os.popen("rm -rf %s/tmp.*" % buildFolder(args)).readlines()
 
@@ -692,6 +706,15 @@ class generic:
                 self.download_versions[x[2]] = x[4]
 
 
+        # set the default version to use!
+        # if one is not set, we default to the latest in the download list
+        self.version_default = -1
+        if kargs.has_key('version_default'):
+            for n in range(len(download)):
+                if kargs['version_default'] == download[n][2]:
+                    self.version_default = n
+                    break
+
         # dependOn retain all dependency packages for each version of this
         # this package. If None is set for a package version, it will use
         # the latest version in the package download list.
@@ -707,10 +730,11 @@ class generic:
             for dependencyPkg in self.depend:
                 # set the last version on the download list for each package
                 #  in the self.depend list!
-                defaultVersion = -1
+                defaultVersion = dependencyPkg.version_default
                 # if the package is python, we try to default to the oldest
-                if dependencyPkg.name == 'python':
-                    defaultVersion = 0
+                # if dependencyPkg.name == 'python':
+                #     print "===========================> ", self.name,  dependencyPkg.name, dependencyPkg.version_default, defaultVersion,dependencyPkg
+                #     defaultVersion = 0
                 dependencyPkgLatestVersion = dependencyPkg.downloadList[defaultVersion][2]
                 self.dependOn[download_version][dependencyPkg] = dependencyPkgLatestVersion
 
@@ -1095,11 +1119,18 @@ class generic:
                     ENVIRON_DEPEND = []
                     for download_version in self.download_versions:
                         # set a DEPEND env var that contains all dependency names
-                        ENVIRON_DEPEND += [x.name for x in self.dependOn[download_version] if hasattr(x, 'name')]
+                        ENVIRON_DEPEND += [x.real_name for x in self.dependOn[download_version] if hasattr(x, 'name')]
                     self.set( "ENVIRON_DEPEND",  ' '.join(ENVIRON_DEPEND) )
 
                     # ENVIRON_DEPEND_VERSION is only used to display dependency during build
-                    source_versions = [ '.'.join(str(x[0]).split(os.path.sep)[-3:-1])  for x in source ]
+                    # source_versions = [ '.'.join(str(x[0]).split(os.path.sep)[-3:-1])  for x in source ]
+                    source_versions = []
+                    for x in source:
+                        pkg_name_version = '.'.join(str(x[0]).split(os.path.sep)[-3:-1])
+                        if 'python.' in pkg_name_version and 'noBaseLib-' in str(x[0]):
+                            source_versions += ['pip_'+str(x[0]).split('noBaseLib-')[-1].split('.done')[0]]
+                        else:
+                            source_versions += [pkg_name_version]
                     source_versions.sort()
                     self.set( "ENVIRON_DEPEND_VERSION",  ' '.join( source_versions ) )
 
@@ -1135,7 +1166,9 @@ class generic:
 
                     aliasPkg     = self.env.Alias( self.name, t )
                     aliasInstall = self.env.Alias( 'all', t )
-                    # if 'pyilmbase' in self.name and 'phase' not in str(t):
+                    # if 'field3d' in self.name and 'phase' not in str(t):
+                    #     print '\n'.join([str(x[0])  for x in source])
+                    #     Exception("BUM")
                     #     print '--------> %s' % (self.name), t
                     #     z=[ str(x) for x in source ]
                     #     z.sort()

@@ -610,6 +610,7 @@ class all: # noqa
         python = build.python(
             ARGUMENTS,
             'python',
+            version_default='2.7.16',
             download=[(
                     # CY2015 - CY2019
                     'http://www.python.org/ftp/python/2.7.16/Python-2.7.16.tgz',

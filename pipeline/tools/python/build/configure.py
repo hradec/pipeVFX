@@ -177,6 +177,7 @@ class pip(configure):
             download,
             src='build.sh',
             targetSuffix=pip_pkg, # we need this to build on top of an already built pkg
+            real_name='pip_'+pip_pkg,
             apps=None, # we need this so building on top of an already built pkg won't delete the target folder!
             depend=python.depend+[python]
         )
