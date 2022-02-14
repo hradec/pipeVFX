@@ -443,10 +443,23 @@ class pkg_superdict(dict):
             v = [x for x in self.keys() if x.name.lower() == key.lower()]
             if v:
                 key = v[0]
-        value = str(dict.__getitem__(self, key))
-        ret = pkg_superdict.superstring(value)
-        ret.obj = key
-        ret.version = str(value)
+
+        if dict.has_key(self, key):
+            value = str(dict.__getitem__(self, key))
+            ret = pkg_superdict.superstring(value)
+            ret.obj = key
+            ret.version = str(value)
+        else:
+            # we do this so we can add dependency of versions that exist,
+            # and just ignore when the requested version doesn't exist.
+            # (ex: ilmbase 2.3.0 and up is builtin openexr, but we still add it
+            # when version is bellow, so to avoid adding "ifs" everywhere, we
+            # just ignore then)
+            # print ":: key ",key,"requested, but does not exist!"
+            ret = pkg_superdict.superstring("0.0.0")
+            ret.obj = None
+            ret.version = str("0.0.0")
+            ret.requested_key = key
         return ret
 
     def __contains__(self,key):
@@ -457,6 +470,26 @@ class pkg_superdict(dict):
         else:
             return key in self
         return False
+
+    def keyNames(self):
+        return { x.name: x for x in self.keys() }
+
+    def update(self, d):
+        _keynames = self.keyNames()
+        for key in d:
+            if key:
+                # since keys are build classes objs, we first
+                # check if the class name exists, and re-use
+                # the obj for the given classname.
+                # this fixes the issue where we can endup having
+                # 2 dependencies of the same package, each with a diferent
+                # version. 
+                if key.name in _keynames.keys():
+                    self[ _keynames[key.name] ] = d[key]
+                else:
+                    self[key] = d[key]
+
+
 
 
 # a class to override builder parameters in the download dependency dictionary,
@@ -684,6 +717,18 @@ class generic:
             if self.download_versions[download_version].keys():
                 self.dependOn[download_version].update(self.download_versions[download_version])
 
+        # double check if the version required does exist in the packages.
+        # if not, delete it!
+        for download_version in self.download_versions:
+            keys = []+self.dependOn[download_version].keys()
+            for each in keys:
+                if not self.dependOn[download_version][each].obj:
+                    print "::==> deleting dependency for ",self.name,": it's None (", self.dependOn[download_version][each].requested_key, ')'
+                    del self.dependOn[download_version][each]
+                if hasattr(self.dependOn[download_version][each].obj, 'download_versions'):
+                    if self.dependOn[download_version][each].version not in self.dependOn[download_version][each].obj.download_versions:
+                        print "::==> deleting dependency for ",self.name,": ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!"
+                        del self.dependOn[download_version][each]
 
         # set gcc_version for instalation purposes
         # gcc_version = None
@@ -1362,7 +1407,7 @@ class generic:
         # grab dependency version override from download list, if any!
         for download in self.downloadVersion(currVersion):
             if len(download)>4: # 5th element is a dependency list with version
-                override = [ x for x in download[4].keys() if dependOn.name == x.name ]
+                override = [ x for x in download[4].keys() if hasattr(x, 'name') and dependOn.name == x.name ]
                 if override:
                     dependOnOverride = override[0]
                     dependOnVersion = download[4][override[0]]
