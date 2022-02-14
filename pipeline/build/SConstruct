@@ -71,7 +71,8 @@ try:
         pipe.version.set( maya  = version )
         pipe.apps.maya().path('bin/maya.bin')
 
-    canBuildCortexNow = True
+    if mv:
+        canBuildCortexNow = True
 except:
     print '''
 
@@ -81,7 +82,7 @@ except:
     '''
     traceback.print_exc()
 
-print "canBuildCortexNow:",canBuildCortexNow
+print "canBuildAppsNow:",canBuildCortexNow
 # ok, so we do have the libraries built, so now lets do app dependent packages!!
 if canBuildCortexNow:
     nuke    = pipe.apps.nuke()

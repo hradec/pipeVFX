@@ -627,10 +627,24 @@ class generic:
         if 'MATRIX' in self.args:
             self.github_matrix = True
 
+        # store a list of versions and version dependency versions if
+        # one exist.
+        self.download_versions = {}
+        for x in download:
+            self.download_versions[x[2]] = {}
+            # if we have the 5th element
+            # we store it (the dict of packages:versions)
+            if len(x) > 4:
+                self.download_versions[x[2]] = x[4]
+
+
         # initialize a scons environment for this class object!
         if self.env is None:
             self.env = Environment()
 
+        self.env2 = {}
+        for each in self.download_versions:
+            self.env2[each] = Environment()
         # ==============================================
         # dealing with global dependencies only in here
         # and at the bottom of __init__
@@ -694,16 +708,6 @@ class generic:
 
         # add this class to the allPkgs cache
         allPkgs[name] = self
-
-        # store a list of versions and version dependency versions if
-        # one exist.
-        self.download_versions = {}
-        for x in download:
-            self.download_versions[x[2]] = {}
-            # if we have the 5th element
-            # we store it (the dict of packages:versions)
-            if len(x) > 4:
-                self.download_versions[x[2]] = x[4]
 
 
         # set the default version to use!
@@ -1324,20 +1328,8 @@ class generic:
 
     def shouldBuild(self, target, source, env, cmd=None):
         lastlogFile = self.__lastlog(target[0])
-        lastlog = self.__check_target_log__( lastlogFile, stage='pre-build' )
+        lastlog = self.__check_target_log__( lastlogFile, env, stage='pre-build' )
         # _print( '=====>',target[0], lastlogFile)
-
-        # double check if the dependency list changed!!
-        build_depend_list = "%s.depend" % lastlogFile
-        if os.path.exists(build_depend_list):
-            build_depend_list_content = [ x.strip() for x in open(build_depend_list ,'w').readlines() if x.strip() ]
-            for each in env.get('ENVIRON_DEPEND_VERSION').split(' '):
-                each = each.split('.')
-                each = each[0]+'/'+'.'.join(each[1:])
-                if each not in build_depend_list_content:
-                    print ":: ==> dependency changed for", os.path.basename(lastlogFile)
-                    lastlog = 240
-
 
         if lastlog==0:
             os.popen( "touch %s" % str(target[0]) ).readlines()
@@ -1477,7 +1469,7 @@ class generic:
         # and the dependency obj (dependOnOverride)!
         return depend_n, dependOnOverride
 
-    def __check_target_log__(self,target, install=None, stage='pre-build'):
+    def __check_target_log__(self,target, env, install=None, stage='pre-build'):
         ret=0
         msg="__check_target_log__(%s): " % '/'.join(target.split('/')[-3:])
         if os.path.exists(target):
@@ -1510,9 +1502,29 @@ class generic:
                 if code and 'pre-build' in stage:
                     _print( msg+"last build finished with error code: %d"  % code )
                 ret = code
+
         else:
-            # _print( msg+" log %s doesn't exist!"  % target )
-            ret = 255
+            # double check if the dependency list changed!!
+            if '-' in os.path.basename(target):
+                tmp = glob(os.path.dirname(target)+'/.??*'+os.path.basename(target).split('-')[-1]+'*depend')
+            else:
+                tmp = glob(os.path.dirname(target)+'/.??*'+os.path.basename(target).split('.')[-1]+'*depend')
+
+            if tmp:
+                build_depend_list = tmp[0]
+                print str(build_depend_list), env.get('ENVIRON_DEPEND_VERSION').split(' ')
+                if os.path.exists(build_depend_list):
+                    build_depend_list_content = [ x.strip() for x in open(build_depend_list ,'w').readlines() if x.strip() ]
+                    for each in env.get('ENVIRON_DEPEND_VERSION').split(' '):
+                        if each and 'pip' not in each:
+                            each = each.split('.')
+                            each = each[0]+'/'+'.'.join(each[1:])
+                            if each not in build_depend_list_content:
+                                _print( msg, "dependency changed for %s" % os.path.basename(target) )
+                                ret = 102
+            else:
+                # _print( msg+" log %s doesn't exist!"  % target )
+                ret = 255
 
         return ret
 
@@ -2331,7 +2343,7 @@ class generic:
             time.sleep(1)
         sys.stdout.write('\033[2K\033[1G')
 
-        ret = self.__check_target_log__(lastlog)
+        ret = self.__check_target_log__(lastlog, env)
         _elapsed = time.gmtime(time.time()-_start)
         _print( bcolors.WARNING+':\ttotal build time: %s %02d:%02d:%02d' % (
             bcolors.GREEN,
@@ -2742,8 +2754,8 @@ class generic:
 
                 # if not os.path.exists(self.__lastlog(__pkgInstalled__[s],python)):
                 lastlog = self.__lastlog(__pkgInstalled__[s],python)
-                # print self.__check_target_log__( lastlog ), str(target[0]), str(source[0])
-                if self.__check_target_log__( lastlog ):
+                # print self.__check_target_log__( lastlog, env ), str(target[0]), str(source[0])
+                if self.__check_target_log__( lastlog, env ):
                     # _print( "\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                     cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)

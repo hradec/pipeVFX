@@ -1959,7 +1959,7 @@ class all: # noqa
                         '1.8.10',
                         'a129a4caa39d7ad79aa1a3dc60cb0418',
                         { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
-                        self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
+                        self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
                         self.field3d[sufix]: '1.7.2'}
                     ],[
                         'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
