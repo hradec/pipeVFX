@@ -1331,7 +1331,7 @@ class generic:
         build_depend_list = "%s.depend" % lastlogFile
         if os.path.exists(build_depend_list):
             build_depend_list_content = [ x.strip() for x in open(build_depend_list ,'w').readlines() if x.strip() ]
-            for each in env['ENVIRON_DEPEND_VERSION'].split(' '):
+            for each in env.get('ENVIRON_DEPEND_VERSION').split(' '):
                 each = each.split('.')
                 each = each[0]+'/'+'.'.join(each[1:])
                 if each not in build_depend_list_content:
