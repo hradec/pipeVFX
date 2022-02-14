@@ -49,8 +49,9 @@ class gaffer(baseLib):
                 self['OCIO'] = '%s/ocio/config.ocio' % pipe.roots().tools()
 
         # add all versions of OIIO libraries to search path
-        for each in cached.glob( "%s/*" % os.path.dirname(pipe.libs.oiio().path()) ):
-            self['LD_LIBRARY_PATH'] = '%s/lib/' % each
+        if hasattr(pipe.libs, 'oiio'):
+            for each in cached.glob( "%s/*" % os.path.dirname(pipe.libs.oiio().path()) ):
+                self['LD_LIBRARY_PATH'] = '%s/lib/' % each
 
         self['GAFFERUI_IMAGECACHE_MEMORY'] = '2000'
         if pipe.versionMajor(self.version())>0.5 and pipe.versionMajor(self.version())<2.0:
@@ -116,11 +117,12 @@ class gaffer(baseLib):
             glsl = self.path('glsl'),
         )
 
-        pipe.apps.prman.addon(self,
-            display = self.path( "renderMan/displayDrivers" ),
-        	procedurals = self.path( "renderMan/procedurals" ),
-            shader = self.path( "shaders" ),
-        )
+        if hasattr(pipe.apps, 'prman'):
+            pipe.apps.prman.addon(self,
+                display = self.path( "renderMan/displayDrivers" ),
+            	procedurals = self.path( "renderMan/procedurals" ),
+                shader = self.path( "shaders" ),
+            )
 
         self['OSLHOME'] = self.path()
         self['QT_QWS_FONTDIR'] = self.path('fonts')
@@ -128,14 +130,15 @@ class gaffer(baseLib):
 
 
         self.update( pipe.apps.arnold() )
-        pipe.apps.arnold.addon( self,
-            plugins = self.path('arnold/$ARNOLD_VERSION_MAJOR/arnoldPlugins'),
-        )
         gaffer.addon(self,
             libs = self.path('arnold/$ARNOLD_VERSION_MAJOR/lib'),
             scripts = self.path('arnold/$ARNOLD_VERSION_MAJOR/python'),
             startups = self.path('arnold/$ARNOLD_VERSION_MAJOR/startup'),
         )
+        if self.parent() in ['gaffer','python']:
+            pipe.apps.arnold.addon( self,
+                plugins = self.path('arnold/$ARNOLD_VERSION_MAJOR/arnoldPlugins'),
+            )
 
 
         if self.parent() in ['gaffer','python']:

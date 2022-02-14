@@ -33,7 +33,9 @@ class python(baseLib):
         # compiled with the system libraries.
         # we have to remove this once OIIO and OCIO are properly build with the pipe gcc!
         if self.parent() not in ['nuke']:
-            self.update(pipe.LD_PRELOAD.gcc.system())
+            try:
+                self.update(pipe.LD_PRELOAD.gcc.system())
+            except: pass
 
         # if nuke version < 8.0 or gaffer, force to load our libpython shared lib
         if parent in ['nuke','gaffer']:

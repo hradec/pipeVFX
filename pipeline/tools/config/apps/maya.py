@@ -182,8 +182,8 @@ class maya(baseApp):
         # this fixes problems in python with hashlib/md5!!
         if self.parent() in ['maya']:
             if os.path.exists(self.path('support/openssl/libcrypto.so.6')):
-                self['LD_PRELOAD'] = self.path('support/openssl/libcrypto.so.6')
-                self['LD_PRELOAD'] = self.path('support/openssl/libssl.so.6')
+                # self['LD_PRELOAD'] = self.path('support/openssl/libcrypto.so.6')
+                # self['LD_PRELOAD'] = self.path('support/openssl/libssl.so.6')
                 self['LD_PRELOAD'] = '/usr/lib/libjpeg.so.62'
             elif os.path.exists(self.path('../../libs/libcrypto.so.10')):
                 self['LD_PRELOAD'] = self.path('../../libs/libcrypto.so.10')
@@ -275,6 +275,7 @@ class maya(baseApp):
         # self['MAYA_USE_MALLOC'] = '1'
         # self['MAYA_DISABLE_CASCADING'] = '1'
         self['MAYA_LOCATION'] = self.path()
+        self['MAYA_NO_WARNING_FOR_MISSING_DEFAULT_RENDERER'] = '1'
 
         if mv > 2014:
             self['MAYA_ALLOW_RENDER_LAYER_SWITCHING'] = '1'

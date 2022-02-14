@@ -28,6 +28,7 @@ from pipe.bcolors import bcolors
 import pipe.cached as cached
 import os
 import traceback
+from pipe import cached
 
 # avoid getting duplicated files.
 appz = {}
@@ -37,18 +38,24 @@ def sourceApps( jconfig ):
             appz[ os.path.basename( each ) ] = each
 
 # go over the folder structure, and overwrite the files before sourcing then.
-sourceApps( "%s/config/apps" % roots.tools() )
+sourced=False
 if pipe.admin:
     if pipe.admin.job.current():
+        sourced=True
         sourceApps( pipe.admin.job().path("/tools/config/apps") )
         if pipe.admin.job.shot.current():
             sourceApps( pipe.admin.job.shot().path("/tools/config/apps") )
-            sourceApps( pipe.admin.job.shot.user().path("/tools/config/apps") )
+            userTools = pipe.admin.job.shot.user().path("/tools/config/apps")
+            sourceApps( userTools )
+
+if not sourced:
+    sourceApps( "%s/config/apps" % roots.tools() )
+
 
 
 # now we source our files!!
 for each in appz.keys():
-#    print appz[each]
+    # print appz[each]
     try:
         exec(''.join(open(appz[each]).readlines()),globals(),locals())
     except:

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+tools=$(dirname $(dirname $(readlink -f $BASH_SOURCE)))
+
+
+_afrender() {
+    if [ "$HOME" == "" ] ; then
+        mkdir -p /tmp/afrender
+        HOME=/tmp/afrender
+    fi
+    export HOME
+    source $tools/init/bash
+    alias
+    run afrender -hostname $(hostname) -V
+}
+
+_afrender > /var/log/afrender.log 2>&1

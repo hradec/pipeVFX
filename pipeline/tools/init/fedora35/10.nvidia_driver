@@ -1,50 +1,108 @@
 #!/bin/bash
 
+export nomonitor='farm-023'
+# nomonitor="$nomonitor|ws-033"
+export nomonitor4k='farm-023'
+export nomonitor2k='ws-033'
+
+# wait if we have another instancing running!
+wait4modules() {
+    while [ "$(pgrep -fa NVIDIA.Linux)" != "" ] || [ "$(pgrep -fa depmod)" != "" ]; do
+        sleep 1
+        date
+        pgrep -fa NVIDIA.Linux
+        pgrep -fa depmod
+    done
+}
 
 # ============================================================================================
 # NVIDIA Driver Install at boot!
 # ============================================================================================
+# only run if we have a nvidia gpu phisically installed.
+nouveau=0
 if [ "$(lspci | grep 'NVIDIA' | grep VGA)" != "" ] ; then
- 	systemctl stop gdm
-	rm -rf /etc/X11/xorg.conf
-	cp $tools/init/nvidiagpu/52*.conf /etc/X11/xorg.conf.d/
-	# ==============================================================================================
- 	# the machine has a NVIDIA and the linux has no driver for it. Install the latest nvidia driver
-	# ==============================================================================================
-	if [ "$(dmesg | grep 'None of the NVIDIA graphics adapters were initialized')" != "" ]  ; then
-		driver=$(ls -lv $tools/init/nvidiagpu | tail -1 | awk '{print $(NF)}')
-       		time sh $tools/init/nvidiagpu/$driver -a  --no-x-check -s  --no-abi-note
-	  	nvidia-modprobe
-	# ==============================================================================================
- 	# the machine has a NVIDIA GTX1070, so lets install the latest nvidia driver to keep it up2date
-	# ==============================================================================================
-	elif [ "$(lspci  | grep VGA.*GTX.*1070)" != "" ] ; then
-        	driver=$(ls -lv $tools/init/nvidiagpu | tail -1 | awk '{print $(NF)}')
-        	time sh $tools/init/nvidiagpu/$driver -a  --no-x-check -s  --no-abi-note
-	 	nvidia-modprobe
+
+    # wait before, so we don't run it twice, in case it's still running
+    wait4modules
+
+    # now we install if needed (if not installed yet, or if it failed before!)
+    lsmod | grep nvidia | grep -v i2c
+    if [ "$(lsmod | grep nvidia | grep -v i2c)" == "" ] ; then
+     	systemctl stop gdm
+
+    	rm -rf /etc/X11/xorg.conf
+    	cp $tools/init/nvidiagpu/52*.conf /etc/X11/xorg.conf.d/
+        driver=$(basename $(ls -lrt $tools/init/nvidiagpu/NVIDIA* | tail -1 | awk '{print $(NF)}'))
+    	# ==============================================================================================
+     	# the machine has a NVIDIA and the linux has no driver for it. Install the latest nvidia driver
+    	# ==============================================================================================
+        /bin/sh $tools/init/nvidiagpu/$driver -A --help
+    	if [ "$(dmesg | grep 'None of the NVIDIA graphics adapters were initialized')" != "" ]  ; then
+            rmmod nouveau
+           	/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
+        # ==============================================================================================
+     	# the machine has an old NVIDIA GPU, so lets use nouveau!
+    	# ==============================================================================================
+        # elif [ "$(dmesg | grep 'supported through the NVIDIA 340.xx Legacy drivers.')" != "" ] ; then
+        elif [ "$(lspci | grep VGA | grep GT218)" != "" ] ; then
+            #driver=$(basename $(ls -lrt $tools/init/nvidiagpu/NVIDIA*340* | tail -1 | awk '{print $(NF)}'))
+            #/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check >> /tmp/nvidia.log 2>&1
+            /bin/sh $tools/init/nvidiagpu/NVIDIA-Linux-x86_64-340.108-patched-kernel-5.16.run  -a  -s  --no-abi-note  --ui=none --no-x-check >> /tmp/nvidia.log 2>&1
+    	# ==============================================================================================
+     	# the machine has a NVIDIA GTX1070, so lets install the latest nvidia driver to keep it up2date
+    	# ==============================================================================================
+    	elif [ "$(lspci  | grep VGA.*GTX.*1070)" != "" ] ; then
+            rmmod nouveau
+            /bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
+        else
+            rmmod nouveau
+           	/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
+     	fi
+        wait4modules
+        nvidia-modprobe
+    fi
+
+    # now wait again, since the installer can release the flow but can still be
+    # doing things in the background.
+    wait4modules
+
+    # ===============================================================================================================
+    # set a fake monitor edid for xorg.conf so we can run X without a monitor connected. (and get 4k resolution)
+    # ===============================================================================================================
+    # if [ "$(grep ' connected' /var/log/Xorg.0.log)" == "" ] ; then
+    if [ "$(cat /etc/hostname | egrep "$nomonitor")" != "" ] ; then
+    	nvidia-xconfig -a --allow-empty-initial-configuration --use-display-device="DP-0" --connected-monitor="DP-0" --custom-edid="DP-0:$tools/init/nvidiagpu/edid.bin"
+    fi
+
+    # ===============================================================================================================
+    # double check if everythin is installed correct, and restart gdm!
+    # ===============================================================================================================
+    if [ "$(lsmod | grep nvidia | grep -v i2c)" != "" ] ; then
+        echo ==================================================================
+        date
+        # systemctl status gdm
+        systemctl stop gdm
+        systemctl start gdm &
+        # systemctl status gdm
+        echo ==================================================================
     else
-        driver=$(ls -lv $tools/init/nvidiagpu | tail -1 | awk '{print $(NF)}')
-       		time sh $tools/init/nvidiagpu/$driver -a  --no-x-check -s  --no-abi-note
-	  	nvidia-modprobe
- 	fi
-	# ===============================================================================================================
-	# set a fake monitor edid for xorg.conf so we can run X without a monitor connected. (and get 4k resolution)
-	# ===============================================================================================================
-	# if [ "$(hostname | egrep 'newfarm-029')" != "" ] ; then
-	# 	nvidia-xconfig -a --allow-empty-initial-configuration --use-display-device="DP-0" --connected-monitor="DP-0" --custom-edid="DP-0:$tools/init/edid.bin"
-	# fi
-	# ===============================================================================================================
-	# force 4k
-	# ===============================================================================================================
-	# if [ "$(hostname | egrep 'vfxws-029')" != "" ] ; then
-	# 	DISPLAY=:0 xrandr --fb 3840x2160
-	# fi
-	# ===============================================================================================================
-	# force 2k
-	# ===============================================================================================================
-	# if [ "$(hostname | egrep 'vfxws-031|vfxws-013')" != "" ] ; then
-	# 	DISPLAY=:0 xrandr --fb 1920x1080
-	# fi
-    systemctl restart gdm
-    systemctl start gdm
+        date
+        systemctl stop gdm
+        systemctl status gdm
+        echo "ERROR installing NVIDIA!"
+        exit -1
+    fi
+
+    # ===============================================================================================================
+    # force 4k
+    # ===============================================================================================================
+    if [ "$(cat /etc/hostname | egrep "$nomonitor4k")" != "" ] ; then
+    	DISPLAY=:0 xrandr --fb 3840x2160
+    fi
+    # ===============================================================================================================
+    # force 2k
+    # ===============================================================================================================
+    if [ "$(hostname | egrep "$nomonitor2k")" != "" ] ; then
+    	DISPLAY=:0 xrandr --fb 1920x1080
+    fi
 fi

@@ -5,19 +5,21 @@
 #     sudo systemctl enable dbusPipeVFX
 
 [Unit]
-Description=DBus PipeVFX  daemon
-After=network.target sshd-keygen.service multi-user.target autofs.service
+Description=Farm PipeVFX daemon
+After=network.target sshd.service autofs.service dbusPipeVFX.service
 Conflicts=getty@tty1.service
 
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -l -c "source /atomo/pipeline/tools/init/bash && /atomo/pipeline/tools/scripts/run afrender -hostname $(hostname) -V"
+ExecStart=/bin/bash /atomo/pipeline/tools/scripts/afrender
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
-Restart=always
-RestartSec=2s
-StandardInput=tty-force
+# Restart=always
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pipevfx
 
 [Install]
 WantedBy=multi-user.target

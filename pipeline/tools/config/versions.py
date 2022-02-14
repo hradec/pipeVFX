@@ -62,6 +62,7 @@ if 'GCC_VERSION' in os.environ:
     pipe.libs.version.set( oiio     = '1.8' )
     pipe.libs.version.set( qt       = '5.15.2' )
     pipe.libs.version.set( tbb      = '2019_U6' )
+    pipe.libs.version.set( cortex   = '10.2' )
 else:
     pipe.version.set( python        = '2.6.8' )
     pipe.libs.version.set( alembic  = '1.1.1' )

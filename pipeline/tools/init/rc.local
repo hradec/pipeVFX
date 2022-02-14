@@ -130,12 +130,14 @@ if [ "$release" != "" ] ; then
     echo -e "\nRunning $release specific setup..."
     ls $tools/init/$release/ | while read line ; do
         path=$tools/init/$release/$line
+        chmod +x $path
         action_tab='\t%-51s'
         action $line $path
     done
     rclocal=$tools/init/$release/rc.local
     # if the current release has an rc.local file, run it!
     if [ -f $rclocal ] ; then
+        chmod +x $rclocal
         . $rclocal
     fi
 fi

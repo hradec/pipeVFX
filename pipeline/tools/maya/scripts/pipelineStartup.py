@@ -54,6 +54,10 @@ def prependPythonPath( libs ):
         for x in p:
             sys.path.insert( 0, os.path.expandvars(x) )
 
+# if float(os.environ["MAYA_VERSION"]) > 2017:
+#     prependPythonPath(pipe.libs.pyilmbase())
+#     if not m.about(batch=1):
+#         import imath
 
 
 # now we add maya pythonpath to the top!

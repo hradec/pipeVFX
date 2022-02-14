@@ -21,7 +21,6 @@
 
 import IECore
 import Gaffer
-import GafferUI
 
 import opaClasses
 import genericAsset
@@ -89,8 +88,11 @@ class opa( Gaffer.Application ) :
         self.__classLoader = loader
 
     def getClassLoader( self ) :
+        # if self.__classLoader is None :
+        #     self.__classLoader = IECore.ClassLoader.defaultLoader( "IECORE_OP_PATHS" )# IECore.ClassLoader.defaultOpLoader()
+
         if self.__classLoader is None :
-            self.__classLoader = IECore.ClassLoader.defaultLoader( "IECORE_OP_PATHS" )# IECore.ClassLoader.defaultOpLoader()
+            self.__classLoader = IECore.ClassLoader.defaultOpLoader()
 
 
         return self.__classLoader
@@ -151,8 +153,25 @@ class opa( Gaffer.Application ) :
         IECore.ParameterParser().parse( list( args["arguments"] ), op.parameters() )
 
         if args["gui"].value :
+            import GafferUI
+            import GafferCortex
+            import GafferCortexUI
+
+            # build a script to host the op.
+
+            self.root()["scripts"]["script1"] = Gaffer.ScriptNode()
+            self.root()["scripts"]["script1"]["op"] = GafferCortex.ParameterisedHolderNode()
+            self.root()["scripts"]["script1"]["op"].setParameterised( op )
+
+            # apply the autoload preset, if and only if no preset and no parameter
+            # values were specified via the command line.
+
+            if not args["preset"].value and not args["arguments"] :
+                GafferCortexUI.ParameterPresets.autoLoad( self.root()["scripts"]["script1"]["op"] )
+
+            # create a ui to display everything.
             self.__dialogue = opaClasses.OpaDialogue( op, opName=opName )
-            self.__dialogueClosedConnection = self.__dialogue.closedSignal().connect( self.__dialogueClosed )
+            self.__dialogueClosedConnection = self.__dialogue.closedSignal().connect( Gaffer.WeakMethod( self.__dialogueClosed ) )
             self.__dialogue.setVisible( True )
             # if not GafferUI.EventLoop.mainEventLoop().running():
             try:
@@ -168,9 +187,10 @@ class opa( Gaffer.Application ) :
             import maya.cmds as m
             from maya.mel import eval as meval
             reload(Asset)
-            # m.ls()
-            GafferUI.EventLoop.mainEventLoop().stop()
         except:
             m = None
+
+        import GafferUI # delay import to improve startup times for non-gui case
+        GafferUI.EventLoop.mainEventLoop().stop()
 
 IECore.registerRunTimeTyped( opa )

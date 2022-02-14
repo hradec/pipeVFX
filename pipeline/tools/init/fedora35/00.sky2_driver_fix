@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# =======================================================================================
+# trying to fix a bug with Marvel 88E8056 sky2 driver that stop working after a while
+# =======================================================================================
+
+# find the network device name for the marvel device from lspci
+lspci | grep -i eth | grep 88E8056 | awk '{print $1}' | while read id ; do
+    # now that we have the pci id of the device, we can get the
+    # device name in /sys
+    dev=$(ls -1 "/sys/bus/pci/devices/0000:$id/net/")
+    if [ "$dev" != "" ] ; then
+        # if we have a device name, use ethtool to disable checksum hw offload
+        ethtool --offload $dev tx off
+        ethtool --offload $dev rx off
+    fi
+done

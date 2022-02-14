@@ -29,18 +29,22 @@
 [Unit]
 Description=DBus PipeVFX  daemon
 After=network.target sshd.service autofs.service
+ConditionPathExists=/dev/tty
 Conflicts=getty@tty1.service
 
 
 [Service]
 Type=simple
-ExecStartPre=/bin/bash /atomo/pipeline/tools/init/rc.local
-ExecStart=/bin/python2 /atomo/pipeline/tools/init/dbusService.py
+TimeoutStartSec=600
+ExecStartPre=/bin/bash -c "/usr/bin/sudo /bin/bash /atomo/pipeline/tools/init/rc.local 2>&1 | sudo tee -a /var/log/pipevfx/rc-local.log"
+ExecStart=/bin/bash -c "/usr/bin/sudo /bin/python2 /atomo/pipeline/tools/init/dbusService.py 2>&1 | sudo tee -a /var/log/pipevfx/dbusService.log"
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=always
 RestartSec=2s
-StandardInput=tty-force
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pipevfx
 
 [Install]
 WantedBy=multi-user.target
