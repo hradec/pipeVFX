@@ -359,7 +359,8 @@ def update_environ_dict(dict1, dict2addingTo1):
     result = {}
     clean_result = {}
     result.update(removeDuplicatedEntriesEnvVars(dict1))
-    for _env in removeDuplicatedEntriesEnvVars(dict2addingTo1):
+    dict2addingTo1Fixed = removeDuplicatedEntriesEnvVars(dict2addingTo1)
+    for _env in dict2addingTo1Fixed:
         # make sure key exists in result dict
         if _env not in result:
             result[_env] = ''
@@ -374,12 +375,12 @@ def update_environ_dict(dict1, dict2addingTo1):
         if _env not in ['LD','CC','CXX','CXXCPP','CPP']:
             _ENV = '$%s' % _env.upper()
 
-        # print _ENV, dict2addingTo1[_env].replace(_ENV,result[_env])
-        if _ENV and _ENV in dict2addingTo1[_env]:
+        # print _ENV, _env
+        if _ENV and _ENV in dict2addingTo1Fixed[_env]:
             var = divisor.join([result[_env],_ENV])
-            result[_env] = dict2addingTo1[_env].replace(_ENV,var)
+            result[_env] = dict2addingTo1Fixed[_env].replace(_ENV,var)
         else:
-            result[_env] = dict2addingTo1[_env]
+            result[_env] = dict2addingTo1Fixed[_env]
 
     return removeDuplicatedEntriesEnvVars(result)
 
@@ -645,6 +646,7 @@ class generic:
         self.env2 = {}
         for each in self.download_versions:
             self.env2[each] = Environment()
+
         # ==============================================
         # dealing with global dependencies only in here
         # and at the bottom of __init__
@@ -666,14 +668,73 @@ class generic:
         self.depend = [x for x in self.depend if hasattr(x, 'name')]
         depend      = self.depend
 
-        # se environment override
-        if environ:
-            self.environ  = environ
 
         # add global env vars
-        if not hasattr(self,'environ'):
-            self.environ = {}
+        self.environ = {}
+        self.environ = update_environ_dict(self.environ,{
+            # this fixes the problem with missing stdlib.h
+            'CXX':  'g++'
+                        ' -isystem${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ '
+                        ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include-fixed/'
+                        ' -isystem${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/'
+                        ' -isystem${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/x86_64-pc-linux-gnu/'
+                        ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/'
+                        ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/c++'
+                        ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/c++/x86_64-pc-linux-gnu/'
+                        ' -isystem/usr/include',
+            'CC' :  'gcc -isystem${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ '
+                        ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/'
+                        ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include-fixed/'
+                        ' -isystem/usr/include',
+            'LD' :  'g++ '
+                        ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/'
+                        ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                        ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib64/ ',
+
+            'LDFLAGS'   : "$LDFLAGS  -Wl,-rpath-link,${OPENEXR_TARGET_FOLDER}/lib/ "
+                          ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/'
+                          ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                          ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib64/ ',
+            'CFLAGS'    : '$CFLAGS  '
+                          '-I${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/ '
+                          '-I${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/numpy/ '
+                          '-I${BOOST_TARGET_FOLDER}/include/boost/ '
+                          '-I${BOOST_TARGET_FOLDER}/include/boost/python '
+                          '$CFLAGS ',
+            'CXXFLAGS'  : '$CXXFLAGS  '
+                          '-I${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/ '
+                          '-I${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/numpy/ '
+                          '-I${BOOST_TARGET_FOLDER}/include/boost/ '
+                          '-I${BOOST_TARGET_FOLDER}/include/boost/python '
+                          '$CXXFLAGS ',
+            'LD'        : 'ld',
+            'LDFLAGS'   : '$LDFLAGS -L${TARGET_FOLDER}/lib/ -L${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ '
+                          '-Wl,-rpath,${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ -L${SOURCE_FOLDER}/PyImath/.libs/ '
+                          '-Wl,-rpath,${INSTALL_FOLDER}/lib/ ',
+
+            'CPATH'     : ':'.join([
+                          '${PYTHON_TARGET_FOLDER}/include/python${PYTHON_VERSION_MAJOR}/',
+                          '${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/',
+                          '${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/numpy/',
+                          '$CPATH',
+            ]),
+            'RPATH'     : ':'.join([
+                          '${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/lib/',
+                          '${INSTALL_FOLDER}/lib/',
+                          '${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/',
+                          '$RPATH',
+            ]),
+        })
+        # se environment override. Passing the environ dict to the build class, will override
+        # whatever is set above. (although it will expand any $VAR string, so if you want to
+        # to override and keep the values above, just add $VAR. ex: 'CC' : '$CC -I/path' will
+        # keep the value in CC and add -I/path to it.)
+        if environ:
+            self.environ  = update_environ_dict(self.environ, environ)
+
+        # and last, set global env vars from global dependencies
         self.environ = update_environ_dict(self.environ, all_env_vars)
+
 
 
         # we pass over self.environ as ENVIRON_<key()> in the scons environment,
@@ -922,6 +983,7 @@ class generic:
 
         # when no baselib is set, self.baseLibs will
         # be a noBaseLibPlaceHolder class obj
+        ENVIRON_DEPEND_VERSION = []
         for baselib in self.baseLibs:
             for baselibDownloadList in baselib.downloadList:
                 # create target file
@@ -1004,7 +1066,14 @@ class generic:
                     # if install folder has no sub-folders with content,
                     # or if the final install file doesn't exist, we probably got a fail install,
                     # so force re-build!
-                    if not self._installer_final_check( [install], [build] ):
+                    _ENVIRON_DEPEND_VERSION = []
+                    for download_version in self.download_versions:
+                            # set a DEPEND env var that contains all dependency names
+                            _ENVIRON_DEPEND_VERSION += [p+'_'+download_version+'@'+x.real_name+'/'+self.dependOn[download_version][x] for x in self.dependOn[download_version] if hasattr(x, 'name')]
+
+                    tmp_env = Environment()
+                    tmp_env["ENVIRON_DEPEND_VERSION"] =  ' '.join( _ENVIRON_DEPEND_VERSION )
+                    if not self._installer_final_check( [install], [build], tmp_env ):
                         # if not installed, remove build folder!
                         if os.path.exists(self.buildFolder[p][-1]) and not self.github_matrix:
                             cmd = "rm -rf "+self.buildFolder[p][-1]+" 2>/dev/null"
@@ -1044,10 +1113,12 @@ class generic:
                     # add dependencies as source so dependencies are built
                     # first.
                     source = []
+                    sourceVersioned = {}
                     # this also makes possible to display the
                     # dependency.versions during build.
                     # reminder: self.download_versions keys are string versions!
                     for download_version in self.download_versions:
+                        sourceVersioned[p+'_'+download_version] = []
                         # just a reminder:
                         # pkgDictKey is a package object, not a string!
                         for pkgDictKey in self.dependOn[download_version].keys():
@@ -1089,6 +1160,7 @@ class generic:
                                 if dependOn._depend[p][depend_n] not in source:
                                     # but it doesn't exist in the source list
                                     source.append( dependOn._depend[p][depend_n] )
+                                    sourceVersioned[p+'_'+download_version].append( dependOn._depend[p][depend_n] )
                                 # else:
                                 #     if self.name == 'pyilmbase':
                                 #         print 1, depend_n, dependOn.name, ".%s." % dependOn.targetSuffix, p, k, dependOn._depend[p][depend_n]
@@ -1103,6 +1175,7 @@ class generic:
                                 kk=k[-1]
                                 if dependOn._depend[kk][depend_n] not in source:
                                     source.append( dependOn._depend[kk][depend_n] )
+                                    sourceVersioned[p+'_'+download_version].append( dependOn._depend[kk][depend_n] )
                             #     else:
                             #         if self.name == 'pyilmbase':
                             #             print 2, depend_n, dependOn.name, ".%s." % dependOn.targetSuffix, p, k
@@ -1127,16 +1200,21 @@ class generic:
                     self.set( "ENVIRON_DEPEND",  ' '.join(ENVIRON_DEPEND) )
 
                     # ENVIRON_DEPEND_VERSION is only used to display dependency during build
+                    # and to fix python version when noBaseLib 
                     # source_versions = [ '.'.join(str(x[0]).split(os.path.sep)[-3:-1])  for x in source ]
                     source_versions = []
-                    for x in source:
-                        pkg_name_version = '.'.join(str(x[0]).split(os.path.sep)[-3:-1])
-                        if 'python.' in pkg_name_version and 'noBaseLib-' in str(x[0]):
-                            source_versions += ['pip_'+str(x[0]).split('noBaseLib-')[-1].split('.done')[0]]
-                        else:
-                            source_versions += [pkg_name_version]
+                    for download_version in sourceVersioned:
+                        for x in sourceVersioned[download_version]:
+                            pkg_name_version = str(x[0]).split(os.path.sep)[-3:-1]
+                            version = '.'.join(pkg_name_version[1:])
+                            if 'python' == pkg_name_version[0] and 'python' in download_version.split('_')[0]:
+                                version = download_version.split('_')[0].replace('python','')
+                            pkg_name_version = pkg_name_version[0]+'/'+version
+                            if 'python.' in pkg_name_version and 'noBaseLib-' in str(x[0]):
+                                pkg_name_version = 'pip_'+str(x[0]).split('noBaseLib-')[-1].split('.done')[0]
+                            source_versions += [download_version+'@'+pkg_name_version]
                     source_versions.sort()
-                    self.set( "ENVIRON_DEPEND_VERSION",  ' '.join( source_versions ) )
+                    ENVIRON_DEPEND_VERSION += source_versions
 
                     # we use this to inform the build python module when it's
                     # been imported inside a running build
@@ -1191,6 +1269,10 @@ class generic:
                     # we can't build individual packages.
                     self.env.Alias( 'install', [] )
 
+        self.set( "ENVIRON_DEPEND_VERSION",  ' '.join( ENVIRON_DEPEND_VERSION ) )
+        if 'pycairo' in self.real_name:
+            print self.env["ENVIRON_DEPEND_VERSION"]
+
         # ==========================================================================
         # add itself as a global dependency for all subsequent builds!
         # We MUST do this at the end, so it won't influence itself
@@ -1224,7 +1306,6 @@ class generic:
         ''' retrieve the dependency dictionary for the given version '''
         return self.dependOn[version]
 
-
     def registerSconsBuilder(self, *args):
 #        name = str(args[0]).split(' ')[2].split('.')[-1]
         name = self.className
@@ -1246,6 +1327,13 @@ class generic:
             if not self.shouldBuild( target, source, env ):
                 return
             t=str(target[0])
+            v = os.path.basename(os.path.dirname(t))
+            # baselib = 'noBaseLib'
+            # if 'python' in os.path.basename(t):
+            #     baselib = os.path.basename(t).split('python')[-1].split('.done')[0]
+            baselib = 'noBaseLib'
+            if 'python' in os.path.basename(t):
+                baselib = os.path.basename(t).split('python')[-1].split('-')[0].split('.done')[0]
             extra = []
             if self.targetSuffix:
                 extra = ['-',self.targetSuffix]
@@ -1266,10 +1354,14 @@ class generic:
             _print( bcolors.WARNING+": " )
             # print '===================>',  [ '.'.join(os.path.dirname(str(x)).split('/')[-2:]) for x in source ]
             # d = [ '.'.join(str(x).split(os.path.sep)[-3:-1]) for x in source[1:] ]
-            d = env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
             _print( bcolors.WARNING+": "+bcolors.BLUE+"   depend: %s" % str(source[0]) )
+            # print env.get( "ENVIRON_DEPEND_VERSION" )
+            d = [ x.split('@')[-1] for x in env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ') if x.strip() and (v in x.split('@')[0].split('_')[1]) and (baselib in x.split('@')[0].split('_')[0]) ]
+            # print d, v, baselib, env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
             d=list(set(d))
             d.sort()
+            if not d:
+                print env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
             for n in range(0,len(d),6):
                 _print( bcolors.WARNING+": "+bcolors.BLUE+"           %s" % ', '.join(d[n:n+6]) )
             _print( bcolors.WARNING+": "+bcolors.END )
@@ -1504,27 +1596,9 @@ class generic:
                 ret = code
 
         else:
-            # double check if the dependency list changed!!
-            if '-' in os.path.basename(target):
-                tmp = glob(os.path.dirname(target)+'/.??*'+os.path.basename(target).split('-')[-1]+'*depend')
-            else:
-                tmp = glob(os.path.dirname(target)+'/.??*'+os.path.basename(target).split('.')[-1]+'*depend')
+            # _print( msg+" log %s doesn't exist!"  % target )
+            ret = 255
 
-            if tmp:
-                build_depend_list = tmp[0]
-                print str(build_depend_list), env.get('ENVIRON_DEPEND_VERSION').split(' ')
-                if os.path.exists(build_depend_list):
-                    build_depend_list_content = [ x.strip() for x in open(build_depend_list ,'w').readlines() if x.strip() ]
-                    for each in env.get('ENVIRON_DEPEND_VERSION').split(' '):
-                        if each and 'pip' not in each:
-                            each = each.split('.')
-                            each = each[0]+'/'+'.'.join(each[1:])
-                            if each not in build_depend_list_content:
-                                _print( msg, "dependency changed for %s" % os.path.basename(target) )
-                                ret = 102
-            else:
-                # _print( msg+" log %s doesn't exist!"  % target )
-                ret = 255
 
         return ret
 
@@ -1574,10 +1648,15 @@ class generic:
         os_environ['%s_VERSION_MAJOR' % self.name.upper()] = os_environ['VERSION_MAJOR']
 
 
+        # ======================================================================
         # set a python version if none is set
+        # ======================================================================
         pythonVersion = '1.0.0' if pkgName != 'python' else pkgVersion
 
-
+        # ======================================================================
+        # set the python version according to the target file
+        # (it only applies when building with baseLib)
+        # ======================================================================
         # set the python version needed (baseLib build!)
         if '.python' in os.path.basename(target) or pkgName == 'python':
             # pythonVersion = pipe.apps.baseApp("python").version()
@@ -1595,17 +1674,38 @@ class generic:
                     tmp += n
                 pythonVersion = tmp
 
-            # fix pythonN.N folders if we have a PYTHON_VERSION_MAJOR env var
-            for var in os_environ:
-                pp = []
-                for each in os_environ[var].split(':'):
-                    if 'PYTHON_VERSION_MAJOR' in os_environ:
-                        each = each.replace('python%s' % os_environ['PYTHON_VERSION_MAJOR'], 'python%s' % pythonVersion[:3])
-                    if 'PYTHON_VERSION' in os_environ:
-                        if '/python/' in each:
-                            each = each.replace(os_environ['PYTHON_VERSION'], pythonVersion)
-                    pp.append(each)
-                os_environ[var] = ':'.join(pp)
+        else:
+            # ======================================================================
+            # get python version from ENVIRON_DEPEND_VERSION, the same var used to
+            # display the dependency during build.
+            # ======================================================================
+            # dependencies with version
+            baselib = 'noBaseLib'
+            ENVIRON_DEPEND_VERSION = env['ENVIRON_DEPEND_VERSION'].split(' ')
+            # get python version from ENVIRON_DEPEND_VERSION
+            env_python_dependence = [ x.split('@')[-1].split('/')[-1] for x in ENVIRON_DEPEND_VERSION if x.strip() and (pkgVersion in x.split('@')[0]) and (baselib in x.split('@')[0]) and ('python' in x.split('@')[-1]) ]
+            if env_python_dependence:
+                pythonVersion = env_python_dependence[0]
+        # ======================================================================
+
+        # ======================================================================
+        # fix pythonN.N folders if we have a PYTHON_VERSION_MAJOR env var
+        # ======================================================================
+        for var in os_environ:
+            pp = []
+            for each in os_environ[var].split(':'):
+                if 'PYTHON_VERSION_MAJOR' in os_environ:
+                    each = each.replace('python%s' % os_environ['PYTHON_VERSION_MAJOR'], 'python%s' % pythonVersion[:3])
+                if 'PYTHON_VERSION' in os_environ:
+                    if '/python/' in each:
+                        each = each.replace(os_environ['PYTHON_VERSION'], pythonVersion)
+                pp.append(each)
+            os_environ[var] = ':'.join(pp)
+
+
+        # ======================================================================
+        # from now on, we have the correct python version
+        # ======================================================================
 
         # set Python version env vars.
         os_environ['PYTHON_VERSION'] = pythonVersion
@@ -1719,6 +1819,8 @@ class generic:
                 if dependOn.name=='gcc'  and dependOn.targetSuffix=='pre':
                     continue
 
+
+
                 # grab the index for the version needed
                 debug=0
                 # if 'oiio' in target:
@@ -1739,10 +1841,11 @@ class generic:
                         dependOn.targetFolder[os.path.basename(tmp[0])] = [tmp[0]]
                         os_environ['PYTHON_ROOT'] = tmp[0]
 
+
+
                 k = dependOn.targetFolder.keys()
                 p = pythonVersion
 
-                # print dependOn.name, k
                 if k:
                     p = filter(lambda x: p in x, k)
                     if p:
@@ -2542,6 +2645,39 @@ class generic:
         if self.github_matrix:
             return
 
+
+        # double check if the dependency list changed!!
+        # if a dependency changes version or a new dependency is added to
+        # an already built package, we need to rebuild it!
+        # print [ str(x) for x in source ]
+        # build_log = str(source[0])
+        # if '.build' in os.path.basename(build_log):
+        #     if 'phase' not in os.path.basename(build_log):
+        #         build_depend_list = build_log+'.depend'
+        #         if os.path.exists(build_depend_list):
+        #             v = os.path.basename(os.path.dirname(build_depend_list))
+        #             baselib = 'noBaseLib'
+        #             if 'python' in os.path.basename(build_log):
+        #                 baselib = os.path.basename(build_log).split('python')[-1].split('-')[0].split('.done')[0]
+        #             ENVIRON_DEPEND_VERSION = [ x.split('@')[-1] for x in env['ENVIRON_DEPEND_VERSION'].split(' ') if x.strip() and (v in x.split('@')[0].split('_')[1]) and (baselib in x.split('@')[0].split('_')[0]) ]
+        #             ENVIRON_DEPEND_VERSION = [ x for x in ENVIRON_DEPEND_VERSION if 'gcc/4.1.2' not in x and 'None/' not in x ]
+        #             build_depend_list_content = [ '/'.join(x.strip().split('/')[-2:]) for x in open(build_depend_list ,'r').readlines() if x.strip() ]
+        #             if build_depend_list_content:
+        #                 # print build_depend_list
+        #                 # print build_depend_list_content
+        #                 # print env['ENVIRON_DEPEND_VERSION'].split(' '), v, baselib
+        #                 # print ENVIRON_DEPEND_VERSION
+        #                 pkg = '/'.join(os.path.dirname(build_log).split('/')[-2:])
+        #                 for each in ENVIRON_DEPEND_VERSION:
+        #                     if each and ('pip' not in each):
+        #                         # each = each.split('.')
+        #                         # each = each[0]+'/'+'.'.join(each[1:])
+        #                         if not [ x for x in build_depend_list_content if each in x ]:
+        #                             _print( ":: dependency %s changed for %s" % (each, pkg))
+        #                             return False
+
+
+
         _TARGET = str(target[0])
         TARGET_FOLDER = os.path.dirname(_TARGET)
         _TARGET_SUFIX = ''
@@ -2733,6 +2869,7 @@ class generic:
         if self.error:
             raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
+        # print [ str(x) for x in target ], [ str(x) for x in source ]
         if not self.shouldBuild( target, source, env ):
             return
 
