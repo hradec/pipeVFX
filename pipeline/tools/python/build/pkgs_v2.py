@@ -956,15 +956,16 @@ class all: # noqa
                 'freetype-2.5.5.tar.gz',
                 '2.5.5',
                 '7448edfbd40c7aa5088684b0a3edb2b8',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.8.5', python: '2.7.16' }
             ),(
                 'https://download.savannah.gnu.org/releases/freetype/freetype-2.10.0.tar.gz',
                 'freetype-2.10.0.tar.gz',
                 '2.10.0',
                 '58d56c9ad775326d6c9c5417c462a527',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.8.5', python: '2.7.16' }
             )],
-            environ = { 'LD' : 'ld' },
+            depend = [self.binutils],
+            environ = { 'LD' : 'ld', 'CC' : 'gcc' },
         )
         self.freetype = freetype
         build.globalDependency(self.freetype)
@@ -1140,10 +1141,10 @@ class all: # noqa
                 'python-ldap-2.4.19.tar.gz',
                 '2.4.19',
                 'b941bf31d09739492aa19ef679e94ae3',
-                { python: '2.7.16' }
+                { self.python: '2.7.16', self.gcc: '4.1.2' }
             )],
             # baseLibs=[python],
-            depend=[python],
+            depend=[self.binutils],
             noMinTime=True,
         )
 
@@ -1629,7 +1630,15 @@ class all: # noqa
                         'cd build',
                         'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
                         'make -j $DCORES ',
-                        'make -j $DCORES install'
+                        'make -j $DCORES install',
+                        # don't known why, but cmake wont install the python modules.
+                        # so we do it manually here.
+                        'mkdir -p $INSTALL_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/site-packages/',
+                        'rsync -avpP ./python$(echo $PYTHON_VERSION_MAJOR | sed "s/\./_/")/ $INSTALL_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/site-packages/',
+                        'rm -rf $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
+                        'rm -rf $INSTALL_FOLDER/../../../ilmbase/$OPENEXR_VERSION',
+                        'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
+                        'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../ilmbase/$OPENEXR_VERSION'
                     ') || ('
                         './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
                         'make -j $DCORES',
@@ -1711,11 +1720,12 @@ class all: # noqa
                 #     '7ec7fef6f65594acd612bbe9fbefcea3',
                 #     { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.3.0', openexr: '2.3.0', boost: "1.55.0" }
                 # ),(
-                #     'https://github.com/openexr/openexr/releases/download/v2.4.0/pyilmbase-2.4.0.tar.gz',
-                #     'pyilmbase-2.4.0.tar.gz',
+                #     # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
+                #     'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.0.tar.gz',
+                #     'openexr-2.4.0.tar.gz',
                 #     '2.4.0',
-                #     '7ec7fef6f65594acd612bbe9fbefcea3',
-                #     { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.4.0', openexr: '2.4.0', boost: "1.55.0" }
+                #     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
+                #     { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version, build.override.src: 'CMakeLists.txt'  }
                 )],
                 baseLibs=[python],
                 depend=[python, gcc, python],
@@ -1742,7 +1752,7 @@ class all: # noqa
                     '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyImath)" == "" ] ',
                     '( echo "imathmodule.so misses PyImath" && false ) || true ; '
                     '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyIex)" == "" ] ',
-                    '(echo "imathmodule.so misses PyIex" && false ) || true',
+                    '(echo "imathmodule.so misses PyIex" && false ) || true'
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
@@ -1924,6 +1934,7 @@ class all: # noqa
             self.field3d[sufix] = field3d
 
         # build OIIO for all boost versions
+        environ = self.exr_rpath_environ.copy()
         for boost_version in self.boost.versions:
             gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
@@ -1967,9 +1978,19 @@ class all: # noqa
                         '2.0.11',
                         '4fa0ce4538fb2d7eb72f54f4036972d5',
                         { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
+                        self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
+                        self.field3d[sufix]: '1.7.2'}
+                    ]]
+            if build.versionMajor(boost_version) > 1.60:
+                download += [[
+                        'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.2.15.1.tar.gz',
+                        'oiio-2.2.15.1.tar.gz',
+                        '2.2.15.1',
+                        '568a1efb4fc41711e2dae8c39450a83e',
+                        { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
                         self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
                         self.field3d[sufix]: '1.7.2'}
-                ]]
+                    ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
             # we also need to set the current boost version to all versions since we're building
