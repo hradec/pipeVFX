@@ -1200,7 +1200,7 @@ class generic:
                     self.set( "ENVIRON_DEPEND",  ' '.join(ENVIRON_DEPEND) )
 
                     # ENVIRON_DEPEND_VERSION is only used to display dependency during build
-                    # and to fix python version when noBaseLib 
+                    # and to fix python version when noBaseLib
                     # source_versions = [ '.'.join(str(x[0]).split(os.path.sep)[-3:-1])  for x in source ]
                     source_versions = []
                     for download_version in sourceVersioned:
@@ -1270,9 +1270,6 @@ class generic:
                     self.env.Alias( 'install', [] )
 
         self.set( "ENVIRON_DEPEND_VERSION",  ' '.join( ENVIRON_DEPEND_VERSION ) )
-        if 'pycairo' in self.real_name:
-            print self.env["ENVIRON_DEPEND_VERSION"]
-
         # ==========================================================================
         # add itself as a global dependency for all subsequent builds!
         # We MUST do this at the end, so it won't influence itself

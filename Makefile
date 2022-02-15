@@ -88,7 +88,7 @@ shell: upload
 matrix: upload
 	# @${CD}/pipeline/tools/scripts/pipevfx -b | tee matrix.txt
 	@cd pipeline/build/ ; scons install MATRIX=1 2>&1 | tee ${CD}/matrix.txt
-	@export phases=$$( cat matrix.txt | grep -v ARGUMENTS | egrep '=>' | awk -F'phase: ' '{print $$2}' | awk -F' =>' '{print "\""$$1"\","}' ) ;\
+	@export phases=$$( cat matrix.txt | grep -v ARGUMENTS | egrep 'github.*=>' | awk -F'phase: ' '{print $$2}' | awk -F' =>' '{print "\""$$1"\","}' ) ;\
 	echo "{ \"name\": [ "$$(echo $$phases | sed 's/,$$//')", \"all\" ] }"
 
 upload: #cache
