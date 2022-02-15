@@ -41,14 +41,14 @@ RUN  yum install -y mesa-utils tkinter gstreamer-plugins-base.x86_64 gamin freet
 # RUN yum groupinstall -y "X Window System" "Fonts"
 RUN yum groupinstall -y "Development Tools" && fc-cache
 
-RUN  [ ! -f /etc/fedora-release ] && yum -y install epel-release
+RUN  [ ! -f /etc/fedora-release ] && yum -y install epel-release || true
 # remove mirrors from epel or else it will fail if there are no mirrors
 # in the country the build machine is running
 # RUN cat /etc/yum.repos.d/epel.repo \
 #     | sed 's/.baseurl/baseurl/' \
 #     | sed 's/metalink/#metalink/' > /tmp/epel.repo && \
 #     /bin/mv /tmp/epel.repo /etc/yum.repos.d/epel.repo
-RUN  [ ! -f /etc/fedora-release ] && yum -y install centos-release-scl devtoolset-6
+RUN  [ ! -f /etc/fedora-release ] && yum -y install centos-release-scl devtoolset-6 || true
 
 RUN ln -s /lib64/libbz2.so.1 /lib64/libbz2.so.1.0 ; \
     ln -s libcrypto.so.1.0.2k /usr/lib64/libcrypto.so.10 ; \

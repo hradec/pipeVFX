@@ -6,8 +6,8 @@
 # without having to re-download the ones in this image!
 
 ARG BASE_IMAGE
-FROM $BASE_IMAGE
-# FROM centos:7.6.1810
+# FROM $BASE_IMAGE
+FROM centos:7.6.1810
 # FROM hradec/pipevfx_pkgs:centos7_latest
 
 ARG http
@@ -46,6 +46,16 @@ COPY docker/setuptools-33.1.1.zip   /atomo/pipeline/build/.download/setuptools-3
 # create the build folder, if one doesn't exist
 RUN mkdir -p /atomo/pipeline/build/
 
+# WARNING: if building for the first time, comment this line out!
+RUN mkdir -p /atomo/pipeline/build/.download/
+COPY --from=hradec/pipevfx_pkgs:centos7_latest /atomo/pipeline/build/.download  /atomo/pipeline/build/.download/
+
+# install scons
+RUN yum -y install wget git zip
+RUN yum -y install python-setuptools
+RUN curl -s https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py && python2 ./get-pip.py
+RUN python2 -m pip install SCons
+
 # cleanup download folder
 RUN cd /atomo/pipeline/build && \
     if [ -e /atomo/pipeline/build/.download ] ; then \
@@ -73,6 +83,7 @@ RUN cd /atomo/pipeline/build && if [ "$_PRE_CMD" != "" ] ; then \
 
 RUN cd /atomo/pipeline/build && \
     PYTHONPATH=/atomo/pipeline/tools/python \
+    STUDIO=atomo \
     scons install -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 ))
 
 RUN cd /atomo/pipeline/build && if [ "$_POS_CMD" != "" ] ; then \
