@@ -1030,7 +1030,6 @@ class generic:
                     dependOnBackup = {}.update(self.dependOn[download_version])
                 self._dependOnByVersion = {}
 
-
                 self.downloader_install_done_file[baselib] = []
                 self.downloader_archive[baselib] = []
                 for n in range(len(download)):
@@ -1157,7 +1156,9 @@ class generic:
                                 # so we have the target for the current
                                 # baselibName+version in the dependency
                                 # package _depend variable...
-                                if dependOn._depend[p][depend_n] not in source:
+                                # if 'ilmbase' in self.real_name:
+                                #     print '1111######################', pkgDictKey.name, download_version, dependOn._depend[p][depend_n]
+                                # if dependOn._depend[p][depend_n] not in source:
                                     # but it doesn't exist in the source list
                                     source.append( dependOn._depend[p][depend_n] )
                                     sourceVersioned[p+'_'+download_version].append( dependOn._depend[p][depend_n] )
@@ -1173,24 +1174,16 @@ class generic:
                                 # current baselibName+version, just get the
                                 # latest
                                 kk=k[-1]
-                                if dependOn._depend[kk][depend_n] not in source:
-                                    source.append( dependOn._depend[kk][depend_n] )
-                                    sourceVersioned[p+'_'+download_version].append( dependOn._depend[kk][depend_n] )
+                                # if 'ilmbase' in self.real_name:
+                                #     print '2222######################', pkgDictKey.name, download_version, dependOn._depend[kk][depend_n]
+                                # if dependOn._depend[kk][depend_n] not in source:
+                                source.append( dependOn._depend[kk][depend_n] )
+                                sourceVersioned[p+'_'+download_version].append( dependOn._depend[kk][depend_n] )
                             #     else:
                             #         if self.name == 'pyilmbase':
                             #             print 2, depend_n, dependOn.name, ".%s." % dependOn.targetSuffix, p, k
                             # else:
                             #     print 3, depend_n, dependOn.name, ".%s." % dependOn.targetSuffix, p, k
-
-
-                    # _new_source=[]
-                    # for each in source:
-                    #     if self.name not in str(each):
-                    #         _new_source += [each]
-                    # source = [ x for x in source if self.name not in str(each) ]
-
-                    # source.sort()
-                    # source = list(set(source))
 
 
                     ENVIRON_DEPEND = []
@@ -1324,19 +1317,15 @@ class generic:
             if not self.shouldBuild( target, source, env ):
                 return
             t=str(target[0])
-            v = os.path.basename(os.path.dirname(t))
-            # baselib = 'noBaseLib'
-            # if 'python' in os.path.basename(t):
-            #     baselib = os.path.basename(t).split('python')[-1].split('.done')[0]
-            baselib = 'noBaseLib'
-            if 'python' in os.path.basename(t):
-                baselib = os.path.basename(t).split('python')[-1].split('-')[0].split('.done')[0]
             extra = []
             if self.targetSuffix:
                 extra = ['-',self.targetSuffix]
+            v = os.path.basename(os.path.dirname(t))
+            baselib = 'noBaseLib'
             n=' '.join(t.split(os.path.sep)[-3:-1]+extra)
-            if '.python' in t:
-                n = "%s (py %s)" % (n, t.split('.python')[-1].split('.done')[0])
+            if '.python' in os.path.basename(t):
+                baselib = os.path.basename(t).split('python')[-1].split('-')[0].split('.done')[0]
+                n = "%s (py %s)" % (n, t.split('.python')[-1].split('-')[0].split('.done')[0])
             _print( bcolors.WARNING+':'+'='*tcols )
 
             _elapsed = time.gmtime(time.time()-buildStartTime)
@@ -1405,7 +1394,7 @@ class generic:
         if not pythonVersion:
             pythonVersion = "1.0"
             if len(str(target).split('.python')) > 1:
-                pythonVersion = str(target).split('.python')[-1].split('.done')[0][:3]
+                pythonVersion = str(target).split('.python')[-1].split('-')[0].split('.done')[0][:3]
 
         lastlogFile = "%s/%s.%s" % (os.path.dirname(str(target)), crtl_file_lastlog, pythonVersion)
         if self.targetSuffix.strip():
@@ -1455,7 +1444,7 @@ class generic:
 
         # if building for multiple python versions
         if len(str(target[0]).split('.python')) > 1:
-            pythonVersion = str(target[0]).split('.python')[-1].split('.done')[0]
+            pythonVersion = str(target[0]).split('.python')[-1].split('-')[0].split('.done')[0]
             targetFolder = os.path.dirname(str(target[0]))
             folder = "%s/lib/python%s/" % (targetFolder,pythonVersion[:3])
             os.popen("mkdir -p %s" % folder).readlines()
@@ -1508,7 +1497,7 @@ class generic:
             if '.python' in os.path.basename(target):
                 # adjust env vars for the current selected python version
                 if len(target.split('.python')) > 1:
-                    pythonVersion = target.split('.python')[-1].split('.done')[0]
+                    pythonVersion = target.split('.python')[-1].split('-')[0].split('.done')[0]
 
                     # we have to use the same gcc version as the current python build used.
                     # if 'gcc' in dependOn.name  and not dependOn.targetSuffix:
@@ -1663,7 +1652,7 @@ class generic:
             # adjust env vars for the current selected python version
             sys.stdout.write( bcolors.FAIL )
             if len(target.split('.python')) > 1:
-                pythonVersion = target.split('.python')[-1].split('.done')[0]
+                pythonVersion = target.split('.python')[-1].split('-')[0].split('.done')[0]
                 tmp =''
                 for n in pythonVersion:
                     if not n.isdigit() and n!='.':
