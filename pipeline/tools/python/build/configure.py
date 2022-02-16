@@ -606,6 +606,8 @@ class boost(configure):
     the patch links can be found at: http://www.boost.org/patches/
     '''
     environ = {
+        'CC'    : 'gcc',
+        'CXX'   : 'g++',
         'RPATH' : ':'.join([
             '$BOOST_TARGET_FOLDER/lib/',
             '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
