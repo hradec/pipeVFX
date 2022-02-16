@@ -1297,6 +1297,7 @@ class all: # noqa
             download=download,
             baseLibs=[python],
             depend=[python, openssl, bzip2, icu],
+
         )
         self.boost = boost
 
@@ -1582,44 +1583,48 @@ class all: # noqa
         for boost_version in self.boost.versions:
             gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
-            openexr = build.configure(
-                ARGUMENTS,
-                'openexr',
-                targetSuffix=sufix,
-                download=[(
-                    'http://download.savannah.nongnu.org/releases/openexr/openexr-2.0.0.tar.gz',
-                    'openexr-2.0.0.tar.gz',
-                    '2.0.0',
-                    '0820e1a8665236cb9e728534ebf8df18',
-                    { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.0.0', boost: boost_version }
-                ),(
-                    'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
-                    'openexr-2.1.0.tar.gz',
-                    '2.1.0',
-                    '33735d37d2ee01c6d8fbd0df94fb8b43',
-                    { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.1.0', boost: boost_version }
-                ),(
-                    # CY2016 - CY2018
-                    'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
-                    'openexr-2.2.0.tar.gz',
-                    '2.2.0',
-                    'b64e931c82aa3790329c21418373db4e',
-                    { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.2.0', boost: boost_version }
-                # ),(
-                #     # CY2019
-                #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
-                #     'openexr-2.3.0.tar.gz',
-                #     '2.3.0',
-                #     'a157e8a46596bc185f2472a5a4682174',
-                #     { self.gcc : '6.3.1', python: '2.7.16' }
-                ),(
+            download=[(
+                'http://download.savannah.nongnu.org/releases/openexr/openexr-2.0.0.tar.gz',
+                'openexr-2.0.0.tar.gz',
+                '2.0.0',
+                '0820e1a8665236cb9e728534ebf8df18',
+                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.0.0', boost: boost_version }
+            ),(
+                'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
+                'openexr-2.1.0.tar.gz',
+                '2.1.0',
+                '33735d37d2ee01c6d8fbd0df94fb8b43',
+                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.1.0', boost: boost_version }
+            ),(
+                # CY2016 - CY2018
+                'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
+                'openexr-2.2.0.tar.gz',
+                '2.2.0',
+                'b64e931c82aa3790329c21418373db4e',
+                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.2.0', boost: boost_version }
+            # ),(
+            #     # CY2019
+            #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
+            #     'openexr-2.3.0.tar.gz',
+            #     '2.3.0',
+            #     'a157e8a46596bc185f2472a5a4682174',
+            #     { self.gcc : '6.3.1', python: '2.7.16' }
+            )]
+
+            if build.versionMajor(boost_version) >= 1.61:
+                download += [(
                     # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
                     'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.0.tar.gz',
                     'openexr-2.4.0.tar.gz',
                     '2.4.0',
                     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
                     { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version, build.override.src: 'CMakeLists.txt'  }
-                )],
+                )]
+            openexr = build.configure(
+                ARGUMENTS,
+                'openexr',
+                targetSuffix=sufix,
+                download=download,
                 sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
                 depend=[gcc, python, openssl],
                 environ=environ,
@@ -1628,7 +1633,7 @@ class all: # noqa
                     '[ -e IlmBase ] && ('
                         'mkdir build',
                         'cd build',
-                        'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
+                        'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
                         'make -j $DCORES ',
                         'make -j $DCORES install',
                         # don't known why, but cmake wont install the python modules.
@@ -1637,6 +1642,8 @@ class all: # noqa
                         'rsync -avpP ./python$(echo $PYTHON_VERSION_MAJOR | sed "s/\./_/")/ $INSTALL_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/site-packages/',
                         'rm -rf $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
                         'rm -rf $INSTALL_FOLDER/../../../ilmbase/$OPENEXR_VERSION',
+                        'mkdir -p $INSTALL_FOLDER/../../../ilmbase/',
+                        'mkdir -p $INSTALL_FOLDER/../../../pyilmbase/',
                         'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
                         'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../ilmbase/$OPENEXR_VERSION'
                     ') || ('
