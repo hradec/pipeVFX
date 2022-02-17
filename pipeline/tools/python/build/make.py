@@ -133,6 +133,8 @@ class cmake(make):
             '-DBOOST_INCLUDEDIR=$BOOST_TARGET_FOLDER/include',
             '''-DBOOST_LIBRARYDIR=$( if [ \"$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)\" == '' ] ; then ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 ; else echo $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi)/ ''',
             '''-DBoost_LIBRARY_DIRS=$( if [ \"$(ls -l $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ 2>/dev/null)\" == '' ] ; then ls -d  $BOOST_TARGET_FOLDER/lib/python* 2>/dev/null | tail -1 ; else echo $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi)/ ''',
+            '-DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include',
+            '-DBoost_LIBRARY_DIRS=$BOOST_TARGET_FOLDER/lib',
             '-DILMBASE_ROOT=$ILMBASE_TARGET_FOLDER',
             '$CMAKE_VERBOSE ',
             # '-DMAYA_ROOT=$MAYA_ROOT',
