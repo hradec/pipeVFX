@@ -1707,19 +1707,19 @@ class all: # noqa
                     'pyilmbase-2.0.0.tar.gz',
                     '2.0.0',
                     '4585eba94a82f0b0916445990a47d143',
-                    { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.0.0', self.openexr[sufix]: '2.0.0', boost: boost_version }
+                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.0.0', self.openexr[sufix]: '2.0.0', self.boost: boost_version }
                 ),(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
                     'pyilmbase-2.1.0.tar.gz',
                     '2.1.0',
                     'af1115f4d759c574ce84efcde9845d29',
-                    { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.1.0', self.openexr[sufix]: '2.1.0', boost: boost_version }
+                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.1.0', self.openexr[sufix]: '2.1.0', self.boost: boost_version }
                 ),(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
                     'pyilmbase-2.2.0.tar.gz',
                     '2.2.0',
                     'e84a6a4462f90b5e14d83d67253d8e5a',
-                    { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0', boost: boost_version }
+                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0', self.boost: boost_version }
                 # ),(
                 #     'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
                 #     'pyilmbase-2.3.0.tar.gz',
@@ -1914,15 +1914,18 @@ class all: # noqa
         for boost_version in self.boost.versions:
             gcc_version = '6.3.1'
             sufix = "boost.%s" % boost_version
+            f3d_exr_version = exr_version
+            if build.versionMajor(boost_version) < 1.6:
+                f3d_exr_version = '2.2.0'
 
             # build sony field3d used by oiio 2.x
             field3d_dependency_versions = {
                 hdf5 : '1.8.11',
                 boost : boost_version,
                 gcc: gcc_version,
-                self.ilmbase  [sufix] : exr_version,
-                self.pyilmbase[sufix] : exr_version,
-                self.openexr  [sufix] : exr_version,
+                self.ilmbase  [sufix] : f3d_exr_version,
+                self.pyilmbase[sufix] : f3d_exr_version,
+                self.openexr  [sufix] : f3d_exr_version,
             }
             field3d = build.cmake(
                 ARGUMENTS,
@@ -3064,9 +3067,9 @@ class all: # noqa
                     '1.5.8',
                     'a70ba5f2e80b47d346d15d797c28731a',
                     {self.gcc: '6.3.1', self.boost: '1.51.0', self.hdf5: '1.8.11',
-                    self.ilmbase  ['boost.1.51.0']: exr_version,
-                    self.openexr  ['boost.1.51.0']: exr_version,
-                    self.pyilmbase['boost.1.51.0']: exr_version },
+                    self.ilmbase  ['boost.1.51.0']: '2.2.0',
+                    self.openexr  ['boost.1.51.0']: '2.2.0',
+                    self.pyilmbase['boost.1.51.0']: '2.2.0' },
                 )]
             elif bv == '1.55.0':
                 download += [(
@@ -3076,11 +3079,11 @@ class all: # noqa
                     '1.6.1',
                     'e1f9f2cbe1899d3d55b58708b9307482',
                     {self.gcc: '6.3.1', self.boost: '1.55.0', self.hdf5: '1.8.11',
-                    self.ilmbase  ['boost.1.55.0']: exr_version,
-                    self.openexr  ['boost.1.55.0']: exr_version,
-                    self.pyilmbase['boost.1.55.0']: exr_version },
+                    self.ilmbase  ['boost.1.55.0']: '2.2.0',
+                    self.openexr  ['boost.1.55.0']: '2.2.0',
+                    self.pyilmbase['boost.1.55.0']: '2.2.0' },
                 )]
-            else:
+            elif build.versionMajor(bv) > 1.6:
                 download += [(
                     # CY2018 - CY2020
                     'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
