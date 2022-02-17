@@ -684,14 +684,14 @@ class boost(configure):
         cmd = ['export LDFLAGS="$LDFLAGS -L$BZIP2_TARGET_FOLDER/lib/"']+cmd
 
         return ' && '.join(cmd+[
-            'list=$(ls  $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/*-mt* 2>/dev/null) && '
+            '( list=$(ls  $BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/*-mt* 2>/dev/null) && '
             '[ "$list" != ""  ] && ('
                 'for p in $list ; do '
                     'bp=$(basename $p) ; '
                     'np=$( echo $bp | sed "s/-mt//") ; '
                     'ln -s $bp  $(dirname $p)/$np ; '
                 'done'
-            ') || true'
+            ') || true )'
         ])
 
     # def installer(self, target, source, os_environ):
