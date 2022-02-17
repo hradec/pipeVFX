@@ -584,7 +584,55 @@ class generic:
     cmd   = ''
     extra = ''
     sed = {}
-    environ = {}
+    environ = {
+        'CXX':  'g++'
+                    ' -isystem${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ '
+                    ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include-fixed/'
+                    ' -isystem${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/'
+                    ' -isystem${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/x86_64-pc-linux-gnu/'
+                    ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/'
+                    ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/c++'
+                    ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/c++/x86_64-pc-linux-gnu/'
+                    ' -isystem/usr/include',
+        'CC' :  'gcc -isystem${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ '
+                    ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/'
+                    ' -isystem${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include-fixed/'
+                    ' -isystem/usr/include',
+        'LD' :  'g++ '
+                    ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/'
+                    ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                    ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib64/ ',
+
+        'LDFLAGS'   : "$LDFLAGS  -Wl,-rpath-link,${OPENEXR_TARGET_FOLDER}/lib/ "
+                      ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/'
+                      ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                      ' -Wl,-rpath=${GCC_TARGET_FOLDER}/lib64/ ',
+        'CFLAGS'    : '$CFLAGS  '
+                      '-I${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/ '
+                      '-I${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/numpy/ '
+                      '-I${BOOST_TARGET_FOLDER}/include/boost/ '
+                      '-I${BOOST_TARGET_FOLDER}/include/boost/python '
+                      '$CFLAGS ',
+        'CXXFLAGS'  : '$CXXFLAGS  '
+                      '-I${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/ '
+                      '-I${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/numpy/ '
+                      '-I${BOOST_TARGET_FOLDER}/include/boost/ '
+                      '-I${BOOST_TARGET_FOLDER}/include/boost/python '
+                      '$CXXFLAGS ',
+        'LD'        : 'ld',
+        'LDFLAGS'   : '$LDFLAGS -L${TARGET_FOLDER}/lib/ -L${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ '
+                      '-Wl,-rpath,${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ -L${SOURCE_FOLDER}/PyImath/.libs/ '
+                      '-Wl,-rpath,${INSTALL_FOLDER}/lib/ ',
+
+        'CPATH'     : '${PYTHON_TARGET_FOLDER}/include/python${PYTHON_VERSION_MAJOR}/'
+                      ':${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/'
+                      ':${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/numpy/'
+                      ':$CPATH',
+        'RPATH'     : '${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/lib/'
+                      ':${INSTALL_FOLDER}/lib/'
+                      ':${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/'
+                      ':$RPATH',
+    }
     do_not_use=False
 
 
@@ -672,8 +720,7 @@ class generic:
         # add global env vars
 
         # now we can reset it
-        if not hasattr(self, 'environ'):
-            self.environ = {}
+        if not self.environ.keys():
             self.environ = update_environ_dict(self.environ,{
                 # this fixes the problem with missing stdlib.h
                 'CXX':  'g++'
@@ -715,18 +762,14 @@ class generic:
                               '-Wl,-rpath,${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/ -L${SOURCE_FOLDER}/PyImath/.libs/ '
                               '-Wl,-rpath,${INSTALL_FOLDER}/lib/ ',
 
-                'CPATH'     : ':'.join([
-                              '${PYTHON_TARGET_FOLDER}/include/python${PYTHON_VERSION_MAJOR}/',
-                              '${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/',
-                              '${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/numpy/',
-                              '$CPATH',
-                ]),
-                'RPATH'     : ':'.join([
-                              '${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/lib/',
-                              '${INSTALL_FOLDER}/lib/',
-                              '${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/',
-                              '$RPATH',
-                ]),
+                'CPATH'     : '${PYTHON_TARGET_FOLDER}/include/python${PYTHON_VERSION_MAJOR}/'
+                              ':${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/'
+                              ':${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/include/numpy/'
+                              ':$CPATH',
+                'RPATH'     : '${PYTHON_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/numpy/core/lib/'
+                              ':${INSTALL_FOLDER}/lib/'
+                              ':${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/'
+                              ':$RPATH',
             })
         # se environment override. Passing the environ dict to the build class, will override
         # whatever is set above. (although it will expand any $VAR string, so if you want to
