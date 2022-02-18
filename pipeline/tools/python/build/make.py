@@ -203,6 +203,8 @@ class cmake(make):
 class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
+        # fix for pyilmbase 2.4.0 and up
+        '( [ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER || true )',
         # force cmake to use our RPATH env var
         ''' grep 'INSTALL_RPATH ' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak  -e 's/INSTALL_RPATH /INSTALL_RPATH \$ENV{RPATH}:/' $p ; done''',
         ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
@@ -283,6 +285,7 @@ class alembic(cmake):
             '-Wno-dev',
             # '-DUSE_PYALEMBIC=0', # disable python bindings
             '-DUSE_PYALEMBIC=1',
+            '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER/',
             '-DALEMBIC_PYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER/',
             '-DALEMBIC_PYILMBASE_MODULE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
             '-DALEMBIC_PYILMBASE_PYIMATH_MODULE=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so',
@@ -315,8 +318,8 @@ class alembic(cmake):
                 cmd = cmd.replace('cmake','cmake '+each+' ')
 
         return cmake.fixCMD(self, cmd, os_environ, [
-            'export CORES=2',
-            'export DCORES=4',
+            # 'export CORES=2',
+            # 'export DCORES=4',
             'export PRMAN_ROOT=$PRMAN_ROOT/RenderManProServer-$PRMAN_VERSION'
         ])
 
