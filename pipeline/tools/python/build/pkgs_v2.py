@@ -1691,7 +1691,6 @@ class all: # noqa
                           self.exr_rpath_environ['RPATH'],
             ]),
         })
-
         for boost_version in self.boost.versions:
             gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
@@ -1735,9 +1734,10 @@ class all: # noqa
                 #     { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version, build.override.src: 'CMakeLists.txt'  }
                 )],
                 baseLibs=[python],
-                depend=[python, gcc, python],
+                depend=[python, gcc, python], #+[ self.pip[x] for x in self.pip.keys() ],
                 environ=environ,
                 cmd = [
+                    'mv /usr/include/numpy /usr/include/numpy.bak',
                     'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared ', #'--disable-boostpythontest ',
                     # we have to forcely build libPyImath first, since the build
                     # in parallel builds imathmodule without libPyImath, since
@@ -1759,7 +1759,8 @@ class all: # noqa
                     '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyImath)" == "" ] ',
                     '( echo "imathmodule.so misses PyImath" && false ) || true ; '
                     '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyIex)" == "" ] ',
-                    '(echo "imathmodule.so misses PyIex" && false ) || true'
+                    '(echo "imathmodule.so misses PyIex" && false ) || true',
+                    'mv /usr/include/numpy.bak /usr/include/numpy',
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
@@ -2216,8 +2217,12 @@ class all: # noqa
                 # every release, and configure fails if you leave options it
                 # doesnt known!
                 '( [ "$(basename $TARGET_FOLDER)" == "4.8.7" ] && '
+                    "sed -i.bak -e 's/utils.h/..\/utils.h/' ./src/tools/uic/cpp/cppwriteinitialization.cpp",
+                    "sed -i.bak -e 's/utils.h/..\/utils.h/' ./src/tools/uic/cpp/cppwriteiconinitialization.cpp",
                     './configure  -opensource -shared --confirm-license  -no-webkit -silent '
                 '|| true ; [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && '
+                    "sed -i.bak -e 's/utils.h/..\/utils.h/' ./qtbase/src/tools/uic/cpp/cppwriteinitialization.cpp",
+                    "sed -i.bak -e 's/utils.h/..\/utils.h/' ./qtbase/src/tools/uic/cpp/cppwriteiconinitialization.cpp",
                     './configure -plugindir $INSTALL_FOLDER/qt/plugins -release -opensource --confirm-license '
                     '-no-rpath -no-gtkstyle -no-audio-backend -no-dbus '
                     '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
