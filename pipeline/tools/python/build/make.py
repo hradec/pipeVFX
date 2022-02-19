@@ -204,7 +204,9 @@ class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
         # fix for pyilmbase 2.4.0 and up
-        '( [ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER || true )',
+        'export PYIMATH_MODULE=imathmodule.so',
+        '[ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYIMATH_MODULE=imath.so || true',
+        '[ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER || true',
         # force cmake to use our RPATH env var
         ''' grep 'INSTALL_RPATH ' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak  -e 's/INSTALL_RPATH /INSTALL_RPATH \$ENV{RPATH}:/' $p ; done''',
         ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
@@ -288,7 +290,9 @@ class alembic(cmake):
             '-DPYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER/',
             '-DALEMBIC_PYILMBASE_ROOT=$PYILMBASE_TARGET_FOLDER/',
             '-DALEMBIC_PYILMBASE_MODULE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
-            '-DALEMBIC_PYILMBASE_PYIMATH_MODULE=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so',
+            '-DALEMBIC_PYILMBASE_PYIMATH_MODULE=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/$PYIMATH_MODULE',
+            '-DALEMBIC_PYIMATH_MODULE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
+            '-DALEMBIC_PYILMBASE_PYIMATH_LIB=$PYILMBASE_TARGET_FOLDER/lib/',
             '-DALEMBIC_PYILMBASE_INCLUDE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/include/OpenEXR/',
             '-DPYILMBASE_LIBRARY_DIR=$PYILMBASE_TARGET_FOLDER/lib/',
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
