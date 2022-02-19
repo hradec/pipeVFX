@@ -1638,6 +1638,7 @@ class all: # noqa
                         'make -j $DCORES install',
                         # don't known why, but cmake wont install the python modules.
                         # so we do it manually here.
+                        'cp $SOURCE_FOLDER/build/PyIlmBase/config/PyIlmBaseConfigInternal.h $INSTALL_FOLDER/include/OpenEXR/',
                         'mkdir -p $INSTALL_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/site-packages/',
                         'rsync -avpP ./python$(echo $PYTHON_VERSION_MAJOR | sed "s/\./_/")/ $INSTALL_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/site-packages/',
                         'rm -rf $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
@@ -1907,7 +1908,7 @@ class all: # noqa
         # =============================================================================================================================================
         # build one OIIO version for each boost version.
         exr_version = '2.4.0'
-        oiio_version = '2.0.11'
+        # oiio_version = '2.0.11'
         self.oiio = {}
         self.field3d = {}
 
@@ -2718,6 +2719,7 @@ class all: # noqa
                 'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
         })
 
+
         for bv in ['1.66.0']:
             bsufix = "boost.%s" % bv
 
@@ -2755,9 +2757,9 @@ class all: # noqa
                     '1abd7ce40481771a9fa937f19595d2f2',
                     { self.llvm: "7.1.0", self.gcc: "6.3.1",
                     self.boost: bv, self.qt: '5.6.1',
-                    self.oiio[bsufix]:oiio_version,
-                    self.oiio[bsufix][oiio_version]['ilmbase'].obj:  self.oiio[bsufix][oiio_version]['ilmbase'],
-                    self.oiio[bsufix][oiio_version]['openexr'].obj:  self.oiio[bsufix][oiio_version]['openexr']}
+                    self.oiio[bsufix]:"2.2.15.1",
+                    self.oiio[bsufix]["2.2.15.1"]['ilmbase'].obj:  self.oiio[bsufix]["2.2.15.1"]['ilmbase'],
+                    self.oiio[bsufix]["2.2.15.1"]['openexr'].obj:  self.oiio[bsufix]["2.2.15.1"]['openexr']}
                 )],
                 depend=[self.icu, self.cmake, self.pugixml, self.freetype,
                         self.openssl, self.bzip2, self.libraw, self.pybind],
@@ -2803,7 +2805,7 @@ class all: # noqa
                 verbose=1,
             )
             self.osl[bsufix] = osl
-            latest_osl = self.osl[bsufix][ self.osl[bsufix].keys()[-1] ]
+            latest_osl = self.osl[bsufix]['1.11.14']
             self.latest_osl = latest_osl
 
             # materialx don't need boost.
