@@ -54,12 +54,13 @@ class configure(generic):
         return cmd
 
 class wait4dependencies(configure):
+    ''' used to wait for builds to finish '''
     noMinTime=True
     dontUseTargetSuffixForFolders = 1
     do_not_use=True
     globalDependency = True
     no_folder_install_checking=True
-    def __init__(self, wait4, msg, version=None, cmd=["echo Done!!!!!"], depend=[], **kargs):
+    def __init__(self, wait4, msg, version=None, cmd=["echo Done!!!!!"], depend=[], dependVersion={}, **kargs):
         self.cmd = cmd
         self.wait4 = wait4
         d = self.wait4.download
@@ -68,9 +69,10 @@ class wait4dependencies(configure):
                 version = [version]
             d = [ x for x in wait4.download if x[2] in version ]
 
-        download = [ (None,"wait4.%s.%s.%s" % (self.wait4.name,msg,x[2]),x[2],None,{self.wait4: x[2]}) for x in d ]
+        download = [ (None,"wait4.%s.%s.%s" % (self.wait4.name,msg,x[2]), x[2], None, {self.wait4: x[2]}) for x in d ]
         for d in download:
             os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
+            d[4].update(dependVersion)
 
         configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
         # configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
@@ -80,11 +82,37 @@ class wait4dependencies(configure):
 
 globals()['github_phases']=0
 class github_phase(wait4dependencies):
+    ''' used to create a default alias for the build of the packages we want. '''
     def __init__(self, wait4,version=None, cmd=["echo Done!!!!!"], depend=[], **kargs):
         globals()['github_phases'] += 1
         alias = 'phase'+str(globals()['github_phases'])
         genericBuilders.s_print( 'github phase: %s => %s(%s)' % (alias, wait4.name, version) )
         wait4dependencies.__init__(self, wait4, alias, version=version, cmd=cmd, depend=depend, **kargs)
+
+class github_phase_one_version(wait4dependencies):
+    ''' used to create a default alias for the build of the packages we want. '''
+    def __init__(self, args, wait4={}, cmd=["echo Done!!!!!"], depend=[], **kargs):
+        self.cmd = cmd
+        self.wait4 = wait4
+        globals()['github_phases'] += 1
+        alias = 'phase'+str(globals()['github_phases'])
+        version = '1.0.0'
+        # wait4dependencies.__init__(self, wait4, alias, version=version, cmd=cmd, depend=depend, dependVersion=dependVersion, **kargs)
+        genericBuilders.s_print( 'github phase: %s => %s(%s)' % ( alias, str([ x.name for x in wait4 ]), str([ wait4[x] for x in wait4 ]) ) )
+        download = [ (None,"wait4.%s.%s" % (alias, version), version, None, wait4) ]
+        target = [ x.target[wait4[x]] for x in wait4 ]
+        for dep in depend:
+            for version in dep.keys():
+                target += [dep.target[version]]
+        for d in download:
+            os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
+
+        configure.__init__(self, args, alias, download, src='configure', depend=depend, **kargs )
+        self.env.Alias( alias, target )
+
+
+
+
 
 class pip(configure):
     cmd = ["./build.sh"]

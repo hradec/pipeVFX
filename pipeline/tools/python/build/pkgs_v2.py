@@ -2824,7 +2824,7 @@ class all: # noqa
                     'MaterialX-1.37.4.tar.gz',
                     '1.37.4',
                     'fdc0efb49f3170fc1e7baaf714df3e31',
-                    { self.gcc : '6.3.1', python: '2.7.16', osl: '1.10.7',
+                    { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
                     latest_osl['oiio'   ].obj: latest_osl['oiio'],
                     latest_osl['openexr'].obj: latest_osl['openexr'],
                     latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
@@ -2834,7 +2834,7 @@ class all: # noqa
                     'MaterialX-1.38.0.tar.gz',
                     '1.38.0',
                     'b8bc253454164b0c19600eb0f925d654',
-                    { self.gcc : '6.3.1', python: '2.7.16', osl: '1.10.7',
+                    { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
                     latest_osl['oiio'   ].obj: latest_osl['oiio'],
                     latest_osl['openexr'].obj: latest_osl['openexr'],
                     latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
@@ -2844,7 +2844,7 @@ class all: # noqa
                     'MaterialX-1.38.1.tar.gz',
                     '1.38.1',
                     '578a1b63263281414e1594d44409b882',
-                    { self.gcc : '6.3.1', python: '2.7.16', osl: '1.10.7',
+                    { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
                     latest_osl['oiio'   ].obj: latest_osl['oiio'],
                     latest_osl['openexr'].obj: latest_osl['openexr'],
                     latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
@@ -2854,7 +2854,7 @@ class all: # noqa
                     'MaterialX-1.38.2.tar.gz',
                     '1.38.2',
                     '9916b1d732ffe43a6f1c6822e6da1d28',
-                    { self.gcc : '6.3.1', python: '3.7.5', osl: '1.10.7',
+                    { self.gcc : '6.3.1', python: '3.7.5', latest_osl.obj: latest_osl.version,
                     latest_osl['oiio'   ].obj: latest_osl['oiio'],
                     latest_osl['openexr'].obj: latest_osl['openexr'],
                     latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
@@ -3581,17 +3581,12 @@ class all: # noqa
                 # verbose=1,
             )
             self.usd[bsufix] = usd
-            self.masterVersion['usd'] = '21.11.0'
-
-
+            self.masterVersion['usd'] = '21.5.0'
 
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.usd[bsufix])
-
-
-
+        build.github_phase_one_version(ARGUMENTS, {self.usd["boost.1.66.0"] : '21.5.0'})
 
         # ============================================================================================================================================
         # download stuff for gaffer
@@ -3631,6 +3626,7 @@ class all: # noqa
         )
 
 
+
         cgru_boost_version = '1.61.0'
         cgru_boost_sufix = 'boost.1.61.0'
         self.cgru = build.configure(
@@ -3644,14 +3640,15 @@ class all: # noqa
                 '72930f0363a465e87e6730345982065e',
                 {   self.gcc : '6.3.1',
                     self.boost: cgru_boost_version,
-                    self.ilmbase  [cgru_boost_sufix] : exr_version,
-                    self.pyilmbase[cgru_boost_sufix] : exr_version,
-                    self.openexr  [cgru_boost_sufix] : exr_version}
+                    self.ilmbase  [cgru_boost_sufix] : '2.2.0',
+                    self.pyilmbase[cgru_boost_sufix] : '2.2.0',
+                    self.openexr  [cgru_boost_sufix] : '2.2.0'}
             )],
             cmd=[
                 'rm /bin/python*',
                 'cd utilities',
-                './get.sh',
+                './get.sh > get.log 2>&1 || true',
+                'mkdir -p $SOURCE_FOLDER/utilities/imagemagick/ImageMagick/lib64',
                 './build.sh -j $DCORES > build.log 2>&1',
                 'cd ..',
                 '([ -e bin/convert ] || exit -1)',
@@ -3663,6 +3660,12 @@ class all: # noqa
         )
 
 
+        build.github_phase_one_version(ARGUMENTS, depend=[
+            self.cgru,
+            self.gaffer_resources,
+            self.ocio_profiles,
+            self.fonts
+        ])
 
 
 

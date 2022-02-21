@@ -323,6 +323,10 @@ def legacy(pkgs):
                         environ = cortex_environ,
                     )
     '''
+    # for sufix in pkgs.cortex:
+    #     for version in pkgs.cortex[sufix].versions():
+    #         build.github_phase_one_version(ARGUMENTS, {pkgs.cortex[sufix] : version})
+
 
 
 def cortex(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
@@ -433,6 +437,8 @@ def cortex(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
             apps = apps,
             # environ = { 'LD' : 'ld' },
         )
+        # for version in pkgs.cortex[sufix].versions():
+        #     build.github_phase_one_version(ARGUMENTS, {pkgs.cortex[sufix] : version})
         return pkgs.cortex[sufix]
 
 
@@ -537,4 +543,7 @@ def gaffer(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
             # 'LD' : 'ld'
         },
     )
+    # for version in pkgs.gaffer[sufix].versions():
+    #     build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[sufix] : version})
+
     return pkgs.gaffer[ suffix ]

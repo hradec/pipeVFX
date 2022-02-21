@@ -1020,6 +1020,7 @@ class generic:
         self.setAppsInit()
 
         # build all python versions specified (baseLib)
+        self.target  = {}
         self.buildFolder = {}
         self.targetFolder = {}
         self._depend = {}
@@ -1090,6 +1091,7 @@ class generic:
                         targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.rpm',pythonDependency))
 
                     installpath = os.path.join( self.installPath,  self.name, download[n][2] )
+                    self.target[download[n][2]] = installpath
                     # print "%s/install.*.done" % installpath, glob( "%s/install.*.done" % installpath )
 
                     # build and install folder
@@ -1112,9 +1114,9 @@ class generic:
                     # or if the final install file doesn't exist, we probably got a fail install,
                     # so force re-build!
                     _ENVIRON_DEPEND_VERSION = []
-                    for download_version in self.download_versions:
-                            # set a DEPEND env var that contains all dependency names
-                            _ENVIRON_DEPEND_VERSION += [p+'_'+download_version+'@'+x.real_name+'/'+self.dependOn[download_version][x] for x in self.dependOn[download_version] if hasattr(x, 'name')]
+                    # for download_version in self.download_versions:
+                    #         # set a DEPEND env var that contains all dependency names
+                    #         _ENVIRON_DEPEND_VERSION += [p+'_'+download_version+'@'+x.real_name+'/'+self.dependOn[download_version][x] for x in self.dependOn[download_version] if hasattr(x, 'name')]
 
                     tmp_env = Environment()
                     tmp_env["ENVIRON_DEPEND_VERSION"] =  ' '.join( _ENVIRON_DEPEND_VERSION )
@@ -1334,8 +1336,17 @@ class generic:
             return key in self.keys()
         return False
 
+    def latestVersion(self):
+        ''' return the latest version '''
+        return self.keys(-1)
+
+    def versions(self):
+        ''' just an alternative function to return the keys, which are versions '''
+        return self.keys()
+
     def keys(self):
-        ''' return the versions of this build package obj '''
+        ''' return the versions of this build package obj, properly sorted.
+        So last one is the latest version!'''
         return pipe.versionSort(self.download_versions.keys())
 
     def __getitem__(self, version):
