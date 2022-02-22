@@ -3336,6 +3336,7 @@ class all: # noqa
                     'touch  $SOURCE_FOLDER/src/doc/SeExpr',
                     'mkdir -p $INSTALL_FOLDER/share/doc/SeExpr',
                     'make install',
+                    'chmod a+rx -R $INSTALL_FOLDER/',
                 ],
                 environ = environ,
             )
@@ -3583,10 +3584,10 @@ class all: # noqa
             self.usd[bsufix] = usd
             self.masterVersion['usd'] = '21.5.0'
 
-        # ============================================================================================================================================
-        # github build point so we can split the build in multiple matrix jobs in github actions
-        # ============================================================================================================================================
-        build.github_phase_one_version(ARGUMENTS, {self.usd["boost.1.66.0"] : '21.5.0'})
+            # ============================================================================================================================================
+            # github build point so we can split the build in multiple matrix jobs in github actions
+            # ============================================================================================================================================
+            build.github_phase_one_version(ARGUMENTS, {self.usd[bsufix] : self.masterVersion['usd']})
 
         # ============================================================================================================================================
         # download stuff for gaffer
