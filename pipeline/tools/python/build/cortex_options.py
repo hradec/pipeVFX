@@ -290,10 +290,10 @@ APPLESEED_ROOT = ''
 APPLESEED_VERSION = ''
 apps                    = pipe.roots().apps()
 if "MAYA_ROOT" in os.environ:
-    MAYA_ROOT               = apps+"/maya/%s/"   % maya
+    MAYA_ROOT = os.environ['MAYA_ROOT'] #apps+"/maya/%s/"   % maya
     CXXSTD = 'c++11'
 if "PRMAN_ROOT" in os.environ:
-    RMAN_ROOT               = "%s/RenderManProServer-%s"  % (os.environ["PRMAN_ROOT"], os.environ["PRMAN_VERSION"])
+    RMAN_ROOT = "%s/RenderManProServer-%s"  % (os.environ["PRMAN_ROOT"], os.environ["PRMAN_VERSION"])
 if "NUKE_ROOT" in os.environ:
     NUKE_ROOT		        = os.environ["NUKE_ROOT"]
 if "HOUDINI_ROOT" in os.environ:

@@ -98,7 +98,7 @@ class github_phase_one_version(wait4dependencies):
         alias = 'phase'+str(globals()['github_phases'])
         version = '1.0.0'
         # wait4dependencies.__init__(self, wait4, alias, version=version, cmd=cmd, depend=depend, dependVersion=dependVersion, **kargs)
-        genericBuilders.s_print( 'github phase: %s => %s(%s)' % ( alias, str([ x.name for x in wait4 ]), str([ wait4[x] for x in wait4 ]) ) )
+        genericBuilders.s_print( 'github phase: %s => %s(%s)' % ( alias, str([ x.name+' '+x.targetSuffix+x.extraTargetSuffix for x in wait4 ]), str([ wait4[x] for x in wait4 ]) ) )
         download = [ (None,"wait4.%s.%s" % (alias, version), version, None, wait4) ]
         target = [ x.target[wait4[x]] for x in wait4 ]
         for dep in depend:

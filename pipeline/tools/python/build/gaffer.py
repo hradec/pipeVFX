@@ -387,14 +387,14 @@ def cortex(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
     usd = pkgs.usd[cortex_sufix][usd_version]
     # usd_boost = [ x[4][pkgs.boost] for x in pkgs.usd.download if x[2] == usd_version ][0]
     if 'boost' in usd and usd['boost'] == boost_version:
-        suffix = ''
+        sufix = ''
         dontUseTargetSuffixForFolders = 1
         if apps:
             version = apps[0][1]
-            suffix = "-%s.%s" % (str(apps[0][0]).split("'")[1].split(".")[-1], version)
+            sufix = "-%s.%s" % (str(apps[0][0]).split("'")[1].split(".")[-1], version)
             dontUseTargetSuffixForFolders = 1
 
-        sufix = "boost.%s-usd.%s%s" % (boost_version, usd_version, suffix)
+        sufix = "boost.%s-usd.%s%s" % (boost_version, usd_version, sufix)
         build.s_print( sufix )
 
         # since USD was introduced in cortex 10, only build for version >= 10
@@ -431,14 +431,17 @@ def cortex(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
             patch = devPatch,
             dontUseTargetSuffixForFolders = dontUseTargetSuffixForFolders,
             cmd = [
+                # IECoreArnold is broken for newer arnold versions
+                'unset ARNOLD_ROOT',
+                'unset ARNOLD_VERSION',
+
                 build._cortex.cmd[0]+" install",
             ],
             environ = cortex_environ,
             apps = apps,
             # environ = { 'LD' : 'ld' },
         )
-        # for version in pkgs.cortex[sufix].versions():
-        #     build.github_phase_one_version(ARGUMENTS, {pkgs.cortex[sufix] : version})
+        build.github_phase_one_version(ARGUMENTS, {pkgs.cortex[sufix] : version for version in pkgs.cortex[sufix].keys()})
         return pkgs.cortex[sufix]
 
 
@@ -543,7 +546,6 @@ def gaffer(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
             # 'LD' : 'ld'
         },
     )
-    # for version in pkgs.gaffer[sufix].versions():
-    #     build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[sufix] : version})
+    build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[suffix] : version for version in pkgs.gaffer[suffix].keys()})
 
     return pkgs.gaffer[ suffix ]
