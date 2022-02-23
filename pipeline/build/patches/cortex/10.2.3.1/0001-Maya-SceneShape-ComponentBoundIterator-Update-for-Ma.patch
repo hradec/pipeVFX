@@ -1,0 +1,62 @@
+From e4c711474060061962ab788dcfb3cf340a3e9bde Mon Sep 17 00:00:00 2001
+From: Andrew Kaufman <andrewk@image-engine.com>
+Date: Fri, 11 Feb 2022 12:49:27 -0800
+Subject: [PATCH] Maya SceneShape ComponentBoundIterator : Update for Maya 2022
+ API
+
+This seems a particularly wasteful update... I hope it doesn't impact performance of `next()` noticably
+---
+ .../SceneShapeInterfaceComponentBoundIterator.h    |  6 ++++++
+ .../SceneShapeInterfaceComponentBoundIterator.cpp  | 14 ++++++++++++++
+ 2 files changed, 20 insertions(+)
+
+diff --git a/include/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.h b/include/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.h
+index 1918028f0..062311079 100644
+--- a/include/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.h
++++ b/include/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.h
+@@ -60,7 +60,13 @@ class IECOREMAYA_API SceneShapeInterfaceComponentBoundIterator : public MPxGeome
+ 		~SceneShapeInterfaceComponentBoundIterator() override = default;
+ 
+ 		bool isDone() const override;
++
++#if MAYA_API_VERSION < 202200
+ 		void next() override;
++#else
++		MStatus next() override;
++#endif
++
+ 		void reset() override;
+ 		void component( MObject &component ) override;
+ 		bool hasPoints() const override;
+diff --git a/src/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.cpp b/src/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.cpp
+index 18128ae8d..b7cccbdff 100644
+--- a/src/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.cpp
++++ b/src/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.cpp
+@@ -118,10 +118,24 @@ bool SceneShapeInterfaceComponentBoundIterator::isDone() const
+ 	return m_idx >= m_numComponents * 8;
+ }
+ 
++#if MAYA_API_VERSION < 202200
+ void SceneShapeInterfaceComponentBoundIterator::next()
+ {
+ 	++m_idx;
+ }
++#else
++MStatus SceneShapeInterfaceComponentBoundIterator::next()
++{
++	if( isDone() )
++	{
++		return MS::kFailure;
++	}
++
++	++m_idx;
++
++	return MS::kSuccess;
++}
++#endif
+ 
+ void SceneShapeInterfaceComponentBoundIterator::component( MObject &component )
+ {
+-- 
+2.29.2
+

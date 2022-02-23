@@ -702,9 +702,9 @@ class generic:
         # with global dependency values!
         # ==============================================
         # add global dependency if not already in
-        self__dependNames = [ '%s%s' % (x.name, x.targetSuffix) for x in self.depend if hasattr(x, 'name') ]
+        self__dependNames = [ '%s%s' % (x.name, x.targetSuffix+x.extraTargetSuffix) for x in self.depend if hasattr(x, 'name') ]
         if type(self.depend) == type([]):
-            self.depend += [x for x in allDepend if '%s%s' % (x.name, x.targetSuffix) not in self__dependNames]
+            self.depend += [x for x in allDepend if '%s%s' % (x.name, x.targetSuffix+x.extraTargetSuffix) not in self__dependNames]
         else:
             for d in allDepend:
                 if d not in self.depend:
@@ -807,6 +807,10 @@ class generic:
         if kargs.has_key('targetSuffix'):
             self.targetSuffix = kargs['targetSuffix'] #.replace('.','_')
 
+        self.extraTargetSuffix=""
+        if kargs.has_key('extraTargetSuffix'):
+            self.extraTargetSuffix = kargs['extraTargetSuffix'] #.replace('.','_')
+
         if kargs.has_key('real_name'):
             self.real_name = kargs['real_name'] #.replace('.','_')
 
@@ -868,7 +872,7 @@ class generic:
                     if self.dependOn[download_version][each].version not in self.dependOn[download_version][each].obj.download_versions:
                         ts=""
                         if self.targetSuffix:
-                            ts=" (%s)" % self.targetSuffix
+                            ts=" (%s)" % self.targetSuffix+self.extraTargetSuffix
                         print "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!"
                         del self.dependOn[download_version][each]
 
@@ -1041,7 +1045,7 @@ class generic:
                 # add target sufix to target file.
                 pythonDependency = ".%s" % p
                 if self.targetSuffix.strip():
-                    pythonDependency = ".%s-%s" % (p,self.targetSuffix)
+                    pythonDependency = ".%s-%s" % (p,self.targetSuffix+self.extraTargetSuffix)
 
                 self._depend[p] = []
                 self.buildFolder[p] = []
@@ -1376,7 +1380,7 @@ class generic:
             t=str(target[0])
             extra = []
             if self.targetSuffix:
-                extra = ['-',self.targetSuffix]
+                extra = ['-',self.targetSuffix+self.extraTargetSuffix]
             v = os.path.basename(os.path.dirname(t))
             baselib = 'noBaseLib'
             n=' '.join(t.split(os.path.sep)[-3:-1]+extra)
@@ -1455,7 +1459,7 @@ class generic:
 
         lastlogFile = "%s/%s.%s" % (os.path.dirname(str(target)), crtl_file_lastlog, pythonVersion)
         if self.targetSuffix.strip():
-            lastlogFile = '%s-%s' % (lastlogFile, self.targetSuffix)
+            lastlogFile = '%s-%s' % (lastlogFile, self.targetSuffix+self.extraTargetSuffix)
 
         # print lastlogFile
         return os.path.abspath( lastlogFile )
@@ -2143,6 +2147,9 @@ class generic:
         if hasattr(self, 'patch'):
             if self.patch:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
+
+        for each in glob( '%s/patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION'])):
+            cmd = ' && '.join([ self.__patches(each), cmd ])
 
         cmd = cmd.replace('"','\"') #.replace('$','\$')
         _print( bcolors.WARNING+':'+bcolors.BLUE+'\tCORES: '+bcolors.WARNING+os_environ['CORES'], \
