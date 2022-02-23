@@ -2148,8 +2148,9 @@ class generic:
             if self.patch:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
 
-        for each in glob( '%s/patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION'])):
-            cmd = ' && '.join([ self.__patches(each), cmd ])
+        patches = glob( '%s/../../patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION']) )
+        if patches:
+            cmd = ' && '.join([ self.__patches(patches), cmd ])
 
         cmd = cmd.replace('"','\"') #.replace('$','\$')
         _print( bcolors.WARNING+':'+bcolors.BLUE+'\tCORES: '+bcolors.WARNING+os_environ['CORES'], \
@@ -3139,27 +3140,32 @@ class generic:
         ret = []
         for p in patchList:
             count += 1
-            patchName = "/tmp/__patch.%0d.%s" % (count,self.name)
-            f = open(patchName, "w")
-            # because we want to store patch text in a list with proper python identation
-            # we need to mangle the patch text to remove the trailing spaces here!
-            # we also make sure that, if a \ at the end of a line was used in the patch, we use '    +' to
-            # re-create a newline \n! (since even with ''' python still understand the \ and uses it insead of
-            # just storing it as is!)
-            firstOnly = 1
-            tabs = 0
-            for line in p.replace('     +','\n+').split('\n'):
-                if firstOnly:
-                    l = line.lstrip()
-                    if l:
-                        tabs = len(line) - len(l)
-                        firstOnly = 0
-                if len(line) and line[0] == ' ':
-                    f.write('%s\n' % line[tabs:])
-                else:
-                    f.write('%s\n' % line)
-            f.close()
-            ret.append('cat %s | patch -p1 ; echo %s' % (patchName, patchName))
+            # print "#######################>", p
+            if os.path.exists(p):
+                patchName = p
+            else:
+                # patchs can be text files, so we write then down here.
+                patchName = "/tmp/__patch.%0d.%s" % (count,self.name)
+                f = open(patchName, "w")
+                # because we want to store patch text in a list with proper python identation
+                # we need to mangle the patch text to remove the trailing spaces here!
+                # we also make sure that, if a \ at the end of a line was used in the patch, we use '    +' to
+                # re-create a newline \n! (since even with ''' python still understand the \ and uses it insead of
+                # just storing it as is!)
+                firstOnly = 1
+                tabs = 0
+                for line in p.replace('     +','\n+').split('\n'):
+                    if firstOnly:
+                        l = line.lstrip()
+                        if l:
+                            tabs = len(line) - len(l)
+                            firstOnly = 0
+                    if len(line) and line[0] == ' ':
+                        f.write('%s\n' % line[tabs:])
+                    else:
+                        f.write('%s\n' % line)
+                f.close()
+            ret.append('cat %s | patch -p1' % (patchName))
         return ';'.join(ret)
 
     def downloadVersion(self, v, compare = '=='):

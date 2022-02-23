@@ -15,19 +15,19 @@ index 1918028f0..062311079 100644
 --- a/include/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.h
 +++ b/include/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.h
 @@ -60,7 +60,13 @@ class IECOREMAYA_API SceneShapeInterfaceComponentBoundIterator : public MPxGeome
- 		~SceneShapeInterfaceComponentBoundIterator() override = default;
+ 		~SceneShapeInterfaceComponentBoundIterator();
  
- 		bool isDone() const override;
+ 		virtual bool isDone() const;
 +
 +#if MAYA_API_VERSION < 202200
- 		void next() override;
+ 		virtual void next();
 +#else
-+		MStatus next() override;
++		virtual MStatus next();
 +#endif
 +
- 		void reset() override;
- 		void component( MObject &component ) override;
- 		bool hasPoints() const override;
+ 		virtual void reset();
+ 		virtual void component( MObject &component );
+ 		virtual bool hasPoints() const;
 diff --git a/src/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.cpp b/src/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.cpp
 index 18128ae8d..b7cccbdff 100644
 --- a/src/IECoreMaya/SceneShapeInterfaceComponentBoundIterator.cpp

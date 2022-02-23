@@ -255,6 +255,7 @@ else
         -v $CD/pipeline/tools/:/$STUDIO/pipeline/tools/ \
         -v $LIB_FOLDER:/$STUDIO/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/$STUDIO/pipeline/build/SConstruct \
+        -v $CD/pipeline/build/patches:/$STUDIO/pipeline/build/patches \
         -v $BUILD_FOLDER:/$STUDIO/pipeline/build/.build/ \
         -v $CD/pipeline/tools/scripts/pipevfx_docker_init.sh:/run.sh \
         -v $CD/.root:/$STUDIO/.root \
