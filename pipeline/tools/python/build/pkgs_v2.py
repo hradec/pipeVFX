@@ -1452,7 +1452,8 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.llvm, version='10.0.1')
+        build.github_phase_one_version(ARGUMENTS, {self.llvm : version for version in self.llvm.keys()})
+        # build.github_phase(self.llvm, version='10.0.1')
         # build.github_phase(self.llvm, version='7.1.0')
         # build.github_phase(self.llvm, version='3.9.1')
         # build.github_phase(self.llvm, version='9.0.0')
@@ -3386,208 +3387,216 @@ class all: # noqa
             usd_CORES  = os.environ['CORES']
             if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
                 usd_CORES  = "1"
-            usd = build.cmake(
-                ARGUMENTS,
-                'usd',
-                sed = usd_sed,
-                targetSuffix=bsufix,
-                download=[(
-                #     # theres no CY for USD - not in VFX Platform yet.
-                #     # so lets build the one in Gaffer dependencies
-                #     'https://github.com/PixarAnimationStudios/USD/archive/v18.09.tar.gz',
-                #     'USD-18.09.tar.gz',
-                #     '18.9.0',
-                #     '10a06767c6a9c69733bb5f9fbadcb52a',
-                #     {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', opensubdiv: '3.3.3', alembic: '1.6.1',
-                #     hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
-                #     boost: '1.55.0',
-                #     self.ilmbase['boost.1.55.0']: exr_version,
-                #     self.openexr['boost.1.55.0']: exr_version,
-                #     self.oiio['boost.1.55.0']: '1.6.15' },
-                # ),(
-                #     # this is the latest for now - nov/2019
-                #     'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
-                #     'USD-19.07.tar.gz',
-                #     '19.7.0',
-                #     '8d274089364cfed23004ae52fa3d258f',
-                #     {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
-                #     cmake: '3.18.2', tbb: '4.4.6',
-                #     boost: bv,
-                #     self.ilmbase[bsufix]: exr_version,
-                #     self.openexr[bsufix]: exr_version,
-                #     self.oiio   [bsufix]: '1.8.10'},
-                #
-                # ),(
-                    # this is the latest for now - sept/2020
-                    'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
-                    'USD-20.08.tar.gz',
-                    '20.8.0',
-                    'e7f31719ef2359c939d23871333a763a',
-                    {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                    self.tbb: '2019_U6', self.embree: '3.2.2',
-                    self.boost: bv,
-                    self.opensubdiv[bsufix]: '3.4.0',
-                    self.materialx[bsufix] : '1.37.4',
-                    self.openvdb[bsufix] : '7.0.0',
-                    self.alembic[bsufix] : '1.7.11',
-                    self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
-                    latest_osl.obj : latest_osl.version,
-                    latest_osl['oiio'     ].obj: latest_osl['oiio'],
-                    latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                    latest_osl['openexr'  ].obj: latest_osl['openexr'],
-                    self.pyilmbase[bsufix]     : latest_osl['openexr']}
-                ),(
-                    # this is the latest for now - sept/2020
-                    'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
-                    'USD-21.05.tar.gz',
-                    '21.5.0',
-                    'f63736f66fe7f81d17c7a046cb6dbc39',
-                    {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                    self.tbb: '2019_U6', self.embree: '3.2.2',
-                    self.boost: bv,
-                    self.opensubdiv[bsufix]: '3.4.0',
-                    self.materialx[bsufix] : '1.38.0',
-                    self.openvdb[bsufix] : '8.2.0',
-                    self.alembic[bsufix] : '1.7.11',
-                    self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
-                    latest_osl.obj : latest_osl.version,
-                    latest_osl['oiio'     ].obj: latest_osl['oiio'],
-                    latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                    latest_osl['openexr'  ].obj: latest_osl['openexr'],
-                    self.pyilmbase[bsufix]     : latest_osl['openexr']}
-                ),(
-                    # this is the latest for now - sept/2020
-                    'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.11.tar.gz',
-                    'USD-21.11.tar.gz',
-                    '21.11.0',
-                    '7fe232df5c732fedf466d33ff431ce33',
-                    {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                    self.tbb: '2019_U6', self.embree: '3.2.2',
-                    self.boost: bv,
-                    self.opensubdiv[bsufix]: '3.4.0',
-                    self.materialx[bsufix] : '1.37.4',
-                    self.openvdb[bsufix] : '8.2.0',
-                    self.alembic[bsufix] : '1.7.11',
-                    self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
-                    latest_osl.obj : latest_osl.version,
-                    latest_osl['oiio'     ].obj: latest_osl['oiio'],
-                    latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                    latest_osl['openexr'  ].obj: latest_osl['openexr'],
-                    self.pyilmbase[bsufix]     : latest_osl['openexr']}
-                )],
-                # baseLibs=[python],
-                depend=[
-                    self.clew[bsufix], self.lz4[bsufix], self.clew[bsufix],
-                    self.seexpr[bsufix], self.xerces[bsufix],
-                    self.icu, self.embree, self.ocio,
-                    self.hdf5, self.glfw, self.glew, self.ptex,
-                    self.pyside, self.qt, self.python, self.jemalloc
-                ],
-                cmd = [
-                    "mkdir build",
-                    "cd build",
-                    # we need to do this since USD 21 will insist in using the system tbb!!
-                    "mv /usr/lib64/libtbb.so.2 /usr/lib64/__libtbb.so.2__",
-                    # "export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH" % os.popen("dirname $(ldconfig -p | grep libc.so.6 | awk '{print $(NF)}')").readlines()[0].strip(),
-                    # "echo $LD_LIBRARY_PATH",
-                    "cmake --build --target install --parallel $CORES ..",
-                    # patch generated files to remove any "-isystem /usr/include" from the build cmd lines, to avoid gcc errors!
-                    "( grep '.isystem /usr/include' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak -e 's/.isystem .usr.include/-I \/usr\/include/g' $p ; done )",
-                    # now we can build!
-                    "make -j $CORES",
-                    "make -j $CORES install",
-                    "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
-                    # now we can return the system tbb back
-                    "mv /usr/lib64/__libtbb.so.2__ /usr/lib64/libtbb.so.2",
+            for MONOLITHIC in [1,0]:
+                extra_sufix = ""
+                if MONOLITHIC == 0:
+                    extra_sufix += '.non_monolithic'
+                usd_sufix = bsufix+extra_sufix
+                usd = build.cmake(
+                    ARGUMENTS,
+                    'usd',
+                    sed = usd_sed,
+                    targetSuffix=bsufix,
+                    extraTargetSuffix=extra_sufix,
+                    download=[(
+                    #     # theres no CY for USD - not in VFX Platform yet.
+                    #     # so lets build the one in Gaffer dependencies
+                    #     'https://github.com/PixarAnimationStudios/USD/archive/v18.09.tar.gz',
+                    #     'USD-18.09.tar.gz',
+                    #     '18.9.0',
+                    #     '10a06767c6a9c69733bb5f9fbadcb52a',
+                    #     {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', opensubdiv: '3.3.3', alembic: '1.6.1',
+                    #     hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
+                    #     boost: '1.55.0',
+                    #     self.ilmbase['boost.1.55.0']: exr_version,
+                    #     self.openexr['boost.1.55.0']: exr_version,
+                    #     self.oiio['boost.1.55.0']: '1.6.15' },
+                    # ),(
+                    #     # this is the latest for now - nov/2019
+                    #     'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
+                    #     'USD-19.07.tar.gz',
+                    #     '19.7.0',
+                    #     '8d274089364cfed23004ae52fa3d258f',
+                    #     {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
+                    #     cmake: '3.18.2', tbb: '4.4.6',
+                    #     boost: bv,
+                    #     self.ilmbase[bsufix]: exr_version,
+                    #     self.openexr[bsufix]: exr_version,
+                    #     self.oiio   [bsufix]: '1.8.10'},
+                    #
+                    # ),(
+                        # this is the latest for now - sept/2020
+                        'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
+                        'USD-20.08.tar.gz',
+                        '20.8.0',
+                        'e7f31719ef2359c939d23871333a763a',
+                        {self.gcc: '6.3.1', self.cmake: '3.18.2',
+                        self.tbb: '2019_U6', self.embree: '3.2.2',
+                        self.boost: bv,
+                        self.opensubdiv[bsufix]: '3.4.0',
+                        self.materialx[bsufix] : '1.37.4',
+                        self.openvdb[bsufix] : '7.0.0',
+                        self.alembic[bsufix] : '1.7.11',
+                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
+                        latest_osl.obj : latest_osl.version,
+                        latest_osl['oiio'     ].obj: latest_osl['oiio'],
+                        latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
+                        latest_osl['openexr'  ].obj: latest_osl['openexr'],
+                        self.pyilmbase[bsufix]     : latest_osl['openexr']}
+                    ),(
+                        # this is the latest for now - sept/2020
+                        'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
+                        'USD-21.05.tar.gz',
+                        '21.5.0',
+                        'f63736f66fe7f81d17c7a046cb6dbc39',
+                        {self.gcc: '6.3.1', self.cmake: '3.18.2',
+                        self.tbb: '2019_U6', self.embree: '3.2.2',
+                        self.boost: bv,
+                        self.opensubdiv[bsufix]: '3.4.0',
+                        self.materialx[bsufix] : '1.38.0',
+                        self.openvdb[bsufix] : '8.2.0',
+                        self.alembic[bsufix] : '1.7.11',
+                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
+                        latest_osl.obj : latest_osl.version,
+                        latest_osl['oiio'     ].obj: latest_osl['oiio'],
+                        latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
+                        latest_osl['openexr'  ].obj: latest_osl['openexr'],
+                        self.pyilmbase[bsufix]     : latest_osl['openexr']}
+                    ),(
+                        # this is the latest for now - sept/2020
+                        'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.11.tar.gz',
+                        'USD-21.11.tar.gz',
+                        '21.11.0',
+                        '7fe232df5c732fedf466d33ff431ce33',
+                        {self.gcc: '6.3.1', self.cmake: '3.18.2',
+                        self.tbb: '2019_U6', self.embree: '3.2.2',
+                        self.boost: bv,
+                        self.opensubdiv[bsufix]: '3.4.0',
+                        self.materialx[bsufix] : '1.37.4',
+                        self.openvdb[bsufix] : '8.2.0',
+                        self.alembic[bsufix] : '1.7.11',
+                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
+                        latest_osl.obj : latest_osl.version,
+                        latest_osl['oiio'     ].obj: latest_osl['oiio'],
+                        latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
+                        latest_osl['openexr'  ].obj: latest_osl['openexr'],
+                        self.pyilmbase[bsufix]     : latest_osl['openexr']}
+                    )],
+                    # baseLibs=[python],
+                    depend=[
+                        self.clew[bsufix], self.lz4[bsufix], self.clew[bsufix],
+                        self.seexpr[bsufix], self.xerces[bsufix],
+                        self.icu, self.embree, self.ocio,
+                        self.hdf5, self.glfw, self.glew, self.ptex,
+                        self.pyside, self.qt, self.python, self.jemalloc
+                    ],
+                    cmd = [
+                        "mkdir build",
+                        "cd build",
+                        # we need to do this since USD 21 will insist in using the system tbb!!
+                        "mv /usr/lib64/libtbb.so.2 /usr/lib64/__libtbb.so.2__",
+                        # "export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH" % os.popen("dirname $(ldconfig -p | grep libc.so.6 | awk '{print $(NF)}')").readlines()[0].strip(),
+                        # "echo $LD_LIBRARY_PATH",
+                        "cmake --build --target install --parallel $CORES ..",
+                        # patch generated files to remove any "-isystem /usr/include" from the build cmd lines, to avoid gcc errors!
+                        "( grep '.isystem /usr/include' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak -e 's/.isystem .usr.include/-I \/usr\/include/g' $p ; done )",
+                        # now we can build!
+                        "make -j $CORES",
+                        "make -j $CORES install",
+                        "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
+                        # now we can return the system tbb back
+                        "mv /usr/lib64/__libtbb.so.2__ /usr/lib64/libtbb.so.2",
 
-                ],
-                flags=[
-                    # installation prefix
-                    "-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER",
-                    "-D CMAKE_PREFIX_PATH=$INSTALL_FOLDER",
+                    ],
+                    flags=[
+                        # installation prefix
+                        "-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER",
+                        "-D CMAKE_PREFIX_PATH=$INSTALL_FOLDER",
 
-                    # libraries locations
-                    "-D TBB_ROOT_DIR=$TBB_TARGET_FOLDER",
-                    "-D BOOST_ROOT=$BOOST_TARGET_FOLDER",
-                    "-D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR",
-                    "-D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER",
-                    "-D HDF5_LOCATION=$HDF5_TARGET_FOLDER",
-                    "-D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib",
-                    "-D GLEW_LOCATION=$GLEW_TARGET_FOLDER/",
-                    "-D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER",
-                    "-D OIIO_LOCATION=$OIIO_TARGET_FOLDER",
-                    "-D OSL_LOCATION=$OSL_TARGET_FOLDER",
-                    "-D PTEX_LOCATION=$PTEX_TARGET_FOLDER",
-                    "-D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER",
-                    "-D MATERIALX_LIB_DIRS=$MATERIALX_TARGET_FOLDER/lib/",
-                    "-D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/",
-                    "-D PYSIDEUICBINARY=$PYSIDE_TARGET_FOLDER/bin/uic",
+                        # libraries locations
+                        "-D TBB_ROOT_DIR=$TBB_TARGET_FOLDER",
+                        "-D BOOST_ROOT=$BOOST_TARGET_FOLDER",
+                        "-D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR",
+                        "-D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER",
+                        "-D HDF5_LOCATION=$HDF5_TARGET_FOLDER",
+                        "-D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib",
+                        "-D GLEW_LOCATION=$GLEW_TARGET_FOLDER/",
+                        "-D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER",
+                        "-D OIIO_LOCATION=$OIIO_TARGET_FOLDER",
+                        "-D OSL_LOCATION=$OSL_TARGET_FOLDER",
+                        "-D PTEX_LOCATION=$PTEX_TARGET_FOLDER",
+                        "-D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER",
+                        "-D MATERIALX_LIB_DIRS=$MATERIALX_TARGET_FOLDER/lib/",
+                        "-D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/",
+                        "-D PYSIDEUICBINARY=$PYSIDE_TARGET_FOLDER/bin/uic",
 
-                    # boost options
-                    "-D Boost_NO_SYSTEM_PATHS=ON",
-                    "-D Boost_NO_BOOST_CMAKE=ON",
+                        # boost options
+                        "-D Boost_NO_SYSTEM_PATHS=ON",
+                        "-D Boost_NO_BOOST_CMAKE=ON",
 
-                    # fix malloc problem with newer glibc (better performance too)
-                    "-D PXR_MALLOC_LIBRARY:path=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
-                    "-D PXR_MALLOC_LIBRARY=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
+                        # fix malloc problem with newer glibc (better performance too)
+                        "-D PXR_MALLOC_LIBRARY:path=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
+                        "-D PXR_MALLOC_LIBRARY=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
 
-                    # embree
-                    # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
-                    # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
+                        # embree
+                        # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
+                        # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
 
-                    # enable plugins
-                    "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
-                    "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
-                    "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
-                    "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
-                    "-D PXR_BUILD_IMAGING=ON",
-                    "-D PXR_BUILD_USD_IMAGING=ON",
+                        # enable plugins
+                        "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
+                        "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
+                        "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
+                        "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
+                        "-D PXR_BUILD_IMAGING=ON",
+                        "-D PXR_BUILD_USD_IMAGING=ON",
 
-                    # enable support to different components.
-                    "-D PXR_BUILD_TESTS=ON",
-                    "-D PXR_BUILD_GPU_SUPPORT=ON",
-                    "-D PXR_ENABLE_HDF5_SUPPORT=ON",
-                    "-D PXR_ENABLE_OSL_SUPPORT=ON",
-                    "-D PXR_ENABLE_PTEX_SUPPORT=ON",
+                        # enable support to different components.
+                        "-D PXR_BUILD_TESTS=ON",
+                        "-D PXR_BUILD_GPU_SUPPORT=ON",
+                        "-D PXR_ENABLE_HDF5_SUPPORT=ON",
+                        "-D PXR_ENABLE_OSL_SUPPORT=ON",
+                        "-D PXR_ENABLE_PTEX_SUPPORT=ON",
 
-                    # build options to improve compatibility (gaffer/cortex)
-                    "-D PXR_BUILD_MONOLITHIC=ON",
-                    "-D VERBOSE=1",
-                    "-D CMAKE_CXX_STANDARD=11",
-                    "-D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
-                    "-D_GLIBCXX_USE_CXX11_ABI=0",
-                ],
-                environ = {
-                    # we need boost first of everything else since icu also has regex.h
-                    'LD'        : 'ld',
-                    'CFLAGS'    : ' '.join([
-                        ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w ',#'-isystem $BOOST_TARGET_FOLDER/include/boost ',
-                    ]),
-                    'CXXFLAGS'  : ' '.join([
-                        ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w ',#'-isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options ',
-                    ]),
-                    'LDFLAGS'   : ' '.join([
-                        '$LDFLAGS -lboost_regex -lboost_program_options',
-                    ]),
-                    'LD_PRELOAD': ':'.join([
-                        '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
-                        '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
-                    ]),
-                    'CORES'  : usd_CORES,
-                    'DCORES' : usd_CORES,
-                    'HCORES' : usd_CORES,
-                    'CPATH'  : '$CPATH:'+self.exr_rpath_environ['CPATH'],
-                    'RPATH'  : '$RPATH:'+self.exr_rpath_environ['RPATH'],
-                },
-                # verbose=1,
-            )
-            self.usd[bsufix] = usd
-            self.masterVersion['usd'] = '21.5.0'
+                        # build options to improve compatibility (gaffer/cortex)
+                        "-D PXR_BUILD_MONOLITHIC=%d" % MONOLITHIC,
+                        "-D VERBOSE=1",
+                        "-D CMAKE_CXX_STANDARD=11",
+                        "-D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
+                        "-D_GLIBCXX_USE_CXX11_ABI=0",
+                    ],
+                    environ = {
+                        # we need boost first of everything else since icu also has regex.h
+                        'LD'        : 'ld',
+                        'CFLAGS'    : ' '.join([
+                            ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w ',#'-isystem $BOOST_TARGET_FOLDER/include/boost ',
+                        ]),
+                        'CXXFLAGS'  : ' '.join([
+                            ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w ',#'-isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options ',
+                        ]),
+                        'LDFLAGS'   : ' '.join([
+                            '$LDFLAGS -lboost_regex -lboost_program_options',
+                        ]),
+                        'LD_PRELOAD': ':'.join([
+                            '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                            '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                        ]),
+                        'CORES'  : usd_CORES,
+                        'DCORES' : usd_CORES,
+                        'HCORES' : usd_CORES,
+                        'CPATH'  : '$CPATH:'+self.exr_rpath_environ['CPATH'],
+                        'RPATH'  : '$RPATH:'+self.exr_rpath_environ['RPATH'],
+                    },
+                    # verbose=1,
+                )
+                if usd_sufix not in self.usd:
+                    self.usd[usd_sufix] = usd
 
-            # ============================================================================================================================================
-            # github build point so we can split the build in multiple matrix jobs in github actions
-            # ============================================================================================================================================
-            build.github_phase_one_version(ARGUMENTS, {self.usd[bsufix] : self.masterVersion['usd']})
+
+                self.masterVersion['usd'] = '21.5.0'
+                # ============================================================================================================================================
+                # github build point so we can split the build in multiple matrix jobs in github actions
+                # ============================================================================================================================================
+                build.github_phase_one_version(ARGUMENTS, {self.usd[usd_sufix] : self.masterVersion['usd']})
 
         # ============================================================================================================================================
         # download stuff for gaffer
