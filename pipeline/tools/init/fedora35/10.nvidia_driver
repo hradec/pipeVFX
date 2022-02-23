@@ -5,6 +5,8 @@ export nomonitor='farm-023'
 export nomonitor4k='farm-023'
 export nomonitor2k='ws-033'
 
+export PATH=$PATH:/usr/sbin:/usr/bin:/sbin:/bin
+
 # wait if we have another instancing running!
 wait4modules() {
     while [ "$(pgrep -fa NVIDIA.Linux)" != "" ] || [ "$(pgrep -fa depmod)" != "" ]; do
@@ -26,41 +28,42 @@ if [ "$(lspci | grep 'NVIDIA' | grep VGA)" != "" ] ; then
     wait4modules
 
     # now we install if needed (if not installed yet, or if it failed before!)
-    lsmod | grep nvidia | grep -v i2c
-    if [ "$(lsmod | grep nvidia | grep -v i2c)" == "" ] ; then
-     	systemctl stop gdm
+    if [ "$(which nvidia-smi)" == "" ] ; then
+        if [ "$(lsmod | grep nvidia | grep -v i2c)" == "" ] ; then
+         	systemctl stop gdm
 
-    	rm -rf /etc/X11/xorg.conf
-    	cp $tools/init/nvidiagpu/52*.conf /etc/X11/xorg.conf.d/
-        driver=$(basename $(ls -lrt $tools/init/nvidiagpu/NVIDIA* | tail -1 | awk '{print $(NF)}'))
-    	# ==============================================================================================
-     	# the machine has a NVIDIA and the linux has no driver for it. Install the latest nvidia driver
-    	# ==============================================================================================
-        /bin/sh $tools/init/nvidiagpu/$driver -A --help
-    	if [ "$(dmesg | grep 'None of the NVIDIA graphics adapters were initialized')" != "" ]  ; then
-            rmmod nouveau
-           	/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
-        # ==============================================================================================
-     	# the machine has an old NVIDIA GPU, so lets use nouveau!
-    	# ==============================================================================================
-        # elif [ "$(dmesg | grep 'supported through the NVIDIA 340.xx Legacy drivers.')" != "" ] ; then
-        elif [ "$(lspci | grep VGA | grep GT218)" != "" ] ; then
-            #driver=$(basename $(ls -lrt $tools/init/nvidiagpu/NVIDIA*340* | tail -1 | awk '{print $(NF)}'))
-            #/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check >> /tmp/nvidia.log 2>&1
-            /bin/sh $tools/init/nvidiagpu/NVIDIA-Linux-x86_64-340.108-patched-kernel-5.16.run  -a  -s  --no-abi-note  --ui=none --no-x-check >> /tmp/nvidia.log 2>&1
-    	# ==============================================================================================
-     	# the machine has a NVIDIA GTX1070, so lets install the latest nvidia driver to keep it up2date
-    	# ==============================================================================================
-    	elif [ "$(lspci  | grep VGA.*GTX.*1070)" != "" ] ; then
-            rmmod nouveau
-            /bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
-        else
-            rmmod nouveau
-           	/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
-     	fi
-        wait4modules
-        nvidia-modprobe
+        	rm -rf /etc/X11/xorg.conf
+        	cp $tools/init/nvidiagpu/52*.conf /etc/X11/xorg.conf.d/
+            driver=$(basename $(ls -lrt $tools/init/nvidiagpu/NVIDIA* | tail -1 | awk '{print $(NF)}'))
+        	# ==============================================================================================
+         	# the machine has a NVIDIA and the linux has no driver for it. Install the latest nvidia driver
+        	# ==============================================================================================
+            /bin/sh $tools/init/nvidiagpu/$driver -A --help
+        	if [ "$(dmesg | grep 'None of the NVIDIA graphics adapters were initialized')" != "" ]  ; then
+                rmmod nouveau
+               	/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
+            # ==============================================================================================
+         	# the machine has an old NVIDIA GPU, so lets use nouveau!
+        	# ==============================================================================================
+            # elif [ "$(dmesg | grep 'supported through the NVIDIA 340.xx Legacy drivers.')" != "" ] ; then
+            elif [ "$(lspci | grep VGA | grep GT218)" != "" ] ; then
+                #driver=$(basename $(ls -lrt $tools/init/nvidiagpu/NVIDIA*340* | tail -1 | awk '{print $(NF)}'))
+                #/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check >> /tmp/nvidia.log 2>&1
+                /bin/sh $tools/init/nvidiagpu/NVIDIA-Linux-x86_64-340.108-patched-kernel-5.16.run  -a  -s  --no-abi-note  --ui=none --no-x-check >> /tmp/nvidia.log 2>&1
+        	# ==============================================================================================
+         	# the machine has a NVIDIA GTX1070, so lets install the latest nvidia driver to keep it up2date
+        	# ==============================================================================================
+        	elif [ "$(lspci  | grep VGA.*GTX.*1070)" != "" ] ; then
+                rmmod nouveau
+                /bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
+            else
+                rmmod nouveau
+               	/bin/sh $tools/init/nvidiagpu/$driver -a  -s  --no-abi-note  --ui=none --no-x-check --force-libglx-indirect >> /tmp/nvidia.log 2>&1
+         	fi
+            wait4modules
+        fi
     fi
+    nvidia-modprobe
 
     # now wait again, since the installer can release the flow but can still be
     # doing things in the background.
@@ -75,8 +78,9 @@ if [ "$(lspci | grep 'NVIDIA' | grep VGA)" != "" ] ; then
     fi
 
     # ===============================================================================================================
-    # double check if everythin is installed correct, and restart gdm!
+    # double check if everything is installed correct, and restart gdm!
     # ===============================================================================================================
+    lsmod | grep nvidia | grep -v i2c
     if [ "$(lsmod | grep nvidia | grep -v i2c)" != "" ] ; then
         echo ==================================================================
         date
