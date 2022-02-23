@@ -1,0 +1,3 @@
+#!/bin/bash
+
+curl -L -O  https:$(curl -L https://www.nvidia.com$(curl -L "$(curl -L 'https://www.nvidia.com/en-us/drivers/unix/' | grep 'Latest Production Branch' | head -1 | awk -F'"' '{print $2}')" | egrep 'href.*NVIDIA-Linux-x86_64' | awk -F'"' '{print $2}') | grep 'href.*NVIDIA-Linux-x86_64' | awk -F'"' '{print $2}')
