@@ -123,6 +123,9 @@ jobs:
 
     # - name: 'Install Python Modules'
     #   run: pip install PyJWT==1.7.1 PyGitHub==1.45
+    - name: Install json2yaml
+      run: |
+        sudo npm install -g json2yaml
 
     - uses: actions/checkout@v2
       with:
