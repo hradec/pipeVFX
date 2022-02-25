@@ -1,0 +1,22 @@
+#!/bin/bash
+
+central_rc_local() {
+	tftp=192.168.1.231
+
+	# wait for tftp server
+	echo -n "Waiting for tftp server."
+	while [ "$(ping -W 5  -c 1 192.168.1.231 2>&1 | grep -i unreachable)" != "" ] ; do 
+		echo -n .
+		sleep 5
+	done
+	echo " [ Done ]"
+
+	# get fedora init script from tftp and execute it
+	cd /etc/
+	tftp 192.168.1.231 -c get /fedora.rc.local
+	chmod a+x /etc/fedora.rc.local
+	. /etc/fedora.rc.local
+}
+central_rc_local
+
+exit 0
