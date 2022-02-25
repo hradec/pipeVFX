@@ -3138,7 +3138,7 @@ class all: # noqa
                     # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
                     'CPATH' : '$CPATH:'+self.exr_rpath_environ['CPATH'],
                     'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
-                    'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib -lhdf5_hl $LDFLAGS ',
+                    'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib -lhdf5_hl  $LDFLAGS ',
                     'LD_PRELOAD': ':'.join([
                         '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
                         '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',

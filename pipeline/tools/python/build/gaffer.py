@@ -323,9 +323,7 @@ def legacy(pkgs):
                         environ = cortex_environ,
                     )
     '''
-    # for sufix in pkgs.cortex:
-    #     for version in pkgs.cortex[sufix].versions():
-    #         build.github_phase_one_version(ARGUMENTS, {pkgs.cortex[sufix] : version})
+
 
 
 

@@ -204,9 +204,11 @@ class alembic(cmake):
     ''' a dedicated build class for alembic versions'''
     cmd = [
         # fix for pyilmbase 2.4.0 and up
-        'export PYIMATH_MODULE=imathmodule.so',
-        '[ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYIMATH_MODULE=imath.so || true',
-        '[ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER || true',
+        '''export PYIMATH_LIBRARY=libPyImath.so''',
+        '''export PYIMATH_MODULE=imathmodule.so''',
+        '''[ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYIMATH_LIBRARY=libPyImath_Python$(echo $PYTHON_VERSION | awk -F'.' '{print $1"_"$2}')-$(echo $OPENEXR_VERSION | awk -F'.' '{print $1"_"$2}').so || true''',
+        '''[ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYIMATH_MODULE=imath.so || true''',
+        '''[ "$PYILMBASE_TARGET_FOLDER" == "" ] && export PYILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER || true''',
         # force cmake to use our RPATH env var
         ''' grep 'INSTALL_RPATH ' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak  -e 's/INSTALL_RPATH /INSTALL_RPATH \$ENV{RPATH}:/' $p ; done''',
         ' cmake $SOURCE_FOLDER -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
@@ -292,7 +294,7 @@ class alembic(cmake):
             '-DALEMBIC_PYILMBASE_MODULE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
             '-DALEMBIC_PYILMBASE_PYIMATH_MODULE=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/$PYIMATH_MODULE',
             '-DALEMBIC_PYIMATH_MODULE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
-            '-DALEMBIC_PYILMBASE_PYIMATH_LIB=$PYILMBASE_TARGET_FOLDER/lib/',
+            '-DALEMBIC_PYILMBASE_PYIMATH_LIB=$PYILMBASE_TARGET_FOLDER/lib/$PYIMATH_LIBRARY',
             '-DALEMBIC_PYILMBASE_INCLUDE_DIRECTORY=$PYILMBASE_TARGET_FOLDER/include/OpenEXR/',
             '-DPYILMBASE_LIBRARY_DIR=$PYILMBASE_TARGET_FOLDER/lib/',
             '-DALEMBIC_PYTHON_ROOT=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/config',
@@ -317,7 +319,7 @@ class alembic(cmake):
 
         cmd = cmd.replace('cmake', 'cmake  -DBUILD_SHARED_LIBS:BOOL="TRUE"  -DBUILD_STATIC_LIBS:BOOL="FALSE" ')
 
-        for each in self.flags+extra_flags:
+        for each in extra_flags:
             if 'cmake' in cmd and each.split('=')[0] not in cmd:
                 cmd = cmd.replace('cmake','cmake '+each+' ')
 
