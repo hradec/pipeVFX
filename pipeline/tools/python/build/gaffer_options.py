@@ -40,6 +40,7 @@ if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 4.2:
     CXXSTD = "c++11"
 if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 6.0:
     CXXSTD = "c++14"
+    CXXFLAGS += ["-fno-sized-deallocation"]
 
 # INSTALL_DIR = os.environ['INSTALL_FOLDER']
 BUILD_DIR='/tmp/build/gaffer-${GAFFER_MAJOR_VERSION}.${GAFFER_MINOR_VERSION}.${GAFFER_PATCH_VERSION}-${GAFFER_PLATFORM}-python'+'.'.join(python.split('.')[:2])
