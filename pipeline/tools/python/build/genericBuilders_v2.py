@@ -2059,9 +2059,10 @@ class generic:
         if float(_p) > 1.0:
             folders += ['lib/python%s/site-packages' % _p]
 
-        for n in folders:
-            path = '%s/%s' % (os_environ['INSTALL_FOLDER'], n )
-            os.system( 'mkdir -p "%s"' % path )
+        if not hasattr(self,'no_folder_install_checking') or not self.no_folder_install_checking:
+            for n in folders:
+                path = '%s/%s' % (os_environ['INSTALL_FOLDER'], n )
+                os.system( 'mkdir -p "%s"' % path )
 
         # PATH         = ['$INSTALL_FOLDER/bin'] + PATH
         # LIBRARY_PATH = [
@@ -2148,9 +2149,10 @@ class generic:
             if self.patch:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
 
-        patches = glob( '%s/../../patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION']) )
-        if patches:
-            cmd = ' && '.join([ self.__patches(patches), cmd ])
+        if not self.do_not_use:
+            patches = glob( '%s/../../patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION']) )
+            if patches:
+                cmd = ' && '.join([ self.__patches(patches), cmd ])
 
         cmd = cmd.replace('"','\"') #.replace('$','\$')
         _print( bcolors.WARNING+':'+bcolors.BLUE+'\tCORES: '+bcolors.WARNING+os_environ['CORES'], \

@@ -91,12 +91,29 @@ class github_phase(wait4dependencies):
 
 class github_phase_one_version(wait4dependencies):
     ''' used to create a default alias for the build of the packages we want. '''
+    noMinTime=True
+    dontUseTargetSuffixForFolders = 1
+    do_not_use=True
+    globalDependency = True
+    no_folder_install_checking=True
     def __init__(self, args, wait4={}, cmd=["echo Done!!!!!"], depend=[], **kargs):
         self.cmd = cmd
         self.wait4 = wait4
         globals()['github_phases'] += 1
         alias = 'phase'+str(globals()['github_phases'])
         version = '1.0.0'
+
+        # we use the same name as the dependency, so the system wont create
+        # install folders for this class.
+        # we use targetSuffix to isolate the control files from everything else.
+        name = alias
+        if wait4.keys():
+            name = wait4.keys()[0].name
+            version = wait4[wait4.keys()[0]]
+        elif depend:
+            name = depend[0].name
+            version = depend[0].keys()[-1]
+
         # wait4dependencies.__init__(self, wait4, alias, version=version, cmd=cmd, depend=depend, dependVersion=dependVersion, **kargs)
         genericBuilders.s_print( 'github phase: %s => %s(%s)' % ( alias, str([ x.name+' '+x.targetSuffix+x.extraTargetSuffix for x in wait4 ]), str([ wait4[x] for x in wait4 ]) ) )
         download = [ (None,"wait4.%s.%s" % (alias, version), version, None, wait4) ]
@@ -107,7 +124,7 @@ class github_phase_one_version(wait4dependencies):
         for d in download:
             os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
 
-        configure.__init__(self, args, alias, download, src='configure', depend=depend, **kargs )
+        configure.__init__(self, args, name, download, targetSuffix=alias, src='configure', depend=depend, **kargs )
         self.env.Alias( alias, target )
 
 
