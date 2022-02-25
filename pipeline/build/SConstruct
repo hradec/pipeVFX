@@ -109,7 +109,7 @@ if canBuildCortexNow:
     pkgs.maya_openvdb = {}
     maya_dependency = {}
     # maya_dependency['2016.5'] = { 'usd' : USD_VERSION, 'boost' : '1.61.0' }
-    # maya_dependency['2022'  ] = { 'usd' : USD_VERSION, 'boost' : '1.66.0' }
+    maya_dependency['2022'  ] = { 'usd' : USD_VERSION, 'boost' : '1.66.0' }
     maya_dependency['2022.2'] = { 'usd' : USD_VERSION, 'boost' : '1.66.0' }
     for mv in maya_dependency:
         version = mv
@@ -122,7 +122,7 @@ if canBuildCortexNow:
 
         # maya cortex and gaffer
         cortex = build.cortex(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs, apps=[(pipe.apps.maya, version)])
-        gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs, apps=[(pipe.apps.maya, version)])
+        # gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs, apps=[(pipe.apps.maya, version)])
 
         # maya USD plugins
         boost_sufix = "boost.%s" % maya_dependency[version]['boost']
