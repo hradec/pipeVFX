@@ -203,7 +203,13 @@ jobs:
     # name of the next phase, so the next phase can download and extract!
     - name: save out pipeline/libs/ folder as artifact
       run: |
-        export NEXT_MATRIX_NAME=$(echo $(expr $(echo ${{ matrix.name }} | sed 's/phase//') + 1) | awk '{print "phase"$1}') ;\
+        export MATRIX=${{fromJson(needs.matrix.outputs.matrix)}} ;\
+        export LAST=$(echo $MATRIX  | json2yaml  | grep 'all' -B2 | head -n 1 | awk -F'"' '{print $2}' | sed 's/phase//') ;\
+        echo $MATRIX | json2yaml ;\
+        export NEXT=$(expr $(echo ${{ matrix.name }} | sed 's/phase//') + 1)
+        echo "$LAST $NEXT" ;\
+        export NEXT_MATRIX_NAME=$(echo $NEXT | awk '{print "phase"$1}') ;\
+        [ $NEXT -gt $LAST ] export NEXT_MATRIX_NAME="all" ; \
         echo "NEXT_MATRIX_NAME=$NEXT_MATRIX_NAME" >> $GITHUB_ENV ;\
         tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
 
