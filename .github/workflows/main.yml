@@ -210,11 +210,11 @@ jobs:
             export MATRIX='${{ needs.matrix.outputs.matrix }}'
             export NEXT_MATRIX_NAME=$(echo $MATRIX  | sed -e 's/[{}",:[]//g' -e 's/]//g' -e 's/name//g' | awk '{print $('$NEXT')}')
             [ "$NEXT_MATRIX_NAME" == "" ] && export NEXT_MATRIX_NAME="all"
-            export NEXT_MATRIX_NAME="-$NEXT_MATRIX_NAME"
+            export NEXT_MATRIX_NAME="$NEXT_MATRIX_NAME"
         fi
         echo $NEXT_MATRIX_NAME ;\
         echo "NEXT_MATRIX_NAME=$NEXT_MATRIX_NAME" >> $GITHUB_ENV ;\
-        tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
+        tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
 
     # upload next-phase artifact
     - name: upload pipeline/libs as artifact
