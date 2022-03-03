@@ -138,76 +138,75 @@ if ! nbd-client -check /dev/nbd0 > /dev/null; then
     # and boot from it, using COW with the local disk.
     cache=$(blkid | grep CACHE | awk -F':' '{print $1}')
     if [ "$cache" != "" ] ; then
-	fsck -y -v $cache >&2
-	mkdir -p /tmp/CACHE
-	mount $cache /tmp/CACHE
-	if [ -e /tmp/CACHE/.nbd0 ] ; then
-		labelCACHE=$(blkid -D /tmp/CACHE/.nbd0 | sed 's/ /\n/g' | grep LABEL | awk -F'"' '{print $2}')
-		labelNBD0=$(blkid -D /dev/nbd0 | sed 's/ /\n/g' | grep LABEL | awk -F'"' '{print $2}')
-		warn "NBD0  image md5: $labelNBD0"
-		warn "CACHE image md5: $labelCACHE"
-		if [ "$labelCACHE" != "$labelNBD0" ] ; then
-			UPDATE="1"
-		fi
-		mkdir /tmp/local_cache
-		mount -o ro /tmp/CACHE/.nbd0 /tmp/local_cache
-		if [ $? -ne 0 ] ; then
-			UPDATE="1"
-		fi
-		umount /tmp/local_cache > /dev/null 2>&1
-		rm -rf  /tmp/local_cache
-		if [ "$UPDATE" != "" ] ; then
-			warn "$(printf '\n\n\nUpdating cache with latest network boot drive. Please wait...\n\n')"
-			dd if=/dev/nbd0 of=/tmp/CACHE/.nbd0 bs=10M status=progress >&2
-			if [ $? -ne 0 ] ; then
-				warn "$(printf '\n\nFAILED TO COPY NBD0 TO CACHE DISK!!\n\n')"
-				sleep 15
-			else
-				warn "$(printf '\n\nFinished! Continuing boot...\n\n\n')"
-			fi
-		fi
-		warn "$(printf 'Creating writable area on cache disk...\n')"
-		fallocate -l 32G /tmp/CACHE/.cow
-		echo y | mkfs.ext4 /tmp/CACHE/.cow
-		mount -o rw /tmp/CACHE/.cow /tmp/cow
-		mkdir -p /tmp/cow/lower
-		mkdir -p /tmp/cow/upper
-		mkdir -p /tmp/cow/work
-		warn "$(printf 'Mounting NBD0 cached copy and writable area as root...\n')"
-		mount -o ro /tmp/CACHE/.nbd0 /tmp/cow/lower
-		mount -t overlay overlay -o lowerdir=/tmp/cow/lower,upperdir=/tmp/cow/upper,workdir=/tmp/cow/work /sysroot
-		if [ $? -ne 0 ] ; then
-			warn "$(printf 'FAILED MOUNTING ROOT USING CACHE DISK... Reverting to booting directly from NBD0 netboot disk...\n')"
-		else
-			mkdir -p /sysroot/mnt/CACHE
-			mount --make-private /
-			mount --move /tmp/CACHE /sysroot/mnt/CACHE
-		fi
-	fi
+    	fsck -y -v $cache >&2
+    	mkdir -p /tmp/CACHE
+    	mount $cache /tmp/CACHE
+    	if [ -e /tmp/CACHE/.nbd0 ] ; then
+    		labelCACHE=$(blkid -D /tmp/CACHE/.nbd0 | sed 's/ /\n/g' | grep LABEL | awk -F'"' '{print $2}')
+    		labelNBD0=$(blkid -D /dev/nbd0 | sed 's/ /\n/g' | grep LABEL | awk -F'"' '{print $2}')
+    		warn "NBD0  image md5: $labelNBD0"
+    		warn "CACHE image md5: $labelCACHE"
+    		if [ "$labelCACHE" != "$labelNBD0" ] ; then
+    			UPDATE="1"
+    		fi
+    		mkdir /tmp/local_cache
+    		mount -o ro /tmp/CACHE/.nbd0 /tmp/local_cache
+    		if [ $? -ne 0 ] ; then
+    			UPDATE="1"
+    		fi
+    		umount /tmp/local_cache > /dev/null 2>&1
+    		rm -rf  /tmp/local_cache
+    		if [ "$UPDATE" != "" ] ; then
+    			warn "$(printf '\n\n\nUpdating cache with latest network boot drive. Please wait...\n\n')"
+    			dd if=/dev/nbd0 of=/tmp/CACHE/.nbd0 bs=10M status=progress >&2
+    			if [ $? -ne 0 ] ; then
+    				warn "$(printf '\n\nFAILED TO COPY NBD0 TO CACHE DISK!!\n\n')"
+    				sleep 15
+    			else
+    				warn "$(printf '\n\nFinished! Continuing boot...\n\n\n')"
+    			fi
+    		fi
+    		warn "$(printf 'Creating writable area on cache disk...\n')"
+    		fallocate -l 32G /tmp/CACHE/.cow
+    		echo y | mkfs.ext4 /tmp/CACHE/.cow
+    		mount -o rw /tmp/CACHE/.cow /tmp/cow
+    		mkdir -p /tmp/cow/lower
+    		mkdir -p /tmp/cow/upper
+    		mkdir -p /tmp/cow/work
+    		warn "$(printf 'Mounting NBD0 cached copy and writable area as root...\n')"
+    		mount -o ro /tmp/CACHE/.nbd0 /tmp/cow/lower
+    		mount -t overlay overlay -o lowerdir=/tmp/cow/lower,upperdir=/tmp/cow/upper,workdir=/tmp/cow/work /sysroot
+    		if [ $? -ne 0 ] ; then
+    			warn "$(printf 'FAILED MOUNTING ROOT USING CACHE DISK... Reverting to booting directly from NBD0 netboot disk...\n')"
+    		else
+    			mkdir -p /sysroot/mnt/CACHE
+    			mount --make-private /
+    			mount --move /tmp/CACHE /sysroot/mnt/CACHE
+    		fi
+    	fi
     fi
-	sleep 120
     # we dont have a local disk named CACHE, so lets just boot over NBD0, using NBD1 as a writable
     # cow disk. NBD standard cow seems to causes crashes when linux uses swap.
     # we replaced NBD standard cow by using overlayfs to mount a writable NBD1 over a read only ND0
     if [ "$(mount | grep overlay)" == "" ] ; then
-	warn "$(printf 'Mounting NBD0 netboot disk as root...\n')"
-	nbd-client -persist -swap -systemd-mark "$nbdserver" -N cow /dev/nbd1 $opts || exit 1
-	nbd-client -persist -swap -systemd-mark "$nbdserver" -N swap /dev/nbd2 $opts || exit 1
-	echo y | mkfs.ext4 /dev/nbd1
-	mount /dev/nbd1 /tmp/cow
-	mkdir -p /tmp/cow/lower
-	mkdir -p /tmp/cow/upper
-	mkdir -p /tmp/cow/work
-	mount /dev/nbd0 /tmp/cow/lower
-	mount -t overlay overlay -o lowerdir=/tmp/cow/lower,upperdir=/tmp/cow/upper,workdir=/tmp/cow/work /sysroot
-	if [ $? -ne 0 ] ; then
-		warn "$(printf 'FAILED MOUNTING ROOT USING NBD0 NETBOOT DISK!!!\n')"
-		sleep 5
-	else
-		mkdir -p /sysroot/mnt/CACHE
-		mount --make-private /
-		mount --move /tmp/CACHE /sysroot/mnt/CACHE
-	fi
+    	warn "$(printf 'Mounting NBD0 netboot disk as root...\n')"
+    	nbd-client -persist -swap -systemd-mark "$nbdserver" -N cow /dev/nbd1 $opts || exit 1
+    	nbd-client -persist -swap -systemd-mark "$nbdserver" -N swap /dev/nbd2 $opts || exit 1
+    	echo y | mkfs.ext4 /dev/nbd1
+    	mount /dev/nbd1 /tmp/cow
+    	mkdir -p /tmp/cow/lower
+    	mkdir -p /tmp/cow/upper
+    	mkdir -p /tmp/cow/work
+    	mount /dev/nbd0 /tmp/cow/lower
+    	mount -t overlay overlay -o lowerdir=/tmp/cow/lower,upperdir=/tmp/cow/upper,workdir=/tmp/cow/work /sysroot
+    	if [ $? -ne 0 ] ; then
+    		warn "$(printf 'FAILED MOUNTING ROOT USING NBD0 NETBOOT DISK!!!\n')"
+    		sleep 5
+    	else
+    		mkdir -p /sysroot/mnt/CACHE
+    		mount --make-private /
+    		mount --move /tmp/CACHE /sysroot/mnt/CACHE
+    	fi
     fi
     # this signs dracut that /sysroot is already mounted, so it's ready for chroot!
     # this way, dracut won't try to mount /dev/nbd0 as /sysroot anymore
