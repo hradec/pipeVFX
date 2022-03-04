@@ -64,8 +64,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0
-
+          lfs: false
+          submodules: false
 
       - uses: actions/setup-python@v2
         with:
@@ -115,18 +115,26 @@ jobs:
       max-parallel: 1
       matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
 
-    runs-on: [self-hosted, linux]
-    # runs-on: ubuntu-latest
+    # runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     outputs:
       matrix_cleanup: ${{ steps.set-matrix.outputs.matrix_cleanup }}
 
     steps:
 
-    # - name: 'Install Python Modules'
-    #   run: pip install PyJWT==1.7.1 PyGitHub==1.45
+    # - name: 'self-hosted: Cleanup build folder'
+    #   run: |
+    #     ls -la ./
+    #     rm -rf ./* || true
+    #     rm -rf ./.??* || true
+    #     ls -la ./
+    #     apt update
+    #     apt upgrade -y
+
     - uses: actions/checkout@v2
       with:
-        fetch-depth: 0
+        lfs: false
+        submodules: false
 
     - uses: actions/cache@v1
       with:

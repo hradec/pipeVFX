@@ -96,8 +96,8 @@ else
     fi
 
     latest_tag=$(echo $pkg_image | awk -F':' '{print $1}'):$(
-        wget -q \
-        https://registry.hub.docker.com/v1/repositories/"$(echo $pkg_image | awk -F: '{print $1}')"/tags -O - \
+        curl -L \
+        https://registry.hub.docker.com/v1/repositories/"$(echo $pkg_image | awk -F: '{print $1}')"/tags  \
         | tr -d '[]" ' \
         | tr '}' '\n' \
         | awk -F: '{print $3}' \
@@ -257,7 +257,7 @@ else
         -v $CD/pipeline/build/SConstruct:/$STUDIO/pipeline/build/SConstruct \
         -v $CD/pipeline/build/patches:/$STUDIO/pipeline/build/patches \
         -v $BUILD_FOLDER:/$STUDIO/pipeline/build/.build/ \
-        -v $CD/pipeline/tools/scripts/pipevfx_docker_init.sh:/run.sh \
+        --mount type=bind,source=$CD/pipeline/tools/scripts/pipevfx_docker_init.sh,target=/run.sh \
         -v $CD/.root:/$STUDIO/.root \
         -v $HOME:/home/$USER/ \
         $APPS_MOUNT \
@@ -278,8 +278,10 @@ else
         $X11 \
         --network=host \
         --privileged \
+        --entrypoint /$STUDIO/pipeline/tools/scripts/pipevfx_docker_init.sh \
         $build_image "
 
+        # -v $CD/pipeline/tools/scripts/pipevfx_docker_init.sh:/run.sh \
         # --entrypoint /bin/bash \
         # $build_image  -c \"mv /atomo /$STUDIO ; cp /run.sh /run.bak ; cat /run.bak | sed 's/atomo/$STUDIO/g' > /run.sh ; chmod a+x /run.sh ; /run.sh \" "
 
