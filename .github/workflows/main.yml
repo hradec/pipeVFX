@@ -246,16 +246,17 @@ jobs:
   # ================================================================================================================
   # cleanup artifacts we dont need!
   # ================================================================================================================
-  cleanup:
+  cleanup: 
     needs: build
     if: ${{ always() }}
     strategy:
       matrix:
-        # we retrieve matrix_cleanup from the build step, so we can only delete
-        # the artifacts that where actually uploaded, but the last one!
-        # since artifacts are incremental, there's no point on keep previous
-        # ones since the last will have everything.
-        name: ${{fromJson(needs.build.outputs.matrix_cleanup)}}
+        name: ${{fromJson(needs.matrix.outputs.matrix_cleanup)}}
+        # # we retrieve matrix_cleanup from the build step, so we can only delete
+        # # the artifacts that where actually uploaded, but the last one!
+        # # since artifacts are incremental, there's no point on keep previous
+        # # ones since the last will have everything.
+        # name: ${{fromJson(needs.build.outputs.matrix_cleanup)}}
 
     runs-on: ubuntu-latest
     steps:
