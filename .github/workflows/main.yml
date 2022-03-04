@@ -115,7 +115,8 @@ jobs:
       max-parallel: 1
       matrix: ${{fromJson(needs.matrix.outputs.matrix)}}
 
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
+    # runs-on: ubuntu-latest
     outputs:
       matrix_cleanup: ${{ steps.set-matrix.outputs.matrix_cleanup }}
 
@@ -164,7 +165,7 @@ jobs:
         python3 -c "print('='*80)"
         df -h
         python3 -c "print('='*80)"
-        free -h
+        # free -h
 
     # ================================================================================================================
     # restore pipeline/libs from previous run
@@ -246,7 +247,7 @@ jobs:
   # ================================================================================================================
   # cleanup artifacts we dont need!
   # ================================================================================================================
-  cleanup: 
+  cleanup:
     needs: build
     if: ${{ always() }}
     strategy:
