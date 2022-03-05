@@ -23,25 +23,20 @@ import build, devRoot
 import SCons, os
 from pipe import versionSort, distro
 
-
-
 mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").readlines()).strip()
-
 SCons.Script.SetOption('warn', 'no-all')
-#SCons.Script.SetOption('num_jobs', 8)
-
-# def versionSort(versions):
-#     def method(v):
-#         v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
-#         return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
-#     tmp =  sorted( versions, key=method, reverse=True )
-#     # print tmp
-#     return tmp
-
-
 
 class all: # noqa
     ''' a unique class to hold all packages and versions build in pipeVFX '''
+
+    # =============================================================================================================================================
+    # Set default versions here!
+    # =============================================================================================================================================
+    masterVersion = {
+        'boost'   : '1.70.0',
+        'openexr' : '2.4.0',
+        'usd'     : '21.5.0',
+    }
 
     def cmake_prefix(self):
         ret = []
@@ -96,7 +91,6 @@ class all: # noqa
         self._rpath_environ = {}
         self.all_env_vars = {}
         self.allDepend = []
-        self.masterVersion = {}
 
         # we start by uncompressing a binary tarball of gcc 4.1.2, to use
         # as cold start compiler to build other gcc's
@@ -1283,13 +1277,13 @@ class all: # noqa
             '1.66.0',
             'd275cd85b00022313c171f602db59fc5',
             { self.gcc : '6.3.1' }
-        # ),(
-        #     # CY2020
-        #     'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
-        #     'boost_1_70_0.tar.gz',
-        #     '1.70.0',
-        #     'fea771fe8176828fabf9c09242ee8c26',
-        #     { self.gcc :  '6.3.1' }
+        ),(
+            # CY2020
+            'http://downloads.sourceforge.net/project/boost/boost/1.70.0/boost_1_70_0.tar.gz',
+            'boost_1_70_0.tar.gz',
+            '1.70.0',
+            'fea771fe8176828fabf9c09242ee8c26',
+            { self.gcc :  '6.3.1' }
         )]
         boost = build.boost(
             ARGUMENTS,
@@ -1921,28 +1915,45 @@ class all: # noqa
             if build.versionMajor(boost_version) < 1.6:
                 f3d_exr_version = '2.2.0'
 
-            # build sony field3d used by oiio 2.x
-            field3d_dependency_versions = {
-                hdf5 : '1.8.11',
-                boost : boost_version,
-                gcc: gcc_version,
-                self.ilmbase  [sufix] : f3d_exr_version,
-                self.pyilmbase[sufix] : f3d_exr_version,
-                self.openexr  [sufix] : f3d_exr_version,
-            }
-            field3d = build.cmake(
-                ARGUMENTS,
-                'field3d',
-                targetSuffix=sufix,
-                download=[(
+            download=[]
+            download += [(
                     'https://github.com/imageworks/Field3D/archive/v1.7.2.tar.gz',
                     'Field3D-1.7.2.tar.gz',
                     '1.7.2',
                     '61660c2400213ca9adbb3e17782cccfb',
-                    field3d_dependency_versions,
-                )],
-                depend   = [icu],
+                    {   hdf5 : '1.8.11',
+                        boost : boost_version,
+                        gcc: gcc_version,
+                        self.ilmbase  [sufix] : f3d_exr_version,
+                        self.pyilmbase[sufix] : f3d_exr_version,
+                        self.openexr  [sufix] : f3d_exr_version,
+                    },
+            )]
+            download += [(
+                    'https://github.com/imageworks/Field3D/archive/refs/tags/v1.7.3.tar.gz',
+                    'Field3D-1.7.3.tar.gz',
+                    '1.7.3',
+                    '536198b1b4840a5b35400ccf05d4431c',
+                    {   hdf5 : '1.8.11',
+                        boost : boost_version,
+                        gcc: gcc_version,
+                        self.ilmbase  [sufix] : f3d_exr_version,
+                        self.pyilmbase[sufix] : f3d_exr_version,
+                        self.openexr  [sufix] : f3d_exr_version,
+                    },
+            )]
+            if build.versionMajor(boost_version) >= 1.7:
+                environ["CXXFLAGS"] = " $CXXFLAGS -fno-sized-deallocation "
+
+            # build sony field3d used by oiio 2.x
+            field3d = build.cmake(
+                ARGUMENTS,
+                'field3d',
+                targetSuffix = sufix,
+                download = download,
+                depend = [icu],
                 environ = environ,
+                flags = [' -D CXX_STANDARD="C++11" ']+build.cmake.flags
             )
             self.field3d[sufix] = field3d
 
@@ -1995,6 +2006,9 @@ class all: # noqa
                         self.field3d[sufix]: '1.7.2'}
                     ]]
             if build.versionMajor(boost_version) > 1.60:
+                field3d_version = '1.7.2'
+                if build.versionMajor(boost_version) >= 1.7:
+                    field3d_version = '1.7.3'
                 download += [[
                         'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.2.15.1.tar.gz',
                         'oiio-2.2.15.1.tar.gz',
@@ -2002,7 +2016,7 @@ class all: # noqa
                         '568a1efb4fc41711e2dae8c39450a83e',
                         { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
                         self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
-                        self.field3d[sufix]: '1.7.2'}
+                        self.field3d[sufix]: field3d_version}
                     ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
@@ -2668,6 +2682,72 @@ class all: # noqa
         )
         self.embree = embree
 
+        self.cuda = build.configure(
+            build.ARGUMENTS,
+            'cuda',
+            src='cuda_11.6.1_510.47.03_linux.run',
+            do_not_set = ['include/*'],
+            download=[(
+                'https://developer.download.nvidia.com/compute/cuda/11.6.1/local_installers/cuda_11.6.1_510.47.03_linux.run',
+                'cuda_11.6.1_510.47.03_linux.run',
+                '11.6.1_510.47.03',
+                'd0b0bbd4616cf3f46dfafae8b5a87e82',
+            )],
+            cmd = [
+                'sh ./$(ls *.run) --installpath=$INSTALL_FOLDER/ --toolkit --silent --samples',
+                'mv $INSTALL_FOLDER/bin/nvcc $INSTALL_FOLDER/bin/__nvcc__',
+                'echo "$INSTALL_FOLDER/bin/__nvcc__ -ccbin clang $CLIMITS -include climits -std=c++14 \$@" > $INSTALL_FOLDER/bin/nvcc',
+                'chmod a+x $INSTALL_FOLDER/bin/nvcc',
+                'echo "DONE!!"',
+            ],
+            environ = {
+                'CLIMITS' : ' -DCHAR_BIT=8 '
+                            ' -DSCHAR_MIN=-127 '
+                            ' -DSCHAR_MAX=127 '
+                            ' -DUCHAR_MAX=255 '
+                            ' -DCHAR_MIN=0 '
+                            ' -DCHAR_MAX=UCHAR_MAX '
+                            ' -DSHRT_MIN=-32767 '
+                            ' -DSHRT_MAX=32767 '
+                            ' -DUSHRT_MAX=65535 '
+                            ' -DINT_MIN=-32767 '
+                            ' -DINT_MAX=32767 '
+                            ' -DUINT_MAX=65535 '
+                            ' -DLONG_MIN=-2147483647 '
+                            ' -DLONG_MAX=2147483647 '
+                            ' -DULONG_MAX=4294967295 '
+                            ' -DLLONG_MIN=-9223372036854775807 '
+                            ' -DLLONG_MAX=9223372036854775807 '
+                            ' -DULLONG_MAX=18446744073709551615 '
+            }
+        )
+        self.optix = build.configure(
+            build.ARGUMENTS,
+            'optix',
+            src='NVIDIA-OptiX-SDK-7.4.0-linux64-x86_64.sh',
+            download=[(
+                'https://hradec.com/optix-7.4.0.tar.gz',
+                'optix-7.4.0.tar.gz',
+                '7.4.0',
+                '7d5b9b640e376cf437523b2fba793446',
+            )],
+            cmd = [
+                'sh ./$(ls *.sh) --prefix=$INSTALL_FOLDER/ --skip-license',
+                'echo "DONE!!"',
+            ]
+        )
+
+        self.gtest = build.cmake(
+            build.ARGUMENTS,
+            'gtest',
+            download=[(
+                'https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz',
+                'googletest-release-1.11.0.tar.gz',
+                '1.11.0',
+                'e8a8df240b6938bb6384155d4c37d937',
+            )],
+        )
+
 
 
         # =============================================================================================================================================
@@ -2721,7 +2801,7 @@ class all: # noqa
         })
 
 
-        for bv in ['1.66.0']:
+        for bv in ['1.66.0', '1.70.0']:
             bsufix = "boost.%s" % bv
 
             osl = build.cmake(
@@ -2891,19 +2971,77 @@ class all: # noqa
             )
             self.materialx[bsufix] = materialx
 
+
+            # OPENVDB
             download_openvdb = []
+            openvdb_environ = {
+                # this fixes the problem with missing stdlib.h
+                'CXX':  'g++ '
+                            # '-include climits '
+                            ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -I$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+                            ' -isystem/usr/include',
+                'CC' :  'gcc '
+                            # ' -include limits.h '
+                            ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
+                'LD' :  'g++ '
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+
+                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+                'RPATH'     : '$RPATH:'+self.exr_rpath_environ['RPATH'],
+                # we need to add the python$VERSION_MAJOR to include path for openvdb 7
+                'CPATH'     : '$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/:$CPATH:'+self.exr_rpath_environ['CPATH'],
+                'PATH'      : '$SOURCE_FOLDER/tools/:$PATH',
+                'CLIMITS'   : ''
+            }
             if bv == "1.70.0":
+                # openvdb_environ['CLIMITS'] = ''.join([
+                #     ' -DCHAR_BIT=8 ',
+                #     ' -DSCHAR_MIN=-127 ',
+                #     ' -DSCHAR_MAX=127 ',
+                #     ' -DUCHAR_MAX=255 ',
+                #     ' -DCHAR_MIN=0 ',
+                #     ' -DCHAR_MAX=UCHAR_MAX ',
+                #     ' -DSHRT_MIN=-32767 ',
+                #     ' -DSHRT_MAX=32767 ',
+                #     ' -DUSHRT_MAX=65535 ',
+                #     ' -DINT_MIN=-32767 ',
+                #     ' -DINT_MAX=32767 ',
+                #     ' -DUINT_MAX=65535 ',
+                #     ' -DLONG_MIN=-2147483647 ',
+                #     ' -DLONG_MAX=2147483647 ',
+                #     ' -DULONG_MAX=4294967295 ',
+                #     ' -DLLONG_MIN=-9223372036854775807 ',
+                #     ' -DLLONG_MAX=9223372036854775807 ',
+                #     ' -DULLONG_MAX=18446744073709551615 ',
+                # ])
                 download_openvdb += [(
                     # CY 2022
                     'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v9.0.0.tar.gz',
                     'openvdb-9.0.0.tar.gz',
                     '9.0.0',
                     '684ce40c2f74f3a0c9cac530e1c7b07e',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U3',
+                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2019_U6',
                     self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version,}
+                    self.pyilmbase[bsufix]: exr_version,
+                    self.gtest: self.gtest.latestVersion(),
+                    self.cuda: self.cuda.latestVersion(),
+                    self.optix: self.optix.latestVersion(),}
                 )]
             elif bv == "1.66.0":
                 download_openvdb += [(
@@ -2968,33 +3106,6 @@ class all: # noqa
                 #     self.ilmbase[bsufix]: exr_version, self.openexr[bsufix]: exr_version, self.pyilmbase[bsufix]: exr_version, }
                 )]
 
-            openvdb_environ = {
-                # this fixes the problem with missing stdlib.h
-                'CXX':  'g++'
-                            ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
-                            ' -isystem/usr/include',
-                'CC' :  'gcc -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem/usr/include',
-                'LD' :  'g++ '
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-
-                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-                'RPATH'     : '$RPATH:'+self.exr_rpath_environ['RPATH'],
-                # we need to add the python$VERSION_MAJOR to include path for openvdb 7
-                'CPATH'     : '$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/:$CPATH:'+self.exr_rpath_environ['CPATH'],
-            }
             if 'OPENVDB_CORES' in ARGUMENTS:
                 openvdb_environ['CORES']  = str(int(ARGUMENTS['OPENVDB_CORES'])/2)
                 openvdb_environ['DCORES'] = ARGUMENTS['OPENVDB_CORES']
@@ -3017,14 +3128,29 @@ class all: # noqa
                 cmd = [
                     "[ -d openvdb/openvdb ] "
                     "&& ( "
+                        # force boost 1.66
+                        "sed -i.bak CMakeLists.txt -e 's/set.MINIMUM_BOOST_VERSION ..../set(MINIMUM_BOOST_VERSION 1.66/g'",
+                        # force cmake to use our CC/CXX env vars, since the damn thing wont!!
+                        # 'mkdir -p tools',
+                        # '''echo "$CUDA_TARGET_FOLDER/bin/nvcc -ccbin clang $CLIMITS -include climits -std=c++14 \$@" >> tools/nvcc''',
+                        # 'chmod a+x $SOURCE_FOLDER/tools/*',
+                        # now we can build
                         "mkdir ./build",
                         "cd ./build",
                         "cmake ../ "
+                            '-D USE_NANOVDB=ON '
+                            '-D NANOVDB_BUILD_UNITTESTS=ON '
+                            '-D NANOVDB_BUILD_EXAMPLES=ON '
+                            '-D NANOVDB_BUILD_BENCHMARK=ON '
+                            '-D NANOVDB_USE_INTRINSICS=ON '
+                            '-D NANOVDB_USE_CUDA=ON '
+                            '-D NANOVDB_CUDA_KEEP_PTX=ON '
                             '-D OPENVDB_BUILD_PYTHON_MODULE=1 '
                             '-D OPENVDB_BUILD_AX=1 '
                             '-D OPENVDB_BUILD_AX_BINARIES=1 '
                             '-D OPENVDB_ENABLE_RPATH=1 '
-                            '-D CONCURRENT_MALLOC=Jemalloc ',
+                            '-D CONCURRENT_MALLOC=Jemalloc '
+                            '-D DOPENVDB_BUILD_NANOVDB=ON ',
                         "make -j $DCORES VERBOSE=1",
                         "make -j $DCORES install"
                     ") || ( cd openvdb ",
@@ -3063,7 +3189,7 @@ class all: # noqa
         # =============================================================================================================================================
         # ALEMBIC needs boost 1.51.0 for cortex 9
         # =============================================================================================================================================
-        for bv in ['1.51.0', '1.66.0']:
+        for bv in ['1.51.0', '1.66.0', '1.70.0']:
             bsufix = "boost.%s" % bv
             # build alembic without apps plugins
             download=[]
@@ -3155,7 +3281,7 @@ class all: # noqa
         # =============================================================================================================================================
         # resume building the boost for loop
         # =============================================================================================================================================
-        for bv in ['1.66.0']:
+        for bv in ['1.66.0', '1.70.0']:
             bsufix = "boost.%s" % bv
 
             clew = build.cmake(
@@ -3592,11 +3718,12 @@ class all: # noqa
                     self.usd[usd_sufix] = usd
 
 
-                self.masterVersion['usd'] = '21.5.0'
                 # ============================================================================================================================================
                 # github build point so we can split the build in multiple matrix jobs in github actions
                 # ============================================================================================================================================
                 build.github_phase_one_version(ARGUMENTS, {self.usd[usd_sufix] : self.masterVersion['usd']})
+
+
 
         # ============================================================================================================================================
         # download stuff for gaffer
@@ -3669,12 +3796,42 @@ class all: # noqa
             ]
         )
 
+        self.glog = build.cmake(
+            build.ARGUMENTS,
+            'glog',
+            download=[(
+                'https://github.com/google/glog/archive/refs/tags/v0.5.0.tar.gz',
+                'glog-0.5.0.tar.gz',
+                '0.5.0',
+                '2368e3e0a95cce8b5b35a133271b480f',
+                {   self.gcc : '6.3.1',
+                    self.boost: cgru_boost_version,
+                }
+            )],
+        )
+
+        self.gflags = build.cmake(
+            build.ARGUMENTS,
+            'gflags',
+            download=[(
+                'https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.tar.gz',
+                'gflags-2.2.2.tar.gz',
+                '2.2.2',
+                '1a865b93bacfa963201af3f75b7bd64c',
+                {   self.gcc : '6.3.1',
+                    self.boost: cgru_boost_version,
+                }
+            )],
+        )
+
 
         build.github_phase_one_version(ARGUMENTS, depend=[
             self.cgru,
             self.gaffer_resources,
             self.ocio_profiles,
-            self.fonts
+            self.fonts,
+            self.glog,
+            self.gflags,
         ])
 
 

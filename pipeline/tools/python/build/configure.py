@@ -718,7 +718,16 @@ class boost(configure):
         # starting with boost 1.70, the python version is added to the libbost_python library, so some older packages will fail to find it.
         # we fix it by adding a link
         if float(os_environ['VERSION_MAJOR']) >= 1.70:
-            cmd += ['( x=$(ls $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python??.so) ; [ "$x" != "" ] && ln -s $(basename $x) $(dirname $x)/libboost_python.so )']
+            # cmd += ['( x=$(ls $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python??.so) ; [ "$x" != "" ] && ln -s $(basename $x) $(dirname $x)/libboost_python.so )']
+            cmd = [
+                # ' ./bootstrap.sh --prefix=$INSTALL_FOLDER --libdir=$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER --without-libraries=log --without-icu',
+                # ' ./bjam -j $CORES --disable-icu cxxflags=" -D_GLIBCXX_USE_CXX11_ABI=0 -fPIC -fpermissive -std=c++11 " variant=release linkflags="$LDFLAGS" link=shared threading=multi  -d+2  install',
+                "sed -i.bak 's/if PTHREAD_STACK_MIN . 0/ifdef PTHREAD_STACK_MIN/g' ./boost/thread/pthread/thread_data.hpp",
+                "./bootstrap.sh --prefix=$INSTALL_FOLDER --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER/", #" --without-libraries=log --without-icu",
+		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++11' cxxstd=11 variant=release link=shared threading=multi install",
+                "[ -e $INSTALL_FOLDER/lib/cmake ] && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"
+
+            ]
 
         # if we need to build with system gcc
         # if float(os_environ['VERSION_MAJOR']) in []:

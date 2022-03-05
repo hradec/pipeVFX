@@ -29,19 +29,33 @@ sys.path.insert( 0, os.path.abspath('%s/tools/python/' % pipelinePath) )
 # build all pkgs, if not already built!
 import build
 pkgs = build.pkgs.all(ARGUMENTS) # noqa
+pkgs.masterVersion['boost'  ] = '1.70.0'
+pkgs.masterVersion['openexr'] = '2.4.0'
+pkgs.masterVersion['usd'    ] = '21.5.0'
 
+USD_VERSION   = pkgs.masterVersion['usd']
+BOOST_VERSION = pkgs.masterVersion['boost']
 
 # get installed app versions using pipe
 import pipe
 
-USD_VERSION='21.5.0'
-BOOST_VERSION='1.66.0'
-
 # ===========================================================================================
 # build gaffer without any app support first!
 # ===========================================================================================
+pkgs.gaffer_haven = build.download(
+    ARGUMENTS,
+    'gaffer_resources',
+    src='README.md',
+    download=[(
+        'https://github.com/kubo-von/GafferHaven/archive/refs/heads/main.zip',
+        'GafferHaven-main.zip',
+        '1.0.0',
+        None,
+    )],
+)
 cortex = build.cortex(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
 gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
+gafferCycles =build.gafferCycles(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
 
 
 # ===========================================================================================

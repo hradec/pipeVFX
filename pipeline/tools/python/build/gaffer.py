@@ -221,6 +221,7 @@ def legacy(pkgs):
                             # environ = { 'LD' : 'ld' },
                         )
 
+'''
 
             # ===========================================================================================
             # CORTEX USD+ALEMBIC+OPENVDB for each boost it is available (only for cortex >= 10)
@@ -277,7 +278,6 @@ def legacy(pkgs):
                             # environ = { 'LD' : 'ld' },
                         )
 
-    '''
             # ===========================================================================================
             # CORTEX APPLESEED
             # ===========================================================================================
@@ -327,7 +327,12 @@ def legacy(pkgs):
 
 
 
-def cortex(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
+def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
+    if not usd:
+        usd = pkgs.masterVersion['usd']
+    if not boost:
+        usd = pkgs.masterVersion['boost']
+
     legacy(pkgs=pkgs)
     depend = cortex_depency(pkgs)
     boost_version = boost
@@ -446,7 +451,12 @@ def cortex(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
 # ===========================================================================================
 # GAFFER
 # ===========================================================================================
-def gaffer(apps=[], boost='1.66.0', usd=None, pkgs=None, __download__=None):
+def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
+    if not usd:
+        usd = pkgs.masterVersion['usd']
+    if not boost:
+        usd = pkgs.masterVersion['boost']
+
     depend = cortex_depency(pkgs)
     version=0
     suffix = ''

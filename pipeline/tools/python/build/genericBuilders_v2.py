@@ -814,6 +814,10 @@ class generic:
         if kargs.has_key('real_name'):
             self.real_name = kargs['real_name'] #.replace('.','_')
 
+        self.do_not_set = []
+        if kargs.has_key('do_not_set'):
+            self.do_not_set = kargs['do_not_set']
+
         # cleanup tmp folders
         os.popen("rm -rf %s/tmp.*" % buildFolder(args)).readlines()
 
@@ -1088,7 +1092,9 @@ class generic:
                     # os.environ['GCC_VERSION'] can override the gcc version set in the installRoot
                     self.installPath = os.path.abspath(installRoot(self.args))
 
-                    targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.tar.gz',pythonDependency))
+                    targetpath = os.path.join( buildFolder(self.args),os.path.splitext(download[n][1])[0]+pythonDependency )
+                    if '.tar' in download[n][1]:
+                        targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.tar.gz',pythonDependency))
                     if '.zip' in download[n][1]:
                         targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.zip',pythonDependency))
                     if '.rpm' in download[n][1]:
@@ -1130,6 +1136,8 @@ class generic:
                             cmd = "rm -rf "+self.buildFolder[p][-1]+" 2>/dev/null"
                             _print( ":: __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
+                    # else:
+                    #     os.system("touch /.done-dontTryToBuildAnymore" % installpath)
 
                     # _pkgs hold all download files for all versions of this
                     # pacakage
@@ -1143,6 +1151,8 @@ class generic:
                         # so actions can check if its installed
                         __pkgInstalled__[os.path.abspath(archive)] = install
 
+                        pkgs = archive
+                        # if os.path.exists( "%s.done-dontTryToBuildAnymore" % installpath):
                         #download pkg
                         pkgs = self._download(archive)
 
@@ -1342,7 +1352,7 @@ class generic:
 
     def latestVersion(self):
         ''' return the latest version '''
-        return self.keys(-1)
+        return self.keys()[-1]
 
     def versions(self):
         ''' just an alternative function to return the keys, which are versions '''
@@ -1969,11 +1979,12 @@ class generic:
                     C_INCLUDE_PATH += include_environ( '$%s_TARGET_FOLDER/include/' % dependOn.name.upper() )['CPATH'].split(':')
 
                     # add extra folders inside dependency include folders
-                    for each in glob("%s/include/*" % dependOn.targetFolder[p][depend_n]):
-                        if os.path.isdir(each):
-                            if dependOn.name == 'tbb' and 'serial' in each:
-                                continue
-                            C_INCLUDE_PATH += ["%s" % each]
+                    if 'include/*' not in dependOn.do_not_set:
+                        for each in glob("%s/include/*" % dependOn.targetFolder[p][depend_n]):
+                            if os.path.isdir(each):
+                                if dependOn.name == 'tbb' and 'serial' in each:
+                                    continue
+                                C_INCLUDE_PATH += ["%s" % each]
 
                     # set python searchpath for dependencies
                     PYTHONPATH += [
@@ -2948,15 +2959,20 @@ class generic:
                 if self.__check_target_log__( lastlog, env ):
                     # _print( "\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
-                    cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
-                    if '.zip' in s:
+                    if '.tar' in s:
+                        cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
+                    elif '.zip' in s:
                         cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
                         _print( cmd )
                     elif '.rpm' in s:
-                        ss = os.path.basename( os.path.dirname( str(target[n]) ) )
+                        # ss = os.path.basename( os.path.dirname( str(target[n]) ) )
                         ss = uncompressed_folder
                         cmd = "mkdir -p %s/%s && cd %s/%s && rm -rf  %s.rpm && ln -s %s %s.rpm && rpm2cpio %s.rpm | cpio -idmv  2>&1 && cd .. " % (tmp, ss, tmp, ss, s, s, s, s)
+                        _print( cmd )
+                    else:
+                        uncompressed_folder = self.fix_uncompressed_path( os.path.splitext(os.path.basename(s))[0] )
+                        cmd = "mkdir -p %s/%s && cd %s/%s && ln -s %s ./ && cd .. " % (tmp, uncompressed_folder, tmp, uncompressed_folder, s)
                         _print( cmd )
 
 

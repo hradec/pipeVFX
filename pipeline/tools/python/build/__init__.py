@@ -45,6 +45,7 @@ import pkgs
 # we don't want to import the gaffer py in this situation.
 if 'BUILD_RUNNING' not in os.environ:
     from gaffer import gaffer, cortex
+    from gafferCycles import gafferCycles
 
 
 

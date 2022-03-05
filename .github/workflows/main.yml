@@ -256,7 +256,7 @@ jobs:
   # cleanup artifacts we dont need!
   # ================================================================================================================
   cleanup:
-    needs: build
+    needs: [build, matrix]
     if: ${{ always() }}
     strategy:
       matrix:
