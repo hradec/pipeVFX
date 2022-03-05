@@ -2960,15 +2960,15 @@ class generic:
                     # _print( "\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
                     os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
-                    if '.tar' in s:
-                        cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
-                    elif '.zip' in s:
-                        cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
-                        _print( cmd )
-                    elif '.rpm' in s:
+                    if '.rpm' in s:
                         # ss = os.path.basename( os.path.dirname( str(target[n]) ) )
                         ss = uncompressed_folder
                         cmd = "mkdir -p %s/%s && cd %s/%s && rm -rf  %s.rpm && ln -s %s %s.rpm && rpm2cpio %s.rpm | cpio -idmv  2>&1 && cd .. " % (tmp, ss, tmp, ss, s, s, s, s)
+                        _print( cmd )
+                    elif '.tar' in s:
+                        cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
+                    elif '.zip' in s:
+                        cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
                         _print( cmd )
                     else:
                         uncompressed_folder = self.fix_uncompressed_path( os.path.splitext(os.path.basename(s))[0] )
