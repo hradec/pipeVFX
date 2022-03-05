@@ -725,8 +725,8 @@ class boost(configure):
                 "sed -i.bak 's/if PTHREAD_STACK_MIN . 0/ifdef PTHREAD_STACK_MIN/g' ./boost/thread/pthread/thread_data.hpp",
                 "./bootstrap.sh --prefix=$INSTALL_FOLDER --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER/", #" --without-libraries=log --without-icu",
 		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++11' cxxstd=11 variant=release link=shared threading=multi install",
-                "[ -e $INSTALL_FOLDER/lib/cmake ] && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"
-
+                "[ -e $INSTALL_FOLDER/lib/cmake ] && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
+                "[ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] && ln -s libboost_python$(echo $PYTHON_VERSION_MAJOR | sed 's/\.//').so $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so",
             ]
 
         # if we need to build with system gcc
