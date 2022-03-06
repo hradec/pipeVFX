@@ -2695,7 +2695,7 @@ class all: # noqa
             )],
             cmd = [
                 'sh ./$(ls *.run) --installpath=$INSTALL_FOLDER/ --toolkit --silent --samples',
-                # create a nvcc wrapper to force cuda to use clang (LLVM) instead of gcc, since 
+                # create a nvcc wrapper to force cuda to use clang (LLVM) instead of gcc, since
                 # gcc 6.3.1 can't cope well with cuda.
                 'mv $INSTALL_FOLDER/bin/nvcc $INSTALL_FOLDER/bin/__nvcc__',
                 'echo "$INSTALL_FOLDER/bin/__nvcc__ -ccbin clang $CLIMITS -include climits -std=c++14 \$@" > $INSTALL_FOLDER/bin/nvcc',
@@ -2736,7 +2736,8 @@ class all: # noqa
             cmd = [
                 'sh ./$(ls *.sh) --prefix=$INSTALL_FOLDER/ --skip-license',
                 'echo "DONE!!"',
-            ]
+            ],
+            noMinTime=True
         )
 
         self.gtest = build.cmake(

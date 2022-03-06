@@ -70,7 +70,7 @@ try:
     except: pv = []
     try: mv = [ x for x in build.pkgs.versionSort( pipe.apps.maya().versionList()  ) if float(x.split('.')[0])>2016 ]
     except: mv = []
-    try: nv = [ x for x in build.pkgs.versionSort( pipe.apps.nuke().versionList()  ) if float(x.split('.')[0])>=9 ]
+    try: nv = [ x for x in build.pkgs.versionSort( pipe.apps.nuke().versionList()  ) if float(x.split('.')[0])>=12 ]
     except: nv = []
     try: hv = build.pkgs.versionSort( pipe.apps.houdini().versionList() )[-2:]
     except: hv = []
