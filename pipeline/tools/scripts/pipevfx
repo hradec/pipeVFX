@@ -268,6 +268,7 @@ else
         -e RUN_SHELL=$SHELL \
         -e EXTRA=\"$EXTRA\" \
         -e DEBUG=\"$DEBUG\" \
+        -e DOCKER=\"$DOCKER\" \
         -e TRAVIS=\"$TRAVIS\" \
         -e http_proxy=\"$http_proxy\" \
         -e https_proxy=\"$https_proxy\" \

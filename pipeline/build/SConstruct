@@ -29,7 +29,7 @@ sys.path.insert( 0, os.path.abspath('%s/tools/python/' % pipelinePath) )
 # build all pkgs, if not already built!
 import build
 pkgs = build.pkgs.all(ARGUMENTS) # noqa
-pkgs.masterVersion['boost'  ] = '1.70.0'
+pkgs.masterVersion['boost'  ] = '1.66.0'
 pkgs.masterVersion['openexr'] = '2.4.0'
 pkgs.masterVersion['usd'    ] = '21.5.0'
 
@@ -55,7 +55,7 @@ pkgs.gaffer_haven = build.download(
 )
 cortex = build.cortex(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
 gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
-gafferCycles =build.gafferCycles(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
+gafferCycles = build.gafferCycles(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
 
 
 # ===========================================================================================
@@ -64,19 +64,19 @@ gafferCycles =build.gafferCycles(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs
 # we need libraries built to detect installed apps, so if we don't have then yet,
 # we cant build app dependent packages.
 canBuildCortexNow = False
-try:
-    # grab version lists
-    try: pv = [ x for x in build.pkgs.versionSort( pipe.apps.prman().versionList() ) if float(x.split('.')[0])>=21 ]
-    except: pv = []
-    try: mv = [ x for x in build.pkgs.versionSort( pipe.apps.maya().versionList()  ) if float(x.split('.')[0])>2016 ]
-    except: mv = []
-    try: nv = [ x for x in build.pkgs.versionSort( pipe.apps.nuke().versionList()  ) if float(x.split('.')[0])>=12 ]
-    except: nv = []
-    try: hv = build.pkgs.versionSort( pipe.apps.houdini().versionList() )[-2:]
-    except: hv = []
-    try: av = [ x for x in build.pkgs.versionSort( pipe.apps.arnold().versionList() ) if float(x.split('.')[0])>=7 ]
-    except: av = []
+# grab version lists
+try: pv = [ x for x in build.pkgs.versionSort( pipe.apps.prman().versionList() ) if float(x.split('.')[0])>=21 ]
+except: pv = []
+try: mv = [ x for x in build.pkgs.versionSort( pipe.apps.maya().versionList()  ) if float(x.split('.')[0])>2016 ]
+except: mv = []
+try: nv = [ x for x in build.pkgs.versionSort( pipe.apps.nuke().versionList()  ) if float(x.split('.')[0])>=12 ]
+except: nv = []
+try: hv = build.pkgs.versionSort( pipe.apps.houdini().versionList() )[-2:]
+except: hv = []
+try: av = [ x for x in build.pkgs.versionSort( pipe.apps.arnold().versionList() ) if float(x.split('.')[0])>=7 ]
+except: av = []
 
+try:
     # we check if we can resolv the maya app class for the
     # available maya versions we have.
     for n in range(len(mv)):
@@ -96,14 +96,17 @@ except:
     '''
     traceback.print_exc()
 
+if 'CACHING' in os.environ and os.environ['CACHING'] == '1':
+    canBuildCortexNow = True
+
 print "canBuildAppsNow:",canBuildCortexNow
 # ok, so we do have the libraries built, so now lets do app dependent packages!!
 if canBuildCortexNow:
-    nuke    = pipe.apps.nuke()
-    maya    = pipe.apps.maya()
-    prman   = pipe.apps.prman()
-    houdini = pipe.apps.houdini()
-    arnold  = pipe.apps.arnold()
+    # nuke    = pipe.apps.nuke()
+    # maya    = pipe.apps.maya()
+    # prman   = pipe.apps.prman()
+    # houdini = pipe.apps.houdini()
+    # arnold  = pipe.apps.arnold()
 
     # ===========================================================================================
     # ARNOLD
@@ -132,7 +135,7 @@ if canBuildCortexNow:
         iversion = int(build.versionMajor(version))
         targetSuffix = "maya.%s" % str(version)
 
-        build.s_print( pipe.apps.maya().path('bin/maya.bin'), mv, targetSuffix )
+        # build.s_print( pipe.apps.maya().path('bin/maya.bin'), mv, targetSuffix )
 
         # maya cortex and gaffer
         cortex = build.cortex(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs, apps=[(pipe.apps.maya, version)])

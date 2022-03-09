@@ -67,6 +67,49 @@ memGB = float(mem)/1024/1024
 print "Memory: %sGB" % memGB
 
 
+
+class globalDict(dict):
+    def __init__(self, context = 'OBJSglobal'):
+        self.context = context
+        if context not in globals():
+            globals()[self.context] = {}
+
+    def __getitem__(self, key):
+        return globals()[self.context][key]
+
+    def __setitem__(self, key, v):
+        globals()[self.context][key] = v
+
+class pkgVersions(globalDict):
+    def __init__(self, key):
+        globalDict.__init__(self,'OBJSglobalVersions')
+        self.key = key
+        if self.key not in globals()[self.context]:
+            globals()[self.context][self.key] = {}
+
+    def keys(self):
+        return globals()[self.context][self.key].keys()
+
+    def __getitem__(self, key):
+        return globals()[self.context][self.key][key][key]
+
+    def __setitem__(self, key, v):
+        if self.key == v.real_name and 'github_phase' not in str(v):
+            globals()[self.context][self.key][key] = v
+
+    def versions(self):
+        return pipe.versionSort(self.keys())
+        # return pipe.versionSort(globals()[self.context][self.key].keys())
+
+    def latestVersion(self):
+        return pipe.versionSort(self.versions())[0]
+
+    def latestVersionOBJ(self):
+        return self[self.latestVersion()]
+        # return globals()[self.context][self.key][self.latestVersion()][self.latestVersion()]
+
+
+
 def _print(*args):
     global sconsParallel
     # print args
@@ -463,7 +506,8 @@ class pkg_superdict(dict):
             ret.obj = None
             ret.version = str("0.0.0")
             ret.requested_key = key
-            print ":: WARNING: key",key,"doesn't exist"
+            if 'ilmbase' not in key:
+                print ":: WARNING: key",key,"doesn't exist"
         return ret
 
     def __setitem__(self, key, v):
@@ -877,7 +921,8 @@ class generic:
                         ts=""
                         if self.targetSuffix:
                             ts=" (%s)" % self.targetSuffix+self.extraTargetSuffix
-                        print "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!"
+                        if 'ilmbase' not in  self.dependOn[download_version][each].obj.name:
+                            print "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!"
                         del self.dependOn[download_version][each]
 
         # set gcc_version for instalation purposes
@@ -1026,6 +1071,9 @@ class generic:
         # this will change the version specified in the download[4]
         # dictionary!
         self.setAppsInit()
+
+        for download_version in self.download_versions:
+            pkgVersions(self.name)[download_version] = self
 
         # build all python versions specified (baseLib)
         self.target  = {}
@@ -1352,11 +1400,11 @@ class generic:
 
     def latestVersion(self):
         ''' return the latest version '''
-        return self.keys()[-1]
+        return pipe.versionSort(self.keys())[0]
 
     def versions(self):
         ''' just an alternative function to return the keys, which are versions '''
-        return self.keys()
+        return pipe.versionSort(self.keys())
 
     def keys(self):
         ''' return the versions of this build package obj, properly sorted.
@@ -1922,6 +1970,7 @@ class generic:
                     # os_environ['%s_VERSION' % dependOn.name.upper()] = os.path.basename(dependOn.targetFolder[p][depend_n])
                     os_environ['%s_VERSION' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()].strip('/').split('/')[-1]
                     os_environ['%s_ROOT' % dependOn.name.upper()] = os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()]
+                    os_environ['%s_VERSION_MAJOR' % dependOn.name.upper()] = '.'.join(os_environ['%s_VERSION' % dependOn.name.upper()].split('.')[:2])
 
                     if os_environ['VERSION'] not in DB[self.name]:
                         DB[self.name][os_environ['VERSION']] = {}
@@ -2173,6 +2222,14 @@ class generic:
         _print( bcolors.WARNING+':\ttarget : %s%s' % (bcolors.GREEN, target) )
         _print( bcolors.WARNING+":\tinstall: %s%s" % (bcolors.GREEN, os_environ['INSTALL_FOLDER']) )
 
+
+        # store cmake files in the correct python version for the build,
+        # if building with python
+        cmd +=  ' && '+' && '.join([
+            "([ -e $INSTALL_FOLDER/lib/cmake ] && [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ) || true",
+            "([ -e $INSTALL_FOLDER/cmake ] && [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] && mv $INSTALL_FOLDER/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ) || true ",
+        ])
+
         for l in cmd.split('&&'):
             _print( bcolors.WARNING+':\t%s%s : %s %s  %s ' % ( \
                      '.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]), \
@@ -2183,6 +2240,8 @@ class generic:
         # and then we need to setup a clean PYTHONPATH so ppython can find pipe, build and the correct modules
         #    os_environ['PYTHONPATH'] = pythonpath_original
 
+        # end of the command line - pipe result to log files
+        cmd_script = cmd
         showLog = ' > '
         if DEBUG():
             showLog = ' | tee -a '
@@ -2555,6 +2614,13 @@ class generic:
             _print( bcolors.FAIL,
                      traceback.format_exc(), #.print_exc()
             bcolors.END )
+            # write command line as a debug script
+            debugcmd = os_environ['SOURCE_FOLDER']+'/build_cmd_debug_pipevfx.sh'
+            f=open( debugcmd, 'w' )
+            f.write( cmd_script )
+            f.close()
+            os.system("chmod a+x "+debugcmd)
+
             _print( cmd )
             _print( '-'*tcols )
             _print( self.travis, self.__class__ )
@@ -2743,7 +2809,7 @@ class generic:
 
 
         _TARGET = str(target[0])
-        TARGET_FOLDER = os.path.dirname(_TARGET)
+        TARGET_FOLDER = self.extractBuildFolder(_TARGET)
         _TARGET_SUFIX = ''
         if '-' in _TARGET:
             # _TARGET_SUFIX = '-'+_TARGET.split('-')[1].split('.')[0]+'*'
@@ -2926,6 +2992,14 @@ class generic:
         if not self.github_matrix:
             self.uncompressor( target, source, env )
 
+    def extractBuildFolder(self, t):
+        t=str(t)
+        buildFolder = t.split(self.src)[0].rstrip('/')
+        if buildFolder == t:
+            buildFolder = os.path.dirname(t).rstrip('/')
+        return buildFolder
+
+
     def uncompressor( self, target, source, env):
         ''' this method is a builder responsible to uncompress the packages to be build '''
         global __pkgInstalled__
@@ -2942,10 +3016,11 @@ class generic:
             # print source[n]
             s = os.path.abspath(str(source[n]))
             t = os.path.abspath(str(target[n]))
+            buildFolder = self.extractBuildFolder(t)
             if not url[3] or self.md5(source[n]) == url[3]:
                 import random
                 tmp = int(random.random()*10000000)
-                tmp = "%s/tmp.%s" % (os.path.dirname(os.path.dirname(str(target[n]))), str(tmp))
+                tmp = "%s/tmp.%s" % (os.path.dirname(buildFolder), str(tmp))
                 # print "\tMD5 OK for file ", source[n],
                 # print  "rm -rf %s 2>&1" % os.path.dirname(t)
                 # print self.__lastlog(__pkgInstalled__[s]), s, t
@@ -2958,7 +3033,7 @@ class generic:
                 # print self.__check_target_log__( lastlog, env ), str(target[0]), str(source[0])
                 if self.__check_target_log__( lastlog, env ):
                     # _print( "\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
-                    os.popen( "rm -rf %s 2>&1" % os.path.dirname(t) ).readlines()
+                    os.popen( "rm -rf %s 2>&1" % buildFolder ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
                     if '.rpm' in s:
                         # ss = os.path.basename( os.path.dirname( str(target[n]) ) )
@@ -2976,7 +3051,7 @@ class generic:
                         _print( cmd )
 
 
-                    cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (uncompressed_folder, os.path.dirname(t), tmp)
+                    cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (uncompressed_folder, buildFolder, tmp)
                     lines = os.popen( cmd ).readlines()
                     if not os.path.exists(str(target[n])):
                         _print( '-'*tcols )
@@ -2992,7 +3067,7 @@ class generic:
                         raise Exception("Uncompress failed!")
 
                     for updates in ['config.sub', 'config.guess']:
-                        for file2update in os.popen('find %s -name %s 2>&1' % (os.path.dirname(t), updates) ).readlines():
+                        for file2update in os.popen('find %s -name %s 2>&1' % (buildFolder, updates) ).readlines():
                             os.popen( "cp %s/../.download/%s %s"   % (os.path.dirname(s), updates, file2update) )
 
                     ret = True
@@ -3001,8 +3076,8 @@ class generic:
                     # f=open(s, 'w')
                     # f.write(' ')
                     # f.close()
-                    if not os.path.exists(os.path.dirname(t)):
-                        os.mkdirs(os.path.dirname(t))
+                    if not os.path.exists(buildFolder):
+                        os.mkdirs(buildFolder)
                         open(t, 'a').close()
         return ret
 
@@ -3057,43 +3132,45 @@ class generic:
             tmp = os.path.basename(t).split('.noBaseLib')[0]
         if self.do_not_use:
             return
-        url = filter(lambda x: tmp in x[1], self.downloadList)[0]
-        for version in ids:
-            v  = map(lambda x: int(x), version.split('.')[:3])
-            vv = map(lambda x: int(''.join(filter(lambda z: z.isdigit(),x))), url[2].split('.')[:3])
-            if len(vv)> 2:
-                if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]:
-                    for each in self.sed[version]:
-                        f = "%s/%s" % (t,each)
+        url = filter(lambda x: tmp in x[1], self.downloadList)
+        if url:
+            url = url[0]
+            for version in ids:
+                v  = map(lambda x: int(x), version.split('.')[:3])
+                vv = map(lambda x: int(''.join(filter(lambda z: z.isdigit(),x))), url[2].split('.')[:3])
+                if len(vv)> 2:
+                    if vv[0]>=v[0] and vv[1]>=v[1] and vv[2]>=v[2]:
+                        for each in self.sed[version]:
+                            f = "%s/%s" % (t,each)
 
-                        # sed a file if it exists!
-                        if os.path.exists("%s" % f):
-                            _print( bcolors.WARNING+":"+bcolors.BLUE+"\t'sed' patching %s %s... %s" % (bcolors.WARNING, f, bcolors.END) )
+                            # sed a file if it exists!
+                            if os.path.exists("%s" % f):
+                                _print( bcolors.WARNING+":"+bcolors.BLUE+"\t'sed' patching %s %s... %s" % (bcolors.WARNING, f, bcolors.END) )
 
-                            # we make a copy of the original file, before running sed
-                            # if we already have a copy, we restore it before running sed
-                            if os.path.exists("%s.original" % f):
-                                os.popen("cp %s.original %s" % (f,f)).readlines()
+                                # we make a copy of the original file, before running sed
+                                # if we already have a copy, we restore it before running sed
+                                if os.path.exists("%s.original" % f):
+                                    os.popen("cp %s.original %s" % (f,f)).readlines()
+                                else:
+                                    os.popen("cp %s %s.original" % (f,f)).readlines()
+                                # apply seds
+                                for sed in self.sed[version][each]:
+                                    cmd = '''sed -i.bak %s -e "s/%s/%s/g" 2>&1 ; echo $?''' % (
+                                        f,
+                                        sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
+                                        sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
+                                    )
+                                    lines = os.popen(cmd).readlines()
+                                    # _print(cmd+'\n'+'\n'.join(lines))
+
+                            # if it doesnt exist, create it!!
                             else:
-                                os.popen("cp %s %s.original" % (f,f)).readlines()
-                            # apply seds
-                            for sed in self.sed[version][each]:
-                                cmd = '''sed -i.bak %s -e "s/%s/%s/g" 2>&1 ; echo $?''' % (
-                                    f,
-                                    sed[0].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('#','\#').replace('"','\\"'),
-                                    sed[1].replace('/','\/').replace('$','\$').replace('\n','\\n').replace('\\"','\\\\\\\\\"').replace('"','\\"').replace('&','\\&')
-                                )
-                                lines = os.popen(cmd).readlines()
-                                # _print(cmd+'\n'+'\n'.join(lines))
+                                ptr = open(f, 'w')
+                                for sed in self.sed[version][each]:
+                                    ptr.write(sed[1])
+                                ptr.close()
 
-                        # if it doesnt exist, create it!!
-                        else:
-                            ptr = open(f, 'w')
-                            for sed in self.sed[version][each]:
-                                ptr.write(sed[1])
-                            ptr.close()
-
-                    break
+                        break
 
         # patch all -O3 to -O2 everywhere in the source, since -O3 can create
         # CPU specific code!
@@ -3141,7 +3218,8 @@ class generic:
     def uncompress(self,target, source):
         ret = self.env.uncompressor( target, source )
         for t in target:
-            self.env.Clean( ret, os.path.dirname(t) )
+            buildFolder = self.extractBuildFolder(t)
+            self.env.Clean( ret, buildFolder )
         return ret
 
 #    def sed(self,target,source):

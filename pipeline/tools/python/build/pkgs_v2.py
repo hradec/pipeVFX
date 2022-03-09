@@ -87,6 +87,7 @@ class all: # noqa
 
         To build a package with a specific version of GCC, just add gcc as a dependency to the package. (see python again!)
         '''
+        self.ARGUMENTS = ARGUMENTS
         self._rpath = []
         self._rpath_environ = {}
         self.all_env_vars = {}
@@ -460,6 +461,13 @@ class all: # noqa
                    'gcc-6.3.1.rpm.tar.gz',
                    '6.3.1',
                    'f6f508c03da14106554604b1ad3a5aab',
+                   { build.override.src: 'gcc.spec' } #, self.gcc_4_1_2: None }
+                ),(
+                    # CY2021 GCC 9.3.1 source code.
+                   'https://vault.centos.org/7.9.2009/sclo/Source/rh/devtoolset-9-gcc-9.3.1-2.2.el7.src.rpm',
+                   'gcc-9.3.1.rpm.tar.gz',
+                   '9.3.1',
+                   '3470cd70f1547d8abc2f2330e30ebfea',
                    { build.override.src: 'gcc.spec' } #, self.gcc_4_1_2: None }
                 )],
                 depend = [self.gcc_4_1_2],
@@ -1446,11 +1454,8 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase_one_version(ARGUMENTS, {self.llvm : version for version in self.llvm.keys()})
-        # build.github_phase(self.llvm, version='10.0.1')
-        # build.github_phase(self.llvm, version='7.1.0')
-        # build.github_phase(self.llvm, version='3.9.1')
-        # build.github_phase(self.llvm, version='9.0.0')
+        for v in self.llvm.keys():
+            build.github_phase_one_version(ARGUMENTS, {self.llvm : v})
 
 
         # ============================================================================================================================================
@@ -1760,10 +1765,10 @@ class all: # noqa
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
-        # ============================================================================================================================================
-        # github build point so we can split the build in multiple matrix jobs in github actions
-        # ============================================================================================================================================
-        build.github_phase(self.pyilmbase[sufix])
+            # ============================================================================================================================================
+            # github build point so we can split the build in multiple matrix jobs in github actions
+            # ============================================================================================================================================
+            build.github_phase_one_version(ARGUMENTS, {self.pyilmbase[sufix] : v for v in self.pyilmbase[sufix].keys()})
 
 
 
@@ -2677,6 +2682,12 @@ class all: # noqa
                 'embree-3.2.2.x86_64.linux.tar.gz',
                 '3.2.2',
                 '7d79863211c0b5d8061dd738c600a2b6',
+            ),(
+                'https://github.com/embree/embree/releases/download/v3.13.3/embree-3.13.3.x86_64.linux.tar.gz',
+                'embree-3.13.3.x86_64.linux.tar.gz',
+                '3.13.3',
+                '080abf6733dd68f4161acd8ec1720134',
+                { build.override.src: 'embree-vars.csh' }
             )],
             environ = environ,
         )
@@ -2698,7 +2709,7 @@ class all: # noqa
                 # create a nvcc wrapper to force cuda to use clang (LLVM) instead of gcc, since
                 # gcc 6.3.1 can't cope well with cuda.
                 'mv $INSTALL_FOLDER/bin/nvcc $INSTALL_FOLDER/bin/__nvcc__',
-                'echo "$INSTALL_FOLDER/bin/__nvcc__ -ccbin clang $CLIMITS -include climits -std=c++14 \$@" > $INSTALL_FOLDER/bin/nvcc',
+                'echo "$INSTALL_FOLDER/bin/__nvcc__  $CLIMITS \$@ -include climits -std=c++14 -ccbin clang " > $INSTALL_FOLDER/bin/nvcc',
                 'chmod a+x $INSTALL_FOLDER/bin/nvcc',
                 'echo "DONE!!"',
             ],
@@ -2977,7 +2988,7 @@ class all: # noqa
 
             # OPENVDB
             download_openvdb = []
-            openvdb_environ = {
+            self.gcc_llvm_environ = {
                 # this fixes the problem with missing stdlib.h
                 'CXX':  'g++ '
                             # '-include climits '
@@ -3010,6 +3021,7 @@ class all: # noqa
                 'PATH'      : '$SOURCE_FOLDER/tools/:$PATH',
                 'CLIMITS'   : ''
             }
+            openvdb_environ = self.gcc_llvm_environ
             if bv == "1.70.0":
                 # openvdb_environ['CLIMITS'] = ''.join([
                 #     ' -DCHAR_BIT=8 ',
@@ -3048,22 +3060,11 @@ class all: # noqa
                 )]
             elif bv == "1.66.0":
                 download_openvdb += [(
-                    # CY 2021
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v8.2.0.tar.gz',
-                    'openvdb-8.2.0.tar.gz',
-                    '8.2.0',
-                    '2852fe7176071eaa18ab9ccfad5ec403',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2019_U6',
-                    self.llvm: '7.1.0',
-                    self.ilmbase[bsufix]: exr_version,
-                    self.openexr[bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version,}
-                ),(
-                    # CY 2020
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
-                    'openvdb-7.0.0.tar.gz',
-                    '7.0.0',
-                    'fd6c4f168282f7e0e494d290cd531fa8',
+                    # CY 2018
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
+                    'openvdb-5.0.0.tar.gz',
+                    '5.0.0',
+                    '9ba08c29dda60ec625acb8a5928875e5',
                     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
                     self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
@@ -3081,12 +3082,23 @@ class all: # noqa
                     self.openexr[bsufix]: exr_version,
                     self.pyilmbase[bsufix]: exr_version,}
                 ),(
-                    # CY 2018
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
-                    'openvdb-5.0.0.tar.gz',
-                    '5.0.0',
-                    '9ba08c29dda60ec625acb8a5928875e5',
+                    # CY 2020
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
+                    'openvdb-7.0.0.tar.gz',
+                    '7.0.0',
+                    'fd6c4f168282f7e0e494d290cd531fa8',
                     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
+                    self.llvm: '7.1.0',
+                    self.ilmbase[bsufix]: exr_version,
+                    self.openexr[bsufix]: exr_version,
+                    self.pyilmbase[bsufix]: exr_version,}
+                ),(
+                    # CY 2021
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v8.2.0.tar.gz',
+                    'openvdb-8.2.0.tar.gz',
+                    '8.2.0',
+                    '2852fe7176071eaa18ab9ccfad5ec403',
+                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2019_U6',
                     self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
@@ -3183,10 +3195,10 @@ class all: # noqa
             )
             self.openvdb[bsufix] = openvdb
 
-        # ============================================================================================================================================
-        # github build point so we can split the build in multiple matrix jobs in github actions
-        # ============================================================================================================================================
-        build.github_phase(self.openvdb[bsufix])
+            # ============================================================================================================================================
+            # github build point so we can split the build in multiple matrix jobs in github actions
+            # ============================================================================================================================================
+            build.github_phase_one_version(ARGUMENTS, {self.openvdb[bsufix] : v for v in self.openvdb[bsufix].keys()})
 
 
         # =============================================================================================================================================
@@ -3275,10 +3287,10 @@ class all: # noqa
                 },
             )
             self.alembic[bsufix] = alembic
-        # =============================================================================================================================================
-        # github build point so we can split the build in multiple matrix jobs in github actions
-        # ============================================================================================================================================
-        build.github_phase(self.alembic[bsufix])
+            # =============================================================================================================================================
+            # github build point so we can split the build in multiple matrix jobs in github actions
+            # ============================================================================================================================================
+            build.github_phase_one_version(ARGUMENTS, {self.alembic[bsufix] : v for v in self.alembic[bsufix].keys()})
 
 
         # =============================================================================================================================================
@@ -3361,7 +3373,8 @@ class all: # noqa
                     '3.4.0',
                     '2eea21ef2d85bcbbcee94e287c34a07e',
                     {self.gcc: '6.3.1', self.boost: bv, self.ptex: '2.3.2',
-                    self.hdf5: self.alembic[bsufix]['1.7.11']['hdf5']},
+                    self.hdf5: self.alembic[bsufix]['1.7.11']['hdf5'],
+                    self.llvm: '7.1.0' },
                 )]
 
             opensubdiv = build.cmake(
@@ -3378,9 +3391,10 @@ class all: # noqa
                 ]}},
                 download=download,
                 # baseLibs=[python],
-                depend=[self.hdf5, self.glfw, self.glew, self.clew[bsufix]],
+                depend=[self.hdf5, self.glfw, self.glew, self.clew[bsufix], self.cuda],
                 flags=[
                     "-D GLEW_LOCATION=$GLEW_TARGET_FOLDER/",
+                    "-D OSD_CUDA_NVCC_FLAGS='--gpu-architecture compute_52'",
                     "-D VERBOSE=1",
                 ],
                 environ = {
@@ -3511,6 +3525,9 @@ class all: # noqa
                     }
                 }
             }
+
+            openvdbOBJ = build.pkgVersions('openvdb').latestVersionOBJ()
+            print 'usd',bsufix,self.openvdb[bsufix].latestVersion()
             usd_sed['21.5.0']  = usd_sed['20.8.0']
             usd_sed['21.11.0'] = usd_sed['20.8.0']
             usd_CORES  = os.environ['CORES']
@@ -3564,7 +3581,7 @@ class all: # noqa
                         self.boost: bv,
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.37.4',
-                        self.openvdb[bsufix] : '7.0.0',
+                        self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
                         self.alembic[bsufix] : '1.7.11',
                         self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
                         latest_osl.obj : latest_osl.version,
@@ -3581,9 +3598,10 @@ class all: # noqa
                         {self.gcc: '6.3.1', self.cmake: '3.18.2',
                         self.tbb: '2019_U6', self.embree: '3.2.2',
                         self.boost: bv,
+                        # openvdbOBJ.obj : openvdbOBJ.version,
+                        self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.38.0',
-                        self.openvdb[bsufix] : '8.2.0',
                         self.alembic[bsufix] : '1.7.11',
                         self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
                         latest_osl.obj : latest_osl.version,
@@ -3600,9 +3618,10 @@ class all: # noqa
                         {self.gcc: '6.3.1', self.cmake: '3.18.2',
                         self.tbb: '2019_U6', self.embree: '3.2.2',
                         self.boost: bv,
+                        # openvdbOBJ.obj : openvdbOBJ.version,
+                        self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.37.4',
-                        self.openvdb[bsufix] : '8.2.0',
                         self.alembic[bsufix] : '1.7.11',
                         self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
                         latest_osl.obj : latest_osl.version,
@@ -3825,6 +3844,19 @@ class all: # noqa
                     self.boost: cgru_boost_version,
                 }
             )],
+        )
+
+        self.oidn = build.download(
+            build.ARGUMENTS,
+            'oidn',
+            src='bin/oidnDenoise',
+            download=[(
+                'https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/oidn-1.4.3.x86_64.linux.tar.gz',
+                'oidn-1.4.3.x86_64.linux.tar.gz',
+                '1.4.3',
+                'b6b255d513c953665db6d76ec583a13b'
+            )],
+            cmd=["fkdjsfsf"]
         )
 
 

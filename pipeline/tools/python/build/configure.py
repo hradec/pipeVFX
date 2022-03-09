@@ -313,6 +313,15 @@ class gccBuild(configure):
                     "tar xf ./isl-0.14.tar.bz2",
                     "tar xf ./mpc-0.8.1.tar.gz",
                 ]) % (os.path.dirname(t)) )
+        elif float(v) == 9.3:
+            if configure.uncompressor( self, target, source, env):
+                os.system( " && ".join([
+                    "cd %s",
+                    "tar xf ./gcc-9.3.1-20200408.tar.xz",
+                    "tar xf ./doxygen-1.8.0.src.tar.gz",
+                    "tar xf ./isl-0.16.1.tar.bz2",
+                    "tar xf ./mpc-0.8.1.tar.gz",
+                ]) % (os.path.dirname(t)) )
         else:
             configure.uncompressor( self, target, source, env)
 
@@ -451,46 +460,6 @@ class gccBuild(configure):
             # extract from https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=gcc48
             distroSpecific = []
             distroSpecificConfigure = ''
-            # if 'arch' in pipe.distro:
-            #     distroSpecific = [
-            #         # Do not run fixincludes
-            #         "sed -i -e 's@\./fixinc\.sh@-c true@' 'gcc/Makefile.in'",
-            #         # fix build with GCC 6
-            #         "curl -L -s 'https://aur.archlinux.org/cgit/aur.git/plain/gcc-4.9-fix-build-with-gcc-6.patch?h=gcc48' | sed 's/--- a/--- ./g' | sed 's/+++ b/+++ ./g' | patch -p1",
-            #         # Arch Linux installs x86_64 libraries /lib
-            #         "sed -i -e '/m64=/s/lib64/lib/' 'gcc/config/i386/t-linux64'",
-            #         # hack! - some configure tests for header files using "$CPP $CPPFLAGS"
-            #         "sed -i -e '/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/' {libiberty,gcc}/configure",
-            #         # installing libiberty headers is broken
-            #         # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=56780#c6
-            #         # "sed -i -e 's/@target_header_dir@/libiberty/' 'libiberty/Makefile.in'",
-            #     ]
-            #     distroSpecificConfigure = ' '.join([
-            #         '--disable-libstdcxx-pch '
-            #         '--disable-libunwind-exceptions '
-            #         '--disable-multilib '
-            #         '--disable-werror '
-            #         '--enable-__cxa_atexit '
-            #         '--enable-checking=release '
-            #         '--enable-clocale=gnu '
-            #         '--enable-cloog-backend=isl '
-            #         '--enable-gnu-unique-object '
-            #         '--enable-gold '
-            #         '--enable-languages="c,c++" '
-            #         '--enable-plugin '
-            #         '--enable-fdpic '
-            #         '--enable-shared '
-            #         '--enable-threads=posix '
-            #         '--enable-version-specific-runtime-libs '
-            #         '--infodir="$INSTALL_FOLDER/share/info" '
-            #         '--libdir="$INSTALL_FOLDER/lib" '
-            #         '--libexecdir="$INSTALL_FOLDER/lib" '
-            #         '--mandir=$INSTALL_FOLDER/share/man '
-            #         "--program-suffix=$(basename $TARGET_FOLDER) "
-            #         "--with-ppl "
-            #         "--without-system-zlib "
-            #     ])
-
             if 'fedora' in pipe.distro:
                 distroSpecific = [
                     '''( for n in $(ls gcc-6.3.1-20170216/libgcc/config/*/linux-unwind.h) ; do sudo sed -i -e 's/struct.ucontext/ucontext_t/g' $n ; done )''',
@@ -503,6 +472,53 @@ class gccBuild(configure):
                 # "./contrib/download_prerequisites",
                 "ls -lh",
                 "cd gcc-6.3.1-20170216",
+                # "( for n in $(ls ../gcc6*.patch) ; do patch -p < $n ; done )",
+                "mkdir -p build",
+                "cd build",
+                "ulimit -s 32768",
+                '../configure '
+                        '--disable-libsanitizer '
+                        '--disable-multilib '
+                        '--disable-werror '
+                        '--disable-bootstrap '
+                        '--disable-install-libiberty '
+                        '--disable-werror '
+                        '--enable-__cxa_atexit '
+                        '--enable-checking=release '
+                        '--enable-languages="c,c++" '
+                        '--enable-fdpic '
+                        "--without-system-zlib "
+                        "--with-ppl "
+                        '--with-gmp=$GMP_TARGET_FOLDER '
+                        '--with-mpfr=$MPFR_TARGET_FOLDER '
+                        '--with-mpc=$MPC_TARGET_FOLDER '
+                        '--infodir="$INSTALL_FOLDER/share/info" '
+                        '--libdir="$INSTALL_FOLDER/lib" '
+                        '--libexecdir="$INSTALL_FOLDER/lib" '
+                        '--mandir=$INSTALL_FOLDER/share/man '
+                        "--program-suffix=$(basename $TARGET_FOLDER) "
+                        "%s --prefix=$INSTALL_FOLDER " % distroSpecificConfigure,
+                'make -j $DCORES',
+                'make install',
+            ])
+
+        elif float(os_environ['VERSION_MAJOR']) == 9.3:
+            # extract from https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=gcc48
+            distroSpecific = []
+            distroSpecificConfigure = ''
+            if 'fedora' in pipe.distro:
+                distroSpecific = [
+                    # '''( for n in $(ls gcc-6.3.1-20170216/libgcc/config/*/linux-unwind.h) ; do sudo sed -i -e 's/struct.ucontext/ucontext_t/g' $n ; done )''',
+                    # "sed -i.bak -e 's/fcntl.h./fcntl.h>\\n#include <signal.h>/' gcc-6.3.1-20170216/libsanitizer/asan/asan_linux.cc",
+                    # "sed -i.bak -e 's/__res_state .statp . .__res_state..state/struct __res_state *statp = (struct __res_state*)state/'  gcc-6.3.1-20170216/libsanitizer/tsan/tsan_platform_linux.cc",
+                    # "sed -i.bak -e 's/.include..sys.ustat.h.//' gcc-6.3.1-20170216/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.cc"
+                ]
+
+            cmd = ' && '.join(distroSpecific+[
+                # "./contrib/download_prerequisites",
+                "ls -lh",
+                "cd gcc-9.3.1-20200408",
+                "( for n in $(ls ../0*.patch) ; do patch -p1 < $n ; done )",
                 # "( for n in $(ls ../gcc6*.patch) ; do patch -p < $n ; done )",
                 "mkdir -p build",
                 "cd build",

@@ -96,25 +96,18 @@ class cmake(make):
         '-DCMAKE_STATIC_LINKER_FLAGS="$STATICFLAGS"',
         '-DCMAKE_INSTALL_RPATH="$RPATH"',
         '-DENABLERTTI=1',
+        '-Wno-dev',
+        # '-DCMAKE_CC_COMPILER=$CC',
+        # '-DCMAKE_CXX_COMPILER=$CXX',
+        # '-DCMAKE_CPP_COMPILER=$CPP',
+        # '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
+        # '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
+        # '-DCMAKE_LINKER=$LD',
     ]
     flags = [
-            '-Wno-dev',
             '-DUSE_SIMD=0',
             '-DUSE_FFMPEG=0',
             '-DUSE_OPENCV=0',
-            # '-DCMAKE_CC_COMPILER=$CC',
-            # '-DCMAKE_CXX_COMPILER=$CXX',
-            # '-DCMAKE_CPP_COMPILER=$CPP',
-            '-DCMAKE_CC_FLAGS="$CFLAGS"',
-            '-DCMAKE_CXX_FLAGS="$CXXFLAGS"',
-            '-DCMAKE_CPP_FLAGS="$CPPFLAGS"',
-            '-DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS"',
-            '-DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS"',
-            '-DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS"',
-            '-DCMAKE_STATIC_LINKER_FLAGS="$STATICFLAGS"',
-            # '-DCMAKE_CC_LINKER_PREFERENCE=$LD',
-            # '-DCMAKE_CXX_LINKER_PREFERENCE=$LD',
-            # '-DCMAKE_LINKER=$LD',
             '-DOPENIMAGEIOHOME=$OIIO_TARGET_FOLDER',
             '-DOIIO_INCLUDES=$OIIO_TARGET_FOLDER/include/',
             '-DOIIO_LIBRARIES=$OIIO_TARGET_FOLDER/lib/libOpenImageIO.so',
@@ -197,6 +190,7 @@ class cmake(make):
             if 'make' in cmd and 'cmake' not in cmd:
                 if not '-j' in cmd:
                     cmd = cmd.replace('make', "make -j $DCORES")
+
 
         return cmd
 

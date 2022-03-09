@@ -39,8 +39,13 @@ import build
 if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 4.2:
     CXXSTD = "c++11"
 if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 6.0:
-    CXXSTD = "c++14"
+    # CXXSTD = "c++14"
     CXXFLAGS += ["-fno-sized-deallocation"]
+    CXXSTD = "c++17"
+if build.versionMajor(os.path.basename(os.environ['GAFFER_VERSION'])) >= 0.62:
+    CXXSTD = "c++17"
+    CXXFLAGS += ["-fno-sized-deallocation"]
+    os.system("grep atomic_uint32_t ./* -R | awk -F':' '{print $1}' | grep -v config.log | while read p ; do sed -i.bak -e 's/atomic_uint32_t/atomic<std::uint32_t>/' $p ; done")
 
 # INSTALL_DIR = os.environ['INSTALL_FOLDER']
 BUILD_DIR='/tmp/build/gaffer-${GAFFER_MAJOR_VERSION}.${GAFFER_MINOR_VERSION}.${GAFFER_PATCH_VERSION}-${GAFFER_PLATFORM}-python'+'.'.join(python.split('.')[:2])

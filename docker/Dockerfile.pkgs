@@ -31,18 +31,6 @@ RUN yum -y install source-highlight
 #COPY docker/run.sh /run.sh
 COPY pipeline/tools/scripts/pipevfx_docker_init.sh /run.sh
 
-ADD pipeline/tools/python /atomo/pipeline/tools/python
-ADD pipeline/tools/config /atomo/pipeline/tools/config
-COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
-
-# since we're having trouble with a gcc 4.1.2 built in centos
-# (link complains about code needing -fPIC, when it was compiled with it!)
-# we are adopting this quick and dirty solution, using a pre-compiled binary
-# of gcc 4.1.2, done in an arch linux distro!
-# this binaries work without issue, not complening about -fPIC.
-COPY docker/gcc-bin-4.1.2.tgz       /atomo/pipeline/build/.download/4.1.2.tar.gz
-COPY docker/setuptools-33.1.1.zip   /atomo/pipeline/build/.download/setuptools-33.1.1.zip
-
 # create the build folder, if one doesn't exist
 RUN mkdir -p /atomo/pipeline/build/
 
@@ -75,13 +63,30 @@ ENV DOCKER_PYTHON=/python/
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
     touch /atomo/.root
 
+ADD pipeline/tools/python /atomo/pipeline/tools/python
+ADD pipeline/tools/config /atomo/pipeline/tools/config
+COPY pipeline/build/SConstruct /atomo/pipeline/build/SConstruct
+
+# since we're having trouble with a gcc 4.1.2 built in centos
+# (link complains about code needing -fPIC, when it was compiled with it!)
+# we are adopting this quick and dirty solution, using a pre-compiled binary
+# of gcc 4.1.2, done in an arch linux distro!
+# this binaries work without issue, not complening about -fPIC.
+COPY docker/gcc-bin-4.1.2.tgz       /atomo/pipeline/build/.download/4.1.2.tar.gz
+COPY docker/setuptools-33.1.1.zip   /atomo/pipeline/build/.download/setuptools-33.1.1.zip
+
+
 ENV TERM=xterm
 RUN cd /atomo/pipeline/build && if [ "$_PRE_CMD" != "" ] ; then \
         echo "$_PRE_CMD" ; \
         bash -c "$_PRE_CMD" ; \
     fi
 
+COPY .github /.github
+# COPY .github /atomo/.github
+RUN ls -l /.github/
 RUN cd /atomo/pipeline/build && \
+    export CACHING=1 && \
     PYTHONPATH=/atomo/pipeline/tools/python \
     STUDIO=atomo \
     scons install -j $(( $(grep MHz /proc/cpuinfo | wc -l) * 2 ))
@@ -93,7 +98,8 @@ RUN cd /atomo/pipeline/build && if [ "$_POS_CMD" != "" ] ; then \
 
 RUN yum clean all
 RUN rm -rf /var/cache/yum/*
-RUN rm -rv \
+RUN rm -r \
+    /.github \
     /run.sh \
     /atomo/pipeline/tools/python \
     /atomo/pipeline/tools/config \
@@ -102,7 +108,7 @@ RUN rm -rv \
 
 # cleanup download folder
 RUN cd /atomo/pipeline/build && [ -e /atomo/pipeline/build/.download ] && \
-    ( ls -1 .download/*{.tar,.zip}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
+    ( ls -1 .download/*{.tar,.zip,.run,.rpm,.tgz}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
         do [ "$(egrep $p /tmp/xx)" == "" ] && rm -rf ".download/$p" ; \
         [ -d .download/$p ] && rm -rf ".download/$p" ; \
     done ; rm /tmp/xx ) || true

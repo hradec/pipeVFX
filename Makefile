@@ -14,6 +14,7 @@ PRE_CMD?=
 POS_CMD?=
 CUSTOM_LIB_FOLDER?=
 STUDIO?=$(shell echo $STUDIO)
+DEBUG?=
 
 
 all: help
@@ -57,6 +58,9 @@ endif
 ifneq "${PARALLEL}" ""
 BUILD_EXTRA:=${BUILD_EXTRA} -j ${PARALLEL}
 endif
+ifneq "${DEBUG}" ""
+BUILD_EXTRA:=${BUILD_EXTRA} -d
+endif
 ifneq "${PKG}" ""
 BUILD_EXTRA:=${BUILD_EXTRA} ${PKG}
 else
@@ -78,7 +82,8 @@ endif
 $(info ${STUDIO})
 
 build: upload
-	export CUSTOM_LIB_FOLDER=${_CUSTOM_LIB_FOLDER} ; ${CD}/pipeline/tools/scripts/pipevfx -b ${BUILD_EXTRA}
+	export CUSTOM_LIB_FOLDER=${_CUSTOM_LIB_FOLDER} ;\
+	${CD}/pipeline/tools/scripts/pipevfx -b ${BUILD_EXTRA}
 
 build_gcc: upload_centos
 	@IMAGE=centos ${CD}/pipeline/tools/scripts/pipevfx -b -e 'build-gcc'
@@ -93,13 +98,14 @@ matrix: upload
 	echo "{ \"name\": [ "$$(echo $$phases | sed 's/,$$//')", \"all\" ] }"
 
 upload: #cache
-	@[ "${DOCKER}" == "1" ] && ${CD}/pipeline/tools/scripts/pipevfx -u || echo "Not building docker image!"
+	@[ "${DOCKER}" == "1" ] && DOCKER=1 ${CD}/pipeline/tools/scripts/pipevfx -u || echo "Not building docker image!"
 
 upload_centos:
-	@[ "${DOCKER}" == "1" ] && IMAGE=centos ${CD}/pipeline/tools/scripts/pipevfx -u || echo "Not building docker image!"
+	@[ "${DOCKER}" == "1" ] && DOCKER=1 IMAGE=centos ${CD}/pipeline/tools/scripts/pipevfx -u || echo "Not building docker image!"
 
 cache:
 	@[ "${DOCKER}" == "1" ] && \
+	DOCKER=1 \
 	PRE_CMD='${PRE_CMD}' \
 	POS_CMD='${POS_CMD}' \
 	${CD}/pipeline/tools/scripts/pipevfx -p || echo "Not building docker image!"
