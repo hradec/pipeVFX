@@ -21,3 +21,4 @@ pipeline/tools/prman/ris/src/build
 pipeline/tools/prman/ris/*.*
 *.out
 NVIDIA*.run
+cuda*.run
