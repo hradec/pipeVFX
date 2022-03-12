@@ -1182,7 +1182,7 @@ class generic:
                         # if not installed, remove build folder!
                         if os.path.exists(self.buildFolder[p][-1]) and not self.github_matrix:
                             cmd = "rm -rf "+self.buildFolder[p][-1]+" 2>/dev/null"
-                            _print( ":: __init__:",cmd,"\r" )
+                            # _print( ":: __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
                     # else:
                     #     os.system("touch /.done-dontTryToBuildAnymore" % installpath)
@@ -2106,7 +2106,8 @@ class generic:
 
         # set TARGET_FOLDER and INSTALL_FOLDER
         os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
-        os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
+        # os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
+        os_environ['SOURCE_FOLDER'] = os.path.abspath(self.extractBuildFolder(str(source[0])))
         os_environ['INSTALL_FOLDER'] = os_environ['TARGET_FOLDER']
         if not self.dontUseTargetSuffixForFolders:
             if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
@@ -2856,12 +2857,13 @@ class generic:
 
                 cmd = list(set(cmd))
                 if cmd and path_exist:
-                    _print(     ":: _installer_final_check: error! (%s)" % _TARGET )
+                    # _print(     ":: _installer_final_check: error! (%s)" % _TARGET )
                     for c in cmd:
                         if c[0] == ':':
-                            _print( c )
+                            # _print( c )
+                            pass
                         else:
-                            _print( "::                       "+c )
+                            # _print( "::                       "+c )
                             os.system(c)
 
                 if ret:
@@ -3052,6 +3054,7 @@ class generic:
 
 
                     cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (uncompressed_folder, buildFolder, tmp)
+                    _print( cmd )
                     lines = os.popen( cmd ).readlines()
                     if not os.path.exists(str(target[n])):
                         _print( '-'*tcols )

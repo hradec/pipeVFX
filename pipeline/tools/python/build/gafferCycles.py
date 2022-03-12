@@ -56,20 +56,19 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
             '0.24.0',
             'a4f431798e073628b363e8fd4f18e5db',
             {pkgs.boost: boost, usdOBJ.obj: usd,
-            pkgs.gcc: pkgs.gcc.latestVersion(),
-            # gafferOBJ['gcc'].obj: gafferOBJ['gcc'].version,
             gafferOBJ.obj: gafferOBJ.version,
+            # gafferOBJ['gcc'].obj: gafferOBJ['gcc'].version,
+            # gafferOBJ['openvdb'].obj: gafferOBJ['openvdb'].version,
+            gafferOBJ['tbb'].obj: gafferOBJ['tbb'].version,
             gafferOBJ['cortex'].obj: gafferOBJ['cortex'].version,
             gafferOBJ['openexr'].obj: gafferOBJ['openexr'].version,
             gafferOBJ['oiio'].obj: gafferOBJ['oiio'].version,
             gafferOBJ['ocio'].obj: gafferOBJ['ocio'].version,
             gafferOBJ['osl'].obj: gafferOBJ['osl'].version,
-            gafferOBJ['tbb'].obj: gafferOBJ['tbb'].version,
             usdOBJ['blosc'].obj: usdOBJ['blosc'].version,
             usdOBJ['opensubdiv'].obj: usdOBJ['opensubdiv'].version,
             oslOBJ['pugixml'].obj: oslOBJ['pugixml'].version,
             oslOBJ['llvm'].obj: oslOBJ['llvm'].version,
-            pkgs.embree: pkgs.embree.latestVersion(),
             pkgs.jpeg: pkgs.jpeg.latestVersion(),
             pkgs.glew: pkgs.glew.latestVersion(),
             pkgs.cuda: pkgs.cuda.latestVersion(),
@@ -77,10 +76,17 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
             pkgs.ispc: pkgs.ispc.latestVersion(),
             pkgs.glog: pkgs.glog.latestVersion(),
             pkgs.gflags: pkgs.gflags.latestVersion(),
+            pkgs.cyclesx: pkgs.cyclesx.latestVersion(),
+            # we need the latest gcc, since we're using binary embree/odin
+            pkgs.gcc: pkgs.gcc.latestVersion(),
+            # the tbb version used by embree/odin binaries
+            # pkgs.tbb: '2021.5.0',
+            # embree and oidn are pre-built binaries!!
+            pkgs.embree: pkgs.embree.latestVersion(),
             pkgs.oidn: pkgs.oidn.latestVersion(),
-            openvdbOBJ.obj : openvdbOBJ.obj.latestVersion(),
-            # gafferOBJ['openvdb'].obj: gafferOBJ['openvdb'].version,
-            pkgs.cyclesx: pkgs.cyclesx.latestVersion() }
+            # we're using the latest openvdb, even if it wasn't build with the
+            # current boost version!
+            openvdbOBJ.obj : openvdbOBJ.obj.latestVersion()}
         )],
         flags = [
             ' -D DCMAKE_CC="$CC"'
@@ -136,6 +142,7 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
         cmd = [
             # put our pre-downloaded version of cyclesx as the cycles folder
             # in this source folder
+            'mv $OCIO_TARGET_FOLDER/lib/static $OCIO_TARGET_FOLDER/__static',
             'rmdir cycles',
             'ln -s $CYCLESX_TARGET_FOLDER ./cycles',
             # now we can build!
@@ -144,6 +151,7 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
             'cmake ..',
             'make -j $DCORES',
             'make -j $DCORES install ',
+            'mv $OCIO_TARGET_FOLDER/__static $OCIO_TARGET_FOLDER/lib/static',
         ],
         environ = {
             'CXXFLAGS' : pkgs.gcc_llvm_environ['CXX'].split('g++')[1]+' $CXXFLAGS'

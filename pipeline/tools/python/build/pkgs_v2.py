@@ -656,69 +656,6 @@ class all: # noqa
             # 'pybind11[Global]',
         ]}
 
-        tbb = build.tbb(
-            ARGUMENTS,
-            'tbb',
-            download=[(
-                # CY2016
-                'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb43_20150611oss_src.tgz',
-                'tbb43_20150611oss.tar.gz',
-                '4.3.6',
-                'bb144ec868c53244ea6be11921d86f03',
-                { self.gcc : '4.1.2', python: '2.7.16' }
-            ),(
-                # CY2017
-                'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb44_20160526oss_src_0.tgz',
-                'tbb44_20160526oss.tar.gz',
-                '4.4.r20160526oss',
-                '6309541504a819dabe352130f27e57d5',
-                { self.gcc : '4.1.2', python: '2.7.16' }
-            ),(
-                # CY2018
-                'https://github.com/intel/tbb.git',
-                'tbb-2017_U6.zip',
-                '2017_U6',
-                None,
-                { self.gcc : '4.1.2', python: '2.7.16' }
-            ),(
-                # CY2019
-                'https://github.com/intel/tbb.git',
-                'tbb-2018.zip',
-                '2018',
-                None,
-                { self.gcc : '4.1.2', python: '2.7.16' }
-            ),(
-                # CY2020
-                'https://github.com/intel/tbb.git',
-                'tbb-2019_U6.zip',
-                '2019_U6',
-                None,
-                { self.gcc : '6.3.1', python: '2.7.16' }
-            ),(
-                # CY2021
-                'https://github.com/intel/tbb.git',
-                'tbb-2020_U2.zip',
-                '2020_U2',
-                None,
-                { self.gcc : '6.3.1', python: '2.7.16' }
-            ),(
-                # CY2022
-                'https://github.com/intel/tbb.git',
-                'tbb-2020_U3.zip',
-                '2020_U3',
-                None,
-                { self.gcc : '6.3.1', python: '2.7.16' }
-            ),(
-                # USD / maya 2018
-                'https://github.com/intel/tbb/archive/4.4.6.tar.gz',
-                'tbb-4.4.6.tar.gz',
-                '4.4.6',
-                '20e15206f70c2651bfc964e451a443a0',
-                { self.gcc : '4.1.2', python: '2.7.16' }
-            )],
-        )
-        self.tbb = tbb
-
         cmake = build.configure(
             ARGUMENTS,
             'cmake',
@@ -779,6 +716,78 @@ class all: # noqa
             # },
         )
         self.cmake = cmake
+
+        tbb = build.tbb(
+            ARGUMENTS,
+            'tbb',
+            download=[(
+                # CY2016
+                'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb43_20150611oss_src.tgz',
+                'tbb43_20150611oss.tar.gz',
+                '4.3.6',
+                'bb144ec868c53244ea6be11921d86f03',
+                { self.gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                # CY2017
+                'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb44_20160526oss_src_0.tgz',
+                'tbb44_20160526oss.tar.gz',
+                '4.4.r20160526oss',
+                '6309541504a819dabe352130f27e57d5',
+                { self.gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                # CY2018
+                'https://github.com/intel/tbb.git',
+                'tbb-2017_U6.zip',
+                '2017_U6',
+                None,
+                { self.gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                # CY2019
+                'https://github.com/intel/tbb.git',
+                'tbb-2018.zip',
+                '2018',
+                None,
+                { self.gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                # CY2020
+                'https://github.com/intel/tbb.git',
+                'tbb-2019_U6.zip',
+                '2019_U6',
+                None,
+                { self.gcc : '6.3.1', python: '2.7.16' }
+            ),(
+                # CY2021
+                'https://github.com/intel/tbb.git',
+                'tbb-2020_U2.zip',
+                '2020_U2',
+                None,
+                { self.gcc : '6.3.1', python: '2.7.16' }
+            ),(
+                # CY2022
+                'https://github.com/intel/tbb.git',
+                'tbb-2020_U3.zip',
+                '2020_U3',
+                None,
+                { self.gcc : '6.3.1', python: '2.7.16' }
+            # ),(
+            #     # CY????
+            #     'https://github.com/oneapi-src/oneTBB/archive/refs/tags/v2021.5.0.tar.gz',
+            #     'oneTBB-2021.5.0.tar.gz',
+            #     '2021.5.0',
+            #     '5e5f2ee22a0d19c0abbe7478f1c7ccf6',
+            #     { self.gcc : '6.3.1', python: '2.7.16',
+            #     self.cmake : self.cmake.latestVersion(),
+            #     build.override.src: 'CMakeLists.txt' }
+            ),(
+                # USD / maya 2018
+                'https://github.com/intel/tbb/archive/4.4.6.tar.gz',
+                'tbb-4.4.6.tar.gz',
+                '4.4.6',
+                '20e15206f70c2651bfc964e451a443a0',
+                { self.gcc : '4.1.2', python: '2.7.16' }
+            )],
+        )
+        self.tbb = tbb
 
         for pip in self.pip:
             build.globalDependency(self.pip[pip])
@@ -3167,7 +3176,10 @@ class all: # noqa
                             '-D CONCURRENT_MALLOC=Jemalloc '
                             '-D DOPENVDB_BUILD_NANOVDB=ON ',
                         "make -j $DCORES VERBOSE=1",
-                        "make -j $DCORES install"
+                        "make -j $DCORES install",
+                        # if we're building a bigger than 1.70 boost version, create a
+                        # 1.66 folder for compatibility
+                        '''[ ! -e $INSTALL_FOLDER/../boost.1.66.0 ] && if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then ln -s boost.1.70.0 $INSTALL_FOLDER/../boost.1.66.0 ; fi'''
                     ") || ( cd openvdb ",
                         " make install -j $DCORES"
             			" DESTDIR=$INSTALL_FOLDER"
@@ -3527,7 +3539,7 @@ class all: # noqa
             }
 
             openvdbOBJ = build.pkgVersions('openvdb').latestVersionOBJ()
-            print 'usd',bsufix,self.openvdb[bsufix].latestVersion()
+            # print 'usd',bsufix,self.openvdb[bsufix].latestVersion()
             usd_sed['21.5.0']  = usd_sed['20.8.0']
             usd_sed['21.11.0'] = usd_sed['20.8.0']
             usd_CORES  = os.environ['CORES']
@@ -3856,7 +3868,9 @@ class all: # noqa
                 '1.4.3',
                 'b6b255d513c953665db6d76ec583a13b'
             )],
-            cmd=["fkdjsfsf"]
+            # no_folder_install_checking = False,
+            # noMinTime = False,
+            # cmd=["fkdjsfsf"]
         )
 
 

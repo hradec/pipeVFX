@@ -177,8 +177,8 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
         __download[n][4][ usd['tbb'].obj       ] = usd['tbb'      ].version
         __download[n][4][ usd['gcc'].obj       ] = usd['gcc'      ].version
         __download[n][4][ usd['ocio'].obj      ] = usd['ocio'     ].version
-        __download[n][4][ openvdbOBJ.obj       ] = openvdbOBJ.version
-        # __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
+        __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
+        # __download[n][4][ openvdbOBJ.obj       ] = openvdbOBJ.version
         # __download[n][4][ pkgs.cortex[cortex_sufix] ] = __download[n][2]
 
     # now build the version of cortex with the usd version

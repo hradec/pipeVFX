@@ -397,7 +397,7 @@ class glfw(cmake):
                 ret = os.popen("ln -s lib64 %s/lib" % targetFolder).readlines()
         return ret
 
-class tbb(make):
+class tbb(cmake):
     ''' a make class to exclusively build intels TBB package
     since we need to handle the installation by ourselfs, we override
     installer() method'''
@@ -425,6 +425,15 @@ class tbb(make):
                 ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
                 ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
     }
+
+    def fixCMD(self, cmd, os_environ, environ=[]):
+        if float(os_environ['VERSION_MAJOR'].replace('_','.')) > 2021:
+            cmd = '''cmake -DTBB_WARNING_LEVEL="-Woff"  && '''+ cmd
+            cmd = cmake.fixCMD(self, cmd, os_environ, environ)
+            cmd = '''sed -i.bak -e 's/Wall/Wno-error) #/' ./cmake/compilers/GNU.cmake ; '''+cmd
+        else:
+            cmd = make.fixCMD(self, cmd, os_environ, environ)
+        return cmd
 
     def installer(self, target, source, os_environ):
         '''we use this method to do a custom tbb install
