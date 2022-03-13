@@ -1181,7 +1181,7 @@ class baseApp(_environ):
 
     def nice(self):
         return 19
-        
+
     def expand(self, binName=None):
         ''' Expand all env vars in this class to the environment.
         This runs at the very end, before running the actual app
@@ -1599,10 +1599,23 @@ class baseLib(baseApp):
         pv = versionLib.get('python')
         bv = versionLib.get('boost')
         pvm = '.'.join(pv.split('.')[:2])
-        ret =  cached.glob( self.path('lib/*.so') )
-        ret +=  cached.glob( self.path('lib/python%s/*.so' % pvm) )
-        ret +=  cached.glob( self.path('lib/boost%s/*.so' % bv) )
-        ret +=  cached.glob( self.path('lib/boost%s/python%s/*.so' % (bv,pvm)) )
+        tmp =  cached.glob( self.path('lib/*.so') )
+        tmp +=  cached.glob( self.path('lib/python%s/*.so' % pvm) )
+        tmp +=  cached.glob( self.path('lib/boost%s/*.so' % bv) )
+        tmp +=  cached.glob( self.path('lib/boost%s/python%s/*.so' % (bv,pvm)) )
+        ret = []
+        for each in tmp:
+            if 'ASCII' in ''.join(cached.popen("file -b -e soft '%s'" % each).readlines()):
+                # account for text links that some libraries create, instead of
+                # symlinks (damn tbb)
+                data = cached.copen(each).readlines()
+                if 'INPUT ' in data[0]:
+                    each = '/'.join([ os.path.dirname(each), data[0].split('(')[1].split(')')[0] ])
+            ret += [each]
+
+
+
+
         # d = {}
         # for each in ret:
         #     if os.path.isfile(each):
