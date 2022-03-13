@@ -36,6 +36,7 @@ class all: # noqa
         'boost'   : '1.70.0',
         'openexr' : '2.4.0',
         'usd'     : '21.5.0',
+        'tbb'     : '2020_U3'
     }
 
     def cmake_prefix(self):
@@ -2672,7 +2673,24 @@ class all: # noqa
             ]
         )
 
-        embree = build.download(
+        self.ispc = build.download(
+            build.ARGUMENTS,
+            'ispc',
+            src='ReleaseNotes.txt',
+            download=[(
+                'https://github.com/ispc/ispc/releases/download/v1.16.1/ispc-v1.16.1-linux.tar.gz',
+                'ispc-v1.16.1-linux.tar.gz',
+                '1.16.1',
+                '4665c577541003e31c8ce0afd64b6952',
+            ),(
+                'https://github.com/ispc/ispc/releases/download/v1.17.0/ispc-v1.17.0-linux.tar.gz',
+                'ispc-v1.17.0-linux.tar.gz',
+                '1.17.0',
+                'e68c54266c2d2b4d9f2fb81cf3e42937',
+            )],
+        )
+
+        self.embree_bin = build.download(
             ARGUMENTS,
             'embree',
             src='embree-config.cmake',
@@ -2691,17 +2709,34 @@ class all: # noqa
                 'embree-3.2.2.x86_64.linux.tar.gz',
                 '3.2.2',
                 '7d79863211c0b5d8061dd738c600a2b6',
-            ),(
-                'https://github.com/embree/embree/releases/download/v3.13.3/embree-3.13.3.x86_64.linux.tar.gz',
-                'embree-3.13.3.x86_64.linux.tar.gz',
-                '3.13.3',
-                '080abf6733dd68f4161acd8ec1720134',
-                { build.override.src: 'embree-vars.csh' }
+            # ),(
+            #     'https://github.com/embree/embree/releases/download/v3.13.3/embree-3.13.3.x86_64.linux.tar.gz',
+            #     'embree-3.13.3.x86_64.linux.tar.gz',
+            #     '3.13.3',
+            #     '080abf6733dd68f4161acd8ec1720134',
+            #     { build.override.src: 'embree-vars.csh' }
             )],
             environ = environ,
         )
-        self.embree = embree
-
+        self.embree = build.cmake(
+            ARGUMENTS,
+            'embree',
+            targetSuffix = "src",
+            download = [(
+                'https://github.com/embree/embree/archive/refs/tags/v3.13.3.tar.gz',
+                'embree-3.13.3.tar.gz',
+                '3.13.3',
+                '61aee19db0341a8353289043617975a7',
+                {self.gcc: '6.3.1',
+                self.tbb: '2020_U3',
+                self.ispc: self.ispc.latestVersion()},
+            )],
+            depend = [self.glfw, self.glew],
+            environ = environ,
+            flags = {
+                '-D CMAKE_INSTALL_PREFIX'
+            }
+        )
         self.cuda = build.configure(
             build.ARGUMENTS,
             'cuda',
@@ -3058,7 +3093,7 @@ class all: # noqa
                     'openvdb-9.0.0.tar.gz',
                     '9.0.0',
                     '684ce40c2f74f3a0c9cac530e1c7b07e',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2019_U6',
+                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U3',
                     self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
@@ -3107,7 +3142,7 @@ class all: # noqa
                     'openvdb-8.2.0.tar.gz',
                     '8.2.0',
                     '2852fe7176071eaa18ab9ccfad5ec403',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2019_U6',
+                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U3',
                     self.llvm: '7.1.0',
                     self.ilmbase[bsufix]: exr_version,
                     self.openexr[bsufix]: exr_version,
@@ -3589,8 +3624,9 @@ class all: # noqa
                         '20.8.0',
                         'e7f31719ef2359c939d23871333a763a',
                         {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                        self.tbb: '2019_U6', self.embree: '3.2.2',
+                        self.tbb: '2020_U3', self.embree_bin: '3.2.2',
                         self.boost: bv,
+                        self.ptex: self.ptex.latestVersion(),
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.37.4',
                         self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
@@ -3608,8 +3644,9 @@ class all: # noqa
                         '21.5.0',
                         'f63736f66fe7f81d17c7a046cb6dbc39',
                         {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                        self.tbb: '2019_U6', self.embree: '3.2.2',
+                        self.tbb: '2020_U3', self.embree: '3.13.3',
                         self.boost: bv,
+                        self.ptex: self.ptex.latestVersion(),
                         # openvdbOBJ.obj : openvdbOBJ.version,
                         self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
                         self.opensubdiv[bsufix]: '3.4.0',
@@ -3628,8 +3665,9 @@ class all: # noqa
                         '21.11.0',
                         '7fe232df5c732fedf466d33ff431ce33',
                         {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                        self.tbb: '2019_U6', self.embree: '3.2.2',
+                        self.tbb: '2020_U3', self.embree: '3.13.3',
                         self.boost: bv,
+                        self.ptex: self.ptex.latestVersion(),
                         # openvdbOBJ.obj : openvdbOBJ.version,
                         self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
                         self.opensubdiv[bsufix]: '3.4.0',
@@ -3646,8 +3684,8 @@ class all: # noqa
                     depend=[
                         self.clew[bsufix], self.lz4[bsufix], self.clew[bsufix],
                         self.seexpr[bsufix], self.xerces[bsufix],
-                        self.icu, self.embree, self.ocio,
-                        self.hdf5, self.glfw, self.glew, self.ptex,
+                        self.icu, self.ocio,
+                        self.glfw, self.glew,
                         self.pyside, self.qt, self.python, self.jemalloc
                     ],
                     cmd = [
@@ -3908,7 +3946,7 @@ class all: # noqa
             #     #     '2.1.0.beta',
             #     #     '4413d83ee8d6fc379f4a914381f1c7a4',
             #     #     { gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11',
-            #     #     hdf5: '1.8.11', cmake: '3.9.6', tbb: '2019_U6',  qt: '5.6.1',
+            #     #     hdf5: '1.8.11', cmake: '3.9.6', tbb: '2020_U3',  qt: '5.6.1',
             #     #     self.boost: bv, embree: '3.6.1',
             #     #     self.ilmbase[bsufix]: exr_version,
             #     #     self.openexr[bsufix]: exr_version,
@@ -3919,7 +3957,7 @@ class all: # noqa
             #         '2.0.5.beta',
             #         '8fd84ddd180abc8fba75163b67419e3e',
             #         { gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11',
-            #         hdf5: '1.8.11', cmake: '3.9.6', tbb: '2019_U6',  qt: '4.8.7',
+            #         hdf5: '1.8.11', cmake: '3.9.6', tbb: '2020_U3',  qt: '4.8.7',
             #         self.boost: bv, embree: '3.5.2',
             #         self.ilmbase[bsufix]: exr_version,
             #         self.openexr[bsufix]: exr_version,
