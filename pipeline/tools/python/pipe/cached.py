@@ -22,7 +22,7 @@ import pickle, os, pwd
 import glob as _glob
 
 def __get_username():
-    return '' # pwd.getpwuid( os.getuid() )[ 0 ]
+    return pwd.getpwuid( os.getuid() )[ 0 ]
 
 def __cached_name__(path):
     ret = '/dev/shm/cached__'+__get_username()+'_'
@@ -69,5 +69,20 @@ class popen:
             data = __load__(self.cache)
         else:
             data = os.popen(self.cmd).readlines()
+            __save__(data, self.cache)
+        return data
+
+class copen:
+    def __init__(self, file, mode='r'):
+        self.cache = __cached_name__(file)
+        self.file = file
+        self.mode = mode
+    def readlines(self):
+        if __exists__( self.cache ):
+            data = __load__(self.cache)
+        else:
+            f = open(self.file, self.mode)
+            data = f.readlines()
+            f.close()
             __save__(data, self.cache)
         return data
