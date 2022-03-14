@@ -257,11 +257,12 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
         _download[n][4].update( gaffer_dependency_dict(pkgs) )
         _download[n][4].update({
             pkgs.boost: boost,
-            usd['tbb' ].obj: usd['tbb' ].version,
-            usd['gcc' ].obj: usd['gcc' ].version,
-            usd['ocio'].obj: usd['ocio' ].version,
-            usd['osl' ].obj: usd['osl'].version,
-            osl['llvm'].obj: osl['llvm'].version,
+            usd['jemalloc'].obj: usd['jemalloc' ].version,
+            usd['tbb'     ].obj: usd['tbb'      ].version,
+            usd['gcc'     ].obj: usd['gcc'      ].version,
+            usd['ocio'    ].obj: usd['ocio'     ].version,
+            usd['osl'     ].obj: usd['osl'      ].version,
+            osl['llvm'    ].obj: osl['llvm'     ].version,
             cortexOBJ.obj: cortexOBJ.version,
             cortexOBJ['usd'      ].obj: cortexOBJ['usd'      ].version,
             cortexOBJ['hdf5'     ].obj: cortexOBJ['hdf5'     ].version,
