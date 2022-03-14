@@ -78,7 +78,7 @@ jobs:
       - id: set-matrix
         run: |
             make matrix | tee output.txt
-            matrix=$(cat output.txt | grep name)
+            matrix=$(cat output.txt | grep -v Error | grep name)
             matrix_cleanup=$(cat output.txt | grep name | sed 's/,..all.//')
             echo $matrix
             echo $matrix | jq .
