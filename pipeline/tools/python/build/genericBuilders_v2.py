@@ -1404,7 +1404,7 @@ class generic:
 
     def latestVersionOBJ(self):
         ''' return the latest version OBJ '''
-        return self.__getitem__(self, self.latestVersion())
+        return self.__getitem__(self.latestVersion())
 
     def versions(self):
         ''' just an alternative function to return the keys, which are versions '''
