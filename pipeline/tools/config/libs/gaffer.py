@@ -28,25 +28,16 @@ class gaffer(baseLib):
         # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
         # self.ignorePipeLib( "freetype" )
 
-        # self['PYTHONPATH'] = pipe.libs.python.path('lib/python$PYTHON_VERSION_MAJOR/site-packages')
         self['PYTHONPATH'] = self.path('python')
 
         if self.parent() not in ['maya']:
             # gaffer can't inherit it's env vars from a call app, so we're forced to
             # clean then up here from os.environ to make sure!
-
             for each in filter(lambda x: 'GAFFER' in x, os.environ.keys()):
                 del os.environ[each]
 
-            # if hasattr( pipe.libs, 'ocio' ):
-            #     # self['LD_PRELOAD'] = pipe.libs.ocio().path('lib/libOpenColorIO.so.1')
-            #     self['LD_PRELOAD'] = pipe.latestGCCLibrary("libstdc++.so.6")
-            #     self['LD_PRELOAD'] = pipe.latestGCCLibrary("libgcc_s.so.1")
-            #     self.insert( 'LD_LIBRARY_PATH', 0,  pipe.libs.ocio().path('lib/python$PYTHON_VERSION_MAJOR/site-packages') )
-
-            # our standard OCIO color space
-            if self.parent() in ["gaffer", 'maya', 'houdini']:
-                self['OCIO'] = '%s/ocio/config.ocio' % pipe.roots().tools()
+        # our standard OCIO color space
+        self.update( pipe.libs.ocio() )
 
         # add all versions of OIIO libraries to search path
         if hasattr(pipe.libs, 'oiio'):
@@ -128,57 +119,48 @@ class gaffer(baseLib):
         self['QT_QWS_FONTDIR'] = self.path('fonts')
         self['QT_QPA_FONTDIR'] = self.path('fonts')
 
+        # plugins
+        if hasattr( pipe.libs, 'gaffer_cycles'):
+            self.update( pipe.libs.gaffer_cycles() )
+        if hasattr( pipe.libs, 'gaffer_heaven'):
+            self.update( pipe.libs.gaffer_heaven() )
 
-        self.update( pipe.apps.arnold() )
-        gaffer.addon(self,
-            libs = self.path('arnold/$ARNOLD_VERSION_MAJOR/lib'),
-            scripts = self.path('arnold/$ARNOLD_VERSION_MAJOR/python'),
-            startups = self.path('arnold/$ARNOLD_VERSION_MAJOR/startup'),
-        )
-        if self.parent() in ['gaffer','python']:
-            pipe.apps.arnold.addon( self,
-                plugins = self.path('arnold/$ARNOLD_VERSION_MAJOR/arnoldPlugins'),
+        if hasattr( pipe.apps, 'arnold'):
+            self.update( pipe.apps.arnold() )
+            gaffer.addon(self,
+                libs = self.path('arnold/$ARNOLD_VERSION_MAJOR/lib'),
+                scripts = self.path('arnold/$ARNOLD_VERSION_MAJOR/python'),
+                startups = self.path('arnold/$ARNOLD_VERSION_MAJOR/startup'),
             )
+            if self.parent() in ['gaffer','python']:
+                pipe.apps.arnold.addon( self,
+                    plugins = self.path('arnold/$ARNOLD_VERSION_MAJOR/arnoldPlugins'),
+                )
 
-
+        # adjustments to the environment
         if self.parent() in ['gaffer','python']:
-            # if os.path.exists(self.path("lib/libtbb.so.2")):
-            #     self['LD_PRELOAD'] = self.path("lib/libtbb.so.2")
-            # else:
-            #     self['LD_PRELOAD'] = pipe.libs.tbb().path("lib/libtbb.so.2")
-
-            # preload Qt
-            # for each in cached.glob(pipe.libs.qt().path("lib/*.so*")):
-            #     if os.path.isfile(each):
-            #         self['LD_PRELOAD'] = each
-
             self.update( top=pipe.libs.pyside() )
             self.update( pipe.apps.python() )
-
             # hack to enable renderman in gaffer!
             self['DELIGHT'] = '0'
-
             # self['LD_PRELOAD'] = pipe.libs.ocio().LD_PRELOAD()
             # self['LD_PRELOAD'] = pipe.libs.oiio().LD_PRELOAD()
             self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()
-
             self['GAFFER_JEMALLOC'] = '0'
-
-
-
 
     # def runUserSetup(self, bin):
     #     ''' only create a user folder structure if it's the main gaffer app.'''
     #     return bin[0] in ['gaffer', 'bundle']
 
     @staticmethod
-    def addon(caller, ops="", procedurals="", apps="", graphics="", scripts="", startups="", shaders="", libs=""):
+    def addon(caller, ops="", procedurals="", apps="", graphics="", scripts="", startups="", shaders="", libs="", extensions=""):
         caller['GAFFER_APP_PATHS'] = apps
         caller['GAFFERUI_IMAGE_PATHS'] = graphics
         caller['PYTHONPATH'] = scripts
         caller['GAFFER_STARTUP_PATHS'] = startups
         caller['OSL_SHADER_PATHS'] = shaders
         caller['LD_LIBRARY_PATH'] = libs
+        caller['GAFFER_EXTENSION_PATHS'] = extensions
 
     def bins(self):
         ''' we make our wrapper without the .py just to keep
