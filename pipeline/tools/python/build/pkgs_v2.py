@@ -727,49 +727,49 @@ class all: # noqa
                 'tbb43_20150611oss.tar.gz',
                 '4.3.6',
                 'bb144ec868c53244ea6be11921d86f03',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', python: '2.7.16', build.override.src: 'Makefile' }
             ),(
                 # CY2017
                 'https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb44_20160526oss_src_0.tgz',
                 'tbb44_20160526oss.tar.gz',
                 '4.4.r20160526oss',
                 '6309541504a819dabe352130f27e57d5',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', python: '2.7.16', build.override.src: 'Makefile' }
             ),(
                 # CY2018
                 'https://github.com/intel/tbb.git',
                 'tbb-2017_U6.zip',
                 '2017_U6',
                 None,
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', python: '2.7.16', build.override.src: 'Makefile' }
             ),(
                 # CY2019
                 'https://github.com/intel/tbb.git',
                 'tbb-2018.zip',
                 '2018',
                 None,
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', python: '2.7.16', build.override.src: 'Makefile' }
             ),(
                 # CY2020
                 'https://github.com/intel/tbb.git',
                 'tbb-2019_U6.zip',
                 '2019_U6',
                 None,
-                { self.gcc : '6.3.1', python: '2.7.16' }
+                { self.gcc : '6.3.1', python: '2.7.16', build.override.src: 'Makefile' }
             ),(
                 # CY2021
                 'https://github.com/intel/tbb.git',
                 'tbb-2020_U2.zip',
                 '2020_U2',
                 None,
-                { self.gcc : '6.3.1', python: '2.7.16' }
+                { self.gcc : '6.3.1', python: '2.7.16', build.override.src: 'Makefile' }
             ),(
                 # CY2022
                 'https://github.com/intel/tbb.git',
                 'tbb-2020_U3.zip',
                 '2020_U3',
                 None,
-                { self.gcc : '6.3.1', python: '2.7.16' }
+                { self.gcc : '6.3.1', python: '2.7.16', build.override.src: 'Makefile'  }
             # ),(
             #     # CY????
             #     'https://github.com/oneapi-src/oneTBB/archive/refs/tags/v2021.5.0.tar.gz',
@@ -785,7 +785,7 @@ class all: # noqa
                 'tbb-4.4.6.tar.gz',
                 '4.4.6',
                 '20e15206f70c2651bfc964e451a443a0',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', python: '2.7.16', build.override.src: 'Makefile'  }
             )],
         )
         self.tbb = tbb
@@ -2802,6 +2802,7 @@ class all: # noqa
         self.seexpr = {}
         self.xerces = {}
         self.usd = {}
+        self.usd_non_monolithic = {}
 
         environ = self.exr_rpath_environ.copy()
         environ.update( {
@@ -3595,43 +3596,15 @@ class all: # noqa
             if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
                 usd_CORES  = "1"
             for MONOLITHIC in [1,0]:
-                extra_sufix = ""
+                name = 'usd'
                 if MONOLITHIC == 0:
-                    extra_sufix += '.non_monolithic'
-                usd_sufix = bsufix+extra_sufix
+                    name = 'usd_non_monolithic'
                 usd = build.cmake(
                     ARGUMENTS,
-                    'usd',
+                    name,
                     sed = usd_sed,
                     targetSuffix=bsufix,
-                    extraTargetSuffix=extra_sufix,
                     download=[(
-                    #     # theres no CY for USD - not in VFX Platform yet.
-                    #     # so lets build the one in Gaffer dependencies
-                    #     'https://github.com/PixarAnimationStudios/USD/archive/v18.09.tar.gz',
-                    #     'USD-18.09.tar.gz',
-                    #     '18.9.0',
-                    #     '10a06767c6a9c69733bb5f9fbadcb52a',
-                    #     {gcc: '6.3.1' if 'fedora' in distro else '4.8.5', opensubdiv: '3.3.3', alembic: '1.6.1',
-                    #     hdf5: '1.8.11', cmake: '3.8.2', tbb: '4.4.6',
-                    #     boost: '1.55.0',
-                    #     self.ilmbase['boost.1.55.0']: exr_version,
-                    #     self.openexr['boost.1.55.0']: exr_version,
-                    #     self.oiio['boost.1.55.0']: '1.6.15' },
-                    # ),(
-                    #     # this is the latest for now - nov/2019
-                    #     'https://github.com/PixarAnimationStudios/USD/archive/v19.07.tar.gz',
-                    #     'USD-19.07.tar.gz',
-                    #     '19.7.0',
-                    #     '8d274089364cfed23004ae52fa3d258f',
-                    #     {gcc: '6.3.1', opensubdiv: '3.4.0', alembic: '1.7.11', hdf5: '1.8.11',
-                    #     cmake: '3.18.2', tbb: '4.4.6',
-                    #     boost: bv,
-                    #     self.ilmbase[bsufix]: exr_version,
-                    #     self.openexr[bsufix]: exr_version,
-                    #     self.oiio   [bsufix]: '1.8.10'},
-                    #
-                    # ),(
                         # this is the latest for now - sept/2020
                         'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
                         'USD-20.08.tar.gz',
@@ -3800,14 +3773,15 @@ class all: # noqa
                     },
                     # verbose=1,
                 )
-                if usd_sufix not in self.usd:
-                    self.usd[usd_sufix] = usd
-
+                if MONOLITHIC:
+                    self.usd[bsufix] = usd
+                else:
+                    self.usd_non_monolithic[bsufix] = usd
 
                 # ============================================================================================================================================
                 # github build point so we can split the build in multiple matrix jobs in github actions
                 # ============================================================================================================================================
-                build.github_phase_one_version(ARGUMENTS, {self.usd[usd_sufix] : self.masterVersion['usd']})
+                build.github_phase_one_version(ARGUMENTS, {usd : self.masterVersion['usd']})
 
 
 

@@ -427,11 +427,12 @@ class tbb(cmake):
     }
 
     def fixCMD(self, cmd, os_environ, environ=[]):
-        if float(os_environ['VERSION_MAJOR'].replace('_','.')) > 2021:
+        if float('.'.join(os_environ['VERSION'].replace('_U','.').split('.')[:2])) >= 2021:
             cmd = '''cmake -DTBB_WARNING_LEVEL="-Woff"  && '''+ cmd
             cmd = cmake.fixCMD(self, cmd, os_environ, environ)
             cmd = '''sed -i.bak -e 's/Wall/Wno-error) #/' ./cmake/compilers/GNU.cmake ; '''+cmd
         else:
+            self.flags = make.flags
             cmd = make.fixCMD(self, cmd, os_environ, environ)
         return cmd
 

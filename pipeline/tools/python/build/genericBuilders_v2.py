@@ -1469,8 +1469,8 @@ class generic:
             # print d, v, baselib, env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
             d=list(set(d))
             d.sort()
-            if not d:
-                print env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
+            # if not d:
+            #     print env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
             for n in range(0,len(d),6):
                 _print( bcolors.WARNING+": "+bcolors.BLUE+"           %s" % ', '.join(d[n:n+6]) )
             _print( bcolors.WARNING+": "+bcolors.END )
