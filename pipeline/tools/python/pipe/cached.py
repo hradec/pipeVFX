@@ -25,7 +25,10 @@ def __get_username():
     return pwd.getpwuid( os.getuid() )[ 0 ]
 
 def __cached_name__(path):
-    ret = '/dev/shm/cached__'+__get_username()+'_'
+    dir = '/dev/shm/cached__'+__get_username()
+    ret = dir+'/___'
+    if not os.path.exists(dir):
+        os.system('mkdir -p %s' % dir)
     for each in [os.path.sep,'"',"'"]:
         path = path.replace(each,'_')
     return ret+path
