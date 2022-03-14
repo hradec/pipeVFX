@@ -1402,6 +1402,10 @@ class generic:
         ''' return the latest version '''
         return pipe.versionSort(self.keys())[0]
 
+    def latestVersionOBJ(self):
+        ''' return the latest version OBJ '''
+        return self.__getitem__(self, self.latestVersion())
+
     def versions(self):
         ''' just an alternative function to return the keys, which are versions '''
         return pipe.versionSort(self.keys())
@@ -2276,7 +2280,8 @@ class generic:
             # to avoid "version `GLIBCXX_' not found" like errors
             # here we set LATESTGCC_* env vars to use for that purpose...
             versions = pipe.versionSort( [
-                os.path.basename(x.replace('/bin/gcc','')) for x in glob('%s/../*/bin/gcc' % os_environ['GCC_TARGET_FOLDER'])
+                # os.path.basename(x.replace('/bin/gcc','')) for x in glob('%s/../*/bin/gcc' % os_environ['GCC_TARGET_FOLDER'])
+                os.path.basename(x.strip('/')) for x in glob('%s/../*' % os_environ['GCC_TARGET_FOLDER'])
             ] )
             os_environ['LATESTGCC_VERSION'] = versions[0]
             os_environ['LATESTGCC_TARGET_FOLDER'] = '%s/%s' % (

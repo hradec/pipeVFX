@@ -2718,25 +2718,6 @@ class all: # noqa
             )],
             environ = environ,
         )
-        self.embree = build.cmake(
-            ARGUMENTS,
-            'embree',
-            targetSuffix = "src",
-            download = [(
-                'https://github.com/embree/embree/archive/refs/tags/v3.13.3.tar.gz',
-                'embree-3.13.3.tar.gz',
-                '3.13.3',
-                '61aee19db0341a8353289043617975a7',
-                {self.gcc: '6.3.1',
-                self.tbb: '2020_U3',
-                self.ispc: self.ispc.latestVersion()},
-            )],
-            depend = [self.glfw, self.glew],
-            environ = environ,
-            flags = {
-                '-D CMAKE_INSTALL_PREFIX'
-            }
-        )
         self.cuda = build.configure(
             build.ARGUMENTS,
             'cuda',
@@ -2753,7 +2734,7 @@ class all: # noqa
                 # create a nvcc wrapper to force cuda to use clang (LLVM) instead of gcc, since
                 # gcc 6.3.1 can't cope well with cuda.
                 'mv $INSTALL_FOLDER/bin/nvcc $INSTALL_FOLDER/bin/__nvcc__',
-                'echo "$INSTALL_FOLDER/bin/__nvcc__  $CLIMITS \$@ -include climits -std=c++14 -ccbin clang " > $INSTALL_FOLDER/bin/nvcc',
+                'echo "$INSTALL_FOLDER/bin/__nvcc__  $CLIMITS \$@ -include climits -ccbin clang \$NVCCFLAGS " > $INSTALL_FOLDER/bin/nvcc',
                 'chmod a+x $INSTALL_FOLDER/bin/nvcc',
                 'echo "DONE!!"',
             ],
@@ -2859,8 +2840,39 @@ class all: # noqa
         })
 
 
+        self.embree = {}
         for bv in ['1.66.0', '1.70.0']:
             bsufix = "boost.%s" % bv
+
+            self.embree[bsufix] = build.cmake(
+                ARGUMENTS,
+                'embree',
+                targetSuffix=bsufix,
+                download = [(
+                    'https://github.com/embree/embree/archive/refs/tags/v3.13.3.tar.gz',
+                    'embree-3.13.3.tar.gz',
+                    '3.13.3',
+                    '61aee19db0341a8353289043617975a7',
+                    {self.gcc: '6.3.1',
+                    self.tbb: '2020_U3',
+                    self.oiio[bsufix]: self.oiio[bsufix].latestVersion(),
+                    self.ispc: self.ispc.latestVersion()},
+                )],
+                depend = [self.glfw, self.glew],
+                environ = environ,
+                flags = [
+                    '-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER',
+                    '-D EMBREE_TBB_ROOT=$TBB_TARGET_FOLDER',
+                    '-D TBB_DIR=$TBB_TARGET_FOLDER',
+                    '-D OPENIMAGEIO_ROOT=$OIIO_TARGET_FOLDER',
+                ],
+                cmd = [
+                    # compatibility for glib 2.34 (https://bugs.launchpad.net/ubuntu/+source/segyio/+bug/1951658)
+                    "sed -i.bak 's/....MINSIGSTKSZ/; \/\/ >= MINSIGSTKSZ/' ./tutorials/embree_tests/../external/catch.hpp",
+                    'mkdir build',
+                    'cd build',
+                ]+build.cmake.cmd,
+            )
 
             osl = build.cmake(
                 ARGUMENTS,
@@ -2944,10 +2956,9 @@ class all: # noqa
                 verbose=1,
             )
             self.osl[bsufix] = osl
-            latest_osl = self.osl[bsufix]['1.11.14']
-            self.latest_osl = latest_osl
 
             # materialx don't need boost.
+            latest_osl = self.osl[bsufix].latestVersionOBJ()
             materialx = build.cmake(
                 ARGUMENTS,
                 'materialx',
@@ -2964,9 +2975,9 @@ class all: # noqa
                     '1.37.4',
                     'fdc0efb49f3170fc1e7baaf714df3e31',
                     { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'],
-                    latest_osl['openexr'].obj: latest_osl['openexr'],
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
+                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
+                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
+                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
                 ),(
                     # USD 21.X moved to 1.38.0
                     'https://github.com/materialx/MaterialX/releases/download/v1.38.0/MaterialX-1.38.0.tar.gz',
@@ -2974,9 +2985,9 @@ class all: # noqa
                     '1.38.0',
                     'b8bc253454164b0c19600eb0f925d654',
                     { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'],
-                    latest_osl['openexr'].obj: latest_osl['openexr'],
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
+                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
+                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
+                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
 
                 ),(
                     'https://github.com/materialx/MaterialX/releases/download/v1.38.1/MaterialX-1.38.1.tar.gz',
@@ -2984,9 +2995,9 @@ class all: # noqa
                     '1.38.1',
                     '578a1b63263281414e1594d44409b882',
                     { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'],
-                    latest_osl['openexr'].obj: latest_osl['openexr'],
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
+                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
+                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
+                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
 
                 ),(
                     'https://github.com/materialx/MaterialX/releases/download/v1.38.2/MaterialX-1.38.2.tar.gz',
@@ -2994,9 +3005,9 @@ class all: # noqa
                     '1.38.2',
                     '9916b1d732ffe43a6f1c6822e6da1d28',
                     { self.gcc : '6.3.1', python: '3.7.5', latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'],
-                    latest_osl['openexr'].obj: latest_osl['openexr'],
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase']}
+                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
+                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
+                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
 
                 )],
                 depend=[self.python, self.freeglut],
@@ -3063,6 +3074,7 @@ class all: # noqa
                 # we need to add the python$VERSION_MAJOR to include path for openvdb 7
                 'CPATH'     : '$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/:$CPATH:'+self.exr_rpath_environ['CPATH'],
                 'PATH'      : '$SOURCE_FOLDER/tools/:$PATH',
+                'NVCCFLAGS' : ' -std=c++17 ',
                 'CLIMITS'   : ''
             }
             openvdb_environ = self.gcc_llvm_environ
@@ -3451,6 +3463,7 @@ class all: # noqa
                     'LDFLAGS'       : ' -lX11 -lclew -lPtex $LDFLAGS ',
                     'CPATH'         : '$CPATH:'+self.exr_rpath_environ['CPATH'],
                     'RPATH'         : '$RPATH:'+self.exr_rpath_environ['RPATH'],
+                    'NVCCFLAGS'     : ' -std=c++17 ',
                 },
                 verbose=1,
             )
@@ -3573,6 +3586,7 @@ class all: # noqa
                 }
             }
 
+            oslOBJ = self.osl[bsufix].latestVersionOBJ()
             openvdbOBJ = build.pkgVersions('openvdb').latestVersionOBJ()
             # print 'usd',bsufix,self.openvdb[bsufix].latestVersion()
             usd_sed['21.5.0']  = usd_sed['20.8.0']
@@ -3631,12 +3645,12 @@ class all: # noqa
                         self.materialx[bsufix] : '1.37.4',
                         self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
                         self.alembic[bsufix] : '1.7.11',
-                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
-                        latest_osl.obj : latest_osl.version,
-                        latest_osl['oiio'     ].obj: latest_osl['oiio'],
-                        latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                        latest_osl['openexr'  ].obj: latest_osl['openexr'],
-                        self.pyilmbase[bsufix]     : latest_osl['openexr']}
+                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
+                        oslOBJ.obj : oslOBJ.version,
+                        oslOBJ['oiio'     ].obj: oslOBJ['oiio'].version,
+                        oslOBJ['ilmbase'  ].obj: oslOBJ['ilmbase'].version,
+                        oslOBJ['openexr'  ].obj: oslOBJ['openexr'].version,
+                        self.pyilmbase[bsufix]     : oslOBJ['openexr'].version}
                     ),(
                         # this is the latest for now - sept/2020
                         'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
@@ -3644,7 +3658,7 @@ class all: # noqa
                         '21.5.0',
                         'f63736f66fe7f81d17c7a046cb6dbc39',
                         {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                        self.tbb: '2020_U3', self.embree: '3.13.3',
+                        self.tbb: '2020_U3', self.embree[bsufix]: '3.13.3',
                         self.boost: bv,
                         self.ptex: self.ptex.latestVersion(),
                         # openvdbOBJ.obj : openvdbOBJ.version,
@@ -3652,12 +3666,12 @@ class all: # noqa
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.38.0',
                         self.alembic[bsufix] : '1.7.11',
-                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
-                        latest_osl.obj : latest_osl.version,
-                        latest_osl['oiio'     ].obj: latest_osl['oiio'],
-                        latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                        latest_osl['openexr'  ].obj: latest_osl['openexr'],
-                        self.pyilmbase[bsufix]     : latest_osl['openexr']}
+                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
+                        oslOBJ.obj : oslOBJ.version,
+                        oslOBJ['oiio'     ].obj: oslOBJ['oiio'].version,
+                        oslOBJ['ilmbase'  ].obj: oslOBJ['ilmbase'].version,
+                        oslOBJ['openexr'  ].obj: oslOBJ['openexr'].version,
+                        self.pyilmbase[bsufix]     : oslOBJ['openexr'].version}
                     ),(
                         # this is the latest for now - sept/2020
                         'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.11.tar.gz',
@@ -3665,7 +3679,7 @@ class all: # noqa
                         '21.11.0',
                         '7fe232df5c732fedf466d33ff431ce33',
                         {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                        self.tbb: '2020_U3', self.embree: '3.13.3',
+                        self.tbb: '2020_U3', self.embree[bsufix]: '3.13.3',
                         self.boost: bv,
                         self.ptex: self.ptex.latestVersion(),
                         # openvdbOBJ.obj : openvdbOBJ.version,
@@ -3673,12 +3687,12 @@ class all: # noqa
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.37.4',
                         self.alembic[bsufix] : '1.7.11',
-                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'],
-                        latest_osl.obj : latest_osl.version,
-                        latest_osl['oiio'     ].obj: latest_osl['oiio'],
-                        latest_osl['ilmbase'  ].obj: latest_osl['ilmbase'],
-                        latest_osl['openexr'  ].obj: latest_osl['openexr'],
-                        self.pyilmbase[bsufix]     : latest_osl['openexr']}
+                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
+                        oslOBJ.obj : oslOBJ.version,
+                        oslOBJ['oiio'     ].obj: oslOBJ['oiio'].version,
+                        oslOBJ['ilmbase'  ].obj: oslOBJ['ilmbase'].version,
+                        oslOBJ['openexr'  ].obj: oslOBJ['openexr'].version,
+                        self.pyilmbase[bsufix]     : oslOBJ['openexr'].version}
                     )],
                     # baseLibs=[python],
                     depend=[
