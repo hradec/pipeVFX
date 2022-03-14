@@ -31,3 +31,7 @@ class scons(baseLib):
     def runUserSetup(self, jobuser):
         ''' don't create a scons folder in the user folder!!'''
         return False
+        
+    def needJob(self):
+        ''' we don't need a job/shot setup to run this '''
+        return False
