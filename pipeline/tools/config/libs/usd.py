@@ -21,9 +21,6 @@
 
 
 class usd(baseLib):
-    def versions(self):
-        pipe.libs.version.set( ptex='2.0.42' )
-
     def environ(self):
         self['PYTHONPATH'] = self.path('lib/python')
 
