@@ -44,7 +44,7 @@ import pipe
 # ===========================================================================================
 pkgs.gaffer_haven = build.download(
     ARGUMENTS,
-    'gaffer_resources',
+    'gaffer_haven',
     src='README.md',
     download=[(
         'https://github.com/kubo-von/GafferHaven/archive/refs/heads/main.zip',
