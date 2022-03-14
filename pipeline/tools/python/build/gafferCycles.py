@@ -20,17 +20,6 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
             'a623952094e2f953d05eca62f16e664a',
         )],
     )
-    pkgs.ispc = build.download(
-        build.ARGUMENTS,
-        'ispc',
-        src='ReleaseNotes.txt',
-        download=[(
-            'https://github.com/ispc/ispc/releases/download/v1.16.1/ispc-v1.16.1-linux.tar.gz',
-            'ispc-v1.16.1-linux.tar.gz',
-            '1.16.1',
-            '4665c577541003e31c8ce0afd64b6952',
-        )],
-    )
 
     # special case, since we can't build gaffer with boost.1.70.0 yet,
     # and gaffercycles needs openvdb 9, which needs boost 1.70.0
@@ -55,18 +44,19 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
             'GafferCycles-0.24.0.tar.gz',
             '0.24.0',
             'a4f431798e073628b363e8fd4f18e5db',
-            {pkgs.boost: boost, usdOBJ.obj: usd,
+            {pkgs.boost: boost,
+            usdOBJ.obj: usdOBJ.version,
+            usdOBJ['jemalloc'].obj: usdOBJ['jemalloc' ].version,
+            usdOBJ['blosc'].obj: usdOBJ['blosc'].version,
+            usdOBJ['opensubdiv'].obj: usdOBJ['opensubdiv'].version,
+            usdOBJ['embree'].obj: usdOBJ['embree'].version,
             gafferOBJ.obj: gafferOBJ.version,
-            # gafferOBJ['gcc'].obj: gafferOBJ['gcc'].version,
-            # gafferOBJ['openvdb'].obj: gafferOBJ['openvdb'].version,
             gafferOBJ['tbb'].obj: gafferOBJ['tbb'].version,
             gafferOBJ['cortex'].obj: gafferOBJ['cortex'].version,
             gafferOBJ['openexr'].obj: gafferOBJ['openexr'].version,
             gafferOBJ['oiio'].obj: gafferOBJ['oiio'].version,
             gafferOBJ['ocio'].obj: gafferOBJ['ocio'].version,
             gafferOBJ['osl'].obj: gafferOBJ['osl'].version,
-            usdOBJ['blosc'].obj: usdOBJ['blosc'].version,
-            usdOBJ['opensubdiv'].obj: usdOBJ['opensubdiv'].version,
             oslOBJ['pugixml'].obj: oslOBJ['pugixml'].version,
             oslOBJ['llvm'].obj: oslOBJ['llvm'].version,
             pkgs.jpeg: pkgs.jpeg.latestVersion(),
@@ -82,11 +72,11 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
             # the tbb version used by embree/odin binaries
             # pkgs.tbb: '2021.5.0',
             # embree and oidn are pre-built binaries!!
-            pkgs.embree: pkgs.embree.latestVersion(),
             pkgs.oidn: pkgs.oidn.latestVersion(),
             # we're using the latest openvdb, even if it wasn't build with the
             # current boost version!
             openvdbOBJ.obj : openvdbOBJ.obj.latestVersion()}
+            # gafferOBJ['openvdb'].obj: gafferOBJ['openvdb'].version,
         )],
         flags = [
             ' -D DCMAKE_CC="$CC"'
@@ -145,6 +135,8 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
             'mv $OCIO_TARGET_FOLDER/lib/static $OCIO_TARGET_FOLDER/__static',
             'rmdir cycles',
             'ln -s $CYCLESX_TARGET_FOLDER ./cycles',
+            # remove yaml and expat libraries from findOpenColorIO, since we only have the shared ocio library
+            "sed -i.bak -e 's/yaml/#yaml/' -e 's/expat/#expat/' ./cycles/src/cm???/Modules/FindOpenColorIO.cmak?",
             # now we can build!
             'mkdir build',
             'cd build',
@@ -154,6 +146,6 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
             'mv $OCIO_TARGET_FOLDER/__static $OCIO_TARGET_FOLDER/lib/static',
         ],
         environ = {
-            'CXXFLAGS' : pkgs.gcc_llvm_environ['CXX'].split('g++')[1]+' $CXXFLAGS'
+            'CXXFLAGS' : pkgs.gcc_llvm_environ['CXX'].split('g++')[1]+' $CXXFLAGS -fno-strict-aliasing -D_GLIBCXX_USE_CXX11_ABI=0',
         },
     )
