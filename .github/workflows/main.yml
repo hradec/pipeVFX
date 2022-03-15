@@ -44,6 +44,7 @@ env:
   CACHE_DIR: "pipeline/libs/"
   STUDIO: "pipevfx"
   GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TIMEOUT_HOURS: 6
 
 # concurrency:
 #   group: ${{ github.ref_name }}
@@ -120,6 +121,10 @@ jobs:
     outputs:
       matrix_cleanup: ${{ steps.set-matrix.outputs.matrix_cleanup }}
 
+    # env:
+    #   DO_BUILD: '0'
+
+
     steps:
 
     # - name: 'self-hosted: Cleanup build folder'
@@ -131,12 +136,48 @@ jobs:
     #     apt update
     #     apt upgrade -y
 
+
+    - name: calcule and store next phase name
+      run: |
+        if [ "${{ matrix.name }}" == "all" ] ; then
+            export NEXT_MATRIX_NAME=""
+        else
+            export NEXT=$(expr $(echo ${{ matrix.name }} | sed 's/phase//') + 1)
+            export MATRIX='${{ needs.matrix.outputs.matrix }}'
+            export NEXT_MATRIX_NAME=$(echo $MATRIX  | sed -e 's/[{}",:[]//g' -e 's/]//g' -e 's/name//g' | awk '{print $('$NEXT')}')
+            [ "$NEXT_MATRIX_NAME" == "" ] && export NEXT_MATRIX_NAME="all"
+            export NEXT_MATRIX_NAME="$NEXT_MATRIX_NAME"
+        fi
+        echo $NEXT_MATRIX_NAME ;\
+        echo "NEXT_MATRIX_NAME=$NEXT_MATRIX_NAME" >> $GITHUB_ENV
+        # also, update TIMEOUT_MINUTES since we need it in minutes!
+        let mins=$TIMEOUT_HOURS*60
+        echo "TIMEOUT_MINUTES=$mins" >> $GITHUB_ENV
+
+    - name: try to download artifact from this phase - if works, skip this phase build (retrying the build)
+      continue-on-error: true
+      uses: actions/download-artifact@v2
+      with:
+          name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME }}-${{ github.sha }}.tar.gz
+
+    - name: check if we need to run this build phase, or else skip to the next!
+      if: always()
+      run: |
+        if [ -e ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ] ; then
+            rm -rf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz
+            echo "DO_BUILD='0'" >> $GITHUB_ENV
+        else
+            echo "DO_BUILD='1'" >> $GITHUB_ENV
+        fi
+
     - uses: actions/checkout@v2
+      if: ${{ env.DO_BUILD }} == '1'
       with:
         lfs: false
         submodules: false
 
     - uses: actions/cache@v1
+      if: ${{ env.DO_BUILD }} == '1'
       with:
         path: ./
         key: |
@@ -147,21 +188,23 @@ jobs:
     # rm -rf /usr/local/lib/android # will release about 10 GB if you don't need Android
     # rm -rf /usr/share/dotnet ex# will release about 20GB if you don't need .NET
     - name: free up disk space removing things we don't need for this build
+      if: ${{ env.DO_BUILD }} == '1'
       run: |
         df -h
         # python3 -c "print('='*80)"
         # du -shc /opt/hostedtoolcache/* | sort -h
         # python3 -c "print('='*80)"
-        sudo rm -rf /usr/local/lib/android*
-        sudo rm -rf /usr/local/lib/node_modules*
-        sudo rm -rf /usr/local/lib/heroku*
-        sudo rm -rf /usr/share/swift*
-        sudo rm -rf /usr/share/dotnet*
-        sudo rm -rf /usr/share/miniconda*
-        sudo rm -rf /opt/hostedtoolcache*
-        sudo rm -rf /opt/az*
-        sudo rm -rf /opt/microsoft*
-        sudo rm -rf /opt/google*
+        sudo rm -rf /usr/local/lib/android* &
+        sudo rm -rf /usr/local/lib/node_modules* &
+        sudo rm -rf /usr/local/lib/heroku* &
+        sudo rm -rf /usr/share/swift* &
+        sudo rm -rf /usr/share/dotnet* &
+        sudo rm -rf /usr/share/miniconda* &
+        sudo rm -rf /opt/hostedtoolcache* &
+        sudo rm -rf /opt/az* &
+        sudo rm -rf /opt/microsoft* &
+        sudo rm -rf /opt/google* &
+        wait
         # python3 -c "print('='*80)"
         # du -shc /usr/share/* | sort -h
         # python3 -c "print('='*80)"
@@ -182,27 +225,36 @@ jobs:
     # ================================================================================================================
     - name: download artifact from previous run
       uses: actions/download-artifact@v2
-      if: matrix.name != 'phase1'
+      if: ${{ matrix.name != 'phase1' && env.DO_BUILD == '1' }}
       with:
           name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz
         # name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
 
     - name: extract pipeline/libs from the previous uploaded artifact so we can continue building
-      if: matrix.name != 'phase1'
-      run: |
-        tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz ; \
-        ls -lh --color=yes ; \
-        ls -lh --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/
+      if: ${{ matrix.name != 'phase1' && env.DO_BUILD == '1' }}
+      uses: nick-fields/retry@v2
+      with:
+        timeout_minutes: ${{ env.TIMEOUT_MINUTES }}
+        max_attempts: 3
+        command: |
+            tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz ; \
+            ls -lh --color=yes ; \
+            ls -lh --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/
 
 
     # ================================================================================================================
     # run scons and do the actual building
     # ================================================================================================================
     - name: build PipeVFX ${{ matrix.name }}
-      run: |
-        mkdir -p pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
-        ls -l pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
-        nice -n 19 make build DOCKER=0 PKG=${{ matrix.name }}
+      if: ${{ env.DO_BUILD }} == '1'
+      uses: nick-fields/retry@v2
+      with:
+        timeout_minutes: ${{ env.TIMEOUT_MINUTES }}
+        max_attempts: 3
+        command: |
+            mkdir -p pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
+            ls -l pipeline/libs/linux/x86_64/pipevfx.5.0.0/ ; \
+            nice -n 19 make build DOCKER=0 PKG=${{ matrix.name }}
 
     # ================================================================================================================
     # upload pipeline/libs to an artifact with the next phase name, so we can restore it on the next phase
@@ -211,22 +263,12 @@ jobs:
     # name of the next phase, so the next phase can download and extract!
 
     - name: save out pipeline/libs/ folder as artifact
-      run: |
-        if [ "${{ matrix.name }}" == "all" ] ; then
-            export NEXT_MATRIX_NAME=""
-        else
-            export NEXT=$(expr $(echo ${{ matrix.name }} | sed 's/phase//') + 1)
-            export MATRIX='${{ needs.matrix.outputs.matrix }}'
-            export NEXT_MATRIX_NAME=$(echo $MATRIX  | sed -e 's/[{}",:[]//g' -e 's/]//g' -e 's/name//g' | awk '{print $('$NEXT')}')
-            [ "$NEXT_MATRIX_NAME" == "" ] && export NEXT_MATRIX_NAME="all"
-            export NEXT_MATRIX_NAME="$NEXT_MATRIX_NAME"
-        fi
-        echo $NEXT_MATRIX_NAME ;\
-        echo "NEXT_MATRIX_NAME=$NEXT_MATRIX_NAME" >> $GITHUB_ENV ;\
-        tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
+      if: ${{ env.DO_BUILD }} == '1'
+      run: tar -czf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
 
     # upload next-phase artifact
     - name: upload pipeline/libs as artifact
+      if: ${{ env.DO_BUILD }} == '1'
       uses: actions/upload-artifact@v2
       with:
         name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
@@ -235,11 +277,13 @@ jobs:
 
     # remove all tar archive files just in case
     - name: Remove archive after upload so it won't be cached
+      if: ${{ env.DO_BUILD }} == '1'
       run: rm -rf ./*.tar*
 
     # update matrix_cleanup for the cleanup step, with all the phases, but the
     # last one!
     - id: set-matrix
+      if: ${{ env.DO_BUILD }} == '1'
       run: |
         m='{ "name": [ '
         n=$(( $(echo ${{ matrix.name }} | sed 's/phase//') - 1))
@@ -250,6 +294,15 @@ jobs:
         matrix_cleanup=$(echo "$m" | sed 's/, ]/ ]/')
         echo "$matrix_cleanup" | jq .
         echo "::set-output name=matrix_cleanup::$matrix_cleanup"
+
+
+    # - name: Cleanup artifacts we don't need!
+    #   if: ${{ matrix.name != 'all' && env.DO_BUILD  == '1' }}
+    #   uses: geekyeggo/delete-artifact@v1
+    #   with:
+    #     failOnError: false
+    #     name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name }}-${{ github.sha }}.tar.gz
+
 
 
   # ================================================================================================================
