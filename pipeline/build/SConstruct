@@ -165,7 +165,7 @@ if canBuildCortexNow:
                 '''sed -i.bak -e 's/^........sys.exit.1./    return "release","nogit"/' ./build.py''',
                 'python build.py -v 2 --install-location $INSTALL_FOLDER '
                     '--maya-location $MAYA_ROOT '
-                    '--pxrusd-location $USD_TARGET_FOLDER '
+                    '--pxrusd-location $USD_NON_MONOLITHIC_TARGET_FOLDER '
                     '--devkit-location $MAYA_ROOT/devkit '
                     '--qt-location $QT_TARGET_FOLDER '
                     '--build-args "\-DMAYA_EXECUTABLE=$MAYA_ROOT/bin/maya.bin" '

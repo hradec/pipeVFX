@@ -154,21 +154,28 @@ jobs:
         let mins=$TIMEOUT_HOURS*60
         echo "TIMEOUT_MINUTES=$mins" >> $GITHUB_ENV
 
-    - name: try to download artifact from this phase - if works, skip this phase build (retrying the build)
-      continue-on-error: true
-      uses: actions/download-artifact@v2
-      with:
-          name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME }}-${{ github.sha }}.tar.gz
+    # - name: try to download artifact from this phase - if works, skip this phase build (retrying the build)
+    #   continue-on-error: true
+    #   uses: actions/download-artifact@v2
+    #   with:
+    #       name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME }}-${{ github.sha }}.tar.gz
+    #
+    # - name: check if we need to run this build phase, or else skip to the next!
+    #   if: always()
+    #   run: |
+    #     if [ -e ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ] ; then
+    #         rm -rf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz
+    #         echo "DO_BUILD='0'" >> $GITHUB_ENV
+    #         echo "DO_DOWNLOAD_ARTIFACT='0'" >> $GITHUB_ENV
+    #     else
+    #         echo "DO_BUILD='1'" >> $GITHUB_ENV
+    #         if [ "${{ matrix.name }}" == 'phase1' ] ; then
+    #             echo "DO_DOWNLOAD_ARTIFACT='0'" >> $GITHUB_ENV
+    #         else
+    #             echo "DO_DOWNLOAD_ARTIFACT='1'" >> $GITHUB_ENV
+    #         fi
+    #     fi
 
-    - name: check if we need to run this build phase, or else skip to the next!
-      if: always()
-      run: |
-        if [ -e ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ] ; then
-            rm -rf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz
-            echo "DO_BUILD='0'" >> $GITHUB_ENV
-        else
-            echo "DO_BUILD='1'" >> $GITHUB_ENV
-        fi
 
     - uses: actions/checkout@v2
       if: ${{ env.DO_BUILD }} == '1'
@@ -225,21 +232,24 @@ jobs:
     # ================================================================================================================
     - name: download artifact from previous run
       uses: actions/download-artifact@v2
-      if: ${{ matrix.name != 'phase1' && env.DO_BUILD == '1' }}
+      if: ${{ env.DO_DOWNLOAD_ARTIFACT }} == '1'
+      continue-on-error: true
       with:
           name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz
         # name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
 
     - name: extract pipeline/libs from the previous uploaded artifact so we can continue building
-      if: ${{ matrix.name != 'phase1' && env.DO_BUILD == '1' }}
+      if: ${{ env.DO_DOWNLOAD_ARTIFACT }} == '1'
       uses: nick-fields/retry@v2
       with:
         timeout_minutes: ${{ env.TIMEOUT_MINUTES }}
         max_attempts: 3
         command: |
-            tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz ; \
-            ls -lh --color=yes ; \
-            ls -lh --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/
+            if [ "${{ matrix.name }}" != 'phase1' ] ; then
+                tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz ; \
+                ls -lh --color=yes ; \
+                ls -lh --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/
+            fi
 
 
     # ================================================================================================================
