@@ -1778,7 +1778,8 @@ class all: # noqa
             # ============================================================================================================================================
             # github build point so we can split the build in multiple matrix jobs in github actions
             # ============================================================================================================================================
-            build.github_phase_one_version(ARGUMENTS, {self.pyilmbase[sufix] : v for v in self.pyilmbase[sufix].keys()})
+            # build.github_phase_one_version(ARGUMENTS, {self.pyilmbase[sufix] : v for v in self.pyilmbase[sufix].keys()})
+            build.github_phase(self.pyilmbase[bsufix])
 
 
 
@@ -2089,7 +2090,7 @@ class all: # noqa
                 environ = environ,
             )
             self.oiio[sufix] = oiio
-
+            build.github_phase(self.oiio[sufix])
 
 
 
@@ -2147,8 +2148,6 @@ class all: # noqa
         # ============================================================================================================================================
         build.github_phase(self.glfw, depend=[
             self.pugixml,
-            self.oiio[self.oiio.keys()[-1]],
-            self.field3d[self.field3d.keys()[-1]],
             self.ocio,
             self.hdf5,
             self.yasm
@@ -2342,31 +2341,31 @@ class all: # noqa
                 'sip-4.15.5.tar.gz',
                 '4.15.5',
                 '4c95447c7b0391b7f183cf9f92ae9bc6',
-                { self.gcc : '4.1.2', qt : '4.8.7' }
+                { self.gcc : '4.1.2', self.qt: '4.8.7' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.7/sip-4.16.7.tar.gz',
                 'sip-4.16.7.tar.gz',
                 '4.16.7',
                 '32abc003980599d33ffd789734de4c36',
-                { self.gcc : '4.1.2', qt : '4.8.7' }
+                { self.gcc : '4.1.2', self.qt: '4.8.7' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.16.4/sip-4.16.4.tar.gz',
                 'sip-4.16.4.tar.gz',
                 '4.16.4',
                 'a9840670a064dbf8f63a8f653776fec9',
-                { self.gcc : '4.1.2', qt : '4.8.7' }
+                { self.gcc : '4.1.2', self.qt: '4.8.7' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18/sip-4.18.tar.gz',
                 'sip-4.18.tar.gz',
                 '4.18.0',
                 '78724bf2a79878201c3bc81a1d8248ea',
-                { self.gcc : '4.8.5', qt : '5.6.0' }
+                { self.gcc : '4.8.5', self.qt: '5.6.0' }
             ),(
                 'https://sourceforge.net/projects/pyqt/files/sip/sip-4.18.1/sip-4.18.1.tar.gz',
                 'sip-4.18.1.tar.gz',
                 '4.18.1',
                 '9d664c33e8d0eabf1238a7ff44a399e9',
-                { self.gcc : '4.8.5', qt : '5.12.0' }
+                { self.gcc : '4.8.5', self.qt: '5.15.2' }
             # ),(
             #     'https://sourceforge.net/project/pyqt/files/sip/sip-4.19.13/sip-4.19.13.tar.gz',
             #     'sip-4.19.13.tar.gz',
@@ -2403,21 +2402,21 @@ class all: # noqa
                 'PyQt-x11-gpl-4.11.4.tar.gz',
                 '4.11.4',
                 '2fe8265b2ae2fc593241c2c84d09d481',
-                { qt:'4.8.7', sip: '4.16.7', self.gcc : '4.8.5'},
+                { self.qt:'4.8.7', self.sip: '4.16.7', self.gcc : '4.8.5'},
             ),(
                 # CY 2016-2018
                 'https://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.6/PyQt5_gpl-5.6.tar.gz',
                 'PyQt5_gpl-5.6.tar.gz',
                 '5.6.0',
                 'dbfc885c0548e024ba5260c4f44e0481',
-                { qt:'5.6.1', sip: '4.18.0', self.gcc : '4.8.5' },
+                { self.qt:'5.6.1', self.sip: '4.18.0', self.gcc : '4.8.5' },
             ),(
                 # CY 2019-2020
                 'https://www.riverbankcomputing.com/static/Downloads/PyQt5/5.12/PyQt5_gpl-5.12.tar.gz',
                 'PyQt5_gpl-5.12.tar.gz',
                 '5.12.0',
                 '0d839c6218a4287d51bf79d6195016f0',
-                { qt:'5.12.0', sip: '4.18.1', self.gcc : '4.8.5' },
+                { self.qt:'5.15.2', self.sip: '4.18.1', self.gcc : '4.8.5' },
             )],
             baseLibs=[python],
             depend=[sip, qt, gcc],
@@ -2842,6 +2841,8 @@ class all: # noqa
 
 
         self.embree = {}
+        environ_embree = environ
+        environ['CXXFLAGS'] =  environ['CXXFLAGS']+' -fno-strict-aliasing -D_GLIBCXX_USE_CXX11_ABI=0 '
         for bv in ['1.66.0', '1.70.0']:
             bsufix = "boost.%s" % bv
 
@@ -2860,7 +2861,6 @@ class all: # noqa
                     self.ispc: self.ispc.latestVersion()},
                 )],
                 depend = [self.glfw, self.glew],
-                environ = environ,
                 flags = [
                     '-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER',
                     '-D EMBREE_TBB_ROOT=$TBB_TARGET_FOLDER',
@@ -2873,6 +2873,7 @@ class all: # noqa
                     'mkdir build',
                     'cd build',
                 ]+build.cmake.cmd,
+                environ = environ,
             )
 
             osl = build.cmake(
@@ -2899,7 +2900,7 @@ class all: # noqa
                     '53f66e12c3e29c62dc51b070f027a0ad',
                     { self.llvm: "7.1.0", self.gcc: "6.3.1",
                     self.boost: bv, self.qt: '5.6.1',
-                    self.oiio[bsufix]:"1.8.10",
+                    self.oiio[bsufix]: "1.8.10",
                     self.oiio[bsufix]["1.8.10"]['ilmbase'].obj:  self.oiio[bsufix]["1.8.10"]['ilmbase'],
                     self.oiio[bsufix]["1.8.10"]['openexr'].obj:  self.oiio[bsufix]["1.8.10"]['openexr']}
                 ),(
@@ -2909,7 +2910,7 @@ class all: # noqa
                     '1abd7ce40481771a9fa937f19595d2f2',
                     { self.llvm: "7.1.0", self.gcc: "6.3.1",
                     self.boost: bv, self.qt: '5.6.1',
-                    self.oiio[bsufix]:"2.2.15.1",
+                    self.oiio[bsufix]: "2.2.15.1",
                     self.oiio[bsufix]["2.2.15.1"]['ilmbase'].obj:  self.oiio[bsufix]["2.2.15.1"]['ilmbase'],
                     self.oiio[bsufix]["2.2.15.1"]['openexr'].obj:  self.oiio[bsufix]["2.2.15.1"]['openexr']}
                 )],
@@ -3258,7 +3259,8 @@ class all: # noqa
             # ============================================================================================================================================
             # github build point so we can split the build in multiple matrix jobs in github actions
             # ============================================================================================================================================
-            build.github_phase_one_version(ARGUMENTS, {self.openvdb[bsufix] : v for v in self.openvdb[bsufix].keys()})
+            for v in self.openvdb[bsufix].keys():
+                build.github_phase_one_version(ARGUMENTS, {self.openvdb[bsufix] : v})
 
 
         # =============================================================================================================================================
@@ -3350,7 +3352,8 @@ class all: # noqa
             # =============================================================================================================================================
             # github build point so we can split the build in multiple matrix jobs in github actions
             # ============================================================================================================================================
-            build.github_phase_one_version(ARGUMENTS, {self.alembic[bsufix] : v for v in self.alembic[bsufix].keys()})
+            for v in self.alembic[bsufix].keys():
+                build.github_phase_one_version(ARGUMENTS, {self.alembic[bsufix] : v})
 
 
         # =============================================================================================================================================
@@ -3483,8 +3486,8 @@ class all: # noqa
                     'lz4-1.9.2.tar.gz',
                     '1.9.2',
                     '3898c56c82fb3d9455aefd48db48eaad',
-                    { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
-                    qt: '5.6.1', boost: bv, },
+                    { self.gcc: '6.3.1', self.cmake: '3.9.0', self.tbb: '4.4.6',
+                    self.qt: '5.6.1', self.boost: bv, },
                 )],
                 depend = [python],
                 cmd=[
@@ -3523,8 +3526,8 @@ class all: # noqa
                     'SeExpr-appleseed-qt5.zip',
                     '2.1.0.beta',
                     'c73820b50ebb15ce8a5affcab60722a2',
-                    { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
-                    qt: '5.6.1', boost: bv, },
+                    { self.gcc: '6.3.1', self.cmake: '3.9.0', self.tbb: '4.4.6',
+                    self.qt: '5.6.1', self.boost: bv, },
                 )],
                 depend = [python, qt],
                 flags = [
@@ -3555,8 +3558,8 @@ class all: # noqa
                     'xerces-c-3.2.2.tar.gz',
                     '3.2.2',
                     'bd91a5583212e77035a5d524eda17555',
-                    { gcc: '6.3.1', cmake: '3.9.0', tbb: '4.4.6',
-                    qt: '5.6.1', boost: bv, },
+                    { self.gcc: '6.3.1', self.cmake: '3.9.0', self.tbb: '4.4.6',
+                    self.qt: '5.6.1', self.boost: bv, },
                 )],
                 depend = [python],
                 flags = [
@@ -3586,6 +3589,9 @@ class all: # noqa
                     }
                 }
             }
+
+
+
 
             oslOBJ = self.osl[bsufix].latestVersionOBJ()
             openvdbOBJ = build.pkgVersions('openvdb').latestVersionOBJ()
@@ -3676,6 +3682,7 @@ class all: # noqa
                         self.pyside, self.qt, self.python, self.jemalloc
                     ],
                     cmd = [
+                        "rm -rf build",
                         "mkdir build",
                         "cd build",
                         # we need to do this since USD 21 will insist in using the system tbb!!
@@ -3778,10 +3785,10 @@ class all: # noqa
                 else:
                     self.usd_non_monolithic[bsufix] = usd
 
-                # ============================================================================================================================================
-                # github build point so we can split the build in multiple matrix jobs in github actions
-                # ============================================================================================================================================
-                build.github_phase_one_version(ARGUMENTS, {usd : self.masterVersion['usd']})
+            # ============================================================================================================================================
+            # github build point so we can split the build in multiple matrix jobs in github actions
+            # ============================================================================================================================================
+            build.github_phase_one_version(ARGUMENTS, {self.usd[bsufix] : self.masterVersion['usd']})
 
 
 

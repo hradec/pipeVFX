@@ -44,7 +44,7 @@ env:
   CACHE_DIR: "pipeline/libs/"
   STUDIO: "pipevfx"
   GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  TIMEOUT_HOURS: 6
+  TIMEOUT_HOURS: 7
 
 # concurrency:
 #   group: ${{ github.ref_name }}
