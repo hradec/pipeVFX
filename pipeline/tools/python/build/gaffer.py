@@ -87,9 +87,7 @@ gaffer_download = [(
 #     {"boost" : ("1.70.0", "99.99.99")}
 )]
 def gaffer_dependency_dict(pkgs):
-    return {pkgs.pyside: '5.15.2', pkgs.qt: '5.15.2',
-
-    }
+    return {pkgs.pyside: '5.15.2', pkgs.qt: '5.15.2'}
 
 
 
@@ -130,7 +128,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
     legacy(pkgs=pkgs)
     depend = cortex_depency(pkgs)
     boost_version = boost
-    cortex_sufix = "boost.%s" % boost_version
+    bsufix = "boost.%s" % boost_version
     _download = []
     extraInstall = ""
 
@@ -145,7 +143,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
 
     # build the usd cortex only for the boost version used to build the current usd version.
     usd_version = usd
-    usd = pkgs.usd[cortex_sufix][usd_version]
+    usd = pkgs.usd[bsufix][usd_version]
 
     sufix = ''
     dontUseTargetSuffixForFolders = 1
@@ -179,7 +177,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
         __download[n][4][ usd['ocio'].obj      ] = usd['ocio'     ].version
         __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
         # __download[n][4][ openvdbOBJ.obj       ] = openvdbOBJ.version
-        # __download[n][4][ pkgs.cortex[cortex_sufix] ] = __download[n][2]
+        # __download[n][4][ pkgs.cortex[bsufix] ] = __download[n][2]
 
     # now build the version of cortex with the usd version
     pkgs.cortex[sufix] = build._cortex(
@@ -202,6 +200,10 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
             'unset ARNOLD_VERSION',
             'export DCORES=$CORES',
             # build cortex
+            build._cortex.cmd[0]+"installLib"+";"+\
+            build._cortex.cmd[0]+"installCore"+";"+\
+            build._cortex.cmd[0]+";"+\
+            build._cortex.cmd[0]+" build ;"+\
             build._cortex.cmd[0]+" install",
         ],
         environ = cortex_environ,
@@ -249,8 +251,9 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
 
     # update dependencies, retrieving the versions from the boost/usd main versions
     usd_version = usd
-    cortex10version = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].latestVersion()
-    cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)][cortex10version]
+    # cortex10version = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].latestVersion()
+    # cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)][cortex10version]
+    cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].latestVersionOBJ()
     usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
     osl = usd['osl'].obj[usd['osl'].version]
     for n in range(len(_download)):
@@ -282,15 +285,14 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
         # baseLibs = [pkgs.python],
         download = _download,
         depend =  depend + [
-            pkgs.qt, pkgs.pyside, pkgs.osl,
-            pkgs.oiio, pkgs.ocio, pkgs.llvm,
+            pkgs.qt, pkgs.pyside,
             pkgs.python, pkgs.qtpy, pkgs.fonts,
             pkgs.ocio_profiles, pkgs.gaffer_resources
         ],
         apps = apps,
         cmd = [
-            build._gaffer.cmd[0],
-            build._gaffer.cmd[0]+' build',
+            build._gaffer.cmd[0]+";"+\
+            build._gaffer.cmd[0]+' build ;'+\
             build._gaffer.cmd[0]+' install',
         ],
         dontUseTargetSuffixForFolders = dontUseTargetSuffixForFolders,
@@ -321,7 +323,6 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
             'LDFLAGS': pkgs.exr_rpath_environ['LDFLAGS'],
             'DCORES' : os.environ['CORES'],
             # 'DCORES' : '1',
-            # 'LD' : 'ld'
         },
     )
     build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[suffix] : version for version in pkgs.gaffer[suffix].keys()})
@@ -348,7 +349,7 @@ def legacy(pkgs):
 
     depend = cortex_depency(pkgs)
     for boost_version in pkgs.boost.versions:
-        cortex_sufix = "boost.%s" % boost_version
+        bsufix = "boost.%s" % boost_version
         _download = []
         extraInstall = ""
 
@@ -392,9 +393,9 @@ def legacy(pkgs):
             # we use different OIIO versions for cortex 9 and 10
             if build.versionMajor(_download[n][2]) >= 10.0:
                 latest_osl_oiio_version = pkgs.latest_osl['oiio']
-                oiio = pkgs.oiio[cortex_sufix][latest_osl_oiio_version]
+                oiio = pkgs.oiio[bsufix][latest_osl_oiio_version]
             else:
-                oiio = pkgs.oiio[cortex_sufix]['1.6.15']
+                oiio = pkgs.oiio[bsufix]['1.6.15']
 
             _download[n][4][ oiio.obj ] = oiio.version
             _download[n][4][ oiio['openexr'  ].obj ] = oiio['openexr'].version
@@ -404,10 +405,10 @@ def legacy(pkgs):
         if _download:
             __download = []+_download
             cortex_environ = pkgs.exr_rpath_environ.copy()
-            pkgs.cortex[cortex_sufix] = build._cortex(
+            pkgs.cortex[bsufix] = build._cortex(
                 ARGUMENTS, # noqa
                 'cortex',
-                targetSuffix = cortex_sufix,
+                targetSuffix = bsufix,
                 # build the version that matches the boost version in the loop!
                 download = __download,
                 # baseLibs = [pkgs.python],
@@ -426,12 +427,12 @@ def legacy(pkgs):
             )
 
             # ===========================================================================================
-            # CORTEX ALEMBIC for each boost it is available
+            # CORTEX ALEMBIC/OpenVDB for each boost it is available
             # ===========================================================================================
-            if cortex_sufix in pkgs.alembic:
-                for alembic_version in pkgs.alembic[cortex_sufix].versions:
+            if bsufix in pkgs.alembic:
+                for alembic_version in pkgs.alembic[bsufix].versions:
                     # build the alembic cortex only for the boost version used to build the current alembic version.
-                    alembic = pkgs.alembic[cortex_sufix][alembic_version]
+                    alembic = pkgs.alembic[bsufix][alembic_version]
                     # alembic_boost = [ x[4][pkgs.boost] for x in pkgs.alembic.download if x[2] == alembic_version ][0]
                     if 'boost' in alembic and alembic['boost'] == boost_version:
                         sufix = "boost.%s-alembic.%s" % (boost_version, alembic_version)
@@ -453,7 +454,7 @@ def legacy(pkgs):
                             __download[n][4][ alembic['ilmbase'].obj   ] = alembic['openexr'].version
                             __download[n][4][ alembic['openexr'].obj   ] = alembic['openexr'].version
                             __download[n][4][ alembic['pyilmbase'].obj ] = alembic['openexr'].version
-                            __download[n][4][ pkgs.cortex[cortex_sufix]     ] = __download[n][2]
+                            __download[n][4][ pkgs.cortex[bsufix]     ] = __download[n][2]
 
                         # and build cortex
                         pkgs.cortex[sufix] = build._cortex(
@@ -475,15 +476,15 @@ def legacy(pkgs):
             # ===========================================================================================
             # CORTEX USD+ALEMBIC+OPENVDB for each boost it is available (only for cortex >= 10)
             # ===========================================================================================
-            if cortex_sufix in pkgs.usd:
-                for usd_version in pkgs.usd[cortex_sufix].versions:
+            if bsufix in pkgs.usd:
+                for usd_version in pkgs.usd[bsufix].versions:
 
                     # cortex is not compatible with USD 21.11 yet
                     if usd_version == '21.11.0':
                         continue
 
                     # build the usd cortex only for the boost version used to build the current usd version.
-                    usd = pkgs.usd[cortex_sufix][usd_version]
+                    usd = pkgs.usd[bsufix][usd_version]
                     # usd_boost = [ x[4][pkgs.boost] for x in pkgs.usd.download if x[2] == usd_version ][0]
                     if 'boost' in usd and usd['boost'] == boost_version:
                         sufix = "boost.%s-usd.%s" % (boost_version, usd_version)
@@ -492,7 +493,7 @@ def legacy(pkgs):
                         # since USD was introduced in cortex 10, only build for version >= 10
                         # we select only the cortex version that uses the current version of USD to build in this step
                         # the []+x is to create a new list!
-                        __download = [ []+x for x in _download if build.versionMajor(x[2]) >= 10.0 ] # if x[4][pkgs.usd[cortex_sufix]] == usd_version ]
+                        __download = [ []+x for x in _download if build.versionMajor(x[2]) >= 10.0 ] # if x[4][pkgs.usd[bsufix]] == usd_version ]
 
                         # we dont need to remove usd, alembic or openvdb since the _download won't have it!
                         for n in range(len(__download)):
@@ -509,7 +510,7 @@ def legacy(pkgs):
                             __download[n][4][ usd['ilmbase'  ].obj ] = usd['openexr'  ].version
                             __download[n][4][ usd['openexr'  ].obj ] = usd['openexr'  ].version
                             __download[n][4][ usd['pyilmbase'].obj ] = usd['openexr'  ].version
-                            __download[n][4][ pkgs.cortex[cortex_sufix] ] = __download[n][2]
+                            __download[n][4][ pkgs.cortex[bsufix] ] = __download[n][2]
 
                         # now build the version of cortex with the usd version
                         pkgs.cortex[sufix] = build._cortex(
@@ -552,7 +553,7 @@ def legacy(pkgs):
                         __download[n][4][ pkgs.openexr   ['boost.%s' % boost_version] ] = exr_version
                         __download[n][4][ pkgs.oiio      ['boost.%s' % boost_version] ] = '1.8.10'
                         __download[n][4][ pkgs.usd       ] = None
-                        __download[n][4][ pkgs.alembic[cortex_sufix]   ] = None
+                        __download[n][4][ pkgs.alembic[bsufix]   ] = None
                         __download[n][4][ pkgs.openvdb   ] = None
 
                     # now build the version of cortex with the openvdb version
