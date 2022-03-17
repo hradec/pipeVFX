@@ -2709,13 +2709,17 @@ class generic:
                 className = str(app).split('.')[-1].split("'")[0]
                 pipe.version.set({className:version})
                 _app = app()
-                _app.fullEnvironment()
+                # _app.fullEnvironment()
                 _print( bcolors.WARNING+":"+bcolors.BLUE+"\tapp: ", "%s(%s)" % (
                     className,
                     version
                 ),)
                 # get all vars from app class and add to cmd environ
                 for each in _app:
+                    # we cant override any env var already set!
+                    if each in self._os_environ_(target):
+                        continue
+
                     if each not in ['LD_PRELOAD','PYTHON_VERSION','PYTHON_VERSION_MAJOR']:
                         v = _app[each]
                         if type(v) == str:
@@ -3038,8 +3042,10 @@ class generic:
                 # if not os.path.exists(self.__lastlog(__pkgInstalled__[s],python)):
                 lastlog = self.__lastlog(__pkgInstalled__[s],python)
                 # print self.__check_target_log__( lastlog, env ), str(target[0]), str(source[0])
+                # _print("\n\n\n%s %s\n\n\n" % (lastlog, self.__check_target_log__( lastlog, env )))
                 if self.__check_target_log__( lastlog, env ):
-                    # _print( "\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
+                    # _print( "\n\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
+
                     os.popen( "rm -rf %s 2>&1" % buildFolder ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
                     if '.rpm' in s:
@@ -3049,6 +3055,7 @@ class generic:
                         _print( cmd )
                     elif '.tar' in s:
                         cmd = "mkdir -p %s && cd %s && tar xf %s 2>&1" % (tmp,tmp,s)
+                        _print( cmd )
                     elif '.zip' in s:
                         cmd = "mkdir -p %s && cd %s && unzip %s 2>&1" % (tmp,tmp,s)
                         _print( cmd )
