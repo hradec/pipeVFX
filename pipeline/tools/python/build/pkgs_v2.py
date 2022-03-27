@@ -1779,7 +1779,7 @@ class all: # noqa
             # github build point so we can split the build in multiple matrix jobs in github actions
             # ============================================================================================================================================
             # build.github_phase_one_version(ARGUMENTS, {self.pyilmbase[sufix] : v for v in self.pyilmbase[sufix].keys()})
-            build.github_phase(self.pyilmbase[bsufix])
+            build.github_phase(self.pyilmbase[sufix])
 
 
 
