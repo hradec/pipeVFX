@@ -25,10 +25,11 @@ class davinci(baseApp):
         # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
         self.ignorePipeLib( "freetype" )
         #/var/BlackmagicDesign
-        sudo = pipe.admin.sudo()
-        sudo.cmd("mkdir -p '/var/BlackmagicDesign'")
-        sudo.cmd("chmod a+rwx '/var/BlackmagicDesign'")
-        sudo.run()
+        if not os.path.exists('/var/BlackmagicDesign'):
+            sudo = pipe.admin.sudo()
+            sudo.cmd("mkdir -p '/var/BlackmagicDesign'")
+            sudo.cmd("chmod a+rwx '/var/BlackmagicDesign'")
+            sudo.run()
 
 
     def bg(self, cmd, bin):
