@@ -27,21 +27,8 @@ class maya(baseApp):
         this makes it simple to install new versions of maya.
         '''
         if not os.path.exists(self.path("bin")) and os.path.exists(self.path("usr")):
-            # we have to set the modules path before we set macfix['subpath'], since
-            # the module paths are outside the new maya root folder.
-
+            # now we can update maya root properly.
             mv = self.version().split('.')[0]
-            modules = [
-                self.path("opt/Allegorithmic/Substance_in_Maya/%s/" % mv),
-                self.path("usr/autodesk/modules/maya/%s/" % mv)
-            ]
-            modules += cached.glob(self.path("usr/autodesk/bifrost/maya%s/*" % mv))
-            modules += cached.glob(self.path("usr/autodesk/mayausd/maya%s/*" % mv))
-            for each in modules:
-                maya.addon( self, module = cached.glob( "%s/*.mod" % each ) )
-            #print modules
-
-            # now we can set maya root properly.
             macfixData['subpath'] = 'usr/autodesk/maya%s/' % mv
             if not os.path.exists( self.path( 'bin/maya' ) ):
                 self.maya_bin = "bin/maya%s" % mv
@@ -97,28 +84,54 @@ class maya(baseApp):
             self.update( substance() )
             self.update( mgear() )
 
-            if hasattr(self, 'maya_bin'):
-                # setup maya usd that comes with maya!
-                for usdVersion in cached.glob(self.path('../mayausd/maya%d/*' % mv)):
-                    maya.addon(self,
-                        plugin = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/plugin",
-                        script = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/scripts",
-                        icon = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/icons",
-                    )
-                    maya.addon(self,
-                        plugin = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/maya",
-                        lib = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/",
-                        script = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/python/",
-                        icon = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/icons/",
-                    )
-                    self['PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/bin"
-                    self['LD_LIBRARY_PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/lib"
-                    self['LD_LIBRARY_PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/lib64"
-                    self['PXR_PLUGINPATH_NAME'] = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/usd"
-                    self['MAYAUSD_VERSION'] = '.'.join(os.path.basename(usdVersion).split('.')[:2])
-
-            else:
+            if mv > 2016:
                 self.update( pipe.libs.usd() )
+
+                # substance that comes with maya
+                maya.addon(self, module = self.path("../../../opt/Allegorithmic/Substance_in_Maya/$MAYA_VERSION/") )
+
+                # bifrost in later mayas
+                for each in cached.glob(self.path("../bifrost/maya*/*/*")):
+                    maya.addonModule( self, each )
+                    if os.path.basename(each) == 'bifrost':
+                        self['MAYA_CONTENT_PATH']             = each+'/examples/Bifrost_Fluids'
+                        self['MAYA_MODULE_UI_WORKSPACE_PATH'] = each+'/resources/workspaces'
+                        self['MAYA_TOOLCLIPS_PATH']           = each+'/resources/toolclips'
+                        self['BIFROST_LIB_CONFIG_FILES']      = each+'/resources/plugin_config.json'
+
+
+
+                # maya.addon(self,
+                #     plugin  = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION/plug-ins/"),
+                #     lib     = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION/lib/"),
+                #     script  = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION/scripts/"),
+                #     qml     = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION/qml-modules-linux/"),
+                #
+                # )
+
+                if pipe.libs.mayausd().keys():
+                    self.update( pipe.libs.mayausd() )
+                else:
+                    # setup maya usd that comes with maya!
+                    if hasattr(self, 'maya_bin'):
+                        for usdVersion in cached.glob(self.path('../mayausd/maya%d/*' % mv)):
+                            maya.addon(self,
+                                plugin = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/plugin",
+                                script = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/scripts",
+                                icon = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/plugin/adsk/icons",
+                            )
+                            maya.addon(self,
+                                plugin = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/maya",
+                                lib = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/",
+                                script = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/python/",
+                                icon = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/icons/",
+                            )
+                            self['PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/bin"
+                            self['LD_LIBRARY_PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/lib"
+                            self['LD_LIBRARY_PATH'] = usdVersion+"/mayausd/USD$MAYA_PYTHON_VERSION/lib64"
+                            self['PXR_PLUGINPATH_NAME'] = usdVersion+"/mayausd/MayaUSD$MAYA_PYTHON_VERSION/lib/usd"
+                            self['MAYAUSD_VERSION'] = '.'.join(os.path.basename(usdVersion).split('.')[:2])
+
 
             if 'PIPE_REDSHIFT' in os.environ and os.environ['PIPE_REDSHIFT']=='1':
                 self.update( redshift() )
@@ -276,20 +289,30 @@ class maya(baseApp):
         # self['MAYA_DISABLE_CASCADING'] = '1'
         self['MAYA_LOCATION'] = self.path()
         self['MAYA_NO_WARNING_FOR_MISSING_DEFAULT_RENDERER'] = '1'
+        self['MAYA_WORKSPACES_ALWAYS_SHOW_TAB'] = '1'
+
+        # If you are running Maya off a network, set this variable to the location
+        # of the Maya .syncfg file. It must be set to enable the Send to commands.
+        self['SYNHUB_CONFIG_PATH'] = self.path('../../../opt/Autodesk/Synergy/')
+        self['MAYA_SYNSUITE_CONFIG_PATH'] = self.path('../../../opt/Autodesk/Synergy/')
+
+        # Specifies the location of the common network repository where files
+        # reside during live character streaming between two different workstations.
+        # self['ONECLICK_TEMP_DIR']
 
         if mv > 2014:
             self['MAYA_ALLOW_RENDER_LAYER_SWITCHING'] = '1'
             # this bellow prevents the privacy window to show up when starting maya or the firt time!
-            # this windown actually can create some problems of getting maya stuck at startup forever in some cases!
+            # this windown actually can create some problems of getting maya stuck forever at startup in some cases!
             if not os.path.exists( "%s/Adlm" % os.environ["HOME"] ):
                 os.mkdir( "%s/Adlm" % os.environ["HOME"] )
             Adlm = open( "%s/Adlm/AdlmUserSettings.xml" % os.environ["HOME"], "w" )
             Adlm.write('''<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-<AdlmSettings>
-    <Section Name="PrivacyPolicyConsent">
-        <Data Key="%d.0.0.F">1</Data>
-    </Section>
-</AdlmSettings>\n''' % mv )
+                <AdlmSettings>
+                    <Section Name="PrivacyPolicyConsent">
+                        <Data Key="%d.0.0.F">1</Data>
+                    </Section>
+                </AdlmSettings>\n''' % mv )
             Adlm.close()
 
         # we run this to make sure Asset module works when importing IECore
@@ -298,17 +321,16 @@ class maya(baseApp):
         if mv >= 2018:
             # as maya comes with pyilmbase, we want to force it to load ours instead, so IECore works,
             # as well alembic and pyalembic latest versions.
-            from sys import path as pythonpath
-            os.environ['PYTHON_VERSION_MAJOR'] = pythonVer
-            os.environ['BOOST_VERSION'] = pipe.libs.version.get( 'boost' )
-            # os.environ['LD_LIBRARY_PATH'] = ''
-            for p in [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]:
-                pythonpath.insert(0, p)
-            for p in [ os.path.expandvars(x) for x in pipe.libs.boost()['LD_LIBRARY_PATH'] ]:
-                pythonpath.insert(0, p)
-                # os.environ['LD_LIBRARY_PATH'] = p+":"+os.environ['LD_LIBRARY_PATH']
-            del os.environ['PYTHON_VERSION_MAJOR']
-            del os.environ['BOOST_VERSION']
+            for p in pipe.libs.pyilmbase()['PYTHONPATH']:
+                self.insert('PYTHONPATH',0, p)
+            for p in pipe.libs.boost()['LD_LIBRARY_PATH']:
+                self.insert('PYTHONPATH',0, p)
+
+            # we also need to make sure our oiio libraries are loaded,
+            # not the ones that come with maya, or else IECoreImage will
+            # cause a lockup in maya!
+            self['LD_PRELOAD'] = pipe.libs.oiio().LD_PRELOAD()
+            self['LD_PRELOAD'] = pipe.libs.ptex().LD_PRELOAD()
 
         self['EDITOR'] = 'atom'
 
@@ -400,7 +422,7 @@ class maya(baseApp):
     #     return False
 
     @staticmethod
-    def addon(caller, plugin="", script="", icon="", renderDesc='', lib='', preset='',module='', shelves='', templates=''):
+    def addon(caller, plugin="", script="", icon="", renderDesc='', lib='', preset='',module='', shelves='', templates='', qml='', content='', toolclips='', workspace=''):
         ''' the addon method MUST be implemented for all classes so other apps can set up
         searchpaths for this app. For example, another app which has plugins for this one!'''
         if not pipe.osx:
@@ -408,16 +430,39 @@ class maya(baseApp):
                 icon = map( lambda x: x+"/%B", icon )
             else:
                 icon = icon+"/%B"
-        caller['MAYA_PLUG_IN_PATH']         = plugin
-        caller['MAYA_SCRIPT_PATH']          = script
-        caller['PYTHONPATH']                = script
-        caller['XBMLANGPATH']               = icon
-        caller['MAYA_RENDER_DESC_PATH']     = renderDesc
-        caller['LD_LIBRARY_PATH']           = lib
-        caller['MAYA_PRESET_PATH']          = preset
-        caller['MAYA_MODULE_PATH']          = module
-        caller['MAYA_SHELF_PATH']           = shelves
-        caller['MAYA_CUSTOM_TEMPLATE_PATH'] = templates
+        caller['MAYA_PLUG_IN_PATH']             = plugin
+        caller['MAYA_SCRIPT_PATH']              = script
+        caller['PYTHONPATH']                    = script
+        caller['XBMLANGPATH']                   = icon
+        caller['MAYA_RENDER_DESC_PATH']         = renderDesc
+        caller['LD_LIBRARY_PATH']               = lib
+        caller['MAYA_PRESET_PATH']              = preset
+        caller['MAYA_MODULE_PATH']              = module
+        caller['MAYA_SHELF_PATH']               = shelves
+        caller['MAYA_CUSTOM_TEMPLATE_PATH']     = templates
+        caller['QML2_IMPORT_PATH']              = qml
+        caller['MAYA_CONTENT_PATH']             = content
+        caller['MAYA_MODULE_UI_WORKSPACE_PATH'] = workspace
+        caller['MAYA_TOOLCLIPS_PATH']           = toolclips
+
+    @staticmethod
+    def addonModule(caller, path):
+        maya.addon(caller,
+            script = path+'/scripts',
+            preset = path+'/presets',
+            icon   = path+'/icons',
+            plugin = path+'/plug-ins',
+            # = "%s/%s" % (path, 'bin/image')
+            # = "%s/%s" % (path, 'shaders'),
+            # = "%s/%s" % (path, 'shaders/include'),
+            # = "%s/%s" % (path, 'devkit'),
+        )
+        caller['PATH'] = path+'/bin'
+        caller['PATH'] = path+'/lib'
+        caller['PYTHONPATH'] = path+'/scripts'
+        caller['PYTHONPATH'] = path+'/python'
+        caller['PYTHONPATH'] = path+'/python/site-packages'
+        caller['MAYA_PLUG_IN_RESOURCE_PATH'] = path+'/resources'
 
 
     def preRun(self, cmd):
