@@ -25,6 +25,8 @@ import pipe
 # setup project root path!
 # ========================================================================
 def __setupPipeVFX( container, script ) :
-	script["variables"]["projectRootDirectory"]['value'].setValue( "%s/gaffer/" % pipe.admin.job.shot.user().path() )
+	try:
+		script["variables"]["projectRootDirectory"]['value'].setValue( "%s/gaffer/" % pipe.admin.job.shot.user().path() )
+	except: pass
 
 application.root()["scripts"].childAddedSignal().connect( __setupPipeVFX, scoped = False )

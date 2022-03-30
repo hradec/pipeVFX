@@ -36,7 +36,7 @@
 ##########################################################################
 
 import GafferUI
-
+#
 import jobManager
 
 import assetListWidget
@@ -45,7 +45,6 @@ import bundleListWidget
 layouts = GafferUI.Layouts.acquire( application )
 
 # register the editors we want to be available to the user
-
 layouts.registerEditor( "Viewer" )
 layouts.registerEditor( "NodeEditor" )
 layouts.registerEditor( "NodeGraph" )
@@ -58,49 +57,7 @@ layouts.registerEditor( "UIEditor" )
 layouts.registerEditor( "SAMList" )
 layouts.registerEditor( "SAMBundleList" )
 
-# register some predefined layouts
-layout2 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.163087, ( {'tabs': (), 'tabsVisible': True, 'pinned': []}, ( GafferUI.SplitContainer.Orientation.Horizontal, 0.720387, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, {'tabs': (), 'tabsVisible': True, 'pinned': []} ) ) ) ) )"
-layout4 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.162910, ( {'tabs': (GafferUI.SAMAssetListWidget( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Horizontal, 0.720247, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, {'tabs': (), 'tabsVisible': True, 'pinned': []} ) ) ) ) )"
-layout11 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.287942, ( ( GafferUI.SplitContainer.Orientation.Horizontal, 0.491561, ( {'tabs': (), 'tabsVisible': True, 'pinned': []}, {'tabs': (GafferUI.SAMAssetListWidget( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]} ) ), ( GafferUI.SplitContainer.Orientation.Horizontal, 0.720576, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, {'tabs': (), 'tabsVisible': True, 'pinned': []} ) ) ) ) )"
-layout13 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.195207, ( ( GafferUI.SplitContainer.Orientation.Horizontal, 0.399390, ( {'tabs': (), 'tabsVisible': True, 'pinned': []}, {'tabs': (GafferUI.SAMAssetListWidget( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]} ) ), ( GafferUI.SplitContainer.Orientation.Horizontal, 0.819110, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.500606, ( {'tabs': (), 'tabsVisible': True, 'pinned': []}, {'tabs': (), 'tabsVisible': True, 'pinned': []} ) ) ) ) ) ) )"
-layout14 =  "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.194541, ( ( GafferUI.SplitContainer.Orientation.Horizontal, 0.398176, ( {'tabs': (GafferUI.SAMbundleListWidget( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, {'tabs': (GafferUI.SAMAssetListWidget( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]} ) ), ( GafferUI.SplitContainer.Orientation.Horizontal, 0.819696, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.500657, ( {'tabs': (), 'tabsVisible': True, 'pinned': []}, {'tabs': (), 'tabsVisible': True, 'pinned': []} ) ) ) ) ) ) )"
-l17 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.194266, ( ( GafferUI.SplitContainer.Orientation.Horizontal, 0.398773, ( {'tabs': (GafferUI.SAMbundleListWidget( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]}, {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]} ) ), ( GafferUI.SplitContainer.Orientation.Horizontal, 0.753465, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.501211, ( {'tabs': (GafferUI.NodeEditor( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [False]}, {'tabs': (), 'tabsVisible': True, 'pinned': []} ) ) ) ) ) ) )"
-l21 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.113821, ( {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Horizontal, 0.753289, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.500657, ( {'tabs': (GafferUI.NodeEditor( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [False]}, {'tabs': (), 'tabsVisible': True, 'pinned': []} ) ) ) ) ) ) )"
-l30 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.113728, ( {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Horizontal, 1.000000, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.500605, ( {'tabs': (GafferUI.NodeEditor( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [False]}, {'tabs': (), 'tabsVisible': True, 'pinned': []} ) ) ) ) ) ) )"
-l40 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.113821, ( {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Horizontal, 0.753289, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.206522, ( {'tabs': (GafferUI.NodeEditor( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [True]}, {'tabs': (GafferUI.ScriptEditor( scriptNode ), GafferUI.NodeEditor( scriptNode )), 'tabsVisible': True, 'currentTab': 1, 'pinned': [None, False]} ) ) ) ) ) ) )"
-l40 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.113821, ( {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Horizontal, 0.723684, ( ( GafferUI.SplitContainer.Orientation.Vertical, 0.970652, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, {'tabs': (GafferUI.Timeline( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]} ) ), ( GafferUI.SplitContainer.Orientation.Vertical, 0.494565, ( {'tabs': (GafferUI.NodeEditor( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [True]}, {'tabs': (GafferUI.ScriptEditor( scriptNode ), GafferUI.NodeEditor( scriptNode )), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None, False]} ) ) ) ) ) ) )"
-l50 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.113821, ( {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Horizontal, 0.753289, ( ( GafferUI.SplitContainer.Orientation.Vertical, 0.369565, ( {'tabs': (GafferUI.Viewer( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [False]}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.951220, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, {'tabs': (GafferUI.Timeline( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]} ) ) ) ), ( GafferUI.SplitContainer.Orientation.Vertical, 0.205435, ( {'tabs': (GafferUI.NodeEditor( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [True]}, {'tabs': (GafferUI.ScriptEditor( scriptNode ), GafferUI.NodeEditor( scriptNode )), 'tabsVisible': True, 'currentTab': 1, 'pinned': [None, False]} ) ) ) ) ) ) )"
-l60 = "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.113821, ( {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]}, ( GafferUI.SplitContainer.Orientation.Horizontal, 0.753289, ( ( GafferUI.SplitContainer.Orientation.Vertical, 0.552174, ( {'tabs': (GafferUI.Viewer( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [False]}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.911330, ( {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [None]}, {'tabs': (GafferUI.Timeline( scriptNode ),), 'tabsVisible': False, 'currentTab': 0, 'pinned': [None]} ) ) ) ), ( GafferUI.SplitContainer.Orientation.Vertical, 0.492391, ( {'tabs': (GafferUI.NodeEditor( scriptNode ),), 'tabsVisible': True, 'currentTab': 0, 'pinned': [False]}, {'tabs': (GafferSceneUI.SceneHierarchy( scriptNode ), GafferUI.ScriptEditor( scriptNode )), 'tabsVisible': True, 'currentTab': 0, 'pinned': [False, None]} ) ) ) ) ) ) )"
-
-layouts.add( "Default", l60 )
-
-
-
-
-
-#  '''
-#     GafferUI.CompoundEditor( scriptNode, children = (
-#         GafferUI.SplitContainer.Orientation.Vertical, 0.97, (
-#             {'tabs': (GafferUI.Viewer( scriptNode ),), 'tabsVisible': True, 'currentTab': 0},
-#             (
-#             GafferUI.SplitContainer.Orientation.Horizontal, 0.70,( (
-#                 GafferUI.SplitContainer.Orientation.Vertical, 0.48, (
-#                     {'tabs': (GafferUI.Viewer( scriptNode ),), 'tabsVisible': True, 'currentTab': 0},
-#                     {'tabs': (GafferUI.NodeGraph( scriptNode ),), 'tabsVisible': True, 'currentTab': 0}
-#                 )
-#             ),(
-#                 GafferUI.SplitContainer.Orientation.Vertical, 0.54, (
-#                     {'tabs': (GafferUI.NodeEditor( scriptNode ), GafferSceneUI.SceneInspector( scriptNode )), 'tabsVisible': True, 'currentTab': 0},
-#                     {'tabs': (GafferSceneUI.SceneHierarchy( scriptNode ), GafferUI.ScriptEditor( scriptNode )), 'tabsVisible': True, 'currentTab': 0}
-#                 )
-#             )
-#         ) ),
-#               {'tabs': (GafferUI.Timeline( scriptNode ),), 'tabsVisible': False, 'currentTab': 0}
-#         ) )
-#     )'''.replace('\n', '')
-# )
-
-layouts.add( "Scene", "GafferUI.CompoundEditor( scriptNode, children = ( GafferUI.SplitContainer.Orientation.Horizontal, 0.772664, ( ( GafferUI.SplitContainer.Orientation.Horizontal, 0.255898, ( (GafferSceneUI.SceneHierarchy( scriptNode ),), ( GafferUI.SplitContainer.Orientation.Vertical, 0.500000, ( ( GafferUI.SplitContainer.Orientation.Vertical, 1.000000, ( (GafferUI.Viewer( scriptNode ),), (GafferUI.Timeline( scriptNode ),) ) ), (GafferUI.NodeGraph( scriptNode ),) ) ) ) ), ( GafferUI.SplitContainer.Orientation.Vertical, 0.500000, ( (GafferUI.NodeEditor( scriptNode ),), (GafferSceneUI.SceneInspector( scriptNode ),) ) ) ) ) )" )
-layouts.add( "Empty", "GafferUI.CompoundEditor( scriptNode )" )
+layouts.add( 'SAM', "GafferUI.CompoundEditor( scriptNode, _state={ 'children' : ( GafferUI.SplitContainer.Orientation.Horizontal, 0.157126, ( {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': True, 'currentTab': 0}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.969265, ( {'tabs': (GafferUI.Viewer( scriptNode ),), 'tabsVisible': True, 'currentTab': 0}, {'tabs': (GafferUI.Timeline( scriptNode ),), 'tabsVisible': False, 'currentTab': 0} ) ) ) ), 'detachedPanels' : (), 'windowState' : { 'fullScreen' : False, 'screen' : -1, 'bound' : imath.Box2f( imath.V2f( 0.0500000007, 0.0492424257 ), imath.V2f( 0.949999988, 0.950757563 ) ), 'maximized' : False }, 'editorState' : {} } )", persistent = False )
+layouts.setDefault( 'SAM', persistent = False )
 
 del layouts # avoid polluting the namespace for other config files

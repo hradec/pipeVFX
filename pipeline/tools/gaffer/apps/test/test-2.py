@@ -166,26 +166,24 @@ class test( Gaffer.Application ) :
         # self.timer = QtCore.QTimer()
         # self.timer.timeout.connect(progress)
         # self.timer.start(100)
-
-
         # primaryWindow._qtWidget().resize( 1800, 800 )
 
-        self.setSize()
+        # self.setSize()
 
 
         GafferUI.EventLoop.mainEventLoop().start()
 
         return 0
 
-    def setSize(self, w=20, h=20):
-        primaryWindow = GafferUI.ScriptWindow.acquire( self.scriptNode )
-        desktop = QtGui.QApplication.instance().desktop()
-        geometry = desktop.availableGeometry()
-        adjustment = geometry.size()
-        ww = int(adjustment.width())/w
-        hh = int(adjustment.height())/h
-        geometry.adjust( ww, hh, -ww, -hh )
-        primaryWindow._qtWidget().setGeometry( geometry )
+    # def setSize(self, w=20, h=20):
+    #     primaryWindow = GafferUI.ScriptWindow.acquire( self.scriptNode )
+    #     desktop = QtGui.QApplication.instance().desktop()
+    #     geometry = desktop.availableGeometry()
+    #     adjustment = geometry.size()
+    #     ww = int(adjustment.width())/w
+    #     hh = int(adjustment.height())/h
+    #     geometry.adjust( ww, hh, -ww, -hh )
+    #     primaryWindow._qtWidget().setGeometry( geometry )
 
 
     def __setupClipboardSync( self ) :
