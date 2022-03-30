@@ -20,6 +20,7 @@
 
 
 
+os.environ['PIPE_MAYA_PRMAN']        = '0'
 os.environ['PIPE_MAYA_ARNOLD']       = '0'
 os.environ['PIPE_MAYA_VRAY']         = '1'
 os.environ['PIPE_MAYA_ZYNC']         = '0'
