@@ -26,9 +26,13 @@ logd = False
 if '--logd' in sys.argv:
     logd = True
 
-def __log(msg):
-    print(msg)
-    sys.stderr.flush()
+def __log(msg, error=False):
+    if error:
+        sys.stderr.write(msg.strip('\n')+'\n')
+        sys.stderr.flush()
+    else:
+        print(msg)
+        sys.stdout.flush()
 
 def info(msg):
     if logd:
@@ -47,9 +51,9 @@ def warning(msg):
         __log(W+"WARNING: "+"="*120+bcolors.END)
 
 def error(msg):
-    __log(bcolors.FAIL+"_"*120)
-    __log("ERROR:\t"+'\nERROR:\t'.join(str(msg).split('\n')))
-    __log("_"*120+bcolors.END)
+    __log(bcolors.FAIL+"_"*120, error=True)
+    __log("ERROR:\t"+'\nERROR:\t'.join(str(msg).split('\n')), error=True)
+    __log("_"*120+bcolors.END, error=True)
 
 def debug(msg):
     if logd:
