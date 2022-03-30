@@ -230,13 +230,22 @@ jobs:
     # we use artifacts to pass on the built packages from the previous job to the next!
     # this allows us to continue building the libs folder during the whole workflow.
     # ================================================================================================================
-    - name: download artifact from previous run
+    - name: download artifact from previous run 1/2
       uses: actions/download-artifact@v2
       # if: ${{ env.DO_DOWNLOAD_ARTIFACT }} == '1'
       if: matrix.name != 'phase1'
       continue-on-error: true
       with:
-        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz00
+        # name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
+
+    - name: download artifact from previous run 2/2
+      uses: actions/download-artifact@v2
+      # if: ${{ env.DO_DOWNLOAD_ARTIFACT }} == '1'
+      if: matrix.name != 'phase1'
+      continue-on-error: true
+      with:
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz01
         # name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
 
     - name: extract pipeline/libs from the previous uploaded artifact so we can continue building
@@ -251,7 +260,12 @@ jobs:
                 ls -lh --color=yes .
                 cat /proc/meminfo | grep Mem
                 df -h
-                tar xf ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz
+                if [ $(du -k ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz00 | cut -f1) -eq 0 ] ; then
+                    echo "artifact has zero size!"
+                    exit -1
+                fi
+                cat ${{ env.STUDIO }}-${{ github.ref_name }}-${{ matrix.name  }}-${{ github.sha }}.tar.gz* | tar xzf -
+                rm -rf *tar.gz*
                 ls -lh --color=yes pipeline/libs/linux/x86_64/pipevfx.5.0.0/
                 df -h
             fi
@@ -277,23 +291,35 @@ jobs:
     # after building, we save the pipeline/libs folder as an artifact with the
     # name of the next phase, so the next phase can download and extract!
 
-    - name: save out pipeline/libs/ folder as artifact
+    - name: save out pipeline/libs/ folder as artifacts
       # if: ${{ env.DO_BUILD }} == '1'
-      run: tar -cvzf ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz ${{ env.CACHE_DIR }}/
+      run: |
+        df -h
+        sudo rm -rf pipeline/build/.build
+        df -h
+        sudo tar -czf - ${{ env.CACHE_DIR }}/ | split --bytes=5GB -d - ${{ env.STUDIO }}-${{ github.ref_name }}-$NEXT_MATRIX_NAME-${{ github.sha }}.tar.gz
 
     # upload next-phase artifact
-    - name: upload pipeline/libs as artifact
+    - name: upload pipeline/libs as artifact 1/2
       # if: ${{ env.DO_BUILD }} == '1'
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
-        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz00
+        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz00
+
+    # upload next-phase artifact
+    - name: upload pipeline/libs as artifact 2/2
+      # if: ${{ env.DO_BUILD }} == '1'
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz01
+        path: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME  }}-${{ github.sha }}.tar.gz01
 
 
     # remove all tar archive files just in case
     - name: Remove archive after upload so it won't be cached
       # if: ${{ env.DO_BUILD }} == '1'
-      run: rm -rf ./*.tar*
+      run: sudo rm -rf ./*.tar*
 
     # update matrix_cleanup for the cleanup step, with all the phases, but the
     # last one!
