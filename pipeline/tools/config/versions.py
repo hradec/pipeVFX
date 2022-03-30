@@ -34,7 +34,7 @@ pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
 # pipe.version.set( maya      = '2018' )
 pipe.version.set( maya      = '2022.2' )
 pipe.version.set( nuke      = '12.1v1' )
-pipe.version.set( natron    = '2.4.1' )
+pipe.version.set( natron    = '2.5.0.a2' )
 pipe.version.set( houdini   = 'hfs17.5.173' )
 pipe.version.set( delight   = '11.0.12' )
 pipe.version.set( mari      = '2.0v1' )
@@ -51,7 +51,7 @@ pipe.version.set( vray      = '5.2.31206' )
 # set global library versions
 # ===================================================================
 if 'GCC_VERSION' in os.environ:
-    exr='2.2.0'
+    exr='2.4.0'
     pipe.version.set( python        = '2.7' )
     pipe.libs.version.set( python   = '2.7' )
     pipe.libs.version.set( freetype = '2.4.0' )
