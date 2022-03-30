@@ -9,22 +9,25 @@ if [ "$sport" == "" ] ; then
 	sport=22
 fi
 
-if [ "$(nmap -Pn -p 650$port $1 | grep open)" == "" ] ; then
+ip=$(echo $1 | awk -F'@' '{print $(NF)}')
+user=$(echo $1 | awk -F'@' '{print $(NF-1)}')
+
+if [ "$(nmap -Pn -p 650$port $ip | grep open)" == "" ] ; then
 	echo Starting...
-	echo -n "Waiting ssh port on $1 to be open."
-	while [ "$(nmap -Pn -p $sport $1 2>/dev/null | grep open)" == "" ] ; do
+	echo -n "Waiting ssh port on $ip to be open."
+	while [ "$(nmap -Pn -p $sport $ip 2>/dev/null | grep open)" == "" ] ; do
 		echo -n .
 		sleep 1
 	done
-	cmd="/bin/xpra start --start-via-proxy=no --video-encoders=nvenc --bind-tcp=$1:650$port :$port --start=terminology"
+	cmd="/bin/xpra start --start-via-proxy=no --video-encoders=nvenc --bind-tcp=$ip:650$port :$port --start=terminology"
 	echo ssh $1 "$cmd"
 	ssh -p $sport $1 "$cmd"
 	echo -n "Waiting xpra start up in $1."
-	while [ "$(nmap -Pn -p 650$port $1 2>/dev/null | grep open)" == "" ] ; do
+	while [ "$(nmap -Pn -p 650$port $ip 2>/dev/null | grep open)" == "" ] ; do
 		echo -n .
 		sleep 1
 	done
 	echo
 fi
 echo Attaching...
-/bin/xpra attach tcp:$1:650$port
+/bin/xpra attach tcp:$ip:650$port
