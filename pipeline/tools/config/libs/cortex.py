@@ -229,7 +229,8 @@ class cortex(baseLib):
         except: pass
 
     def bins(self):
-        return [('cpython', 'cpython')]
+        # return [('cpython', 'cpython')]
+        return []
 
 
     @staticmethod
