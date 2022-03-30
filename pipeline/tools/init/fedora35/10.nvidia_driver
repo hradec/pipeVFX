@@ -64,6 +64,7 @@ if [ "$(lspci | grep 'NVIDIA' | grep VGA)" != "" ] ; then
         fi
     fi
     nvidia-modprobe
+    nvidia-smi
 
     # now wait again, since the installer can release the flow but can still be
     # doing things in the background.
