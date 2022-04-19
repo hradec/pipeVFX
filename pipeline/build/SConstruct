@@ -170,11 +170,19 @@ if canBuildCortexNow:
                     '--qt-location $QT_TARGET_FOLDER '
                     '--build-args "\-DMAYA_EXECUTABLE=$MAYA_ROOT/bin/maya.bin" '
                     '-j $DCORES .',
-            ]
+            ],
+            environ = {
+                'LD_PRELOAD': ':'.join([
+                    '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                    '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                ]),
+            },
         )
         build.github_phase_one_version(ARGUMENTS, depend=[pkgs.maya_usd[targetSuffix]])
 
 
+
+#https://gitlab.com/api/v4/projects/23515672/packages/generic/NukeCGDenoiser/0.9.2/denoiser-0.9.2.linux.tar.gz
 
         # # ===========================================================================================
         # # build sip/pyqt for maya version!
