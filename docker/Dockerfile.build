@@ -189,6 +189,23 @@ RUN yum -y install mesa-libGLw
 
 RUN [ -f /etc/centos-release ] && yum -y install python2-scons || true
 
+RUN yum install -y dbus-daemon
+
+# maya
+RUN yum install -y libpng15 \
+    xorg-x11-fonts-ISO8859-1-100dpi \
+    xorg-x11-fonts-ISO8859-1-75dpi \
+    liberation-mono-fonts \
+    liberation-fonts-common \
+    liberation-sans-fonts \
+    liberation-serif-fonts \
+    libXmu libXt libXi libXinerama libxcb tcsh \
+    audiofile audiofile-devel \
+    libpng15  \
+    audiofile audiofile-devel e2fsprogs-libs libpng12 \
+    x11vnc xrdp mesa-libGLw mesa-libGLU libXp \
+
+
 ENV TERM=xterm
 ENTRYPOINT "/run.sh"
 
