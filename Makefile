@@ -85,6 +85,10 @@ build: upload
 	export CUSTOM_LIB_FOLDER=${_CUSTOM_LIB_FOLDER} ;\
 	${CD}/pipeline/tools/scripts/pipevfx -b ${BUILD_EXTRA}
 
+build_centos: upload_centos
+	export CUSTOM_LIB_FOLDER=${_CUSTOM_LIB_FOLDER} ;\
+	IMAGE=centos ${CD}/pipeline/tools/scripts/pipevfx -b ${BUILD_EXTRA}
+
 build_gcc: upload_centos
 	@IMAGE=centos ${CD}/pipeline/tools/scripts/pipevfx -b -e 'build-gcc'
 
