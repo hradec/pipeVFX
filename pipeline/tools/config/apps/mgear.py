@@ -23,15 +23,22 @@
 
 class mgear(baseApp):
     def environ(self):
-        maya.addon( self,
-            plugin      = self.path("platforms/$MAYA_VERSION/linux/x64/plug-ins/"),
-            script      = self.path("scripts/"),
-            #icon        = self.path("maya.$MAYA_VERSION/icons/"),
-            #lib         = self.path("maya.$MAYA_VERSION/lib/"),
-            #module      = self.path("maya.$MAYA_VERSION")
-            #renderDesc  = self.path("maya.$MAYA_VERSION/scripts/"),
-            #preset      = self.path("maya.$MAYA_VERSION/scripts/")
-        )
+        if cached.exists(self.path('release')):
+            maya.addon( self,
+                plugin      = self.path("release/platforms/$MAYA_VERSION_MAJOR_ONLY/linux/x64/plug-ins/"),
+                script      = self.path("release/scripts/"),
+                icon        = self.path("release/icons/"),
+            )
+        else:
+            maya.addon( self,
+                plugin      = self.path("platforms/$MAYA_VERSION_MAJOR/linux/x64/plug-ins/"),
+                script      = self.path("scripts/"),
+                #icon        = self.path("maya.$MAYA_VERSION/icons/"),
+                #lib         = self.path("maya.$MAYA_VERSION/lib/"),
+                #module      = self.path("maya.$MAYA_VERSION")
+                #renderDesc  = self.path("maya.$MAYA_VERSION/scripts/"),
+                #preset      = self.path("maya.$MAYA_VERSION/scripts/")
+            )
 
 
     def bins(self):
