@@ -188,10 +188,10 @@ else
         # use real apps folder if we have one!
         APPS_MOUNT=" -v $CD/apps:/$STUDIO/apps"
         if [ -e /$STUDIO/apps ] && [ "$TRAVIS" == "" ] ; then
-            APPS_MOUNT=" -v /$STUDIO/apps:/$STUDIO/apps "
+            APPS_MOUNT=" -v $(readlink -f /$STUDIO/apps):/$STUDIO/apps "
         fi
         if [ -e /$STUDIO/jobs ] ; then
-            APPS_MOUNT=" $APPS_MOUNT -v /$STUDIO/jobs:/$STUDIO/jobs "
+            APPS_MOUNT=" $APPS_MOUNT -v $(readlink -f /$STUDIO/jobs):/$STUDIO/jobs "
         fi
     fi
 
@@ -232,8 +232,8 @@ else
     LIB_FOLDER="$CD/pipeline/libs/"
     BUILD_FOLDER="$CD/pipeline/build/.build/"
     if [ "$CUSTOM_LIB_FOLDER" != "" ] ; then
-        LIB_FOLDER="$CUSTOM_LIB_FOLDER"
-        BUILD_FOLDER="$CUSTOM_LIB_FOLDER/__BUILD__/"
+        LIB_FOLDER="$(readlink -f $CUSTOM_LIB_FOLDER)"
+        BUILD_FOLDER="$LIB_FOLDER/__BUILD__/"
     fi
 
     # create lib folder
@@ -253,6 +253,7 @@ else
         -v $CD/docker/:/.docker/ \
         -v $CD/.github/:/.github/ \
         -v $CD/pipeline/tools/:/$STUDIO/pipeline/tools/ \
+        -v $CD/pipeline/tags/:/$STUDIO/pipeline/tags/ \
         -v $LIB_FOLDER:/$STUDIO/pipeline/libs/ \
         -v $CD/pipeline/build/SConstruct:/$STUDIO/pipeline/build/SConstruct \
         -v $CD/pipeline/build/patches:/$STUDIO/pipeline/build/patches \
