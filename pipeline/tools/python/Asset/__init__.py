@@ -317,6 +317,7 @@ class AssetParameter( CompoundParameter ):
 
     def getData(self):
         if self.path:
+            import imath
             p = self.getFilePath()
             # print '====>',p, self.path
             if os.path.exists("%s/data.txt" % p):
