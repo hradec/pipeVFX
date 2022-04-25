@@ -63,6 +63,15 @@ def glob(path):
         __save__(data, cache)
     return data
 
+def exists(path):
+    cache = __cached_name__(path+"_exists_")
+    if __exists__( cache ):
+        data = __load__(cache)
+    else:
+        data = os.path.exists(path)
+        __save__(data, cache)
+    return data
+
 class popen:
     def __init__(self, cmd):
         self.cache = __cached_name__(cmd)
