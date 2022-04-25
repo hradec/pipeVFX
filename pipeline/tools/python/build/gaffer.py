@@ -60,6 +60,13 @@ download = [[
     '4437543f90238f69082b7ac0178d9115',
     {},
     {"boost" : ("1.66.0", "99.99.99")}
+ ],[
+    'https://github.com/ImageEngine/cortex/archive/refs/tags/10.3.2.1.tar.gz',
+    'cortex-10.3.2.1.tar.gz',
+    '10.3.4.0',
+    '4437543f90238f69082b7ac0178d9115',
+    {},
+    {"boost" : ("1.66.0", "99.99.99")}
 ]]
 def cortex_depency(pkgs):
     return [
