@@ -276,9 +276,6 @@ if __name__ == '__main__':
         # script['mayaScene']['in0'].setInput( script['animation_alembic_test']['out'] )
         # script['mayaScene']['in1'].setInput( script['camera_alembic_test']['out'] )
 
-
-
-
         with GafferUI.Window('test') as window:
             with GafferUI.SplitContainer( GafferUI.SplitContainer.Orientation.Horizontal ) as split:
                 assetList = assetListWidget.assetListWidget( script )
@@ -319,7 +316,7 @@ if __name__ == '__main__':
 
         split.setSizes( ( 0.2, 0.5, 0.3 ) )
 
-        window._qtWidget().resize( 1300, 800 )
+        window._qtWidget().resize( 1000, 600 )
         window.setVisible( True )
 
         GafferUI.EventLoop.mainEventLoop().start()

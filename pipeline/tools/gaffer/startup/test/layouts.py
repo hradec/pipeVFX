@@ -55,7 +55,7 @@ layouts.registerEditor( "Browser" )
 layouts.registerEditor( "Timeline" )
 layouts.registerEditor( "UIEditor" )
 layouts.registerEditor( "SAMList" )
-layouts.registerEditor( "SAMBundleList" )
+# layouts.registerEditor( "SAMBundleList" )
 
 layouts.add( 'SAM', "GafferUI.CompoundEditor( scriptNode, _state={ 'children' : ( GafferUI.SplitContainer.Orientation.Horizontal, 0.157126, ( {'tabs': (GafferUI.SAMPanel( scriptNode ),), 'tabsVisible': True, 'currentTab': 0}, ( GafferUI.SplitContainer.Orientation.Vertical, 0.969265, ( {'tabs': (GafferUI.Viewer( scriptNode ),), 'tabsVisible': True, 'currentTab': 0}, {'tabs': (GafferUI.Timeline( scriptNode ),), 'tabsVisible': False, 'currentTab': 0} ) ) ) ), 'detachedPanels' : (), 'windowState' : { 'fullScreen' : False, 'screen' : -1, 'bound' : imath.Box2f( imath.V2f( 0.0500000007, 0.0492424257 ), imath.V2f( 0.949999988, 0.950757563 ) ), 'maximized' : False }, 'editorState' : {} } )", persistent = False )
 layouts.setDefault( 'SAM', persistent = False )

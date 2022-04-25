@@ -133,6 +133,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         if j:
             self.job = j
 
+        self.browser = None
 
     def type(self, path):
         return os.path.dirname(os.path.dirname(str(path)))
@@ -145,7 +146,8 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         return IECore.V3i( v[0], v[1], v[2] )
 
     def isValid( self ) :
-        path = str(self.getPath())
+        path = str(self.getPath()['fullName'])
+        print path
         if not path:
             return False
 
@@ -154,10 +156,12 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         # classes = Asset.AssetParameter().classLoader.classNames( "*" )
         # print path, '/'.join(path.strip('/').split('/')[0:2]) in classes, classes
         # sys.stdout.flush()
+        print '/'.join(path.strip('/').split('/')[0:2]), classes
         return '/'.join(path.strip('/').split('/')[0:2]) in classes
 
     def getPath(self):
-        p = str(GafferUI.DeferredPathPreview.getPath(self))
+        i = GafferUI.DeferredPathPreview.getPath(self).info()
+        p = i['fullName']
         try:
             if not os.path.exists(self.job.path('sam/')+p):
                 pp = p.split('/')
@@ -166,24 +170,27 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                     p = '/'.join(pp)
         except:
             pass
-        return p
+        i['fullName'] = p
+        return i
 
     def _load( self ) :
         return self.getPath()
 
 
-    def _deferredUpdate( self, path ) :
+    def _deferredUpdate( self, pathInfo ) :
         ''' Main Asset Preview tab '''
+        # print "_deferredUpdate", pathInfo
+        path = pathInfo['fullName']
+        # sys.stdout.flush()
         self.parent().setCurrent(self)
         del self.__column[:]
-        # print '===',path
-        sys.stdout.flush()
 
-        self.browser = self.ancestor( GafferUI.SplitContainer ).browser
+        if not self.browser:
+            self.browser = self.ancestor( GafferUI.SplitContainer ).browser
+
 
         # make this preview the default showed when an asset is clicked!
         self.__column.setVisible(False)
-
         self._previewCollum = GafferUI.SplitContainer( GafferUI.SplitContainer.Orientation.Horizontal )
         self.__column.append(self._previewCollum)
         row = GafferUI.SplitContainer( GafferUI.SplitContainer.Orientation.Vertical )
@@ -226,7 +233,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                     size = 900
                     row._qtWidget().setMinimumSize( size, 400 )
 
-                    self.__script = Gaffer.ScriptNode( "" )
+                    self.__script = Gaffer.ScriptNode()
                     self.__script["frameRange"]["start"].setValue(0)
                     self.__script["frameRange"]["end"].setValue(len(files)-1)
                     # self.__script.timelineChangedCallback = callback
@@ -331,7 +338,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                 # =====================================================================================
                 # publish mode - show "opa publish" in a splitview with the preview
                 # =====================================================================================
-                if 'publish' in self.browser()._action:
+                if hasattr(self.browser(), '_action') and 'publish' in self.browser()._action:
                     # if running in maya
                     if genericAsset.hostApp()=='maya' and m:
                         # and asset has meshPrimitives, select then
@@ -355,7 +362,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                 # =====================================================================================
                 # Import mode - create buttons!
                 # =====================================================================================
-                elif 'import' in self.browser()._action:
+                elif hasattr(self.browser(), '_action') and 'import' in self.browser()._action:
                     with row:
                         with GafferUI.SplitContainer( GafferUI.SplitContainer.Orientation.Horizontal ) as blayout:
                             self.openButton = GafferUI.Button( "", "nautilus-45.png", toolTip="Open the asset folder with nautilus." )
@@ -439,7 +446,9 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
 
                         blayout._qtWidget().setMinimumSize( 300, 50 )
 
-                self.__column.setVisible(True)
+        self.__column.setVisible(True)
+
+        # print "_deferredUpdate: Done"; sys.stdout.flush()
 
     def importButtonFunc( self, button ) :
         ''' Import Button main function - loads the asset class and run the doImport method!
@@ -513,7 +522,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
 
 
     def _loadOPA( self ) :
-        return self.loadOP( str( self.getPath() ) )
+        return self.loadOP( str( self.getPath()['fullName'] ) )
 
     def loadOP( self, path, newVersion=1 ) :
         self.classType = '/'.join(path.split('/')[0:2])
@@ -609,30 +618,23 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
 
     def connect( self ) :
         self.qtreeView = self.browser().pathChooser().pathListingWidget()._qtWidget()
-
-
-
+        # print self.qtreeView
         samEditor.SamEditor.Mode.connect( self )
 
         # expand the tree view!
-        # def recursiveExpand(assetsDict, prefix=''):
-        #     if len(prefix.split('/'))<3:
-        #         for each in assetsDict:
-        #             p="%s/%s" % (prefix, each)
-        #             self.browser().pathChooser().pathListingWidget().setPathExpanded(Gaffer.Path(p), True)
-        #             # self.browser().pathChooser().pathListingWidget().setSelectedPaths(Gaffer.Path(p))
-        #             # selectedRows = self.browser().pathChooser().pathListingWidget()._qtWidget().selectionModel().selectedRows()
-        #             # for r in  selectedRows:
-        #             #     print r, r.data()
-        #             # item.setBackground(0,QBrush(Qt.red,Qt.Dense6Pattern))
-        #             recursiveExpand(assetsDict[each], p)
-        #
-        # recursiveExpand( self.assets[0] )
+        def recursiveExpand(assetsDict, prefix=''):
+            if len(prefix.split('/'))<3:
+                for each in assetsDict:
+                    p="%s/%s" % (prefix, each)
+                    self.browser().pathChooser().pathListingWidget().setPathExpanded(Gaffer.Path(p), True)
+                    # self.browser().pathChooser().pathListingWidget().setSelectedPaths(Gaffer.Path(p))
+                    # selectedRows = self.browser().pathChooser().pathListingWidget()._qtWidget().selectionModel().selectedRows()
+                    # for r in  selectedRows:
+                    #     print r, r.data()
+                    # item.setBackground(0,QBrush(Qt.red,Qt.Dense6Pattern))
+                    recursiveExpand(assetsDict[each], p)
 
-        # exapnd the tree view using c++ functions from _GafferUI
-        #
-        # print qtreeView.model()
-        # print dir(qtreeView.model())
+        recursiveExpand( self.assets[0] )
 
         result = QtCore.QModelIndex()
         GafferUI._GafferUI._pathListingWidgetIndexForPath(
@@ -641,14 +643,14 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
             GafferUI._qtAddress( result ),
         )
 
-        GafferUI._GafferUI._pathListingWidgetPropagateExpanded(
-            GafferUI._qtAddress( self.qtreeView ),
-            GafferUI._qtAddress( result ),
-            True,
-            2
-        )
+        # GafferUI._GafferUI._pathListingWidgetPropagateExpanded(
+        #     GafferUI._qtAddress( self.qtreeView ),
+        #     GafferUI._qtAddress( result ),
+        #     True,
+        #     2
+        # )
 
-        if self.browser()._asset:
+        if hasattr(self.browser(), "_asset") and self.browser()._asset:
             self.browser().pathChooser().pathListingWidget().setSelectedPaths(Gaffer.Path(self.browser()._asset))
             splitContainer = self.browser().pathChooser().pathListingWidget().ancestor( GafferUI.SplitContainer )
             # self.browser().pathChooser().pathListingWidget()._qtWidget().setMinimumSize( 0, 400 )
@@ -657,7 +659,16 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
             # print dir(splitContainer)
             # print splitContainer[0].size()
 
+        self.__pathSelectedConnection = self.browser().pathChooser().pathListingWidget().pathSelectedSignal().connect(
+            Gaffer.WeakMethod( self.__pathSelected )
+        )
+        self.__contextMenuConnection  = self.browser().pathChooser().pathListingWidget().contextMenuSignal().connect(
+            Gaffer.WeakMethod( self._menu )
+        )
+
+
     def disconnect( self ) :
+        # GafferUI.BrowserEditor.Mode.disconnect( self )
         samEditor.SamEditor.Mode.disconnect( self )
         self.__pathSelectedConnection = None
         self.__contextMenuConnection = None
@@ -741,6 +752,8 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
 
     def __pathSelected( self, pathListing ) :
         selectedPaths = pathListing.getSelectedPaths()
+        print "======>",selectedPaths
+        sys.stdout.flush()
         if not len( selectedPaths ) :
             return
 

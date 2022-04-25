@@ -214,10 +214,10 @@ def updateCurrentLoadedAssets(forceRefresh=False):
         if m:
             for each in pm.ls(type="AlembicNode"):
                 start = float(each.getAttr('startFrame'))
-                print start
+                # print start
                 if start < 0:
                     if not each.hasAttr('originalStart'):
-                        print each.name()
+                        # print each.name()
                         each.addAttr('originalStart', at='double')
                     each.setAttr('originalStart', start)
                     each.setAttr('startFrame', 0)
@@ -235,14 +235,14 @@ def updateCurrentLoadedAssets(forceRefresh=False):
             #     _updateCurrentLoadedAssets__[t] = None
 
             op = types.op(t)
-            print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
+            # print op, hasattr(op.op, 'typeOP'), hasattr(op.op.typeOP, 'onRefreshCallback'), nodeNamePrefix
             if hasattr(op.op, 'typeOP') and hasattr(op.op.typeOP, 'onRefreshCallback'):
                 canRefresh = True
                 if m and not m.ls('|%s*_??_??_??_*' % nodeNamePrefix):
                     canRefresh = False
 
                 if canRefresh:
-                    print 'SAM REFRESH =>',t, nodeNamePrefix
+                    # print 'SAM REFRESH =>',t, nodeNamePrefix
                     op.op.typeOP.onRefreshCallback( t, nodeNamePrefix )
 
 
@@ -355,7 +355,7 @@ class _genericAssetClass( IECore.Op ) :
                 IECore.BoolParameter(
                     name="enableAnimation",
                     description = "Enable exporting animation.",
-                    defaultValue = False,
+                    defaultValue = self.animation,
                     userData = { "UI": {
                         "collapsed" : IECore.BoolData(False),
                         "visible" : IECore.BoolData(animation),
@@ -364,8 +364,8 @@ class _genericAssetClass( IECore.Op ) :
                 IECore.CompoundParameter("FrameRange","",[
                     IECore.V3fParameter("range","Inicio, fim e 'step' da sequencia a ser rendida.",IECore.V3f(0, 10, 1), userData=disabled),
                 ],userData = { "UI": {
-                    "collapsed" : IECore.BoolData(True),
-                    "visible" : IECore.BoolData(animation),
+                    "collapsed" : IECore.BoolData(False),
+                    "visible" : IECore.BoolData(self.animation),
                 }}),
         ])
 
@@ -459,6 +459,7 @@ class _genericAssetClass( IECore.Op ) :
 
         if hostApp() == 'maya' and m:
             if not m.about(batch=1):
+                import pipe
                 import maya.OpenMaya as api
                 import maya.OpenMayaUI as apiUI
                 data['extraFiles'] += [ '%s/data/preview.jpg' % m.workspace(q=1, rd=1) ]
@@ -472,7 +473,8 @@ class _genericAssetClass( IECore.Op ) :
                 #read the color buffer from the view, and save the MImage to disk
                 image = api.MImage()
                 view.readColorBuffer(image, True)
-                image.writeToFile(data['extraFiles'][-1], 'jpg')
+                image.writeToFile("/dev/shm/maya-preview.png", 'png')
+                os.system( "%s /dev/shm/maya-preview.png %s" % ( pipe.libs.cgru().path("bin/convert"), data['extraFiles'][-1] ) )
                 m.select(sl)
 
         elif hostApp() == 'gaffer':
@@ -609,8 +611,10 @@ class _genericAssetClass( IECore.Op ) :
         # print self.data['multipleFiles']
         for n in range(len(self.data['multipleFiles'])):
             each = os.path.splitext(self.data['multipleFiles'][n])[0]
-            filename = self.data['multiplePublishedFiles'][n]
-            # print filename
+            filename = ''
+            if 'multiplePublishedFiles' in self.data:
+                filename = self.data['multiplePublishedFiles'][n]
+                # print filename
 
             nodeName = self.nodeName(self.data) + each
 
@@ -631,15 +635,16 @@ class _genericAssetClass( IECore.Op ) :
                     continue
 
             canPublish = 0
-            if hasattr(self, 'doImportMaya'):
-                canPublish += self.doImportMaya(filename, nodeName)
-            if hasattr(self, 'doImportHoudini'):
-                canPublish += self.doImportHoudini(filename, nodeName)
-            if hasattr(self, 'doImportNuke'):
-                canPublish += self.doImportNuke(filename, nodeName)
+            if filename:
+                if hasattr(self, 'doImportMaya'):
+                    canPublish += self.doImportMaya(filename, nodeName)
+                if hasattr(self, 'doImportHoudini'):
+                    canPublish += self.doImportHoudini(filename, nodeName)
+                if hasattr(self, 'doImportNuke'):
+                    canPublish += self.doImportNuke(filename, nodeName)
 
             if not canPublish:
-                raise Exception("Can't import asset when running from shell!!")
+                raise Exception("Can't import asset!!")
 
             self.fixRIGMeshCTRLS()
 
@@ -655,7 +660,7 @@ class _genericAssetClass( IECore.Op ) :
             while namespaces:
                 namespaces = [ns for ns in pm.namespaceInfo(lon=True) if ns not in defaults]
                 for ns in namespaces:
-                    print ns
+                    # print ns
                     m.namespace( removeNamespace = ns, mergeNamespaceWithRoot = True)
     @staticmethod
     def fixRIGMeshCTRLS(grp='|CTRLS|'):
@@ -717,7 +722,7 @@ class maya( _genericAssetClass ) :
     @staticmethod
     def shaveCleanup():
         if m:
-            print "Shave Cleanup!"
+            # print "Shave Cleanup!"
             # shave cleanup
             attrs_to_clean = [
                 "renderManRISGlobals.rman__torattr___preRenderScript",
@@ -731,7 +736,7 @@ class maya( _genericAssetClass ) :
                     tmp = m.getAttr( attr );
                     if tmp:
                         tmp = ';'.join([ x for x in tmp.split(';') if  x.strip() and 'shave' not in x.lower() ])
-                        print attr, tmp
+                        # print attr, tmp
                         m.setAttr( attr , tmp, type="string" );
 
 
@@ -739,17 +744,18 @@ class maya( _genericAssetClass ) :
     class prmanDinamicRules():
         ''' a simple class to handle prman dinamic rules in a simple way!'''
         def __init__(self):
-            try:
-                import rfm.rlf2maya as rlf2maya
-                import rfm.rlf as rlf
-                self.s  = rlf.RLFScope()
-                self.ps = self.s.GetInjectionPayloads()
-                self.rlf2maya = rlf2maya
-                self.rlf = rlf
-                self.cache = {}
-            except:
-                print "WARNING: No prman python module to set dynamic rules for shaders."
-                self.rlf2maya = self.rlf = None
+            self.rlf2maya = self.rlf = None
+            if pipe.isEnable('prman'):
+                try:
+                    import rfm.rlf2maya as rlf2maya
+                    import rfm.rlf as rlf
+                    self.s  = rlf.RLFScope()
+                    self.ps = self.s.GetInjectionPayloads()
+                    self.rlf2maya = rlf2maya
+                    self.rlf = rlf
+                    self.cache = {}
+                except:
+                    print "WARNING: No prman python module to set dynamic rules for shaders."
 
         def fromScene(self):
             if self.rlf2maya:
@@ -1123,10 +1129,10 @@ class maya( _genericAssetClass ) :
             import pymel.core as pm
             __files={}
             for ntype in nodeTypes:
-                print ntype, node
+                # print ntype, node
                 for n in pm.listHistory(node, type=ntype):
                     each = n.nodeName()
-                    print "\t\t", each
+                    # print "\t\t", each
                     __files[each] = maya.getFileTexture(each)
             return __files
 
@@ -1216,7 +1222,7 @@ class maya( _genericAssetClass ) :
                         _max += [animLength[1]]
 
         if len(_min)<1:
-            print fatherNodes, _min, _max
+            # print fatherNodes, _min, _max
             # print m.ls(fatherNode[:-2]+'*', dag=1, l=1)
             # print m.ls(fatherNode+'*',  l=1)
             return None
@@ -1396,7 +1402,7 @@ class maya( _genericAssetClass ) :
                     if os.path.splitext(each)[-1] in ['.xgen']:
                         for node in [ x for x in data['xgenNodes'] if os.path.basename(each) in data['xgenNodes'][x][1] ]:
                             xgen_metadata = str(m.workspace(q=True, dir=True, rd=True)+'/scenes/'+os.path.basename(data['xgenNodes'][node][1]))
-                            print xgen_metadata
+                            # print xgen_metadata
                             w=open(xgen_metadata,'w')
                             r=open(samFile,'r')
                             for line in r:
@@ -1408,7 +1414,7 @@ class maya( _genericAssetClass ) :
                         cmd = 'mkdir -p "%s" ; cp -rvf "%s" "%s"' % ( os.path.dirname(userFile), samFile, userFile )
                         if os.path.isdir(samFile):
                             cmd = 'mkdir -p "%s" ; cp -rvf %s/* "%s"' % ( os.path.dirname(userFile), samFile, userFile )
-                        print each, cmd
+                        # print each, cmd
                         os.system( cmd  )
 
 
@@ -1924,12 +1930,13 @@ class alembic(  _genericAssetClass ) :
                     cobs = {}
                     has_shaveNodes = 'shaveNodes' in data
                     if not has_shaveNodes:
-                        for each in data['extraFiles']:
-                            if 'shave.' in each:
-                                nodeName = '.'.join( each.split('.')[:-2] )
-                                if nodeName not in cobs:
-                                    cobs[ nodeName ] = []
-                                cobs[ nodeName ] += [each]
+                        if 'extraFiles' in data:
+                            for each in data['extraFiles']:
+                                if 'shave.' in each:
+                                    nodeName = '.'.join( each.split('.')[:-2] )
+                                    if nodeName not in cobs:
+                                        cobs[ nodeName ] = []
+                                    cobs[ nodeName ] += [each]
                     else:
                         cobs = data['shaveNodes']
 
@@ -1995,7 +2002,7 @@ class alembic(  _genericAssetClass ) :
                                         try: attrPar = fnPH.parameterPlugPath( fnPH.getProcedural()[attr] )
                                         except: attrPar = None
                                         if attrPar:
-                                            print data['shave'][cobIndex][attr], type(data['shave'][cobIndex][attr])
+                                            # print data['shave'][cobIndex][attr], type(data['shave'][cobIndex][attr])
                                             if type(data['shave'][cobIndex][attr]) in [str, unicode]:
                                                 m.setAttr( attrPar, data['shave'][cobIndex][attr], type="string" )
                                             else:
@@ -2012,9 +2019,9 @@ class alembic(  _genericAssetClass ) :
                                 description = c[2]
                                 patch_name = c[3]
                                 samXgen.xgen_create_ribbox(collection, description, abc, patch_name, xgen_path)
-                                print "11111111111111111"
-                                print collection, description, patch_name
-                                print "11111111111111111"
+                                # print "11111111111111111"
+                                # print collection, description, patch_name
+                                # print "11111111111111111"
 
 
 

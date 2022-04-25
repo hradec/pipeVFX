@@ -4,6 +4,8 @@ import ast
 import os
 import sys
 
+import pipe
+
 import IECore
 
 import Gaffer

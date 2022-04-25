@@ -135,7 +135,7 @@ class shelf(object):
         ids = [x for x in m.optionVar(l=1) if 'shelfName' in x or 'shelfVers' in x or 'shelfFile' in x or 'shelfLoad' in x or 'shelfAlign' in x]
         ids.sort()
         for n in ids:
-            print n, m.optionVar(q=n)
+            # print n, m.optionVar(q=n)
             m.optionVar(rm=n)
 
         topLevelShelf = mel.eval('string $m = $gShelfTopLevel')
@@ -148,7 +148,7 @@ class shelf(object):
                     pm.optionVar(stringValue=('shelfLoad%d' % (index+1), 1))
                     pm.optionVar(stringValue=('shelfFile%d' % (index+1), 'shelf_'+str(shelf)))
                     pm.optionVar(stringValue=('shelfAlign%d' % (index+1), 'left'))
-                    print index+1,shelf
+                    # print index+1,shelf
 
         # ids = [x for x in m.optionVar(l=1) if 'shelfName' in x or 'shelfVers' in x or 'shelfFile' in x or 'shelfLoad' in x or 'shelfAlign' in x]
         # ids.sort()
@@ -212,7 +212,7 @@ class shelf(object):
 def __scriptJob( **kk ):
     if m.about(batch=1):
         if 'idleEvent' in kk:
-            print "====>",kk['idleEvent']
+            # print "====>",kk['idleEvent']
             kk['idleEvent']()
     else:
         m.scriptJob( **kk )
@@ -236,7 +236,8 @@ def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnl
             if _jobs:
                 jobs =  [ str(x).strip().split(':') for x in _jobs if idleEvent.func_name in x ]
                 for job in jobs:
-                    m.scriptJob( kill=int(job[0]), force=True )
+                    try:m.scriptJob( kill=int(job[0]), force=True )
+                    except: pass
             __scriptJob( runOnce=runOnce,  idleEvent=idleEvent )
             # print [ str(x).strip().split(':') for x in m.scriptJob(listJobs=True) if idleEvent.func_name in x ]
 
@@ -245,7 +246,8 @@ def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnl
             if _jobs:
                 jobs =  [ str(x).strip().split(':') for x in _jobs if event[1].func_name in x and "'%s'" % event[0] in x ]
                 for job in jobs:
-                    m.scriptJob( kill=int(job[0]), force=True )
+                    try:m.scriptJob( kill=int(job[0]), force=True )
+                    except: pass
             __scriptJob( runOnce=runOnce,  event=event )
             # print [ str(x).strip().split(':') for x in m.scriptJob(listJobs=True) if event[1].func_name in x ]
 
@@ -306,15 +308,17 @@ class assetOP(object):
         self.__maya_ls = None
         self.op = None
         self.subOP = None
-        self.__hostApp = hostApp
         self.types = types()
+        self.hostApp( hostApp )
 
     def hostApp(self, app=None):
+        ''' return the host app this module is running in'''
         if app:
             self.__hostApp = app
         return self.__hostApp
 
     def __data(self):
+        ''' return the asset data '''
         if not self.data:
             # import samDB
             # db=samDB.asset2()
@@ -322,6 +326,9 @@ class assetOP(object):
             self.data =  self.asset.getData()
 
     def color(self):
+        ''' return a color for the asset
+        it queries the op _color variable, so the color can be set
+        in the asset classes '''
         ret =  IECore.Color3f( 0.2, 0.25, 0.30 )  #IECore.Color3f( 0.2401, 0.3394, 0.485 )
         if self.loadOP():
             if hasattr(self.subOP, '_color'):
@@ -330,6 +337,7 @@ class assetOP(object):
 
 
     def newPublish(self, run=True):
+        ''' publish a new asset '''
         import os
         if m:
             import samPrman
@@ -353,6 +361,7 @@ class assetOP(object):
         # self.ancestor( GafferUI.Window ).close()
 
     def updatePublish(self, run=True):
+        ''' publish an updated version to an asset that already exists'''
         self.__data()
         if self.data:
             if m:
@@ -376,6 +385,9 @@ class assetOP(object):
                 return a
 
     def publish(self, run=False):
+        ''' invoke the publish op for the selected publishing asset
+        it will call the updatePublish if the asset already exists, or
+        the newPublish if it's a new asset '''
         ret = self.updatePublish(run)
         if not ret:
             ret = self.newPublish( run )
@@ -401,6 +413,7 @@ class assetOP(object):
         return ret
 
     def frameRange(self):
+        ''' return frame range from the host app'''
         startFrame = 0
         endFrame = 0
 
@@ -420,6 +433,7 @@ class assetOP(object):
 
 
     def loadOP( self ):
+        ''' load an op class for the selected op '''
         self.__data()
         if not self.subOP:
             try:
@@ -436,6 +450,7 @@ class assetOP(object):
 
 
     def printParameters( self ):
+        ''' just print the parameters of the op class for the current asset '''
         print "="*120
         for each in  self.op.parameters()['Asset']['type'].keys():
             print 'Asset type',each, self.op.parameters()['Asset']['type'][each].getValue()
@@ -499,12 +514,16 @@ class assetOP(object):
 
 
     def mayaLastLs( self ):
-        return self.__maya_ls
-
+        ''' return the last maya ls result - just a cache to speed up things!'''
+        ret = []
+        if self.hostApp()=='maya':
+            ret =  self.__maya_ls
+        return ret
 
     def assetSourceExistsInHost( self ):
+        ''' check if the source of the current asset is opened in the current host app
+        returns true if so - used to display the little edit icon on the assetListWidget'''
         self.__data()
-
         if self.hostApp()=='maya' and m:
             if len(self.pathPar.split('/'))>2 and self.data and 'meshPrimitives' in self.data:
                 selection = m.ls(self.data['meshPrimitives'], l=1)
@@ -525,6 +544,7 @@ class assetOP(object):
 
 
     def nodes( self ):
+        ''' return the nodes of the current asset, in the host app'''
         import re
         if self.path and self.hostApp()=='maya' and m and len(self.pathPar.split('/'))>2:
             self.__maya_ls = m.ls('|SAM*',l=1)
@@ -536,6 +556,7 @@ class assetOP(object):
 
 
     def selectNodes( self ):
+        ''' select the nodes of the current asset, in the host app'''
         import re
         if self.hostApp()=='maya' and m and len(self.pathPar.split('/'))>2:
             assetLS = self.nodes()
@@ -547,6 +568,7 @@ class assetOP(object):
 
 
     def canImport( self ):
+        ''' return true if the current asset can be published from the current host app '''
         if self.loadOP():
             if self.hostApp()=='maya' and m and 'maya' in self.subOP._whoCanImport:
                 return True
@@ -557,25 +579,31 @@ class assetOP(object):
 
 
     def whoCanImport( self ):
+        ''' return a list of host apps that can import this asset'''
         if self.loadOP():
             return self.subOP._whoCanImport
         return []
 
     def whoCanOpen( self ):
+        ''' return a list of host apps that can open for edit this asset'''
         if self.loadOP():
             return self.subOP._whoCanOpen
         return []
 
     def whoCanPublish( self ):
+        ''' return a list of host apps that can publish updates to this asset'''
         if self.loadOP():
             return self.subOP._whoCanPublish
         return []
 
     def assetDependencyFilename( self ):
+        ''' return the dependency files of the current asset - for example, for
+        assets published from maya, it will return the maya scene used to publish it'''
         self.__data()
         return self.data['assetDependencyPath']
 
     def canPublish( self ):
+        ''' return true if the current hostapp can publish this asset '''
         if self.loadOP():
             if self.hostApp()=='maya' and m and 'maya' in self.whoCanPublish():
                 return True
@@ -585,6 +613,7 @@ class assetOP(object):
         return False
 
     def nodeName(self):
+        ''' return the node name of the current asset in the host app'''
         self.__data()
         if self.loadOP():
             return self.subOP.nodeName(self.data)
@@ -610,8 +639,8 @@ class assetOP(object):
         ''' do a checkout of the asset into the current application '''
         self.__data()
         if self.loadOP():
-            print self.pathPar
-            print self.data.keys()
+            # print self.pathPar
+            # print self.data.keys()
             self.subOP.doImport( self.path, self.data )
             if self.hostApp()=='maya' and m:
                 self.__maya_ls = m.ls('|SAM*')
@@ -685,7 +714,7 @@ class assetOP(object):
                 cmd = cmd='run gaffer test'
                 if scene.strip():
                     cmd += ' -scripts "%s" -asset %s' % (scene, self.pathPar)
-                print '===>',cmd
+                # print '===>',cmd
                 os.system( cmd + ' &')
 
             def __runGafferInHost(scene):
@@ -783,7 +812,7 @@ class assetOP(object):
             cmd(scene)
         else:
             cmd = cmd.replace('"','\"') % scene +' &'
-            print  '===>',cmd
+            # print  '===>',cmd
             os.system( cmd  )
 
         # restore the job/shot to the original one
