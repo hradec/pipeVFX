@@ -19,26 +19,12 @@
 # =================================================================================
 
 
-class davinci(baseApp):
+class djv (baseApp):
 
     def environ(self):
         # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
         self.ignorePipeLib( "freetype" )
 
-    def getLicenses(self):
-        #/var/BlackmagicDesign
-        if not os.path.exists('/var/BlackmagicDesign'):
-            sudo = pipe.admin.sudo()
-            sudo.cmd("mkdir -p '/var/BlackmagicDesign'")
-            sudo.cmd("chmod a+rwx '/var/BlackmagicDesign'")
-            sudo.run()
-
     def bg(self, cmd, bin):
         ''' return True if a cmd or binary should run in background '''
-        return True
-
-    def bins(self):
-        # we want to limit houdini wrappers to just houdini!
-        return [
-            ('resolve'  ,'resolve'),
-        ]
+        return False
