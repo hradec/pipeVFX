@@ -198,8 +198,10 @@ class maya(baseApp):
                 # self['LD_PRELOAD'] = self.path('support/openssl/libcrypto.so.6')
                 # self['LD_PRELOAD'] = self.path('support/openssl/libssl.so.6')
                 self['LD_PRELOAD'] = '/usr/lib/libjpeg.so.62'
-            elif os.path.exists(self.path('../../libs/libcrypto.so.10')):
-                self['LD_PRELOAD'] = self.path('../../libs/libcrypto.so.10')
+            if 'fedora' not in pipe.distro:
+                if os.path.exists(self.path('../../libs/libcrypto.so.10')):
+                    self['LD_PRELOAD'] = self.path('../../libs/libcrypto.so.10')
+            if os.path.exists(self.path('../../libs/libfontconfig.so.1')):
                 self['LD_PRELOAD'] = self.path('../../libs/libfontconfig.so.1')
                 self['LD_PRELOAD'] = self.path('../../libs/libharfbuzz.so.0')
                 self['LD_LIBRARY_PATH'] = self.path('../../libs')
@@ -218,6 +220,8 @@ class maya(baseApp):
             if mv>2014:
                 if 'centos' not in pipe.distro:
                     self.ignorePipeLib( "libpng" )
+                    # self.ignorePipeLib( "jpeg" )
+                    # self.ignorePipeLib( "tiff" )
 
                 # freetype setup
                 # self.ignorePipeLib( "freetype" )
@@ -233,7 +237,7 @@ class maya(baseApp):
                 self.ignorePipeLib( "fontconfig" )
 
                 # maya 2022 doesn't need system freetype
-                if mv < 2022:
+                if mv < 2022 or 'gcc-multi' in os.environ["GCC_VERSION"]:
                     if os.path.exists('/usr/lib/libfreetype.so.6'):
                         self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
 
@@ -321,8 +325,9 @@ class maya(baseApp):
         if mv >= 2018:
             # as maya comes with pyilmbase, we want to force it to load ours instead, so IECore works,
             # as well alembic and pyalembic latest versions.
-            for p in pipe.libs.pyilmbase()['PYTHONPATH']:
-                self.insert('PYTHONPATH',0, p)
+            if hasattr(pipe.libs, 'pyilmbase'):
+                for p in pipe.libs.pyilmbase()['PYTHONPATH']:
+                    self.insert('PYTHONPATH',0, p)
             for p in pipe.libs.boost()['LD_LIBRARY_PATH']:
                 self.insert('PYTHONPATH',0, p)
 
@@ -330,7 +335,8 @@ class maya(baseApp):
             # not the ones that come with maya, or else IECoreImage will
             # cause a lockup in maya!
             self['LD_PRELOAD'] = pipe.libs.oiio().LD_PRELOAD()
-            self['LD_PRELOAD'] = pipe.libs.ptex().LD_PRELOAD()
+            if hasattr(pipe.libs, 'ptex'):
+                self['LD_PRELOAD'] = pipe.libs.ptex().LD_PRELOAD()
 
         self['EDITOR'] = 'atom'
 
@@ -364,7 +370,6 @@ class maya(baseApp):
             # m = app.replace('maya', self.maya_bin)
             m = self.path(self.maya_bin)
 
-
         if '--debug' in sys.argv:
             self['MAYA_DEBUG_NO_SIGNAL_HANDLERS'] = '1'
 
@@ -395,7 +400,7 @@ class maya(baseApp):
                 if os.path.exists(self.path('bin/mayapy2')):
                     __run = app.replace('mayapy', 'mayapy2')
 
-            __run = app.replace('mayapy','bin/mayapy')
+            # __run = app.replace('mayapy','bin/mayapy')
         else:
             pass
 
@@ -473,7 +478,8 @@ class maya(baseApp):
                 # as maya comes with pyilmbase and alembic python, we want to
                 # force it to load ours instead, so IECore and renderman works,
                 # as well alembic and pyalembic latest versions.
-                top += [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]
+                if hasattr(pipe.libs, 'pyilmbase'):
+                    top += [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]
                 top += [ os.path.expandvars(x) for x in pipe.libs.alembic()['PYTHONPATH'] ]
                 pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
                 os.environ['PYTHONPATH'] = ':'.join(top+[
