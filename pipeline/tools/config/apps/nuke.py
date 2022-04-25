@@ -36,7 +36,10 @@ class nuke(baseApp):
     def environ(self):
         nukeMajorVersion = int(self.version().split('.')[0])
         if self.parent() in ['nuke']:
-            if nukeMajorVersion >= 8:
+            if nukeMajorVersion >= 13:
+                pipe.version.set( python = '3.7.5' )
+                pipe.libs.version.set( python = '3.7.5' )
+            elif nukeMajorVersion >= 8:
                 pipe.version.set( python = '2.7.6' )
                 pipe.libs.version.set( python = '2.7.6' )
             else:
@@ -187,14 +190,17 @@ class nuke(baseApp):
 
         # run the application
         cmd = app.split(' ')
-        nukeBin = glob('%s/Nuke*.*' % self.bin())
+        nukeBin = cached.glob('%s/Nuke*.*' % self.bin())
         if not nukeBin:
-            raise Exception( "\n\nCan't find Nuke executable at %s. Are you sure Nuke %s is installed?\n" % ('%s/Nuke*.*' % self.bin(), self.version()) )
+            nukeBin = cached.glob('%s/../Nuke*.*' % self.bin())
+            if not nukeBin:
+                raise Exception( "\n\nCan't find Nuke executable at %s. Are you sure Nuke %s is installed?\n" % ('%s/Nuke*.*' % self.bin(), self.version()) )
+
 
         if int( self.version().split('.')[0] ) >= 10:
             cmd += ['--disable-nuke-frameserver']
 
-        baseApp.run( self, os.path.basename(nukeBin[0]) + '  ' + ' '.join(cmd[1:]) )
+        baseApp.run( self, nukeBin[0].split(self.bin())[-1] + '  ' + ' '.join(cmd[1:]) )
 
 
     def preRun(self, cmd):
