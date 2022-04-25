@@ -51,8 +51,8 @@ def warning(msg):
         __log(W+"WARNING: "+"="*120+bcolors.END)
 
 def error(msg):
-    __log(bcolors.FAIL+"_"*120, error=True)
-    __log("ERROR:\t"+'\nERROR:\t'.join(str(msg).split('\n')), error=True)
+    # __log(bcolors.WARNING+"_"*120, error=True)
+    __log(bcolors.FAIL+"ERROR:\t"+'\nERROR:\t'.join(str(msg).split('\n')), error=True)
     __log("_"*120+bcolors.END, error=True)
 
 def debug(msg):
