@@ -27,10 +27,14 @@ export TERM=xterm-256color
 
 
 if [ "$RUN_SHELL" == "1" ] ; then
+    # adjust minimum UID
+    sed -i.bak -e 's/1000$/600/' /etc/login.defs
     # set root password to "nopass"
     passwd="nopasswd"
     echo -e "$passwd\n$passwd\n\n" | /bin/passwd -f root 1>/dev/null 2>&1
     # initialize and start dbus
+    # yum install -y dbus-daemon
+    mkdir -p /var/lib/dbus/
     dbus-uuidgen > /var/lib/dbus/machine-id
     mkdir -p /var/run/dbus
     dbus-daemon \
@@ -40,7 +44,8 @@ if [ "$RUN_SHELL" == "1" ] ; then
     # now we can start dbusService.py, which is the way pipeVFX execute commands as root,
     # to create new folders automatically for the current user in a struture which the
     # user has no rights to do it.
-    /$STUDIO/pipeline/tools/init/dbusService.py > /var/log/dbusService.log 2>&1 &
+    . /$STUDIO/pipeline/tools/init/bash
+    /bin/python2 /$STUDIO/pipeline/tools/init/dbusService.py > /var/log/dbusService.log 2>&1 &
     # when running in shell mode, we create the user/group equivalent to the one
     # setup in the distro, so the container runs under the same user and home folder.
     sudo userdel games > /dev/null 2>&1
@@ -79,7 +84,8 @@ else
     # fix inkscape after we removed the boost libraries from /lib64
     mv /usr/bin/inkscape /usr/bin/inkscape_
     echo '#!/bin/bash' > /usr/bin/inkscape
-    echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/source-highlight/libs/' >> /usr/bin/inkscape
+    # echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/source-highlight/libs/' >> /usr/bin/inkscape
+    echo 'export LD_LIBRARY_PATH=/root/source-highlight/libs/' >> /usr/bin/inkscape
     echo '/usr/bin/inkscape_ "$@"' >> /usr/bin/inkscape
     chmod a+x /usr/bin/inkscape
 
