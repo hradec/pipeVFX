@@ -25,7 +25,6 @@ from pipe.baseApp import cache, getMacAddress, _appsDB
 from pipe.base import roots
 from pipe.libs import allLibs
 from pipe.bcolors import bcolors
-import pipe.cached as cached
 import os
 import traceback
 from pipe import cached
@@ -48,7 +47,7 @@ if pipe.admin:
             userTools = pipe.admin.job.shot.user().path("/tools/config/apps")
             sourceApps( userTools )
 
-if not sourced:
+if not sourced or not appz:
     sourceApps( "%s/config/apps" % roots.tools() )
 
 
@@ -83,9 +82,13 @@ class wxpython(baseApp):
 
 genericRegistry = [
     'class %s(baseApp):',
-    '   pass',
+    '   enable=False',
 ]
 for each in _appsDB:
     if each.strip() not in  dir():
 #        if os.path.exists( '%s/%s/bin' % (roots.apps(), each) ):
             exec( '\n'.join(genericRegistry) % each )
+
+# cleanup pipe.apps
+# del _appsDB, appz
+# del allLibs
