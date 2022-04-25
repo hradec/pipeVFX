@@ -43,6 +43,10 @@ try:
 except:
     admin=None
 
+def isEnable(plugin, hostApp='maya'):
+    return 'PIPE_%s_%s' % (hostApp.upper(), plugin.upper()) in os.environ and int(os.environ['PIPE_%s_%s' % (hostApp.upper(), plugin.upper())]) > 0
+
+
 
 # avoid creating .pyc since it can cause trouble between Intel and AMD
 sys.dont_write_bytecode = True
@@ -232,7 +236,6 @@ def alias(withlibs=True):
             paths.sort()
             pythonBin = "%s/bin/python" % paths[-1]
 
-
     for appname in baseApp._libsDB:
         classType = 'apps'
         try:
@@ -253,10 +256,12 @@ def alias(withlibs=True):
                 aliasScript.append('''alias %s='env LD_PRELOAD="" %s -c "import pipe;pipe.%s.%s().run(\\"%s\\")"' ''' % (each[0].replace(' ','_'), pythonBin, classType,appname, each[1]) )
 
     for appname in baseApp._appsDB:
-        try:
-            appClass = eval("apps.%s()" % appname)
-        except:
-            appClass = None
+        appClass = None
+        if hasattr(apps, appname):
+            try:
+                appClass = eval("apps.%s()" % appname)
+            except:
+                appClass = None
         if appClass:
             try:
                 for each in appClass.bins():
@@ -310,6 +315,12 @@ def init():
         tmp = tmp.replace(pythonpath,'').replace('::',':')
         pythonpath += ':%s' % tmp
 
+    # add dbus and pygobject from pipeVFX, if we have it!
+    if hasattr(libs, 'dbus'):
+        pythonpath += ':'+':'.join(libs.dbus()['PYTHONPATH'])
+    if hasattr(libs, 'pygobject'):
+        pythonpath += ':'+':'.join(libs.pygobject()['PYTHONPATH'])
+
     # custom init for OSX
     # sets pythonpath to use pipe python-dbus so things work
     # without having to install python-dbus into the machine itself!
@@ -328,6 +339,7 @@ def init():
         export VGLCLIENT=$(which vglclient 2>/dev/null)
         export ROOT=%s
         export STUDIO=$(basename $ROOT)
+        export PYTHON_VERSION_MAJOR=%s
         %s
         export __PATH_HOME=%s
         export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$__PATH_HOME
@@ -335,7 +347,7 @@ def init():
         export __PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         export __PYTHONPATH=$PYTHONPATH
         export EDITOR=nano
-    ''' % (root, depotRoot(), alias(), path, pythonpath)
+    ''' % (root, depotRoot(), versionMajor(libs.version.get("python")), alias(), path, pythonpath)
 
     if '___PATH' not in os.environ.keys():
         envs += '''
@@ -510,10 +522,10 @@ def __go(args):
     if len(args)>1:
 
         if args[1].lower() not in reserved:
-            jobs = filter( lambda x: args[1] in x, glob( "%s/*" % roots.jobs() ) )
+            jobs = filter( lambda x: args[1] in x, cached.glob( "%s/*" % roots.jobs() ) )
             if not jobs:
                 ret = ["echo 'ERROR: job %s doesnt exist! \n\nOptions are:'\n" % args[1].lower()]
-                for each in glob( '%s/*' % (roots.jobs()) ):
+                for each in cached.glob( '%s/*' % (roots.jobs()) ):
                     beach = os.path.basename(each)
                     if beach[:4] != '0000':
                         ret.append( "echo '\t %s'" % beach )
@@ -548,7 +560,7 @@ def __go(args):
                 except:
                     ret = ["echo 'ERROR: %s %s doesnt exist!\n\nOptions are:'" % (each, value)]
 
-                    for l in glob( '%s/%s/%ss/*' % (roots.jobs(), job, shotPrefix) ):
+                    for l in cached.glob( '%s/%s/%ss/*' % (roots.jobs(), job, shotPrefix) ):
                         ret.append( "echo '\t%s %s'" % (each, os.path.basename(l)) )
                     ret.append( "echo ' '")
                     return "\n".join(ret)
@@ -566,7 +578,7 @@ def __go(args):
     path = '%s/tools/scripts' % currentJob(job)
     env.append( 'export PATH=$__PATH:%s:$__PATH_HOME' % path )
     pythonpath = '%s/tools/python' % currentJob(job)
-    env.append( 'export PYTHONPATH=%s:$__PYTHONPATH' % pythonpath )
+    env.append( 'export PYTHONPATH=%s:$___PYTHONPATH' % pythonpath )
 
     # deal with shot
     values = ['Shot','']
@@ -586,7 +598,7 @@ def __go(args):
 
 
     env.append( 'export PATH=$__PATH:%s:$__PATH_HOME' % path )
-    env.append( 'export PYTHONPATH=%s:$__PYTHONPATH' % pythonpath )
+    env.append( 'export PYTHONPATH=%s:$___PYTHONPATH' % pythonpath )
 
     env.append( 'echo "Job: %s\n%s: %s\nPath: $(pwd)"' % (job, values[0], values[1] ) )
 
@@ -602,8 +614,9 @@ def __go(args):
         env.append( 'export PIPE_FARM_USER=%s' % user )
         env.append( 'export PIPE_FARM_JOBID=%s' % os.environ['QBJOBID'] )
 
-
-
+    # prevents error when not specifying shot
+    if 'PIPE_JOB' in os.environ:
+        del os.environ['PIPE_JOB']
     return '%s \n %s' % (init(), '\n'.join(env))
 
 
