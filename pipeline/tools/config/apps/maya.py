@@ -85,10 +85,9 @@ class maya(baseApp):
             self.update( mgear() )
 
             if mv > 2016:
-                self.update( pipe.libs.usd() )
-
                 # substance that comes with maya
-                maya.addon(self, module = self.path("../../../opt/Allegorithmic/Substance_in_Maya/$MAYA_VERSION/") )
+                if cached.exists( self.path("../../../opt/Allegorithmic/Substance_in_Maya") ):
+                    maya.addon(self, module = self.path("../../../opt/Allegorithmic/Substance_in_Maya/$MAYA_VERSION_MAJOR_ONLY/") )
 
                 # bifrost in later mayas
                 for each in cached.glob(self.path("../bifrost/maya*/*/*")):
@@ -100,16 +99,18 @@ class maya(baseApp):
                         self['BIFROST_LIB_CONFIG_FILES']      = each+'/resources/plugin_config.json'
 
 
+                # if rokoko motion library is installed, set it up
+                if cached.exists( self.path("../../../opt/rokoko_motion_library/maya") ):
+                    maya.addon(self,
+                        plugin  = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION_MAJOR_ONLY/plug-ins/"),
+                        lib     = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION_MAJOR_ONLY/lib/"),
+                        script  = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION_MAJOR_ONLY/scripts/"),
+                        qml     = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION_MAJOR_ONLY/qml-modules-linux/"),
 
-                # maya.addon(self,
-                #     plugin  = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION/plug-ins/"),
-                #     lib     = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION/lib/"),
-                #     script  = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION/scripts/"),
-                #     qml     = self.path("../../../opt/rokoko_motion_library/maya/$MAYA_VERSION/qml-modules-linux/"),
-                #
-                # )
+                    )
 
-                if pipe.libs.mayausd().keys():
+                # if we have a pipevfx mayausd installed, use it instead of autodesk one
+                if hasattr(pipe.libs, "mayausd"):
                     self.update( pipe.libs.mayausd() )
                 else:
                     # setup maya usd that comes with maya!
