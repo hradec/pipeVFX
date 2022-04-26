@@ -219,14 +219,17 @@ class cortex(baseLib):
         self['IECORE_OP_PRESET_PATHS'] = '%s/.config/cortex/preset' % os.environ['HOME']
         self['IECORE_PROCEDURAL_PRESET_PATHS'] = '%s/.config/cortex/preset' % os.environ['HOME']
 
-        try: self.update( pipe.libs.pyilmbase() )
-        except: pass
-        try: self.update( pipe.libs.openvdb() )
-        except: pass
-        try: self.update( pipe.libs.alembic() )
-        except: pass
-        try: self.update( pipe.libs.usd() )
-        except: pass
+        if hasattr(pipe.libs, "pyilmbase"):
+            self.update( pipe.libs.pyilmbase() )
+
+        if hasattr(pipe.libs, "openvdb"):
+            self.update( pipe.libs.openvdb() )
+
+        if hasattr(pipe.libs, "alembic"):
+            self.update( pipe.libs.alembic() )
+
+        if hasattr(pipe.libs, "usd"):
+            self.update( pipe.libs.usd() )
 
     def bins(self):
         # return [('cpython', 'cpython')]
