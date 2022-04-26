@@ -357,7 +357,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                                         Maybe you should publish a new asset for the selected objects?
                                     ''')
                     self._deferredUpdateOPA(self._loadOPA())
-                    self._previewCollum.setSizes( [ 0.9, 0.1 ] )
+                    self._previewCollum.setSizes( [ 0.6, 0.4 ] )
 
                 # =====================================================================================
                 # Import mode - create buttons!
@@ -583,7 +583,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
             with self._previewCollum :
                 with  GafferUI.ListContainer( borderWidth = 0, spacing = 0 ) as frame:
-                    opaClasses.pipeImage(op)
+                    # opaClasses.pipeImage(op)
                     self.__nodeUI = GafferUI.NodeUI.create( self.__node )
 
                     button = GafferUI.Button( "Publish" )
