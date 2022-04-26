@@ -21,7 +21,7 @@
 import log
 from environ import environ as _environ
 from base import depotRoot, roots, platform, py, arch, WIN, OSX, LIN, runProcess, taskset, vglrun
-
+from base import distroName as distro
 import admin
 
 import os, sys, stat, shutil, traceback
@@ -30,6 +30,8 @@ from multiprocessing import cpu_count
 import cached
 
 from bcolors import bcolors
+
+
 
 libraries_with_versioned_names = [
     'boost',
@@ -560,6 +562,7 @@ class baseApp(_environ):
         TODO: a subsystem to automatically detect default version on
         the filesystem.
     '''
+    enable=False
     def __init__(self, app=None, platform=platform, arch=arch, DB=appsDB, versionClass=version, DB_EnvVar='__DB_LATEST', cache=True):
         '''
             the class init basically just sets the version according to the __version db,
@@ -593,6 +596,7 @@ class baseApp(_environ):
         # =====================================================================
         # Look for the --disable command line option, which disables packages
         # ex: maya --disable delight,prman
+        # =====================================================================
         if '--disable' in sys.argv:
             id = sys.argv.index('--disable')
             for each in sys.argv[id+1].split(','):
@@ -605,6 +609,7 @@ class baseApp(_environ):
         # globals()['DBKEYS'] stores what's actually installed in the central
         # disk, opposed to pipe.apps/libs.version() that returns what has been
         # set via python
+        # =====================================================================
         if 'DBKEYS' not in globals():
             globals()['DBKEYS'] = globals()['_appsDB'].latest.keys() + \
                                   globals()['_libsDB'].latest.keys() + ['allLibs']
@@ -613,6 +618,7 @@ class baseApp(_environ):
             globals()['DBKEYS_FORCED'] = []
 
         # disable class if has being disabled in a config file
+        # =====================================================================
         self.enable = True
 
         # if class has force_enable, that's override any auto enable setup
@@ -662,6 +668,7 @@ class baseApp(_environ):
             return
 
         # we only continue, if the class isen't disabled
+        # =====================================================================
         if self.enable:
             # from now on, this is the initialization we need
             # to do if NOT cached!
@@ -706,7 +713,6 @@ class baseApp(_environ):
                 self.versions()
 
             self.appFromDB = self.DB(self.className, platform, arch)
-            self.path = self.appFromDB.path
             if hasattr(self, 'macfix'):
                 self.appFromDB.macfix = self.macfix
 
@@ -757,6 +763,12 @@ class baseApp(_environ):
             # evaluate license method of all classes
             self.evaluate()
 
+    def path(self, subpath=''):
+        ret = '/not-installed/'
+        if hasattr(self, 'appFromDB'):
+            self.__path = self.appFromDB.path
+            ret = self.__path(subpath)
+        return ret
 
     @staticmethod
     def configFiles(self=None):
@@ -815,9 +827,11 @@ class baseApp(_environ):
 
     def bin(self):
         '''returns the app bin folder (from appsDB)'''
-        ret = self.appFromDB.bin()
+        ret = 'bin'
         if '%s_BIN' % self.className.upper() in self:
             ret = self['%s_BIN' % self.className.upper()]
+        elif hasattr(self, 'appFromDB'):
+            ret = self.appFromDB.bin()
         return ret
 
     def bins(self, appName=None):
@@ -878,6 +892,11 @@ class baseApp(_environ):
                 '%s_VERSION_MAJOR' % appName : '.'.join( self.appFromDB.version().split('.')[0:2] ),
             })
         except: pass
+        try:
+            self.replace( {
+                '%s_VERSION_MAJOR_ONLY' % appName : self.appFromDB.version().split('.')[0],
+            })
+        except: pass
 
         py='.'.join( self.globalVersion.get('python').split('.')[:2] )
         pythonPaths = self.pythonPath()
@@ -891,10 +910,7 @@ class baseApp(_environ):
             except:
                 # import inspect
                 # lines = inspect.getsource(self.environ)
-                print( bcolors.FAIL+'='*80 )
-                print(self.className)
-                print( "\n\t".join(traceback.format_exc().split('\n')) )
-                print( '='*80 + bcolors.END )
+                log.error( self.className+"\n"+"\n\t".join(traceback.format_exc().split('\n')) )
 
 
 
@@ -1150,6 +1166,13 @@ class baseApp(_environ):
             for each in extraUpdates:
                 self[each] = allLibs[each]
 
+            # make sure pipe latest gcc is used wehn running on arch
+            if 'arch' in distro:
+                if 'gcc' in allLibs.updatedClasses:
+                    ldpreload = [ x for x in self['LD_PRELOAD'] if '/usr' not in x[:5] ]
+                    self.replace(LD_PRELOAD = allLibs.updatedClasses['gcc'].LD_PRELOAD() + ldpreload  )
+
+
     def fullEnvironment(self, binName=None):
         '''
         here is were we actually update self with all updated
@@ -1178,6 +1201,7 @@ class baseApp(_environ):
         # last, run self license
         if binName:
             self._license(binName)
+
 
     def nice(self):
         return 19
@@ -1380,25 +1404,32 @@ class baseApp(_environ):
         # we assume that ssh or any other remote connection will
         # have a DISPLAY bigger than 9 here, to detect if we need virtualGL or not!
         # (or if running in DOCKER, use vglrun!)
-        if ( display > 15 or 'DOCKER' in os.environ ) and vglrun:
-            # debug = 'vglrun -c jpeg -q 30 %s %s' % (m32, debug)
-            # find out what display is active
-            # d = os.popen("echo $(ps -AHfc | grep Xorg | grep $(cat /sys/class/tty/tty0/active)) | cut -d' ' -f10").readlines()
-            # if d:
-            #     d = d[0].strip()
-            #     if not d:
-            #         d = os.popen("echo $(ps -AHfc | grep Xorg | grep -v grep) | cut -d' ' -f10").readlines()[0].strip()
-            #         if not ':' in d:
-            #             d = ":0"
-            #     d = "-d %s" % d
-            d = os.popen("loginctl list-sessions | egrep -v 'SESSION|sessions' | awk '{print $1}' | while read s ; do loginctl show-session -p Display -p Active  $s ; done | grep 'Active=yes' -B1 | grep ':' | awk -F'=' '{print $2}'")
-            if not ':' in d:
-                d = ":0"
-            else:
-                d = ""
-            if d:
-                d = "-d %s" % d
-            debug = '%s +v %s %s %s env LD_LIBRARY_PATH=$LD_LIBRARY_PATH' % (vglrun, d, m32, debug)
+        vglDisplay = 15
+        if 'fedora' in distro:
+            vglDisplay = 10
+        if ( display >= vglDisplay or 'DOCKER' in os.environ ) and vglrun:
+            d = ""
+            debug = '%s +v %s %s %s ' % (vglrun, d, m32, debug)
+            if 'fedora' not in distro:
+                # debug = 'vglrun -c jpeg -q 30 %s %s' % (m32, debug)
+                # find out what display is active
+                # d = os.popen("echo $(ps -AHfc | grep Xorg | grep $(cat /sys/class/tty/tty0/active)) | cut -d' ' -f10").readlines()
+                # if d:
+                #     d = d[0].strip()
+                #     if not d:
+                #         d = os.popen("echo $(ps -AHfc | grep Xorg | grep -v grep) | cut -d' ' -f10").readlines()[0].strip()
+                #         if not ':' in d:
+                #             d = ":0"
+                #     d = "-d %s" % d
+                d = os.popen("loginctl list-sessions | egrep -v 'SESSION|sessions' | awk '{print $1}' | while read s ; do loginctl show-session -p Display -p Active  $s ; done | grep 'Active=yes' -B1 | grep ':' | awk -F'=' '{print $2}'")
+                if not ':' in d:
+                    d = ":0"
+                else:
+                    d = ""
+                if d:
+                    d = "-d %s" % d
+                debug = '%s +v %s %s %s env LD_LIBRARY_PATH=$LD_LIBRARY_PATH' % (vglrun, d, m32, debug)
+                # os.environ['LD_LIBRARY_PATH']="/usr/lib64/VirtualGL:"+os.environ['LD_LIBRARY_PATH']
         # if a display is below 15, we're running ssh connection, not xpra, so we use LIBGL_ALWAYS_INDIRECT instead of VirtualGL.
         # this way, opengl applications will use the client GPU, not the host GPU.
         # this allows to run hardware accelerated opengl applications in a GPUless HOST (software runs in the host,
@@ -1605,12 +1636,15 @@ class baseLib(baseApp):
         tmp +=  cached.glob( self.path('lib/boost%s/python%s/*.so' % (bv,pvm)) )
         ret = []
         for each in tmp:
-            if 'ASCII' in ''.join(cached.popen("file -b -e soft '%s'" % each).readlines()):
+            if 'ASCII' in ''.join(cached.popen("file -b -e soft $(readlink -f '%s')" % each).readlines()):
                 # account for text links that some libraries create, instead of
                 # symlinks (damn tbb)
                 data = cached.copen(each).readlines()
+                jdata = ''.join(data)
                 if 'INPUT ' in data[0]:
                     each = '/'.join([ os.path.dirname(each), data[0].split('(')[1].split(')')[0] ])
+                if 'GROUP ' in jdata:
+                    each = '/'.join([ os.path.dirname(each) ]+[ x for x in jdata.split(' ') if '.so' in x ])
             ret += [each]
 
 
