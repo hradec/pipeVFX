@@ -22,4 +22,6 @@
 class mayausd(baseLib):
 
     def environ(self):
+        if hasattr(pipe.libs, "usd"):
+            self.update( pipe.libs.usd() )
         pipe.apps.maya.addon( self, module = self.path("maya.$MAYA_VERSION") )
