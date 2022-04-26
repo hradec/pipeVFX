@@ -612,8 +612,12 @@ class assetListWidget( GafferUI.Editor ):
                 if 'renderSettings/' in selectedPaths[0]:
                     canImport = True
 
-            if len(selectedPaths)==1:
                 menuDefinition.append( "/Import selected" , { "command" : IECore.curry(self.checkout, selectedPaths), "active" : canImport  } )
+
+                # add the publish menu, if the item can be published
+                if selectedPathsEditable or 'render/maya' in selectedPaths[0]:
+                    menuDefinition.append( "/Publish an UPDATE to the selected asset" , { "command" : IECore.curry(self.publishAssetUpdate, selectedPaths) }) #, "active" : not selected_source_exists_in_host  } )
+
 
         # updateall
         menuDefinition.append( "/d2" , {"divider":True } )
@@ -624,10 +628,6 @@ class assetListWidget( GafferUI.Editor ):
         if isAssetMenu:
             # if only one asset is selected, we can add some more menu itens
             if len(selectedPaths)==1:
-
-                # add the publish menu, if the item can be published
-                if selectedPathsEditable or 'render/maya' in selectedPaths[0]:
-                    menuDefinition.append( "/Publish an UPDATE to the selected asset" , { "command" : IECore.curry(self.publishAssetUpdate, selectedPaths) }) #, "active" : not selected_source_exists_in_host  } )
 
                 # if the asset is publishable in maya add the edit in maya menus
                 # we do an extra check if the extension of the dependency files is a .ma/.mb to garantee its a maya scene!
@@ -1868,7 +1868,6 @@ class _SAMPanelUI( QtGui.QDialog ):
         # if assetUtils.j:
         #     title = "SAM / %s" % assetUtils.j.proj
 
-
         self._windowTitle = title
         self._windowObject = "%sWinObject" % self._windowTitle.replace(' ', '')
 
@@ -1879,6 +1878,7 @@ class _SAMPanelUI( QtGui.QDialog ):
 
         self.setObjectName(self._windowTitle+'_')
         self.setWindowTitle(self._windowTitle)
+        self.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint)
 
 
         # remove panel if it exists
@@ -1965,8 +1965,10 @@ if assetUtils.m:
             instance = cls()
             # Get the empty WorkspaceControl created by Maya
             workspaceControl = omui.MQtUtil.getCurrentParent()
+            print "====>>",workspaceControl
             # Grab the pointer to our instance as a Maya object
             mixinPtr = omui.MQtUtil.findControl(instance.objectName())
+            print "====>>",mixinPtr
             # Add our UI to the WorkspaceControl
             omui.MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(workspaceControl))
             # Store reference to UI
