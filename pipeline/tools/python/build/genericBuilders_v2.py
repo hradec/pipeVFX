@@ -3005,6 +3005,8 @@ class generic:
 
     def extractBuildFolder(self, t):
         t=str(t)
+        if len(t.split(self.src)) > 2:
+            raise Exception('self.src="%s" breaks logic to determine source folder (%s)!! Please Fix it!' % (self.src, t))
         buildFolder = t.split(self.src)[0].rstrip('/')
         if buildFolder == t:
             buildFolder = os.path.dirname(t).rstrip('/')
@@ -3032,9 +3034,6 @@ class generic:
                 import random
                 tmp = int(random.random()*10000000)
                 tmp = "%s/tmp.%s" % (os.path.dirname(buildFolder), str(tmp))
-                # print "\tMD5 OK for file ", source[n],
-                # print  "rm -rf %s 2>&1" % os.path.dirname(t)
-                # print self.__lastlog(__pkgInstalled__[s]), s, t
                 python = '1.0'
                 if '.python' in t:
                     python = '.'.join( t.split('.python')[-1].split('.')[:2] )
@@ -3048,6 +3047,16 @@ class generic:
 
                     os.popen( "rm -rf %s 2>&1" % buildFolder ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
+                    b = buildFolder
+
+                    # in case the source comes from the build folder, make sure the path looks at the dowload folder!
+                    if '.build' in s:
+                        b = '/'.join([x for x in os.path.dirname(t).rstrip('/').split('/') if 'bin'!=x])
+                        s = s.replace('.build','.download')
+                    #     uncompressed_folder = self.fix_uncompressed_path( os.path.splitext(os.path.basename(s))[0] )
+                    #     cmd = "mkdir -p %s/%s && cd %s/%s && ln -s %s ./ && cd .. " % (tmp, uncompressed_folder, tmp, uncompressed_folder, s)
+                    #     _print( cmd )
+
                     if '.rpm' in s:
                         # ss = os.path.basename( os.path.dirname( str(target[n]) ) )
                         ss = uncompressed_folder
@@ -3065,7 +3074,7 @@ class generic:
                         _print( cmd )
 
 
-                    cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (uncompressed_folder, buildFolder, tmp)
+                    cmd +=  " ; mv %s %s && cd ../../ && rm -rf %s 2>&1" % (uncompressed_folder, b, tmp)
                     _print( cmd )
                     lines = os.popen( cmd ).readlines()
                     if not os.path.exists(str(target[n])):
@@ -3202,7 +3211,11 @@ class generic:
                     files2patch[ f ] += [each]
 
             for file in files2patch:
-                os.popen('''sed -i.bak -e 's/\-O3/-O2/g' -e 's/\-O4/-O2/g' -e 's/\-O5/-O2/g' %s ''' % file).readlines()
+                try:
+                    if os.path.exists(file):
+                        os.popen('''sed -i.bak -e 's/\-O3/-O2/g' -e 's/\-O4/-O2/g' -e 's/\-O5/-O2/g' %s ''' % file).readlines()
+                except:
+                    _print(  bcolors.WARNING+":"+bcolors.BLUE+"\tpatching canceled due to error during file greping" + bcolors.END )
             # print os.popen(''' grep -R  '\-O3' %s/* ''' % t).readlines()
 
         # wee need certain aclocal-* versions in case we modify configure base files.
