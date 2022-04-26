@@ -19,9 +19,22 @@
 # =================================================================================
 
 
-
+import sys
 class usd(baseLib):
+    def path(self, subpath=''):
+        '''we overwrite the path function to return the path for the
+        non monolithic usd version if this class is being set for maya.
+        We have to go through this trouble since mayausd won't build with
+        monolithic usd, while gaffer only builds with it.
+        '''
+        # sys.stderr.write("\n\nBUM1\n\n")
+        path = baseLib.path(self)
+        if self.parent() in ['maya']:
+            path = path.replace("/usd/", '/usd_non_monolithic/')
+        return '/'.join([path, subpath])
+
     def environ(self):
+        # sys.stderr.write("\n\nBUM2\n\n")
         self['PYTHONPATH'] = self.path('lib/python')
 
         self.update( pipe.libs.opensubdiv() )
