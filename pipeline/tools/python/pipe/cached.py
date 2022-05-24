@@ -44,9 +44,11 @@ def __exists__(cache):
     return os.path.exists( cache )
 
 
-def cache_func(func, force=False):
+def cache_func(func, force=False, cache_name=None):
     import traceback
-    cache = __cached_name__(traceback.extract_stack(None, 2)[0][2])
+    if not cache_name:
+        cache_name = traceback.extract_stack(None, 2)[0][2]
+    cache = __cached_name__(cache_name)
     if __exists__( cache ) and not force:
         data = __load__(cache)
     else:
@@ -73,8 +75,10 @@ def exists(path):
     return data
 
 class popen:
-    def __init__(self, cmd):
-        self.cache = __cached_name__(cmd)
+    def __init__(self, cmd, cache_name=None):
+        if not cache_name:
+            cache_name = cmd
+        self.cache = __cached_name__(cache_name)
         self.cmd = cmd
     def readlines(self):
         if __exists__( self.cache ):
