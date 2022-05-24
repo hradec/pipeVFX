@@ -56,12 +56,12 @@ RUN dnf install -y \
         liberation-serif-fonts \
         libXmu libXt libXi libXinerama libxcb tcsh \
         audiofile audiofile-devel \
-        libpng15 libglvnd-devel cronie \
-        x11vnc xrdp mesa-libGLw mesa-libGLU libXp \
+        libpng15  \
         audiofile audiofile-devel e2fsprogs-libs libpng12 \
-        gnome-tweaks \
-        gnome-extensions-app \
+        x11vnc xrdp mesa-libGLw mesa-libGLU libXp \
         VirtualGL \
+        gnome-tweaks libglvnd-devel cronie \
+        gnome-extensions-app \
         python2 \
         autofs \
         xpra \
