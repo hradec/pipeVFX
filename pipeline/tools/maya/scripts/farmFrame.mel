@@ -1,0 +1,7 @@
+global proc float farmFrame(){
+    $f=getenv("FRAME_NUMBER");
+    if($f==""){
+        $f=float(`currentTime -q`);
+    }
+    return $f;
+}
