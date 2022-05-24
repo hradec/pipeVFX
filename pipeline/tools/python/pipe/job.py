@@ -33,13 +33,25 @@ except:
 
 def current(job=None):
     import os
-    if not job:
-        if 'PIPE_JOB' in os.environ:
-            job = os.environ['PIPE_JOB']
+    if not job and 'PIPE_JOB' in os.environ:
+        job = os.environ['PIPE_JOB']
+
+    if job:
+        jobs = [ os.path.basename(x) for x in pipe.cached.glob( "%s/*.*" % pipe.roots.jobs() ) if job in x.split('/')[3] ]
+        if not jobs:
+            available = [os.path.basename(x) for x in pipe.cached.glob( "%s/????.*" % pipe.roots.jobs() )]
+            available.sort()
+            raise Exception("\n\nRequested job '%s' doesn't exist! The options are:\n\t%s" % (job, '\n\t'.join(available)) )
+        if len(jobs)>1:
+            raise Exception("\n\nRequested job '%s' is part of the name of more than one job. The options are:\n\t%s" % (job, '\n\t'.join(jobs)) )
+        job = jobs[0]
+
     if not job:
         return ''
-    return "%s/%s" % (roots.jobs(), job)
-
+    ret = "%s/%s" % (roots.jobs(), job)
+    if not os.path.exists(ret):
+        raise Exception("Job '%s' current set doesn't exist on disk! Please check your jobs folder!!" % (job))
+    return ret
 
 def currentShot(job=None, values=None):
     import os
