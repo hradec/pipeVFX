@@ -32,3 +32,6 @@ class gaffer_haven(baseLib):
             startups = self.path('startup'),
             extensions = self.path()
         )
+        for each in self.toolsPaths():
+            self['HAVENLIBRARY' ] = "%s/gaffer/gaffer_heave/" % each
+        self['SSL_CERT_FILE'] = "/etc/ssl/certs/ca-bundle.crt"
