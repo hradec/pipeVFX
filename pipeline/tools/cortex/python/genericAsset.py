@@ -175,7 +175,7 @@ def _nodeName(data=None):
     ret = 'SAM_none_none_none_none'
     ret =  _nodeNameTemplate() % (
         data['assetType'].replace('/','_'),
-        data['assetName'].replace('.','_'), #split('.')[-1],
+        data['assetName'].replace('.','_').replace('-','_'), #split('.')[-1],
         data['assetInfo']['version'].value.x,
         data['assetInfo']['version'].value.y,
         data['assetInfo']['version'].value.z,
@@ -186,7 +186,7 @@ def _nodeName(data=None):
     try:
         ret =  _nodeNameTemplate() % (
             data['assetType'].replace('/','_'),
-            data['assetName'].replace('.','_'), #split('.')[-1],
+            data['assetName'].replace('.','_').replace('-','_'), #split('.')[-1],
             data['assetInfo']['version'].value.x,
             data['assetInfo']['version'].value.y,
             data['assetInfo']['version'].value.z,
@@ -515,6 +515,7 @@ class _genericAssetClass( IECore.Op ) :
         ''' find the asset in the scene, no matter what version it is! '''
         nodes=[]
         if m:
+            nodeName = nodeName.replace('-','_')
             if anyVersion:
                 import re
                 versionPosition = re.search('_\d\d_\d\d_\d\d', nodeName).start()
@@ -522,7 +523,7 @@ class _genericAssetClass( IECore.Op ) :
                 # print mask, m.ls(mask)
                 nodes = m.ls(mask)
             else:
-                nodes = m.ls('|%s*' % nodeName)
+                nodes = m.ls('|' + nodeName + '*')
         return nodes
 
 
@@ -608,7 +609,9 @@ class _genericAssetClass( IECore.Op ) :
             data = self.asset.getData()
         self.data = data
 
-        # print self.data['multipleFiles']
+        # print self.data, self.asset, asset
+        if 'multipleFiles' not in self.data:
+            return
         for n in range(len(self.data['multipleFiles'])):
             each = os.path.splitext(self.data['multipleFiles'][n])[0]
             filename = ''

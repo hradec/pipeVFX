@@ -435,6 +435,7 @@ class AssetParameter( CompoundParameter ):
                     # make sure an asset in a shot is being published
                     # with the template shotname.assetname
                     assetName = assetName.split('.')[-1]
+                    assetName = assetName.replace('-','_').replace(' ','_')
                     # print  self.shot.path()
                     if self.shot.path().split('/')[-2] == 'shots':
                         assetName = assetName.strip().replace(self.shot.shot,'').strip('_')
