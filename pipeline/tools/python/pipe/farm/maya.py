@@ -73,6 +73,8 @@ class maya(current.engine):
                 pre = 'rm -rfv %s/renderman/%s_%s ; export error=$? ; echo $error ; [ $error -ne 0 ] && echo "[PARSER ERROR]" || ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
                 pos = ' && rm -rfv %s/renderman/%s_%s ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
 
+
+
             if 'mentalRay' in  self.renderer:
                 extra = ' -mr:v 5 '
 
@@ -93,7 +95,26 @@ class maya(current.engine):
 
             self.files = ["%s/images/none" % self.asset]
             # add an extra postCmd to cleanup the pipe_asset folder inside renderman, if any!
-#            self.postCmd = {
-#                'name' : "(post cleanup)",
-#                'cmd'  : 'rm -rf "%s/renderman/%s"' % ( self.project, pipe_asset ),
-#            }
+            # self.postCmd = {
+            #     'name' : "(post cleanup)",
+            #     'cmd'  : 'rm -rf "%s/renderman/%s"' % ( self.project, pipe_asset ),
+            # }
+
+    # mount a ramdisk to the renderman folder, so render is faster and
+    # hopefully minimize problems at googlefarm
+    def farmSetupPre(self):
+        preFarmCmd = ''
+        if 'renderMan' in self.renderer:
+            if self.asset:
+               pipe_asset = "_".join(self.asset.strip('/').split('/')[-2:]).replace('.','_')
+               batchContext = "%s_%s" % (pipe_asset, self.frameNumber())
+               preFarmCmd += '''mount | egrep 'tmpfs.*renderman' | awk '{print $3}' | while read p ; do umount $p ; done ; '''
+               preFarmCmd += 'mkdir -p  %s/renderman/%s_%s ; ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
+               preFarmCmd += 'mount -t tmpfs tmpfs  %s/renderman/%s_%s ; df -h ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
+        return preFarmCmd
+
+    def farmSetupPos(self):
+        posFarmCmd = ''
+        if 'renderMan' in self.renderer:
+            posFarmCmd  = '''mount | egrep 'tmpfs.*renderman' | awk '{print $3}' | while read p ; do umount $p ; done ; df -h '''
+        return posFarmCmd

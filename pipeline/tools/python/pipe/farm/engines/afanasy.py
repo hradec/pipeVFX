@@ -23,6 +23,8 @@ import pipe, os, sys
 from pipe.farm.baseClass import baseFarmJobClass
 
 class job(baseFarmJobClass):
+    preFarmCmd=''
+    posFarmCmd=''
 
     def _init(self):
         ''' import afanasy python module '''
@@ -33,6 +35,8 @@ class job(baseFarmJobClass):
         self.af = af
         self.afnetwork = afnetwork
         os.environ.update(osback)
+        self.preFarmCmd=''
+        self.posFarmCmd=''
 
     def _runJSON(self, json):
         ret = self.afnetwork.sendServer( self.af.json.dumps(json), False )
@@ -40,9 +44,21 @@ class job(baseFarmJobClass):
             return ret[1]
         return []
 
+    def farmSetupPre(self):
+        ''' virtual method so submissions can add root commands before the farm cmd, like mounting folders, etc '''
+        return ""
+
+    def farmSetupPos(self):
+        ''' virtual method so submissions can add root commands after the farm cmd, like un-mounting folders, etc '''
+        return ""
+
     @staticmethod
-    def farmCmd(cmd):
-        return "/usr/sbin/runuser -l %s --session-command  'export PIPE_FARM_USER=%s ; unset LD_LIBRARY_PATH ;  unset LD_PRELOAD;  echo $HOSTNAME ; " % (pipe.admin.username(),pipe.admin.username())  + cmd.replace("'","\\'") + " || echo '[PARSER ERROR]' ; echo $? ' ; echo $?"
+    def farmCmd(cmd, preFarmCmd = "", posFarmCmd = ""):
+        if preFarmCmd:
+            preFarmCmd = preFarmCmd+' ; '
+        if posFarmCmd:
+            posFarmCmd = ' ; '+posFarmCmd
+        return preFarmCmd+"/usr/sbin/runuser -l %s --session-command  'export PIPE_FARM_USER=%s ; unset LD_LIBRARY_PATH ;  unset LD_PRELOAD;  echo $HOSTNAME ; " % (pipe.admin.username(),pipe.admin.username())  + cmd.replace("'","\\'") + " || echo '[PARSER ERROR]' ; echo $? ' ; echo $?"+posFarmCmd
 
     def _list(self, filter='', mode="full"):
         json = {"get":{"type":"jobs", "mode":mode}}
@@ -423,9 +439,13 @@ class job(baseFarmJobClass):
             return job.send()
 
         else:
+            self.preFarmCmd = self.farmSetupPre()
+            self.posFarmCmd = self.farmSetupPos()
+            print "==========> self.preFarmCmd:",self.preFarmCmd
+            print "==========> self.posFarmCmd:",self.posFarmCmd
 
             # we use su to run the tasks as the user who submitted it!
-            cmd = self.farmCmd(self.cmd)
+            cmd = self.farmCmd(self.cmd, self.preFarmCmd, self.posFarmCmd)
             #cmd = "/usr/sbin/runuser -l %s --session-command  'export PIPE_FARM_USER=%s ; " % ('pkg',pipe.admin.username())  + self.cmd.replace("'","\\'") + "'"
             _job = af.Job( "SAM %s" % self.name )
             _job.setNeedOS('linux')
@@ -464,8 +484,8 @@ class job(baseFarmJobClass):
                 block3 = af.Block( self.taskPostCmd['name'] )
                 block3.setTasksDependMask( "main" )
                 block3.setDependSubTask()
-                task   =  af.Task( _job.farmCmd( self.postCmd['cmd'] ) )
-                task.setCommand( _job.farmCmd( self.postCmd['cmd'] ) )
+                task   =  af.Task( _job.farmCmd( self.postCmd['cmd'], self.preFarmCmd, self.posFarmCmd ) )
+                task.setCommand( _job.farmCmd( self.postCmd['cmd'], self.preFarmCmd, self.posFarmCmd ) )
                 block3.tasks.append(task)
                 _job.blocks.append(block3)
 
