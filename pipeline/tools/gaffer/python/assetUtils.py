@@ -300,6 +300,7 @@ class assetOP(object):
         try:
             self.data = data
             self.__data()
+            # print self.data
             self.path = str(self.data['publishPath'])
         except:
             self.data = None
@@ -548,7 +549,7 @@ class assetOP(object):
         import re
         if self.path and self.hostApp()=='maya' and m and len(self.pathPar.split('/'))>2:
             self.__maya_ls = m.ls('|SAM*',l=1)
-            nodeName = '_'.join(self.path.split('sam/')[-1].split('/')[:-1]).replace('.','_')
+            nodeName = '_'.join(self.path.split('sam/')[-1].split('/')[:-1]).replace('.','_').replace('-','_').replace('-','_')
             versionPosition = re.search('_\d\d_\d\d_\d\d', nodeName).start()
             # mask = '^\|SAM_%s_\d\d_\d\d_\d\d_' % ( nodeName[:versionPosition] )
             return m.ls( '|SAM_%s*_??_??_??_*' % nodeName[:versionPosition], l=1 )
@@ -795,7 +796,7 @@ class assetOP(object):
             # copy the dependency to the user folder, with a standard name that identifies the
             # asset and version
             if copyToFolder:
-                sceneUser = "%s/%s%s%s" % (copyToFolder, self.data['assetName'], self.data['assetVersion'].replace('.','_'), os.path.splitext(scene)[1])
+                sceneUser = "%s/%s%s%s" % (copyToFolder, self.data['assetName'], self.data['assetVersion'].replace('.','_').replace('-','_'), os.path.splitext(scene)[1])
                 if sceneUser != scene:
                     if app:
                         app()._userSetup()

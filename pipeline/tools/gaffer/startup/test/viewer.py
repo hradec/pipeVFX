@@ -35,19 +35,27 @@
 ##########################################################################
 
 import functools
+import imath
+import inspect
+import os
 
 import IECore
+import IECoreScene
 
 import Gaffer
 import GafferUI
 import GafferScene
 import GafferSceneUI
+import GafferImageUI
 
 # add plugs to the preferences node
 
 preferences = application.root()["preferences"]
-preferences["viewer"] = Gaffer.CompoundPlug()
-preferences["viewer"]["gridDimensions"] = Gaffer.V2fPlug( defaultValue = IECore.V2f( 10 ), minValue = IECore.V2f( 0 ) )
+preferences["viewer"] = Gaffer.Plug()
+preferences["viewer"]["gridDimensions"] = Gaffer.V2fPlug( defaultValue = imath.V2f( 10 ), minValue = imath.V2f( 0 ) )
+
+Gaffer.Metadata.registerValue( preferences["viewer"], "plugValueWidget:type", "GafferUI.LayoutPlugValueWidget", persistent = False )
+Gaffer.Metadata.registerValue( preferences["viewer"], "layout:section", "Viewer", persistent = False )
 
 # register a customised view for viewing scenes
 
@@ -60,6 +68,15 @@ def __sceneView( plug ) :
 	return view
 
 GafferUI.View.registerView( GafferScene.ScenePlug.staticTypeId(), __sceneView )
+
+# Add items to the viewer's right click menu
+
+def __viewContextMenu( viewer, view, menuDefinition ) :
+
+	GafferSceneUI.LightUI.appendViewContextMenuItems( viewer, view, menuDefinition )
+	GafferSceneUI.SceneHistoryUI.appendViewContextMenuItems( viewer, view, menuDefinition )
+
+GafferUI.Viewer.viewContextMenuSignal().connect( __viewContextMenu, scoped = False )
 
 # register shading modes
 
@@ -83,54 +100,208 @@ def __registerShadingModes( modes ) :
 			)
 		)
 
-with IECore.IgnoredExceptions( ImportError ) :
+def __createXRayShader() :
 
-	# If this import fails, then our "with" block will swallow the error
-	# and we'll not add any useless visualisation modes (because the code
-	# below won't be reached). We leave the actual error reporting to the
-	# startup/gui/menus.py config file.
-	import GafferRenderMan
+	# ideally this could be any type of node (eg Box), but
+	# SceneView seems to require a SceneProcessor.
+	xray = GafferScene.SceneProcessor( "XRay" )
+	xray["attributes"] = GafferScene.CustomAttributes()
+	xray["attributes"]["attributes"].addChild( Gaffer.NameValuePlug( "gl:depthTest", Gaffer.BoolPlug( "value", defaultValue = False ), True, "depthTest" ) )
+	xray["attributes"]["in"].setInput( xray["in"] )
+	xray["assignment"] = GafferScene.ShaderAssignment()
+	xray["assignment"]["in"].setInput( xray["attributes"]["out"] )
+	xray["shader"] = GafferScene.OpenGLShader( "XRay" )
+	xray["shader"]["name"].setValue( "xray" )
+	xray["shader"]["type"].setValue( "gl:surface" )
+	xray["shader"]["parameters"].addChild( Gaffer.StringPlug( "glFragmentSource", defaultValue = inspect.cleandoc(
+		'''
+		\\#if __VERSION__ <= 120
+		\\#define in varying
+		\\#endif
+		in vec3 fragmentN;
+		in vec3 fragmentI;
+		void main()
+		{
+			float f = abs( dot( normalize( fragmentI ), normalize( fragmentN ) ) );
+			gl_FragColor = vec4( mix( vec3( 0.7 ), vec3( 0.5 ), f ), 0.5 );
+		}
+		'''
+	) ) )
+	xray["shader"]["out"] = Gaffer.Plug()
+	xray["assignment"]["shader"].setInput( xray["shader"]["out"] )
+	xray["out"].setInput( xray["assignment"]["out"] )
 
-	__registerShadingModes( [
+	return xray
 
-		( "Diagnostic/RenderMan/Shader Assignment", GafferScene.AttributeVisualiser, { "attributeName" : "ri:surface", "mode" : GafferScene.AttributeVisualiser.Mode.ShaderNodeColor } ),
-		( "Diagnostic/RenderMan/Camera Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ri:visibility:camera" } ),
-		( "Diagnostic/RenderMan/Transmission Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ri:visibility:transmission" } ),
-		( "Diagnostic/RenderMan/Diffuse Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ri:visibility:diffuse" } ),
-		( "Diagnostic/RenderMan/Specular Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ri:visibility:specular" } ),
-		( "Diagnostic/RenderMan/Photon Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ri:visibility:photon" } ),
-		( "Diagnostic/RenderMan/Matte", GafferScene.AttributeVisualiser, { "attributeName" : "ri:visibility:matte" } ),
+GafferSceneUI.SceneView.registerShadingMode( "X-Ray", functools.partial( __createXRayShader ) )
 
-	] )
+def __createNormalShader() :
 
-with IECore.IgnoredExceptions( ImportError ) :
+	# ideally this could be any type of node (eg Box), but
+	# SceneView seems to require a SceneProcessor.
+	xray = GafferScene.SceneProcessor( "Normal" )
+	xray["attributes"] = GafferScene.CustomAttributes()
+	xray["attributes"]["attributes"].addChild( Gaffer.NameValuePlug( "gl:depthTest", Gaffer.BoolPlug( "value", defaultValue = True ), True, "depthTest" ) )
+	xray["attributes"]["in"].setInput( xray["in"] )
+	xray["assignment"] = GafferScene.ShaderAssignment()
+	xray["assignment"]["in"].setInput( xray["attributes"]["out"] )
+	xray["shader"] = GafferScene.OpenGLShader( "Normal" )
+	xray["shader"]["name"].setValue( "normal" )
+	xray["shader"]["type"].setValue( "gl:surface" )
+	# Use a StringPlug named "glVertexSource", "glGeometrySource", or "glFragmentSource"
+	# to specify the various types of glsl source code.
+	vertSource = inspect.cleandoc('''
+	    \\#version 120
+		\\#if __VERSION__ <= 120
+		\\#define in attribute
+		\\#define out varying
+		\\#endif
 
-	import GafferArnold
+		uniform vec3 Cs = vec3( 1, 1, 1 );
+		uniform bool vertexCsActive = false;
+		in vec3 vertexP;
+		in vec3 vertexN;
+		in vec2 vertexuv;
+		in vec3 vertexCs;
+		out vec3 geometryI;
+		out vec3 geometryP;
+		out vec3 geometryN;
+		out vec2 geometryuv;
+		out vec3 geometryCs;
+		out vec3 fragmentI;
+		out vec3 fragmentP;
+		out vec3 fragmentN;
+		out vec2 fragmentuv;
+		out vec3 fragmentCs;
+		out vec3 fragmentWorldN;
+		void main()
+		{
+			// vec3 aimedXAxis, aimedYAxis, aimedZAxis;
+			// aimedXAxis = normalize( gl_ModelViewMatrixInverse * vec4( 0, 0, -1, 0 ) ).xyz;
+			// aimedYAxis = normalize( gl_ModelViewMatrixInverse * vec4( 0, 1, 0, 0 ) ).xyz;
+			// aimedZAxis = normalize( gl_ModelViewMatrixInverse * vec4( 1, 0, 0, 0 ) ).xyz;
+			// vec3 pAimed = vertexP.x * aimedXAxis + vertexP.y * aimedYAxis + vertexP.z * aimedZAxis;
 
-	__registerShadingModes( [
 
-		( "Diagnostic/Arnold/Shader Assignment", GafferScene.AttributeVisualiser, { "attributeName" : "ai:surface", "mode" : GafferScene.AttributeVisualiser.Mode.ShaderNodeColor } ),
-		( "Diagnostic/Arnold/Camera Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:camera" } ),
-		( "Diagnostic/Arnold/Shadow Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:shadow" } ),
-		( "Diagnostic/Arnold/Reflection Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:reflected" } ),
-		( "Diagnostic/Arnold/Refraction Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:refracted" } ),
-		( "Diagnostic/Arnold/Diffuse Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:diffuse" } ),
-		( "Diagnostic/Arnold/Glossy Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:glossy" } ),
+			vec4 pCam = gl_ModelViewMatrix * vec4( vertexP, 1 );
+			gl_Position = gl_ProjectionMatrix * pCam;
 
-	] )
+			geometryP = pCam.xyz;
+			geometryN = normalize( gl_NormalMatrix * vertexN );
+			if( gl_ProjectionMatrix[2][3] != 0.0 )
+			{
+				geometryI = normalize( -pCam.xyz );
+			}
+			else
+			{
+				geometryI = vec3( 0, 0, -1 );
+			}
 
-with IECore.IgnoredExceptions( ImportError ) :
+			geometryuv = vertexuv;
+			geometryCs = mix( Cs, vertexCs, float( vertexCsActive ) );
 
-	import GafferAppleseed
+			fragmentI = geometryI;
+			fragmentP = geometryP;
+			fragmentN = normalize(geometryN);
+			fragmentuv = geometryuv;
+			fragmentCs = geometryCs;
+			fragmentWorldN = normalize( (gl_ModelViewMatrix * vec4(geometryN,1)).xyz );
+		}
+	''')
+	geomSource = inspect.cleandoc(
+		'''
+		layout(points) in;
+		layout(points, max_vertices = 1) out;
+		void main()
+		{
+			gl_Position = gl_in[0].gl_Position;
+			EmitVertex();
+			EndPrimitive();
+		}
+		'''
+	)
+	fragSource = inspect.cleandoc(
+		'''
+		\\#if __VERSION__ <= 120
+		\\#define in varying
+		\\#endif
+		in vec3 fragmentN;
+		in vec3 fragmentWorldN;
+		in vec3 fragmentI;
+		void main()
+		{
+			gl_FragColor = vec4( normalize(fragmentN), 1.0 );
+		}
+		'''
+	)
+	xray["shader"]["parameters"].addChild( Gaffer.StringPlug( "glVertexSource", defaultValue = vertSource ) )
+	# xray["shader"]["parameters"].addChild( Gaffer.StringPlug( "glGeometrySource", defaultValue = geomSource ) )
+	xray["shader"]["parameters"].addChild( Gaffer.StringPlug( "glFragmentSource", defaultValue = fragSource ) )
+	xray["shader"]["out"] = Gaffer.Plug()
+	xray["assignment"]["shader"].setInput( xray["shader"]["out"] )
+	xray["out"].setInput( xray["assignment"]["out"] )
 
-	__registerShadingModes( [
+	return xray
 
-		( "Diagnostic/Appleseed/Shader Assignment", GafferScene.AttributeVisualiser, { "attributeName" : "osl:surface", "mode" : GafferScene.AttributeVisualiser.Mode.ShaderNodeColor } ),
-		( "Diagnostic/Appleseed/Camera Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:camera" } ),
-		( "Diagnostic/Appleseed/Shadow Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:shadow" } ),
-		( "Diagnostic/Appleseed/Diffuse Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:diffuse" } ),
-		( "Diagnostic/Appleseed/Specular Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:specular" } ),
-		( "Diagnostic/Appleseed/Glossy Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:glossy" } ),
-		( "Diagnostic/Appleseed/Photon Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:light" } ),
+GafferSceneUI.SceneView.registerShadingMode( "Normal", functools.partial( __createNormalShader ) )
 
-	] )
+
+# with IECore.IgnoredExceptions( ImportError ) :
+#
+# 	import GafferArnold
+#
+# 	__registerShadingModes( [
+#
+# 		( "Diagnostic/Arnold/Shader Assignment", GafferScene.AttributeVisualiser, { "attributeName" : "ai:surface", "mode" : GafferScene.AttributeVisualiser.Mode.ShaderNodeColor } ),
+# 		( "Diagnostic/Arnold/Camera Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:camera" } ),
+# 		( "Diagnostic/Arnold/Shadow Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:shadow" } ),
+# 		( "Diagnostic/Arnold/Reflection Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:reflected" } ),
+# 		( "Diagnostic/Arnold/Refraction Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:refracted" } ),
+# 		( "Diagnostic/Arnold/Diffuse Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:diffuse" } ),
+# 		( "Diagnostic/Arnold/Glossy Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "ai:visibility:glossy" } ),
+# 		( "Diagnostic/Arnold/Matte", GafferScene.AttributeVisualiser, { "attributeName" : "ai:matte" } ),
+# 		( "Diagnostic/Arnold/Opaque", GafferScene.AttributeVisualiser, { "attributeName" : "ai:opaque" } ),
+# 		( "Diagnostic/Arnold/Receive Shadows", GafferScene.AttributeVisualiser, { "attributeName" : "ai:receive_shadows" } ),
+# 		( "Diagnostic/Arnold/Self Shadows", GafferScene.AttributeVisualiser, { "attributeName" : "ai:self_shadows" } ),
+#
+# 	] )
+#
+# with IECore.IgnoredExceptions( ImportError ) :
+#
+# 	import GafferDelight
+#
+# 	__registerShadingModes( [
+#
+# 		( "Diagnostic/3Delight/Shader Assignment", GafferScene.AttributeVisualiser, { "attributeName" : "osl:surface", "mode" : GafferScene.AttributeVisualiser.Mode.ShaderNodeColor } ),
+# 		( "Diagnostic/3Delight/Camera Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "dl:visibility.camera" } ),
+# 		( "Diagnostic/3Delight/Shadow Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "dl:visibility.shadow" } ),
+# 		( "Diagnostic/3Delight/Reflection Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "dl:visibility.reflection" } ),
+# 		( "Diagnostic/3Delight/Refraction Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "dl:visibility.refraction" } ),
+# 		( "Diagnostic/3Delight/Diffuse Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "dl:visibility.diffuse" } ),
+# 		( "Diagnostic/3Delight/Specular Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "dl:visibility.specular" } ),
+# 		( "Diagnostic/3Delight/Hair Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "dl:visibility.hair" } ),
+#
+# 	] )
+#
+# if os.environ.get( "GAFFERAPPLESEED_HIDE_UI", "" ) != "1" :
+#
+# 	with IECore.IgnoredExceptions( ImportError ) :
+#
+# 		import GafferAppleseed
+#
+# 		__registerShadingModes( [
+#
+# 			( "Diagnostic/Appleseed/Shader Assignment", GafferScene.AttributeVisualiser, { "attributeName" : "osl:surface", "mode" : GafferScene.AttributeVisualiser.Mode.ShaderNodeColor } ),
+# 			( "Diagnostic/Appleseed/Camera Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:camera" } ),
+# 			( "Diagnostic/Appleseed/Shadow Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:shadow" } ),
+# 			( "Diagnostic/Appleseed/Diffuse Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:diffuse" } ),
+# 			( "Diagnostic/Appleseed/Specular Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:specular" } ),
+# 			( "Diagnostic/Appleseed/Glossy Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:glossy" } ),
+# 			( "Diagnostic/Appleseed/Photon Visibility", GafferScene.AttributeVisualiser, { "attributeName" : "as:visibility:light" } ),
+#
+# 		] )
+
+
+# Add catalogue hotkeys to viewers, eg: up/down navigation
+GafferUI.Editor.instanceCreatedSignal().connect( GafferImageUI.CatalogueUI.addCatalogueHotkeys, scoped = False )
+GafferUI.Editor.instanceCreatedSignal().connect( GafferSceneUI.EditScopeUI.addPruningActions, scoped = False )

@@ -86,6 +86,11 @@ __tools__ = pipe.roots().tools()
 
 _search = IECore.SearchPath(os.environ['GAFFERUI_IMAGE_PATHS'], ':')
 
+def gaffer_delay( delay ) :
+	endtime = time.time() + delay
+	while time.time() < endtime :
+		GafferUI.EventLoop.waitForIdle( 1 )
+
 def getMayaWindow():
     """
     Get the main Maya window as a QtGui.QMainWindow instance
@@ -471,10 +476,11 @@ class assetListWidget( GafferUI.Editor ):
         self.__buttonPressConnection = self.buttonPressSignal().connect( Gaffer.WeakMethod( self.__buttonPress ) )
         self.__buttonReleaseConnection = self.buttonReleaseSignal().connect( Gaffer.WeakMethod( self.__buttonRelease ) )
         self.__mouseMoveConnection = self.mouseMoveSignal().connect( Gaffer.WeakMethod( self.__mouseMove ) )
-        self.__dragBeginConnection = self.dragBeginSignal().connect( Gaffer.WeakMethod( self.__dragBegin ) )
-        self.__dragEndConnection = self.dragEndSignal().connect( Gaffer.WeakMethod( self.__dragEnd ) )
-        self.__dragEnterConnection = self.dragEnterSignal().connect( Gaffer.WeakMethod( self.__dragEnter ) )
-        self.__dragPointer = "paths"
+        if 'SAM_DISABLE_DRAG' not in os.environ:
+            self.__dragBeginConnection = self.dragBeginSignal().connect( Gaffer.WeakMethod( self.__dragBegin ) )
+            self.__dragEndConnection = self.dragEndSignal().connect( Gaffer.WeakMethod( self.__dragEnd ) )
+            self.__dragEnterConnection = self.dragEnterSignal().connect( Gaffer.WeakMethod( self.__dragEnter ) )
+            self.__dragPointer = "paths"
 
         self.__contextMenuConnection = self.contextMenuSignal().connect( Gaffer.WeakMethod( self.__contextMenu ) )
 
@@ -548,6 +554,11 @@ class assetListWidget( GafferUI.Editor ):
         self.treeModelStateSave()
         if assetUtils.m:
             ls = assetUtils.m.ls("|*")
+            # this accounts for <f4> expression in ribArchiveNodes, for prman 21.n.
+            if pipe.isEnable('prman'):
+                assetUtils.m.setAttr('defaultRenderGlobals.preMel', 'python("import fixPrmanArchiveSequence;reload(fixPrmanArchiveSequence);fixPrmanArchiveSequence.fix()")', type="string")
+                assetUtils.m.setAttr('defaultRenderGlobals.preRenderMel', 'python("import fixPrmanArchiveSequence;reload(fixPrmanArchiveSequence);fixPrmanArchiveSequence.fix()")', type="string")
+                assetUtils.m.setAttr('defaultRenderGlobals.preRenderLayerMel', 'python("import fixPrmanArchiveSequence;reload(fixPrmanArchiveSequence);fixPrmanArchiveSequence.fix()")', type="string")
 
         if ls != self._lastLS or force:
             self.refresh(ls)
@@ -840,7 +851,6 @@ class assetListWidget( GafferUI.Editor ):
     def __repr__( self ) :
         return "GafferUI.SAMAssetListWidget( scriptNode )"
 
-
     def setNodeGraph(self, nodeGraph):
         self._nodeGraph = nodeGraph
 
@@ -860,14 +870,157 @@ class assetListWidget( GafferUI.Editor ):
             ret[column] = []
             for index in selectedRows:
                 ret[column] += [index.internalPointer().data(eval('TreeItem.%s' % column))]
+        # print ret
         return ret
 
     def __selectionChanged( self, selected, deselected ) :
-        # print selected, deselected
+        # print selected, deselected;sys.stdout.flush()
         self.selectionChangedSignal()( self )
         return True
 
     def selectionChangedSignal( self ) :
+        # print 'selectionChangedSignal', os.environ['SAM_VIEWER_MODE']
+        if 'SAM_VIEWER_MODE' in os.environ:
+            import Asset
+            import glob
+            import GafferScene, GafferSceneUI, GafferImage
+            selectedData = self.getSelectedColumns()
+
+            def frameRange(data):
+                if data:
+                    fr = data['assetClass']['FrameRange']['range'].value
+                    start = int( fr.x )
+                    end = int( fr.y )
+                    self._script.context().setFrame( start )
+                    self._script["frameRange"]["start"].setValue( start )
+                    self._script["frameRange"]["end"].setValue( end )
+                    GafferUI.Playback.acquire( self._script.context() ).setFrameRange( start, end )
+
+            # delete previous preview nodes
+            for each in [ x for x in self._script.keys() if x[0:2] == '__' ]:
+                del self._script[each]
+
+            # grab the viewer from gaffer
+            scriptWindow = GafferUI.ScriptWindow.acquire( self._script )
+            viewer = scriptWindow.getLayout().editors( GafferUI.Viewer )[0]
+
+            # now we create the nodes needed to display the selection
+            # group node in case we have mode than one geometry node selected
+            group = GafferScene.Group()
+            if "group" in self._script:
+                del self._script["group"]
+            self._script["group"] = group
+            # the set is used to assign the node to the viewer!
+            # (the same as clinking on the target icon at the right-top
+            # corner of the node in gaffer!)
+            gset = Gaffer.StandardSet()
+            count = 0
+            for assetFullPath in selectedData['assetFullPath']:
+                data = Asset.AssetParameter( assetUtils.j.path('sam/')+str(assetFullPath) ).getData()
+
+                # we have a path in data, so we can continue
+                if data and 'path' in data:
+                    path = data['path']
+                if not data or not os.path.exists(data['path']):
+                    path = assetUtils.j.path('sam/')+str(assetFullPath)
+                    if not data:
+                        versions = glob.glob("%s/*" % path)
+                        versions.sort()
+                        path = versions[-1]
+
+                print path, assetFullPath
+                # gather alembic / USD files
+                abc  = glob.glob("%s/*.abc" % path)
+                abc += glob.glob("%s/*.usd" % path)
+                # gather images
+                images = glob.glob("%s/images/*.exr" % path)
+
+                # a node name convention so we can delete it when the selection changes.
+                nodePrefix = str(assetFullPath).replace('/','_').replace('.','_').replace('-','_').replace('-','_')
+
+                # alembic/USD geometry
+                print abc, images
+                if abc:
+                    GafferScene.MergeScenes
+                    for each in abc:
+                        node = "__sceneReader%s%02d" % (nodePrefix, count)
+                        self._script[node] = GafferScene.SceneReader()
+                        self._script[node]["fileName"].setValue( each )
+                        group["in"][count].setInput( self._script[node]["out"] )
+                        count += 1
+                        gset.add( group )
+                        frameRange( data )
+
+                # images!
+                elif images:
+                    # aovs = list(set([ os.path.splitext(os.path.splitext(x)[0])[0] for x in images ]))
+                    aovs = list(set([ x[:-8] for x in images ]))
+                    if aovs:
+                        frameRange( data )
+                        nodes = 0
+                        for each in [aovs[0]]:
+                            print each
+                            node = "__imageReader%s%02d" % (nodePrefix, nodes)
+                            self._script[node] = GafferImage.ImageReader()
+                            self._script[node]["fileName"].setValue( each+'####.exr' )
+                            nodes += 1
+                            gset.add( self._script[node] )
+                            frameRange( data )
+                else:
+                    os.system("ls -lh %s/*" % path)
+
+            if gset.size():
+                # add the nodes created in the loop above to the viewer
+                # (the same as clinking on the target icon at the right-top
+                # corner of the node in gaffer!)
+                viewer.setNodeSet( gset )
+                view = viewer.view()
+                viewport = view.viewportGadget()
+
+                # we need to wait for the viewport to be properly set after adding the set.
+                viewport_primary_child = viewport.getPrimaryChild()
+                if hasattr(viewport_primary_child, 'waitForCompletion'):
+                    viewport_primary_child.waitForCompletion()
+
+                # now we can grab the boundingbox from the viewport, so we can "f" frame the viewer
+                viewport.frame( viewport.getPrimaryChild().bound() )
+                if hasattr(view, 'expandSelection'):
+                    view["minimumExpansionDepth"].setValue( 999 )
+                    # print (dir(view))
+                    # def setSelection( paths ) :
+			        #     GafferSceneUI.ContextAlgo.setSelectedPaths( view.getContext(), IECore.PathMatcher( paths ) )
+                    # setSelection('/')
+                    # view.expandSelection( depth = 100000000 )
+                    # setSelection('')
+
+                # print self._script.keys()
+                # print [ x for x in self._script.keys() if x[0:2] == '__' ]
+
+            # with row :
+            #     if abc:
+            #         try:
+            #             # class SceneReaderPathPreview( GafferSceneUI.SceneReaderPathPreview ) :
+            #             def frameRange(self, start, end):
+            #                 start = int(start)
+            #                 end = int(end)
+            #                 self._script.context().setFrame( start )
+            #                 self._script["frameRange"]["start"].setValue( start )
+            #                 self._script["frameRange"]["end"].setValue( end )
+            #                 GafferUI.Playback.acquire( self._script.context() ).setFrameRange( start, end )
+            #
+            #             # scene = SceneReaderPathPreview( Gaffer.FileSystemPath( abc[0] ) )
+            #             fr = data['assetClass']['FrameRange']['range'].value
+            #             scene.frameRange( fr.x, fr.y )
+            #             txt=GafferUI.Label(  "Previewing: %s" % abc[0] )
+            #             txt._qtWidget().setMaximumSize( 1100, 10 )
+            #         except:
+            #             GafferUI.Label( "<img src='%s/preview.jpg'>" % str(data['publishPath']) )
+            #             del row[0]
+            #     else:
+            #         GafferUI.Label( "<img src='%s/gaffer/graphics/samNoFiles.png' width=%s height=%s>" % (pipe.roots.tools(), 800, 600)  )
+            sys.stdout.flush()
+
+
         if assetUtils.m:
             # assetUtils.m.select(cl=1)
             selectedData = self.getSelectedColumns()
@@ -876,6 +1029,7 @@ class assetListWidget( GafferUI.Editor ):
             for n in range( len( selectedData['assetFullPath'] ) ):
                 path, op = selectedData['assetFullPath'][n], selectedData['assetOP'][n]
                 # op = assetUtils.assetOP( path, self.hostApp() )
+                # print path
                 if not op:
                     op = assetUtils.assetOP( path, self.hostApp() )
                 if op:
@@ -918,7 +1072,7 @@ class assetListWidget( GafferUI.Editor ):
 
     ## This signal is emitted when the user double clicks on a leaf path.
     def pathSelectedSignal( self ) :
-
+        print 'pathSelectedSignal';sys.stdout.flush()
         return self.__pathSelectedSignal
 
     def __buttonPress( self, widget, event ) :
@@ -1106,7 +1260,7 @@ class assetListWidget( GafferUI.Editor ):
                         for _node in event.data.children():
                             if type(_node) == Gaffer.Node:
                                 asset = _node['asset'].getValue()
-                                # tmp = asset.replace('.','_').split('/')
+                                # asset = asset.replace('-','_')
                                 tmp = asset.split('/')
                                 tmp[2] = tmp[2].split('.')[-1]
 
@@ -1203,7 +1357,7 @@ class assetListWidget( GafferUI.Editor ):
 
 def checkIfNodeIsUpToDate( node ):
     from glob import glob
-    p = node.strip().split('_')
+    p = node.strip().replace('-','_').split('_')
     path = assetUtils.assetOP._fixShotPath( "%s/%s/%s" % ( p[1], p[2], '_'.join(p[3:-4]) ) )
     if '/sam/' not in path:
         path = pipe.admin.job().path('sam/')+path
@@ -1403,7 +1557,7 @@ class TreeModel(QtCore.QAbstractItemModel):
             self.columnName = name
         elif not hasattr(self, 'columnName'):
             self.columnName = uiColumnName()
-        print self.columnName
+        # print self.columnName
         self.rootItem.itemData = (self.columnName,)
 
     def refreshData(self):
@@ -1622,7 +1776,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                     ret = self.lights['blank']
                     import re
                     asset = item.data(TreeItem.assetFullPath)
-                    node = asset.replace('.','_').replace('/','_')
+                    node = asset.replace('.','_').replace('-','_').replace('/','_')
 
                     # gather data from host app to show if things are up2date, loaded or editable
                     # if nothing changed, just use the cached value!
@@ -1677,7 +1831,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                         # only light up the loaded version
                         if [ x for x in nodesInTheScene if node in x ]:
                             ret = self.lights['red']
-                            current = item.data(TreeItem.assetData).replace('.','_').replace('/','_')
+                            current = item.data(TreeItem.assetData).replace('.','_').replace('-','_').replace('/','_')
                             if node in current:
                                 # if the loaded version is current, make it green
                                 ret = self.lights['green']
@@ -1689,7 +1843,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 
                     # only to set the current version icon!
                     if item.data(TreeItem.assetData)[0]=='/':
-                        if node in item.data(TreeItem.assetData).replace('/','_').replace('.','_'):
+                        if node in item.data(TreeItem.assetData).replace('/','_').replace('.','_').replace('-','_'):
                             ret = self.lightCurrent[ret]
 
 
@@ -1859,7 +2013,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 
 
 # class SAMPanelUI(MayaQWidgetDockableMixin, QtGui.QDockWidget ):
-class _SAMPanelUI( QtGui.QDialog ):
+class _SAMPanelUI( QtGui.QFrame ):
     def __init__(self, title="SAM", parent=None):
         width=100
         # if not parent:
@@ -1873,7 +2027,7 @@ class _SAMPanelUI( QtGui.QDialog ):
 
 
         # super(_SAMPanelUI, self).__init__()
-        QtGui.QDialog.__init__(self)
+        QtGui.QFrame.__init__(self)
 
 
         self.setObjectName(self._windowTitle+'_')
@@ -1928,6 +2082,7 @@ if assetUtils.m:
         """
         def __init__(self, controlName, **kwargs):
             self.controlName = controlName
+            self.workspaceName = "%sWorkspaceControl" % self.controlName
             # we use the global mixinWindows var to store the control name
             # so we can delete the workspace when it already exists.
             # this fixes the problem at startup, since the workspace indeed exists
@@ -1936,14 +2091,28 @@ if assetUtils.m:
             # try to delete the workspace!
             if not hasattr(sys, 'mixinWindows'):
                 sys.mixinWindows= {}
-            if self.controlName in sys.mixinWindows:
-                if assetUtils.m.workspaceControl("%sWorkspaceControl" % self.controlName, exists = True):
-                    sys.mixinWindows[controlName]=None
-                    assetUtils.m.deleteUI("%sWorkspaceControl" % self.controlName)
-                    del sys.mixinWindows[controlName]
+
+            # if self.controlName in sys.mixinWindows:
+            #     del sys.mixinWindows[controlName]
+            if assetUtils.m.workspaceControl(self.workspaceName, exists = True):
+                # print "#######>", assetUtils.m.workspaceControl(self.workspaceName, exists = True)
+                assetUtils.m.workspaceControl(self.workspaceName,
+                    retain = False,
+                    restore = 1,
+                    requiredControl = "ToolBox",
+                    dockToControl = ("ToolBox", 'right'),
+                    width=200,
+                    e=1
+                )
+                assetUtils.m.deleteUI(self.workspaceName)
+
             super(DockableBase, self).__init__(**kwargs)
             self.setObjectName(controlName)
             sys.mixinWindows[controlName] = self
+            # print "##====>>",workspaceControl, omui.MQtUtil.findControl(self.objectName()), self;sys.stdout.flush()
+            #     workspaceControl = omui.MQtUtil.getCurrentParent()
+            #     print "##====>>",omui.MQtUtil.getLayoutChildren(long(workspaceControl))
+            #     sys.mixinWindows[controlName]=None
 
         def close(self):
             super(DockableBase, self).close(self)
@@ -1955,6 +2124,21 @@ if assetUtils.m:
             modulePath = inspect.getmodule(self).__name__
             className = self.__class__.__name__
             super(DockableBase, self).show(dockable=True,uiScript="import {0}; {0}.{1}._restoreUI()".format(modulePath, className), **kwargs)
+            if assetUtils.m.workspaceControl(self.workspaceName, exists = True):
+            #     assetUtils.m.deleteUI("%sWorkspaceControl" % self.controlName)
+                assetUtils.m.workspaceControl(self.workspaceName,
+                    retain = False,
+                    restore = 1,
+                    requiredControl = "ToolBox",
+                    dockToControl = ("ToolBox", 'right'),
+                    width=200,
+                    e=1
+                )
+                mixinPtr = omui.MQtUtil.findControl(self.controlName)
+                workspaceControl = omui.MQtUtil.findControl("%sWorkspaceControl" % self.controlName)
+                if mixinPtr:
+                    name = omui.MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(workspaceControl))
+
 
         @classmethod
         def _restoreUI(cls):
@@ -1962,20 +2146,32 @@ if assetUtils.m:
             Internal method to restore the UI when Maya is opened.
             """
             # Create UI instance
-            instance = cls()
-            # Get the empty WorkspaceControl created by Maya
-            workspaceControl = omui.MQtUtil.getCurrentParent()
-            print "====>>",workspaceControl
-            # Grab the pointer to our instance as a Maya object
-            mixinPtr = omui.MQtUtil.findControl(instance.objectName())
-            print "====>>",mixinPtr
-            # Add our UI to the WorkspaceControl
-            omui.MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(workspaceControl))
-            # Store reference to UI
+            # restore the one already created if one exists!
+            # if hasattr(sys, 'mixinWindows'):
+            #     instance = sys.mixinWindows[controlName]
+            # else:
+            #     instance = cls(controlName)
+            #     # Store reference to UI
+            #     sys.mixinWindows= {}
+            #     sys.mixinWindows[controlName] = instance
+
+            # instance = cls()
+            # print instance
+            # # Get the empty WorkspaceControl created by Maya
+            # workspaceControl = omui.MQtUtil.getCurrentParent()
+            # print "====>>",workspaceControl,dir(workspaceControl);sys.stdout.flush()
+            # # Grab the pointer to our instance as a Maya object
+            # mixinPtr = omui.MQtUtil.findControl(instance.objectName())
+            # print "====>>",mixinPtr,instance;sys.stdout.flush()
+            # # Add our UI to the WorkspaceControl
+            # name = omui.MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(workspaceControl))
+            # print " omui.MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(workspaceControl))", name
+            # sys.stdout.flush()
+            # controlName = name.split('WorkspaceControl')[0]
 
 
     # class SAMPanelUI(MayaQWidgetDockableMixin, _SAMPanelUI ):
-    class SAMPanelUI( DockableBase, QtGui.QDialog ):
+    class SAMPanelUI( DockableBase, QtGui.QFrame ):
         def __init__(self):
             super(SAMPanelUI, self).__init__(controlName="MyWindowSAM")
             self.setWindowTitle("SAM")

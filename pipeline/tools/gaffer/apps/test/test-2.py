@@ -31,10 +31,23 @@ import sys
 import re
 import weakref
 import threading
+import ctypes
 
 import IECore
+
+# try :
+# 		originalDLOpenFlags = sys.getdlopenflags()
+# 		sys.setdlopenflags( originalDLOpenFlags & ~ctypes.RTLD_GLOBAL )
+# 		from pxr import Usd
+# finally :
+# 		sys.setdlopenflags( originalDLOpenFlags )
+# import IECoreUSD
+# print IECoreUSD.__file__
+
 import Gaffer
 import GafferUI
+import GafferScene
+import GafferSceneUI
 import pipe
 import genericAsset
 import assetUtils
@@ -235,6 +248,8 @@ class test( Gaffer.Application ) :
 
 
 
+os.environ['SAM_DISABLE_DRAG'] = '1'
+os.environ['SAM_VIEWER_MODE'] = '1'
 if __name__ == '__main__':
         import assetListWidget, GafferScene,GafferCortex
         # gaffer needs a script context
