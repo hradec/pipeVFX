@@ -340,6 +340,7 @@ class maya(baseApp):
                 self['LD_PRELOAD'] = pipe.libs.ptex().LD_PRELOAD()
 
         self['EDITOR'] = 'atom'
+        self['MAYA_NO_HOME'] = '1'
 
     def version(self, v=None):
         if v:
