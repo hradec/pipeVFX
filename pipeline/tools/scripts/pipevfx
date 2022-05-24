@@ -261,6 +261,7 @@ else
         --mount type=bind,source=$CD/pipeline/tools/scripts/pipevfx_docker_init.sh,target=/run.sh \
         -v $CD/.root:/$STUDIO/.root \
         -v $HOME:/home/$USER/ \
+        $EXTRA_MOUNTS \
         $APPS_MOUNT \
         -e _UID=$_uid \
         -e _USER=$_user \
