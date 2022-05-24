@@ -38,6 +38,7 @@ import cached
 import farm
 import apps
 import libs
+
 try:
     import admin
 except:
@@ -488,9 +489,19 @@ def go():
     except:
         pass
 
+    # run go and cache results so subsequent go is faster
+    ret = cached.cache_func( lambda: __go(args), cache_name='source_go_'+''.join(args) )
 
+    # check if the job being set is legacy code or not.
+    checkPipeVersion = ret+'''\n python2 -c 'import pipe,os;print os.environ["GCC_VERSION"]' '''
+    if 'pipevfx.' not in cached.popen(checkPipeVersion, 'go_'+''.join(args)).readlines()[-1]:
+        sys.stderr.write("\n\nRunning legacy pipevfx code in requested job.\n\n")
+        # TODO: run arch linux root into a docker container, so we can run
+        # old jobs in the new system!
+        # pipevfx script has all the code to run pipvfx inside a docker container
+        # we just need to clone it and use the hradec/docker_lizardfs docker image!
 
-    return __go(args)
+    return ret
 
 def __go(args):
     import sys, os
@@ -574,6 +585,7 @@ def __go(args):
 
     # cd to job
     env.append( 'cd "%s"' % currentJob(job) )
+
     # add job tools/python to pythonpath
     path = '%s/tools/scripts' % currentJob(job)
     env.append( 'export PATH=$__PATH:%s:$__PATH_HOME' % path )
