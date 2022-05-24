@@ -125,7 +125,7 @@ if os.path.exists( patchFile ):
     devPatch = [ ''.join(open(patchFile).readlines()) ]
 
 
-def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
+def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_monolithic=False):
     ''' build cortex '''
     if not usd:
         usd = pkgs.masterVersion['usd']
@@ -151,6 +151,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
     # build the usd cortex only for the boost version used to build the current usd version.
     usd_version = usd
     usd = pkgs.usd[bsufix][usd_version]
+    usd_non_monolithic = pkgs.usd_non_monolithic[bsufix][usd_version]
 
     sufix = ''
     dontUseTargetSuffixForFolders = 1
@@ -167,24 +168,41 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
     # we dont need to remove usd, alembic or openvdb since the _download won't have it!
     for n in range(len(__download)):
         # set the version of usd for all versions of cortex >= 10
-        osl = usd['osl'].obj[usd['osl'].version]
-        alembic = usd['alembic'].obj[usd['alembic'].version]
-        __download[n][4] = __download[n][4].copy()
-        __download[n][4][ pkgs.boost           ] = boost_version
-        __download[n][4][ usd.obj              ] = usd.version
-        __download[n][4][ alembic.obj          ] = alembic.version
-        __download[n][4][ alembic['hdf5' ].obj ] = alembic['hdf5'].version
-        __download[n][4][ usd['osl'      ].obj ] = usd['osl'      ].version
-        __download[n][4][ usd['oiio'     ].obj ] = usd['oiio'     ].version
-        __download[n][4][ usd['ilmbase'  ].obj ] = usd['openexr'  ].version
-        __download[n][4][ usd['openexr'  ].obj ] = usd['openexr'  ].version
-        __download[n][4][ usd['pyilmbase'].obj ] = usd['openexr'  ].version
-        __download[n][4][ usd['tbb'].obj       ] = usd['tbb'      ].version
-        __download[n][4][ usd['gcc'].obj       ] = usd['gcc'      ].version
-        __download[n][4][ usd['ocio'].obj      ] = usd['ocio'     ].version
-        __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
-        # __download[n][4][ openvdbOBJ.obj       ] = openvdbOBJ.version
-        # __download[n][4][ pkgs.cortex[bsufix] ] = __download[n][2]
+        if usd_monolithic:
+            osl = usd['osl'].obj[usd['osl'].version]
+            alembic = usd['alembic'].obj[usd['alembic'].version]
+            __download[n][4] = __download[n][4].copy()
+            __download[n][4][ pkgs.boost           ] = boost_version
+            __download[n][4][ usd.obj              ] = usd.version
+            __download[n][4][ alembic.obj          ] = alembic.version
+            __download[n][4][ alembic['hdf5' ].obj ] = alembic['hdf5'].version
+            __download[n][4][ usd['osl'      ].obj ] = usd['osl'      ].version
+            __download[n][4][ usd['oiio'     ].obj ] = usd['oiio'     ].version
+            __download[n][4][ usd['ilmbase'  ].obj ] = usd['openexr'  ].version
+            __download[n][4][ usd['openexr'  ].obj ] = usd['openexr'  ].version
+            __download[n][4][ usd['pyilmbase'].obj ] = usd['openexr'  ].version
+            __download[n][4][ usd['tbb'].obj       ] = usd['tbb'      ].version
+            __download[n][4][ usd['gcc'].obj       ] = usd['gcc'      ].version
+            __download[n][4][ usd['ocio'].obj      ] = usd['ocio'     ].version
+            __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
+        else:
+            osl = usd_non_monolithic['osl'].obj[usd_non_monolithic['osl'].version]
+            alembic = usd_non_monolithic['alembic'].obj[usd_non_monolithic['alembic'].version]
+            __download[n][4] = __download[n][4].copy()
+            __download[n][4][ pkgs.boost             ] = boost_version
+            __download[n][4][ usd_non_monolithic.obj ] = usd_non_monolithic.version
+            __download[n][4][ alembic.obj            ] = alembic.version
+            __download[n][4][ alembic['hdf5' ].obj   ] = alembic['hdf5'].version
+            __download[n][4][ usd_non_monolithic['osl'      ].obj ] = usd_non_monolithic['osl'      ].version
+            __download[n][4][ usd_non_monolithic['oiio'     ].obj ] = usd_non_monolithic['oiio'     ].version
+            __download[n][4][ usd_non_monolithic['ilmbase'  ].obj ] = usd_non_monolithic['openexr'  ].version
+            __download[n][4][ usd_non_monolithic['openexr'  ].obj ] = usd_non_monolithic['openexr'  ].version
+            __download[n][4][ usd_non_monolithic['pyilmbase'].obj ] = usd_non_monolithic['openexr'  ].version
+            __download[n][4][ usd_non_monolithic['tbb'].obj       ] = usd_non_monolithic['tbb'      ].version
+            __download[n][4][ usd_non_monolithic['gcc'].obj       ] = usd_non_monolithic['gcc'      ].version
+            __download[n][4][ usd_non_monolithic['ocio'].obj      ] = usd_non_monolithic['ocio'     ].version
+            __download[n][4][ usd_non_monolithic['openvdb'  ].obj ] = usd_non_monolithic['openvdb'  ].version
+            cortex_environ['USD_VERSION'] = usd_non_monolithic.version
 
     # now build the version of cortex with the usd version
     pkgs.cortex[sufix] = build._cortex(
@@ -224,7 +242,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
 # ===========================================================================================
 # GAFFER
 # ===========================================================================================
-def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
+def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_monolithic=False):
     if not usd:
         usd = pkgs.masterVersion['usd']
     if not boost:
@@ -258,15 +276,18 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
 
     # update dependencies, retrieving the versions from the boost/usd main versions
     usd_version = usd
-    # cortex10version = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].latestVersion()
-    # cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)][cortex10version]
     cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].latestVersionOBJ()
-    usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
+    if usd_monolithic:
+        usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
+    else:
+        usd = cortexOBJ['usd_non_monolithic'].obj[ cortexOBJ['usd_non_monolithic'].version ]
+
     osl = usd['osl'].obj[usd['osl'].version]
     for n in range(len(_download)):
         _download[n][4].update( gaffer_dependency_dict(pkgs) )
         _download[n][4].update({
             pkgs.boost: boost,
+            usd.obj: usd.version,
             usd['jemalloc'].obj: usd['jemalloc' ].version,
             usd['tbb'     ].obj: usd['tbb'      ].version,
             usd['gcc'     ].obj: usd['gcc'      ].version,
@@ -274,7 +295,6 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
             usd['osl'     ].obj: usd['osl'      ].version,
             osl['llvm'    ].obj: osl['llvm'     ].version,
             cortexOBJ.obj: cortexOBJ.version,
-            cortexOBJ['usd'      ].obj: cortexOBJ['usd'      ].version,
             cortexOBJ['hdf5'     ].obj: cortexOBJ['hdf5'     ].version,
             cortexOBJ['alembic'  ].obj: cortexOBJ['alembic'  ].version,
             cortexOBJ['oiio'     ].obj: cortexOBJ['oiio'     ].version,
@@ -328,6 +348,7 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None):
                 # '$GCC_TARGET_FOLDER/lib64/libgcc_s.so.1'
             ]) if 'fedora' in  pipe.distro else '',
             'LDFLAGS': pkgs.exr_rpath_environ['LDFLAGS'],
+            'USD_VERSION': usd.version,
             'DCORES' : os.environ['CORES'],
             # 'DCORES' : '1',
         },

@@ -29,8 +29,12 @@ class usd(baseLib):
         '''
         # sys.stderr.write("\n\nBUM1\n\n")
         path = baseLib.path(self)
-        if self.parent() in ['maya']:
-            path = path.replace("/usd/", '/usd_non_monolithic/')
+        # if self.parent() in ['maya']:
+        #     path = path.replace("/usd/", '/usd_non_monolithic/')
+
+        # we're using usd_non_monolithic for everything until mayausd plugin
+        # can build with usd monolithic libs
+        path = path.replace("/usd/", '/usd_non_monolithic/')
         return '/'.join([path, subpath])
 
     def environ(self):

@@ -244,9 +244,9 @@ if ' alembic ' in os.environ['DEPEND']:
     ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
     ALEMBIC_LIB_PATH        = "%s/lib" % os.environ['ALEMBIC_TARGET_FOLDER']
 
+WITH_USD_MONOLITHIC = False
 if ' usd ' in os.environ['DEPEND']:
     WITH_USD_MONOLITHIC = os.path.exists("%s/lib/lib*_ms.so" % os.environ['USD_TARGET_FOLDER'])
-WITH_USD_MONOLITHIC = True
 
 if versionMajor(app_environ('USD_VERSION')) > 21.5:
     USD_LIB_PREFIX = 'usd_'

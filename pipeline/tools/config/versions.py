@@ -22,6 +22,7 @@ import pipe,os
 
 # default libraries set
 os.environ['GCC_VERSION'] = 'pipevfx.5.0.0'
+#os.environ['GCC_VERSION'] = 'gcc-multi'
 
 # default farm engine!
 os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
@@ -33,6 +34,7 @@ pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
 # pipe.version.set( maya      = '2016.5' )
 # pipe.version.set( maya      = '2018' )
 pipe.version.set( maya      = '2022.2' )
+# pipe.version.set( maya      = '2022.3' )
 pipe.version.set( nuke      = '12.1v1' )
 pipe.version.set( natron    = '2.5.0.a2' )
 pipe.version.set( houdini   = 'hfs17.5.173' )
@@ -62,7 +64,10 @@ if 'GCC_VERSION' in os.environ:
     pipe.libs.version.set( oiio     = '1.8' )
     pipe.libs.version.set( qt       = '5.15.2' )
     pipe.libs.version.set( tbb      = '2019_U6' )
-    pipe.libs.version.set( cortex   = '10.2' )
+    pipe.libs.version.set( cortex   = '10.3.4.0' )
+    pipe.libs.version.set( cmake    = '3.22.2' )
+    pipe.libs.version.set( openvdb  = '8.2.0' )
+    pipe.libs.version.set( jpeg     = '6b' )
 else:
     pipe.version.set( python        = '2.6.8' )
     pipe.libs.version.set( alembic  = '1.1.1' )
