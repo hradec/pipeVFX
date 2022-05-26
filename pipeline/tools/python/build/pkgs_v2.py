@@ -36,7 +36,8 @@ class all: # noqa
         'boost'   : '1.70.0',
         'openexr' : '2.4.0',
         'usd'     : '21.5.0',
-        'tbb'     : '2020_U3'
+        'tbb'     : '2020_U3',
+        'jpeg'    : '6b'
     }
 
     def cmake_prefix(self):
@@ -654,6 +655,7 @@ class all: # noqa
             'six',      # needed by CortexVFX > 10
             'jinja2',   # needed by USD
             'sphinx',   # needed by pyside
+            'psutil',   # needed by sam
             # 'pybind11[Global]',
         ]}
 
@@ -868,7 +870,8 @@ class all: # noqa
                 'make install INSTALL="/usr/bin/install -D"',
             ],
             environ = { 'LD' : 'ld' },
-            noMinTime=True,
+            noMinTime = True,
+            version_default = self.masterVersion['jpeg'],
         )
         self.jpeg = jpeg
 
@@ -920,19 +923,19 @@ class all: # noqa
                 'tiff-3.8.2.tar.gz',
                 '3.8.2',
                 'fbb6f446ea4ed18955e2714934e5b698',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', python: '2.7.16', jpeg: '6b' }
             ),(
                 'http://download.osgeo.org/libtiff/old/tiff-4.0.3.tar.gz',
                 'tiff-4.0.3.tar.gz',
                 '4.0.3',
                 '051c1068e6a0627f461948c365290410',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', python: '2.7.16', jpeg: '6b' }
             ),(
                 'http://download.osgeo.org/libtiff/tiff-4.0.6.tar.gz',
                 'tiff-4.0.6.tar.gz',
                 '4.0.6',
                 'd1d2e940dea0b5ad435f21f03d96dd72',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', python: '2.7.16', jpeg: '6b' }
             )],
             depend=[jpeg, libraw],
             environ = { 'LD' : 'ld', 'LD_LIBRARY_PATH' : '$GCC_TARGET_FOLDER/lib64/'  },
@@ -2303,6 +2306,7 @@ class all: # noqa
         qtpy = build.download(
             ARGUMENTS,
             'qtpy',
+            src = 'README.md',
             download=[(
                 'https://github.com/mottosso/Qt.py/archive/1.1.0.b3.tar.gz',
                 'Qt.py-1.1.0.b3.tar.gz',
@@ -2317,6 +2321,8 @@ class all: # noqa
             cmd = [
                 'rm -rf $INSTALL_FOLDER/*',
                 'mkdir -p $INSTALL_FOLDER/lib/python/site-packages/src',
+                'cp -rf ./Qt.py $INSTALL_FOLDER/lib/python/site-packages/',
+                'cp -rf ./* $INSTALL_FOLDER/lib/python/site-packages/src/',
                 'ln -s python $INSTALL_FOLDER/lib/python2.6',
                 'ln -s python $INSTALL_FOLDER/lib/python2.7',
                 'ln -s python $INSTALL_FOLDER/lib/python3.5',
@@ -2324,12 +2330,8 @@ class all: # noqa
                 'ln -s python $INSTALL_FOLDER/lib/python3.7',
                 'ln -s python $INSTALL_FOLDER/lib/python3.8',
                 'ln -s lib $INSTALL_FOLDER/lib64',
-                'cp -rf ./Qt.py $INSTALL_FOLDER/lib/python/site-packages/',
-                'cp -rf ./* $INSTALL_FOLDER/lib/python/site-packages/src/',
                 'echo "This build was done suscessfully!!"',
             ],
-            src = 'Qt.py',
-            noMinTime=True,
         )
         self.qtpy = qtpy
 
@@ -2495,7 +2497,7 @@ class all: # noqa
                 'pyside2-maya2018.6' : 'pyside-setup',
             },
             # baseLibs=[python],
-            depend=[self.qt, self.gcc, self.patchelf],
+            depend=[self.patchelf],
             environ={
                 # to be able to use gcc and llvm togheter, we have to add
                 # GCC search paths in CC/CXX/LD env vars, since LLVM
@@ -2527,6 +2529,10 @@ class all: # noqa
                 'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
                             ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+                'LD_PRELOAD': ':'.join([
+                    '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                    '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                ]),
                 'RPATH'   : '$RPATH:'+self.qt_rpath_environ['RPATH'],
                 'CPATH'   : '$CPATH:'+self.qt_rpath_environ['CPATH'],
             },
@@ -2717,12 +2723,16 @@ class all: # noqa
             )],
             environ = environ,
         )
+
+        # https://developer.nvidia.com/cuda-10.1-download-archive-update2?target_arch=x86_64&target_distro=CentOS&target_os=Linux&target_version=7&target_type=runfilelocal
         self.cuda = build.configure(
             build.ARGUMENTS,
             'cuda',
             src='cuda_11.6.1_510.47.03_linux.run',
             do_not_set = ['include/*'],
             download=[(
+                # 'https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run'
+                #https://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_440.33.01_linux.run
                 'https://developer.download.nvidia.com/compute/cuda/11.6.1/local_installers/cuda_11.6.1_510.47.03_linux.run',
                 'cuda_11.6.1_510.47.03_linux.run',
                 '11.6.1_510.47.03',
@@ -3469,7 +3479,7 @@ class all: # noqa
                     'RPATH'         : '$RPATH:'+self.exr_rpath_environ['RPATH'],
                     'NVCCFLAGS'     : ' -std=c++17 ',
                 },
-                verbose=1,
+                verbose=0,
             )
             self.opensubdiv[bsufix] = opensubdiv
 
@@ -3686,7 +3696,7 @@ class all: # noqa
                         "mkdir build",
                         "cd build",
                         # we need to do this since USD 21 will insist in using the system tbb!!
-                        "mv /usr/lib64/libtbb.so.2 /usr/lib64/__libtbb.so.2__",
+                        "( mv /usr/lib64/libtbb.so.2 /usr/lib64/__libtbb.so.2__ || true )",
                         # "export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH" % os.popen("dirname $(ldconfig -p | grep libc.so.6 | awk '{print $(NF)}')").readlines()[0].strip(),
                         # "echo $LD_LIBRARY_PATH",
                         "cmake --build --target install --parallel $CORES ..",
@@ -3695,9 +3705,9 @@ class all: # noqa
                         # now we can build!
                         "make -j $CORES",
                         "make -j $CORES install",
-                        "ln -s lib/python/pxr $INSTALL_FOLDER/python || true",
+                        "( ln -s lib/python/pxr $INSTALL_FOLDER/python || true )",
                         # now we can return the system tbb back
-                        "mv /usr/lib64/__libtbb.so.2__ /usr/lib64/libtbb.so.2",
+                        "( mv /usr/lib64/__libtbb.so.2__ /usr/lib64/libtbb.so.2 | true )",
 
                     ],
                     flags=[
@@ -3788,7 +3798,8 @@ class all: # noqa
             # ============================================================================================================================================
             # github build point so we can split the build in multiple matrix jobs in github actions
             # ============================================================================================================================================
-            build.github_phase_one_version(ARGUMENTS, {self.usd[bsufix] : self.masterVersion['usd']})
+            for v in self.usd_non_monolithic[bsufix].keys():
+                build.github_phase_one_version(ARGUMENTS, {self.usd_non_monolithic[bsufix] : v})
 
 
 
@@ -3915,6 +3926,24 @@ class all: # noqa
             self.glog,
             self.gflags,
         ])
+
+
+        # self.gdb = build.configure(
+        #     build.ARGUMENTS,
+        #     'gdb',
+        #     download=[(
+        #         'https://ftp.gnu.org/gnu/gdb/gdb-11.2.tar.gz',
+        #         'gdb-11.2.tar.gz',
+        #         '11.2',
+        #         'b5674bef1fbd6beead889f80afa6f269',
+        #         { self.gcc : '9.3.1' }
+        #     )],
+        #     cmd=[
+        #         './configure --with-python=no',
+        #         'make',
+        #         'make install',
+        #     ]
+        # )
 
 
 
