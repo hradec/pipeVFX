@@ -478,6 +478,7 @@ class maya(baseApp):
                 'ERROR | [driver_exr]',
                 'H5FD_sec2_open',
                 'OpenEXR exception',
+                'OpenEXR display driver:  Cannot open image file',
             ]
             for s in errors:
                 if s in str(returnLog):
@@ -495,13 +496,15 @@ class maya(baseApp):
                 # 'Error: X00002 Plugin error: ',
                 "Error: T02001 Can't open texture ",
                 "Error: R50005 License error",
-                "Error reading EXR 'renderman",
                 'ERROR | [driver_exr]',
                 'H5FD_sec2_open',
                 'OpenEXR exception',
                 '* CRASHED',
                 'render terminating early:  received abort signal',
                 'Maya exited with status',
+                'rfm Fatal: R06004 Error 139 during RiSystem call',
+                'OpenEXR display driver:  Cannot open image file',
+                # "Error reading EXR 'renderman",  # denoise error
         ]
         for s in fatalErrors:
             if s in str(returnLog):
@@ -513,6 +516,7 @@ class maya(baseApp):
         # return a posix error code if we got an error, so the farm engine
         # will get a proper error!
         return int(error)*255
+
 
 
 
