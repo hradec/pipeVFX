@@ -633,6 +633,7 @@ class maya(baseApp):
                 'ERROR | [driver_exr]',
                 'H5FD_sec2_open',
                 'OpenEXR exception',
+                'OpenEXR display driver:  Cannot open image file',
             ]
             for s in errors:
                 if s in str(returnLog):
@@ -654,9 +655,11 @@ class maya(baseApp):
                 'ERROR | [driver_exr]',
                 'H5FD_sec2_open',
                 'OpenEXR exception',
+                'OpenEXR display driver:  Cannot open image file',
                 '* CRASHED',
                 'render terminating early:  received abort signal',
                 'Maya exited with status',
+                'rfm Fatal: R06004 Error 139 during RiSystem call',
         ]
         for s in fatalErrors:
             if s in str(returnLog):
