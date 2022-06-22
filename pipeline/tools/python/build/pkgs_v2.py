@@ -629,6 +629,13 @@ class all: # noqa
                     '3.7.5',
                     '1cd071f78ff6d9c7524c95303a3057aa',
                     { self.gcc : '4.8.5', readline : '7.0.0', openssl : '1.0.2s' },
+                ),(
+                    # CY2022
+                    'https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tar.xz',
+                    'Python-3.9.13.tar.gz',
+                    '3.9.13',
+                    '5e2411217b0060828d5f923eb422a3b8',
+                    { self.gcc : '6.3.1', readline : '7.0.0', openssl : '1.0.2s' },
             )],
             # this fixes https not finding certificate in easy_install
             environ = {
@@ -1305,6 +1312,20 @@ class all: # noqa
             '1.70.0',
             'fea771fe8176828fabf9c09242ee8c26',
             { self.gcc :  '6.3.1' }
+        ),(
+            # CY2021
+            'https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.gz',
+            'boost_1_73_0.tar.gz',
+            '1.73.0',
+            '4036cd27ef7548b8d29c30ea10956196',
+            { self.gcc :  '6.3.1' }
+        ),(
+            # CY2022
+            'https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz',
+            'boost_1_76_0.tar.gz',
+            '1.76.0',
+            'e425bf1f1d8c36a3cd464884e74f007a',
+            { self.gcc :  '6.3.1' }
         )]
         boost = build.boost(
             ARGUMENTS,
@@ -1632,6 +1653,15 @@ class all: # noqa
                     '2.4.0',
                     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
                     { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version, build.override.src: 'CMakeLists.txt'  }
+                )]
+            if build.versionMajor(boost_version) >= 1.76:
+                download += [(
+                    # CY2022 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
+                    'https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.1.5.tar.gz',
+                    'openexr-3.1.5.tar.gz',
+                    '3.1.5',
+                    'a92f38eedd43e56c0af56d4852506886',
+                    { self.gcc : '6.3.1', python: '3.9.13', boost: boost_version, build.override.src: 'CMakeLists.txt'  }
                 )]
             openexr = build.configure(
                 ARGUMENTS,

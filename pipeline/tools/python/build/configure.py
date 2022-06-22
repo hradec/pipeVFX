@@ -745,6 +745,16 @@ class boost(configure):
                 "[ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] && ln -s libboost_python$(echo $PYTHON_VERSION_MAJOR | sed 's/\.//').so $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so",
             ]
 
+        # CY2022 switchs to c++17 with gcc 9.3.1
+        if float(os_environ['VERSION_MAJOR']) >= 1.76:
+            # cmd += ['( x=$(ls $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python??.so) ; [ "$x" != "" ] && ln -s $(basename $x) $(dirname $x)/libboost_python.so )']
+            cmd = [
+                "./bootstrap.sh --prefix=$INSTALL_FOLDER --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER/", #" --without-libraries=log --without-icu",
+		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17' cxxstd=17 variant=release link=shared threading=multi install",
+                "[ -e $INSTALL_FOLDER/lib/cmake ] && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
+                "[ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] && ln -s libboost_python$(echo $PYTHON_VERSION_MAJOR | sed 's/\.//').so $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so",
+            ]
+
         # if we need to build with system gcc
         # if float(os_environ['VERSION_MAJOR']) in []:
         #     cmd = [
