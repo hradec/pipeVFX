@@ -84,7 +84,7 @@ list_ig(){
 list_template(){
     __cache_list "gcloud compute --project $project  instance-templates list $1" /tmp/.googleList_templates.txt
 }
-zones(){
+list_zones(){
 	__cache_list "gcloud compute zones list $1"  /tmp/.googleListZones.txt
 }
 disks(){
@@ -219,10 +219,10 @@ gserver(){
     echo $type
     [ "$type" == "" ] && type="n1-standard-4"
 
-	#gcloud compute --project "orbital-ego-170117" disks create "gserver$1" \
+	#gcloud compute --project "$project" disks create "gserver$1" \
 	#	--size "10"  --source-snapshot "arch-kexec" --type "pd-standard"
 
-    echo gcloud compute --project "orbital-ego-170117" instances create "gserver$SUFFIX" \
+    echo gcloud compute --project "$project" instances create "gserver$SUFFIX" \
 	--machine-type "$type" \
 	--subnet "default" \
 	--metadata "OS_LABEL=SERVER,OS_BOOT=1,serial-port-enable=1" \
@@ -235,7 +235,7 @@ gserver(){
 
 
 
-	gcloud compute --project "orbital-ego-170117" instances create "gserver$SUFFIX" \
+	gcloud compute --project "$project" instances create "gserver$SUFFIX" \
 	--machine-type "$type" \
 	--subnet "default" \
 	--metadata "OS_LABEL=SERVER,OS_BOOT=1,serial-port-enable=1" \
@@ -259,23 +259,26 @@ cat > /dev/shm/serial.sh <<\EOF
 #!/bin/sh
     h="$1"
     echo $1
-    if [ "$(let h=-5+$1+1 ; echo $h)" != "-4" ] ; then
-        h=$(echo $1 | awk '{printf("%03d", $1)}')
-    fi
+    #if [ "$(let h=-5+$1+1 ; echo $h)" != "-4" ] ; then
+    #    h=$(echo $1 | awk '{printf("%03d", $1)}')
+    #fi
     for v in $(googlefarm.sh list | grep "$h" | awk '{print $1"@"$2}') ; do
+        echo $v
         hostname=$(echo $v | awk -F'@' '{print $1}')
         zone=$(echo $v | awk -F'@' '{print $2}')
         echo "serial: |$hostname|$zone|"
         export hostname
-        #xterm -geometry 180x40 -bg "#222" -fg "white" -e "while true ; do gcloud beta compute --project orbital-ego-170117 connect-to-serial-port $hostname --extra-args replay-lines=2000 --zone $zone ; sleep 1; done" &
-        gcloud compute --project orbital-ego-170117 connect-to-serial-port $hostname --extra-args replay-lines=2000 --zone $zone
+        #xterm -geometry 180x40 -bg "#222" -fg "white" -e "while true ; do gcloud beta compute --project $project connect-to-serial-port $hostname --extra-args replay-lines=2000 --zone $zone ; sleep 1; done" &
+        echo gcloud compute --project $project connect-to-serial-port $hostname --extra-args replay-lines=2000 --zone $zone
+        gcloud compute --project $project connect-to-serial-port $hostname --extra-args replay-lines=2000 --zone $zone
     done
 EOF
 chmod a+x /dev/shm/serial.sh
 }
 serial(){
+    export project
     _serial
-    xterm -geometry 180x40 -bg "#222" -fg "white" -e "/dev/shm/serial.sh $1" &
+    xterm -geometry 180x40 -bg "#222" -fg "white" -e "/dev/shm/serial.sh $1 || bash -i -l" &
     #tilix -e "/dev/shm/serial.sh $1" &
 }
 
@@ -288,6 +291,9 @@ ssh(){
     else
         echo ""
     fi
+    if [ "$(echo $h | grep gmonitor)" != "" ] ; then
+	port=22002
+    fi
     googlefarm.sh list
     for each in $($0 list | grep "$h" | awk '{print $(NF-1)"@"$(NF)}') ; do
         export hostname=$(echo $each  | awk -F'@' '{print $(NF-1)}')
@@ -297,7 +303,7 @@ ssh(){
         if [ "$hostname" != "" ] && [ "$state" == "RUNNING" ]; then
         	#echo gcloud compute --project "$project"  connect-to-serial-port  $hostname
         	#gcloud compute --project "$project"  connect-to-serial-port  $hostname --extra-args replay-lines=800,on-dtr-low=disconnect
-            #xterm -geometry 180x40 -bg "#222" -fg "white" -e 'gcloud beta compute --project "orbital-ego-170117" connect-to-serial-port "$hostname" --zone "$CLOUDSDK_COMPUTE_ZONE"' &
+            #xterm -geometry 180x40 -bg "#222" -fg "white" -e 'gcloud beta compute --project "$project" connect-to-serial-port "$hostname" --zone "$CLOUDSDK_COMPUTE_ZONE"' &
             if [ "$(echo $hostname | grep gmonitor)" != "" ] ; then
                  port=22002
             fi
@@ -325,7 +331,7 @@ startStopReset(){
     l=$(list)
     # echo -e "$l\n\n"
 	action=$1
-    grep=$(echo "$l" | egrep "google.*cpus.*" |  grep "$2" | awk '{print $1}')
+    grep=$(echo "$l" |  grep "$2" | awk '{print $1}')
 	h=$2
     if [ "$grep" != "" ] ; then
         h=$grep
@@ -401,9 +407,9 @@ create_storage(){
     # create the network
     region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
     network=custom-$region
-    gcloud compute --project=orbital-ego-170117 networks create \
+    gcloud compute --project=$project networks create \
         $network --subnet-mode=custom
-    gcloud compute --project=orbital-ego-170117 networks subnets create sub1-$network \
+    gcloud compute --project=$project networks subnets create sub1-$network \
         --network=$network --region=$region\
         --range=10.0.0.0/16 --secondary-range=r2-$network=192.168.0.0/16
 
@@ -448,8 +454,10 @@ create_storage(){
     vm_type="n1-standard-4"
     vm_type="n1-highmem-4"
     vm_type="n1-highcpu-8"
+    vm_type="n2d-highcpu-16"
+    vm_type="n1-highcpu-16"
 	name="storage-${region}$SUFFIX$BRANCH"
-	gcloud beta compute --project=orbital-ego-170117 instances create $name\
+	gcloud beta compute --project=$project instances create $name\
 		--machine-type=$vm_type \
 		--network-interface "subnet=sub1-$network,aliases=r2-$network:192.168.0.0/16" \
 		--network-tier=PREMIUM \
@@ -459,11 +467,12 @@ create_storage(){
         --scopes=https://www.googleapis.com/auth/cloud-platform \
 		--tags=proxmox,http-server,https-server \
 		--image=nested-vm-proxmox \
-		--image-project=orbital-ego-170117 \
+		--image-project=$project \
 		--boot-disk-size=50GB \
 		--boot-disk-type=pd-ssd \
 		--boot-disk-device-name=$name \
-		--create-disk=mode=rw,size=1000,type=projects/orbital-ego-170117/zones/$CLOUDSDK_COMPUTE_ZONE/diskTypes/pd-standard,device-name=persistent-disk-1,name=$name-cache
+		--create-disk=mode=rw,size=1000,type=projects/$project/zones/$CLOUDSDK_COMPUTE_ZONE/diskTypes/pd-ssd,device-name=persistent-disk-1,name=$name-cache
+#		--create-disk=mode=rw,size=1000,type=projects/$project/zones/$CLOUDSDK_COMPUTE_ZONE/diskTypes/pd-standard,device-name=persistent-disk-1,name=$name-cache
 
     echo "last command result: $?"
 }
@@ -474,7 +483,7 @@ create_render_node(){
     name="render-node$SUFFIX$BRANCH"
     region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
     network=custom-$region
-    gcloud compute --project=orbital-ego-170117 instances create $name \
+    gcloud compute --project=$project instances create $name \
         --zone=$CLOUDSDK_COMPUTE_ZONE \
         --machine-type=$type \
         --subnet=sub1-$network \
@@ -488,7 +497,7 @@ create_render_node(){
         --min-cpu-platform="Intel Skylake" \
         --tags=proxmox,http-server,https-server \
         --image=nested-vm-proxmox \
-        --image-project=orbital-ego-170117 \
+        --image-project=$project \
         --boot-disk-size=50GB \
         --boot-disk-type=pd-ssd \
         --boot-disk-device-name=$name
@@ -497,6 +506,7 @@ create_render_node(){
 }
 
 create_render_node_instance(){
+    #echo $0
     cores=$1
     # if [ "$2" != "" ] ; then
         # noaddress="-$2"
@@ -505,19 +515,23 @@ create_render_node_instance(){
 
     region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
     network=custom-$region
-    name="render-node-$cores-cores-instance-$region$noaddress"
-    echo $name
 
-    type="n1-highcpu-"
-    [ $cores -lt 30 ] && type="n1-standard-"
+    type="n1-highcpu"
+    [ $cores -lt 30 ] && type="standard"
+    # gcloud compute zones list  | awk '{print $1}' | grep $region
+    type=$(/usr/sbin/gcloud compute machine-types list --zones ${region}-a | awk '{print $1}' | grep $type | grep $cores | /bin/tail -n 1)
+    #echo "type: $type"
+
+    name="render-node-$type-$region$noaddress"
+    echo "$name"
 
     # echo "$(list_template | grep $name)"
-    if [ "$(list_template | grep $name)" == "" ] ; then
-        gcloud compute --project=orbital-ego-170117 instance-templates \
+    if [ "$(list_template | egrep $(echo $name | sed 's/-/./g') )" == "" ] ; then
+        gcloud compute --project=$project instance-templates \
             create $name \
             $extra \
-            --machine-type=$type$cores \
-            --subnet=projects/orbital-ego-170117/regions/$region/subnetworks/sub1-$network \
+            --machine-type=$type \
+            --subnet=projects/$project/regions/$region/subnetworks/sub1-$network \
             --network-tier=PREMIUM \
             --can-ip-forward \
             --no-restart-on-failure \
@@ -529,61 +543,67 @@ create_render_node_instance(){
             --min-cpu-platform="Intel Skylake" \
             --tags=http-server,https-server \
             --image=nested-vm-proxmox \
-            --image-project=orbital-ego-170117 \
+            --image-project=$project \
             --boot-disk-size=50GB \
-            --boot-disk-type=pd-standard \
+            --boot-disk-type=pd-ssd \
             --boot-disk-device-name=$name
+
+            [ $? != 0 ] && exit 1
     fi
 
 }
 create_instance_group(){
+    echo $0
     cores=$1
     max_vms=$2
+    mode=$3
+    cpuLimit=$4
+    [ "$cpuLimit" == "" ] && cpuLimit="0.05"
+    [ "$mode" == "" ] && mode="only-up"
     [ "$cores" == "" ] && cores=64
     [ "$max_vms" == "" ] && max_vms=20
     [ "$(echo $max_vms | grep '-')" != "" ] && max_vms=20
     region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
 
-    zones="$(echo $(./bin/proxmox-vm/googlefarm.sh zones | grep $region | awk '{print $1}' | sort) | sed 's/ /,/g')"
+    zones="$(echo $(list_zones | grep $region | awk '{print $1}' | sort) | sed 's/ /,/g')"
     [ $cores -lt 30 ] && zones=$CLOUDSDK_COMPUTE_ZONE
 
     # create the template
     template=$(create_render_node_instance $cores $region)
-    echo $template
+    echo "$template"
 
-    name="ig-$cores-$region"
+    name="ig-$template"
+    grep_name=$(echo $name | sed 's/-/./g')
 
-    sleep 5
-    if [ "$(list_ig | grep $name)" == "" ] ; then
-        while true ; do
-            gcloud beta compute --project orbital-ego-170117 instance-groups managed \
-                create $name \
-                --base-instance-name=rnode-$cores-cores \
-                --template=$template \
-                --size=1 \
-                --health-check=check --initial-delay=300 \
-                --zones=$zones
-            # if template shows up, continue
-            if [ "$(gcloud compute --project orbital-ego-170117  instance-groups list | grep $name)" != "" ] ; then
-                break
-            fi
-            echo "It may take a while for the instance template be available... just retry."
-            sleep 5
-        done
-    fi
+    while [ "$(list_ig | egrep $grep_name)" == "" ] ; do
+        list_ig
+        list_template
+        echo $grep_name
+        echo "It may take a while for the instance template be available... "
+        sleep 5
+        gcloud beta compute --project $project instance-groups managed \
+            create $name \
+            --base-instance-name=rnode-$cores-cores \
+            --template=$template \
+            --size=1 \
+            --zones=$zones
+            #--health-check=check --initial-delay=300
+    done
 
 
     while true ; do
-        gcloud compute --project "orbital-ego-170117" instance-groups managed \
+        gcloud beta compute --project "$project" instance-groups managed \
             set-autoscaling "$name" \
             --region "$region" \
             --cool-down-period "120" \
             --max-num-replicas "$max_vms" \
             --min-num-replicas "1" \
-            --target-cpu-utilization "0.04"
+            --target-cpu-utilization "$cpuLimit" \
+            --mode "$mode" \
+#            --scale-in-control max-scaled-in-replicas=95%,time-window=120
 
         if [ $? != 0 ] ; then
-            echo "It may take a while for the instance group be available to set autoscaling, after creating it... just retry."
+            echo "It may take a while for the instance group be available to set autoscaling, after creating it... "
             sleep 5
         else
             break
@@ -594,7 +614,7 @@ create_instance_group(){
 delete_instance_group()
 {
     region=$(echo $CLOUDSDK_COMPUTE_ZONE | awk -F'-' '{print $1"-"$2}')
-    gcloud compute --project "orbital-ego-170117" instance-groups managed delete $1 --region "$region"
+    gcloud compute --project "$project" instance-groups managed delete $1 --region "$region"
     #--zone=$(list_ig | grep $1 | awk '{print $2}')
 }
 
@@ -636,7 +656,7 @@ elif  [ "$1" == "zone" ] ; then
     current_zone
 
 elif  [ "$1" != "" ] ; then
-	$1 $2 $3 $4 $5 $6 $7 $8 $9
+	"$1" $2 $3 $4 $5 $6 $7 $8 $9
 else
 cat << EOF
 $0
@@ -651,7 +671,7 @@ ________________________________________________________________________________
 		$0 list
 		$0 list_ig
 		$0 list_template
-		$0 zones
+		$0 list_zones
 		$0 disks
 		$0 snapshots
 
