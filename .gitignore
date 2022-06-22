@@ -23,5 +23,6 @@ pipeline/tools/prman/ris/*.*
 NVIDIA*.run
 cuda*.run
 *_libs
-
+mtoaRoot
+arnoldRoot
 updates
