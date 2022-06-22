@@ -137,7 +137,17 @@ RUN yum -y install gcc-objc++
 RUN yum -y install xcb-util-wm-devel libxcb-devel.x86_64 \
     xcb-util-image-devel.x86_64 xcb-util-keysyms-devel.x86_64 \
     xcb-util-renderutil-devel.x86_64 xcb-util-wm-devel.x86_64
-RUN yum -y install xcb*devel
+    
+RUN yum -y install xcb*devel libXcursor-devel \
+    libXrandr-devel \
+    libXinerama-devel \
+    libXi-devel \
+    mesa-libGLU-devel \
+
+RUN ln -s /lib64/libssl.so /lib64/libssl.so.10 && \
+    ln -s /lib64/libcrypto.so /lib64/libcrypto.so.10 && \
+    ln -s /lib64/libtinfo.so.6 /lib64/libtinfo.so.5 && \
+    ln -s /lib64/libnsl.so.2 /lib64/libnsl.so.1 \
 
 
 ENTRYPOINT "/run.sh"

@@ -204,8 +204,20 @@ RUN yum install -y libpng15 \
     libpng15  \
     audiofile audiofile-devel e2fsprogs-libs libpng12 \
     x11vnc xrdp mesa-libGLw mesa-libGLU libXp \
+    libXcursor-devel \
+    libXrandr-devel \
+    libXinerama-devel \
+    libXi-devel \
+    mesa-libGLU-devel
 
 
+RUN ln -s /lib64/libssl.so /lib64/libssl.so.10 && \
+    ln -s /lib64/libcrypto.so /lib64/libcrypto.so.10 && \
+    ln -s /lib64/libtinfo.so.6 /lib64/libtinfo.so.5 && \
+    ln -s /lib64/libnsl.so.2 /lib64/libnsl.so.1
+
+
+RUN yum clean all
 ENV TERM=xterm
 ENTRYPOINT "/run.sh"
 
