@@ -30,7 +30,6 @@ def difference(node):
         except:
           pass
 
-
     return current
 
 def union(node):
@@ -226,7 +225,6 @@ def run():
     old=[]
     meshes = []
     disabled = []
-
     cleanUp()
 
     try: disabled=m.listConnections('disable.dagSetMembers')
@@ -235,7 +233,8 @@ def run():
     # dont execute scripts that are inside a display layer and are not visible!
     for each in m.ls(type='displayLayer'):
         if not m.getAttr('%s.visibility' % each):
-            disabled += m.editDisplayLayerMembers(each,q=1)
+            try: disabled += m.editDisplayLayerMembers(each,q=1)
+            except: pass
 
     scripts=m.ls('__scrip*')
     def natural_keys(text):
