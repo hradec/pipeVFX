@@ -64,6 +64,6 @@ mkdir -p mtoaRoot/$mtoaVersion && cd mtoaRoot/$mtoaVersion
 echo Downloading MtoA "https://${url}"
 curl -L https://${login}${url} -o mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run
 
-sh ../mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run --tar xvf
+sh ./mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run --tar xvf
 mkdir -p install && cd install
 unzip ../package.zip

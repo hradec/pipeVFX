@@ -28,13 +28,6 @@ build.s_print('build.installRoot() = '+build.installRoot())
 # get installed app versions using pipe
 import pipe
 
-
-# we're setting boostMasterVersion as the main default boost version
-# although we try to build cortex with all the available boost versions,
-# but because of boost is used by other cortex dependencies, we have
-# to build only the boost versions we have dependencies built for.
-boostMasterVersion = "1.66.0"
-
 # cortex versions we build for now.
 download = [[
     'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
@@ -61,10 +54,10 @@ download = [[
     {},
     {"boost" : ("1.66.0", "99.99.99")}
  ],[
-    'https://github.com/ImageEngine/cortex/archive/refs/tags/10.3.2.1.tar.gz',
-    'cortex-10.3.2.1.tar.gz',
-    '10.3.4.0',
-    '4437543f90238f69082b7ac0178d9115',
+    'https://github.com/ImageEngine/cortex/archive/refs/tags/10.3.6.1.tar.gz',
+    'cortex-10.3.6.1.tar.gz',
+    '10.3.6.1',
+    '884dc61c6c624b96e3e6acc45468fff0',
     {},
     {"boost" : ("1.66.0", "99.99.99")}
 ]]
@@ -83,7 +76,14 @@ gaffer_download = [(
     'gaffer-0.61.1.1-gaffercortex.tar.gz',
     '0.61.1.1',
     '31b22fb2999873c92aeefea4999ccc3e',
-    {},
+    {}, #{"cortex" : '10.3.2.1'},
+    {"boost" : ("1.66.0", "99.99.99")}
+),(
+    'https://github.com/hradec/gaffer/archive/refs/tags/0.61.13.0-gafferCortex.tar.gz',
+    'gaffer-0.61.13.0-gafferCortex.tar.gz',
+    '0.61.13.0',
+    'a148134bf122b1eb1cf9eda56ac93965',
+    {}, #{"cortex" : '10.3.6.1'},
     {"boost" : ("1.66.0", "99.99.99")}
 # ),(
 #     'https://github.com/hradec/gaffer/archive/refs/tags/0.62.0.0-gafferCortex-alpha1.tar.gz',
@@ -99,7 +99,7 @@ def gaffer_dependency_dict(pkgs):
 
 
 # download and install arnold versions to build arnold gaffer extension
-arnold_versions = ['7.0.0.0']
+arnold_versions = ['7.0.0.0', '7.1.2.0']
 for arnold_version in arnold_versions:
     if not glob.glob( '/%s/apps/linux/x86_64/arnold/%s/*' % (os.environ['STUDIO'], arnold_version) ):
         error = os.system('''
@@ -112,6 +112,31 @@ for arnold_version in arnold_versions:
         ''' % (arnold_version, arnold_version, arnold_version))
         if error != 0:
             Exception("Error downloading Arnold!")
+
+# download and install mtoa versions
+mtoa_versions = {
+    '5.0.0.2' : {'maya' : ['2022'        ], 'arnold' : '7.0.0.0'},
+    '5.1.3'   : {'maya' : ['2022', '2023'], 'arnold' : '7.1.2.0'},
+}
+for mtoa_version in mtoa_versions:
+    for maya_version in mtoa_versions[mtoa_version]['maya']:
+        if not glob.glob( '/%s/apps/linux/x86_64/mtoa/%s/%s/*' % (os.environ['STUDIO'], mtoa_version, maya_version) ):
+            error = os.system('''
+                    sh /.github/workflows/main/installmtoa.sh %s %s
+                    mkdir -p /$STUDIO/apps/linux/x86_64/mtoa/%s
+                    mv mtoaRoot/%s/install /$STUDIO/apps/linux/x86_64/mtoa/%s/%s
+                    ln -s ../../mtoa/%s  /$STUDIO/apps/linux/x86_64/arnold/%s/mtoadeploy
+                    ls -l /$STUDIO/apps/linux/x86_64/mtoa/
+                    ls -l /$STUDIO/apps/linux/x86_64/mtoa/%s/
+                ''' % (
+                mtoa_version, maya_version,
+                mtoa_version,
+                mtoa_version, mtoa_version, maya_version,
+                mtoa_version, mtoa_versions[mtoa_version]['arnold'],
+                mtoa_version
+            ))
+            if error != 0:
+                Exception("Error downloading Arnold!")
 
 
 
@@ -286,11 +311,12 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
     for n in range(len(_download)):
         _download[n][4].update( gaffer_dependency_dict(pkgs) )
         _download[n][4].update({
+            pkgs.gcc: '9.3.1',
             pkgs.boost: boost,
             usd.obj: usd.version,
             usd['jemalloc'].obj: usd['jemalloc' ].version,
             usd['tbb'     ].obj: usd['tbb'      ].version,
-            usd['gcc'     ].obj: usd['gcc'      ].version,
+            # usd['gcc'     ].obj: usd['gcc'      ].version,
             usd['ocio'    ].obj: usd['ocio'     ].version,
             usd['osl'     ].obj: usd['osl'      ].version,
             osl['llvm'    ].obj: osl['llvm'     ].version,
