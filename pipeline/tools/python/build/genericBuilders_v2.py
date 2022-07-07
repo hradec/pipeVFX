@@ -1530,10 +1530,13 @@ class generic:
     def shouldBuild(self, target, source, env, cmd=None):
         lastlogFile = self.__lastlog(target[0])
         lastlog = self.__check_target_log__( lastlogFile, env, stage='pre-build' )
-        # _print( '=====>',target[0], lastlogFile)
+        # _print( '=====>',target[0], lastlogFile, lastlog)
 
         if lastlog==0:
-            os.popen( "touch %s" % str(target[0]) ).readlines()
+            # os.popen( "touch %s" % str(target[0]) ).readlines()
+            pass
+        else:
+            os.system("rm -rf '%s'" % str(target[0]) )
 
         return lastlog
 
@@ -2113,6 +2116,7 @@ class generic:
         # os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
         os_environ['SOURCE_FOLDER'] = os.path.abspath(self.extractBuildFolder(str(source[0])))
         os_environ['INSTALL_FOLDER'] = os_environ['TARGET_FOLDER']
+        os_environ['INSTALL_TARGET'] = os_environ['TARGET_FOLDER']
         if not self.dontUseTargetSuffixForFolders:
             if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
                 os_environ['INSTALL_FOLDER'] = '/'.join([ os_environ['TARGET_FOLDER'], self.targetSuffix ]).replace('//','/')
@@ -2231,8 +2235,8 @@ class generic:
         # store cmake files in the correct python version for the build,
         # if building with python
         cmd +=  ' && '+' && '.join([
-            "([ -e $INSTALL_FOLDER/lib/cmake ] && [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ) || true",
-            "([ -e $INSTALL_FOLDER/cmake ] && [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] && mv $INSTALL_FOLDER/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ) || true ",
+            '''if [ -e $INSTALL_FOLDER/lib/cmake ] ; then if [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi ; fi''',
+            '''if [ -e $INSTALL_FOLDER/cmake ] ; then if [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then mv $INSTALL_FOLDER/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi ; fi''',
         ])
 
         for l in cmd.split('&&'):
@@ -2256,7 +2260,7 @@ class generic:
         # cmd = cmd.replace( '&&', ' %s && ' % pipeFile )
 
         # go to build folder before anything!!
-        cmd  =  '( cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
+        cmd  =  '( find $INSTALL_FOLDER/ -type d -name cmake -exec rm -rf {} \+ ; cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
         cmd +=  ' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" '
 
         # and pipe all to the log file
@@ -2545,7 +2549,7 @@ class generic:
 
         # keep giving feedback about the build.
         while proc.poll() is None:
-            tail = os.popen('tail -n 100 %s | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
+            tail = os.popen('tail -n 100 %s 2>&1 | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors | grep -v "LD_PRELOAD cannot be preloaded" | tail -n 1' % lastlog).readlines()
             if not tail:
                 tail=['']
             _elapsed = time.gmtime(time.time()-_start)
@@ -2623,7 +2627,7 @@ class generic:
             # write command line as a debug script
             debugcmd = os_environ['SOURCE_FOLDER']+'/build_cmd_debug_pipevfx.sh'
             f=open( debugcmd, 'w' )
-            f.write( cmd_script )
+            f.write( cmd_script.replace('&&', '&&\\\n').replace(' -D', ' \\\n\t-D') )
             f.close()
             os.system("chmod a+x "+debugcmd)
 
@@ -3024,12 +3028,15 @@ class generic:
         if not self.shouldBuild( target, source, env ):
             return
 
+        # print "####> uncompressor", str(target[0]), str(source[0])
+
         for n in range(len(source)):
             url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
             # print source[n]
             s = os.path.abspath(str(source[n]))
             t = os.path.abspath(str(target[n]))
             buildFolder = self.extractBuildFolder(t)
+            # print (not url[3] or self.md5(source[n]) == url[3])
             if not url[3] or self.md5(source[n]) == url[3]:
                 import random
                 tmp = int(random.random()*10000000)
@@ -3041,9 +3048,9 @@ class generic:
                 # if not os.path.exists(self.__lastlog(__pkgInstalled__[s],python)):
                 lastlog = self.__lastlog(__pkgInstalled__[s],python)
                 # print self.__check_target_log__( lastlog, env ), str(target[0]), str(source[0])
-                # _print("\n\n\n%s %s\n\n\n" % (lastlog, self.__check_target_log__( lastlog, env )))
+                # print("\n\n\n%s %s\n\n\n" % (lastlog, self.__check_target_log__( lastlog, env )))
                 if self.__check_target_log__( lastlog, env ):
-                    # _print( "\n\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
+                    _print( "\n\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
 
                     os.popen( "rm -rf %s 2>&1" % buildFolder ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )

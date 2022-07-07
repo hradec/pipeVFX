@@ -741,17 +741,18 @@ class boost(configure):
                 "sed -i.bak 's/if PTHREAD_STACK_MIN . 0/ifdef PTHREAD_STACK_MIN/g' ./boost/thread/pthread/thread_data.hpp",
                 "./bootstrap.sh --prefix=$INSTALL_FOLDER --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER/", #" --without-libraries=log --without-icu",
 		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++11' cxxstd=11 variant=release link=shared threading=multi install",
-                "[ -e $INSTALL_FOLDER/lib/cmake ] && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
-                "[ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] && ln -s libboost_python$(echo $PYTHON_VERSION_MAJOR | sed 's/\.//').so $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so",
             ]
 
-        # CY2022 switchs to c++17 with gcc 9.3.1
-        if float(os_environ['VERSION_MAJOR']) >= 1.76:
-            # cmd += ['( x=$(ls $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python??.so) ; [ "$x" != "" ] && ln -s $(basename $x) $(dirname $x)/libboost_python.so )']
-            cmd = [
-                "./bootstrap.sh --prefix=$INSTALL_FOLDER --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER/", #" --without-libraries=log --without-icu",
-		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17' cxxstd=17 variant=release link=shared threading=multi install",
-                "[ -e $INSTALL_FOLDER/lib/cmake ] && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
+            # CY2022 switchs to c++17 with gcc 9.3.1
+            if float(os_environ['VERSION_MAJOR']) >= 1.76:
+                # cmd += ['( x=$(ls $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python??.so) ; [ "$x" != "" ] && ln -s $(basename $x) $(dirname $x)/libboost_python.so )']
+                cmd = [
+                    "./bootstrap.sh --prefix=$INSTALL_FOLDER --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER/", #" --without-libraries=log --without-icu",
+    		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17' cxxstd=17 variant=release link=shared threading=multi install",
+                ]
+
+            cmd += [
+                "[ -e $INSTALL_FOLDER/lib/cmake ] && rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
                 "[ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] && ln -s libboost_python$(echo $PYTHON_VERSION_MAJOR | sed 's/\.//').so $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so",
             ]
 
@@ -818,7 +819,7 @@ class python(configure):
         '''(make -j $DCORES 2>/dev/null  || true ; [ "$(grep CONFIG_ARGS build/lib.linux-x86_64-2.7/_sysconfigdata.py)" == "" ] && cp build/lib.linux-x86_64-2.7/_sysconfigdata.py xx && cat xx | sed -e 's/build_time_vars = ./build_time_vars = {"CONFIG_ARGS": " --enable-unicode=ucs4 --with-openssl --with-bz2  --with-lto --enable-shared ",/' > build/lib.linux-x86_64-2.7/_sysconfigdata.py || true) ''',
         'rm -rf build/*/_sysconfigdata.pyc',
         'make -j $DCORES',
-        'make -j $DCORES install',
+        'PYTHONHOME="" make -j $DCORES install',
         'export PYTHONHOME=$INSTALL_FOLDER',
         '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
         '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config || true)',

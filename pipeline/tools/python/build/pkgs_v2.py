@@ -635,7 +635,7 @@ class all: # noqa
                     'Python-3.9.13.tar.gz',
                     '3.9.13',
                     '5e2411217b0060828d5f923eb422a3b8',
-                    { self.gcc : '6.3.1', readline : '7.0.0', openssl : '1.0.2s' },
+                    { self.gcc : '9.3.1', readline : '7.0.0', openssl : '1.0.2s' },
             )],
             # this fixes https not finding certificate in easy_install
             environ = {
@@ -701,7 +701,7 @@ class all: # noqa
                 { self.gcc : '6.3.1' }
             )],
             cmd = [
-                "mkdir ./build",
+                "mkdir -p ./build",
                 "mount -t tmpfs tmpfs ./build",
                 "cd ./build",
                 "../configure --system-curl --no-system-libs --parallel=$DCORES",
@@ -720,6 +720,7 @@ class all: # noqa
                 #     ('std..optional','std::experimental::optional'),
                 ]},
             },
+            depend = [ self.bzip2 ],
             # environ={
             #     # 'LDFLAGS' : "-Wl,-rpath-link,/usr/lib64/ -Wl,-rpath,/usr/lib64/ $LDFLAGS",
             #     'LD'      : 'ld',
@@ -1180,7 +1181,6 @@ class all: # noqa
                 'c5ea9c4c57082e05efe14e4b34323bfd',
             )],
             flags = [
-                # "-D CMAKE_INSTALL_PREFIX=/atomo/pipeline/build/.build/OpenShadingLanguage-Release-1.11.14.1.noBaseLib-boost.1.66.0/ext/dist ",
                 "-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER",
                 "-D CMAKE_BUILD_TYPE=Release",
                 "-D PYBIND11_TEST=OFF",
@@ -1530,27 +1530,27 @@ class all: # noqa
                     '2.2.0',
                     'b540db502c5fa42078249f43d18a4652',
                     { self.gcc : gcc_version, python: '2.7.16', boost: boost_version }
-                # ),(
-                #     # CY2019 -  *** A compiler with support for C++14 language features is required.
-                #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/ilmbase-2.3.0.tar.gz',
-                #     'ilmbase-2.3.0.tar.gz',
-                #     '2.3.0',
-                #     '354bf86de3b930ab87ac63619d60c860',
-                #     { self.gcc : '6.3.1', python: '2.7.16' }
-                # ),(
-                #     # CY2020 -  *** A compiler with support for C++14 language features is required.
-                #     'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.4.0.tar.gz',
-                #     'ilmbase-2.4.0.tar.gz',
-                #     '2.4.0',
-                #     '354bf86de3b930ab87ac63619d60c860',
-                #     { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version }
+                ),(
+                    # CY2022 -  *** ilmbase was deprecated, and now imath is used by openexr, so we install it as ilmbase
+                    'https://github.com/AcademySoftwareFoundation/Imath/archive/refs/tags/v3.1.5.tar.gz',
+                    'Imath-3.1.5.tar.gz',
+                    '3.1.5',
+                    'dd375574276c54872b7b3d54053baff0',
+                    { self.gcc : '6.3.1', python: '3.9.13', boost: boost_version, build.override.src: 'CMakeLists.txt' }
                 )],
                 depend=[gcc, python, openssl],
                 environ=environ,
                 cmd = [
-                    './configure  --enable-shared ',
-                    'make -j $DCORES',
-                    'make -j $DCORES install',
+                    '[ -e CMakeLists.txt ] && ('
+                        'mkdir -p build && cd build',
+                        'cmake $SOURCE_FOLDER -DPYTHON=1 -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
+                        'make -j $DCORES',
+                        'make -j $DCORES install'
+                    ') || ('
+                        './configure  --enable-shared ',
+                        'make -j $DCORES',
+                        'make -j $DCORES install'
+                    ')'
                 ],
             )
             self.ilmbase[sufix] = ilmbase
@@ -1669,12 +1669,12 @@ class all: # noqa
                 targetSuffix=sufix,
                 download=download,
                 sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
-                depend=[gcc, python, openssl],
+                depend=[gcc, python, openssl ],
                 environ=environ,
                 cmd = [
-                    'mv /usr/include/numpy /usr/include/numpy.bak',
-                    '[ -e IlmBase ] && ('
-                        'mkdir build',
+                    'mv /usr/include/numpy /usr/include/numpy.bak ;'
+                    'if /bin/python -c "exit(0 if $VERSION_MAJOR == 2.4 else 1)" ; then '
+                        'mkdir -p build',
                         'cd build',
                         'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
                         'make -j $DCORES ',
@@ -1690,11 +1690,20 @@ class all: # noqa
                         'mkdir -p $INSTALL_FOLDER/../../../pyilmbase/',
                         'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
                         'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../ilmbase/$OPENEXR_VERSION'
-                    ') || ('
+                    ' ; elif /bin/python -c "exit(0 if $VERSION_MAJOR < 2.4 else 1)" ; then '
                         './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
                         'make -j $DCORES',
                         'make -j $DCORES install'
-                    ') ',
+                    ' ; else '
+                        'mkdir -p build',
+                        'cd build',
+                        'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DImath_DIR=$INSTALL_FOLDER/../../../ilmbase/$VERSION/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
+                        'make -j $DCORES ',
+                        'make -j $DCORES install'
+                        # 'rm -rf $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
+                        # 'mkdir -p $INSTALL_FOLDER/../../../pyilmbase/',
+                        # 'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION'
+                    ' ; fi',
                     'mv /usr/include/numpy.bak /usr/include/numpy'
                 ],
             )
@@ -1948,182 +1957,7 @@ class all: # noqa
 
 
 
-
-        # =============================================================================================================================================
-        # build one OIIO version for each boost version.
         exr_version = '2.4.0'
-        # oiio_version = '2.0.11'
-        self.oiio = {}
-        self.field3d = {}
-
-        environ = self.exr_rpath_environ.copy()
-        for boost_version in self.boost.versions:
-            gcc_version = '6.3.1'
-            sufix = "boost.%s" % boost_version
-            f3d_exr_version = exr_version
-            if build.versionMajor(boost_version) < 1.6:
-                f3d_exr_version = '2.2.0'
-
-            download=[]
-            download += [(
-                    'https://github.com/imageworks/Field3D/archive/v1.7.2.tar.gz',
-                    'Field3D-1.7.2.tar.gz',
-                    '1.7.2',
-                    '61660c2400213ca9adbb3e17782cccfb',
-                    {   hdf5 : '1.8.11',
-                        boost : boost_version,
-                        gcc: gcc_version,
-                        self.ilmbase  [sufix] : f3d_exr_version,
-                        self.pyilmbase[sufix] : f3d_exr_version,
-                        self.openexr  [sufix] : f3d_exr_version,
-                    },
-            )]
-            download += [(
-                    'https://github.com/imageworks/Field3D/archive/refs/tags/v1.7.3.tar.gz',
-                    'Field3D-1.7.3.tar.gz',
-                    '1.7.3',
-                    '536198b1b4840a5b35400ccf05d4431c',
-                    {   hdf5 : '1.8.11',
-                        boost : boost_version,
-                        gcc: gcc_version,
-                        self.ilmbase  [sufix] : f3d_exr_version,
-                        self.pyilmbase[sufix] : f3d_exr_version,
-                        self.openexr  [sufix] : f3d_exr_version,
-                    },
-            )]
-            if build.versionMajor(boost_version) >= 1.7:
-                environ["CXXFLAGS"] = " $CXXFLAGS -fno-sized-deallocation "
-
-            # build sony field3d used by oiio 2.x
-            field3d = build.cmake(
-                ARGUMENTS,
-                'field3d',
-                targetSuffix = sufix,
-                download = download,
-                depend = [icu],
-                environ = environ,
-                flags = [' -D CXX_STANDARD="C++11" ']+build.cmake.flags
-            )
-            self.field3d[sufix] = field3d
-
-        # build OIIO for all boost versions
-        environ = self.exr_rpath_environ.copy()
-        for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
-            sufix = "boost.%s" % boost_version
-
-            # here we select the versions of OIIO to build for each boost.
-            # not all versions build against all boost versions.
-            download=[]
-            if build.versionMajor(boost_version) <= 1.54:
-                download += [[
-                    'https://github.com/OpenImageIO/oiio/archive/Release-1.5.24.tar.gz',
-                    'oiio-Release-1.5.24.tar.gz',
-                    '1.5.24',
-                    '8c1f9a0ec5b55a18eeea76d33ca7a02c',
-                    { self.gcc : gcc_version,  boost : boost_version, python: '2.7.16',
-                    self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                    self.field3d[sufix]: '1.7.2'}
-                ]]
-            if build.versionMajor(boost_version) >= 1.51 and build.versionMajor(boost_version) < 1.70:
-                if build.versionMajor(boost_version) != 1.54:
-                    download += [[
-                            'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
-                            'oiio-Release-1.6.15.tar.gz',
-                            '1.6.15',
-                            '3fe2cef4fb5f7bc78b136d2837e1062f',
-                            { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
-                            self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                            self.field3d[sufix]: '1.7.2'}
-                    ]]
-            if build.versionMajor(boost_version) > 1.53:
-                download += [[
-                        'https://github.com/OpenImageIO/oiio/archive/Release-1.8.10.tar.gz',
-                        'oiio-Release-1.8.10.tar.gz',
-                        '1.8.10',
-                        'a129a4caa39d7ad79aa1a3dc60cb0418',
-                        { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
-                        self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                        self.field3d[sufix]: '1.7.2'}
-                    ],[
-                        'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
-                        'oiio-Release-2.0.11.tar.gz',
-                        '2.0.11',
-                        '4fa0ce4538fb2d7eb72f54f4036972d5',
-                        { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
-                        self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                        self.field3d[sufix]: '1.7.2'}
-                    ]]
-            if build.versionMajor(boost_version) > 1.60:
-                field3d_version = '1.7.2'
-                if build.versionMajor(boost_version) >= 1.7:
-                    field3d_version = '1.7.3'
-                download += [[
-                        'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.2.15.1.tar.gz',
-                        'oiio-2.2.15.1.tar.gz',
-                        '2.2.15.1',
-                        '568a1efb4fc41711e2dae8c39450a83e',
-                        { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
-                        self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
-                        self.field3d[sufix]: field3d_version}
-                    ]]
-
-            # add the version of exr pkgs (build for the current boost) to all versions
-            # we also need to set the current boost version to all versions since we're building
-            # one for each boost.
-            _download = []+download
-            for n in range(len(_download)):
-
-                _download[n][4] = _download[n][4].copy()
-                _download[n][4][ boost ] = boost_version
-                if build.versionMajor( _download[n][4][ gcc ] ) < 4.8:
-                    _download[n][4][ gcc ] = '4.8.5'
-                # _download[n][4][ self.ilmbase  [sufix] ] = exr_version
-                # _download[n][4][ self.pyilmbase[sufix] ] = exr_version
-                # _download[n][4][ self.openexr  [sufix] ] = exr_version
-                # _download[n][4][ self.field3d  [sufix] ] = '1.7.2'
-
-            oiio = build.cmake(
-                ARGUMENTS,
-                'oiio',
-                targetSuffix=sufix,
-                # oiio has some hard-coded path to find python, and the only
-                # way to make it respect the PYTHON related environment variables,
-                # is to patch some files to force it!
-                sed = {
-                    '0.0.0' : {
-                        'src/python/CMakeLists.txt' : [
-                            ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
-                            ('unset.*PYTHON_INCLUDE','#unset( PYTHON_INCLUDE'),
-                            ('unset.*PYTHON_LIBRARY','#unset( PYTHON_LIBRARY'),
-                            ('/usr/include/python','${PYTHON_ROOT}/include/python'),
-                        ],
-                        'CMakeLists.txt' : [
-                            ('lib/python/site-packages','lib/python${PYTHON_VERSION_MAJOR}/site-packages'),
-                            ('-std=c++11',''), # we need this to build with gcc 4.1.2
-                        ],
-                    },
-                },
-                download = _download,
-                depend=[ocio, python, boost, freetype, gcc, icu, cmake, openssl, bzip2, libraw, libpng, tbb],
-                cmd = 'mkdir -p build && cd build && '+' && '.join(build.cmake.cmd),
-                flags = [
-                    '-DUSE_PYTHON=0',
-                    '-DUSE_PTEX=0',
-                    '-DUSE_OCIO=0',
-                    '-DCMAKE_PREFIX_PATH='+"';'".join([
-                        '$OPENEXR_TARGET_FOLDER',
-                        '$ILMBASE_TARGET_FOLDER',
-                        '$JPEG_TARGET_FOLDER',
-                        '$LIBRAW_TARGET_FOLDER',
-                        '$LIBPNG_TARGET_FOLDER',
-                        '$LIBTIFF_TARGET_FOLDER',
-                    ])
-                ]+build.cmake.flags,
-                environ = environ,
-            )
-            self.oiio[sufix] = oiio
-            build.github_phase(self.oiio[sufix])
 
 
 
@@ -2825,6 +2659,196 @@ class all: # noqa
                 'e8a8df240b6938bb6384155d4c37d937',
             )],
         )
+
+        # =============================================================================================================================================
+        # build one OIIO version for each boost version.
+        # oiio_version = '2.0.11'
+        self.oiio = {}
+        self.field3d = {}
+        environ = self.exr_rpath_environ.copy()
+        for boost_version in self.boost.versions:
+            gcc_version = '6.3.1'
+            sufix = "boost.%s" % boost_version
+            f3d_exr_version = exr_version
+            if build.versionMajor(boost_version) < 1.6:
+                f3d_exr_version = '2.2.0'
+
+            download=[]
+            download += [(
+                    'https://github.com/imageworks/Field3D/archive/v1.7.2.tar.gz',
+                    'Field3D-1.7.2.tar.gz',
+                    '1.7.2',
+                    '61660c2400213ca9adbb3e17782cccfb',
+                    {   hdf5 : '1.8.11',
+                        boost : boost_version,
+                        gcc: gcc_version,
+                        self.ilmbase  [sufix] : '2.2.0',
+                        self.pyilmbase[sufix] : '2.2.0',
+                        self.openexr  [sufix] : '2.2.0',
+                    },
+            )]
+            download += [(
+                    'https://github.com/imageworks/Field3D/archive/refs/tags/v1.7.3.tar.gz',
+                    'Field3D-1.7.3.tar.gz',
+                    '1.7.3',
+                    '536198b1b4840a5b35400ccf05d4431c',
+                    {   hdf5 : '1.8.11',
+                        boost : boost_version,
+                        gcc: gcc_version,
+                        self.ilmbase  [sufix] : '2.4.0',
+                        self.pyilmbase[sufix] : '2.4.0',
+                        self.openexr  [sufix] : '2.4.0',
+                    },
+            )]
+            if build.versionMajor(boost_version) >= 1.7:
+                environ["CXXFLAGS"] = " $CXXFLAGS -fno-sized-deallocation "
+
+            # build sony field3d used by oiio 2.x
+            field3d = build.cmake(
+                ARGUMENTS,
+                'field3d',
+                targetSuffix = sufix,
+                download = download,
+                depend = [icu],
+                environ = environ,
+                flags = [' -D CXX_STANDARD="C++11" ']+build.cmake.flags
+            )
+            self.field3d[sufix] = field3d
+
+        # build OIIO for all boost versions
+        environ = self.exr_rpath_environ.copy()
+        for boost_version in self.boost.versions:
+            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
+            sufix = "boost.%s" % boost_version
+
+            # here we select the versions of OIIO to build for each boost.
+            # not all versions build against all boost versions.
+            download=[]
+            if build.versionMajor(boost_version) <= 1.54:
+                download += [[
+                    'https://github.com/OpenImageIO/oiio/archive/Release-1.5.24.tar.gz',
+                    'oiio-Release-1.5.24.tar.gz',
+                    '1.5.24',
+                    '8c1f9a0ec5b55a18eeea76d33ca7a02c',
+                    { self.gcc : gcc_version,  boost : boost_version, python: '2.7.16',
+                    self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
+                    self.field3d[sufix]: '1.7.2'}
+                ]]
+            if build.versionMajor(boost_version) >= 1.51 and build.versionMajor(boost_version) < 1.70:
+                if build.versionMajor(boost_version) != 1.54:
+                    download += [[
+                            'https://github.com/OpenImageIO/oiio/archive/Release-1.6.15.tar.gz',
+                            'oiio-Release-1.6.15.tar.gz',
+                            '1.6.15',
+                            '3fe2cef4fb5f7bc78b136d2837e1062f',
+                            { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
+                            self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
+                            self.field3d[sufix]: '1.7.2'}
+                    ]]
+            if build.versionMajor(boost_version) > 1.53:
+                download += [[
+                        'https://github.com/OpenImageIO/oiio/archive/Release-1.8.10.tar.gz',
+                        'oiio-Release-1.8.10.tar.gz',
+                        '1.8.10',
+                        'a129a4caa39d7ad79aa1a3dc60cb0418',
+                        { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
+                        self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
+                        self.field3d[sufix]: '1.7.2'}
+                    ],[
+                        'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
+                        'oiio-Release-2.0.11.tar.gz',
+                        '2.0.11',
+                        '4fa0ce4538fb2d7eb72f54f4036972d5',
+                        { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
+                        self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
+                        self.field3d[sufix]: '1.7.2', self.jpeg: '9a', self.tbb: self.masterVersion['tbb']}
+                    ]]
+            if build.versionMajor(boost_version) > 1.60:
+                # field3d_version = '1.7.2'
+                # if build.versionMajor(boost_version) >= 1.7:
+                #     field3d_version = '1.7.3'
+                download += [[
+                        'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.2.15.1.tar.gz',
+                        'oiio-2.2.15.1.tar.gz',
+                        '2.2.15.1',
+                        '568a1efb4fc41711e2dae8c39450a83e',
+                        { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
+                        self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
+                        self.field3d[sufix]:  '1.7.3', self.jpeg: '9a', self.tbb: self.masterVersion['tbb']}
+                    ]]
+
+            # add the version of exr pkgs (build for the current boost) to all versions
+            # we also need to set the current boost version to all versions since we're building
+            # one for each boost.
+            _download = []+download
+            for n in range(len(_download)):
+
+                _download[n][4] = _download[n][4].copy()
+                _download[n][4][ boost ] = boost_version
+                # force to minimun gcc 4.8.5
+                if build.versionMajor( _download[n][4][ gcc ] ) < 4.8:
+                    _download[n][4][ gcc ] = '4.8.5'
+                # _download[n][4][ self.ilmbase  [sufix] ] = exr_version
+                # _download[n][4][ self.pyilmbase[sufix] ] = exr_version
+                # _download[n][4][ self.openexr  [sufix] ] = exr_version
+                # _download[n][4][ self.field3d  [sufix] ] = '1.7.2'
+
+            oiio = build.cmake(
+                ARGUMENTS,
+                'oiio',
+                targetSuffix=sufix,
+                # oiio has some hard-coded path to find python, and the only
+                # way to make it respect the PYTHON related environment variables,
+                # is to patch some files to force it!
+                sed = {
+                    '0.0.0' : {
+                        'src/python/CMakeLists.txt' : [
+                            ('SET(.*PYTHON_INCLUDE_DIR','#SET( PYTHON_INCLUDE_DIR'),
+                            ('unset.*PYTHON_INCLUDE','#unset( PYTHON_INCLUDE'),
+                            ('unset.*PYTHON_LIBRARY','#unset( PYTHON_LIBRARY'),
+                            ('/usr/include/python','${PYTHON_ROOT}/include/python'),
+                        ],
+                        'CMakeLists.txt' : [
+                            ('lib/python/site-packages','lib/python${PYTHON_VERSION_MAJOR}/site-packages'),
+                            ('-std=c++11',''), # we need this to build with gcc 4.1.2
+                        ],
+                    },
+                },
+                download = _download,
+                depend=[
+                    self.ocio, self.python, self.boost, self.freetype,
+                    self.gcc, self.icu, self.cmake, self.openssl, self.bzip2,
+                    self.libraw, self.libpng, self.tbb, self.jpeg, self.hdf5,
+                    self.pugixml, self.pybind, self.ilmbase, self.openexr
+                ],
+                cmd = [
+                    'mkdir -p build',
+                    'cd build',
+                    'if [ "$ILMBASE_TARGET_FOLDER" == "" ] ; then export ILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER ; fi',
+                ]+build.cmake.cmd,
+                flags = [
+                    '-DTBB_ROOT_DIR=$TBB_TARGET_FOLDER',
+                    '-DUSE_PYTHON=1',
+                    '-DUSE_PTEX=0',
+                    '-DUSE_OCIO=1',
+                    '-DImath_DIR=$ILMBASE_TARGET_FOLDER',
+                    '-DCMAKE_PREFIX_PATH="'+";".join([
+                        '$OPENEXR_TARGET_FOLDER',
+                        '$ILMBASE_TARGET_FOLDER',
+                        '$JPEG_TARGET_FOLDER',
+                        '$LIBRAW_TARGET_FOLDER',
+                        '$LIBPNG_TARGET_FOLDER',
+                        '$LIBTIFF_TARGET_FOLDER',
+                        '$FIELD3D_TARGET_FOLDER',
+                        '$OCIO_TARGET_FOLDER',
+                        '$PYBIND_TARGET_FOLDER',
+                    ])+'"'
+                ]+build.cmake.flags,
+                environ = environ,
+            )
+            self.oiio[sufix] = oiio
+            build.github_phase(self.oiio[sufix])
+
 
 
 

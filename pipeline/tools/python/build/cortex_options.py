@@ -291,7 +291,7 @@ APPLESEED_VERSION = ''
 apps                    = pipe.roots().apps()
 if "MAYA_ROOT" in os.environ:
     MAYA_ROOT = os.environ['MAYA_ROOT'] #apps+"/maya/%s/"   % maya
-    CXXSTD = 'c++11'
+    # CXXSTD = 'c++11'
 if "PRMAN_ROOT" in os.environ:
     RMAN_ROOT = "%s/RenderManProServer-%s"  % (os.environ["PRMAN_ROOT"], os.environ["PRMAN_VERSION"])
 if "NUKE_ROOT" in os.environ:

@@ -122,6 +122,7 @@ for mtoa_version in mtoa_versions:
     for maya_version in mtoa_versions[mtoa_version]['maya']:
         if not glob.glob( '/%s/apps/linux/x86_64/mtoa/%s/%s/*' % (os.environ['STUDIO'], mtoa_version, maya_version) ):
             error = os.system('''
+                    rm -rf mtoaRoot
                     sh /.github/workflows/main/installmtoa.sh %s %s
                     mkdir -p /$STUDIO/apps/linux/x86_64/mtoa/%s
                     mv mtoaRoot/%s/install /$STUDIO/apps/linux/x86_64/mtoa/%s/%s
