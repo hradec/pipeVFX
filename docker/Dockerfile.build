@@ -208,8 +208,8 @@ RUN yum install -y libpng15 \
     libXrandr-devel \
     libXinerama-devel \
     libXi-devel \
-    mesa-libGLU-devel
-
+    mesa-libGLU-devel \
+    libuuid-devel
 
 RUN ln -s /lib64/libssl.so /lib64/libssl.so.10 && \
     ln -s /lib64/libcrypto.so /lib64/libcrypto.so.10 && \

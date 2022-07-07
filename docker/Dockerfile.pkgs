@@ -108,7 +108,7 @@ RUN rm -r \
 
 # cleanup download folder
 RUN cd /atomo/pipeline/build && [ -e /atomo/pipeline/build/.download ] && \
-    ( ls -1 .download/*{.tar,.zip,.run,.rpm,.tgz}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
+    ( ls -1 .download/*{.tar.gz,.tar,.zip,.run,.rpm,.tgz}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
         do [ "$(egrep $p /tmp/xx)" == "" ] && rm -rf ".download/$p" ; \
         [ -d .download/$p ] && rm -rf ".download/$p" ; \
     done ; rm /tmp/xx ) || true
