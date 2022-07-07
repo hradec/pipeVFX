@@ -387,6 +387,7 @@ class version:
     db = '_appsDB'
     @classmethod
     def __retrieve__(cls):
+        # return cached.cache_func(appsDB)
         if cls._DB_LATEST not in globals():
             globals()[cls._DB_LATEST] = eval(os.environ[cls._DB_LATEST])
         return globals()[cls._DB_LATEST]
@@ -448,6 +449,9 @@ class versionLib(version):
     '''
     _DB_LATEST = '__DB_LATEST_LIBS'
     db = '_libsDB'
+    # @classmethod
+    # def __retrieve__(cls):
+    #     return cached.cache_func(libsDB)
     @classmethod
     def set(cls, x={}, **args ):
         '''
@@ -776,6 +780,7 @@ class baseApp(_environ):
         We cache it in globals(), so we ran it just once '''
 
         import sys
+        # print "configFiles:","versionsFile" not in globals();sys.stdout.flush()
         if "versionsFile" not in globals():
             globals()['versionsFile'] = []
 
@@ -906,6 +911,8 @@ class baseApp(_environ):
         # run the virtual environ() method of the app/lib class, if any!
         if hasattr(self, 'environ'):
             try:
+                import glob
+                from glob import glob
                 self.environ()
             except:
                 # import inspect
