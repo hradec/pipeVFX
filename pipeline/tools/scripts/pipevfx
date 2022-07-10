@@ -130,6 +130,8 @@ else
     if [ "$PKGS" == "1" ] ; then
         echo -e "\n\nusing pkg_image:$previous_tag \nto build new_tag:$latest_tag\n"
         # packages download
+        docker pull $previous_tag
+        docker image tag $previous_tag $pkg_image_tag
         docker build \
             -f $CD/docker/Dockerfile.pkgs \
             $CD/ \
@@ -147,10 +149,7 @@ else
             echo ERROR!!
             exit -1
         fi
-        # docker-squash --tmp-dir /var/lib/docker/squash_tmp/ $latest_tag || true
-        docker push $latest_tag
         docker image tag $latest_tag $pkg_image_tag
-        docker push $pkg_image_tag
         exit 0
     fi
 
@@ -176,7 +175,10 @@ else
             echo ERROR!!
             exit -1
         fi
+        # docker-squash --tmp-dir /var/lib/docker/squash_tmp/ $latest_tag || true
         # docker-squash --tmp-dir /var/lib/docker/squash_tmp/ $build_image || true
+        docker push $latest_tag
+        docker push $pkg_image_tag
         docker push $build_image
         exit $?
     fi

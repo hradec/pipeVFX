@@ -15,7 +15,8 @@ POS_CMD?=
 CUSTOM_LIB_FOLDER?=
 STUDIO?=$(shell echo $STUDIO)
 DEBUG?=
-
+HUB_USER?=$(shell echo $HUB_USER)
+HUB_PASS?=$(shell echo $HUB_PASS)
 
 all: help
 
@@ -28,6 +29,12 @@ help:
 	@echo "               so the build image is also done!"
 	@echo "make upload  - make the build docker image and upload"
 	@echo "make cache   - make the package cache docker image and upload it."
+	@echo "make list    - list images with tags from docker hub. "
+	@echo "make delete  - delete an image tag from docker hub. "
+	@echo "               Set env vars \$HUB_USER as username and \$HUB_PASS as"
+	@echo "               password for docker hub."
+	@echo "               Set IMAGE=<image name:tag> as the image to delete"
+	@echo "               ex: make delete IMAGE=pipevfx_pkgs:centos7_latest"
 	@echo "make matrix  - display the github action matrix."
 	@echo "make help    - display this help screen."
 	@echo ""
@@ -79,7 +86,7 @@ ifeq "${STUDIO}" ""
 STUDIO="atomo"
 export STUDIO
 endif
-$(info ${STUDIO})
+$(info STUDIO=${STUDIO})
 
 build: upload
 	export CUSTOM_LIB_FOLDER=${_CUSTOM_LIB_FOLDER} ;\
@@ -113,6 +120,31 @@ cache:
 	PRE_CMD='${PRE_CMD}' \
 	POS_CMD='${POS_CMD}' \
 	${CD}/pipeline/tools/scripts/pipevfx -p || echo "Not building docker image!"
+
+list:
+	@if [ "$$HUB_USER" == "" ] || [ "$$HUB_PASS" == "" ] ; then \
+		echo "Please define HUB_USER and HUB_PASS as env vars or as parameter to make!!" ;\
+	else \
+		for n in $$(docker search $$HUB_USER | grep pipevfx | awk '{print $$1}') ; do \
+			curl -L https://registry.hub.docker.com/v1/repositories/$$n/tags 2>/dev/null | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print "'$$n':"$$3}' ; \
+		done ;\
+	fi
+
+delete:
+	@if [ "$$HUB_USER" == "" ] || [ "$$HUB_PASS" == "" ] ; then \
+		echo "Please define HUB_USER and HUB_PASS as env vars or as parameter to make!!" ;\
+	else \
+		echo "Docker hub user: $$HUB_USER" &&\
+		export HUB_TOKEN=$$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${HUB_USER}\", \"password\": \"${HUB_PASS}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token) &&\
+		export IMG2=$$(echo "${IMAGE}" | awk -F'/' '{print $$(NF)}') &&\
+		export IMG=$$(echo "$$IMG2" | awk -F':' '{print $$1}') &&\
+		export TAG=$$(echo "$$IMG2" | awk -F':' '{print $$2}') &&\
+		curl -L https://registry.hub.docker.com/v1/repositories/$$HUB_USER/$$IMG/tags  | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print $$3}' &&\
+		echo -n "Deleting ${IMAGE}..." &&\
+		curl -i -X DELETE -H "Accept: application/json"   -H "Authorization: JWT $$HUB_TOKEN"   https://hub.docker.com/v2/repositories/${HUB_USER}/$$IMG/tags/$$TAG/ &&\
+		echo "[DONE]" || echo "[ERROR]" ;\
+		curl -L https://registry.hub.docker.com/v1/repositories/$$HUB_USER/$$IMG/tags | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print $$3}' ;\
+	fi
 
 image: cache upload
 
