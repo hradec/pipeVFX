@@ -2231,26 +2231,58 @@ class generic:
         _print( bcolors.WARNING+':\ttarget : %s%s' % (bcolors.GREEN, target) )
         _print( bcolors.WARNING+":\tinstall: %s%s" % (bcolors.GREEN, os_environ['INSTALL_FOLDER']) )
 
-
-        # store cmake files in the correct python version for the build,
-        # if building with python
-        cmd +=  ' && '+' && '.join([
-            '''if [ -e $INSTALL_FOLDER/lib/cmake ] ; then if [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi ; fi''',
-            '''if [ -e $INSTALL_FOLDER/cmake ] ; then if [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then mv $INSTALL_FOLDER/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ; fi ; fi''',
-        ])
-
+        # print cmd line
         for l in cmd.split('&&'):
             _print( bcolors.WARNING+':\t%s%s : %s %s  %s ' % ( \
                      '.'.join(os_environ['TARGET_FOLDER'].split('/')[-2:]), \
                      extraLabel,bcolors.GREEN,l.strip(),bcolors.END) \
             )
+
+        # store cmake files in the correct python version for the build,
+        # if building with python
+        cmd += ''' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" ; '''
+        cmd += '''
+            mkdir -p $INSTALL_FOLDER/cmake/ ;
+            for n in $(ls -d $SOURCE_FOLDER/cmake/* 2>/dev/null) ; do
+                cp -rfv $n $INSTALL_FOLDER/cmake/ ;
+            done ;
+            for n in $(ls -d $SOURCE_FOLDER/*/lib/cmake/*/ 2>/dev/null) ; do
+                target=$(echo $n | awk -F"$SOURCE_FOLDER" '{print $(NF)}') ;\
+                mkdir -p $(dirname $target) ;\
+                cp -rfv $n $INSTALL_FOLDER/cmake/$target ;
+            done ;
+            for n in $(ls -d $SOURCE_FOLDER/*/cmake/* 2>/dev/null) ; do
+                target=$(echo $n | awk -F"$SOURCE_FOLDER" '{print $(NF)}') ;\
+                mkdir -p $(dirname $target) ;\
+                cp -rfv $n $INSTALL_FOLDER/cmake/$target ;
+            done
+        '''
+        cmd += '''
+            if [ -e $INSTALL_FOLDER/lib/cmake ] ; then
+                if [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then
+                    rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake ;
+                    mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ;
+                fi ;
+            fi
+            if [ -e $INSTALL_FOLDER/cmake ] ; then
+                if [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then
+                    rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake ;
+                    mv $INSTALL_FOLDER/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ;
+                fi ;
+            fi
+        '''
+
+
         # we need to save the current pythonpath to set it later inside pythons system call
         os_environ['BUILD_PYTHONPATH__'] = os_environ['PYTHONPATH']
         # and then we need to setup a clean PYTHONPATH so ppython can find pipe, build and the correct modules
         #    os_environ['PYTHONPATH'] = pythonpath_original
 
+        # go to build folder before anything!!
+        # cmd  =  '( find $INSTALL_FOLDER/ -type d -name cmake -exec rm -rf {} \+ ; cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
+        cmd  =  '( cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
+
         # end of the command line - pipe result to log files
-        cmd_script = cmd
         showLog = ' > '
         if DEBUG():
             showLog = ' | tee -a '
@@ -2258,13 +2290,10 @@ class generic:
             | LD_PRELOAD="" LD_LIBRARY_PATH="/root/source-highlight/libs/" source-highlight -f esc -s errors \
             | tee -a  %s %s %s.err ' % (lastlog, showLog, lastlog)
         # cmd = cmd.replace( '&&', ' %s && ' % pipeFile )
-
-        # go to build folder before anything!!
-        cmd  =  '( find $INSTALL_FOLDER/ -type d -name cmake -exec rm -rf {} \+ ; cd \"%s\" && ' %  os_environ['SOURCE_FOLDER'] + cmd
-        cmd +=  ' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" '
-
         # and pipe all to the log file
+        cmd_script = cmd + ' )'
         cmd +=  ') %s' % pipeFile
+
 
         # set internet proxies, if needed
         proxies = { x[0]:x[1] for x in env.items() if '_PROXY' in x[0] }
@@ -3050,7 +3079,7 @@ class generic:
                 # print self.__check_target_log__( lastlog, env ), str(target[0]), str(source[0])
                 # print("\n\n\n%s %s\n\n\n" % (lastlog, self.__check_target_log__( lastlog, env )))
                 if self.__check_target_log__( lastlog, env ):
-                    _print( "\n\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
+                    _print( "\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
 
                     os.popen( "rm -rf %s 2>&1" % buildFolder ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
