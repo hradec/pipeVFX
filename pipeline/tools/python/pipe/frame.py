@@ -618,3 +618,53 @@ def makeMontage(path):
 
     for f in frames:
         _makeMontage(frames[f], os.path.dirname(path))
+
+
+
+def oiio_list_channels(path):
+    import sys
+    import OpenImageIO as oiio
+
+    # Just take the arg of the input filename.
+    # Exercise for the reader: alter this program to loop over all arguments
+    # so you can use wildcards on the command line.
+    infilename = path
+
+    # Read the image
+    img = oiio.ImageBuf (infilename)
+
+    # For each channel...
+    channels = []
+    for ch in range(img.spec().nchannels) :
+        # extract just one channel into a second ImageBuf
+        channels += [img.spec().channelnames[ch]]
+
+    return channels
+
+def oiio_shuffle(path):
+    import sys
+    import OpenImageIO as oiio
+
+    # Just take the arg of the input filename.
+    # Exercise for the reader: alter this program to loop over all arguments
+    # so you can use wildcards on the command line.
+    infilename = path
+
+    # Read the image
+    img = oiio.ImageBuf (infilename)
+
+    # For each channel...
+    for ch in range(img.spec().nchannels) :
+        # extract just one channel into a second ImageBuf
+        onechan = oiio.ImageBuf()
+        oiio.ImageBufAlgo.channels (onechan, img, (ch,))
+
+        # optionally change bit depth, e.g.:
+        # onechan.set_write_format (oiio.UINT8)
+
+        # Write the extracted channel as a new image, prepending the
+        # channel name on the front of the original file name.
+        chname = img.spec().channelnames[ch]
+        outfilename = chname + "." + infilename
+        onechan.write (outfilename)
+        print ("Channel {} is {} -> {}".format (ch, chname, outfilename))
