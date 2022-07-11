@@ -25,7 +25,7 @@ ENV _POS_CMD=$POS_CMD
 
 # install gcc, git, wget, zip and scons so we can run sconstruct
 RUN yum groupinstall -y "Development Tools"
-RUN yum -y install python2-scons wget git zip zlib-devel openssl-devel libffi-dev
+RUN yum -y install python2-scons wget git zip zlib-devel openssl-devel 
 RUN yum -y install source-highlight
 
 #COPY docker/run.sh /run.sh
@@ -43,6 +43,7 @@ RUN yum -y install wget git zip
 RUN yum -y install python-setuptools
 RUN curl -s https://bootstrap.pypa.io/pip/2.7/get-pip.py > get-pip.py && python2 ./get-pip.py
 RUN python2 -m pip install SCons
+RUN yum -y install libffi-devel
 
 # cleanup download folder
 RUN cd /atomo/pipeline/build && \
@@ -108,12 +109,14 @@ RUN rm -r \
 
 # cleanup download folder
 RUN cd /atomo/pipeline/build && [ -e /atomo/pipeline/build/.download ] && \
-    ( ls -1 .download/*{.tar.gz,.tar,.zip,.run,.rpm,.tgz}* > /tmp/xx ; ls -1 .download/ | grep -v pip | while read p ; \
-        do [ "$(egrep $p /tmp/xx)" == "" ] && rm -rf ".download/$p" ; \
+    ( ls -1 .download/*{.tar.gz,.tar,.zip,.run,.rpm,.tgz}* > /tmp/xx ; ls -1 .download/ | grep -v pip | \
+    while read p ; do \
+        [ "$(egrep $p /tmp/xx)" == "" ] && rm -rf ".download/$p" ; \
         [ -d .download/$p ] && rm -rf ".download/$p" ; \
     done ; rm /tmp/xx ) || true
 
 RUN ls -lh /atomo/pipeline/build/.download/pip*/*/ | egrep pipeline.build
+RUN ls -lh /atomo/pipeline/build/.download/pip*/*/
 RUN ls -lh /atomo/pipeline/build/.download/
 
 

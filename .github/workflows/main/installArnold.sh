@@ -63,4 +63,6 @@ mkdir -p arnoldRoot/$arnoldVersion && cd arnoldRoot/$arnoldVersion
 echo Downloading Arnold "https://${url}"
 curl -L https://${login}${url} -o Arnold-${arnoldVersion}-${arnoldPlatform}.tgz
 
-tar -xzf Arnold-${arnoldVersion}-${arnoldPlatform}.tgz
+if [ "$DOCKER_PYTHON" == "" ] ; then
+	tar -xzf Arnold-${arnoldVersion}-${arnoldPlatform}.tgz
+fi

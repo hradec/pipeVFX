@@ -184,11 +184,16 @@ class pip(configure):
 
             cmd  = "mkdir -p '%s' && " % download_path
             cmd += "cd '%s' && " % download_path
+            cmd += 'export PYTHON_VERSION_MAJOR=%s && ' % pvv
             cmd += 'export LD_LIBRARY_PATH=$DOCKER_PYTHON/%s/lib:$PYTHON_TARGET_FOLDER/lib/ && ' % pv
             cmd += 'export PATH=$DOCKER_PYTHON/%s/bin:$PYTHON_TARGET_FOLDER/bin:$PATH && ' % pv
-            cmd += 'echo $PATH && '
-            # cmd += 'python%s -m pip install --upgrade pip &&' % (pvv)
-            cmd += 'python%s -m pip download "%s" ' % (pvv, self.pip_pkg)
+            cmd += 'export PYTHONPATH=$DOCKER_PYTHON/%s/lib/python$PYTHON_VERSION_MAJOR/site-packages && ' % pv
+            cmd += 'echo "PATH=$PATH" && '
+            cmd += 'echo "PYTHONPATH=$PYTHONPATH" && '
+            cmd += 'python$PYTHON_VERSION_MAJOR -m ensurepip && '
+            cmd += 'python$PYTHON_VERSION_MAJOR -m pip install setuptools && '
+            # cmd += 'python$PYTHON_VERSION_MAJOR -m pip install --upgrade pip &&'
+            cmd += 'python$PYTHON_VERSION_MAJOR -m pip download "%s" ' % self.pip_pkg
             genericBuilders.s_print(cmd)
             print cmd
             os.system(cmd)
