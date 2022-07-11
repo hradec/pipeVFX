@@ -18,8 +18,9 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-
 class gaffer(baseLib):
+    # def versions(self):
+    #     pipe.libs.version.set( cortex   = '10.3.4.0' )
 
     def environ(self):
         ''' as this is a python application, we don't have to setup anything
@@ -30,11 +31,11 @@ class gaffer(baseLib):
 
         self['PYTHONPATH'] = self.path('python')
 
-        if self.parent() not in ['maya']:
-            # gaffer can't inherit it's env vars from a call app, so we're forced to
-            # clean then up here from os.environ to make sure!
-            for each in filter(lambda x: 'GAFFER' in x, os.environ.keys()):
-                del os.environ[each]
+        # if self.parent() not in ['maya']:
+        #     # gaffer can't inherit it's env vars from a call app, so we're forced to
+        #     # clean then up here from os.environ to make sure!
+        #     for each in filter(lambda x: 'GAFFER' in x, os.environ.keys()):
+        #         del os.environ[each]
 
         # our standard OCIO color space
         self.update( pipe.libs.ocio() )
@@ -146,7 +147,11 @@ class gaffer(baseLib):
             # self['LD_PRELOAD'] = pipe.libs.ocio().LD_PRELOAD()
             # self['LD_PRELOAD'] = pipe.libs.oiio().LD_PRELOAD()
             self['LD_PRELOAD'] = pipe.libs.qt().LD_PRELOAD()
+
+            # set jemalloc for gaffer
             self['GAFFER_JEMALLOC'] = '0'
+            self['LD_PRELOAD'] = pipe.libs.jemalloc().LD_PRELOAD()
+
 
     # def runUserSetup(self, bin):
     #     ''' only create a user folder structure if it's the main gaffer app.'''
@@ -174,7 +179,7 @@ class gaffer(baseLib):
             ['opa',     gaffer_bin+' opa -gui 1'],
             ['browser', gaffer_bin+' browser'],
             ['sam',     gaffer_bin+' sam'],
-            ['bundle',  gaffer_bin+' test'],
+            # ['bundle',  gaffer_bin+' test'],
         ]
 
 
