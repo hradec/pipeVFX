@@ -49,7 +49,7 @@ class all: # noqa
         ret += ['$QT_TARGET_FOLDER/lib/cmake/']
         ret += ['$QT_TARGET_FOLDER/lib/cmake/Qt5*/']
         ret += ['$PTEX_TARGET_FOLDER/share/cmake/Ptex/']
-        return ':'.join(ret)
+        return ';'.join(ret)
 
     def rpath( self, l ):
         self._rpath += l
@@ -1428,30 +1428,31 @@ class all: # noqa
         llvm = build.cmake(
             ARGUMENTS,
             'llvm',
+            cmake_prefix = self.cmake_prefix(),
             download=[(
             #     'http://releases.llvm.org/3.9.1/llvm-3.9.1.src.tar.xz',
             #     'llvm-3.9.1.src.tar.gz',
             #     '3.9.1',
             #     '3259018a7437e157f3642df80f1983ea',
-            #     { self.gcc : '6.3.1', clang : '3.9.1', boost: '1.61.0' }
+            #     { self.gcc : '6.3.1', self.clang : '3.9.1', boost: '1.61.0' }
             # ),(
                 'https://github.com/llvm/llvm-project/releases/download/llvmorg-7.1.0/llvm-7.1.0.src.tar.xz',
                 'llvm-7.1.0.src.tar.gz',
                 '7.1.0',
                 '26844e21dbad09dc7f9b37b89d7a2e48',
-                { self.gcc : '6.3.1', clang : '7.1.0', boost: '1.61.0' }
+                { self.gcc : '6.3.1', self.clang : '7.1.0', boost: '1.61.0' }
             ),(
             #     'http://releases.llvm.org/9.0.0/llvm-9.0.0.src.tar.xz',
             #     'llvm-9.0.0.src.tar.gz',
             #     '9.0.0',
             #     '0fd4283ff485dffb71a4f1cc8fd3fc72',
-            #     { self.gcc : '6.3.1', clang : '9.0.0', boost: '1.61.0'}
+            #     { self.gcc : '6.3.1', self.clang : '9.0.0', boost: '1.61.0'}
             # ),(
                 'https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.1/llvm-10.0.1.src.tar.xz',
                 'llvm-10.0.1.src.tar.gz',
                 '10.0.1',
                 '71c68c526cbbf1674b5aafc5542b336c',
-                { self.gcc : '6.3.1', clang : '10.0.1', boost: '1.61.0'}
+                { self.gcc : '6.3.1', self.clang : '10.0.1', boost: '1.61.0'}
             )],
             sed = {
                 '3.5.2' : {
@@ -1466,7 +1467,8 @@ class all: # noqa
                 # mv clang to the tools folder so LLVM can automatically build it!
                 'mkdir -p $SOURCE_FOLDER/tools/clang/',
                 'cp -rfuv $CLANG_TARGET_FOLDER/* $SOURCE_FOLDER/tools/clang/',
-                'mkdir -p build && cd build',
+                'mkdir -p build',
+                'cd build',
                 # since llvm link uses lots of memory, we define the number
                 # of threads by dividing the ammount of memory in GB by 12
                 # 'export DCORES=%s' % LLVM_CORES,
@@ -2113,11 +2115,11 @@ class all: # noqa
                 # since QT loves to keep changing the configure options on almost
                 # every release, and configure fails if you leave options it
                 # doesnt known!
-                '( [ "$(basename $TARGET_FOLDER)" == "4.8.7" ] && '
+                '( if /bin/python -c "exit(0 if $VERSION_MAJOR == 4.8 else 1)" ; then '
                     "sed -i.bak -e 's/utils.h/..\/utils.h/' ./src/tools/uic/cpp/cppwriteinitialization.cpp",
                     "sed -i.bak -e 's/utils.h/..\/utils.h/' ./src/tools/uic/cpp/cppwriteiconinitialization.cpp",
                     './configure  -opensource -shared --confirm-license  -no-webkit -silent '
-                '|| true ; [ "$(basename $TARGET_FOLDER)" == "5.6.1" ] && '
+                '; elif /bin/python -c "exit(0 if $VERSION_MAJOR == 5.6 else 1)" ; then '
                     "sed -i.bak -e 's/utils.h/..\/utils.h/' ./qtbase/src/tools/uic/cpp/cppwriteinitialization.cpp",
                     "sed -i.bak -e 's/utils.h/..\/utils.h/' ./qtbase/src/tools/uic/cpp/cppwriteiconinitialization.cpp",
                     './configure -plugindir $INSTALL_FOLDER/qt/plugins -release -opensource --confirm-license '
@@ -2125,7 +2127,7 @@ class all: # noqa
                     '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
                     '-no-libudev -no-gstreamer -no-icu -qt-pcre -qt-xcb '
                     '-nomake examples -nomake tests -c++std c++11 '
-                '|| true ; [ "$(basename $TARGET_FOLDER)" == "5.15.2" ] && '
+                '; elif /bin/python -c "exit(0 if $VERSION_MAJOR >= 5.15 else 1)" ; then '
                     './configure -plugindir $INSTALL_FOLDER/qt/plugins '
                     '-release -opensource --confirm-license '
                     '-qpa xcb -xcb -xcb-xlib -xkbcommon -bundled-xcb-xinput '
@@ -2138,9 +2140,11 @@ class all: # noqa
                     "-skip qtconnectivity -skip qtwebengine -skip qt3d "
         			"-skip qtdeclarative -skip qtwebchannel -no-libudev "
         			"-no-icu -no-dbus "
-                '|| true )',
+                '; fi )',
                 'make -j $DCORES',
                 'make -j $DCORES install',
+                # 'mkdir -p $INSTALL_FOLDER/cmake/',
+                # 'for n in $(ls -d ./*/lib/cmake/*/ 2>/dev/null) ; do cp -rfv $n/* $INSTALL_FOLDER/cmake/ ; done'
             ],
             depend=[
                 self.tiff, self.jpeg, self.libpng, self.freetype,
@@ -2412,7 +2416,11 @@ class all: # noqa
                 '''[ $(basename $TARGET_FOLDER | awk -F'.' '{print $1}') -ge 5 ] ''',
                 '(mkdir build',
                 'cd build',
-                'cmake ../ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DQT_SRC_DIR=$QT_TARGET_FOLDER/',
+                'cmake ../ '
+                    '-DQt5_DIR=$QT_TARGET_FOLDER '
+                    '-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
+                    '-DCMAKE_PATH_PREFIX="'+self.cmake_prefix()+'" '
+                    '-DQT_SRC_DIR=$QT_TARGET_FOLDER/',
                 'make -j $DCORES install ) || true',
                 # create symbolic links of the libraries in the correct place,
                 # so pipeVFX can find it - this is needed when building maya related
@@ -2665,14 +2673,11 @@ class all: # noqa
         # oiio_version = '2.0.11'
         self.oiio = {}
         self.field3d = {}
+        self.openvdb = {}
         environ = self.exr_rpath_environ.copy()
         for boost_version in self.boost.versions:
             gcc_version = '6.3.1'
             sufix = "boost.%s" % boost_version
-            f3d_exr_version = exr_version
-            if build.versionMajor(boost_version) < 1.6:
-                f3d_exr_version = '2.2.0'
-
             download=[]
             download += [(
                     'https://github.com/imageworks/Field3D/archive/v1.7.2.tar.gz',
@@ -2687,19 +2692,20 @@ class all: # noqa
                         self.openexr  [sufix] : '2.2.0',
                     },
             )]
-            download += [(
-                    'https://github.com/imageworks/Field3D/archive/refs/tags/v1.7.3.tar.gz',
-                    'Field3D-1.7.3.tar.gz',
-                    '1.7.3',
-                    '536198b1b4840a5b35400ccf05d4431c',
-                    {   hdf5 : '1.8.11',
-                        boost : boost_version,
-                        gcc: gcc_version,
-                        self.ilmbase  [sufix] : '2.4.0',
-                        self.pyilmbase[sufix] : '2.4.0',
-                        self.openexr  [sufix] : '2.4.0',
-                    },
-            )]
+            if build.versionMajor(boost_version) >= 1.6:
+                download += [(
+                        'https://github.com/imageworks/Field3D/archive/refs/tags/v1.7.3.tar.gz',
+                        'Field3D-1.7.3.tar.gz',
+                        '1.7.3',
+                        '536198b1b4840a5b35400ccf05d4431c',
+                        {   hdf5 : '1.8.11',
+                            boost : boost_version,
+                            gcc: gcc_version,
+                            self.openexr  [sufix] : '2.4.0',
+                            self.ilmbase  [sufix] : '2.4.0',
+                            self.pyilmbase[sufix] : '2.4.0',
+                        },
+                )]
             if build.versionMajor(boost_version) >= 1.7:
                 environ["CXXFLAGS"] = " $CXXFLAGS -fno-sized-deallocation "
 
@@ -2715,11 +2721,236 @@ class all: # noqa
             )
             self.field3d[sufix] = field3d
 
+
+            # OPENVDB
+            download_openvdb = []
+            self.gcc_llvm_environ = {
+                # this fixes the problem with missing stdlib.h
+                'CXX':  'g++ '
+                            # '-include climits '
+                            ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -I$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+                            ' -isystem/usr/include',
+                'CC' :  'gcc '
+                            # ' -include limits.h '
+                            ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
+                'LD' :  'g++ '
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+
+                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+                'RPATH'     : '$RPATH:'+self.exr_rpath_environ['RPATH'],
+                # we need to add the python$VERSION_MAJOR to include path for openvdb 7
+                'CPATH'     : '$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/:$CPATH:'+self.exr_rpath_environ['CPATH'],
+                'PATH'      : '$SOURCE_FOLDER/tools/:$PATH',
+                'NVCCFLAGS' : ' -std=c++17 ',
+                'CLIMITS'   : ''
+            }
+            openvdb_environ = self.gcc_llvm_environ
+            if build.versionMajor(boost_version) >= 1.70:
+                # openvdb_environ['CLIMITS'] = ''.join([
+                #     ' -DCHAR_BIT=8 ',
+                #     ' -DSCHAR_MIN=-127 ',
+                #     ' -DSCHAR_MAX=127 ',
+                #     ' -DUCHAR_MAX=255 ',
+                #     ' -DCHAR_MIN=0 ',
+                #     ' -DCHAR_MAX=UCHAR_MAX ',
+                #     ' -DSHRT_MIN=-32767 ',
+                #     ' -DSHRT_MAX=32767 ',
+                #     ' -DUSHRT_MAX=65535 ',
+                #     ' -DINT_MIN=-32767 ',
+                #     ' -DINT_MAX=32767 ',
+                #     ' -DUINT_MAX=65535 ',
+                #     ' -DLONG_MIN=-2147483647 ',
+                #     ' -DLONG_MAX=2147483647 ',
+                #     ' -DULONG_MAX=4294967295 ',
+                #     ' -DLLONG_MIN=-9223372036854775807 ',
+                #     ' -DLLONG_MAX=9223372036854775807 ',
+                #     ' -DULLONG_MAX=18446744073709551615 ',
+                # ])
+                download_openvdb += [(
+                    # CY 2022
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v9.0.0.tar.gz',
+                    'openvdb-9.0.0.tar.gz',
+                    '9.0.0',
+                    '684ce40c2f74f3a0c9cac530e1c7b07e',
+                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '2020_U3',
+                    self.llvm: '7.1.0',
+                    self.ilmbase[sufix]: exr_version,
+                    self.openexr[sufix]: exr_version,
+                    self.pyilmbase[sufix]: exr_version,
+                    self.gtest: self.gtest.latestVersion(),
+                    self.cuda: self.cuda.latestVersion(),
+                    self.optix: self.optix.latestVersion(),}
+                )]
+            elif build.versionMajor(boost_version) >= 1.66:
+                download_openvdb += [(
+                    # CY 2018
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
+                    'openvdb-5.0.0.tar.gz',
+                    '5.0.0',
+                    '9ba08c29dda60ec625acb8a5928875e5',
+                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6',
+                    self.llvm: '7.1.0',
+                    self.ilmbase[sufix]: exr_version,
+                    self.openexr[sufix]: exr_version,
+                    self.pyilmbase[sufix]: exr_version,}
+                ),(
+                    # CY 2019
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v6.0.0.tar.gz',
+                    'openvdb-6.0.0.tar.gz',
+                    '6.0.0',
+                    '43604208441b1f3625c479ef0a36d7ad',
+                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6',
+                    self.llvm: '7.1.0',
+                    self.ilmbase[sufix]: exr_version,
+                    self.openexr[sufix]: exr_version,
+                    self.pyilmbase[sufix]: exr_version,}
+                ),(
+                    # CY 2020
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
+                    'openvdb-7.0.0.tar.gz',
+                    '7.0.0',
+                    'fd6c4f168282f7e0e494d290cd531fa8',
+                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6',
+                    self.llvm: '7.1.0',
+                    self.ilmbase[sufix]: exr_version,
+                    self.openexr[sufix]: exr_version,
+                    self.pyilmbase[sufix]: exr_version,}
+                ),(
+                    # CY 2021
+                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v8.2.0.tar.gz',
+                    'openvdb-8.2.0.tar.gz',
+                    '8.2.0',
+                    '2852fe7176071eaa18ab9ccfad5ec403',
+                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '2020_U3',
+                    self.llvm: '7.1.0',
+                    self.ilmbase[sufix]: exr_version,
+                    self.openexr[sufix]: exr_version,
+                    self.pyilmbase[sufix]: exr_version,}
+                # ),(
+                #     # CY 2017
+                #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
+                #     'openvdb-4.0.0.tar.gz',
+                #     '4.0.0',
+                #     'c56d8a1a460f1d3327f2568e3934ca6a',
+                #     { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6',
+                #     self.ilmbase[sufix]: exr_version, self.openexr[sufix]: exr_version,  self.pyilmbase[sufix]: exr_version,}
+                # ),(
+                #     # CY 2015-2016
+                #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
+                #     'openvdb-3.0.0.tar.gz',
+                #     '3.0.0',
+                #     '3ca8f930ddf759763088e265654f4084',
+                #     { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
+                #     self.ilmbase[sufix]: exr_version, self.openexr[sufix]: exr_version, self.pyilmbase[sufix]: exr_version, }
+                )]
+
+            if 'OPENVDB_CORES' in ARGUMENTS:
+                openvdb_environ['CORES']  = str(int(ARGUMENTS['OPENVDB_CORES'])/2)
+                openvdb_environ['DCORES'] = ARGUMENTS['OPENVDB_CORES']
+                openvdb_environ['HCORES'] = str(int(ARGUMENTS['OPENVDB_CORES'])/4)
+
+            if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
+                openvdb_environ['CORES']  = "1"
+                openvdb_environ['DCORES'] = "1"
+                openvdb_environ['HCORES'] = "1"
+
+            openvdb = build.cmake(
+                ARGUMENTS,
+                'openvdb',
+                targetSuffix=sufix,
+                download = download_openvdb,
+                environ = openvdb_environ,
+                depend=[self.glfw, self.jemalloc],
+                src = "README.md",
+                cmake_prefix = self.cmake_prefix(),
+                cmd = [
+                    "if [ -d openvdb/openvdb ] ; then ( "
+                        # force boost 1.66
+                        "sed -i.bak CMakeLists.txt -e 's/set.MINIMUM_BOOST_VERSION ..../set(MINIMUM_BOOST_VERSION 1.66/g'",
+                        # force cmake to use our CC/CXX env vars, since the damn thing wont!!
+                        # 'mkdir -p tools',
+                        # '''echo "$CUDA_TARGET_FOLDER/bin/nvcc -ccbin clang $CLIMITS -include climits -std=c++14 \$@" >> tools/nvcc''',
+                        # 'chmod a+x $SOURCE_FOLDER/tools/*',
+                        # now we can build
+                        "mkdir ./build",
+                        "cd ./build",
+                        "cmake ../ ",
+                        "make -j $DCORES VERBOSE=1",
+                        "make -j $DCORES install",
+                        # if we're building a bigger than 1.70 boost version, create a
+                        # 1.66 folder for compatibility
+                        '''if [ ! -e $INSTALL_FOLDER/../boost.1.66.0 ] ; then if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then ln -s boost.1.70.0 $INSTALL_FOLDER/../boost.1.66.0 ; fi ; fi '''
+                    ") ; else ( cd openvdb ;"
+                        " make install -j $DCORES"
+            			" DESTDIR=$INSTALL_FOLDER"
+            			" BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include"
+            			" BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+            			" BOOST_PYTHON_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
+            			" BOOST_PYTHON_LIB=-lboost_python"
+            			" EXR_INCL_DIR=$OPENEXR_TARGET_FOLDER/include"
+            			" EXR_LIB_DIR=$OPENEXR_TARGET_FOLDER/lib"
+            			" TBB_INCL_DIR=$TBB_TARGET_FOLDER/include/tbb"
+            			" TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib"
+            			" PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
+            			" PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include"
+            			" PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib"
+            			" BLOSC_INCL_DIR=$BLOSC_TARGET_FOLDER/include"
+            			" BLOSC_LIB_DIR=$BLOSC_TARGET_FOLDER/lib"
+            			" NUMPY_INCL_DIR=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/"
+            			" CONCURRENT_MALLOC_LIB="
+            			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
+            			" LOG4CPLUS_INCL_DIR="
+            			" EPYDOC= ",
+                        "cp $INSTALL_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $INSTALL_FOLDER/python",
+            		    "cp $INSTALL_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $INSTALL_FOLDER/include"
+                    " ) ; fi"
+                ],
+                flags = [
+                    '-D LLVM_DIR=$LLVM_TARGET_FOLDER ',
+                    '-D USE_NANOVDB=ON ',
+                    '-D NANOVDB_BUILD_UNITTESTS=ON ',
+                    '-D NANOVDB_BUILD_EXAMPLES=ON ',
+                    '-D NANOVDB_BUILD_BENCHMARK=ON ',
+                    '-D NANOVDB_USE_INTRINSICS=ON ',
+                    '-D NANOVDB_USE_CUDA=ON ',
+                    '-D NANOVDB_CUDA_KEEP_PTX=ON ',
+                    '-D OPENVDB_BUILD_PYTHON_MODULE=1 ',
+                    '-D OPENVDB_BUILD_AX=1 ',
+                    '-D OPENVDB_BUILD_AX_BINARIES=1 ',
+                    '-D OPENVDB_ENABLE_RPATH=1 ',
+                    '-D CONCURRENT_MALLOC=Jemalloc ',
+                    '-D DOPENVDB_BUILD_NANOVDB=ON ',
+                ]
+            )
+            self.openvdb[sufix] = openvdb
+
+            # ============================================================================================================================================
+            # github build point so we can split the build in multiple matrix jobs in github actions
+            # ============================================================================================================================================
+            for v in self.openvdb[sufix].keys():
+                build.github_phase_one_version(ARGUMENTS, {self.openvdb[sufix] : v})
+
+
         # build OIIO for all boost versions
         environ = self.exr_rpath_environ.copy()
         for boost_version in self.boost.versions:
             gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
             sufix = "boost.%s" % boost_version
+            bv = boost_version
 
             # here we select the versions of OIIO to build for each boost.
             # not all versions build against all boost versions.
@@ -2731,8 +2962,7 @@ class all: # noqa
                     '1.5.24',
                     '8c1f9a0ec5b55a18eeea76d33ca7a02c',
                     { self.gcc : gcc_version,  boost : boost_version, python: '2.7.16',
-                    self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                    self.field3d[sufix]: '1.7.2'}
+                    self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0'}
                 ]]
             if build.versionMajor(boost_version) >= 1.51 and build.versionMajor(boost_version) < 1.70:
                 if build.versionMajor(boost_version) != 1.54:
@@ -2774,7 +3004,8 @@ class all: # noqa
                         '568a1efb4fc41711e2dae8c39450a83e',
                         { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
                         self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
-                        self.field3d[sufix]:  '1.7.3', self.jpeg: '9a', self.tbb: self.masterVersion['tbb']}
+                        self.field3d[sufix]:  '1.7.3', self.jpeg: '9a', self.tbb: self.masterVersion['tbb'],
+                        self.openvdb[sufix]: '8.2.0'}
                     ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
@@ -2825,10 +3056,14 @@ class all: # noqa
                     'mkdir -p build',
                     'cd build',
                     'if [ "$ILMBASE_TARGET_FOLDER" == "" ] ; then export ILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER ; fi',
+                    'export USE_PYTHON=0',
+                    'if /bin/python -c "exit(0 if $VERSION_MAJOR >= 2.2 else 1)" ; then '
+                        'export USE_PYTHON=1 ;'
+                    'fi'
                 ]+build.cmake.cmd,
                 flags = [
                     '-DTBB_ROOT_DIR=$TBB_TARGET_FOLDER',
-                    '-DUSE_PYTHON=1',
+                    '-DUSE_PYTHON=$USE_PYTHON',
                     '-DUSE_PTEX=0',
                     '-DUSE_OCIO=1',
                     '-DImath_DIR=$ILMBASE_TARGET_FOLDER',
@@ -2857,7 +3092,6 @@ class all: # noqa
         # for bv in [ x for x in self.boost.versions if build.versionMajor(x) > 1.60 ]:
         self.osl = {}
         self.materialx = {}
-        self.openvdb = {}
         self.alembic = {}
         self.clew = {}
         self.opensubdiv = {}
@@ -3106,225 +3340,6 @@ class all: # noqa
             )
             self.materialx[bsufix] = materialx
 
-
-            # OPENVDB
-            download_openvdb = []
-            self.gcc_llvm_environ = {
-                # this fixes the problem with missing stdlib.h
-                'CXX':  'g++ '
-                            # '-include climits '
-                            ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -I$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
-                            ' -isystem/usr/include',
-                'CC' :  'gcc '
-                            # ' -include limits.h '
-                            ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
-                'LD' :  'g++ '
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-
-                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-                'RPATH'     : '$RPATH:'+self.exr_rpath_environ['RPATH'],
-                # we need to add the python$VERSION_MAJOR to include path for openvdb 7
-                'CPATH'     : '$PYTHON_TARGET_FOLDER/include/python$PYTHON_VERSION_MAJOR/:$CPATH:'+self.exr_rpath_environ['CPATH'],
-                'PATH'      : '$SOURCE_FOLDER/tools/:$PATH',
-                'NVCCFLAGS' : ' -std=c++17 ',
-                'CLIMITS'   : ''
-            }
-            openvdb_environ = self.gcc_llvm_environ
-            if bv == "1.70.0":
-                # openvdb_environ['CLIMITS'] = ''.join([
-                #     ' -DCHAR_BIT=8 ',
-                #     ' -DSCHAR_MIN=-127 ',
-                #     ' -DSCHAR_MAX=127 ',
-                #     ' -DUCHAR_MAX=255 ',
-                #     ' -DCHAR_MIN=0 ',
-                #     ' -DCHAR_MAX=UCHAR_MAX ',
-                #     ' -DSHRT_MIN=-32767 ',
-                #     ' -DSHRT_MAX=32767 ',
-                #     ' -DUSHRT_MAX=65535 ',
-                #     ' -DINT_MIN=-32767 ',
-                #     ' -DINT_MAX=32767 ',
-                #     ' -DUINT_MAX=65535 ',
-                #     ' -DLONG_MIN=-2147483647 ',
-                #     ' -DLONG_MAX=2147483647 ',
-                #     ' -DULONG_MAX=4294967295 ',
-                #     ' -DLLONG_MIN=-9223372036854775807 ',
-                #     ' -DLLONG_MAX=9223372036854775807 ',
-                #     ' -DULLONG_MAX=18446744073709551615 ',
-                # ])
-                download_openvdb += [(
-                    # CY 2022
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v9.0.0.tar.gz',
-                    'openvdb-9.0.0.tar.gz',
-                    '9.0.0',
-                    '684ce40c2f74f3a0c9cac530e1c7b07e',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U3',
-                    self.llvm: '7.1.0',
-                    self.ilmbase[bsufix]: exr_version,
-                    self.openexr[bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version,
-                    self.gtest: self.gtest.latestVersion(),
-                    self.cuda: self.cuda.latestVersion(),
-                    self.optix: self.optix.latestVersion(),}
-                )]
-            elif bv == "1.66.0":
-                download_openvdb += [(
-                    # CY 2018
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v5.0.0.tar.gz',
-                    'openvdb-5.0.0.tar.gz',
-                    '5.0.0',
-                    '9ba08c29dda60ec625acb8a5928875e5',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
-                    self.llvm: '7.1.0',
-                    self.ilmbase[bsufix]: exr_version,
-                    self.openexr[bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version,}
-                ),(
-                    # CY 2019
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v6.0.0.tar.gz',
-                    'openvdb-6.0.0.tar.gz',
-                    '6.0.0',
-                    '43604208441b1f3625c479ef0a36d7ad',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
-                    self.llvm: '7.1.0',
-                    self.ilmbase[bsufix]: exr_version,
-                    self.openexr[bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version,}
-                ),(
-                    # CY 2020
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
-                    'openvdb-7.0.0.tar.gz',
-                    '7.0.0',
-                    'fd6c4f168282f7e0e494d290cd531fa8',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
-                    self.llvm: '7.1.0',
-                    self.ilmbase[bsufix]: exr_version,
-                    self.openexr[bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version,}
-                ),(
-                    # CY 2021
-                    'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v8.2.0.tar.gz',
-                    'openvdb-8.2.0.tar.gz',
-                    '8.2.0',
-                    '2852fe7176071eaa18ab9ccfad5ec403',
-                    { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '2020_U3',
-                    self.llvm: '7.1.0',
-                    self.ilmbase[bsufix]: exr_version,
-                    self.openexr[bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version,}
-                # ),(
-                #     # CY 2017
-                #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
-                #     'openvdb-4.0.0.tar.gz',
-                #     '4.0.0',
-                #     'c56d8a1a460f1d3327f2568e3934ca6a',
-                #     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6',
-                #     self.ilmbase[bsufix]: exr_version, self.openexr[bsufix]: exr_version,  self.pyilmbase[bsufix]: exr_version,}
-                # ),(
-                #     # CY 2015-2016
-                #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
-                #     'openvdb-3.0.0.tar.gz',
-                #     '3.0.0',
-                #     '3ca8f930ddf759763088e265654f4084',
-                #     { self.gcc : '6.3.1', boost : bv, python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
-                #     self.ilmbase[bsufix]: exr_version, self.openexr[bsufix]: exr_version, self.pyilmbase[bsufix]: exr_version, }
-                )]
-
-            if 'OPENVDB_CORES' in ARGUMENTS:
-                openvdb_environ['CORES']  = str(int(ARGUMENTS['OPENVDB_CORES'])/2)
-                openvdb_environ['DCORES'] = ARGUMENTS['OPENVDB_CORES']
-                openvdb_environ['HCORES'] = str(int(ARGUMENTS['OPENVDB_CORES'])/4)
-
-            if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
-                openvdb_environ['CORES']  = "1"
-                openvdb_environ['DCORES'] = "1"
-                openvdb_environ['HCORES'] = "1"
-
-            openvdb = build.cmake(
-                ARGUMENTS,
-                'openvdb',
-                targetSuffix=bsufix,
-                download = download_openvdb,
-                environ = openvdb_environ,
-                depend=[self.glfw, self.jemalloc],
-                src = "README.md",
-                cmake_prefix = self.cmake_prefix(),
-                cmd = [
-                    "[ -d openvdb/openvdb ] "
-                    "&& ( "
-                        # force boost 1.66
-                        "sed -i.bak CMakeLists.txt -e 's/set.MINIMUM_BOOST_VERSION ..../set(MINIMUM_BOOST_VERSION 1.66/g'",
-                        # force cmake to use our CC/CXX env vars, since the damn thing wont!!
-                        # 'mkdir -p tools',
-                        # '''echo "$CUDA_TARGET_FOLDER/bin/nvcc -ccbin clang $CLIMITS -include climits -std=c++14 \$@" >> tools/nvcc''',
-                        # 'chmod a+x $SOURCE_FOLDER/tools/*',
-                        # now we can build
-                        "mkdir ./build",
-                        "cd ./build",
-                        "cmake ../ "
-                            '-D USE_NANOVDB=ON '
-                            '-D NANOVDB_BUILD_UNITTESTS=ON '
-                            '-D NANOVDB_BUILD_EXAMPLES=ON '
-                            '-D NANOVDB_BUILD_BENCHMARK=ON '
-                            '-D NANOVDB_USE_INTRINSICS=ON '
-                            '-D NANOVDB_USE_CUDA=ON '
-                            '-D NANOVDB_CUDA_KEEP_PTX=ON '
-                            '-D OPENVDB_BUILD_PYTHON_MODULE=1 '
-                            '-D OPENVDB_BUILD_AX=1 '
-                            '-D OPENVDB_BUILD_AX_BINARIES=1 '
-                            '-D OPENVDB_ENABLE_RPATH=1 '
-                            '-D CONCURRENT_MALLOC=Jemalloc '
-                            '-D DOPENVDB_BUILD_NANOVDB=ON ',
-                        "make -j $DCORES VERBOSE=1",
-                        "make -j $DCORES install",
-                        # if we're building a bigger than 1.70 boost version, create a
-                        # 1.66 folder for compatibility
-                        '''[ ! -e $INSTALL_FOLDER/../boost.1.66.0 ] && if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then ln -s boost.1.70.0 $INSTALL_FOLDER/../boost.1.66.0 ; fi'''
-                    ") || ( cd openvdb ",
-                        " make install -j $DCORES"
-            			" DESTDIR=$INSTALL_FOLDER"
-            			" BOOST_INCL_DIR=$BOOST_TARGET_FOLDER/include"
-            			" BOOST_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
-            			" BOOST_PYTHON_LIB_DIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR"
-            			" BOOST_PYTHON_LIB=-lboost_python"
-            			" EXR_INCL_DIR=$OPENEXR_TARGET_FOLDER/include"
-            			" EXR_LIB_DIR=$OPENEXR_TARGET_FOLDER/lib"
-            			" TBB_INCL_DIR=$TBB_TARGET_FOLDER/include/tbb"
-            			" TBB_LIB_DIR=$TBB_TARGET_FOLDER/lib"
-            			" PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
-            			" PYTHON_INCL_DIR=$PYTHON_TARGET_FOLDER/include"
-            			" PYTHON_LIB_DIR=$PYTHON_TARGET_FOLDER/lib"
-            			" BLOSC_INCL_DIR=$BLOSC_TARGET_FOLDER/include"
-            			" BLOSC_LIB_DIR=$BLOSC_TARGET_FOLDER/lib"
-            			" NUMPY_INCL_DIR=$PYTHON_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/numpy/core/include/numpy/"
-            			" CONCURRENT_MALLOC_LIB="
-            			" GLFW_INCL_DIR=$GLFW_TARGET_FOLDER/include"
-            			" LOG4CPLUS_INCL_DIR="
-            			" EPYDOC= ",
-                        "cp $INSTALL_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $INSTALL_FOLDER/python",
-            		    "cp $INSTALL_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $INSTALL_FOLDER/include )",
-                ]
-            )
-            self.openvdb[bsufix] = openvdb
-
-            # ============================================================================================================================================
-            # github build point so we can split the build in multiple matrix jobs in github actions
-            # ============================================================================================================================================
-            for v in self.openvdb[bsufix].keys():
-                build.github_phase_one_version(ARGUMENTS, {self.openvdb[bsufix] : v})
 
 
         # =============================================================================================================================================

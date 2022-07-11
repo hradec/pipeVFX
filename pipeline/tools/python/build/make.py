@@ -150,8 +150,11 @@ class cmake(make):
     def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         make.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
         if self.cmake_prefix:
+            cmake_prefix = self.cmake_prefix
+            if type(self.cmake_prefix) == type([]):
+                cmake_prefix = ';'.join(self.cmake_prefix)
             self.flags += [
-                "-DCMAKE_PREFIX_PATH=%s "  % self.cmake_prefix
+                '-DCMAKE_PREFIX_PATH="%s"' % cmake_prefix
             ]
         self.flags +=[
             '-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
@@ -190,7 +193,6 @@ class cmake(make):
             if 'make' in cmd and 'cmake' not in cmd:
                 if not '-j' in cmd:
                     cmd = cmd.replace('make', "make -j $DCORES")
-
 
         return cmd
 
