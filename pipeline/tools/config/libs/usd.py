@@ -21,6 +21,8 @@
 
 import sys
 class usd(baseLib):
+    MONOLITHIC = False
+
     def path(self, subpath=''):
         '''we overwrite the path function to return the path for the
         non monolithic usd version if this class is being set for maya.
@@ -29,12 +31,16 @@ class usd(baseLib):
         '''
         # sys.stderr.write("\n\nBUM1\n\n")
         path = baseLib.path(self)
-        # if self.parent() in ['maya']:
-        #     path = path.replace("/usd/", '/usd_non_monolithic/')
 
-        # we're using usd_non_monolithic for everything until mayausd plugin
-        # can build with usd monolithic libs
-        path = path.replace("/usd/", '/usd_non_monolithic/')
+        if not self.MONOLITHIC:
+            # we use usd_non_monolithic with maya since mayausd wont build with monolithic
+            # if self.parent() in ['maya']:
+            #     path = path.replace("/usd/", '/usd_non_monolithic/')
+
+            # we're using usd_non_monolithic for everything until mayausd plugin
+            # can build with usd monolithic libs
+            path = path.replace("/usd/", '/usd_non_monolithic/')
+
         return '/'.join([path, subpath])
 
     def environ(self):
