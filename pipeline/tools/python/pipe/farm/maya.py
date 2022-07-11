@@ -110,7 +110,10 @@ class maya(current.engine):
                batchContext = "%s_%s" % (pipe_asset, self.frameNumber())
                preFarmCmd += '''mount | egrep 'tmpfs.*renderman' | awk '{print $3}' | while read p ; do umount $p ; done ; '''
                preFarmCmd += 'mkdir -p  %s/renderman/%s_%s ; ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
-               preFarmCmd += 'mount -t tmpfs tmpfs  %s/renderman/%s_%s ; df -h ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
+               preFarmCmd += 'mount -t tmpfs tmpfs  %s/renderman/%s_%s ; df -h ; ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
+               preFarmCmd += 'chown %s:%s -R %s/renderman/%s_%s ; ' % (os.getuid(), os.getgid(), self.project, self.asset.strip('/').split('/')[-2], batchContext)
+               preFarmCmd += 'chmod a+rwx -R %s/renderman/%s_%s ; ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
+               preFarmCmd += 'ls -la %s/renderman/%s_%s/ ' % (self.project, self.asset.strip('/').split('/')[-2], batchContext)
         return preFarmCmd
 
     def farmSetupPos(self):
