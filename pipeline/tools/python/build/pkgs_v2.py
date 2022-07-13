@@ -1543,16 +1543,21 @@ class all: # noqa
                 depend=[gcc, python, openssl],
                 environ=environ,
                 cmd = [
-                    '[ -e CMakeLists.txt ] && ('
+                    ' if python -c "exit(0 if $VERSION_MAJOR >= 3.0 else 1)" ; then '
                         'mkdir -p build && cd build',
                         'cmake $SOURCE_FOLDER -DPYTHON=1 -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
                         'make -j $DCORES',
-                        'make -j $DCORES install'
-                    ') || ('
+                        'make -j $DCORES install '
+                    '; else '
                         './configure  --enable-shared ',
                         'make -j $DCORES',
                         'make -j $DCORES install'
-                    ')'
+                    '; fi',
+                    'if python -c "exit(0 if $VERSION_MAJOR <= 2.2 else 1)" ; then '
+                        'cp -rfv $SOURCE_FOLDER/Half/halfExport.h $INSTALL_FOLDER/include/OpenEXR/ ;'
+                        'cp -rfv $SOURCE_FOLDER/Half/halfExport.h $INSTALL_FOLDER/include/ '
+                    '; fi'
+
                 ],
             )
             self.ilmbase[sufix] = ilmbase
@@ -1675,7 +1680,7 @@ class all: # noqa
                 environ=environ,
                 cmd = [
                     'mv /usr/include/numpy /usr/include/numpy.bak ;'
-                    'if /bin/python -c "exit(0 if $VERSION_MAJOR == 2.4 else 1)" ; then '
+                    'if python -c "exit(0 if $VERSION_MAJOR == 2.4 else 1)" ; then '
                         'mkdir -p build',
                         'cd build',
                         'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
@@ -1692,7 +1697,7 @@ class all: # noqa
                         'mkdir -p $INSTALL_FOLDER/../../../pyilmbase/',
                         'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
                         'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../ilmbase/$OPENEXR_VERSION'
-                    ' ; elif /bin/python -c "exit(0 if $VERSION_MAJOR < 2.4 else 1)" ; then '
+                    ' ; elif python -c "exit(0 if $VERSION_MAJOR < 2.4 else 1)" ; then '
                         './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
                         'make -j $DCORES',
                         'make -j $DCORES install'
@@ -2115,11 +2120,11 @@ class all: # noqa
                 # since QT loves to keep changing the configure options on almost
                 # every release, and configure fails if you leave options it
                 # doesnt known!
-                '( if /bin/python -c "exit(0 if $VERSION_MAJOR == 4.8 else 1)" ; then '
+                '( if python -c "exit(0 if $VERSION_MAJOR == 4.8 else 1)" ; then '
                     "sed -i.bak -e 's/utils.h/..\/utils.h/' ./src/tools/uic/cpp/cppwriteinitialization.cpp",
                     "sed -i.bak -e 's/utils.h/..\/utils.h/' ./src/tools/uic/cpp/cppwriteiconinitialization.cpp",
                     './configure  -opensource -shared --confirm-license  -no-webkit -silent '
-                '; elif /bin/python -c "exit(0 if $VERSION_MAJOR == 5.6 else 1)" ; then '
+                '; elif python -c "exit(0 if $VERSION_MAJOR == 5.6 else 1)" ; then '
                     "sed -i.bak -e 's/utils.h/..\/utils.h/' ./qtbase/src/tools/uic/cpp/cppwriteinitialization.cpp",
                     "sed -i.bak -e 's/utils.h/..\/utils.h/' ./qtbase/src/tools/uic/cpp/cppwriteiconinitialization.cpp",
                     './configure -plugindir $INSTALL_FOLDER/qt/plugins -release -opensource --confirm-license '
@@ -2127,7 +2132,7 @@ class all: # noqa
                     '-skip qtconnectivity -skip qtwebengine -skip qt3d -skip qtdeclarative '
                     '-no-libudev -no-gstreamer -no-icu -qt-pcre -qt-xcb '
                     '-nomake examples -nomake tests -c++std c++11 '
-                '; elif /bin/python -c "exit(0 if $VERSION_MAJOR >= 5.15 else 1)" ; then '
+                '; elif python -c "exit(0 if $VERSION_MAJOR >= 5.15 else 1)" ; then '
                     './configure -plugindir $INSTALL_FOLDER/qt/plugins '
                     '-release -opensource --confirm-license '
                     '-qpa xcb -xcb -xcb-xlib -xkbcommon -bundled-xcb-xinput '
@@ -2678,48 +2683,49 @@ class all: # noqa
         for boost_version in self.boost.versions:
             gcc_version = '6.3.1'
             sufix = "boost.%s" % boost_version
-            download=[]
-            download += [(
-                    'https://github.com/imageworks/Field3D/archive/v1.7.2.tar.gz',
-                    'Field3D-1.7.2.tar.gz',
-                    '1.7.2',
-                    '61660c2400213ca9adbb3e17782cccfb',
-                    {   hdf5 : '1.8.11',
-                        boost : boost_version,
-                        gcc: gcc_version,
-                        self.ilmbase  [sufix] : '2.2.0',
-                        self.pyilmbase[sufix] : '2.2.0',
-                        self.openexr  [sufix] : '2.2.0',
-                    },
-            )]
-            if build.versionMajor(boost_version) >= 1.6:
+            if build.versionMajor(boost_version) >= 1.61:
+                download=[]
                 download += [(
-                        'https://github.com/imageworks/Field3D/archive/refs/tags/v1.7.3.tar.gz',
-                        'Field3D-1.7.3.tar.gz',
-                        '1.7.3',
-                        '536198b1b4840a5b35400ccf05d4431c',
+                        'https://github.com/imageworks/Field3D/archive/v1.7.2.tar.gz',
+                        'Field3D-1.7.2.tar.gz',
+                        '1.7.2',
+                        '61660c2400213ca9adbb3e17782cccfb',
                         {   hdf5 : '1.8.11',
                             boost : boost_version,
                             gcc: gcc_version,
-                            self.openexr  [sufix] : '2.4.0',
-                            self.ilmbase  [sufix] : '2.4.0',
-                            self.pyilmbase[sufix] : '2.4.0',
+                            self.ilmbase  [sufix] : '2.2.0',
+                            self.pyilmbase[sufix] : '2.2.0',
+                            self.openexr  [sufix] : '2.2.0',
                         },
                 )]
-            if build.versionMajor(boost_version) >= 1.7:
-                environ["CXXFLAGS"] = " $CXXFLAGS -fno-sized-deallocation "
+                if build.versionMajor(boost_version) >= 1.6:
+                    download += [(
+                            'https://github.com/imageworks/Field3D/archive/refs/tags/v1.7.3.tar.gz',
+                            'Field3D-1.7.3.tar.gz',
+                            '1.7.3',
+                            '536198b1b4840a5b35400ccf05d4431c',
+                            {   hdf5 : '1.8.11',
+                                boost : boost_version,
+                                gcc: gcc_version,
+                                self.openexr  [sufix] : '2.4.0',
+                                self.ilmbase  [sufix] : '2.4.0',
+                                self.pyilmbase[sufix] : '2.4.0',
+                            },
+                    )]
+                if build.versionMajor(boost_version) >= 1.7:
+                    environ["CXXFLAGS"] = " $CXXFLAGS -fno-sized-deallocation "
 
-            # build sony field3d used by oiio 2.x
-            field3d = build.cmake(
-                ARGUMENTS,
-                'field3d',
-                targetSuffix = sufix,
-                download = download,
-                depend = [icu],
-                environ = environ,
-                flags = [' -D CXX_STANDARD="C++11" ']+build.cmake.flags
-            )
-            self.field3d[sufix] = field3d
+                # build sony field3d used by oiio 2.x
+                field3d = build.cmake(
+                    ARGUMENTS,
+                    'field3d',
+                    targetSuffix = sufix,
+                    download = download,
+                    depend = [icu],
+                    environ = environ,
+                    flags = [' -D CXX_STANDARD="C++11" ']+build.cmake.flags
+                )
+                self.field3d[sufix] = field3d
 
 
             # OPENVDB
@@ -2948,7 +2954,9 @@ class all: # noqa
         # build OIIO for all boost versions
         environ = self.exr_rpath_environ.copy()
         for boost_version in self.boost.versions:
-            gcc_version = '4.1.2' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
+            gcc_version = '4.1.2'
+            if build.versionMajor(boost_version) >= 1.61:
+                gcc_version = '6.3.1'
             sufix = "boost.%s" % boost_version
             bv = boost_version
 
@@ -2972,8 +2980,7 @@ class all: # noqa
                             '1.6.15',
                             '3fe2cef4fb5f7bc78b136d2837e1062f',
                             { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
-                            self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                            self.field3d[sufix]: '1.7.2'}
+                            self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0'}
                     ]]
             if build.versionMajor(boost_version) > 1.53:
                 download += [[
@@ -2982,8 +2989,7 @@ class all: # noqa
                         '1.8.10',
                         'a129a4caa39d7ad79aa1a3dc60cb0418',
                         { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
-                        self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                        self.field3d[sufix]: '1.7.2'}
+                        self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0'}
                     ],[
                         'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                         'oiio-Release-2.0.11.tar.gz',
@@ -2991,9 +2997,14 @@ class all: # noqa
                         '4fa0ce4538fb2d7eb72f54f4036972d5',
                         { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
                         self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                        self.field3d[sufix]: '1.7.2', self.jpeg: '9a', self.tbb: self.masterVersion['tbb']}
+                        self.jpeg: '9a', self.tbb: self.masterVersion['tbb']}
                     ]]
-            if build.versionMajor(boost_version) > 1.60:
+                # add field3d if we have it for the current boost
+                if sufix in self.field3d:
+                    for each in download:
+                        each[4][self.field3d[sufix]] = '1.7.2'
+
+            if build.versionMajor(boost_version) >= 1.61:
                 # field3d_version = '1.7.2'
                 # if build.versionMajor(boost_version) >= 1.7:
                 #     field3d_version = '1.7.3'
@@ -3057,7 +3068,7 @@ class all: # noqa
                     'cd build',
                     'if [ "$ILMBASE_TARGET_FOLDER" == "" ] ; then export ILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER ; fi',
                     'export USE_PYTHON=0',
-                    'if /bin/python -c "exit(0 if $VERSION_MAJOR >= 2.2 else 1)" ; then '
+                    'if python -c "exit(0 if $VERSION_MAJOR >= 2.2 else 1)" ; then '
                         'export USE_PYTHON=1 ;'
                     'fi'
                 ]+build.cmake.cmd,
@@ -3677,7 +3688,8 @@ class all: # noqa
             # print 'usd',bsufix,self.openvdb[bsufix].latestVersion()
             usd_sed['21.5.0']  = usd_sed['20.8.0']
             usd_sed['21.11.0'] = usd_sed['20.8.0']
-            usd_CORES  = os.environ['CORES']
+            icores = int(os.environ['CORES'])
+            usd_CORES  = "%d" % (icores if icores<16 else 16)
             if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
                 usd_CORES  = "1"
             for MONOLITHIC in [1,0]:
