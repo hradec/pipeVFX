@@ -44,7 +44,7 @@ import pkgs
 # this build module when running cortex and gaffer scons build.
 # we don't want to import the gaffer py in this situation.
 if 'BUILD_RUNNING' not in os.environ:
-    from gaffer import gaffer, cortex
+    from gaffer import gaffer, cortex, arnold_versions
     from gafferCycles import gafferCycles
 
 
