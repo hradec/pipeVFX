@@ -156,6 +156,9 @@ else
     # if no image in docker hub or we used -b to force a build, build it
     # and push it to docker hub!
     if [ "$UPLOAD" == "1" ] ; then
+        # we have to push pkg cache tags first, since the dockerfile needs it. 
+        docker push $latest_tag
+        docker push $pkg_image_tag
 
         # build image!
         echo -e "\nbuilding image:$build_image using $raw_image as base.\npackage image:$latest_tag\n\n"
@@ -177,8 +180,6 @@ else
         fi
         # docker-squash --tmp-dir /var/lib/docker/squash_tmp/ $latest_tag || true
         # docker-squash --tmp-dir /var/lib/docker/squash_tmp/ $build_image || true
-        docker push $latest_tag
-        docker push $pkg_image_tag
         docker push $build_image
         exit $?
     fi
