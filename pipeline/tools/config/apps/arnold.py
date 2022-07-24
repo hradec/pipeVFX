@@ -24,14 +24,14 @@
 class arnold(baseApp):
     def environ(self):
 
-        self['PATH'] = self.path('mtoadeploy/$MAYA_VERSION/bin')
+        self['PATH'] = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/bin')
         arnold.addon( self,
-            script      = self.path('mtoadeploy/$MAYA_VERSION/scripts'),
-            extensions  = self.path('mtoadeploy/$MAYA_VERSION/extensions'),
-            shader      = self.path('mtoadeploy/$MAYA_VERSION/shaders'),
+            script      = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/scripts'),
+            extensions  = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/extensions'),
+            shader      = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/shaders'),
             lib         =  [
                 self.path('bin'),
-                self.path('mtoadeploy/$MAYA_VERSION/bin'),
+                self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/bin'),
             ]
         )
 
@@ -39,14 +39,14 @@ class arnold(baseApp):
         self['PYTHONPATH'] = self.path('python')
 
         if os.path.exists(self.path('mtoadeploy/%s/oldpipe' % maya().version())):
-            self['MAYA_MODULE_PATH']=self.path('mtoadeploy/$MAYA_VERSION/oldpipe')
+            self['MAYA_MODULE_PATH']=self.path('mtoadeploy/MAYA_VERSION_MAJOR_ONLY/oldpipe')
         else:
             maya.addon(self,
-                plugin = self.path('mtoadeploy/$MAYA_VERSION/plug-ins'),
-                script = self.path('mtoadeploy/$MAYA_VERSION/scripts'),
-                renderDesc = self.path('mtoadeploy/$MAYA_VERSION'),
+                plugin = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/plug-ins'),
+                script = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/scripts'),
+                renderDesc = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY'),
                 icon   = [
-                    self.path('mtoadeploy/$MAYA_VERSION/icons'),
+                    self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/icons'),
                 ]
             )
 
@@ -88,5 +88,5 @@ class arnold(baseApp):
         caller['PYTHONPATH'] = script
 
     def license(self):
-        #self['solidangle_LICENSE'] = self.path('mtoadeploy/$MAYA_VERSION/license')
+        #self['solidangle_LICENSE'] = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/license')
         self['solidangle_LICENSE'] = os.environ['PIPE_FABRIC_ENGINE_LICENSE']
