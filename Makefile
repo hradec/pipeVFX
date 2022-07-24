@@ -8,8 +8,8 @@ PARALLEL?=
 RAMDISK?=
 _CORES_:=$(shell grep MHz /proc/cpuinfo  | wc -l)
 CORES?=${_CORES_}
-LLVM_CORES?=$(shell [ ${_CORES_} -gt 8 ] && echo 8 || expr ${_CORES_} / 2 )
-OPENVDB_CORES?=$(shell expr  ${_CORES_} / 2  )
+LLVM_CORES?=$(shell [ ${CORES} -gt 8 ] && echo 8 || expr ${CORES} / 2 )
+OPENVDB_CORES?=$(shell expr  [ ${CORES} -gt 8 ] && echo 8 || expr ${CORES} / 2  )
 PRE_CMD?=
 POS_CMD?=
 CUSTOM_LIB_FOLDER?=
@@ -17,6 +17,7 @@ STUDIO?=$(shell echo $STUDIO)
 DEBUG?=
 HUB_USER?=$(shell echo $HUB_USER)
 HUB_PASS?=$(shell echo $HUB_PASS)
+
 
 all: help
 
