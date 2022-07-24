@@ -64,7 +64,7 @@ mkdir -p mtoaRoot/$mtoaVersion && cd mtoaRoot/$mtoaVersion
 echo Downloading MtoA "https://${url}"
 curl -L https://${login}${url} -o mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run
 
-if [ "$DOCKER_PYTHON" == "" ] ; then
+if [ "$DOCKER_PYTHON" == "" ] && [ "$TRAVIS" == "" ] ; then
 	sh ./mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run --tar xvf
 	mkdir -p install && cd install
 	unzip ../package.zip
