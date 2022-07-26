@@ -3,11 +3,13 @@
 import build
 
 
-def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost='1.70.0'):
+def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost=None):
     if not usd:
         usd = pkgs.masterVersion['usd']
     if not boost:
         usd = pkgs.masterVersion['boost']
+    if not openvdb_boost:
+        openvdb_boost = boost
 
     pkgs.cyclesx = build.download(
         build.ARGUMENTS,

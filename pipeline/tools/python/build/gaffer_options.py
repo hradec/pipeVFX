@@ -40,10 +40,16 @@ if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 6.0:
     CXXSTD = "c++17"
     # CXXSTD = "c++11"
     CXXFLAGS += ["-fno-sized-deallocation"]
+
+# gaffer 0.62 switched to c++17
 if build.versionMajor(os.path.basename(os.environ['GAFFER_VERSION'])) >= 0.62:
     CXXSTD = "c++17"
 
-CXXFLAGS += ["-fno-sized-deallocation"]#, "-include", os.environ['BOOST_TARGET_FOLDER']+"/include/boost/signal.hpp"]
+# cortex 10.4 switched to c++17
+if build.versionMajor(os.environ['CORTEX_VERSION']) >= 10.4:
+    CXXSTD = "c++17"
+
+CXXFLAGS += ["-fno-sized-deallocation", "-DQT_NO_VERSION_TAGGING"]#, "-include", os.environ['BOOST_TARGET_FOLDER']+"/include/boost/signal.hpp"]
 os.system("grep atomic_uint32_t ./* -R | awk -F':' '{print $1}' | grep -v config.log | while read p ; do sed -i.bak -e 's/atomic_uint32_t/atomic<std::uint32_t>/' $p ; done")
 
 # INSTALL_DIR = os.environ['INSTALL_FOLDER']

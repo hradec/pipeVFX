@@ -111,6 +111,12 @@ if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 4.2:
     CXXSTD = "c++11"
 if build.versionMajor(os.path.basename(os.environ['GCC_ROOT'])) > 6.0:
     CXXSTD = "c++14"
+if pipe.versionMajor(os.environ['BOOST_VERSION']) >= 1.61:
+    CXXSTD = 'c++14'
+
+# cortex 10.4 switched to c++17
+if build.versionMajor(os.environ['CORTEX_VERSION']) >= 10.4:
+    CXXSTD = "c++17"
 
 # python
 # =============================================================================================================================================================
@@ -291,7 +297,6 @@ APPLESEED_VERSION = ''
 apps                    = pipe.roots().apps()
 if "MAYA_ROOT" in os.environ:
     MAYA_ROOT = os.environ['MAYA_ROOT'] #apps+"/maya/%s/"   % maya
-    # CXXSTD = 'c++11'
 if "PRMAN_ROOT" in os.environ:
     RMAN_ROOT = "%s/RenderManProServer-%s"  % (os.environ["PRMAN_ROOT"], os.environ["PRMAN_VERSION"])
 if "NUKE_ROOT" in os.environ:
@@ -310,9 +315,6 @@ if "APPLESEED_TARGET_FOLDER" in os.environ:
     APPLESEED_LIB_PATH = "%s/lib" % APPLESEED_ROOT
     APPLESEED_VERSION = os.environ["APPLESEED_VERSION"]
     LOCATE_DEPENDENCY_APPLESEED_SEARCHPATH = os.environ["APPLESEED_TARGET_FOLDER"]
-
-if pipe.versionMajor(os.environ['BOOST_VERSION']) >= 1.61:
-    CXXSTD = 'c++14'
 
 # installation paths
 # =============================================================================================================================================================

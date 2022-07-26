@@ -29,18 +29,12 @@ sys.path.insert( 0, os.path.abspath('%s/tools/python/' % pipelinePath) )
 # build all pkgs, if not already built!
 import build
 pkgs = build.pkgs.all(ARGUMENTS) # noqa
-pkgs.masterVersion['boost'  ] = '1.66.0'
-pkgs.masterVersion['openexr'] = '2.4.0'
-pkgs.masterVersion['usd'    ] = '21.5.0'
-
-USD_VERSION   = pkgs.masterVersion['usd']
-BOOST_VERSION = pkgs.masterVersion['boost']
 
 # get installed app versions using pipe
 import pipe
 
 # ===========================================================================================
-# build gaffer without any app support first!
+# install gaffer heaven plugin
 # ===========================================================================================
 pkgs.gaffer_haven = build.download(
     ARGUMENTS,
@@ -50,12 +44,22 @@ pkgs.gaffer_haven = build.download(
         'https://github.com/kubo-von/GafferHaven/archive/refs/heads/main.zip',
         'GafferHaven-main.zip',
         '1.0.0',
-        '0000000000000000000000000000',
+        '2d06cd42c3494355590adec7937d8e6e',
     )],
 )
-cortex = build.cortex(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
-gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
-gafferCycles = build.gafferCycles(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs)
+
+# ===========================================================================================
+# build gaffer without any app support first!
+# ===========================================================================================
+for boost_version in pkgs.boost_versions_for_gaffer:
+    for usd_version in pkgs.usd['boost.%s' % boost_version].versions:
+        # we only build gaffer for USD > 21.5
+        # the build.cortex/build.gaffer will selectively build the correct version
+        # for the required boost/usd combination. 
+        if build.versionMajor(usd_version) >= 21.5:
+            cortex = build.cortex(boost=boost_version, usd=usd_version, pkgs=pkgs)
+            gaffer = build.gaffer(boost=boost_version, usd=usd_version, pkgs=pkgs)
+            gafferCycles = build.gafferCycles(boost=boost_version, usd=usd_version, pkgs=pkgs)
 
 
 # ===========================================================================================
@@ -112,9 +116,12 @@ if canBuildCortexNow:
     # ARNOLD
     # ===========================================================================================
     # build  arnold for gaffer
-    for version in av:
-        pipe.version.set( arnold  = version )
-        gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs, apps=[ (pipe.apps.arnold, version) ])
+    for boost_version in pkgs.boost_versions_for_gaffer:
+        for usd_version in pkgs.usd['boost.%s' % boost_version].versions:
+            if build.versionMajor(usd_version) >= 21.5:
+                for version in av:
+                    pipe.version.set( arnold  = version )
+                    gaffer = build.gaffer(boost=boost_version, usd=usd_version, pkgs=pkgs, apps=[ (pipe.apps.arnold, version) ])
 
     # ===========================================================================================
     # MAYA
@@ -126,11 +133,12 @@ if canBuildCortexNow:
     pkgs.maya_openvdb = {}
 
     maya_dependency = {}
-    # maya_dependency['2016.5'] = { 'usd' : USD_VERSION, 'boost' : '1.61.0' }
-    maya_dependency['2022'  ] = { 'usd' : USD_VERSION, 'boost' : '1.66.0', 'mayausd' : '0.16.0', 'usd_monolithic' : False }
-    maya_dependency['2022.2'] = { 'usd' : USD_VERSION, 'boost' : '1.66.0', 'mayausd' : '0.17.0', 'usd_monolithic' : False }
-    maya_dependency['2022.3'] = { 'usd' : USD_VERSION, 'boost' : '1.66.0', 'mayausd' : '0.17.0', 'usd_monolithic' : False }
-    # maya_dependency['2023'  ] = { 'usd' : USD_VERSION, 'boost' : '1.66.0', 'mayausd' : '0.17.0', 'usd_monolithic' : False }
+    # maya_dependency['2016.5'] = { 'usd' : '21.5.0', 'boost' : '1.61.0' }
+    maya_dependency['2022'  ] = { 'usd' : '21.5.0', 'boost' : '1.66.0', 'mayausd' : '0.16.0', 'usd_monolithic' : False }
+    maya_dependency['2022.2'] = { 'usd' : '21.5.0', 'boost' : '1.66.0', 'mayausd' : '0.17.0', 'usd_monolithic' : False }
+    # maya_dependency['2022.3'] = { 'usd' : '21.5.0', 'boost' : '1.66.0', 'mayausd' : '0.17.0', 'usd_monolithic' : False }
+    maya_dependency['2022.3'] = { 'usd' : '21.11.0', 'boost' : '1.66.0', 'mayausd' : '0.18.0', 'usd_monolithic' : False }
+    # maya_dependency['2023'  ] = { 'usd' : '21.11.0', 'boost' : '1.66.0', 'mayausd' : '0.17.0', 'usd_monolithic' : False }
 
     for mv in maya_dependency:
         version = mv
@@ -150,14 +158,13 @@ if canBuildCortexNow:
             _USD_ENV = 'export _USD="$USD_TARGET_FOLDER"'
 
         else:
+            print  pkgs.usd_non_monolithic[boost_sufix]
             usd = pkgs.usd_non_monolithic[boost_sufix][ usd_version ]
             _USD_ENV = 'export _USD="$USD_NON_MONOLITHIC_TARGET_FOLDER"'
 
-        # build.s_print( pipe.apps.maya().path('bin/maya.bin'), mv, targetSuffix )
-
         # maya cortex and gaffer
-        cortex = build.cortex(boost=usd['boost'].version, usd=usd.version, pkgs=pkgs, apps=[(pipe.apps.maya, version)])
-        # gaffer = build.gaffer(boost=BOOST_VERSION, usd=USD_VERSION, pkgs=pkgs, apps=[(pipe.apps.maya, version)])
+        cortex = build.cortex(boost=boost_version, usd=usd_version, pkgs=pkgs, apps=[(pipe.apps.maya, version)])
+        # gaffer = build.gaffer(boost=boost_version, usd=usd_version, pkgs=pkgs, apps=[(pipe.apps.maya, version)])
 
         # maya USD plugins
         mayausd_download = {
@@ -187,8 +194,35 @@ if canBuildCortexNow:
                 usd['materialx' ].obj : usd['materialx' ].version,
                 usd['qt'        ].obj : usd['qt'        ].version,
             }),
+        '0.18.0' : (
+            'https://github.com/Autodesk/maya-usd/archive/refs/tags/v0.18.0.tar.gz',
+            'maya-usd-0.18.0.tar.gz',
+            '0.18.0',
+            '54ff777629201a3335bd6f05416f5e52',
+            {   pkgs.gcc : '9.3.1',
+                # usd.obj : usd.version,
+                # usd['boost'     ].obj : usd['boost'     ].version,
+                # usd['materialx' ].obj : usd['materialx' ].version,
+                # usd['qt'        ].obj : usd['qt'        ].version,
+                usd.obj : usd.version,
+                usd['boost'     ].obj : usd['boost'     ].version,
+                usd['materialx' ].obj : usd['materialx' ].version,
+                usd['qt'        ].obj : usd['qt'        ].version,
+            }),
         }
 
+        cmd=[
+            '''sed -i.bak -e 's/^........sys.exit.1./    return "release","nogit"/' ./build.py''',
+            _USD_ENV,
+            # 'if [ "$VERSION_MAJOR" == "0.16" ] ; then export _USD="$USD_NON_MONOLITHIC_TARGET_FOLDER" ; fi',
+            'python build.py -v 2 --install-location $INSTALL_FOLDER '
+                '--maya-location $MAYA_ROOT '
+                '--pxrusd-location $_USD '
+                '--devkit-location $MAYA_ROOT/devkit '
+                '--qt-location $QT_TARGET_FOLDER '
+                '--build-args "\-DMAYA_EXECUTABLE=$MAYA_ROOT/bin/maya.bin" '
+                '-j $DCORES .',
+        ]
 
         icores = int(os.environ['CORES'])
         DCORES  = "%d" % (icores if icores<16 else 16)
@@ -197,46 +231,8 @@ if canBuildCortexNow:
             'mayausd',
             targetSuffix=targetSuffix,
             download = [mayausd_download[ mayausd ]],
-            # download=[(
-            #     'https://github.com/Autodesk/maya-usd/archive/refs/tags/v0.16.0.tar.gz',
-            #     'maya-usd-0.16.0.tar.gz',
-            #     '0.16.0',
-            #     '906e3041a8b07589d36e1c25cd7cca58',
-            #     {   pkgs.gcc : '6.3.1',
-            #         usd.obj : usd.version,
-            #         usd['boost'     ].obj : usd['boost'     ].version,
-            #         usd['materialx' ].obj : usd['materialx' ].version,
-            #         usd['qt'        ].obj : usd['qt'        ].version,
-            #     }
-            # ),(
-            #     'https://github.com/Autodesk/maya-usd/archive/refs/tags/v0.17.0.tar.gz',
-            #     'maya-usd-0.17.0.tar.gz',
-            #     '0.17.0',
-            #     '135d9c34193f51b323386dc49b582492',
-            #     {   pkgs.gcc : '6.3.1',
-            #         # usd.obj : usd.version,
-            #         # usd['boost'     ].obj : usd['boost'     ].version,
-            #         # usd['materialx' ].obj : usd['materialx' ].version,
-            #         # usd['qt'        ].obj : usd['qt'        ].version,
-            #         usd.obj : usd.version,
-            #         usd['boost'     ].obj : usd['boost'     ].version,
-            #         usd['materialx' ].obj : usd['materialx' ].version,
-            #         usd['qt'        ].obj : usd['qt'        ].version,
-            #     }
-            # )],
             apps = [(pipe.apps.maya, version)],
-            cmd=[
-                '''sed -i.bak -e 's/^........sys.exit.1./    return "release","nogit"/' ./build.py''',
-                _USD_ENV,
-                # 'if [ "$VERSION_MAJOR" == "0.16" ] ; then export _USD="$USD_NON_MONOLITHIC_TARGET_FOLDER" ; fi',
-                'python build.py -v 2 --install-location $INSTALL_FOLDER '
-                    '--maya-location $MAYA_ROOT '
-                    '--pxrusd-location $_USD '
-                    '--devkit-location $MAYA_ROOT/devkit '
-                    '--qt-location $QT_TARGET_FOLDER '
-                    '--build-args "\-DMAYA_EXECUTABLE=$MAYA_ROOT/bin/maya.bin" '
-                    '-j $DCORES .',
-            ],
+            cmd=cmd,
             environ = {
                 'LD_PRELOAD': ':'.join([
                     '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
