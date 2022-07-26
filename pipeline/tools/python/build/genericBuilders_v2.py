@@ -29,6 +29,11 @@ from pipe.bcolors import bcolors
 from glob import glob
 
 
+try:
+    tcols = int(''.join(os.popen('tput cols').readlines()))-1
+except:
+    tcols = 120
+
 def versionMajor(versionString):
     return float('.'.join(versionString.split('.')[:2]))
 
@@ -110,12 +115,37 @@ class pkgVersions(globalDict):
 
 
 
+def remove_ansi(line):
+        re1 = re.compile(r'\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]')
+        re2 = re.compile(r'\x1b[PX^_].*?\x1b\\')
+        re3 = re.compile(r'\x1b\][^\a]*(?:\a|\x1b\\)')
+        re4 = re.compile(r'\x1b[\[\]A-Z\\^_@]')
+        # re5: zero-width ASCII characters
+        # see https://superuser.com/a/1388860
+        re5 = re.compile(r'[\x00-\x1f\x7f-\x9f\xad]+')
+
+        for r in [re1, re2, re3, re4, re5]:
+            line = r.sub('', line)
+
+        return line
+
 def _print(*args):
     global sconsParallel
     # print args
     p = True
     l = ' '.join([ str(x) for x in args])
     if sconsParallel:
+        if 'building' not in l:
+            # print remove_ansi(l)
+            nl=remove_ansi(l)[tcols:]
+            if nl:
+                ntcols = len(l.split(nl)[0])
+                ll = l[0:ntcols-1]
+            else:
+                ll=l
+            if l[-1] != '\r':
+                ll += '\r'
+            l=ll
         p = False
         if '[' in l[0:40] and ']' in l[0:40]:
             p = True
@@ -123,14 +153,25 @@ def _print(*args):
             p = True
         if 'TRAVIS' in os.environ and os.environ['TRAVIS']!='1':
             if [ x for x in ['processing', 'building', 'Download', 'md5'] if x in l ]:
+                l = '\r'+l
                 p = True
         if 'touch' in l[:15]:
             p = False
+
 
     # dont print dinamic log line if running in CI
     if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
         if l[-1] == '\r':
             p=False
+
+    if sconsParallel:
+        if  [ x for x in ['processing', '_installer', 'Download', 'md5'] if x in l ]:
+            # p = False
+            if l[-1] != '\r':
+                l = l+'\r'
+
+    if '::' in l[0:20]:
+        l = bcolors.WARNING+l+bcolors.END
 
     if p:
         sys.stdout.write('\033[2K\033[1G')
@@ -161,11 +202,6 @@ def expandvars(path, env=os.environ, default=None, skip_escaped=False):
 def DEBUG():
     return ARGUMENTS.get('debug', 0)
 
-
-try:
-    tcols = int(''.join(os.popen('tput cols').readlines()))-1
-except:
-    tcols = 120
 
 
 import multiprocessing
@@ -914,7 +950,7 @@ class generic:
             keys = []+self.dependOn[download_version].keys()
             for each in keys:
                 if not self.dependOn[download_version][each].obj:
-                    print "::==> deleting dependency for ",self.name,": it's None (", self.dependOn[download_version][each].requested_key, ')'
+                    _print( "::==> deleting dependency for ",self.name,": it's None (", self.dependOn[download_version][each].requested_key, ')' )
                     del self.dependOn[download_version][each]
                 if hasattr(self.dependOn[download_version][each].obj, 'download_versions'):
                     if self.dependOn[download_version][each].version not in self.dependOn[download_version][each].obj.download_versions:
@@ -922,7 +958,7 @@ class generic:
                         if self.targetSuffix:
                             ts=" (%s)" % self.targetSuffix+self.extraTargetSuffix
                         if 'ilmbase' not in  self.dependOn[download_version][each].obj.name:
-                            print "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!"
+                            _print( "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!" )
                         del self.dependOn[download_version][each]
 
         # set gcc_version for instalation purposes
@@ -2243,15 +2279,15 @@ class generic:
         cmd += ''' ; echo "@runCMD_ERROR@ $? @runCMD_ERROR@" ; '''
         cmd += '''
             mkdir -p $INSTALL_FOLDER/cmake/ ;
-            for n in $(ls -d $SOURCE_FOLDER/cmake/* 2>/dev/null) ; do
+            for n in $(ls -d $SOURCE_FOLDER/cmake/*.cmake 2>/dev/null) ; do
                 cp -rfv $n $INSTALL_FOLDER/cmake/ ;
             done ;
-            for n in $(ls -d $SOURCE_FOLDER/*/lib/cmake/*/ 2>/dev/null) ; do
+            for n in $(ls -d $SOURCE_FOLDER/*/lib/cmake/*/*.cmake 2>/dev/null) ; do
                 target=$(echo $n | awk -F"$SOURCE_FOLDER" '{print $(NF)}') ;\
                 mkdir -p $(dirname $target) ;\
                 cp -rfv $n $INSTALL_FOLDER/cmake/$target ;
             done ;
-            for n in $(ls -d $SOURCE_FOLDER/*/cmake/* 2>/dev/null) ; do
+            for n in $(ls -d $SOURCE_FOLDER/*/cmake/*.cmake 2>/dev/null) ; do
                 target=$(echo $n | awk -F"$SOURCE_FOLDER" '{print $(NF)}') ;\
                 mkdir -p $(dirname $target) ;\
                 cp -rfv $n $INSTALL_FOLDER/cmake/$target ;
@@ -2260,14 +2296,14 @@ class generic:
         cmd += '''
             if [ -e $INSTALL_FOLDER/lib/cmake ] ; then
                 if [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then
-                    rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake ;
-                    mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ;
+                    mkdir -p $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake ;
+                    cp -rf $INSTALL_FOLDER/lib/cmake/* $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake ;
                 fi ;
             fi
             if [ -e $INSTALL_FOLDER/cmake ] ; then
                 if [ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then
-                    rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake ;
-                    mv $INSTALL_FOLDER/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ ;
+                    mkdir -p $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake
+                    cp -rf $INSTALL_FOLDER/cmake/* $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake/ ;
                 fi ;
             fi
         '''
@@ -2911,7 +2947,7 @@ class generic:
                 if ret:
                     # if we have a log, raise an exception, since it was called from a
                     # real installation builder.
-                    raise Exception("ERROR - nothing was installed at %s/*/*" % TARGET_FOLDER)
+                    raise Exception("\nERROR - nothing was installed at %s/*/*" % TARGET_FOLDER)
                 else:
                     # if no log, just return since it was called live
                     return False
@@ -2937,14 +2973,27 @@ class generic:
         return True
 
 
+    def md5_delete_cache(self, fileName):
+        import hashlib
+        value="nao exist!!" # hashlib.md5('').hexdigest()
+        md5cache = str(fileName).replace('.download','.build')+".md5"
+        os.system("rm -rf '%s'" % md5cache)
 
     def md5(self, fileName):
         import hashlib
         value="nao exist!!" # hashlib.md5('').hexdigest()
-        if os.path.exists(str(fileName)):
-            if not os.stat(str(fileName)).st_size == 0:
+        md5cache = str(fileName).replace('.download','.build')+".md5"
+        if os.path.exists(str(fileName)) and os.stat(str(fileName)).st_size != 0:
+            if os.path.exists(md5cache) and os.stat(md5cache).st_size != 0:
+                f=open(md5cache,'r')
+                value = ''.join(f.readlines())
+                value = value.strip()
+                f.close()
+            else:
                 value = hashlib.md5(open(str(fileName)).read()).hexdigest()
-
+                f=open(md5cache,'w')
+                f.write(str(value))
+                f.close()
         return value
 #        return ''.join(os.popen("md5sum %s 2>/dev/null | cut -d' ' -f1" % str(file)).readlines()).strip()
 
@@ -3014,7 +3063,7 @@ class generic:
                         # os.system('hexdump -C %s | less' % download_file)
 
                     if not os.path.exists(download_file) or os.stat(download_file).st_size == 0:
-                        raise Exception ("error downloading %s" % download_file)
+                        raise Exception ("\nerror downloading %s" % download_file)
                     if url[3] and not '.git' in os.path.splitext(url[0])[-1]:
                         md5 = self.md5(download_file)
                         if md5 != url[3]:
@@ -3023,6 +3072,7 @@ class generic:
                             sys.stdout.write( bcolors.FAIL )
                             sys.stdout.flush()
                             self.error = True
+                            self.md5_delete_cache(source[n])
                         else:
                             _print( "\tmd5 matches for file:", url[1], md5, "=", url[3] )
 
@@ -3039,7 +3089,7 @@ class generic:
     def extractBuildFolder(self, t):
         t=str(t)
         if len(t.split(self.src)) > 2:
-            raise Exception('self.src="%s" breaks logic to determine source folder (%s)!! Please Fix it!' % (self.src, t))
+            raise Exception('\nself.src="%s" breaks logic to determine source folder (%s)!! Please Fix it!' % (self.src, t))
         buildFolder = t.split(self.src)[0].rstrip('/')
         if buildFolder == t:
             buildFolder = os.path.dirname(t).rstrip('/')
@@ -3051,7 +3101,7 @@ class generic:
         global __pkgInstalled__
         ret=None
         if self.error:
-            raise Exception("\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
+            raise Exception("\n\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
         # print [ str(x) for x in target ], [ str(x) for x in source ]
         if not self.shouldBuild( target, source, env ):
@@ -3079,7 +3129,7 @@ class generic:
                 # print self.__check_target_log__( lastlog, env ), str(target[0]), str(source[0])
                 # print("\n\n\n%s %s\n\n\n" % (lastlog, self.__check_target_log__( lastlog, env )))
                 if self.__check_target_log__( lastlog, env ):
-                    _print( "\n:: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
+                    _print( "\n: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
 
                     os.popen( "rm -rf %s 2>&1" % buildFolder ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
@@ -3124,7 +3174,7 @@ class generic:
                         _print( "str(target[n])",str(target[n]) )
                         if not self.travis and not sconsParallel:
                             os.system('/bin/bash')
-                        raise Exception("Uncompress failed!")
+                        raise Exception("\nUncompress failed!")
 
                     for updates in ['config.sub', 'config.guess']:
                         for file2update in os.popen('find %s -name %s 2>&1' % (buildFolder, updates) ).readlines():
@@ -3342,7 +3392,7 @@ class generic:
         elif type(v)==type(float):
             _download = [ x for x in self.download if eval('versionMajor(x[2]) %s v' % compare) ]
         else:
-            raise exception("Error returning the download (%s) for the version specied - %s" % (self.name,v))
+            raise exception("\nError returning the download (%s) for the version specied - %s" % (self.name,v))
         return []+_download
 
 
