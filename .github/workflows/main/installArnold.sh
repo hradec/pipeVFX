@@ -60,8 +60,12 @@ fi
 
 mkdir -p arnoldRoot/$arnoldVersion && cd arnoldRoot/$arnoldVersion
 
-echo Downloading Arnold "https://${url}"
-curl -L https://${login}${url} -o Arnold-${arnoldVersion}-${arnoldPlatform}.tgz
+if [ !  -e pipeline/build/.download/Arnold-${arnoldVersion}-${arnoldPlatform}.tgz ] ; then
+	echo Downloading Arnold "https://${url}"
+	curl -L https://${login}${url} -o Arnold-${arnoldVersion}-${arnoldPlatform}.tgz
+	mv Arnold-${arnoldVersion}-${arnoldPlatform}.tgz ../../pipeline/build/.download/ || exit -1
+fi
+ln -s ../../pipeline/build/.download/Arnold-${arnoldVersion}-${arnoldPlatform}.tgz ./
 
 if [ "$DOCKER_PYTHON" == "" ] ; then
 	tar -xzf Arnold-${arnoldVersion}-${arnoldPlatform}.tgz
