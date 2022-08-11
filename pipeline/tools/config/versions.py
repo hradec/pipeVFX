@@ -18,15 +18,13 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import pipe,os
-
-# default libraries set
-os.environ['GCC_VERSION'] = 'pipevfx.5.0.0'
-#os.environ['GCC_VERSION'] = 'gcc-multi'
+import pipe, os
 
 # default farm engine!
 os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 
+# default libraries set
+os.environ['PIPEVFX_LIBS_VERSION'] = 'pipevfx.5.0.0' if 'PIPEVFX_LIBS_VERSION' not in os.environ else os.environ['PIPEVFX_LIBS_VERSION']
 
 # setup apps global versions
 # ===================================================================
@@ -37,7 +35,7 @@ pipe.version.set( maya      = '2022.2' )
 # pipe.version.set( maya      = '2022.3' )
 pipe.version.set( nuke      = '12.1v1' )
 pipe.version.set( natron    = '2.5.0.a2' )
-pipe.version.set( houdini   = 'hfs17.5.173' )
+pipe.version.set( houdini   = '19.0.622' )
 pipe.version.set( delight   = '11.0.12' )
 pipe.version.set( mari      = '2.0v1' )
 pipe.version.set( xpra      = '0.15.svn9672' )
@@ -48,19 +46,18 @@ pipe.version.set( prman     = '23.4' )
 pipe.version.set( keentools = '02.01.01' )
 pipe.version.set( vray      = '5.2.31206' )
 
-
-
 # set global library versions
 # ===================================================================
-if 'GCC_VERSION' in os.environ:
-    exr='2.4.0'
-    pipe.version.set( python        = '2.7' )
-    pipe.libs.version.set( python   = '2.7' )
-    pipe.libs.version.set( freetype = '2.4.0' )
-    pipe.libs.version.set( boost    = '1.66' )
+if 'PIPEVFX_LIBS_VERSION' in os.environ:
+    exr = '2.4.0'
+    python = '2.7'
     pipe.libs.version.set( openexr  = exr )
     pipe.libs.version.set( ilmbase  = exr )
     pipe.libs.version.set( pyilmbase= exr )
+    pipe.version.set( python        = python )
+    pipe.libs.version.set( python   = python )
+    pipe.libs.version.set( freetype = '2.4.0' )
+    pipe.libs.version.set( boost    = '1.66' )
     pipe.libs.version.set( oiio     = '1.8' )
     pipe.libs.version.set( qt       = '5.15.2' )
     pipe.libs.version.set( tbb      = '2019_U6' )
@@ -69,6 +66,7 @@ if 'GCC_VERSION' in os.environ:
     pipe.libs.version.set( openvdb  = '8.2.0' )
     pipe.libs.version.set( jpeg     = '6b' )
 else:
+    # legacy setup
     pipe.version.set( python        = '2.6.8' )
     pipe.libs.version.set( alembic  = '1.1.1' )
     pipe.libs.version.set( python   = '2.6.8' )
@@ -98,18 +96,3 @@ if mv < 2018:
     if mv <= 2014:
         # maximum versions for maya 2014
         pipe.version.set( prman     = '20.11' )
-
-# gaffer and cortex version need to be tested toguether!
-# ===================================================================
-# if 'GCC_VERSION' not in os.environ:
-#     pipe.version.set( gaffer      = '2.0.0' )
-#     pipe.libs.version.set( cortex = '9.0.0.git_Oct_10_2014' )
-#     pipe.libs.version.set(  tbb   = '2.2.004' )
-# else:
-#     if os.environ['GCC_VERSION'] == 'gcc-multi':
-#         # pipe.version.set( gaffer        = '0.59.6.0' )
-#         # pipe.libs.version.set( gaffer   = '0.59.6.0' )
-#         pipe.version.set( gaffer        = '0.55.0.0' )
-#         pipe.libs.version.set( gaffer   = '0.55.0.0' )
-#         pipe.libs.version.set( cortex   = '10.0' )
-#         pipe.libs.version.set( appleseed= '2.0.5.beta' )
