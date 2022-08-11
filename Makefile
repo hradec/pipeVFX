@@ -13,11 +13,11 @@ OPENVDB_CORES?=$(shell expr  [ ${CORES} -gt 8 ] && echo 8 || expr ${CORES} / 2  
 PRE_CMD?=
 POS_CMD?=
 CUSTOM_LIB_FOLDER?=
-STUDIO?=$(shell echo $STUDIO)
+STUDIO?=$(shell echo $$STUDIO)
 DEBUG?=
-HUB_USER?=$(shell echo $HUB_USER)
-HUB_PASS?=$(shell echo $HUB_PASS)
-
+HUB_USER?=$(shell echo $$HUB_USER)
+HUB_PASS?=$(shell echo $$HUB_PASS)
+PIPEVFX_LIBS_VERSION?=$(shell echo $$PIPEVFX_LIBS_VERSION)
 
 all: help
 
@@ -53,7 +53,9 @@ help:
 	@echo "                                  ex: make image PRE_CMD=\"rm -rf /atomo/pipeline/build/.downloads/pip*\""
 	@echo ""
 
-
+ifneq "${PIPEVFX_LIBS_VERSION}" ""
+BUILD_EXTRA:=${BUILD_EXTRA} PIPEVFX_LIBS_VERSION=${PIPEVFX_LIBS_VERSION}
+endif
 ifneq "${CORES}" ""
 BUILD_EXTRA:=${BUILD_EXTRA} CORES=${CORES} DCORES=$(shell expr ${CORES} + ${CORES}) HCORES=$(shell expr ${CORES} / 2)
 endif
@@ -85,8 +87,8 @@ endif
 
 ifeq "${STUDIO}" ""
 STUDIO="atomo"
-export STUDIO
 endif
+export STUDIO
 $(info STUDIO=${STUDIO})
 
 build: upload

@@ -26,6 +26,10 @@ this_sconscript_file = os.path.abspath((lambda x:x).func_code.co_filename)
 pipelinePath = '/'.join(this_sconscript_file.split('/')[:-2])
 sys.path.insert( 0, os.path.abspath('%s/tools/python/' % pipelinePath) )
 
+# set pipevfx libs version
+os.environ['PIPEVFX_LIBS_VERSION'] = ARGUMENTS.get('PIPEVFX_LIBS_VERSION', 'pipevfx.5.0.0')
+print('PIPEVFX_LIBS_VERSION = '+os.environ['PIPEVFX_LIBS_VERSION'])
+
 # build all pkgs, if not already built!
 import build
 pkgs = build.pkgs.all(ARGUMENTS) # noqa
@@ -55,8 +59,10 @@ for boost_version in pkgs.boost_versions_for_gaffer:
     for usd_version in pkgs.usd['boost.%s' % boost_version].versions:
         # we only build gaffer for USD > 21.5
         # the build.cortex/build.gaffer will selectively build the correct version
-        # for the required boost/usd combination. 
-        if build.versionMajor(usd_version) >= 21.5:
+        # for the required boost/usd combination.
+        # print '::=======>',boost_version, usd_version, build.vComp(usd_version) >= build.vComp('21.5.0'), build.vComp(usd_version), build.vComp('21.5.0')
+        if build.vComp(usd_version) >= build.vComp('21.5.0'):
+            # print ':------->',boost_version, usd_version
             cortex = build.cortex(boost=boost_version, usd=usd_version, pkgs=pkgs)
             gaffer = build.gaffer(boost=boost_version, usd=usd_version, pkgs=pkgs)
             gafferCycles = build.gafferCycles(boost=boost_version, usd=usd_version, pkgs=pkgs)
@@ -118,7 +124,7 @@ if canBuildCortexNow:
     # build  arnold for gaffer
     for boost_version in pkgs.boost_versions_for_gaffer:
         for usd_version in pkgs.usd['boost.%s' % boost_version].versions:
-            if build.versionMajor(usd_version) >= 21.5:
+            if build.vComp(usd_version) >= build.vComp('21.5.0'):
                 for version in av:
                     pipe.version.set( arnold  = version )
                     gaffer = build.gaffer(boost=boost_version, usd=usd_version, pkgs=pkgs, apps=[ (pipe.apps.arnold, version) ])
@@ -208,6 +214,7 @@ if canBuildCortexNow:
                 usd['boost'     ].obj : usd['boost'     ].version,
                 usd['materialx' ].obj : usd['materialx' ].version,
                 usd['qt'        ].obj : usd['qt'        ].version,
+                usd['tbb'       ].obj : usd['tbb'       ].version,
             }),
         }
 
@@ -220,6 +227,7 @@ if canBuildCortexNow:
                 '--pxrusd-location $_USD '
                 '--devkit-location $MAYA_ROOT/devkit '
                 '--qt-location $QT_TARGET_FOLDER '
+                '--build-release '
                 '--build-args "\-DMAYA_EXECUTABLE=$MAYA_ROOT/bin/maya.bin" '
                 '-j $DCORES .',
         ]
