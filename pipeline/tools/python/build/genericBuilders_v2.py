@@ -37,6 +37,16 @@ except:
 def versionMajor(versionString):
     return float('.'.join(versionString.split('.')[:2]))
 
+def vComp(versionString):
+    v = versionString.split('.')
+    vv = range(len(v))
+    vv.reverse()
+    ret = 0
+    for n in vv:
+        ret += float(v[n])*pow(100,(len(v)-n))
+    return ret
+
+
 DB={}
 def spitDBout( target, source, env ):
     from pprint import pprint
@@ -135,7 +145,7 @@ def _print(*args):
     p = True
     l = ' '.join([ str(x) for x in args])
     if sconsParallel:
-        if 'building' not in l:
+        if 'building' not in l and '(' not in l and ')' not in l:
             # print remove_ansi(l)
             nl=remove_ansi(l)[tcols:]
             if nl:
@@ -1436,11 +1446,17 @@ class generic:
 
     def latestVersion(self):
         ''' return the latest version '''
-        return pipe.versionSort(self.keys())[0]
+        ret = pipe.versionSort(self.keys())
+        if not ret:
+            return ""
+        return ret[0]
 
     def latestVersionOBJ(self):
         ''' return the latest version OBJ '''
-        return self.__getitem__(self.latestVersion())
+        lv = self.latestVersion()
+        if not lv:
+            return None
+        return self.__getitem__(lv)
 
     def versions(self):
         ''' just an alternative function to return the keys, which are versions '''

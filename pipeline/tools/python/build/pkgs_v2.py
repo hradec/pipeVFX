@@ -480,6 +480,8 @@ class all: # noqa
         build.globalDependency(self.gcc)
 
         # a dummy build that stalls until the passed build is done!
+        build.wait4dependencies(self.gcc, 'cleanup_after_gcc', cmd=["rm -rvf $GCC_TARGET_FOLDER/../../../gcc-* ; echo DONE"])
+
         # everythin will depend on this dummy post-gcc build, so everything
         # will wait for gcc to finish before start.
         # this is essential when building packages in parallel (scons -j)
@@ -647,6 +649,9 @@ class all: # noqa
         )
         self.python = python
         build.globalDependency(self.python)
+
+        # a dummy build that stalls until the passed build is done!
+        build.wait4dependencies(self.python, 'wait4python', cmd=["echo DONE"])
 
         # install extra python modules using pip, for all python versions
         # installed by python build.
@@ -1692,7 +1697,7 @@ class all: # noqa
                 depend=[gcc, python, openssl ],
                 environ=environ,
                 cmd = [
-                    'mv /usr/include/numpy /usr/include/numpy.bak ;'
+                    'rm -rf /usr/include/numpy;'
                     'if python -c "exit(0 if $VERSION_MAJOR == 2.4 else 1)" ; then '
                         'mkdir -p build',
                         'cd build',
@@ -1724,7 +1729,6 @@ class all: # noqa
                         # 'mkdir -p $INSTALL_FOLDER/../../../pyilmbase/',
                         # 'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION'
                     ' ; fi',
-                    'mv /usr/include/numpy.bak /usr/include/numpy'
                 ],
             )
             self.openexr[sufix] = openexr
@@ -1810,7 +1814,7 @@ class all: # noqa
                 depend=[python, gcc, python], #+[ self.pip[x] for x in self.pip.keys() ],
                 environ=environ,
                 cmd = [
-                    'mv /usr/include/numpy /usr/include/numpy.bak',
+                    'rm -rf  /usr/include/numpy',
                     'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared ', #'--disable-boostpythontest ',
                     # we have to forcely build libPyImath first, since the build
                     # in parallel builds imathmodule without libPyImath, since
@@ -1833,7 +1837,6 @@ class all: # noqa
                     '( echo "imathmodule.so misses PyImath" && false ) || true ; '
                     '[ "$(ldd $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/imathmodule.so 2>/dev/null | grep -i PyIex)" == "" ] ',
                     '(echo "imathmodule.so misses PyIex" && false ) || true',
-                    'mv /usr/include/numpy.bak /usr/include/numpy',
                 ],
             )
             self.pyilmbase[sufix] = pyilmbase
@@ -2817,7 +2820,7 @@ class all: # noqa
             # need this fix on the environment for things to work!
             openvdb_environ = self.gcc_llvm_environ
             download_openvdb = []
-            if build.versionMajor(boost_version) >= 1.7:
+            if build.vComp(boost_version) >= build.vComp('1.70.0'):
                 download_openvdb += [(
                     # CY 2022 (9.x)
                     'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v9.0.0.tar.gz',
@@ -3381,13 +3384,12 @@ class all: # noqa
                     '''if [ "$OSL_VERSION_MAJOR" == "1.10" ] ; then
                         sed -i.bak -e 's/used when installing/\\nif (NOT CMAKE_INSTALL_RPATH)/' -e 's/    . add the automatically determined/endif () #/' src/cmake/install.cmak?
                     fi
-                    if python -c "exit(0 if $VERSION_MAJOR < 1.11 else 1)" ; then
-                        mkdir -p build && cd build && \
-                        cmake ../ && \
-                        make -j $DCORES
-                    else
-                        make -j $DCORES MY_CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=$TARGET_FOLDER -DCMAKE_INSTALL_RPATH=$RPATH '''+' '.join(osl_flags)+'''"
-                    fi''',
+                    if [ "$ILMBASE_TARGET_FOLDER" == "" ] ; then
+                        export ILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER
+                    fi
+                    mkdir -p build && cd build && \
+                    cmake ../ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DCMAKE_INSTALL_RPATH=$RPATH && \
+                    make -j $DCORES''',
                     # 'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
                     # 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                     'make -j $DCORES install',
@@ -3398,6 +3400,8 @@ class all: # noqa
                 verbose=1,
             )
             self.osl[bsufix] = osl
+            for v in self.osl[bsufix].keys():
+                build.github_phase_one_version(ARGUMENTS, {self.osl[bsufix] : v})
 
             # =============================================================================================================================================
             # MATERIALX
@@ -3911,7 +3915,7 @@ class all: # noqa
                         # openvdbOBJ.obj : openvdbOBJ.version,
                         self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
                         self.opensubdiv[bsufix]: '3.4.0',
-                        self.materialx[bsufix] : '1.37.4',
+                        self.materialx[bsufix] : '1.38.4',
                         self.alembic[bsufix] : '1.8.3',
                         self.alembic[bsufix]['1.8.3']['hdf5'].obj : self.alembic[bsufix]['1.8.3']['hdf5'].version,
                         oslOBJ.obj : oslOBJ.version,
@@ -4106,20 +4110,42 @@ class all: # noqa
                     self.ilmbase  [cgru_boost_sufix] : '2.4.0',
                     self.pyilmbase[cgru_boost_sufix] : '2.4.0',
                     self.openexr  [cgru_boost_sufix] : '2.4.0'}
+            ),(
+                'https://github.com/hradec/cgru/archive/refs/tags/3.3.0-pipevfx.tar.gz',
+                'cgru-3.3.0-pipevfx.tar.gz',
+                '3.3.0',
+                '9feafcfa865ac3cdfe61b77d0cc901f3',
+                {   self.gcc : '6.3.1',
+                    self.boost: cgru_boost_version,
+                    self.ilmbase  [cgru_boost_sufix] : '2.4.0',
+                    self.pyilmbase[cgru_boost_sufix] : '2.4.0',
+                    self.openexr  [cgru_boost_sufix] : '2.4.0'}
             )],
             cmd=[
-                'rm /bin/python*',
+                'rm -rf /bin/python*',
                 'cd utilities',
-                './get.sh > get.log 2>&1 || true',
+                './get.sh > get.log 2>&1',
                 'mkdir -p $SOURCE_FOLDER/utilities/imagemagick/ImageMagick/lib64',
+                'rm -rf utilities/openexr ; mkdir -p utilities/openexr ; rsync -avpP $OPENEXR_TARGET_FOLDER/ utilities/openexr/ > /dev/null 2>&1',
+                'export CFLAGS="$CFLAGS -I$OPENEXR_TARGET_FOLDER/include/"',
+                'export CXXFLAGS="$CXXFLAGS -I$OPENEXR_TARGET_FOLDER/include/"',
+                'export LDFLAGS="$LDFLAGS -L$OPENEXR_TARGET_FOLDER/lib/"',
                 './build.sh -j $DCORES > build.log 2>&1',
                 'cd ..',
-                '([ -e bin/convert ] || exit -1)',
+                '([ -e bin/convert ] || (echo "Error building dependencies" && exit -1))',
                 './build-hradec.sh --afanasy',
-                'cp -rf ./* $INSTALL_FOLDER/',
+                'cp -rvf ./* $INSTALL_FOLDER/',
                 'mkdir -p $INSTALL_FOLDER/../../../../../../../apps/linux/x86_64/cgru/',
-                'ln -s $INSTALL_FOLDER $INSTALL_FOLDER/../../../../../../../apps/linux/x86_64/cgru/$CGRU_VERSION'
-            ]
+                'rm -rf $INSTALL_FOLDER/../../../../../../../apps/linux/x86_64/cgru/$CGRU_VERSION',
+                'ln -s $INSTALL_FOLDER $INSTALL_FOLDER/../../../../../../../apps/linux/x86_64/cgru/$CGRU_VERSION',
+                'rm -rf $INSTALL_FOLDER/config.json',
+                ''' cat << EOF > $INSTALL_FOLDER/config.json
+                        {"cgru_config":{
+                            "include":["../../../../../../tools/cgru/config.json"],
+                            "":""
+                        }}\nEOF\necho'''
+            ],
+
         )
 
         # ============================================================================================================================================
