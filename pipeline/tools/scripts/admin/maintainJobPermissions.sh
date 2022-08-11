@@ -16,6 +16,9 @@ if [ "$(pgrep -fa chmod)" == "" ] ; then
     # mode 00777 = rwxrwxrwx and clears sSt
 
     #chmod 2777 -R /$STUDIO/jobs/*/*/*/users/MAC/
+    find /$STUDIO/apps/*/*/*            \! -perm 0555 -type d -exec chmod 00555 -v {} \;
+
+    #chmod 2777 -R /$STUDIO/jobs/*/*/*/users/MAC/
     find /$STUDIO/jobs/*/*/*/users/MAC/ \! -perm a+rwx -type d -exec chmod 00777 -v {} \;
     # we made all user folders writable since covid!
     find /$STUDIO/jobs/*/*/*/users/     \! -perm a+rwx -type d -exec chmod 00777 -v {} \;
