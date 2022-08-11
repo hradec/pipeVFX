@@ -31,8 +31,11 @@ def gafferCycles(boost=None, usd=None, pkgs=None, openvdb_boost=None):
     # print "=================>",build.pkgVersions('openvdb').latestVersion(), build.pkgVersions('openvdb').latestVersionOBJ()['boost'].version
     # print "=================>",build.pkgVersions('cortex').latestVersion(), build.pkgVersions('cortex').latestVersionOBJ()
 
-    usdOBJ = pkgs.usd['boost.%s' % boost][usd]
+    usd_suffix = "boost.%s" % boost
     gaffer_suffix = "boost.%s-usd.%s" % (boost, usd)
+    if usd_suffix not in pkgs.usd or gaffer_suffix not in pkgs.gaffer:
+        return
+    usdOBJ = pkgs.usd['boost.%s' % boost][usd]
     gafferVersion = pkgs.gaffer[gaffer_suffix].latestVersion()
     gafferOBJ = pkgs.gaffer[gaffer_suffix][gafferVersion]
     oslOBJ = gafferOBJ['osl'].obj[ gafferOBJ['osl'].version ]

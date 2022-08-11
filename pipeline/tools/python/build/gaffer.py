@@ -86,7 +86,7 @@ def cortex_dependency_dict(pkgs, version=None):
         if version:
             # if a version is specified, these pkg versions will
             # override any default set.
-            if build.versionMajor(version) >= 10.4:
+            if build.vComp(version) >= build.vComp('10.4.0'):
                 ret.update({ pkgs.gcc : '9.3.1' })
     return ret
 
@@ -97,7 +97,7 @@ gaffer_download = [(
     '0.61.1.1',
     '31b22fb2999873c92aeefea4999ccc3e',
     {}, #{"cortex" : '10.3.2.1'},
-    {"boost" : ("1.66.0", "99.99.99"),
+    {"boost" : ("1.66.0", "1.66.0"),
      "usd"   : ("21.5.0", "21.5.0")}
 ),(
     'https://github.com/hradec/gaffer/archive/refs/tags/0.61.14.0-gafferCortex.tar.gz',
@@ -105,7 +105,7 @@ gaffer_download = [(
     '0.61.14.0',
     'a9509c23d97a4d0d3a602d4668a901d4',
     {}, #{"cortex" : '10.3.6.1'},
-    {"boost" : ("1.66.0", "99.99.99"),
+    {"boost" : ("1.66.0", "1.66.0"),
      "usd"   : ("21.5.0", "21.5.0")}
 ),(
     'https://github.com/hradec/gaffer/archive/refs/tags/1.0.1.0_gafferCortex.tar.gz',
@@ -113,22 +113,15 @@ gaffer_download = [(
     '1.0.1.0',
     '266f24c33f8998b579f42d6ad79d7b1b',
     {},
-    {"boost" : ("1.76.0", "99.99.99"),
+    {"boost" : ("1.76.0", "1.76.0"),
      "usd"   : ("21.11.0", "21.11.0")}
-# ),(
-#     'https://github.com/hradec/gaffer/archive/refs/tags/0.62.0.0-gafferCortex-alpha1.tar.gz',
-#     'gaffer-0.62.0.0-gafferCortex-alpha1.tar.gz',
-#     '0.62.0.0.a1',
-#     '7f7c46fe97619c8db0f80614b940e430',
-#     {},
-#     {"boost" : ("1.70.0", "99.99.99")}
 )]
 def gaffer_dependency_dict(pkgs, version=None):
     ret = {pkgs.pyside: '5.15.2', pkgs.qt: '5.15.2'}
     if version:
         # if a version is specified, these pkg versions will
         # override any default set.
-        if build.versionMajor(version) >= 1.0:
+        if build.vComp(version) >= build.vComp('1.0.0'):
             ret.update({ pkgs.ocio : '2.1.1', pkgs.gcc : '9.3.1' })
     return ret
 
@@ -145,11 +138,11 @@ mtoa_versions = {
     '5.1.1'   : {'maya' : ['2022', '2023'], 'arnold' : '7.1.1.0'},
     '5.1.3'   : {'maya' : ['2022', '2023'], 'arnold' : '7.1.2.0'},
 }
+# download and install arnold for us, based on the table above
 for arnold_version in arnold_versions:
     if not glob.glob( '/%s/apps/linux/x86_64/arnold/%s/*' % (os.environ['STUDIO'], arnold_version) ):
         error = os.system('''
             sh /.github/workflows/main/installArnold.sh %s
-            mv arnoldRoot/*/*.tgz /$STUDIO/pipeline/build/.download/ || exit -1
             mkdir -p /$STUDIO/apps/linux/x86_64/arnold/
             mv arnoldRoot/%s /$STUDIO/apps/linux/x86_64/arnold/
             ls -l /$STUDIO/apps/linux/x86_64/arnold/
@@ -158,7 +151,7 @@ for arnold_version in arnold_versions:
         if error != 0:
             Exception("Error downloading Arnold!")
 
-# download and install mtoa versions
+# download and install mtoa versions for us, based on the table above
 for mtoa_version in mtoa_versions:
     for maya_version in mtoa_versions[mtoa_version]['maya']:
         if not glob.glob( '/%s/apps/linux/x86_64/mtoa/%s/%s/*' % (os.environ['STUDIO'], mtoa_version, maya_version) ):
@@ -197,17 +190,18 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
     if not usd:
         usd = pkgs.masterVersion['usd']
     if not boost:
-        usd = pkgs.masterVersion['boost']
+        boost = pkgs.masterVersion['boost']
 
     legacy(pkgs=pkgs)
     depend = cortex_depency(pkgs)
     boost_version = boost
     bsufix = "boost.%s" % boost_version
-    _download = []
     extraInstall = ""
 
     # only build versions that are compatible with the current boost!
-    _download = [ []+x for x in download  if build.versionMajor(boost_version) >= build.versionMajor(x[5]["boost"][0]) and build.versionMajor(boost_version) <= build.versionMajor(x[5]["boost"][1])   ]
+    _download = download
+    _download = [ []+x for x in _download if build.vComp(boost_version) >= build.vComp(x[5]["boost"][0]) and build.vComp(boost_version) <= build.vComp(x[5]["boost"][1])   ]
+    _download = [ []+x for x in _download if build.vComp(usd) >= build.vComp(x[5]["usd"][0]) and build.vComp(usd) <= build.vComp(x[5]["usd"][1])   ]
     # since USD was introduced in cortex 10, only build for version >= 10
     # we select only the cortex version that uses the current version of USD to build in this step
     # the []+x is to create a new list!
@@ -217,7 +211,6 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
 
     # build the usd cortex only for the boost version used to build the current usd version.
     usd_version = usd
-    print bsufix, pkgs.usd[bsufix].keys()
     usd = pkgs.usd[bsufix][usd_version]
     usd_non_monolithic = pkgs.usd_non_monolithic[bsufix][usd_version]
 
@@ -229,7 +222,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         dontUseTargetSuffixForFolders = 1
 
     sufix = "boost.%s-usd.%s%s" % (boost_version, usd_version, sufix)
-    build.s_print( "cortex: "+sufix )
+    # build.s_print( "cortex: "+sufix, __download )
 
     # retrieve the latest version of the package, no matter what boost version
     openvdbOBJ = build.pkgVersions('openvdb').latestVersionOBJ()
@@ -287,10 +280,17 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         patch = devPatch,
         dontUseTargetSuffixForFolders = dontUseTargetSuffixForFolders,
         cmd = [
-            # Boost removed signals library starting on 1.69.0
-            '''if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then sed -i.bak -e 's/boost_signals//g' SConstruct ; fi''',
-            # fix ambiguous ifstream on boost 1.70
-            '''if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then sed -i.bak -e 's/ifstream/std::ifstream/' src/IECoreGL/ShaderLoader.cpp ; fi''',
+            # fixes for cortex version < 10.4
+            '''if awk awk "BEGIN {exit !($VERSION_MAJOR < 10.4)}" ; then
+                # Boost removed signals library starting on 1.69.0
+                if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then
+                    sed -i.bak -e 's/boost_signals//g' SConstruct
+                fi
+                # fix ambiguous ifstream on boost 1.70
+                if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then
+                    sed -i.bak -e 's/ifstream/std::ifstream/' src/IECoreGL/ShaderLoader.cpp
+                fi
+            fi''',
             # IECoreArnold is broken for newer arnold versions
             'unset ARNOLD_ROOT',
             'unset ARNOLD_VERSION',
@@ -307,7 +307,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         # environ = { 'LD' : 'ld' },
     )
     build.github_phase_one_version(ARGUMENTS, {pkgs.cortex[sufix] : version for version in pkgs.cortex[sufix].keys()})
-    return pkgs.cortex[sufix]
+    return pkgs.cortex
 
 
 # ===========================================================================================
@@ -345,7 +345,9 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         _download=__download__
 
     # only build versions that are compatible with the current boost!
-    _download = [ list(x) for x in _download if build.versionMajor(boost) >= build.versionMajor(x[5]["boost"][0]) and build.versionMajor(boost) <= build.versionMajor(x[5]["boost"][1]) ]
+    _download = [ list(x) for x in _download if build.vComp(boost) >= build.vComp(x[5]["boost"][0]) and build.vComp(boost) <= build.vComp(x[5]["boost"][1]) ]
+    _download = [ list(x) for x in _download if build.vComp(usd) >= build.vComp(x[5]["usd"][0]) and build.vComp(usd) <= build.vComp(x[5]["usd"][1]) ]
+    # build.s_print( '::---->', boost, usd, [ x[0] for x in _download ])
 
     # only build versions that are compatible with the current arnold:
     for classe, av in apps:
@@ -355,89 +357,91 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
     # update dependencies, retrieving the versions from the boost/usd main versions
     usd_version = usd
     cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].latestVersionOBJ()
-    if usd_monolithic:
-        usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
-    else:
-        usd = cortexOBJ['usd_non_monolithic'].obj[ cortexOBJ['usd_non_monolithic'].version ]
+    if cortexOBJ:
+        if usd_monolithic:
+            usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
+        else:
+            print cortexOBJ['usd_non_monolithic'].version
+            usd = cortexOBJ['usd_non_monolithic'].obj[ cortexOBJ['usd_non_monolithic'].version ]
 
-    osl = usd['osl'].obj[usd['osl'].version]
-    for n in range(len(_download)):
-        # default packages for gaffer
-        _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
-        # pull gaffer defaults from package versions used by usd and cortex
-        _download[n][4].update({
-            pkgs.gcc: '6.3.1',
-            pkgs.boost: boost,
-            usd.obj: usd.version,
-            pkgs.ocio: usd['ocio'].version,
-            usd['jemalloc'].obj: usd['jemalloc' ].version,
-            usd['tbb'     ].obj: usd['tbb'      ].version,
-            usd['osl'     ].obj: usd['osl'      ].version,
-            osl['llvm'    ].obj: osl['llvm'     ].version,
-            cortexOBJ.obj: cortexOBJ.version,
-            cortexOBJ['hdf5'     ].obj: cortexOBJ['hdf5'     ].version,
-            cortexOBJ['alembic'  ].obj: cortexOBJ['alembic'  ].version,
-            cortexOBJ['oiio'     ].obj: cortexOBJ['oiio'     ].version,
-            cortexOBJ['openexr'  ].obj: cortexOBJ['openexr'  ].version,
-            cortexOBJ['ilmbase'  ].obj: cortexOBJ['openexr'  ].version,
-            cortexOBJ['pyilmbase'].obj: cortexOBJ['openexr'  ].version,
-            cortexOBJ['openvdb'  ].obj: cortexOBJ['openvdb'  ].version,
-        })
-        # and after default, we can override with packages for the specific version
-        _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
+        osl = usd['osl'].obj[usd['osl'].version]
+        for n in range(len(_download)):
+            # default packages for gaffer
+            _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
+            # pull gaffer defaults from package versions used by usd and cortex
+            _download[n][4].update({
+                pkgs.gcc: '6.3.1',
+                pkgs.boost: boost,
+                usd.obj: usd.version,
+                pkgs.ocio: usd['ocio'].version,
+                usd['jemalloc'].obj: usd['jemalloc' ].version,
+                usd['tbb'     ].obj: usd['tbb'      ].version,
+                usd['osl'     ].obj: usd['osl'      ].version,
+                osl['llvm'    ].obj: osl['llvm'     ].version,
+                cortexOBJ.obj: cortexOBJ.version,
+                cortexOBJ['hdf5'     ].obj: cortexOBJ['hdf5'     ].version,
+                cortexOBJ['alembic'  ].obj: cortexOBJ['alembic'  ].version,
+                cortexOBJ['oiio'     ].obj: cortexOBJ['oiio'     ].version,
+                cortexOBJ['openexr'  ].obj: cortexOBJ['openexr'  ].version,
+                cortexOBJ['ilmbase'  ].obj: cortexOBJ['openexr'  ].version,
+                cortexOBJ['pyilmbase'].obj: cortexOBJ['openexr'  ].version,
+                cortexOBJ['openvdb'  ].obj: cortexOBJ['openvdb'  ].version,
+            })
+            # and after default, we can override with packages for the specific version
+            _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
 
-    pkgs.gaffer[ suffix ] =  build._gaffer(
-        ARGUMENTS, # noqa
-        'gaffer',
-        targetSuffix = suffix,
-        sed=build._gaffer.sed,
-        # baseLibs = [pkgs.python],
-        download = _download,
-        depend =  depend + [
-            pkgs.qt, pkgs.pyside,
-            pkgs.python, pkgs.qtpy, pkgs.fonts,
-            pkgs.ocio_profiles, pkgs.gaffer_resources
-        ],
-        apps = apps,
-        cmd = [
-            build._gaffer.cmd[0]+";"+\
-            build._gaffer.cmd[0]+' build ;'+\
-            build._gaffer.cmd[0]+' install',
-        ],
-        dontUseTargetSuffixForFolders = dontUseTargetSuffixForFolders,
-        dontAddLLVMtoEnviron = 1,
-        environ = {
-            'CXXFLAGS' : ' '.join([
-                # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
-                # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
-                # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
-                # '-isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
-                # '-isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/',
-                '-I$FREETYPE_TARGET_FOLDER/include/freetype2/',
-                '-fno-strict-aliasing',
-                '-D_GLIBCXX_USE_CXX11_ABI=0',
-                pkgs.exr_rpath_environ['CXXFLAGS'],
-                '$CXXFLAGS',
-            ]),
-            # we need this for pre-compiled appleseed (binary tarball),
-            # since centos 7 libc is too old
-            'LD_PRELOAD': ':'.join([
-                '/usr/lib64/libstdc++.so.6',
-                '/lib64/libexpat.so.1',
-                # '$GCC_TARGET_FOLDER/lib64/libstdc++.so.6',
-                # '$GCC_TARGET_FOLDER/lib64/libgcc_s.so.1'
-            ]) if 'fedora' in  pipe.distro else '',
-            'LDFLAGS': pkgs.exr_rpath_environ['LDFLAGS'],
-            'USD_VERSION': usd.version,
-            'DCORES' : os.environ['CORES'],
-            # 'DCORES' : '1',
-        },
-    )
-    build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[suffix] : version for version in pkgs.gaffer[suffix].keys()})
+        pkgs.gaffer[ suffix ] =  build._gaffer(
+            ARGUMENTS, # noqa
+            'gaffer',
+            targetSuffix = suffix,
+            sed=build._gaffer.sed,
+            # baseLibs = [pkgs.python],
+            download = _download,
+            depend =  depend + [
+                pkgs.qt, pkgs.pyside,
+                pkgs.python, pkgs.qtpy, pkgs.fonts,
+                pkgs.ocio_profiles, pkgs.gaffer_resources
+            ],
+            apps = apps,
+            cmd = [
+                build._gaffer.cmd[0]+";"+\
+                build._gaffer.cmd[0]+' build ;'+\
+                build._gaffer.cmd[0]+' install',
+            ],
+            dontUseTargetSuffixForFolders = dontUseTargetSuffixForFolders,
+            dontAddLLVMtoEnviron = 1,
+            environ = {
+                'CXXFLAGS' : ' '.join([
+                    # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
+                    # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                    # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/',
+                    # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
+                    # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/tr1/',
+                    # '-isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
+                    # '-isystem $GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/',
+                    '-I$FREETYPE_TARGET_FOLDER/include/freetype2/',
+                    '-fno-strict-aliasing',
+                    '-D_GLIBCXX_USE_CXX11_ABI=0',
+                    pkgs.exr_rpath_environ['CXXFLAGS'],
+                    '$CXXFLAGS',
+                ]),
+                # we need this for pre-compiled appleseed (binary tarball),
+                # since centos 7 libc is too old
+                'LD_PRELOAD': ':'.join([
+                    '/usr/lib64/libstdc++.so.6',
+                    '/lib64/libexpat.so.1',
+                    # '$GCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                    # '$GCC_TARGET_FOLDER/lib64/libgcc_s.so.1'
+                ]) if 'fedora' in  pipe.distro else '',
+                'LDFLAGS': pkgs.exr_rpath_environ['LDFLAGS'],
+                'USD_VERSION': usd.version,
+                'DCORES' : os.environ['CORES'],
+                # 'DCORES' : '1',
+            },
+        )
+        build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[suffix] : version for version in pkgs.gaffer[suffix].keys()})
 
-    return pkgs.gaffer[ suffix ]
+    return pkgs.gaffer
 
 
 
@@ -467,7 +471,7 @@ def legacy(pkgs):
         tmp = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
 
         # only build the versions that are compatible with the current boost version!
-        _download = [ []+x for x in tmp  if build.versionMajor(boost_version) >= build.versionMajor(x[5]["boost"][0]) and build.versionMajor(boost_version) <= build.versionMajor(x[5]["boost"][1])   ]
+        _download = [ []+x for x in tmp  if build.vComp(boost_version) >= build.vComp(x[5]["boost"][0]) and build.vComp(boost_version) <= build.vComp(x[5]["boost"][1])   ]
 
         # build versions that match boost 1.51 and the masterVersion of boost.
         # if build.versionMajor(boost_version) <= 1.51:
