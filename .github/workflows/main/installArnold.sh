@@ -37,6 +37,8 @@
 
 set -e
 
+CD=$(dirname $(readlink -f $BASH_SOURCE))
+
 if [ -z $1 ] ; then
 	echo "Usage : installArnold.sh arnoldVersion" >&2
 	exit 1
@@ -63,9 +65,9 @@ mkdir -p arnoldRoot/$arnoldVersion && cd arnoldRoot/$arnoldVersion
 if [ !  -e pipeline/build/.download/Arnold-${arnoldVersion}-${arnoldPlatform}.tgz ] ; then
 	echo Downloading Arnold "https://${url}"
 	curl -L https://${login}${url} -o Arnold-${arnoldVersion}-${arnoldPlatform}.tgz
-	mv Arnold-${arnoldVersion}-${arnoldPlatform}.tgz ../../pipeline/build/.download/ || exit -1
+	mv Arnold-${arnoldVersion}-${arnoldPlatform}.tgz ../../.download/ || exit -1
 fi
-ln -s ../../pipeline/build/.download/Arnold-${arnoldVersion}-${arnoldPlatform}.tgz ./
+ln -s ../../.download/Arnold-${arnoldVersion}-${arnoldPlatform}.tgz ./
 
 if [ "$DOCKER_PYTHON" == "" ] ; then
 	tar -xzf Arnold-${arnoldVersion}-${arnoldPlatform}.tgz

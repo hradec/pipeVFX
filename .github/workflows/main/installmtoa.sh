@@ -37,6 +37,8 @@
 
 set -e
 
+CD=$(dirname $(readlink -f $BASH_SOURCE))
+
 if [ -z $1 ] ; then
 	echo "Usage : installmtoa.sh mtoaVersion mayaVersion" >&2
 	exit 1
@@ -64,9 +66,11 @@ mkdir -p mtoaRoot/$mtoaVersion && cd mtoaRoot/$mtoaVersion
 if [ !  -e pipeline/build/.download/mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run ] ; then
 	echo Downloading MtoA "https://${url}"
 	curl -L https://${login}${url} -o mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run
-	mv mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run ../../pipeline/build/.download/ || exit -1
+	pwd
+	ls -l
+	mv mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run ../../.download/ || exit -1
 fi
-ln -s ../../pipeline/build/.download/mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run ./
+ln -s ../../.download/mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run ./
 
 if [ "$DOCKER_PYTHON" == "" ] && [ "$TRAVIS" == "" ] ; then
 	sh ./mtoa-${mtoaVersion}-${arnoldPlatform}-${mayaVersion}.run --tar xvf

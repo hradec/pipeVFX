@@ -4,6 +4,7 @@ CD:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 SHELL:=/bin/bash
 DOCKER?=0
 PKG?=
+EXTRA?=
 PARALLEL?=
 RAMDISK?=
 _CORES_:=$(shell grep MHz /proc/cpuinfo  | wc -l)
@@ -36,7 +37,8 @@ help:
 	@echo "               password for docker hub."
 	@echo "               Set IMAGE=<image name:tag> as the image to delete"
 	@echo "               ex: make delete IMAGE=pipevfx_pkgs:centos7_latest"
-	@echo "make matrix  - display the github action matrix."
+	@echo "make matrix  - display the github action matrix. (>matrix.txt)"
+	@echo "make tree    - display the scons dependency tree. (>tree.txt)"
 	@echo "make help    - display this help screen."
 	@echo ""
 	@echo "optionals:"
@@ -71,6 +73,9 @@ endif
 ifneq "${DEBUG}" ""
 BUILD_EXTRA:=${BUILD_EXTRA} -d
 endif
+ifneq "${EXTRA}" ""
+BUILD_EXTRA:=${BUILD_EXTRA} ${EXTRA}
+endif
 ifneq "${PKG}" ""
 BUILD_EXTRA:=${BUILD_EXTRA} ${PKG}
 else
@@ -86,7 +91,7 @@ _CUSTOM_LIB_FOLDER:=$(shell readlink -f ${CUSTOM_LIB_FOLDER})
 endif
 
 ifeq "${STUDIO}" ""
-STUDIO="atomo"
+STUDIO=pipevfx
 endif
 export STUDIO
 $(info STUDIO=${STUDIO})
@@ -105,9 +110,12 @@ build_gcc: upload_centos
 shell: upload
 	@${CD}/pipeline/tools/scripts/pipevfx -s
 
+tree: upload
+	cd pipeline/build/ ; scons install all MATRIX=1 --tree=all,prune,status ${PKG} 2>&1 | tee ${CD}/tree.txt
+
 matrix: upload
 	# @${CD}/pipeline/tools/scripts/pipevfx -b | tee matrix.txt
-	@cd pipeline/build/ ; scons install MATRIX=1 2>&1 | tee ${CD}/matrix.txt
+	cd pipeline/build/ ; scons install MATRIX=1 ${EXTRA} ${PKG} 2>&1 | tee ${CD}/matrix.txt
 	@export phases=$$( cat matrix.txt | grep -v ARGUMENTS | grep -v Error | egrep 'github.*=>' | awk -F'phase: ' '{print $$2}' | awk -F' =>' '{print "\""$$1"\","}' ) ;\
 	echo -e "\n\n{ \"name\": [ "$$(echo $$phases | sed 's/,$$//')", \"all\" ] }"
 

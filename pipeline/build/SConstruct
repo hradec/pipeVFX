@@ -65,6 +65,7 @@ for boost_version in pkgs.boost_versions_for_gaffer:
             # print ':------->',boost_version, usd_version
             cortex = build.cortex(boost=boost_version, usd=usd_version, pkgs=pkgs)
             gaffer = build.gaffer(boost=boost_version, usd=usd_version, pkgs=pkgs)
+        if build.vComp(usd_version) >= build.vComp('21.11.0'):
             gafferCycles = build.gafferCycles(boost=boost_version, usd=usd_version, pkgs=pkgs)
 
 
