@@ -13,8 +13,8 @@ except:
 
 import genericAsset
 # reload(genericAsset)
-print genericAsset.m
-genericAsset.m = m
+# print genericAsset.m
+# genericAsset.m = m
 
 CTRLS = '|CTRLS|'
 ROOT  = '|ROOT'
@@ -25,14 +25,14 @@ GRP   = '__SAM_TMP__'
 # we can use it to change the menu and add new functionality!
 def assetListRightClickMenu( self, pathListing, menuDefinition ):
     selectedPaths = pathListing.getSelectedColumns()['assetFullPath']
-    print "XXXXXXXXXXXXXXXXXX"
+    # print "XXXXXXXXXXXXXXXXXX"
     if len(selectedPaths)>=1:
-        if 'rigging/' in selectedPaths[0]:
-            try:
-                menuDefinition.insertAfter( "/import selected and apply animation from a maya scene, using rig controls", { "command" :  IECore.curry( checkoutRigAndApplyAnimation, self ) }, "/Import selected" )
-                menuDefinition.insertAfter( "/       ", { }, "/Import selected" )
-            except:
-                pass
+        # if 'rigging/' in selectedPaths[0]:
+        #     try:
+        #         menuDefinition.insertAfter( "/import selected and apply animation from a maya scene, using rig controls", { "command" :  IECore.curry( checkoutRigAndApplyAnimation, self ) }, "/Import selected" )
+        #         menuDefinition.insertAfter( "/       ", { }, "/Import selected" )
+        #     except:
+        #         pass
         # if 'animation/maya/' in selectedPaths[0]:
         #     try:
         #         menuDefinition.insertAfter( "/apply the asset animation using rig controls", { "command" :  IECore.curry( applyAnimation, self ) }, "/Import selected" )

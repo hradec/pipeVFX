@@ -28,8 +28,8 @@ reload(genericAsset)
 
 class maya( genericAsset.maya ) :
     _whoCanImport = ['maya']
+    _importAsReference = True
     def __init__( self ) :
         genericAsset.maya.__init__(self, 'rigging')
-
 
 IECore.registerRunTimeTyped( maya )

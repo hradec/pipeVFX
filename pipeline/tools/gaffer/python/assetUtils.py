@@ -526,12 +526,20 @@ class assetOP(object):
         returns true if so - used to display the little edit icon on the assetListWidget'''
         self.__data()
         if self.hostApp()=='maya' and m:
-            if len(self.pathPar.split('/'))>2 and self.data and 'meshPrimitives' in self.data:
-                selection = m.ls(self.data['meshPrimitives'], l=1)
-                if 'renderSettings/maya' in self.pathPar:
-                    return selection
+            if len(self.pathPar.split('/'))>2 and self.data:
+                if 'meshPrimitives' in self.data:
+                    selection = m.ls(self.data['mayaNodesLsMask'], l=1)
 
-                return selection if self.data['meshPrimitives']==selection else []
+                    if 'renderSettings/maya' in self.pathPar:
+                        return selection
+
+                    return selection # if self.data['mayaNodesLsMask']==selection else []
+                if  'render/' in self.data['assetType']:
+                    if m.objExists( 'defaultRenderGlobals.pipe_asset_name' ):
+                        assetName = m.getAttr( 'defaultRenderGlobals.pipe_asset_name' )
+                        if '%s/%s/' % (self.data['assetType'], assetName) in self.pathPar:
+                            return [assetName]
+
 
         elif self.hostApp()=='gaffer' and hasattr(GafferUI, 'root'):
             ret = []
@@ -705,7 +713,7 @@ class assetOP(object):
 
     def mayaOpenDependency(self):
         ''' run a new maya to open a dependency'''
-        self._openDependency( cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', app=pipe.apps.maya )
+        self._openDependency( cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\(\\\\\\\\"%s\\\\\\\\")\\\\\\")" ''', app=pipe.apps.maya )
 
     def gafferOpenDependency(self):
         ''' open the asset dependency (original scene)
@@ -812,8 +820,9 @@ class assetOP(object):
         if type( cmd ) != str:
             cmd(scene)
         else:
+            scene='\\\"'+scene+'\\\"'
             cmd = cmd.replace('"','\"') % scene +' &'
-            # print  '===>',cmd
+            print  'assetUtil: os.system(',cmd,')'
             os.system( cmd  )
 
         # restore the job/shot to the original one

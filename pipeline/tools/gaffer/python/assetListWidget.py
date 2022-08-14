@@ -243,9 +243,11 @@ class SAMPanel( GafferUI.Editor ):
         if self.al.hostApp() == 'maya':
             import assetListWidget;reload(assetListWidget);assetListWidget.SAMPanelUI()
         else:
-            self.refreshPanel(button)
+            self.refreshPanel( button )
 
     def refreshPanel(self, button):
+        import assetListWidget;reload(assetListWidget)
+
         t = time.time()
         # assetUtils.types(True)
         self.al.treeModelStateSave()
@@ -258,7 +260,6 @@ class SAMPanel( GafferUI.Editor ):
 
         self.al._model.setColumnName(self.columnName)
         print "SAMPanel(%s).refreshPanel():" % self.al.hostApp(),time.time()-t
-
 
     def openSAMBrowser(self, button):
         import IECore
@@ -622,8 +623,10 @@ class assetListWidget( GafferUI.Editor ):
             if len(selectedPaths)==1:
                 if 'renderSettings/' in selectedPaths[0]:
                     canImport = True
+                if 'render/' in selectedPaths[0]:
+                    canImport = False
 
-                menuDefinition.append( "/Import selected" , { "command" : IECore.curry(self.checkout, selectedPaths), "active" : canImport  } )
+                menuDefinition.append( "/import or update selected" , { "command" : IECore.curry(self.checkout, selectedPaths), "active" : canImport  } )
 
                 # add the publish menu, if the item can be published
                 if selectedPathsEditable or 'render/maya' in selectedPaths[0]:
@@ -792,6 +795,8 @@ class assetListWidget( GafferUI.Editor ):
 
             if GafferUI.ConfirmationDialogue( "SAM", msg ).waitForConfirmation():
                 __SAM_assetList_mayaImportDependency__()
+
+        self.refreshPanel()
 
     def openDependency(self, app='maya', paths = None):
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
@@ -1035,8 +1040,8 @@ class assetListWidget( GafferUI.Editor ):
                 if op:
                     nodes = op.assetSourceExistsInHost()
                     # print "===>",path,op, nodes,self.hostApp()
-                    if self.hostApp()=='maya' and nodes and 'renderSettings' not in path:
-                        if assetUtils.m:
+                    if self.hostApp()=='maya' and nodes:
+                        if assetUtils.m and assetUtils.m.ls(nodes):
                             assetUtils.m.select(nodes)
                     else:
                         op.selectNodes()
@@ -1677,8 +1682,8 @@ class TreeModel(QtCore.QAbstractItemModel):
         # return self.__parent.hostApp()
 
     def refresh(self, ls=[]):
-        if self.ls == self.__old_ls and ls==[]:
-            return False
+        # if self.ls == self.__old_ls and ls==[]:
+        #     return False
 
         self.ls = ls
         if not self.ls:
@@ -2015,7 +2020,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 # class SAMPanelUI(MayaQWidgetDockableMixin, QtGui.QDockWidget ):
 class _SAMPanelUI( QtGui.QFrame ):
     def __init__(self, title="SAM", parent=None):
-        width=100
+        width=150
         # if not parent:
         #     parent = getMayaWindow()
 
@@ -2032,7 +2037,7 @@ class _SAMPanelUI( QtGui.QFrame ):
 
         self.setObjectName(self._windowTitle+'_')
         self.setWindowTitle(self._windowTitle)
-        self.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint)
+        # self.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint)
 
 
         # remove panel if it exists
@@ -2045,30 +2050,22 @@ class _SAMPanelUI( QtGui.QFrame ):
         with GafferUI.Window('test') as self.window:
             self.al = SAMPanel( Gaffer.ScriptNode(), 'maya', self.refreshPanel )
 
-
             self.setLayout(QtGui.QVBoxLayout())
             self.layout().addWidget(self.window._qtWidget())
-            # self.layout().addWidget(self.al)
+            self.layout().setAlignment(QtCore.Qt.AlignTop)
+            self.layout().setContentsMargins(0, 0, 0, 0);
+
+            # self.layout().addWidget(self.al._qtWidget())
             self.al._qtWidget().resize(width,100)
             self.resize(width,100)
 
         GafferUI.EventLoop.mainEventLoop().start()
-
-
-        # self.attach2Maya()
-
 
     def refreshPanel(self, button):
         import assetListWidget
         reload(assetListWidget)
         assetListWidget._SAMPanelUI()
 
-    def attach2Maya(self):
-        # add the dock to the maya window
-        # self.parent.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self)
-        # self.widget().setMinimumWidth(100)
-        # self.widget().setMaximumWidth(300)
-        GafferUI.EventLoop.mainEventLoop().start()
 
 
 if assetUtils.m:
@@ -2180,6 +2177,8 @@ if assetUtils.m:
             self.widget = _SAMPanelUI()
 
             self.setLayout(QtGui.QVBoxLayout())
+            self.layout().setAlignment(QtCore.Qt.AlignTop)
+            self.layout().setContentsMargins(0, 0, 0, 0);
             self.layout().addWidget(self.widget)
             # self.layout().addWidget(QtGui.QPushButton("One"))
 

@@ -30,8 +30,7 @@ class maya(baseApp):
             # now we can update maya root properly.
             mv = self.version().split('.')[0]
             macfixData['subpath'] = 'usr/autodesk/maya%s/' % mv
-            if not os.path.exists( self.path( 'bin/maya' ) ):
-                self.maya_bin = "bin/maya%s" % mv
+            self.maya_bin = "bin/maya%s" % mv
 
     def environ(self, allPlugs=True):
         ''' this is the main method in a class to setup environment variables for an app.
@@ -202,6 +201,9 @@ class maya(baseApp):
             if 'fedora' not in pipe.distro:
                 if os.path.exists(self.path('../../libs/libcrypto.so.10')):
                     self['LD_PRELOAD'] = self.path('../../libs/libcrypto.so.10')
+            else:
+                self['LD_PRELOAD'] = '/usr/lib64/libjpeg.so.62'
+                self['LD_PRELOAD'] = '/usr/lib64/libtiff.so.5'
             if os.path.exists(self.path('../../libs/libfontconfig.so.1')):
                 self['LD_PRELOAD'] = self.path('../../libs/libfontconfig.so.1')
                 self['LD_PRELOAD'] = self.path('../../libs/libharfbuzz.so.0')

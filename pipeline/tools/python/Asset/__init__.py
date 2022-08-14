@@ -324,9 +324,17 @@ class AssetParameter( CompoundParameter ):
                 f = open("%s/data.txt" % p)
                 l = f.readlines()
                 # print l
-                d = eval(''.join(l).strip('\n').replace("\n","\\n"))
+                data = eval(''.join(l).strip('\n').replace("\n","\\n"))
                 f.close()
-                return d
+                if 'meshPrimitives' in data:
+                    # this ignores the version in the SAM group name, so all
+                    # versions of an asset can be published as new versions for
+                    # other assets
+                    nodesInAsset = [ x for x in data['meshPrimitives'] if 'SAM_' not in x]
+                    nodesInAssetSAM = [ '_'.join(x.split('_')[:-4])+'*' for x in data['meshPrimitives'] if 'SAM_' in x]
+                    nodesInAsset += nodesInAssetSAM
+                    data['mayaNodesLsMask'] = nodesInAsset
+                return data
         return {}
 
     def getCurrent(self):

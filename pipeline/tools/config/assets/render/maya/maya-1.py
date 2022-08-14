@@ -59,7 +59,7 @@ class maya( render ) :
                 name="RenderEngine",
                 description = "Configuracao do render a ser usado.",
                 defaultValue = 'other',
-                presets = [('3delight','3delight'),('other','other')],
+                presets = [('arnold','arnold'),('3delight','3delight'),('other','other')],
                 presetsOnly = True,
             ),
         ]
@@ -116,7 +116,7 @@ class maya( render ) :
             end = m.getAttr('defaultRenderGlobals.endFrame')
             byFrameStep = m.getAttr('defaultRenderGlobals.byFrameStep')
             currentRenderer = str(m.getAttr('defaultRenderGlobals.currentRenderer')).replace('_','')
-            if currentRenderer != '3delight':
+            if currentRenderer not in ['arnold', '3delight']:
                 currentRenderer = 'other'
 
             self.parameters()["FrameRange"]['range'].setValue( IECore.V3f(start, end, byFrameStep) )
@@ -255,17 +255,13 @@ class maya( render ) :
         if  pipe.admin.job.shot.user().path() not in sceneName:
             return IECore.StringData( 'ERROR - The scene being published MUST be saved in the JOB USER folder:\n\t%s\n\nPlease save the current scene in the user folder before publishing.' % pipe.admin.job.shot.user().path() )
 
-        if render != '3delight':
+        # other renderers (currently prman)
+        if render not in ['arnold', '3delight']:
             render = m.getAttr( "defaultRenderGlobals.currentRenderer" )
 
             # set proper verbosity for mentalray
             self.msetAttr("mentalrayGlobals.renderVerbosity", 6)
             self.msetAttr("mentalrayGlobals.exportVerbosity", 6)
-
-            # set proper verbosity and others for arnold!
-            self.msetAttr("defaultArnoldRenderOptions.shaderNanChecks", 1)
-            self.msetAttr("defaultArnoldRenderOptions.log_verbosity", 1)
-            self.msetAttr("defaultArnoldRenderOptions.log_to_console", 1)
 
             # renderman setup to avoid race condition when creating rib files.
             self.msetAttr("renderManRISGlobals.rman__toropt___lazyRibGen",1)
@@ -308,7 +304,8 @@ class maya( render ) :
             m.file(s=1)
             self.msetAttr("renderManRISGlobals.rman__toropt___lazyRibGen",0)
 
-        else:
+        # 3delight ancient setup
+        elif render  in ['3delight']:
             # self.files will be used by submission method
             self.files      = []
 
@@ -367,25 +364,34 @@ class maya( render ) :
                 # set animation to zero to generate rib on the fly
                 self.msetAttr("%s.animation"  % each, 0)
 
-#                    # generate ribs!
-#                    meval("delightRenderMenuItemCommand %s" % each)
+                # # generate ribs!
+                # meval("delightRenderMenuItemCommand %s" % each)
+                #
+                # # check if all ribs are there, otherwise, it was cancelled!
+                # nribs = len( glob( self.files[-1].replace('_#.rib', '_*.rib') ) )
+                # nframes = len( range( frameRange.x, frameRange.y, frameRange.z ) )+1
+                # print nribs, nframes
+                # if nribs !=  nframes:
+                #     from  shutil import rmtree
+                #     rmtree(self.files[-1].split('/rib/')[0], True)
+                #     return IECore.StringData( "ERROR: RIB generation was not completed. Can't publish asset!" )
+                # delete this to force submission to submit the maya scene instead of ribs!!
 
-#                    # check if all ribs are there, otherwise, it was cancelled!
-#                    nribs = len( glob( self.files[-1].replace('_#.rib', '_*.rib') ) )
-#                    nframes = len( range( frameRange.x, frameRange.y, frameRange.z ) )+1
-#                    print nribs, nframes
-#                    if nribs !=  nframes:
-#                        from  shutil import rmtree
-#                        rmtree(self.files[-1].split('/rib/')[0], True)
-#                        return IECore.StringData( "ERROR: RIB generation was not completed. Can't publish asset!" )
+                self.ribs = self.files
+                del self.files
 
+        # arnold setup
+        elif render in ['arnold']:
+            # set proper verbosity and others for arnold!
+            self.msetAttr("defaultArnoldRenderOptions.shaderNanChecks", 1)
+            self.msetAttr("defaultArnoldRenderOptions.log_verbosity", 2)
+            self.msetAttr("defaultArnoldRenderOptions.log_to_console", 1)
 
-            # delete this to force submission to submit the maya scene instead of ribs!!
-            self.ribs = self.files
-            del self.files
-            # save file so it can be published!
-            m.file(s=1)
+        else:
+            ''' other renderers setup '''
 
+        # save file so it can be published!
+        m.file(s=1)
         return IECore.StringData( 'done' )
 
 
