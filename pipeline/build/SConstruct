@@ -165,7 +165,7 @@ if canBuildCortexNow:
             _USD_ENV = 'export _USD="$USD_TARGET_FOLDER"'
 
         else:
-            print  pkgs.usd_non_monolithic[boost_sufix]
+            # print  pkgs.usd_non_monolithic[boost_sufix]
             usd = pkgs.usd_non_monolithic[boost_sufix][ usd_version ]
             _USD_ENV = 'export _USD="$USD_NON_MONOLITHIC_TARGET_FOLDER"'
 
