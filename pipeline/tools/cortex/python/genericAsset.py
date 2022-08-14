@@ -37,6 +37,8 @@ reload(nodeMD5)
 import samXgen
 reload(samXgen)
 
+DEBUG = 'SAM_DEBUG' in os.environ
+
 try:
     from pymel import core as pm
     import maya.cmds as m
@@ -144,7 +146,8 @@ def pop(attrPOP):
                         if type(v) in [ str ]:
                             m.setAttr( attrName, v, type='string')
                     except:
-                        print "pop(attrPOP) Exception: "+str(attrName)
+                        if DEBUG:
+                            print "pop(attrPOP) Exception: "+str(attrName)
 
 
 
@@ -282,6 +285,7 @@ class _genericAssetClass( IECore.Op ) :
     _whoCanImport = ["gaffer"]
     _whoCanPublish = ["gaffer"]
     _whoCanOpen = ["gaffer"]
+    _importAsReference = None
 
     def hostApp(self, app=None):
         if app:
@@ -374,7 +378,7 @@ class _genericAssetClass( IECore.Op ) :
         self.updateFromHost()
 
     def updateFromHost(self):
-        # if we're inside maya!
+        '''update UI from host data'''
         self._host = []
         # print 'updateFromHost:',hostApp()
         if hostApp()=='maya' and m:
@@ -424,6 +428,7 @@ class _genericAssetClass( IECore.Op ) :
 
 
     def parameterChanged(self, parameter):
+        '''validate UI parameters'''
         if hasattr( parameter, 'parameterChanged' ):
             parameter.parameterChanged( parameter )
 
@@ -492,24 +497,17 @@ class _genericAssetClass( IECore.Op ) :
 
 
     def publishFile(self, publishFile, parameters):
+        ''' returns a padronized filename for the publish file'''
         path = os.path.dirname(publishFile)
         name = os.path.splitext(os.path.basename(publishFile))[0]
         file = "%s/%s.%%s%s" % (path, name, os.path.splitext(parameters['Asset']['type']['%sDependency' % self.prefix].value)[-1])
         return file
 
 
+    @staticmethod
     def cleanupOldVersions( self, nodeName ):
-        ''' delete any other version! '''
-        if m:
-            nodes = self.doesAssetExists(nodeName)
-
-            maya.cleanNodes( self.doesAssetExists(nodeName) )
-
-            # cleanup shader leftovers
-            # maya.cleanUnusedShadingNodes()
-
-            maya.cleanNodes( m.ls("SAMIMPORT*") )
-
+        ''' virtual function to delete any other version - called before importing/update an asset '''
+        return
 
     def doesAssetExists( self, nodeName, anyVersion=True):
         ''' find the asset in the scene, no matter what version it is! '''
@@ -527,8 +525,6 @@ class _genericAssetClass( IECore.Op ) :
         return nodes
 
 
-
-
     def getAssetDataHistory(self, parameters):
         ''' get data from asset based on some history in the host app, if any'''
         meshs = [ x.strip() for x in str(parameters['Asset']['type']['%s%s' % (self.prefix,  self.nameGroup)].value).split(',') ]
@@ -539,6 +535,7 @@ class _genericAssetClass( IECore.Op ) :
                         return parameters.getAssetData(m.getAttr( '%s.pipe_asset' % mesh ))
 
     def doOperation( self, operands ):
+        ''' run the op '''
         if self.animation:
             self.frameRange = operands['FrameRange']['range'].value
         meshPrimitives = [ x.strip() for x in str(operands['%s%s' % (self.prefix,  self.nameGroup)].value).split(',') ]
@@ -567,14 +564,14 @@ class _genericAssetClass( IECore.Op ) :
         if not canPublish:
             raise Exception( "Can't publish this asset type when running from %s!" % '/'.join(self._host) )
 
-        if m:
-            maya.doPublishPreview(self.data)
+        # generates the preview image
+        self.doPublishPreview(self.data)
 
         return IECore.StringData( 'done' )
 
 
     def doPublish(self, operands):
-        ''' use to  implement extra publish stuff '''
+        ''' use to implement extra publish stuff '''
         pass
 
     def childrenNodes(self, nodes):
@@ -599,11 +596,11 @@ class _genericAssetClass( IECore.Op ) :
 
 
     def nodeName(self, data=None):
+        '''return the nodename based on the asset data '''
         return _nodeName(data)
 
     def doImport(self, asset, data=None, replace=True):
-        # maya import
-
+        ''' method called by host to import asset into host scene '''
         self.asset = Asset.AssetParameter(asset)
         if not data:
             data = self.asset.getData()
@@ -630,7 +627,7 @@ class _genericAssetClass( IECore.Op ) :
 
                 # push attributes values of to be deleted nodes so we can restore after update
                 stack = push(self.doesAssetExists(nodeName))
-                self.cleanupOldVersions(nodeName)
+                self.cleanupOldVersions(self, nodeName)
             else:
                 # if the scene already has a version of the node,
                 # don't import another!
@@ -639,21 +636,18 @@ class _genericAssetClass( IECore.Op ) :
 
             canPublish = 0
             if filename:
-                if hasattr(self, 'doImportMaya'):
-                    canPublish += self.doImportMaya(filename, nodeName)
-                if hasattr(self, 'doImportHoudini'):
-                    canPublish += self.doImportHoudini(filename, nodeName)
-                if hasattr(self, 'doImportNuke'):
-                    canPublish += self.doImportNuke(filename, nodeName)
+                canPublish += self.doImportToHost(filename, nodeName)
 
             if not canPublish:
                 raise Exception("Can't import asset!!")
 
-            self.fixRIGMeshCTRLS()
-
             updateCurrentLoadedAssets()
 
             pop(stack)
+
+    def doImportToHost(self, filename, nodeName):
+        '''virtual function to be implement by type specific asset classes'''
+        return 0
 
     @staticmethod
     def removeNamespaces():
@@ -665,34 +659,14 @@ class _genericAssetClass( IECore.Op ) :
                 for ns in namespaces:
                     # print ns
                     m.namespace( removeNamespace = ns, mergeNamespaceWithRoot = True)
-    @staticmethod
-    def fixRIGMeshCTRLS(grp='|CTRLS|'):
-        if m:
-            attrs=[
-                'castsShadows',
-                'receiveShadows',
-                'holdOut',
-                'motionBlur',
-                'primaryVisibility',
-                'smoothShading',
-                'visibleInReflections',
-                'visibleInRefractions',
-                'doubleSided',
-                'opposite',
-            ]
-            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x ]:
-                for a in attrs:
-                    m.setAttr( '%s.%s' % (n,a), 0 )
 
-            # for node in m.ls(geometry=1,l=1):
-            #     if grp in node:
-            #         m.delete(node)
 
 __maya__attach__shaders__lazyCount = 0
 class maya( _genericAssetClass ) :
-    _whoCanImport = ['maya','gaffer']
+    _whoCanImport = ['maya', 'gaffer']
     _whoCanPublish = ['maya']
     _whoCanOpen = ["maya"]
+    _importAsReference = False
 
     def __init__( self, prefix, mayaNodeTypes='transform', mayaScenePublishType=None, animation=False ) :
         _genericAssetClass.__init__( self, prefix, animation=animation, mayaNodeTypes=mayaNodeTypes )
@@ -700,8 +674,6 @@ class maya( _genericAssetClass ) :
 
     def setMayaSceneType(self, st):
         self.__mayaScenePublishType = st
-
-
 
     @staticmethod
     def applyCustomRules():
@@ -720,7 +692,6 @@ class maya( _genericAssetClass ) :
         # if customRules:
         #     maya.createDinamicRules(customRules)
         maya.createDinamicRules()
-
 
     @staticmethod
     def shaveCleanup():
@@ -741,7 +712,6 @@ class maya( _genericAssetClass ) :
                         tmp = ';'.join([ x for x in tmp.split(';') if  x.strip() and 'shave' not in x.lower() ])
                         # print attr, tmp
                         m.setAttr( attr , tmp, type="string" );
-
 
     @staticmethod
     class prmanDinamicRules():
@@ -1039,8 +1009,6 @@ class maya( _genericAssetClass ) :
 
             pb.close()
 
-
-
     @staticmethod
     def setFileTexture( node, fileText ):
         ''' set the file texture string from any texture node type '''
@@ -1059,12 +1027,10 @@ class maya( _genericAssetClass ) :
             m.addAttr( node, ln="SAM_BACKUP_TEXTURE", dt="string" )
         m.setAttr( node + '.SAM_BACKUP_TEXTURE', ';'.join(backup), type="string"  )
 
-
     @staticmethod
     def undoSetFileTexture( node ):
         if m.objExists('%s.SAM_BACKUP_TEXTURE' % node):
             eval( m.getAttr('%s.SAM_BACKUP_TEXTURE' % node) )
-
 
     @staticmethod
     def getFileTexture( node ):
@@ -1085,7 +1051,6 @@ class maya( _genericAssetClass ) :
         textureNode = list(set(tmp))
 
         return textureNode
-
 
     @staticmethod
     def getShadingMap( nodeList = [] ):
@@ -1159,8 +1124,6 @@ class maya( _genericAssetClass ) :
 
 
         return shadingMap, shadingGroups, shadingNodes, displacementNodes, textures
-
-
 
     @staticmethod
     def setOneNucleus(start=None):
@@ -1281,7 +1244,6 @@ class maya( _genericAssetClass ) :
         node = pm.shadingNode("PxrCryptomatte",asTexture=1)
         m.connectAttr(node.name()+".message", "renderManRISGlobals.rman__samplefilters[0]", f=1)
         node.setAttr('filename', 'cryptomatte.${F4}.exr')
-
 
     @staticmethod
     def extraFiles( data, filename='' ):
@@ -1420,6 +1382,38 @@ class maya( _genericAssetClass ) :
                         # print each, cmd
                         os.system( cmd  )
 
+    def doImportToHost( self, filename, nodeName ):
+        ret = 0
+        if m:
+            ret = self.doImportMaya( filename, nodeName )
+            if ret:
+                self.fixRIGMeshCTRLS()
+        return ret
+
+    def mayaFileIn( self, filename, nodeName ):
+        if m:
+            if self._importAsReference:
+                # file -r -type "mayaBinary" -gr  -ignoreVersion -gn "SAM" -gl -mergeNamespacesOnClash false -namespace "eric_animation_test"
+                #  -options "v=0;" "/frankbarton/jobs/9990.rnd/assets/sophia/users/rhradec/maya/scenes/eric-animation-test.mb";
+                nodes = self.doesAssetExists(nodeName)
+                if nodes:
+                    # replace reference with the requested import (updates)
+                    referenceName = None
+                    group = None
+                    for sam in nodes:
+                        for reference in m.ls(type='reference', dag=0):
+                            if  m.referenceQuery(reference, n=1):
+                                referenceName = reference
+                                group = sam
+                    m.file(filename, loadReference=referenceName)
+                    m.rename( group, nodeName)
+                    # cleanup trash that maya leaves behind!!
+                    m.delete('sharedReferenceNode')
+                else:
+                    # import as reference
+                    m.file(filename, r=1, gr=1 )
+            else:
+                m.file(filename, i=1, gr=1 )
 
     def doImportMaya( self, filename, nodeName ):
         # maya import code!
@@ -1427,7 +1421,7 @@ class maya( _genericAssetClass ) :
             self.importXgen(self.data)
 
             old_groups = m.ls('|*', type='transform')
-            m.file(filename, i=1, gr=1 )
+            self.mayaFileIn(filename, nodeName)
             for groups in [ g for g in m.ls('|*', type='transform') if g not in old_groups ]:
                 if m.objExists(groups):
                     newNodeName = m.rename( groups, nodeName)
@@ -1447,15 +1441,41 @@ class maya( _genericAssetClass ) :
             # set the timeslider range to the start/end of available keyframes and alembic range.
             maya.setTimeSliderRangeToAvailableAnim()
 
-
-
             return True
         return False
 
+    @staticmethod
+    def fixRIGMeshCTRLS(grp='|CTRLS|'):
+        if m:
+            attrs=[
+                'castsShadows',
+                'receiveShadows',
+                'holdOut',
+                'motionBlur',
+                'primaryVisibility',
+                'smoothShading',
+                'visibleInReflections',
+                'visibleInRefractions',
+                'doubleSided',
+                'opposite',
+            ]
+            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x ]:
+                for a in attrs:
+                    m.setAttr( '%s.%s' % (n,a), 0 )
 
+            # for node in m.ls(geometry=1,l=1):
+            #     if grp in node:
+            #         m.delete(node)
 
-
-
+    @staticmethod
+    def cleanupOldVersions( self, nodeName ):
+        ''' delete any other version! '''
+        if m and not self._importAsReference:
+            nodes = self.doesAssetExists(nodeName)
+            maya.cleanNodes( self.doesAssetExists(nodeName) )
+            # cleanup shader leftovers
+            # maya.cleanUnusedShadingNodes()
+            maya.cleanNodes( m.ls("SAMIMPORT*") )
 
 
 class alembic(  _genericAssetClass ) :
@@ -1468,14 +1488,6 @@ class alembic(  _genericAssetClass ) :
         self.meshOnly()
         self.setSubDivMeshesMask(None)
         self.__setImportAsGPU = False
-
-    @staticmethod
-    def fixRIGMeshCTRLS(grp='|CTRLS|'):
-        _genericAssetClass.fixRIGMeshCTRLS(grp)
-        # we delete whatever is in the RibControl group, since alembic doesn't need it!
-        if m:
-            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x and '|SAM' in x and '_alembic_' in x ]:
-                m.delete(n)
 
     def meshOnly(self):
         # publish renderable geo only, with UV map
@@ -1599,7 +1611,6 @@ class alembic(  _genericAssetClass ) :
                         print pipe.bcolors.bcolors.WARNING, 'WARNING (SAM SHAVE EXPORT): Cant restore connection from %s to %s!' % (globals()['self'].conection[each][1],globals()['self'].conection[each][0]), pipe.bcolors.bcolors.END
 
         print '*'*200
-
 
     @staticmethod
     def _perFrameCallback(frame, outRIB, selection, tmpfile=None):
@@ -1829,7 +1840,6 @@ class alembic(  _genericAssetClass ) :
             return True
         return False
 
-
     def setSubDivMeshesMask(self, mask):
         self.__subDivMeshesMask = mask
 
@@ -1867,6 +1877,13 @@ class alembic(  _genericAssetClass ) :
             print '='*80
         pb.close()
 
+    def doImportToHost( self, filename, nodeName ):
+        ret = 0
+        if m:
+            ret = self.doImportMaya( filename, nodeName )
+            if ret:
+                self.fixRIGMeshCTRLS()
+        return ret
 
     def doImportMaya(self, filename, nodeName, gpucache=False ):
         if m:
@@ -1921,6 +1938,13 @@ class alembic(  _genericAssetClass ) :
 
         return False
 
+    @staticmethod
+    def fixRIGMeshCTRLS(grp='|CTRLS|'):
+        if m:
+            maya.fixRIGMeshCTRLS(grp)
+            # we delete whatever is in the RibControl group, since alembic doesn't need it!
+            for n in [ x for x in m.ls(dag=1,long=1,type='mesh')  if grp in x and '|SAM' in x and '_alembic_' in x ]:
+                m.delete(n)
 
     @staticmethod
     def importAlembic(filename, nodeName, gpuCache=False, data=None):
@@ -2044,6 +2068,11 @@ class alembic(  _genericAssetClass ) :
 
             return node
 
+    @staticmethod
+    def cleanupOldVersions( self, nodeName ):
+        maya.cleanupOldVersions( self, nodeName )
+
+
 
 
 
@@ -2073,6 +2102,12 @@ class gaffer( _genericAssetClass ):
 
             return True
         return False
+
+    def doImportToHost( self, filename, nodeName ):
+        ret = 0
+        if m:
+            ret = self.doImportMaya( filename, nodeName )
+        return ret
 
     def doImportMaya(self, filename, nodeName ):
         import nodes
@@ -2118,7 +2153,7 @@ class gaffer( _genericAssetClass ):
                         nodes += node['op'].nodes()
         return nodes
 
-
+    @staticmethod
     def cleanupOldVersions( self, nodeName ):
         ''' delete any other version! '''
         if m:

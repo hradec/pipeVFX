@@ -230,8 +230,8 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                     # print '--->', IECore.FileSequence( files[0] )
                     # 			filter = Gaffer.FileSystemPath.createStandardFilter(),
 
-                    size = 900
-                    row._qtWidget().setMinimumSize( size, 400 )
+                    size = 600
+                    row._qtWidget().setMinimumSize( size, 300 )
 
                     self.__script = Gaffer.ScriptNode()
                     self.__script["frameRange"]["start"].setValue(0)
@@ -322,7 +322,8 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                 else:
                     with row:
                         size = row.ancestor( GafferUI.TabbedContainer ).size().x
-                        self.display = GafferUI.Label( "<img src='%s/preview.jpg' width=%s >" % (str(data['publishPath']), size) )
+                        self.display = GafferUI.Label( "<img src='%s/preview.jpg' width=%s >" % (str(data['publishPath']), size*0.5) )
+                        # self.display = GafferUI.Label( "<img src='%s/preview.jpg' width=100% >" % (str(data['publishPath'])) )
                         # _data = [
                 		# 	IECore.FloatVectorData( range( 0, 3 ) ),
                 		# 	IECore.Color3fVectorData( [ IECore.Color3f( x ) for x in range( 0, 3 ) ] ),
@@ -346,8 +347,9 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                         if 'meshPrimitives' in data and 'renderSettings/' not in data['assetType']:
                             import assetUtils
                             with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
+                                # print data['mayaNodesLsMask']
                                 try:
-                                    m.select( data['meshPrimitives'] )
+                                    m.select( data['mayaNodesLsMask'] )
                                 except:
                                     raise Exception('''
                                         The original objects used to publish this asset where not found in the scene.
@@ -357,7 +359,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                                         Maybe you should publish a new asset for the selected objects?
                                     ''')
                     self._deferredUpdateOPA(self._loadOPA())
-                    self._previewCollum.setSizes( [ 0.6, 0.4 ] )
+                    self._previewCollum.setSizes( [ 0.7, 0.3 ] )
 
                 # =====================================================================================
                 # Import mode - create buttons!
@@ -528,11 +530,11 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         self.classType = '/'.join(path.split('/')[0:2])
 
         app = GafferCortex.ClassLoaderPath( IECore.ClassLoader.defaultOpLoader(), "/asset/publish" ).load()()
-        print app
+        # print app
 
         # load the type op so we can run it
         opNames = Asset.AssetParameter().classLoader.classNames( "*%s" % '/'.join(path.strip('/').split('/')[:2]) )
-        print app,opNames
+        # print app,opNames
         app.parameters()['Asset']['type'].setClass(opNames[0],1)
 
         try:
@@ -588,10 +590,10 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
 
                     button = GafferUI.Button( "Publish" )
                     self.__executeClickedConnection = button.clickedSignal().connect( self.__executeClicked )
-                frame._qtWidget().setMaximumSize(100,400)
-                frame._qtWidget().setMaximumSize(200,400)
-                self._previewCollum._qtWidget().setMaximumSize(100,400)
-                self._previewCollum._qtWidget().setMaximumSize(200,400)
+                    frame._qtWidget().setMinimumSize(300,400)
+                    frame._qtWidget().setMaximumSize(300,400)
+                self._previewCollum._qtWidget().setMinimumSize(300,400)
+                self._previewCollum._qtWidget().setMaximumSize(300,400)
 
     # def __executeClicked( self, button ) :
     #     self.__node.getParameterised()[0]()

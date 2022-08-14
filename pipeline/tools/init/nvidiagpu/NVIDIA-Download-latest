@@ -1,3 +1,5 @@
 #!/bin/bash
 
+export http_proxy=192.168.0.17:8001
+export https_proxy=192.168.0.17:8001
 curl -L -O  https:$(curl -L https://www.nvidia.com$(curl -L "$(curl -L 'https://www.nvidia.com/en-us/drivers/unix/' | grep 'Latest Production Branch' | head -1 | awk -F'"' '{print $2}')" | egrep 'href.*NVIDIA-Linux-x86_64' | awk -F'"' '{print $2}') | grep 'href.*NVIDIA-Linux-x86_64' | awk -F'"' '{print $2}')

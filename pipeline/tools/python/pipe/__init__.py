@@ -283,14 +283,7 @@ def alias(withlibs=True):
     return '\n'.join(aliasScript)
 
 
-
-def init():
-    import os
-    if os.environ.has_key('UID'):
-        #only run if enviroment is set and not root!
-        if os.environ['UID'] == '0':
-            return ""
-
+def pathPythonpath():
     from base import depotRoot
     root = os.path.abspath("%s/../../" % moduleRootPath)
 
@@ -335,6 +328,24 @@ def init():
     # add central bin/scripts folders
     path += '%s/bin:%s/scripts' % (root,root)
 
+    return pythonpath, path
+
+
+def init():
+    import os
+    if os.environ.has_key('UID'):
+        #only run if enviroment is set and not root!
+        if os.environ['UID'] == '0':
+            return ""
+
+    from base import depotRoot
+    root = os.path.abspath("%s/../../" % moduleRootPath)
+
+    curdir = os.getcwd()
+    os.chdir(root)
+
+    pythonpath, path = pathPythonpath()
+
     envs = '''
         alias go="source %s/scripts/go"
         export VGLCLIENT=$(which vglclient 2>/dev/null)
@@ -346,7 +357,7 @@ def init():
         export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$__PATH_HOME
         export PYTHONPATH=%s
         export __PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-        export __PYTHONPATH=$PYTHONPATH
+        # export __PYTHONPATH=$PYTHONPATH
         export EDITOR=nano
     ''' % (root, depotRoot(), versionMajor(libs.version.get("python")), alias(), path, pythonpath)
 
@@ -356,7 +367,7 @@ def init():
         '''
     if '___PYTHONPATH' not in os.environ.keys():
         envs += '''
-            export ___PYTHONPATH=$PYTHONPATH
+        export ___PYTHONPATH=$PYTHONPATH
         '''
 
     if osx:
@@ -400,6 +411,7 @@ def initBash():
 
 def go():
     import sys, os
+
     goHist=None
     if os.environ.has_key('HOME'):
         goHist = '%s/.go' % os.environ['HOME']
@@ -495,11 +507,23 @@ def go():
     # check if the job being set is legacy code or not.
     checkPipeVersion = ret+'''\n python2 -c 'import pipe,os;print os.environ["GCC_VERSION"]' '''
     if 'pipevfx.' not in cached.popen(checkPipeVersion, 'go_'+''.join(args)).readlines()[-1]:
+        ret = '\nunset ___PYTHONPATH\n'+'\nunset __PYTHONPATH\n'+ret
+
+
+
+    if 'pipevfx.' not in cached.popen(checkPipeVersion, 'go_'+''.join(args)).readlines()[-1]:
         sys.stderr.write("\n\nRunning legacy pipevfx code in requested job.\n\n")
+        ret += '\nexport PIPE_LEGACY="1"\n'
+        ret += '\nexport LD_LIBRARY_PATH="%s/pipeline/libs/linux/x86_64/gcc-multi/legacy/1.0.0/lib/"\n' % depotRoot()
+        ret += '\nunset ___PYTHONPATH'
+        ret += '\nunset __PYTHONPATH'
+        ret = ret.replace('pipevfx.5.0.0','gcc-multi')
         # TODO: run arch linux root into a docker container, so we can run
         # old jobs in the new system!
         # pipevfx script has all the code to run pipvfx inside a docker container
         # we just need to clone it and use the hradec/docker_lizardfs docker image!
+    else:
+        ret += '\nunset PIPE_LEGACY\n'
 
     return ret
 
@@ -583,14 +607,18 @@ def __go(args):
         ])
 
 
+    _pythonpath, _path = pathPythonpath()
+    # os.system('echo "\n\n%s\n\n" > /tmp/xxx ' % _pythonpath)
+
     # cd to job
     env.append( 'cd "%s"' % currentJob(job) )
 
     # add job tools/python to pythonpath
     path = '%s/tools/scripts' % currentJob(job)
-    env.append( 'export PATH=$__PATH:%s:$__PATH_HOME' % path )
+    # env.append( 'export PATH=$__PATH:%s:$__PATH_HOME' % path )
     pythonpath = '%s/tools/python' % currentJob(job)
-    env.append( 'export PYTHONPATH=%s:$___PYTHONPATH' % pythonpath )
+    # env.append( 'export PYTHONPATH=%s:%s:$___PYTHONPATH' % (pythonpath, _pythonpath) )
+
 
     # deal with shot
     values = ['Shot','']
@@ -609,8 +637,8 @@ def __go(args):
         pythonpath += ':%s/users/%s/tools/python' % (currentShot(job, shot), admin.username())
 
 
-    env.append( 'export PATH=$__PATH:%s:$__PATH_HOME' % path )
-    env.append( 'export PYTHONPATH=%s:$___PYTHONPATH' % pythonpath )
+    env.append( 'export PATH=$__PATH:%s' % path )
+    env.append( 'export PYTHONPATH=%s:%s' % (pythonpath, _pythonpath) )
 
     env.append( 'echo "Job: %s\n%s: %s\nPath: $(pwd)"' % (job, values[0], values[1] ) )
 

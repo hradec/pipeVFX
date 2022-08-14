@@ -19,6 +19,6 @@
 # =================================================================================
 
 
-if hasattr(pipe.libs, 'gaffer'):
-    class gaffer(pipe.libs.gaffer):
+if hasattr(pipe.libs, 'cgru'):
+    class cgru(pipe.libs.cgru):
         pass

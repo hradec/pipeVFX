@@ -1,4 +1,6 @@
-#!/bin/sh 
+#!/bin/bash
 
+export PATH=$(python2 -c 'import pipe;print pipe.apps.cgru().path()')/bin:/bin:/usr/bin:/sbin:/usr/sbin
+unset LD_LIBRARY_PATH
 export MAGICK_OCL_DEVICE=OFF
-/usr/sbin/timeout --foreground -k 10 -s 9  60  /usr/sbin/convert "$@"
+timeout --foreground -k 10 -s 9  60  convert "$@"

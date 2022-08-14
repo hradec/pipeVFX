@@ -247,9 +247,15 @@ def getDistro(check=True):
         version = ['4.1.2']
         distro = 'gcc-%s' % version[-1]
 
-        # we can specify our current gcc version in versions.py, globally or on an per job/user basis!!
-        if 'GCC_VERSION' in os.environ:
-            distro = os.environ['GCC_VERSION']
+    # GCC_VERSION is deprecated. Here for compatibility
+    if 'GCC_VERSION' in os.environ:
+        distro = os.environ['GCC_VERSION']
+
+    # we can specify our current pipevfx libs version in versions.py, globally or on an per job/user basis!!
+    if 'PIPEVFX_LIBS_VERSION' in os.environ:
+        distro = os.environ['PIPEVFX_LIBS_VERSION']
+        # we do this for compatibility!!
+        os.environ['GCC_VERSION'] = os.environ['PIPEVFX_LIBS_VERSION']
     return distro
 
 distro = getDistro()

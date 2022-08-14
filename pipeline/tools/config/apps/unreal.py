@@ -29,6 +29,7 @@ class unreal(baseApp):
         pass
 
     def bins(self):
+        ret = []
         extra  = ''
         # extra += ' -USEALLAVAILABLECORES '
         ret = [
@@ -46,6 +47,8 @@ class unreal(baseApp):
         # run the application
         self['PYTHONPATH'] = ''
         os.environ['PYTHONPATH'] = ''
+        if not os.path.exists( 'Engine/Binaries/Linux/UE4Editor' ):
+            app = app.replace( 'UE4Editor', 'UnrealEditor' )
         cmd = app.split(' ')
         pars=[
             # 'NOHOMEDIR="$NOHOMEDIR"',
@@ -69,27 +72,28 @@ class unreal(baseApp):
             jobuser.create()
 
             USER = pipe.admin.username()
-            PROD = jobuser.path('../../../../PRODUCAO')
+            PROD = jobuser.path('../../../../PRODUCAO/UNREAL')
+            if not os.path.exists( PROD ):
+                os.system('mkdir -p "%s"' % PROD)
 
             # checkout default from git repository
-            if not os.path.exists( "%s/git_%s" % (PROD, USER) ):
-                os.system( 'git clone "%s/git" "%s/git_%s"' % (PROD, PROD, USER) )
+            # if not os.path.exists( PROD ):
+            #     os.system( 'git clone "%s/git" "%s/git_%s"' % (PROD, PROD, USER) )
 
-            # # create main projet folder
+            # # create job projet folder
             # if not os.path.exists( jobuser.path('unreal/Unreal Projects/mainProject/Content') ):
             #     os.system( 'mkdir -p "%s"' % jobuser.path('unreal/Unreal Projects/mainProject/Content') )
-
-            if not os.path.exists( jobuser.path('unreal/Unreal Projects/mainProject') ):
-                os.system( 'ln -s "../../../../../../PRODUCAO/git_%s" "%s" ' %  (
-                    pipe.admin.username(),
-                    jobuser.path('unreal/Unreal Projects/mainProject')
+            if not os.path.exists( jobuser.path('unreal/Unreal Projects/jobProjects') ):
+                centralProject = '../../../../../../PRODUCAO/UNREAL'
+                os.system( 'ln -s "%s" "%s" ' %  (
+                    centralProject,
+                    jobuser.path('unreal/Unreal Projects/SharedProjects')
                 ) )
 
-            os.system( 'cd "%s" ; git push ; git merge ; git checkout' % jobuser.path('unreal/Unreal Projects/mainProject/') )
+            # update from git
+            # os.system( 'cd "%s" ; git push ; git merge ; git checkout' % jobuser.path('unreal/Unreal Projects/mainProject/') )
 
-            # from glob import glob
-            #
-
+            # not in use!!!!
             # from glob import glob
             # for each in glob( os.path.abspath( jobuser.path('../../../../ARTWORKS/*ZIP*/*.zip') ) ):
             #     project = jobuser.path( 'unreal/Unreal Projects/mainProject/Content/%s' % os.path.basename( each ) )
@@ -132,7 +136,7 @@ class unreal(baseApp):
 
             # create project if none exists
             from glob import glob
-            folders = [ x for x in glob( "%s/*" % jobuser.path('unreal/Unreal Projects/') ) if os.path.isdir(x) ]
+            folders = [ x for x in glob( "%s/*" % jobuser.path('unreal/Unreal Projects/') ) if os.path.isdir(x) and not os.path.islink(x) ]
             for each in folders:
                 projectName = "%s/%s.uproject" % ( each, os.path.basename( each ) )
                 if not os.path.exists( projectName ):
