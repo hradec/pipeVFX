@@ -74,7 +74,7 @@ class wait4dependencies(configure):
             os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
             d[4].update(dependVersion)
 
-        configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
+        configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, real_name="wait4_"+wait4.name)
         # configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
         self.env.Alias( msg, wait4.name )
 
@@ -124,7 +124,7 @@ class github_phase_one_version(wait4dependencies):
         for d in download:
             os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
 
-        configure.__init__(self, args, name, download, targetSuffix=alias, src='configure', depend=depend, **kargs )
+        configure.__init__(self, args, name, download, targetSuffix=alias, src='configure', depend=depend, real_name="github_"+name, **kargs )
         self.env.Alias( alias, target )
 
 
@@ -207,11 +207,12 @@ class pip(configure):
         os.system(cmd)
         return _source
 
-    def __init__(self, args, pip_pkg, python, python_versions=None ):
+    def __init__(self, args, pip_pkg, python, depend=[], python_versions=None ):
 
         self.pip_pkg = pip_pkg
 
         # create the download list from the python dowload list
+        # (we pip install for all python versions)
         download = [ (None,"python.%s.%s.%s" % (python.name,pip_pkg,x[2]),x[2],None,dict({python: x[2]}, **x[4])) for x in python.download ]
         if python_versions:
             download = [
@@ -229,7 +230,8 @@ class pip(configure):
             targetSuffix=pip_pkg, # we need this to build on top of an already built pkg
             real_name='pip_'+pip_pkg,
             apps=None, # we need this so building on top of an already built pkg won't delete the target folder!
-            depend=python.depend+[python]
+            depend=depend
+            # depend=python.depend+[python]+depend
         )
 
         # setup the downloading here, since we're avoiding running the generic

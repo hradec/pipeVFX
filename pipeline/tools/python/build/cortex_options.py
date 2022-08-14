@@ -42,7 +42,7 @@ def expandvars(path, env=os.environ, default=None, skip_escaped=False):
 # just a couple of methods to dump out what this
 # option file is setting up!
 def pushPrint(d=locals()):
-    print '='*80
+    print( '='*80 )
     globals()['oldDir'] = d.copy()
     for each in globals()['oldDir'].keys():
         if '_ROOT' in each:
@@ -50,8 +50,8 @@ def pushPrint(d=locals()):
 
 def popPrint(msg,dd=locals()):
     d = dd.copy()
-    print msg
-    print '='*80
+    print( msg )
+    print( '='*80 )
     pp=[]
     for each in d:
         if str(each) not in ['oldDir','msg','cmd']:
@@ -61,8 +61,8 @@ def popPrint(msg,dd=locals()):
                 pp.append( '%s@%s' % (each, eval(each,d.copy())) )
     pp.sort()
     for each in pp:
-        print '% 25s = %s' % tuple(each.split('@')[:2])
-    print '='*80
+        print( '% 25s = %s' % tuple(each.split('@')[:2]) )
+    print( '='*80 )
     globals()['oldDir'] = d.copy()
 
 
@@ -125,7 +125,7 @@ PYTHON 			        = 'python'
 PYTHON_CONFIG 		    = '%s %s/bin/python-config' % (PYTHON, PYTHON_ROOT)
 # PYTHON_INCLUDE_PATH 	= os.popen( '%s --includes' % PYTHON_CONFIG ).readlines()[0].strip().split(' ')[0][2:]
 # PYTHON_LINK_FLAGS 	    = os.popen( '%s --ldflags' % PYTHON_CONFIG ).readlines()[0].strip()
-cmd 			        = '%s -c "import sys;print sys.version[:3]"' % PYTHON
+cmd 			        = '%s -c "import sys;print( sys.version[:3] )"' % PYTHON
 PYTHON_MAJOR_VERSION 	= os.popen( cmd ).readlines()[0].strip()
 try:
     PYTHON_LIB_PATH = filter( lambda x: '-L' in x, PYTHON_LINK_FLAGS.split(' ') )[0][2:]
@@ -418,7 +418,7 @@ if houdini != '0.0.0':
         os.environ['HOUDINI_CXX_FLAGS']  = [ l for l in hcustom_c if '-DVERSION' in l ][0].replace('pipeLog: ','').replace('-std=c++0x','').strip()
         os.environ['HOUDINI_LINK_FLAGS'] = [ l for l in os.popen('HFS=$HOUDINI_ROOT hcustom -m' ).readlines() if '-L' in l ][0].replace('pipeLog: ','').strip()
 
-        print os.environ['HOUDINI_CXX_FLAGS']
+        print( os.environ['HOUDINI_CXX_FLAGS'] )
 
         if 'GCC_VERSION' in os.environ:
             # if os.environ['GCC_VERSION'] == '4.1.2':

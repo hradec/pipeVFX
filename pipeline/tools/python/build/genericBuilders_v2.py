@@ -40,10 +40,12 @@ def versionMajor(versionString):
 def vComp(versionString):
     v = versionString.split('.')
     vv = range(len(v))
-    vv.reverse()
+    vv=range(6)
+    # vv.reverse()
     ret = 0
     for n in vv:
-        ret += float(v[n])*pow(100,(len(v)-n))
+        if len(v) > n:
+            ret += float(v[n])*pow(1000,len(vv)-n)
     return ret
 
 
@@ -168,6 +170,10 @@ def _print(*args):
         if 'touch' in l[:15]:
             p = False
 
+
+    if 'phase:' in l[:20]:
+        _elapsed = time.gmtime(time.time()-buildStartTime)
+        l = '%-120s%s' % (l, '[%02d:%02d:%02d]' % (_elapsed.tm_hour, _elapsed.tm_min, _elapsed.tm_sec) )
 
     # dont print dinamic log line if running in CI
     if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
@@ -744,14 +750,26 @@ class generic:
 
         DB[name] = {}
 
-        self.args     = args
-        self.name     = name
-        self.real_name= name
-        self.download = download
-        self.baseLibs = baseLibs
-        self.env      = env
-        self.depend   = depend
-        self.name     = name
+        self.targetSuffix=""
+        if kargs.has_key('targetSuffix'):
+            self.targetSuffix = kargs['targetSuffix'] #.replace('.','_')
+
+        self.extraTargetSuffix=""
+        if kargs.has_key('extraTargetSuffix'):
+            self.extraTargetSuffix = kargs['extraTargetSuffix'] #.replace('.','_')
+
+        self.do_not_set = []
+        if kargs.has_key('do_not_set'):
+            self.do_not_set = kargs['do_not_set']
+
+        self.className = str(self.__class__).split('.')[-1]
+        self.args      = args
+        self.real_name = name
+        self.download  = download
+        self.baseLibs  = baseLibs
+        self.env       = env
+        self.depend    = depend
+        self.name      = name
         if hasattr(self, "init"):
             self.init()
             args     = self.args
@@ -761,6 +779,10 @@ class generic:
             env      = self.env
             depend   = self.depend
             name     = self.name
+
+
+        if kargs.has_key('real_name'):
+            self.real_name = kargs['real_name'] #.replace('.','_')
 
         self.github_matrix = False
         if 'MATRIX' in self.args:
@@ -791,16 +813,21 @@ class generic:
         # only self.depend and self.environ are altered
         # with global dependency values!
         # ==============================================
+        # we have to filter out waiting classes
+        __allDepend = []+allDepend
+        # __allDepend = [ x for x in allDepend if 'wait4' not in x.className and 'github' not in x.className ]
         # add global dependency if not already in
-        self__dependNames = [ '%s%s' % (x.name, x.targetSuffix+x.extraTargetSuffix) for x in self.depend if hasattr(x, 'name') ]
+        self__dependNames = [ x.name+x.targetSuffix+x.extraTargetSuffix for x in self.depend if hasattr(x, 'name') ]
         if type(self.depend) == type([]):
-            self.depend += [x for x in allDepend if '%s%s' % (x.name, x.targetSuffix+x.extraTargetSuffix) not in self__dependNames]
+            self.depend += [ x for x in __allDepend if x.name+x.targetSuffix+x.extraTargetSuffix not in self__dependNames ]
         else:
-            for d in allDepend:
+            for d in __allDepend:
                 if d not in self.depend:
                     self.depend[d] = None # no version set
 
-        # print '====>', name, [ x.name for x in allDepend ], [x.name for x in self.depend]
+        # print '====>', self.className, name, [ (x.name+'/'+x.targetSuffix,[ [ str(z) for z in x._depend[y] ] for y in x._depend.keys()]) for x in self.depend]
+        # print '====>', self.className, name+'/'+self.targetSuffix, [ (x.name+'/'+x.targetSuffix) for x in allDepend]
+        # print '====>', self.className, self.real_name, [ (x.real_name) for x in allDepend]
 
         # fix depend in case we're reusing it from another package
         self.depend = [x for x in self.depend if hasattr(x, 'name')]
@@ -886,27 +913,11 @@ class generic:
 
 
         sys.stdout.write( bcolors.END )
-        self.className = str(self.__class__).split('.')[-1]
         self.GCCFLAGS = GCCFLAGS
         self.args = args
         self.error = None
         self._os_environ = {}
         self.os_environ = {}
-
-        self.targetSuffix=""
-        if kargs.has_key('targetSuffix'):
-            self.targetSuffix = kargs['targetSuffix'] #.replace('.','_')
-
-        self.extraTargetSuffix=""
-        if kargs.has_key('extraTargetSuffix'):
-            self.extraTargetSuffix = kargs['extraTargetSuffix'] #.replace('.','_')
-
-        if kargs.has_key('real_name'):
-            self.real_name = kargs['real_name'] #.replace('.','_')
-
-        self.do_not_set = []
-        if kargs.has_key('do_not_set'):
-            self.do_not_set = kargs['do_not_set']
 
         # cleanup tmp folders
         os.popen("rm -rf %s/tmp.*" % buildFolder(args)).readlines()
@@ -935,14 +946,14 @@ class generic:
                 self.dependOn[download_version].obj = self
                 self.dependOn[download_version].version = download_version
 
-            # now we finally update self.dependOn with self.depend
+            # now we finally update self.dependOn with self.depend (depend parameter and global dependencies)
             for dependencyPkg in self.depend:
                 # set the last version on the download list for each package
                 #  in the self.depend list!
                 defaultVersion = dependencyPkg.version_default
                 # if the package is python, we try to default to the oldest
                 # if dependencyPkg.name == 'python':
-                #     print "===========================> ", self.name,  dependencyPkg.name, dependencyPkg.version_default, defaultVersion,dependencyPkg
+                #     print "===========================> ", self.name,  dependencyPkg.name, dependencyPkg.version_default, defaultVersion, dependencyPkg, dependencyPkg._depend.keys()
                 #     defaultVersion = 0
                 dependencyPkgLatestVersion = dependencyPkg.downloadList[defaultVersion][2]
                 self.dependOn[download_version][dependencyPkg] = dependencyPkgLatestVersion
@@ -962,14 +973,16 @@ class generic:
                 if not self.dependOn[download_version][each].obj:
                     _print( "::==> deleting dependency for ",self.name,": it's None (", self.dependOn[download_version][each].requested_key, ')' )
                     del self.dependOn[download_version][each]
+
                 if hasattr(self.dependOn[download_version][each].obj, 'download_versions'):
-                    if self.dependOn[download_version][each].version not in self.dependOn[download_version][each].obj.download_versions:
-                        ts=""
-                        if self.targetSuffix:
-                            ts=" (%s)" % self.targetSuffix+self.extraTargetSuffix
-                        if 'ilmbase' not in  self.dependOn[download_version][each].obj.name:
-                            _print( "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name, self.dependOn[download_version][each].version, "does not exist!" )
-                        del self.dependOn[download_version][each]
+                    if not [ x for x in ['github', 'wait4'] if x in self.dependOn[download_version][each].obj.className ]:
+                        if self.dependOn[download_version][each].version not in self.dependOn[download_version][each].obj.download_versions:
+                            ts=""
+                            if self.targetSuffix:
+                                ts=" (%s)" % self.targetSuffix+self.extraTargetSuffix
+                            if 'ilmbase' not in  self.dependOn[download_version][each].obj.name:
+                                _print( "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name,self.dependOn[download_version][each].obj.className, self.dependOn[download_version][each].version, "does not exist!")#, self.dependOn[download_version][each].obj.download_versions )
+                            del self.dependOn[download_version][each]
 
         # set gcc_version for instalation purposes
         # gcc_version = None
@@ -1375,7 +1388,6 @@ class generic:
                     # s is the source file for each build
                     # ex: in a build.configure, s="configure" file!
                     self.env.Depends(s, source)
-                    # source = [s]+source
 
                     # download
                     aliasDownload = self.env.Alias( 'download', _pkgs )
@@ -1424,13 +1436,22 @@ class generic:
         # We MUST do this at the end, so it won't influence itself
         # ==========================================================================
         if kargs.has_key('globalDependency'):
-            if kargs['globalDependency']:
-                self.globalDependency = str(kargs['globalDependency'])
-                globalDependency( self,
-                    RPATH   ='NORPATH'   not in self.globalDependency,
-                    LIB     ='NOLIB'     not in self.globalDependency,
-                    INCLUDE ='NOINCLUDE' not in self.globalDependency,
-                )
+            self.globalDependency = str(kargs['globalDependency'])
+
+        if hasattr(self, 'globalDependency') and self.globalDependency:
+            RPATH   = True
+            LIB     = True
+            INCLUDE = True
+            if type(self.globalDependency) == type(""):
+                RPATH   = 'NORPATH'   not in self.globalDependency
+                LIB     = 'NOLIB'     not in self.globalDependency
+                INCLUDE = 'NOINCLUDE' not in self.globalDependency
+
+            globalDependency( self,
+                RPATH   = RPATH,
+                LIB     = LIB,
+                INCLUDE = INCLUDE,
+            )
 
     # def __repr__(self):
     #     return { x:str(self[x]) for x in self.keys() }
@@ -1468,7 +1489,10 @@ class generic:
         return pipe.versionSort(self.download_versions.keys())
 
     def __getitem__(self, version):
-        ''' retrieve the dependency dictionary for the given version '''
+        ''' retrieve the dependency dictionary for the given version
+        we return dependOn since it's our special pkg_superdict class'''
+        if version not in self.dependOn:
+            _print( "::==> version %s doesn't exist on %s (%s)" % (version, self.name, self.className) )
         return self.dependOn[version]
 
     def registerSconsBuilder(self, *args):
@@ -2856,6 +2880,8 @@ class generic:
 
         ret = None
         # ret = self.installer( target, source, env )
+
+        # write .install file!
         f=open(str(target[0]),'w')
         if ret:
             f.write(''.join(ret))
@@ -2868,7 +2894,7 @@ class generic:
         ''' check if something was installed
         this garantees things get installed!'''
         if self.github_matrix:
-            return
+            return False
 
 
         # double check if the dependency list changed!!

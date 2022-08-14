@@ -96,17 +96,19 @@ gaffer_download = [(
     'gaffer-0.61.1.1-gaffercortex.tar.gz',
     '0.61.1.1',
     '31b22fb2999873c92aeefea4999ccc3e',
-    {}, #{"cortex" : '10.3.2.1'},
+    {},
     {"boost" : ("1.66.0", "1.66.0"),
-     "usd"   : ("21.5.0", "21.5.0")}
+     "usd"   : ("21.5.0", "21.5.0"),
+     "cortex": '10.3.2.1'}
 ),(
     'https://github.com/hradec/gaffer/archive/refs/tags/0.61.14.0-gafferCortex.tar.gz',
     'gaffer-0.61.14.0-gafferCortex.tar.gz',
     '0.61.14.0',
     'a9509c23d97a4d0d3a602d4668a901d4',
-    {}, #{"cortex" : '10.3.6.1'},
+    {},
     {"boost" : ("1.66.0", "1.66.0"),
-     "usd"   : ("21.5.0", "21.5.0")}
+     "usd"   : ("21.5.0", "21.5.0"),
+     "cortex": '10.3.6.1'}
 ),(
     'https://github.com/hradec/gaffer/archive/refs/tags/1.0.1.0_gafferCortex.tar.gz',
     'gaffer-1.0.1.0_gafferCortex.tar.gz',
@@ -114,7 +116,8 @@ gaffer_download = [(
     '266f24c33f8998b579f42d6ad79d7b1b',
     {},
     {"boost" : ("1.76.0", "1.76.0"),
-     "usd"   : ("21.11.0", "21.11.0")}
+     "usd"   : ("21.11.0", "21.11.0"),
+     "cortex": '10.3.6.1'}
 )]
 def gaffer_dependency_dict(pkgs, version=None):
     ret = {pkgs.pyside: '5.15.2', pkgs.qt: '5.15.2'}
@@ -248,6 +251,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
             __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
         else:
             osl = usd_non_monolithic['osl'].obj[usd_non_monolithic['osl'].version]
+            # print usd_non_monolithic['alembic'], usd_non_monolithic['alembic'].obj.versions, boost_version, usd_version, __download[n][2]
             alembic = usd_non_monolithic['alembic'].obj[usd_non_monolithic['alembic'].version]
             __download[n][4] = __download[n][4].copy()
             __download[n][4][ pkgs.boost             ] = boost_version
@@ -356,18 +360,22 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
 
     # update dependencies, retrieving the versions from the boost/usd main versions
     usd_version = usd
-    cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].latestVersionOBJ()
-    if cortexOBJ:
-        if usd_monolithic:
-            usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
-        else:
-            print cortexOBJ['usd_non_monolithic'].version
-            usd = cortexOBJ['usd_non_monolithic'].obj[ cortexOBJ['usd_non_monolithic'].version ]
-
-        osl = usd['osl'].obj[usd['osl'].version]
+    # only build gaffer for the allowed cortex version
+    _download = [ list(x) for x in _download if x[5]['cortex'] in pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].versions ]
+    if _download:
         for n in range(len(_download)):
+            cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)][_download[n][5]['cortex']]
+
             # default packages for gaffer
             _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
+
+            if usd_monolithic:
+                usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
+            else:
+                usd = cortexOBJ['usd_non_monolithic'].obj[ cortexOBJ['usd_non_monolithic'].version ]
+
+            osl = usd['osl'].obj[usd['osl'].version]
+
             # pull gaffer defaults from package versions used by usd and cortex
             _download[n][4].update({
                 pkgs.gcc: '6.3.1',
@@ -434,7 +442,7 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
                     # '$GCC_TARGET_FOLDER/lib64/libgcc_s.so.1'
                 ]) if 'fedora' in  pipe.distro else '',
                 'LDFLAGS': pkgs.exr_rpath_environ['LDFLAGS'],
-                'USD_VERSION': usd.version,
+                'USD_VERSION': usd_version,
                 'DCORES' : os.environ['CORES'],
                 # 'DCORES' : '1',
             },

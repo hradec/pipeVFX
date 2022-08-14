@@ -649,9 +649,11 @@ class all: # noqa
         )
         self.python = python
         build.globalDependency(self.python)
+        # for v in self.python.keys():
+        #     build.github_phase_one_version(ARGUMENTS, {self.python : v})
 
         # a dummy build that stalls until the passed build is done!
-        build.wait4dependencies(self.python, 'wait4python', cmd=["echo DONE"])
+        # build.wait4dependencies(self.python, 'wait_python_finish', cmd=["echo DONE"])
 
         # install extra python modules using pip, for all python versions
         # installed by python build.
@@ -3299,7 +3301,7 @@ class all: # noqa
                 build.github_phase_one_version(ARGUMENTS, {self.embree[bsufix] : v})
 
 
-
+            print self.oiio[bsufix]["1.8.10"].keys()
             # =============================================================================================================================================
             # OSL - OpenShadingLanguage
             # =============================================================================================================================================
@@ -3856,6 +3858,7 @@ class all: # noqa
                 name = 'usd'
                 if MONOLITHIC == 0:
                     name = 'usd_non_monolithic'
+                    # print self.alembic[bsufix].versions.keys(), bsufix
 
                 usd_download = []
                 if build.versionMajor(bv) < 1.7:
