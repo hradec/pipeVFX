@@ -24,12 +24,21 @@ class blender(baseApp):
     def environ(self):
         # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
         # self.ignorePipeLib( "freetype" )
+        from glob import glob
+
+        blenderVersionMajor = '.'.join(pipe.apps.version.get('blender').split('.')[:2])
+
+        pythonVersion = glob( self.path('%s/python/lib/python*' % blenderVersionMajor) )
+        if pythonVersion:
+                pythonVersion = os.path.basename( pythonVersion[0] )
+        else:
+                pythonVersion = 'python2.7'
 
         self.insert('PATH',0, self.path('$BLENDER_VERSION_MAJOR/python/bin'))
-        self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/'))
-        self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/site-packages/'))
-        self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/lib-dynload/'))
-        self.insert('LD_LIBRARY_PATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/python3.7/lib-dynload/'))
+        self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/%s/' % pythonVersion))
+        self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/%s/site-packages/' % pythonVersion))
+        self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/%s/lib-dynload/' % pythonVersion))
+        self.insert('LD_LIBRARY_PATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/%s/lib-dynload/' % pythonVersion))
 
         for each in self.toolsPaths():
             blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/' % each)
