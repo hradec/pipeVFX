@@ -76,9 +76,9 @@ class nightwatch:
 				flags.DELETE_SELF
 
 		# reads .gitignore if one exists at path
-		gitignore = []
+		gitignore = [ '.git' ]
 		if os.path.exists(self.path+'/.gitignore'):
-			gitignore=[ x.strip() for x in open(self.path+'/.gitignore','r').readlines() if '#' not in x.strip() ]
+			gitignore += [ x.strip() for x in open(self.path+'/.gitignore','r').readlines() if '#' not in x.strip() ]
 
 		# initial update
 		print( "does a initial update, to garantee all is in sync from the beginning..." )
