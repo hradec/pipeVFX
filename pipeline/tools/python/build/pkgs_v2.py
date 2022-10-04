@@ -74,6 +74,62 @@ class all: # noqa
         self._rpath_environ = build.removeDuplicatedEntriesEnvVars( self._rpath_environ )
         return self._rpath_environ
 
+    def llvm_plus_gcc_adjustment(self, environ={}, forCMake=False):
+        '''
+        # to be able to use gcc and llvm togheter, we have to add
+        # GCC search paths in CC/CXX/LD env vars, since LLVM
+        # search path is added by the system first than GCC.
+        # As we're using -nostdinc, we have to tell GCC where the
+        # correct includes are!
+        # we add the main system one for last!
+        # we also use -isystem so these come before any *_INCLUDE_PATH
+        # env vars searchpath.
+        # We only have to do this with OSL, since it's the only one
+        # that uses gcc and llvm on the same build!
+        # forCMake=True return the CXXFLAGS and CFLAGS so it works on CMake
+        '''
+        environ = build.update_environ_dict( environ, self.rpath_environ().copy() )
+        environ.update( {
+                'CXX':  'g++  -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+                            ' -isystem/usr/include',
+                'CC' :  'gcc -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -isystem/usr/include',
+                'LD' :  'g++ '
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+
+                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+                'CPATH' : '$CPATH:'+environ['CPATH'],
+                'RPATH' : '$RPATH:'+environ['RPATH'],
+        })
+        if forCMake:
+            environ.update( {
+                'CXXFLAGS': ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+                            ' -isystem/usr/include '+environ['CXXFLAGS'],
+                'CFLAGS'  : ' -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+                            ' -isystem/usr/include '+environ['CFLAGS'],
+            } )
+        return environ.copy()
+
     def __init__(self,ARGUMENTS):
         ''' Build all basic packages needed by pipeVFX, with multiple versions for each.
 
@@ -653,11 +709,11 @@ class all: # noqa
         #     build.github_phase_one_version(ARGUMENTS, {self.python : v})
 
         # a dummy build that stalls until the passed build is done!
-        # build.wait4dependencies(self.python, 'wait_python_finish', cmd=["echo DONE"])
+        wait4python = build.wait4dependencies(self.python, 'wait_python_finish', cmd=["echo DONE"])
 
         # install extra python modules using pip, for all python versions
         # installed by python build.
-        self.pip = { p:build.pip( ARGUMENTS, p, self.python ) for p in [
+        self.pip = { p:build.pip( ARGUMENTS, p, self.python, depend=[wait4python] ) for p in [
             'readline',
             'epydoc',
             'PyOpenGL',
@@ -734,6 +790,7 @@ class all: # noqa
             # },
         )
         self.cmake = cmake
+        build.globalDependency(self.cmake)
 
         tbb = build.tbb(
             ARGUMENTS,
@@ -976,7 +1033,6 @@ class all: # noqa
         build.globalDependency(self.jpeg)
         build.globalDependency(self.tiff)
         build.globalDependency(self.libpng)
-
 
         freetype = build.freetype(
             ARGUMENTS,
@@ -1928,7 +1984,33 @@ class all: # noqa
                 '74d646a3cc1b5d519829441db96744f0',
                 { self.gcc : '6.3.1' }
             )],
+            cmd = [
+                'mkdir -p build && cd build', # configure fails if RPATH is defined!
+                'cmake .. -D BUILD_SHARED_LIBS=1 ',
+                'make -j $DCORES',
+                'make -j $DCORES install',
+            ],
         )
+
+        # self.pystring = build.make(
+        #     ARGUMENTS,
+        #     'pystring',
+        #     download=[(
+        #         'https://github.com/imageworks/pystring/archive/refs/tags/v1.1.3.tar.gz',
+        #         'pystring-1.1.3.tar.gz',
+        #         '1.1.3',
+        #         'f2c68786b359f5e4e62bed53bc4fb86d',
+        #         { self.gcc : '6.3.1' }
+        #     )],
+        #     cmd = [
+        #         'make LIBDIR=$INSTALL_TARGET/lib/',
+        #         'make LIBDIR=$INSTALL_TARGET/lib/ install',
+        #         'mkdir -p $INSTALL_TARGET/include/pystring',
+        #         'cp pystring.h $INSTALL_TARGET/include/pystring/',
+        #         'fdsffdsfs'
+        #     ]
+        # )
+
 
         # ocio for some reason doesn't add -fPIC when building the static external libraries,
         # so we have to patch it or build fail with gcc 4.1.2
@@ -1988,12 +2070,19 @@ class all: # noqa
                 '802d8f5b1d1fe316ec5f76511aa611b8',
                 { self.gcc : '4.1.2' }
             ),(
-                # gaffer 1.0.1.0
+                # gaffer >= 1.0.1.0
                 'https://github.com/AcademySoftwareFoundation/OpenColorIO/archive/refs/tags/v2.1.1.tar.gz',
                 'OpenColorIO-2.1.1.tar.gz',
                 '2.1.1',
                 '604f562e073f23d88ce89ed4f7f709ba',
-                { self.gcc : '6.3.1', self.yaml : '0.2.5', self.yaml_cpp : '0.7.0' }
+                {   self.gcc : '6.3.1',
+                    self.yaml : '0.2.5',
+                    self.yaml_cpp : '0.7.0',
+                    # self.pystring : '1.1.3',
+                    self.openexr  [sufix] : '2.4.0',
+                    self.ilmbase  [sufix] : '2.4.0',
+                    self.pyilmbase[sufix] : '2.4.0',
+                }
             ),(
                 # CY2020
                 'https://github.com/imageworks/OpenColorIO/archive/v1.1.1.tar.gz',
@@ -2006,11 +2095,23 @@ class all: # noqa
             depend   = [self.yasm, self.boost, self.binutils],
             cmd = ['''
                 if python -c "exit(0 if $VERSION_MAJOR > 2.0 else 1)" ; then
+                    sed  -i.bak -e 's/pystring_CXX_FLAGS)/pystring_CXX_FLAGS)\\n\\tset(pystring_CXX_FLAGS " ${pystring_CXX_FLAGS} $ENV{CXXFLAGS}")/' ./share/cmake/modules/Findpystring.cmake
+                fi
+                if python -c "exit(0 if $VERSION_MAJOR > 2.0 else 1)" ; then
                     mkdir -p ./build && \
                     cd ./build && \
-                    cmake ../ && \
+                    cmake ../ \
+                        -DOCIO_BUILD_PYTHON=ON \
+                        -DPython_ROOT_DIR=$PYTHON_TARGET_FOLDER \
+                        -DPython_FIND_STRATEGY=LOCATION \
+                        -Dpystring_INCLUDE_DIR=$PYSTRING_TARGET_FOLDER/include \
+                        -DImath_INCLUDE_DIR=$OPENEXR_TARGET_FOLDER/include \
+                        -DOCIO_USE_OPENEXR_HALF=$(python -c "exit(0 if $OPENEXR_VERSION_MAJOR < 3.0 else 1)" && echo ON || echo OFF) \
+                    && \
                     make -j $DCORES && \
-                    make -j $DCORES install
+                    make -j $DCORES install && \
+                    rm -rf $INSTALL_TARGET/lib/python$PYTHON_VERSION_MAJOR
+                    ln -s ../lib64/python$PYTHON_VERSION_MAJOR $INSTALL_TARGET/lib/python$PYTHON_VERSION_MAJOR
                 else
                     cmake ./ -D CMAKE_AR=$BINUTILS_TARGET_FOLDER/bin/ar && \
                     make -j $DCORES && \
@@ -2018,13 +2119,13 @@ class all: # noqa
                 fi'''],
             flags    = build.cmake.flags+[
                 '-D OCIO_BUILD_APPS=0',
-                '-D OCIO_BUILD_TESTS=0',
+                '-D OCIO_BUILD_TESTS=1',
                 '-D OCIO_BUILD_GPU_TESTS=0',
                 '-D OCIO_USE_BOOST_PTR=1',
                 '-D OCIO_BUILD_TRUELIGHT=OFF',
                 '-D OCIO_BUILD_NUKE=OFF',
                 '-D OCIO_WARNING_AS_ERROR=OFF',
-                '-D OCIO_PYTHON_VERSION=$PYTHON_VERSION_MAJOR'
+                '-D OCIO_PYTHON_VERSION=$PYTHON_VERSION_MAJOR',
                 # '-DUSE_EXTERNAL_TINYXML=1',
                 # '-DUSE_EXTERNAL_YAML=1',
             ],
@@ -2440,44 +2541,45 @@ class all: # noqa
             },
             # baseLibs=[python],
             depend=[self.patchelf],
-            environ={
-                # to be able to use gcc and llvm togheter, we have to add
-                # GCC search paths in CC/CXX/LD env vars, since LLVM
-                # search path is added by the system first than GCC.
-                # As we're using -nostdinc, we have to tell GCC where the
-                # correct includes are!
-                # we add the main system one for last!
-                # we also use -isystem so these come before any *_INCLUDE_PATH
-                # env vars searchpath.
-                # We only have to do this with OSL, since it's the only one
-                # that uses gcc and llvm on the same build!
-                'CXX':  'g++  -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
-                            ' -isystem/usr/include',
-                'CC' :  'gcc -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem/usr/include',
-                'LD' :  'g++ '
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-
-                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-                'LD_PRELOAD': ':'.join([
-                    '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
-                    '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
-                ]),
-                'RPATH'   : '$RPATH:'+self.qt_rpath_environ['RPATH'],
-                'CPATH'   : '$CPATH:'+self.qt_rpath_environ['CPATH'],
-            },
+            environ = self.llvm_plus_gcc_adjustment(),
+            # environ={
+            #     # to be able to use gcc and llvm togheter, we have to add
+            #     # GCC search paths in CC/CXX/LD env vars, since LLVM
+            #     # search path is added by the system first than GCC.
+            #     # As we're using -nostdinc, we have to tell GCC where the
+            #     # correct includes are!
+            #     # we add the main system one for last!
+            #     # we also use -isystem so these come before any *_INCLUDE_PATH
+            #     # env vars searchpath.
+            #     # We only have to do this with OSL, since it's the only one
+            #     # that uses gcc and llvm on the same build!
+            #     'CXX':  'g++  -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+            #                 ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+            #                 ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
+            #                 ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
+            #                 ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+            #                 ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
+            #                 ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
+            #                 ' -isystem/usr/include',
+            #     'CC' :  'gcc -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
+            #                 ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
+            #                 ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
+            #                 ' -isystem/usr/include',
+            #     'LD' :  'g++ '
+            #                 ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+            #                 ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+            #                 ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+            #
+            #     'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
+            #                 ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
+            #                 ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
+            #     'LD_PRELOAD': ':'.join([
+            #         '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+            #         '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+            #     ]),
+            #     'RPATH'   : '$RPATH:'+self.qt_rpath_environ['RPATH'],
+            #     'CPATH'   : '$CPATH:'+self.qt_rpath_environ['CPATH'],
+            # },
             cmd = [
                 # we need to setup differently for pyside < 5
                 '''[ $(basename $TARGET_FOLDER | awk -F'.' '{print $1}') -lt 5 ] ''',
@@ -2931,7 +3033,7 @@ class all: # noqa
                 targetSuffix=sufix,
                 download = download_openvdb,
                 environ = openvdb_environ,
-                depend=[self.glfw, self.jemalloc],
+                depend=[self.glfw, self.jemalloc, self.cmake],
                 src = "README.md",
                 cmake_prefix = self.cmake_prefix(),
                 cmd = [
@@ -3065,6 +3167,16 @@ class all: # noqa
                 if build.versionMajor(boost_version) >= 1.76:
                     # field3d_version = '1.7.3'
                     openvdb_version = '9.1.0'
+                    # download += [[
+                    #         'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.3.11.0.tar.gz',
+                    #         'oiio-2.3.11.0.tar.gz',
+                    #         '2.3.11.0',
+                    #         '568a1efb4fc41711e2dae8c39450a83e',
+                    #         { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
+                    #         self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
+                    #         self.field3d[sufix]: '1.7.3', self.jpeg: '9a', self.tbb: self.masterVersion['tbb'],
+                    #         self.openvdb[sufix]: openvdb_version, self.ocio: '2.1.1' }
+                    #     ]]
                 download += [[
                         'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.2.15.1.tar.gz',
                         'oiio-2.2.15.1.tar.gz',
@@ -3073,7 +3185,7 @@ class all: # noqa
                         { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
                         self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
                         self.field3d[sufix]: '1.7.3', self.jpeg: '9a', self.tbb: self.masterVersion['tbb'],
-                        self.openvdb[sufix]: openvdb_version}
+                        self.openvdb[sufix]: openvdb_version, self.ocio: '2.1.1' }
                     ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
@@ -3114,11 +3226,11 @@ class all: # noqa
                     },
                 },
                 download = _download,
-                depend=[
+                depend = [
                     self.ocio, self.python, self.boost, self.freetype,
                     self.gcc, self.icu, self.cmake, self.openssl, self.bzip2,
                     self.libraw, self.libpng, self.tbb, self.jpeg, self.hdf5,
-                    self.pugixml, self.pybind, self.ilmbase, self.openexr
+                    self.pugixml, self.pybind, self.tiff, self.libpng
                 ],
                 cmd = [
                     'mkdir -p build',
@@ -3166,42 +3278,7 @@ class all: # noqa
         self.xerces = {}
         self.usd = {}
         self.usd_non_monolithic = {}
-
-        environ = self.exr_rpath_environ.copy()
-        environ.update( {
-                # to be able to use gcc and llvm togheter, we have to add
-                # GCC search paths in CC/CXX/LD env vars, since LLVM
-                # search path is added by the system first than GCC.
-                # As we're using -nostdinc, we have to tell GCC where the
-                # correct includes are!
-                # we add the main system one for last!
-                # we also use -isystem so these come before any *_INCLUDE_PATH
-                # env vars searchpath.
-                # We only have to do this with OSL, since it's the only one
-                # that uses gcc and llvm on the same build!
-                'CXX':  'g++  -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/'
-                            ' -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/'
-                            ' -isystem/usr/include',
-                'CC' :  'gcc -isystem$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ '
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/'
-                            ' -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/'
-                            ' -isystem/usr/include',
-                'LD' :  'g++ '
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-
-                'LDFLAGS' : ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/lib64/'
-                            ' -Wl,-rpath=$GCC_TARGET_FOLDER/lib64/ ',
-                'CPATH' : '$CPATH:'+self.exr_rpath_environ['CPATH'],
-                'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
-        })
+        environ = self.llvm_plus_gcc_adjustment()
 
 
 
@@ -3301,7 +3378,7 @@ class all: # noqa
                 build.github_phase_one_version(ARGUMENTS, {self.embree[bsufix] : v})
 
 
-            print self.oiio[bsufix]["1.8.10"].keys()
+            # print self.oiio[bsufix]["1.8.10"].keys()
             # =============================================================================================================================================
             # OSL - OpenShadingLanguage
             # =============================================================================================================================================
@@ -3607,6 +3684,7 @@ class all: # noqa
                 build.github_phase_one_version(ARGUMENTS, {self.alembic[bsufix] : v})
 
 
+        # build.globalDependencyPrint()
         # =============================================================================================================================================
         # resume building the boost for loop
         # =============================================================================================================================================
@@ -4197,6 +4275,40 @@ class all: # noqa
             # cmd=["fkdjsfsf"]
         )
 
+        # build OIDN
+        # for bv in self.boost_versions_for_gaffer:
+        #     bsufix = "boost.%s" % bv
+        #
+        #     self.oidn = build.cmake(
+        #         build.ARGUMENTS,
+        #         'oidn',
+        #         src='bin/oidnDenoise',
+        #         download=[(
+        #             'https://github.com/OpenImageDenoise/oidn/releases/download/v1.4.3/oidn-1.4.3.src.tar.gz',
+        #             'oidn-1.4.3.src.tar.gz',
+        #             '1.4.3',
+        #             'b6b255d513c953665db6d76ec583a13b',
+        #             {   self.gcc : '9.3.1',
+        #                 self.boost : bv,
+        #                 self.usd[bsufix][ 'tbb'  ].obj : self.usd[bsufix][ 'tbb'  ].version,
+        #                 self.usd[bsufix][ 'oiio' ].obj : self.usd[bsufix][ 'oiio' ].version,
+        #             }
+        #         )],
+        #         depend = [self.ispc],
+        #         flags = ['-D ISPC_EXECUTABLE=$ISPC_TARGET_FOLDER/bin/ispc']
+        #     )
+
+        self.openjpeg = build.cmake(
+            build.ARGUMENTS,
+            'openjpeg',
+            download=[(
+                'https://github.com/uclouvain/openjpeg/archive/refs/tags/v2.4.0.tar.gz',
+                'openjpeg-2.4.0.tar.gz',
+                '2.4.0',
+                '4d388298335947367e91f1d100468af1',
+                { self.gcc : '6.3.1' }
+            )],
+        )
 
         build.github_phase_one_version(ARGUMENTS, depend=[
             self.cgru,

@@ -37,7 +37,7 @@ class make(generic):
     _verbose=''
     _verbose_cmake=''
     flags=[]
-    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
+    def __init__(self, args, name, download, baseLibs=None, env=None, depend=[], GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         generic.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
         # some extra parameters to control log output and parallel building
         # default uses the double of cores to build,
@@ -147,7 +147,7 @@ class cmake(make):
             "-DGLUT_Xi_LIBRARY=$(echo $(ldconfig -p | grep 'libXi.so ' | cut -d'>' -f2))",
         ]
 
-    def __init__(self, args, name, download, baseLibs=None, env=None, depend={}, GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
+    def __init__(self, args, name, download, baseLibs=None, env=None, depend=[], GCCFLAGS=[], sed=None, environ=[], compiler=gcc.system, **kargs):
         make.__init__(self, args, name, download, baseLibs, env, depend, GCCFLAGS, sed, environ, compiler, **kargs)
         if self.cmake_prefix:
             cmake_prefix = self.cmake_prefix
@@ -279,7 +279,7 @@ class alembic(cmake):
     def fixCMD(self, cmd, os_environ):
         # update the buld environment with all the enviroment variables
         # specified in apps argument!
-        environ = []
+        # environ = []
 
         extra_flags = [
             '-Wno-dev',
@@ -320,8 +320,6 @@ class alembic(cmake):
                 cmd = cmd.replace('cmake','cmake '+each+' ')
 
         return cmake.fixCMD(self, cmd, os_environ, [
-            # 'export CORES=2',
-            # 'export DCORES=4',
             'export PRMAN_ROOT=$PRMAN_ROOT/RenderManProServer-$PRMAN_VERSION'
         ])
 

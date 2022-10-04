@@ -135,7 +135,7 @@ class pip(configure):
     cmd = ["./build.sh"]
     noMinTime=True
     dontUseTargetSuffixForFolders = 1
-    do_not_use=True
+    # do_not_use=True
     globalDependency = True
 
     def bootstrap_python_versions(self, env, _source):
@@ -195,7 +195,7 @@ class pip(configure):
             # cmd += 'python$PYTHON_VERSION_MAJOR -m pip install --upgrade pip &&'
             cmd += 'python$PYTHON_VERSION_MAJOR -m pip download "%s" ' % self.pip_pkg
             genericBuilders.s_print(cmd)
-            print cmd
+            # print cmd
             os.system(cmd)
             if not glob.glob("%s/*" % download_path):
                 self.error = True
