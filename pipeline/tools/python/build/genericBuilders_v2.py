@@ -82,7 +82,7 @@ if 'MEMGB' in os.environ:
     mem = os.environ['MEMGB']
 memGB = float(mem)/1024/1024
 print "Memory: %sGB" % memGB
-
+os.environ['MEMGB'] = str(int(memGB))
 
 
 class globalDict(dict):
@@ -163,6 +163,8 @@ def _print(*args):
             p = True
         if '::' in l[0:20]:
             p = True
+        if 'github' in l[0:20]:
+            p = True
         if 'TRAVIS' in os.environ and os.environ['TRAVIS']!='1':
             if [ x for x in ['processing', 'building', 'Download', 'md5'] if x in l ]:
                 l = '\r'+l
@@ -212,7 +214,8 @@ def expandvars(path, env=os.environ, default=None, skip_escaped=False):
     def replace_var(m):
         return env.get(m.group(2) or m.group(1), m.group(0) if default is None else default)
     reVar = (r'(?<!\\)' if skip_escaped else '') + r'\$(\w+|\{([^}]*)\})'
-    return re.sub(reVar, replace_var, path)
+    expanded = re.sub(reVar, replace_var, path)
+    return expanded
 
 
 def DEBUG():
@@ -266,8 +269,9 @@ elif memGB < 8:
 # As we store the scons build class, we have all the info we need
 # for the subsequent builds, including all versions build information
 # so we a build can pick and choose its dependency version, if needed!
-allDepend = []
-all_env_vars = {}
+sys.allDepend= []
+sys.all_env_vars = {}
+
 
 
 # cleanup pythonpath env var!
@@ -303,11 +307,11 @@ def __add_boost_python_versioned_lib_folder(paths):
     ret = []+paths
     # add extra rpath to account for boost versioned libs
     for p in [ x for x in paths if 'BOOST' not in x.upper()]:
-        ret += [p+'/boost.$BOOST_VERSION/']
+        ret += [p+'/boost.${BOOST_VERSION}/']
     # add extra rpath to account for python versioned libs
     paths = []+ret
     for p in [ x for x in paths if 'PYTHON' not in x.upper()]:
-        ret += [p+'/python$PYTHON_VERSION_MAJOR/']
+        ret += [p+'/python${PYTHON_VERSION_MAJOR}/']
 
     return ret
 
@@ -320,31 +324,31 @@ def rpath_environ( paths=[], disable="" ):
 
     if 'NOBOOST' not in disable:
         paths += [
-            '$BOOST_TARGET_FOLDER/lib/',
-            '$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
+            '${BOOST_TARGET_FOLDER}/lib/',
+            '${BOOST_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/',
         ]
     if 'NOILM' not in disable:
         paths += [
-            '$OPENEXR_TARGET_FOLDER/lib/',
-            '$ILMBASE_TARGET_FOLDER/lib/',
+            '${OPENEXR_TARGET_FOLDER}/lib/',
+            '${ILMBASE_TARGET_FOLDER}/lib/',
         ]
 
     # special case for OIIO and OCIO libraries.
     paths += [
-        '$OIIO_TARGET_FOLDER/lib/',
-        '$OCIO_TARGET_FOLDER/lib/',
+        '${OIIO_TARGET_FOLDER}/lib/',
+        '${OCIO_TARGET_FOLDER}/lib/',
     ]
 
     # special case for cortex libraries.
     paths += [
-        '$CORTEX_TARGET_FOLDER/lib/boost.$BOOST_VERSION/',
-        '$CORTEX_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/',
-        '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost.$BOOST_VERSION/',
-        '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost.$BOOST_VERSION/',
-        '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost.$BOOST_VERSION/',
-        '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
-        '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
-        '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/',
+        '${CORTEX_TARGET_FOLDER}/lib/boost.${BOOST_VERSION}/',
+        '${CORTEX_TARGET_FOLDER}/lib/boost.${BOOST_VERSION}/python${PYTHON_VERSION_MAJOR}/',
+        '${CORTEX_TARGET_FOLDER}/openvdb/${OPENVDB_VERSION}/lib/boost.${BOOST_VERSION}/',
+        '${CORTEX_TARGET_FOLDER}/alembic/${ALEMBIC_VERSION}/lib/boost.${BOOST_VERSION}/',
+        '${CORTEX_TARGET_FOLDER}/usd/${USD_VERSION}/lib/boost.${BOOST_VERSION}/',
+        '${CORTEX_TARGET_FOLDER}/openvdb/${OPENVDB_VERSION}/lib/boost.${BOOST_VERSION}/python${PYTHON_VERSION_MAJOR}/site-packages/',
+        '${CORTEX_TARGET_FOLDER}/alembic/${ALEMBIC_VERSION}/lib/boost.${BOOST_VERSION}/python${PYTHON_VERSION_MAJOR}/site-packages/',
+        '${CORTEX_TARGET_FOLDER}/usd/${USD_VERSION}/lib/boost.${BOOST_VERSION}/python${PYTHON_VERSION_MAJOR}/site-packages/',
     ]
 
     _environ = {
@@ -367,11 +371,11 @@ def lib_environ( paths=[], disable="" ):
         'LDFLAGS' : ' $LDFLAGS '+' -L'+' -L'.join(paths),
         'LIBRARYPATH' : ':'.join(paths+[
             '$LIBRARYPATH',
-            '$BOOST_TARGET_FOLDER/lib/',
-            '$OPENEXR_TARGET_FOLDER/lib',
-            '$ILMBASE_TARGET_FOLDER/lib',
-            '$OIIO_TARGET_FOLDER/lib/',
-            '$OCIO_TARGET_FOLDER/lib/',
+            '${BOOST_TARGET_FOLDER}/lib/',
+            '${OPENEXR_TARGET_FOLDER}/lib',
+            '${ILMBASE_TARGET_FOLDER}/lib',
+            '${OIIO_TARGET_FOLDER}/lib/',
+            '${OCIO_TARGET_FOLDER}/lib/',
         ]),
     }
     return removeDuplicatedEntriesEnvVars(_environ)
@@ -386,16 +390,16 @@ def include_environ( paths=[], disable="" ):
         paths = [paths]
     if 'NOBOOST' not in disable:
         paths += [
-            '$BOOST_TARGET_FOLDER/include/',
-            '$BOOST_TARGET_FOLDER/include/boost/',
+            '${BOOST_TARGET_FOLDER}/include/',
+            '${BOOST_TARGET_FOLDER}/include/boost/',
         ]
     if 'NOILM' not in disable:
         # we need this to build with exr version below 2.2.0
         paths += [
-            '$OPENEXR_TARGET_FOLDER/include/',
-            '$OPENEXR_TARGET_FOLDER/include/OpenEXR/',
-            '$ILMBASE_TARGET_FOLDER/include/',
-            '$ILMBASE_TARGET_FOLDER/include/OpenEXR/',
+            '${OPENEXR_TARGET_FOLDER}/include/',
+            '${OPENEXR_TARGET_FOLDER}/include/OpenEXR/',
+            '${ILMBASE_TARGET_FOLDER}/include/',
+            '${ILMBASE_TARGET_FOLDER}/include/OpenEXR/',
         ]
 
     _environ = {
@@ -447,7 +451,6 @@ def removeDuplicatedEntriesEnvVars(data):
 
     return clean_result
 
-
 def update_environ_dict(dict1, dict2addingTo1):
     ''' add a environ dictionary correctly to another, without
     overriding key values'''
@@ -479,25 +482,32 @@ def update_environ_dict(dict1, dict2addingTo1):
 
     return removeDuplicatedEntriesEnvVars(result)
 
-
 def globalDependency(classObj, RPATH=True, LIB=True, INCLUDE=True ):
     # ==========================================================================
     # add class obj as a global dependency for all subsequent builds!
     # We MUST do this at the end, so it won't influence itself
     # ==========================================================================
-    global allDepend
-    global all_env_vars
+    all_env_vars = sys.all_env_vars
     # if not [ x for x in allDepend if x.name == classObj.name and x.targetSuffix == classObj.targetSuffix]:
-    if not [ x for x in allDepend if x.name == classObj.name and x.targetSuffix == classObj.targetSuffix]:
-        allDepend += [classObj]
+    # if not [ x for x in allDepend if x.name == classObj.name and x.targetSuffix == classObj.targetSuffix]:
+    sys.allDepend += [classObj]
     if RPATH:
-        all_env_vars = update_environ_dict(all_env_vars, rpath_environ(   '$%s_TARGET_FOLDER/lib/'     % classObj.name.upper() ))
+        all_env_vars = update_environ_dict(all_env_vars, rpath_environ(   '${%s_TARGET_FOLDER}/lib/'     % classObj.name.upper() ))
     if LIB:
-        all_env_vars = update_environ_dict(all_env_vars, lib_environ(     '$%s_TARGET_FOLDER/lib/'     % classObj.name.upper() ))
+        all_env_vars = update_environ_dict(all_env_vars, lib_environ(     '${%s_TARGET_FOLDER}/lib/'     % classObj.name.upper() ))
     if INCLUDE:
-        all_env_vars = update_environ_dict(all_env_vars, include_environ( '$%s_TARGET_FOLDER/include/' % classObj.name.upper() ))
+        all_env_vars = update_environ_dict(all_env_vars, include_environ( '${%s_TARGET_FOLDER}/include/' % classObj.name.upper() ))
+
+    sys.all_env_vars = all_env_vars
 
 
+def globalDependencyGet():
+    all_env_vars = sys.all_env_vars
+    return []+sys.allDepend
+
+def globalDependencyPrint():
+    for each in [  '+'.join([x.name,x.targetSuffix,x.extraTargetSuffix]) for x in  globalDependencyGet() ]:
+        print('\tglobalDependencyPrint:', each)
 
 def checkPathsExist( os_environ ):
     '''' remove unexistent paths from a env vars dict '''
@@ -514,8 +524,6 @@ def checkPathsExist( os_environ ):
                         continue
                     parts += [n]
             os_environ[each] = ':'.join(parts)
-
-
 
 
 class _parameter_override_:
@@ -736,8 +744,8 @@ class generic:
         global __pkgInstalled__
         global buildTotal
         global sconsParallel
-        global allDepend
-        global all_env_vars
+        # allDepend = sys.allDepend
+        all_env_vars = sys.all_env_vars
 
         download = [ list(x) for x in download ]
 
@@ -799,10 +807,6 @@ class generic:
                 self.download_versions[x[2]] = x[4]
 
 
-        # initialize a scons environment for this class object!
-        if self.env is None:
-            self.env = Environment()
-
         self.env2 = {}
         for each in self.download_versions:
             self.env2[each] = Environment()
@@ -814,10 +818,14 @@ class generic:
         # with global dependency values!
         # ==============================================
         # we have to filter out waiting classes
-        __allDepend = []+allDepend
+        __allDepend = globalDependencyGet()
+        # if 'alembic' in self.real_name:
+        #     for each in [  '+'.join([x.real_name, x.name,x.targetSuffix,x.extraTargetSuffix]) for x in __allDepend ]:
+        #         print('\tglobalDependencyPrint:', each)
+
         # __allDepend = [ x for x in allDepend if 'wait4' not in x.className and 'github' not in x.className ]
         # add global dependency if not already in
-        self__dependNames = [ x.name+x.targetSuffix+x.extraTargetSuffix for x in self.depend if hasattr(x, 'name') ]
+        self__dependNames = [ x.name+x.targetSuffix+x.extraTargetSuffix for x in self.depend ] #if hasattr(x, 'className') ]
         if type(self.depend) == type([]):
             self.depend += [ x for x in __allDepend if x.name+x.targetSuffix+x.extraTargetSuffix not in self__dependNames ]
         else:
@@ -825,16 +833,25 @@ class generic:
                 if d not in self.depend:
                     self.depend[d] = None # no version set
 
+        sanityCheck_nodicts = [ x for x in self.depend if not hasattr(x,'name') ]
+        if sanityCheck_nodicts:
+            for each in sanityCheck_nodicts:
+                for k in each.keys():
+                    _print( "::==> dependency (%s) for class %s is not a build class. Please remove it!"  % (each[k].real_name, self.real_name) )
+            raise Exception( "Please remove then!")
+
         # print '====>', self.className, name, [ (x.name+'/'+x.targetSuffix,[ [ str(z) for z in x._depend[y] ] for y in x._depend.keys()]) for x in self.depend]
         # print '====>', self.className, name+'/'+self.targetSuffix, [ (x.name+'/'+x.targetSuffix) for x in allDepend]
-        # print '====>', self.className, self.real_name, [ (x.real_name) for x in allDepend]
+        #     print 'A====>', [ x.className+'.'+x.targetSuffix+'.'+x.extraTargetSuffix for x in __allDepend ]
+        #     print 'B====>', self.depend
+        #     x = [ (x.real_name) for x in self.depend ]
+        #     x.sort()
+        #     print 'A====>', self.className, self.real_name, x
+        #     print 'B====>', self.className, self.real_name, [ x.className+'.'+x.targetSuffix+'.'+x.extraTargetSuffix for x in __allDepend ]
 
         # fix depend in case we're reusing it from another package
         self.depend = [x for x in self.depend if hasattr(x, 'name')]
         depend      = self.depend
-
-
-        # add global env vars
 
         # now we can reset it
         if not self.environ.keys():
@@ -898,19 +915,9 @@ class generic:
         # and last, set global env vars from global dependencies
         self.environ = update_environ_dict(self.environ, all_env_vars)
 
-
-
-        # we pass over self.environ as ENVIRON_<key()> in the scons environment,
-        # so the static build function can pick it up at build time, since build
-        # time has no access to the class state at this point in time.
-        for n in self.environ.keys():
-            self.set("ENVIRON_%s" % n.upper(), self.environ[n])
-
         # ==============================================
-
         if not self.baseLibs:
             self.baseLibs = 'noBaseLib'
-
 
         sys.stdout.write( bcolors.END )
         self.GCCFLAGS = GCCFLAGS
@@ -924,7 +931,6 @@ class generic:
 
         # add this class to the allPkgs cache
         allPkgs[name] = self
-
 
         # set the default version to use!
         # if one is not set, we default to the latest in the download list
@@ -948,15 +954,17 @@ class generic:
 
             # now we finally update self.dependOn with self.depend (depend parameter and global dependencies)
             for dependencyPkg in self.depend:
-                # set the last version on the download list for each package
-                #  in the self.depend list!
-                defaultVersion = dependencyPkg.version_default
-                # if the package is python, we try to default to the oldest
-                # if dependencyPkg.name == 'python':
-                #     print "===========================> ", self.name,  dependencyPkg.name, dependencyPkg.version_default, defaultVersion, dependencyPkg, dependencyPkg._depend.keys()
-                #     defaultVersion = 0
-                dependencyPkgLatestVersion = dependencyPkg.downloadList[defaultVersion][2]
-                self.dependOn[download_version][dependencyPkg] = dependencyPkgLatestVersion
+                # only add if not a dependency control class
+                # if not [ x for x in ['github', 'wait4'] if x in dependencyPkg.className ]:
+                    # set the last version on the download list for each package
+                    #  in the self.depend list!
+                    defaultVersion = dependencyPkg.version_default
+                    # if the package is python, we try to default to the oldest
+                    # if dependencyPkg.name == 'python':
+                    #     print "===========================> ", self.name,  dependencyPkg.name, dependencyPkg.version_default, defaultVersion, dependencyPkg, dependencyPkg._depend.keys()
+                    #     defaultVersion = 0
+                    dependencyPkgLatestVersion = dependencyPkg.downloadList[defaultVersion][2]
+                    self.dependOn[download_version][dependencyPkg] = dependencyPkgLatestVersion
 
         # but download list retains individual versions of packages to build
         # a version of this build.
@@ -1010,8 +1018,6 @@ class generic:
             if not self.baseLibs[n]:
                 self.baseLibs[n] = noBaseLibPlaceHolder
 
-
-
         # the download list of package versions
         self.downloadList = download
 
@@ -1057,45 +1063,47 @@ class generic:
             self.dontUseTargetSuffixForFolders = kargs['dontUseTargetSuffixForFolders']
 
 
-#        bld = Builder(action = self.sed)
-#        self.env.Append(BUILDERS = {'sed' : bld})
-
-        # add our custom SCons build method downloader and uncompressor
-        self.env.AddMethod(self.downloader, 'downloader')
-
-        # bld = Builder( action = Action( self.uncompressor, 'uncompress($SOURCE0 -> $TARGET)') )
-        bld = Builder( action = Action( self._uncompressor, self.sconsPrint) )
-        self.env.Append(BUILDERS = {'uncompressor' : bld})
-
         # make sure our build folder exists!
         os.popen( "mkdir -p %s" % buildFolder(self.args) )
 
         # download latest config.sub and config.guess so we use then to build old packages in newer systems!
         for each in ['%s/../.download/config.sub' % buildFolder(self.args), '%s/../.download/config.guess' % buildFolder(self.args)]:
+            config_target = "%s/../.build/%s" % ( os.path.dirname(each), os.path.basename(each) )
             if not os.path.exists(each) or os.path.getsize(each)==0:
                 _print( 'Downloading latest %s' % each )
                 os.popen( 'wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=%s;hb=HEAD" -O %s 2>&1' % (os.path.basename(each),each) ).readlines()
                 os.popen("chmod a+x %s" % each).readlines()
+            if not os.path.exists( config_target ):
                 os.popen("ln -s ../.download/%s %s/../.build/" % (os.path.basename(each), os.path.dirname(each)) ).readlines()
 
 
         # store the compiler type to use (DEPRECATED??)
         self.compiler = compiler
-        self.set( "BUILD_COMPILER", self.compiler )
+
+        # =====================================================================================================
+        # initialize scons environment
+        # =====================================================================================================
+        self.env = Environment()
+
+        # we pass over self.environ as ENVIRON_<key()> in the scons environment,
+        # so the static build function can pick it up at build time, since build
+        # time has no access to the class state at this point in time.
+        for nn in self.environ.keys():
+            self.set("ENVIRON_%s" % nn.upper(), self.environ[nn])
 
         # store all string variables from the class (self.variable of type str)
         # inside the current scons ENV, so they can be retrieved at build time
         # if necessary!
         # the variable name is upper() case!
+        self.set( "BUILD_COMPILER", self.compiler )
         for each in filter(lambda x: type(x[1])==str and not '__' in x[0], inspect.getmembers(self)):
             self.set(each[0].upper(), each[1])
 
         for each in filter(lambda x: type(x[1])==list and not '__' in x[0], inspect.getmembers(self)):
             v = each[1]
-            for n in range(len(v)):
-                if type(v[n])==str:
-                    self.set("%s_%s_%s_%02d" % (each[0].upper(),self.className,self.name,n), v[n])
-
+            for nn in range(len(v)):
+                if type(v[nn])==str:
+                    self.set("%s_%s_%s_%02d" % (each[0].upper(),self.className,self.name,nn), v[nn])
 
         # check if we're running in TRAVIS-CI
         self.travis=False
@@ -1123,8 +1131,20 @@ class generic:
                 v=[kargs[each]]
             if type(v) not in [int, float, bool, dict]:
                 if v:
-                    for n in range(len(v)):
-                        self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,n), v[n])
+                    for nn in range(len(v)):
+                        self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,nn), v[nn])
+
+
+        # bld = Builder(action = self.sed)
+        # self.env.Append(BUILDERS = {'sed' : bld})
+
+        # add our custom SCons build method downloader and uncompressor
+        self.env.AddMethod(self.downloader, 'downloader')
+
+        # bld = Builder( action = Action( self.uncompressor, 'uncompress($SOURCE0 -> $TARGET)') )
+        bld = Builder( action = Action( self._uncompressor, self.sconsPrint) )
+        self.env.Append(BUILDERS = {'uncompressor' : bld})
+        # =====================================================================================================
 
         # make adjustments according to app used in the build
         # this will change the version specified in the download[4]
@@ -1143,9 +1163,14 @@ class generic:
         self.downloader_install_done_file = {}
         self.downloader_archive = {}
 
+        # =====================================================================================================
+        # turn the self.env into a template to be used for every build version
+        # =====================================================================================================
+        self.env_template = self.env.Clone()
+        # =====================================================================================================
+
         # when no baselib is set, self.baseLibs will
         # be a noBaseLibPlaceHolder class obj
-        ENVIRON_DEPEND_VERSION = []
         for baselib in self.baseLibs:
             for baselibDownloadList in baselib.downloadList:
                 # create target file
@@ -1196,16 +1221,28 @@ class generic:
                 self.downloader_archive[baselib] = []
                 for n in range(len(download)):
 
+                    # =====================================================================================================
+                    # initialize a scons environment for the current download version
+                    # =====================================================================================================
+                    self.env = self.env_template.Clone()
+
+                    # the filename of the downloaded file for the package
+                    # sys.stderr.write(self.name+"\n")
+                    # sys.stderr.write(str(n)+"\n")
+                    # sys.stderr.write(str(download[n])+"\n")
+                    downloadFile = download[n][1]
+                    # sys.stderr.write(downloadFile+"\n")
+
                     # os.environ['GCC_VERSION'] can override the gcc version set in the installRoot
                     self.installPath = os.path.abspath(installRoot(self.args))
 
-                    targetpath = os.path.join( buildFolder(self.args),os.path.splitext(download[n][1])[0]+pythonDependency )
-                    if '.tar' in download[n][1]:
-                        targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.tar.gz',pythonDependency))
-                    if '.zip' in download[n][1]:
-                        targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.zip',pythonDependency))
-                    if '.rpm' in download[n][1]:
-                        targetpath = os.path.join(buildFolder(self.args),download[n][1].replace('.rpm',pythonDependency))
+                    targetpath = os.path.join( buildFolder(self.args),os.path.splitext(downloadFile)[0]+pythonDependency )
+                    if '.tar' in downloadFile:
+                        targetpath = os.path.join(buildFolder(self.args),downloadFile.replace('.tar.gz',pythonDependency))
+                    if '.zip' in downloadFile:
+                        targetpath = os.path.join(buildFolder(self.args),downloadFile.replace('.zip',pythonDependency))
+                    if '.rpm' in downloadFile:
+                        targetpath = os.path.join(buildFolder(self.args),downloadFile.replace('.rpm',pythonDependency))
 
                     installpath = os.path.join( self.installPath,  self.name, download[n][2] )
                     self.target[download[n][2]] = installpath
@@ -1250,7 +1287,7 @@ class generic:
                     # pacakage
                     _pkgs = []
                     # file to be download
-                    archive = os.path.join(buildFolder(self.args),download[n][1])
+                    archive = os.path.join(buildFolder(self.args),downloadFile)
                     self.downloader_archive[baselib] += [archive]
                     if download[n][0]:
                         # the download URL is not empty!
@@ -1272,7 +1309,7 @@ class generic:
                         # source (setup) file so the build function can be called
                         # by SCons
                         # this accounts for builds like python pip
-                        s = os.path.join(buildFolder(self.args),download[n][1],self.src)
+                        s = os.path.join(buildFolder(self.args),downloadFile,self.src)
                         if not self.github_matrix:
                             os.system( 'rm -rf "%s" ; mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s), os.path.dirname(s), s) )
 
@@ -1355,26 +1392,41 @@ class generic:
                             #     print 3, depend_n, dependOn.name, ".%s." % dependOn.targetSuffix, p, k
 
 
+                    # remove duplicates from dependency source
+                    tmp = []
+                    for each in source:
+                        for n in each:
+                            tmp += [str(n)]
+                    tmp.sort()
+                    source = list(set(tmp))
+
+                    # if 'pip' in self.real_name:
+                    #     print "====>", [ str(x) for x in source ]
+
                     ENVIRON_DEPEND = []
                     for download_version in self.download_versions:
                         # set a DEPEND env var that contains all dependency names
-                        ENVIRON_DEPEND += [x.real_name for x in self.dependOn[download_version] if hasattr(x, 'name')]
-                    self.set( "ENVIRON_DEPEND",  ' '.join(ENVIRON_DEPEND) )
+                        ENVIRON_DEPEND += [x.real_name for x in self.dependOn[download_version] if hasattr(x, 'className')]
 
                     # ENVIRON_DEPEND_VERSION is only used to display dependency during build
                     # and to fix python version when noBaseLib
                     # source_versions = [ '.'.join(str(x[0]).split(os.path.sep)[-3:-1])  for x in source ]
+                    ENVIRON_DEPEND_VERSION = []
                     source_versions = []
                     for download_version in sourceVersioned:
                         for x in sourceVersioned[download_version]:
                             pkg_name_version = str(x[0]).split(os.path.sep)[-3:-1]
                             version = '.'.join(pkg_name_version[1:])
-                            if 'python' == pkg_name_version[0] and 'python' in download_version.split('_')[0]:
-                                version = download_version.split('_')[0].replace('python','')
+                            # if 'python' == pkg_name_version[0] and 'python' in download_version.split('_')[0]:
+                            #     version = download_version.split('_')[0].replace('python','')
                             pkg_name_version = pkg_name_version[0]+'/'+version
+
+                            # special hack for pip build - need to go in pip class!!
                             if 'python.' in pkg_name_version and 'noBaseLib-' in str(x[0]):
                                 pkg_name_version = 'pip_'+str(x[0]).split('noBaseLib-')[-1].split('.done')[0]
+
                             source_versions += [download_version+'@'+pkg_name_version]
+
                     source_versions.sort()
                     ENVIRON_DEPEND_VERSION += source_versions
 
@@ -1383,6 +1435,7 @@ class generic:
                     self.set( "ENVIRON_BUILD_RUNNING",  '1' )
 
                     # print self.name, gcc_version
+
 
                     # add dependency to uncompress
                     # s is the source file for each build
@@ -1430,13 +1483,15 @@ class generic:
                     # we can't build individual packages.
                     self.env.Alias( 'install', [] )
 
-        self.set( "ENVIRON_DEPEND_VERSION",  ' '.join( ENVIRON_DEPEND_VERSION ) )
+                    self.set( "ENVIRON_DEPEND",  ' '.join(ENVIRON_DEPEND) )
+                    self.set( "ENVIRON_DEPEND_VERSION",  ' '.join( ENVIRON_DEPEND_VERSION ) )
+                    self.set( "ENVIRON_ALL_DEPEND",  ' '.join([ x.name+x.targetSuffix+x.extraTargetSuffix  for x in __allDepend ]) )
         # ==========================================================================
         # add itself as a global dependency for all subsequent builds!
         # We MUST do this at the end, so it won't influence itself
         # ==========================================================================
         if kargs.has_key('globalDependency'):
-            self.globalDependency = str(kargs['globalDependency'])
+            self.globalDependency = kargs['globalDependency']
 
         if hasattr(self, 'globalDependency') and self.globalDependency:
             RPATH   = True
@@ -1802,7 +1857,7 @@ class generic:
         ''' the main method to run system calls, like configure, make, cmake, etc  '''
 
         target = str(target_original[0])
-
+        self_env = env
 
         # for each in  source:
         #     print str(each)
@@ -1823,7 +1878,7 @@ class generic:
         os_environ['CORES']  = os.environ['CORES']
         os_environ['DCORES'] = os.environ['DCORES']
         os_environ['HCORES'] = os.environ['HCORES']
-        for key,value in self.env.items():
+        for key,value in self_env.items():
             if 'CORES' in key:
                 os_environ[key.replace('ENVIRON_','')] = value
 
@@ -1901,7 +1956,7 @@ class generic:
         pipe.apps.version.set(python=pythonVersion)
 
         # set target folder and python folder for the current pkg
-        target_folder = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
+        target_folder = self_env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         # site_packages = '/'.join([
         #     target_folder,
         #     'lib/python%s/site-packages' % pythonVersion[:3]
@@ -1988,18 +2043,19 @@ class generic:
             'cpp' : 'cpp',
         }
 
-        RPATH          += rpath_environ  ( "$%s_TARGET_FOLDER/lib/"     % self.name.upper() )['RPATH'].split(':')
-        C_INCLUDE_PATH += include_environ( '$%s_TARGET_FOLDER/include/' % self.name.upper() )['CPATH'].split(':')
+        RPATH          += rpath_environ  ( "${%s_TARGET_FOLDER}/lib/"     % self.name.upper() )['RPATH'].split(':')
+        C_INCLUDE_PATH += include_environ( '${%s_TARGET_FOLDER}/include/' % self.name.upper() )['CPATH'].split(':')
 
 
         dependList={}
         sourceList = map(lambda x: os.path.basename(os.path.dirname(os.path.dirname(str(x)))), source)
 
+        # print pkgVersion, self.dependOn[pkgVersion]
         for dependOn in self.dependOn[pkgVersion]:
             # reminder: keys of self.dependOn[pkgVersion] are package objects!
             if dependOn and dependOn.name not in dependList and  dependOn.do_not_use==False:
                 # if not in the source list, skip it
-                if dependOn.name not in target and dependOn.name not in self.env['ENVIRON_DEPEND'].split(' '):
+                if dependOn.name not in target and dependOn.name not in self_env['ENVIRON_DEPEND'].split(' '):
                     continue
 
                 # specific rule to ignore pre-built gcc 4.1.2 binaries as dependency, since we add
@@ -2084,20 +2140,20 @@ class generic:
                     # this also has the advantage of not "recording" the build search paths
                     # on build packages, so cmake won't pick the up later!
                     LIBRARY_PATH += [
-                        "$%s_TARGET_FOLDER/lib/"                               % dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib64/"                             % dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"   % dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/" % dependOn.name.upper(),
-                        '$%s_TARGET_FOLDER/lib64/python$PYTHON_VERSION_MAJOR/lib-dynload/'     %  dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib/"                               % dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib64/"                             % dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/"   % dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib64/python${PYTHON_VERSION_MAJOR}/" % dependOn.name.upper(),
+                        '${%s_TARGET_FOLDER}/lib64/python${PYTHON_VERSION_MAJOR}/lib-dynload/'     %  dependOn.name.upper(),
                     ]
 
-                    _rpath = rpath_environ( "$%s_TARGET_FOLDER/lib/" % dependOn.name.upper() )
+                    _rpath = rpath_environ( "${%s_TARGET_FOLDER}/lib/" % dependOn.name.upper() )
                     RPATH += _rpath['RPATH'].split(':')
                     LDFLAGS += _rpath['LDFLAGS'].split(' ')
                     # RPATH += [
-                    #     "$%s_TARGET_FOLDER/lib/"                               % dependOn.name.upper(),
-                    #     "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"   % dependOn.name.upper(),
-                    #     '$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'     %  dependOn.name.upper(),
+                    #     "${%s_TARGET_FOLDER}/lib/"                               % dependOn.name.upper(),
+                    #     "${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/"   % dependOn.name.upper(),
+                    #     '${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/lib-dynload/'     %  dependOn.name.upper(),
                     # ]
 
                     # include dependency search path in *_INCLUDE_PATH, so we don't
@@ -2107,8 +2163,8 @@ class generic:
                     # USD picks up -I<paths> from python, for example, and if we have gcc paths
                     # from the gcc version used to build python, those will interfere with
                     # the gcc version used with USD.
-                    C_INCLUDE_PATH += ["$%s_TARGET_FOLDER/include/" %  dependOn.name.upper()]
-                    C_INCLUDE_PATH += include_environ( '$%s_TARGET_FOLDER/include/' % dependOn.name.upper() )['CPATH'].split(':')
+                    C_INCLUDE_PATH += ["${%s_TARGET_FOLDER}/include/" %  dependOn.name.upper()]
+                    C_INCLUDE_PATH += include_environ( '${%s_TARGET_FOLDER}/include/' % dependOn.name.upper() )['CPATH'].split(':')
 
                     # add extra folders inside dependency include folders
                     if 'include/*' not in dependOn.do_not_set:
@@ -2120,20 +2176,20 @@ class generic:
 
                     # set python searchpath for dependencies
                     PYTHONPATH += [
-                        "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/"                   %  dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/"     %  dependOn.name.upper(),
-                        '$%s_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'       %  dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/"                   %  dependOn.name.upper(),
-                        "$%s_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages/"     %  dependOn.name.upper(),
-                        '$%s_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/lib-dynload/'       %  dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/"                   %  dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/"     %  dependOn.name.upper(),
+                        '${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/lib-dynload/'       %  dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib/boost.$BOOST_VERSION/python${PYTHON_VERSION_MAJOR}/"                   %  dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib/boost.$BOOST_VERSION/python${PYTHON_VERSION_MAJOR}/site-packages/"     %  dependOn.name.upper(),
+                        '${%s_TARGET_FOLDER}/lib/boost.$BOOST_VERSION/python${PYTHON_VERSION_MAJOR}/lib-dynload/'       %  dependOn.name.upper(),
                     ]
 
                     # set PATH searchpath for dependencies binaries
                     PATH += [
                         # "%s/bin/" % (dependOn.targetFolder[p][depend_n]),
                         # "%s/lib/" % (dependOn.targetFolder[p][depend_n]),
-                        "$%s_TARGET_FOLDER/bin/" % (dependOn.name.upper()),
-                        "$%s_TARGET_FOLDER/lib/" % (dependOn.name.upper()),
+                        "${%s_TARGET_FOLDER}/bin/" % (dependOn.name.upper()),
+                        "${%s_TARGET_FOLDER}/lib/" % (dependOn.name.upper()),
                     ]
 
                     # pull env vars from dependency classes
@@ -2171,7 +2227,7 @@ class generic:
         # from dependent classes
         if 'PYTHON_VERSION' in os_environ:
             os_environ['PYTHON_VERSION_MAJOR'] = '.'.join(os_environ['PYTHON_VERSION'].split('.')[:2])
-            os_environ['PYTHON_TARGET_FOLDER'] = '/'.join([ os.path.dirname(os_environ['PYTHON_TARGET_FOLDER']), os_environ['PYTHON_VERSION'] ])
+            os_environ['PYTHON_TARGET_FOLDER'] = '/'.join([ os_environ['PYTHON_TARGET_FOLDER'].split('python')[0]+'python/', os_environ['PYTHON_VERSION'] ])
             if '/python/' not in target:
                 os_environ['PYTHON_ROOT'] = os_environ['PYTHON_TARGET_FOLDER']
             PATH += [ "%s/bin/" % os_environ['PYTHON_TARGET_FOLDER'] ]
@@ -2188,7 +2244,7 @@ class generic:
             lastlog = self.__lastlog( target,  os_environ['PYTHON_VERSION_MAJOR'] )
 
         # set TARGET_FOLDER and INSTALL_FOLDER
-        os_environ['TARGET_FOLDER'] = self.env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
+        os_environ['TARGET_FOLDER'] = self_env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         # os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
         os_environ['SOURCE_FOLDER'] = os.path.abspath(self.extractBuildFolder(str(source[0])))
         os_environ['INSTALL_FOLDER'] = os_environ['TARGET_FOLDER']
@@ -2255,9 +2311,9 @@ class generic:
                 for each in os_environ[var].split(':'):
                     if  'PYTHON_VERSION' not in each:
                         if 'PYTHON_VERSION' in os_environ and '/python/' in each:
-                            each = each.replace(each.split('/python/')[1].split('/')[0], '$PYTHON_VERSION')
+                            each = each.replace(each.split('/python/')[1].split('/')[0], '${PYTHON_VERSION}')
                         if 'PYTHON_VERSION_MAJOR' in os_environ:
-                            each = re.sub('/python.../', '/python$PYTHON_VERSION_MAJOR/', each)
+                            each = re.sub('/python.../', '/python${PYTHON_VERSION_MAJOR}/', each)
                     pp.append(each)
                 os_environ[var] = ':'.join(pp)
 
@@ -2295,7 +2351,7 @@ class generic:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
 
         if not self.do_not_use:
-            patches = glob( '%s/../../patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION']) )
+            patches = pipe.cached.glob( '%s/../../patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION']) )
             if patches:
                 cmd = ' && '.join([ self.__patches(patches), cmd ])
 
@@ -2408,26 +2464,26 @@ class generic:
 
             # but we set the correct build GCC in the PATH searchpath.
             os_environ['PATH'] = ':'.join([
-                '$GCC_TARGET_FOLDER/bin',
+                '${GCC_TARGET_FOLDER}/bin',
                 os_environ['PATH'],
             ])
 
             # we link gcc using -L instead of -rpath, since we need to set the latest
             # gcc shared libraries at runtime!
             os_environ['LDFLAGS']      = ' '.join([
-                '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                '-L%s/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/'  % os_environ['GCC_TARGET_FOLDER'],
                 # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 # '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 os_environ['LDFLAGS']
             ])
             os_environ['LLDFLAGS']      = ' '.join([
-                '-L%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                '-L%s/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 '-L%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
-                # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/'  % os_environ['GCC_TARGET_FOLDER'],
+                # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/'  % os_environ['GCC_TARGET_FOLDER'],
                 # '-Wl,-rpath=%s/lib/gcc/x86_64-pc-linux-gnu/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 # '-Wl,-rpath=%s/lib64/'  % os_environ['GCC_TARGET_FOLDER'],
                 os_environ['LDFLAGS']
@@ -2435,35 +2491,35 @@ class generic:
 
             # we need to set this so compilation finds the includes from our GCC, instead of the system ones!
             os_environ['C_INCLUDE_PATH'] = ':'.join([
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include-fixed/',
                 os_environ['C_INCLUDE_PATH'],
             ])
             os_environ['CPLUS_INCLUDE_PATH'] = ':'.join([
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/',
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++',
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/',
-                '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/',
-                '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/backward',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include-fixed/',
+                '${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/x86_64-pc-linux-gnu/',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/c++',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/c++/x86_64-pc-linux-gnu/',
+                '${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/',
+                '${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/backward',
                 os_environ['CPLUS_INCLUDE_PATH'],
-                # '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/tr1',
-                # '$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/tr2',
+                # '${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/tr1',
+                # '${GCC_TARGET_FOLDER}/include/c++/${GCC_VERSION}/tr2',
             ])
             os_environ['CPATH'] = ':'.join([
-                '$GCC_TARGET_FOLDER/include',
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
-                '$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++',
+                '${GCC_TARGET_FOLDER}/include',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include-fixed/',
+                '${GCC_TARGET_FOLDER}/lib/gcc/x86_64-pc-linux-gnu/${GCC_VERSION}/include/c++',
                 os_environ['CPATH']
             ])
 
             # set gcc exec env vars
-            os_environ['CC']  = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['CC'].strip())
-            os_environ['CXX'] = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['CXX'].strip())
+            os_environ['CC']  = "${GCC_TARGET_FOLDER}/bin/%s" % (os_environ['CC'].strip())
+            os_environ['CXX'] = "${GCC_TARGET_FOLDER}/bin/%s" % (os_environ['CXX'].strip())
             if 'LD' in os_environ and 'g++' in os.path.basename(os_environ['LD'].split(' ')[0]):
-                os_environ['LD'] = "$GCC_TARGET_FOLDER/bin/%s" % (os_environ['LD'].strip())
+                os_environ['LD'] = "${GCC_TARGET_FOLDER}/bin/%s" % (os_environ['LD'].strip())
 
 
         # we need LLVM search path before anything else, since
@@ -2490,23 +2546,23 @@ class generic:
 
             # we need to set this so compilation finds the includes from our GCC, instead of the system ones!
             os_environ['C_INCLUDE_PATH'] = ':'.join([
-                '$LLVM_TARGET_FOLDER/include/',
-                '$LLVM_TARGET_FOLDER/include/clang',
-                '$LLVM_TARGET_FOLDER/include/clang-c',
-                '$LLVM_TARGET_FOLDER/include/llvm',
-                '$LLVM_TARGET_FOLDER/include/llvm-c',
-                '$LLVM_TARGET_FOLDER/lib/clang/$LLVM_VERSION/include',
-                # '$LLVM_TARGET_FOLDER/lib/clang/$LLVM_VERSION/include/cuda_wrappers/',
+                '${LLVM_TARGET_FOLDER}/include/',
+                '${LLVM_TARGET_FOLDER}/include/clang',
+                '${LLVM_TARGET_FOLDER}/include/clang-c',
+                '${LLVM_TARGET_FOLDER}/include/llvm',
+                '${LLVM_TARGET_FOLDER}/include/llvm-c',
+                '${LLVM_TARGET_FOLDER}/lib/clang/$LLVM_VERSION/include',
+                # '${LLVM_TARGET_FOLDER}/lib/clang/$LLVM_VERSION/include/cuda_wrappers/',
                 os_environ['C_INCLUDE_PATH'],
             ])
             os_environ['CPLUS_INCLUDE_PATH'] = ':'.join([
-                '$LLVM_TARGET_FOLDER/include/',
-                '$LLVM_TARGET_FOLDER/include/clang',
-                '$LLVM_TARGET_FOLDER/include/clang-c',
-                '$LLVM_TARGET_FOLDER/include/llvm',
-                '$LLVM_TARGET_FOLDER/include/llvm-c',
-                '$LLVM_TARGET_FOLDER/lib/clang/$LLVM_VERSION/include',
-                # '$LLVM_TARGET_FOLDER/lib/clang/$LLVM_VERSION/include/cuda_wrappers/',
+                '${LLVM_TARGET_FOLDER}/include/',
+                '${LLVM_TARGET_FOLDER}/include/clang',
+                '${LLVM_TARGET_FOLDER}/include/clang-c',
+                '${LLVM_TARGET_FOLDER}/include/llvm',
+                '${LLVM_TARGET_FOLDER}/include/llvm-c',
+                '${LLVM_TARGET_FOLDER}/lib/clang/$LLVM_VERSION/include',
+                # '${LLVM_TARGET_FOLDER}/lib/clang/$LLVM_VERSION/include/cuda_wrappers/',
                 os_environ['CPLUS_INCLUDE_PATH'],
             ])
 
@@ -2586,7 +2642,7 @@ class generic:
 
         # set extra env vars that were passed to the builder class in the environ parameter!
         # this must come last but before expandvars so we can modify the env vars after they are all set!
-        for name,v in filter(lambda x: 'ENVIRON_' in x[0], self.env.items()):
+        for name,v in filter(lambda x: 'ENVIRON_' in x[0], self_env.items()):
             _env = name.split('ENVIRON_')[-1]
             if _env not in os_environ:
                 os_environ[_env]=''
@@ -2619,8 +2675,8 @@ class generic:
         # add LIBRARY_PATH to LD, if it's 'ld',
         # since 'ld' does not use LIBRARY_PATH
         LD = os.path.basename(os_environ['LD'].split(' ')[0])
-        if 'ENVIRON_LD' in self.env:
-            LD = self.env['ENVIRON_LD']
+        if 'ENVIRON_LD' in self_env:
+            LD = self_env['ENVIRON_LD']
         # if 'ld' in LD:
         #     for each in set(os_environ['LIBRARY_PATH'].split(':')):
         #         if os.path.exists(each) and glob( '%s/*' % each ):
