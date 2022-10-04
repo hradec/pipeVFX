@@ -6,12 +6,12 @@ if [ "$1" == "" ] ; then
 	extra=$2
 elif [ "$(echo $1 | grep '-')" != "" ]  ; then
 	ip=192.168.0.254
-	arg=$1	
+	arg=$1
 	extra="$2 $3 $4 $5 $6 $7"
 else
 	ip=$1
 	arg=$2
-	extra=$3
+	extra="$3 $4 $5 $6 $7 $8"
 fi
 
 if [ "$arg" == "--reset"  ] ; then 
@@ -30,6 +30,7 @@ elif [ "$arg" == "--power-status"  ] ; then
 	ipmitool -I lanplus -H $ip -U root -P t  chassis  power status
 
 elif [ "$arg" == "-c"  ] ; then 
+	echo ipmitool -I lanplus -H $ip -U root -P t  $extra
 	ipmitool -I lanplus -H $ip -U root -P t  $extra
 
 elif [ "$arg" == "--serial"  ] || [ "$arg" == "-s" ] ; then 
