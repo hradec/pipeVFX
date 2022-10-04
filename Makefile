@@ -25,7 +25,8 @@ all: help
 help:
 	@echo ""
 	@echo "make build   - build packages"
-	@echo "make shell   - run a shell inside the build container"
+	@echo "make shell   - run a shell inside the build container (use EXTRA_MOUNTS"
+	@echo "               env var to add mounts to docker run)"
 	@echo "make image   - make booth cache and build images and upload then."
 	@echo "               You should run this one when adding new packages, "
 	@echo "               so the build image is also done!"
@@ -108,7 +109,8 @@ build_gcc: upload_centos
 	@IMAGE=centos ${CD}/pipeline/tools/scripts/pipevfx -b -e 'build-gcc'
 
 shell: upload
-	@${CD}/pipeline/tools/scripts/pipevfx -s
+	export EXTRA_MOUNTS=" -v /${STUDIO}/home:/${STUDIO}/home $$EXTRA_MOUNTS" ; \
+		${CD}/pipeline/tools/scripts/pipevfx -s
 
 tree: upload
 	cd pipeline/build/ ; scons install all MATRIX=1 --tree=all,prune,status ${PKG} 2>&1 | tee ${CD}/tree.txt
