@@ -20,6 +20,21 @@
 
 class maya(baseApp):
 
+    def versions(self):
+        ''' set the pipe python version according to houdinis python version '''
+        if self.parent() in ['maya','arnold']:
+            mv = float(pipe.version.get( 'maya' ).split('.')[0])
+            if mv >= 2023:
+                pipe.version.set( python = '3.9' )
+                pipe.libs.version.set( python = '3.9' )
+            elif mv >= 2014:
+                pipe.version.set( python = '2.7' )
+                pipe.libs.version.set( python = '2.7' )
+            else:
+                pipe.version.set( python = '2.6' )
+                pipe.libs.version.set( python = '2.6' )
+
+
     def macfix(self, macfixData):
         '''
         new format for maya folder structure
@@ -58,7 +73,12 @@ class maya(baseApp):
 
         # set the proper python version for the current maya version!
         if self.parent() in ['maya','arnold']:
-            if mv >= 2014:
+            if mv >= 2023:
+                pipe.version.set( python = '3.9' )
+                pipe.libs.version.set( python = '3.9' )
+                # set the python version to use with maya
+                self['MAYA_PYTHON_VERSION'] = "3"
+            elif mv >= 2014:
                 pipe.version.set( python = '2.7' )
                 pipe.libs.version.set( python = '2.7' )
                 # set the python version to use with maya
@@ -66,6 +86,7 @@ class maya(baseApp):
             else:
                 pipe.version.set( python = '2.6' )
                 pipe.libs.version.set( python = '2.6' )
+
 
 
         # grab current python version
@@ -337,6 +358,7 @@ class maya(baseApp):
             # we also need to make sure our oiio libraries are loaded,
             # not the ones that come with maya, or else IECoreImage will
             # cause a lockup in maya!
+            # self['LD_PRELOAD'] = '/frankbarton/pipeline/libs/linux/x86_64/pipevfx.5.0.0/field3d/1.7.2/boost.1.66.0/lib/libField3D.so.1.7'
             self['LD_PRELOAD'] = pipe.libs.oiio().LD_PRELOAD()
             if hasattr(pipe.libs, 'ptex'):
                 self['LD_PRELOAD'] = pipe.libs.ptex().LD_PRELOAD()

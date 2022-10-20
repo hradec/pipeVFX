@@ -24,15 +24,16 @@ import pipe, os
 os.environ['PIPE_FARM_ENGINE'] = 'afanasy'
 
 # default libraries set
-os.environ['PIPEVFX_LIBS_VERSION'] = 'pipevfx.5.0.0' if 'PIPEVFX_LIBS_VERSION' not in os.environ else os.environ['PIPEVFX_LIBS_VERSION']
+os.environ['PIPEVFX_LIBS_VERSION'] = 'pipevfx.5.0.1' if 'PIPEVFX_LIBS_VERSION' not in os.environ else os.environ['PIPEVFX_LIBS_VERSION']
 
 # setup apps global versions
 # ===================================================================
 pipe.version.set( wine      = '1.5.29.may3.2013.compholioPatch' )
 # pipe.version.set( maya      = '2016.5' )
 # pipe.version.set( maya      = '2018' )
-pipe.version.set( maya      = '2022.2' )
+# pipe.version.set( maya      = '2022.2' )
 # pipe.version.set( maya      = '2022.3' )
+pipe.version.set( maya      = '2023.2' )
 pipe.version.set( nuke      = '12.1v1' )
 pipe.version.set( natron    = '2.5.0.a2' )
 pipe.version.set( houdini   = '19.0.622' )
@@ -57,14 +58,14 @@ if 'PIPEVFX_LIBS_VERSION' in os.environ:
     pipe.version.set( python        = python )
     pipe.libs.version.set( python   = python )
     pipe.libs.version.set( freetype = '2.4.0' )
-    pipe.libs.version.set( boost    = '1.66' )
-    pipe.libs.version.set( oiio     = '1.8' )
-    pipe.libs.version.set( qt       = '5.15.2' )
-    pipe.libs.version.set( tbb      = '2019_U6' )
-    pipe.libs.version.set( cortex   = '10.3.4.0' )
-    pipe.libs.version.set( cmake    = '3.22.2' )
-    pipe.libs.version.set( openvdb  = '8.2.0' )
-    pipe.libs.version.set( jpeg     = '6b' )
+    # pipe.libs.version.set( boost    = '1.66' )
+    # pipe.libs.version.set( oiio     = '1.8' )
+    # pipe.libs.version.set( qt       = '5.15.2' )
+    # pipe.libs.version.set( tbb      = '2019_U6' )
+    # pipe.libs.version.set( cortex   = '10.3.4.0' )
+    # pipe.libs.version.set( cmake    = '3.22.2' )
+    # pipe.libs.version.set( openvdb  = '8.2.0' )
+    # pipe.libs.version.set( jpeg     = '6b' )
 else:
     # legacy setup
     pipe.version.set( python        = '2.6.8' )
