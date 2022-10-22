@@ -20,11 +20,8 @@
 
 
 
-class qtpy(baseLib):
+class qt(baseLib):
     def environ(self):
-        self['PYTHONPATH2'] = self.path('lib/python$PYTHON_VERSION_MAJOR_qt$QT_VERSION')
-
-        self.update(qt())
-        self.update(pyqt())
-        self.update(pyside())
-        self['PYTHONPATH'] = self.path('lib/python/site_packages/')
+        if self.parent() not in ['nuke']:
+            self['QT_QPA_PLATFORM_PLUGIN_PATH'] = self.path("qt/plugins/")
+        # self['QT_QPA_PLATFORM_PLUGIN_PATH'] = self.path("qt/plugins/platforms")
