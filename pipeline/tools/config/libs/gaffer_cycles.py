@@ -20,17 +20,18 @@
 
 
 class gaffer_cycles(baseLib):
+    disable=True
 
     def environ(self):
         ''' as this is a python application, we don't have to setup anything
             since python is already setting it for us! '''
 
-        gaffer.addon(self,
-            libs     = self.path("lib"),
-            scripts  = self.path('python'),
-            shaders  = self.path("shader"),
-            startups = self.path('startup'),
-        )
+        # gaffer.addon(self,
+        #     libs     = self.path("lib"),
+        #     scripts  = self.path('python'),
+        #     shaders  = self.path("shader"),
+        #     startups = self.path('startup'),
+        # )
 
-        if self.parent() in ['gaffer', 'python']:
-            self['LD_PRELOAD'] = pipe.libs.tbb().LD_PRELOAD()
+        # if self.parent() in ['gaffer', 'python']:
+        #     self['LD_PRELOAD'] = pipe.libs.tbb().LD_PRELOAD()
