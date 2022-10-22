@@ -32,6 +32,53 @@ import cached
 from bcolors import bcolors
 
 
+def versionMajor(versionString):
+    ''' return the version major of a normal version number '''
+    if not versionString:
+        return 0.0
+    return float('.'.join(versionString.split('.')[:2]))
+
+__versionSort_cache={}
+def versionSort(versions):
+    ''' sort a list of versions properly (versions as ##.##.##) '''
+    # def method(val):
+    #     v = filter(lambda x: x.isdigit() or x in '.', val.split('b')[0])
+    #     if v:
+    #         return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + val.split('b')[-1]
+    #     return v
+    # return sorted( [ x for x in versions if 'current' not in x ], key=method, reverse=True )
+    def fix(val, replc='.'):
+        for each in ['v','_','..']:
+            val = val.replace(each, '.')
+        return val
+    def answer(l):
+        list1 = [] # this is the list for the nested strings
+        for x in l:
+            list1.append(x.split("."))
+        list2 = [] # this is the same list as list one except everything  is an integer in order for proper sorting
+        for y in list1:
+            y = list(map(int, y))
+            list2.append(y)
+        list3 = sorted(list2) #this is the sorted list of of list 2
+        FinalList = [] # this is the list that converts everything back to the way it was
+        for a in list3:
+            a = '.'.join(str(z) for z in a)
+            FinalList.append(a)
+        return FinalList
+    # print versions
+    if str(versions) not in __versionSort_cache:
+        d = { '.'.join([ str(int(v)) for v in fix("".join( [ y for y in fix(x) if y.isdigit() or y in '.' ] ) ).strip('.').split('.') ]):x for x in versions if x[0].isdigit() }
+        v = d.keys()
+        # print d
+        # print answer(v)
+        ret = versions
+        if v:
+            ret = [ d[k] for k in answer(v) ]
+        __versionSort_cache[str(versions)] = ret
+    return __versionSort_cache[str(versions)]
+
+
+
 
 libraries_with_versioned_names = [
     'boost',
@@ -163,7 +210,7 @@ class appsDB(dict):
             if appDict['versions']:
                 app = os.path.basename(app)
                 self[app] = appDict
-                self[app]['versions'].sort()
+                self[app]['versions'] = versionSort(self[app]['versions'])
                 self[app]['versions'].reverse()
                 self[app]['defaultVersion'] = self[app]['versions'][0]
                 self.latest[app] = self[app]['versions'][0]
@@ -364,13 +411,6 @@ class libsDB(appsDB):
 #            version.set( self.app = version
         return versionLib.get( self.app )
 
-
-def versionSort(versions):
-    def method(v):
-        v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
-        return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
-    tmp =  sorted( versions, key=method, reverse=True )
-    return tmp
 
 
 # initialize global cache of versions!
@@ -615,8 +655,8 @@ class baseApp(_environ):
         # set via python
         # =====================================================================
         if 'DBKEYS' not in globals():
-            globals()['DBKEYS'] = globals()['_appsDB'].latest.keys() + \
-                                  globals()['_libsDB'].latest.keys() + ['allLibs']
+            globals()['DBKEYS'] = list(globals()['_appsDB'].latest.keys()) + \
+                                  list(globals()['_libsDB'].latest.keys()) + ['allLibs']
 
         if 'DBKEYS_FORCED' not in globals():
             globals()['DBKEYS_FORCED'] = []
@@ -1211,7 +1251,12 @@ class baseApp(_environ):
 
 
     def nice(self):
+        ''' adjust the niceness for the application '''
         return 19
+
+    def vglrun(self, vglrun_cmd):
+        ''' adjust the vglrun command line when running on a remote connection '''
+        return vglrun_cmd
 
     def expand(self, binName=None):
         ''' Expand all env vars in this class to the environment.
@@ -1415,10 +1460,11 @@ class baseApp(_environ):
         if 'fedora' in distro:
             vglDisplay = 10
         if ( display >= vglDisplay or 'DOCKER' in os.environ ) and vglrun:
+            _vglrun = self.vglrun(vglrun)
             d = ""
-            debug = '%s +v %s %s %s ' % (vglrun, d, m32, debug)
+            debug = '%s +v %s %s %s ' % (_vglrun, d, m32, debug)
             if 'fedora' not in distro:
-                # debug = 'vglrun -c jpeg -q 30 %s %s' % (m32, debug)
+                # debug = '_vglrun -c jpeg -q 30 %s %s' % (m32, debug)
                 # find out what display is active
                 # d = os.popen("echo $(ps -AHfc | grep Xorg | grep $(cat /sys/class/tty/tty0/active)) | cut -d' ' -f10").readlines()
                 # if d:
@@ -1435,7 +1481,7 @@ class baseApp(_environ):
                     d = ""
                 if d:
                     d = "-d %s" % d
-                debug = '%s +v %s %s %s env LD_LIBRARY_PATH=$LD_LIBRARY_PATH' % (vglrun, d, m32, debug)
+                debug = '%s +v %s %s %s env LD_LIBRARY_PATH=$LD_LIBRARY_PATH' % (_vglrun, d, m32, debug)
                 # os.environ['LD_LIBRARY_PATH']="/usr/lib64/VirtualGL:"+os.environ['LD_LIBRARY_PATH']
         # if a display is below 15, we're running ssh connection, not xpra, so we use LIBGL_ALWAYS_INDIRECT instead of VirtualGL.
         # this way, opengl applications will use the client GPU, not the host GPU.

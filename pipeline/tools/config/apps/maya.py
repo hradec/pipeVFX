@@ -34,6 +34,9 @@ class maya(baseApp):
                 pipe.version.set( python = '2.6' )
                 pipe.libs.version.set( python = '2.6' )
 
+    def vglrun(self, vglrun_cmd ):
+        ''' adjust the vglrun command line when running on a remote connection '''
+        return vglrun_cmd + ' -nodl '
 
     def macfix(self, macfixData):
         '''
@@ -74,6 +77,8 @@ class maya(baseApp):
         # set the proper python version for the current maya version!
         if self.parent() in ['maya','arnold']:
             if mv >= 2023:
+                # fix for: symbol lookup error: FT_Get_Font_Format
+                self.ignorePipeLib( "freetype" )
                 pipe.version.set( python = '3.9' )
                 pipe.libs.version.set( python = '3.9' )
                 # set the python version to use with maya
@@ -96,7 +101,6 @@ class maya(baseApp):
         # plugins
         if allPlugs:
             self.update( studiolibrary() )
-            self.update( prman() )
             self.update( cortex() )
             self.update( gaffer() )
             self.update( golaem() )
@@ -156,7 +160,6 @@ class maya(baseApp):
 
             if 'PIPE_REDSHIFT' in os.environ and os.environ['PIPE_REDSHIFT']=='1':
                 self.update( redshift() )
-
             if 'PIPE_MAYA_ZYNC' in os.environ and os.environ['PIPE_MAYA_ZYNC']=='1':
                 self.update( zync() )
             if mv <= 2015:
@@ -168,6 +171,8 @@ class maya(baseApp):
                 if 'PIPE_MAYA_FABRICENGINE' in os.environ and os.environ['PIPE_MAYA_FABRICENGINE']=='1':
                     self.update( fabricEngine() )
             if mv >= 2016:
+                if 'PIPE_MAYA_PRMAN' in os.environ and os.environ['PIPE_MAYA_PRMAN']=='1':
+                    self.update( prman() )
                 if 'PIPE_MAYA_ARNOLD' in os.environ and os.environ['PIPE_MAYA_ARNOLD']=='1':
                     self.update( arnold() )
                 if 'PIPE_MAYA_VRAY' in os.environ and os.environ['PIPE_MAYA_VRAY']=='1':
