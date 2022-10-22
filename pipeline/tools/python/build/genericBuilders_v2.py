@@ -16,16 +16,21 @@
 #
 #    You should have received a copy of the GNU Lesser General Public License
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
-# ===============================
+# =================================================================================
 
 from  SCons.Environment import *
 from  SCons.Builder import *
 from  SCons.Action import *
 from  SCons.Script import *
 import os, traceback, sys, inspect, re, time
-from devRoot import *
+
+# =================================================================================
+# We now use pipe.cached.exists and pipe.cached.glob to speed up build startup,
+# since /dev/shm is reset on every build thanks to docker.
 import pipe
+# =================================================================================
 from pipe.bcolors import bcolors
+from devRoot import buildFolder, installRoot
 from glob import glob
 
 
@@ -81,7 +86,7 @@ mem = ''.join(os.popen("grep MemTotal /proc/meminfo | awk '{print $(NF-1)}'").re
 if 'MEMGB' in os.environ:
     mem = os.environ['MEMGB']
 memGB = float(mem)/1024/1024
-print "Memory: %sGB" % memGB
+print( "Memory: %sGB" % memGB )
 os.environ['MEMGB'] = str(int(memGB))
 
 
@@ -244,7 +249,7 @@ class pkgInstalled:
 
 # initialize CORES and DCORES(double cores) env var based on the number of cores
 # the host machine has
-print "=====> SCONS ARGUMENTS:",ARGUMENTS,"<======"
+print( "=====> SCONS ARGUMENTS:",ARGUMENTS,"<======" )
 CORES=int(multiprocessing.cpu_count())
 if 'CORES' in ARGUMENTS:
     CORES = int(ARGUMENTS['CORES'])
@@ -275,7 +280,7 @@ sys.all_env_vars = {}
 
 
 # cleanup pythonpath env var!
-if not os.environ.has_key('PYTHONPATH'):
+if not 'PYTHONPATH' in os.environ:
     os.environ['PYTHONPATH']=''
 #pythonpath_original = ':'.join(filter(lambda x: '/usr/'!=x[:5], sys.path))
 pythonpath_original = ':'.join([
@@ -567,7 +572,7 @@ class pkg_superdict(dict):
             ret.version = str("0.0.0")
             ret.requested_key = key
             if 'ilmbase' not in key:
-                print ":: WARNING: key",key,"doesn't exist"
+                print( ":: WARNING: key",key,"doesn't exist" )
         return ret
 
     def __setitem__(self, key, v):
@@ -1277,7 +1282,7 @@ class generic:
                     if not self._installer_final_check( [install], [build], tmp_env ):
                         # if not installed, remove build folder!
                         if os.path.exists(self.buildFolder[p][-1]) and not self.github_matrix:
-                            cmd = "rm -rf "+self.buildFolder[p][-1]+" 2>/dev/null"
+                            cmd = "mv %s %s__ ; rm -rf %s__ &" % (self.buildFolder[p][-1], self.buildFolder[p][-1], self.buildFolder[p][-1])
                             # _print( ":: __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
                     # else:
@@ -1557,7 +1562,8 @@ class generic:
 #        bld = Builder(action = Action( args[0], '%s%s($TARGET)%s' % (bcolors.GREEN,self.className,bcolors.END) ) )
         bld = Builder(action = Action( args[0], self.sconsPrint ) )
         self.env.Append(BUILDERS = {name : bld})
-        return filter(lambda x: self.className==x[0], inspect.getmembers(self.env))[0][1]
+        # return filter(lambda x: self.className==x[0], inspect.getmembers(self.env))[0][1]
+        return [ x for x in inspect.getmembers(self.env) if self.className==x[0] ][0][1]
 
     def sconsPrint(self, target, source, env, what=None):
         global _spinnerCount
@@ -1659,15 +1665,17 @@ class generic:
 
 
     def shouldBuild(self, target, source, env, cmd=None):
+        ''' the only function is to check log and delete target[0] if an error
+        ocurred, so scons rebuild it
+        return the lastlog error result'''
         lastlogFile = self.__lastlog(target[0])
         lastlog = self.__check_target_log__( lastlogFile, env, stage='pre-build' )
-        # _print( '=====>',target[0], lastlogFile, lastlog)
+        # _print( ': shouldBuild =====>',target[0], lastlogFile, lastlog)
 
         if lastlog==0:
-            # os.popen( "touch %s" % str(target[0]) ).readlines()
             pass
         else:
-            os.system("rm -rf '%s'" % str(target[0]) )
+            os.system("rm -rvf '%s'" % str(target[0]) )
 
         return lastlog
 
@@ -1742,7 +1750,7 @@ class generic:
         # by default, use the latest version of the download list!
         depend_n = -1
         if debug:
-            print '\t',target, dependOn.name, self.dependOn[currVersion][ dependOn ]
+            print( '\t',target, dependOn.name, self.dependOn[currVersion][ dependOn ] )
         if dependOn.name in ['gcc', 'python'] and not dependOn.targetSuffix:
             # or the oldest if it's gcc or python
             depend_n = 0
@@ -2219,8 +2227,7 @@ class generic:
 
 
         # here we check if the last build was finished suscessfully
-        __shouldBuild__ =  self.shouldBuild( target_original, source, env )
-        if not __shouldBuild__:
+        if not self.shouldBuild( target_original, source, env ):
             return False
 
         # fix PYTHON_VERSION_MAJOR based on PYTHON_VERSION
@@ -2351,7 +2358,7 @@ class generic:
                 cmd = ' && '.join([ self.__patches(self.patch), cmd ])
 
         if not self.do_not_use:
-            patches = pipe.cached.glob( '%s/../../patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION']) )
+            patches = glob( '%s/../../patches/%s/%s/*' % (os_environ['SOURCE_FOLDER'], self.name, os_environ['VERSION']) )
             if patches:
                 cmd = ' && '.join([ self.__patches(patches), cmd ])
 
@@ -2381,12 +2388,12 @@ class generic:
             for n in $(ls -d $SOURCE_FOLDER/*/lib/cmake/*/*.cmake 2>/dev/null) ; do
                 target=$(echo $n | awk -F"$SOURCE_FOLDER" '{print $(NF)}') ;\
                 mkdir -p $(dirname $target) ;\
-                cp -rfv $n $INSTALL_FOLDER/cmake/$target ;
+                cp -rfv $n $INSTALL_FOLDER/cmake/$target || true ;
             done ;
             for n in $(ls -d $SOURCE_FOLDER/*/cmake/*.cmake 2>/dev/null) ; do
                 target=$(echo $n | awk -F"$SOURCE_FOLDER" '{print $(NF)}') ;\
                 mkdir -p $(dirname $target) ;\
-                cp -rfv $n $INSTALL_FOLDER/cmake/$target ;
+                cp -rfv $n $INSTALL_FOLDER/cmake/$target || true;
             done
         '''
         cmd += '''
@@ -2811,7 +2818,7 @@ class generic:
         # cleanup so we have space to build.
         keep_source = filter(lambda x: 'KEEP_SOURCE_FOLDER' in x[0], env.items())
         if keep_source and keep_source[0][1].strip() != '1':
-            os.system('rm -rf "%s"' % os_environ['SOURCE_FOLDER'])
+            os.system( 'mv %s %s__ ; rm -rf %s__ &' % (os_environ['SOURCE_FOLDER'], os_environ['SOURCE_FOLDER'], os_environ['SOURCE_FOLDER']) )
 
         self.installer(target, source, os_environ)
 
@@ -2819,12 +2826,6 @@ class generic:
 
         return True
 
-
-    def installer(self, target, source, os_environ): # noqa
-        ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.
-        this method is called after the build (not at install), since we want to provide the os_environ env var to run shell commands
-        in the same environment as the build'''
-        pass
 
     def setAppsInit(self):
         '''
@@ -2926,13 +2927,20 @@ class generic:
     def setInstaller(self, method):
         self.installer = method
 
+    def installer(self, target, source, os_environ): # noqa
+        ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.
+        this method is called after the build (not at install), since we want to provide the os_environ env var to run shell commands
+        in the same environment as the build'''
+        pass
+
     def _installer(self, target, source, env):
         ''' a wrapper class to create target in case installer method is suscessfull!
         we do this so whoever implements a installer don't have to bother!'''
         global buildCounter
-        buildCounter += 1
-
         from glob import glob
+        buildCounter += 1
+        doneAndDone = str(target[0])+'.install'
+
 
         ret = None
         # ret = self.installer( target, source, env )
@@ -2944,14 +2952,18 @@ class generic:
         else:
             f.write(' ')
         f.close()
-        self._installer_final_check(target, source, env, ret)
+
+        installed = self._installer_final_check(target, source, env, ret)
+        # if installed:
+        #     f=open(doneAndDone,'w')
+        #     f.write(' ')
+        #     f.close()
 
     def _installer_final_check(self, target, source, env={}, ret=None):
         ''' check if something was installed
         this garantees things get installed!'''
         if self.github_matrix:
             return False
-
 
         # double check if the dependency list changed!!
         # if a dependency changes version or a new dependency is added to
@@ -2983,8 +2995,6 @@ class generic:
         #                             _print( ":: dependency %s changed for %s" % (each, pkg))
         #                             return False
 
-
-
         _TARGET = str(target[0])
         TARGET_FOLDER = self.extractBuildFolder(_TARGET)
         _TARGET_SUFIX = ''
@@ -2997,58 +3007,60 @@ class generic:
                 TARGET_FOLDER = '/'.join([ TARGET_FOLDER, self.targetSuffix ]).replace('//','/').rstrip('/')
 
         # if not hasattr(self, 'apps'):
+        result=True
         if not os.path.exists(_TARGET) or (not glob( '%s/*/*' % TARGET_FOLDER ) and not hasattr(self,'no_folder_install_checking')):
-                # if we have a log, show it!
-                if ret:
-                    _print( bcolors.WARNING, '='*80, bcolors.FAIL )
-                    _print( [ str(x) for x in target ], [ str(x) for x in source ] )
-                    _print( ''.join(ret) )
-                    _print( bcolors.WARNING, '='*80, bcolors.END )
+            result=False
+            # if we have a log, show it!
+            if ret:
+                _print( bcolors.WARNING, '='*80, bcolors.FAIL )
+                _print( [ str(x) for x in target ], [ str(x) for x in source ] )
+                _print( ''.join(ret) )
+                _print( bcolors.WARNING, '='*80, bcolors.END )
 
-                cmd = []
-                if not os.path.exists(_TARGET):
-                    cmd += [":: not os.path.exists(%s): %s" % ( _TARGET, str(not os.path.exists(_TARGET)) )]
+            cmd = []
+            if not os.path.exists(_TARGET):
+                cmd += [":: not os.path.exists(%s): %s" % ( _TARGET, str(not os.path.exists(_TARGET)) )]
+                cmd += ["rm -rf %s" % _TARGET]
+                cmd += ["rm -rf %s/.lastlog.?.?%s" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
+                cmd += ["rm -rf %s/.lastlog.?.?%s.err" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
+
+            # if nothing was installed, cleanup source so we can rebuild it!
+            # if we don't cleanup sources, the build gets stuck!
+            path_exist = False
+            for each in [ str(x) for x in source ]:
+                if os.path.exists(os.path.dirname(each)):
+                    path_exist = True
+                    cmd += [":: os.path.exists(%s): %s" % ( os.path.dirname(each), str(os.path.exists(os.path.dirname(each))) )]
+                    # cmd += ["rm -rf %s/* 2>/dev/null" % os.path.dirname(each)]
                     cmd += ["rm -rf %s" % _TARGET]
                     cmd += ["rm -rf %s/.lastlog.?.?%s" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
                     cmd += ["rm -rf %s/.lastlog.?.?%s.err" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
 
-                # if nothing was installed, cleanup source so we can rebuild it!
-                # if we don't cleanup sources, the build gets stuck!
-                path_exist = False
-                for each in [ str(x) for x in source ]:
-                    if os.path.exists(os.path.dirname(each)):
-                        path_exist = True
-                        cmd += [":: os.path.exists(%s): %s" % ( os.path.dirname(each), str(os.path.exists(os.path.dirname(each))) )]
-                        # cmd += ["rm -rf %s/* 2>/dev/null" % os.path.dirname(each)]
-                        cmd += ["rm -rf %s" % _TARGET]
-                        cmd += ["rm -rf %s/.lastlog.?.?%s" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
-                        cmd += ["rm -rf %s/.lastlog.?.?%s.err" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
+            # if not glob('%s/*/*' % TARGET_FOLDER):
+            #     cmd += [":: not glob( '%s/*/*' ): %s" % ( TARGET_FOLDER, str(not glob('%s/*/*' % TARGET_FOLDER)) )]
+            #     # cmd += ["rm -rf %s/* 2>/dev/null" % os.path.dirname(each)]
+            #     cmd += ["rm -rf %s/*" % TARGET_FOLDER]
+            #     cmd += ["rm -rf %s/.lastlog.?.?%s" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
+            #     cmd += ["rm -rf %s/.lastlog.?.?%s.err" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
 
-                # if not glob('%s/*/*' % TARGET_FOLDER):
-                #     cmd += [":: not glob( '%s/*/*' ): %s" % ( TARGET_FOLDER, str(not glob('%s/*/*' % TARGET_FOLDER)) )]
-                #     # cmd += ["rm -rf %s/* 2>/dev/null" % os.path.dirname(each)]
-                #     cmd += ["rm -rf %s/*" % TARGET_FOLDER]
-                #     cmd += ["rm -rf %s/.lastlog.?.?%s" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
-                #     cmd += ["rm -rf %s/.lastlog.?.?%s.err" % (os.path.dirname(_TARGET), _TARGET_SUFIX)]
+            cmd = list(set(cmd))
+            if cmd and path_exist:
+                # _print(     ":: _installer_final_check: error! (%s)" % _TARGET )
+                for c in cmd:
+                    if c[0] == ':':
+                        # _print( c )
+                        pass
+                    else:
+                        # _print( "::                       "+c )
+                        os.system(c)
 
-                cmd = list(set(cmd))
-                if cmd and path_exist:
-                    # _print(     ":: _installer_final_check: error! (%s)" % _TARGET )
-                    for c in cmd:
-                        if c[0] == ':':
-                            # _print( c )
-                            pass
-                        else:
-                            # _print( "::                       "+c )
-                            os.system(c)
-
-                if ret:
-                    # if we have a log, raise an exception, since it was called from a
-                    # real installation builder.
-                    raise Exception("\nERROR - nothing was installed at %s/*/*" % TARGET_FOLDER)
-                else:
-                    # if no log, just return since it was called live
-                    return False
+            if ret:
+                # if we have a log, raise an exception, since it was called from a
+                # real installation builder.
+                raise Exception("\nERROR - nothing was installed at %s/*/*" % TARGET_FOLDER)
+            else:
+                # if no log, just return since it was called live (not by scons during build)
+                return False
 
         # if something is installed,
         # make sure lib and lib64 have the same contents
@@ -3060,16 +3072,15 @@ class generic:
             if not os.path.exists( '%s/lib/%s' % (TARGET_FOLDER, os.path.basename(each)) ):
                 os.system( 'ln -s ../lib64/%s  %s/lib/ >/dev/null 2>&1' % (os.path.basename(each), TARGET_FOLDER) )
 
-        # remove build folder now that everything is done!
-        for each in [ str(x) for x in source if '.build/' in str(x) ]:
-            if os.path.exists(os.path.dirname(each)):
-                cmd = "rm -rf %s 2>/dev/null" % os.path.dirname(each)
-                # if ret:
-                # _print( ":: _installer_final_check: done - ",cmd, each )
-                os.system(cmd)
+        # remove build folder now that everything is done! (this can slow dow builds a lot!!)
+        # for each in [ str(x) for x in source if '.build/' in str(x) ]:
+        #     if os.path.exists(os.path.dirname(each)):
+        #         cmd = "rm -rf %s 2>/dev/null" % os.path.dirname(each)
+        #         # if ret:
+        #         # _print( ":: _installer_final_check: done - ",cmd, each )
+        #         os.system(cmd)
 
-        return True
-
+        return result
 
     def md5_delete_cache(self, fileName):
         import hashlib
@@ -3193,7 +3204,6 @@ class generic:
             buildFolder = os.path.dirname(t).rstrip('/')
         return buildFolder
 
-
     def uncompressor( self, target, source, env):
         ''' this method is a builder responsible to uncompress the packages to be build '''
         global __pkgInstalled__
@@ -3202,10 +3212,9 @@ class generic:
             raise Exception("\n\tDownload failed! MD5 check didn't match the one described in the Sconstruct file"+bcolors.END)
 
         # print [ str(x) for x in target ], [ str(x) for x in source ]
+        # print "####> uncompressor", str(target[0]), str(source[0])
         if not self.shouldBuild( target, source, env ):
             return
-
-        # print "####> uncompressor", str(target[0]), str(source[0])
 
         for n in range(len(source)):
             url = filter(lambda x: os.path.basename(str(source[n])) in x[1], self.downloadList)[0]
@@ -3229,7 +3238,8 @@ class generic:
                 if self.__check_target_log__( lastlog, env ):
                     _print( "\n: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
 
-                    os.popen( "rm -rf %s 2>&1" % buildFolder ).readlines()
+                    # remove build folder
+                    os.popen( "mv %s %s__ ; rm -rf %s/*__ &" % (buildFolder, buildFolder, os.path.dirname(buildFolder)) ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
                     b = buildFolder
 
@@ -3304,8 +3314,6 @@ class generic:
         # if hasattr(self, 'targetSuffix'):
         #     path = os.path.join(path, self.targetSuffix)
         return path
-
-
 
     def runSED(self,t):
         ''' this method applies sed substitution to files specified in the sed dictionary.
@@ -3440,7 +3448,6 @@ class generic:
 #            ret = self.env.sed( target, ret)
 #            self.env.Clean(ret, target)
 #        return ret
-
 
     def __patches(self, patchList):
         # apply patches
