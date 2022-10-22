@@ -758,10 +758,11 @@ class boost(configure):
     		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17' cxxstd=17 variant=release link=shared threading=multi install",
                 ]
 
-            cmd += [
-                "[ -e $INSTALL_FOLDER/lib/cmake ] && rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/",
-                "[ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] && ln -s libboost_python$(echo $PYTHON_VERSION_MAJOR | sed 's/\.//').so $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so",
-            ]
+        cmd += [
+            "([ -e $INSTALL_FOLDER/lib/cmake ] && rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ || true)",
+            "([ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] && ln -s $(basename $(ls  $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python*.so | head -n 1)) $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so || true)",
+            "([ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy.so ] && ln -s $(basename $(ls  $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy*.so | head -n 1)) $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy.so || true)",
+        ]
 
         # if we need to build with system gcc
         # if float(os_environ['VERSION_MAJOR']) in []:
