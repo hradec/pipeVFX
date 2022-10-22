@@ -22,6 +22,7 @@ path="/mnt/nvme/nfs-pool/dev/pipevfx-atomo-git/"
 hosts = [
 	'rhradec@10.144.0.10:/mnt/pipevfx-qnap/dev/pipevfx-git/',
 	'root@192.168.0.196:/root/dev/pipevfx-atomo-git/',
+	'/ST16TB/fedora_frankbarton_devteam/pipevfx/',
 ]
 # the rsync command used to sync up
 rsync = "rsync -avpP --no-perms --no-owner --no-group %s %s %s & "
