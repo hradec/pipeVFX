@@ -65,12 +65,12 @@ class nuke(baseApp):
             nuke.addon(self, script = self.path('plugins') )
 
         # configure cortex
-        self.update( prman() )
+        # self.update( prman() )
 
         # cortex trava
         #  nukex  /atomo/jobs/0528.davene_filme_2/shots/shot_001/users/rafaelz/nuke/script/shot_001_comp_v088.nk
-        self.update( cortex() )
-        self.update( gaffer() )
+        # self.update( cortex() )
+        # self.update( gaffer() )
 
         # afanasy farm nodes
         self.update( cgru() )
@@ -85,8 +85,8 @@ class nuke(baseApp):
         self.update( neat() )
 
         # rvNuke plugin needs this to find rv wrapper!
-        self.update( rv() )
-        self['RV_PATH'] = '%s/scripts/rv' % roots.tools()
+        # self.update( rv() )
+        # self['RV_PATH'] = '%s/scripts/rv' % roots.tools()
 
         # disable CUDA
         #self['FN_NUKE_DISABLE_GPU_ACCELERATION'] = "1"
@@ -115,8 +115,17 @@ class nuke(baseApp):
                nuke.addon(self, lib = '%s/nuke/$NUKE_VERSION/plugins' % each )
 
         # mari bridge
-        self.update( mari() )
-        self.update( pipe.libs.qt() )
+        if self.parent() in ['nuke']:
+            if nukeMajorVersion < 13:
+                self.update( mari() )
+                self.update( pipe.libs.qt() )
+
+        if self.parent() in ['nuke']:
+            if nukeMajorVersion >= 13:
+                self.update( pipe.libs.oidn() )
+                # fix for: symbol lookup error: FT_Get_Font_Format
+                self.ignorePipeLib( "freetype" )
+
 
         # if 'CENTOS' in os.environ:
         #     self.ignorePipeLib( "freetype" )
@@ -139,16 +148,15 @@ class nuke(baseApp):
                 if 'LM:' in each:
                     self['FOUNDRY_LICENSE_FILE'] = each.split('LM:')[-1]
                 else:
-#                    if each[0]=='@':
-#                        each = each[1:]
                     lic.append(each)
 
         if os.environ.has_key('PIPE_HIERO_LICENSE_SERVERS'):
             lic.append( os.environ['PIPE_HIERO_LICENSE_SERVERS'] )
 
-        self['foundry_LICENSE'] = ':'.join(lic)
-        self['LM_LICENSE_FILE'] = self['foundry_LICENSE']
-        self['FOUNDRY_LICENSE_FILE'] = ':'.join(lic)
+        if lic:
+            self['foundry_LICENSE'] = ':'.join(lic)
+            self['LM_LICENSE_FILE'] = self['foundry_LICENSE']
+            self['FOUNDRY_LICENSE_FILE'] = ':'.join(lic)
 
     def bins(self):
         return [
@@ -205,7 +213,14 @@ class nuke(baseApp):
 
     def preRun(self, cmd):
         del os.environ['LD_PRELOAD']
-        # os.environ['LD_PRELOAD'] = pipe.libs.ocio().path('lib/python2.7/libOpenColorIO.so.1')
+
+        # force nuke qt libraries to be preloaded, as well as
+        # system libstdc++ for mesa
+        os.environ['LD_PRELOAD'] = ':'.join(
+            cached.glob(self.path()+'/*Qt*.so')+
+            [pipe.LD_PRELOAD.systemGCCLibrary("libstdc++.so.6")]
+        )
+
         return cmd
 
     def postRun(self, cmd, returnCode, returnLog=""):
