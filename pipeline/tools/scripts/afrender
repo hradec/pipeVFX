@@ -2,16 +2,18 @@
 
 tools=$(dirname $(dirname $(readlink -f $BASH_SOURCE)))
 
-
 _afrender() {
+    echo $tools
+    pkill -fc -9 bin.afrender
     if [ "$HOME" == "" ] ; then
-        mkdir -p /tmp/afrender
+        mkdir -p /tmp/afrender/.cgru
         HOME=/tmp/afrender
+        echo '{"cgru_config":{ "af_servername":"farm.local" }}' > $HOME/.cgru/config.json
     fi
     export HOME
     source $tools/init/bash
-    alias
-    run afrender -hostname $(hostname) -V
+    # alias
+    $tools/scripts/run afrender -hostname $(hostname) -V
 }
 
-_afrender > /var/log/afrender.log 2>&1
+_afrender 2>&1 | tee  /var/log/afrender.log
