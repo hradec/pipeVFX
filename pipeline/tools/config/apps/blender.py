@@ -28,7 +28,7 @@ class blender(baseApp):
 
         blenderVersionMajor = '.'.join(pipe.apps.version.get('blender').split('.')[:2])
 
-        pythonVersion = glob( self.path('%s/python/lib/python*' % blenderVersionMajor) )
+        pythonVersion = cached.glob( self.path('%s/python/lib/python*' % blenderVersionMajor) )
         if pythonVersion:
                 pythonVersion = os.path.basename( pythonVersion[0] )
         else:
@@ -40,13 +40,15 @@ class blender(baseApp):
         self.insert('PYTHONPATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/%s/lib-dynload/' % pythonVersion))
         self.insert('LD_LIBRARY_PATH',0, self.path('$BLENDER_VERSION_MAJOR/python/lib/%s/lib-dynload/' % pythonVersion))
 
-        for each in self.toolsPaths():
-            blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/' % each)
-            blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/addons/' % each)
-            blender.addon(self, python='%s/blender/$BLENDER_VERSION_MAJOR/python/' % each)
-            blender.addon(self, plugin='%s/blender/' % each)
-            blender.addon(self, plugin='%s/blender/addons/' % each)
-            blender.addon(self, python='%s/blender/python/' % each)
+        # self['BLENDER_USER_SCRIPTS'] = '%s/blender/' % self.toolsPaths()[-1]
+
+        # for each in self.toolsPaths():
+        #     blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/' % each)
+        #     blender.addon(self, plugin='%s/blender/$BLENDER_VERSION_MAJOR/addons/' % each)
+        #     blender.addon(self, python='%s/blender/$BLENDER_VERSION_MAJOR/python/' % each)
+        #     blender.addon(self, plugin='%s/blender/' % each)
+        #     blender.addon(self, plugin='%s/blender/addons/' % each)
+        #     blender.addon(self, python='%s/blender/python/' % each)
 
         self.update(cgru())
         self.update(cortex())
@@ -57,9 +59,13 @@ class blender(baseApp):
         ''' the addon method MUST be implemented for all classes so other apps can set up
         searchpaths for this app. For example, another app which has plugins for this one!'''
         caller['BLENDER_USER_SCRIPTS']      = plugin
-        caller['BLENDER_USER_SCRIPTS']      = script
-        caller['LD_LIBRARY_PATH']           = lib
-        caller['PYTHONPATH']                = python
+        # caller['BLENDER_USER_SCRIPTS']      = script
+        caller['BLENDER_SCRIPTS'] = plugin
+        caller['BLENDER_SCRIPTS'] = script
+        caller['LD_LIBRARY_PATH'] = lib
+        caller['PYTHONPATH']      = python
+        caller['PYTHONPATH']      = plugin
+        caller['PYTHONPATH']      = script
 
     def bins(self):
         ret = [
