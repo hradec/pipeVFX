@@ -276,7 +276,7 @@ class delight(baseApp):
         serverz={}
         for each in licenseServers:
             # check if server is running
-            if os.popen(" ping -c 1 -t 5 "+licenseServers+" | grep ' 0%'").readlines():
+            if os.popen(" ping -c 1 -t 5 "+each+" | grep ' 0%'").readlines():
                 running = os.popen('%s serverstatus @%s' % (self.path('bin/licutils'), each) ).readlines()
                 if filter(lambda x: 'running' in x, running):
 
