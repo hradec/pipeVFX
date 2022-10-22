@@ -21,6 +21,7 @@
 
 from __future__ import print_function
 import os, glob, sys, traceback
+sys.path += [os.path.abspath( os.path.dirname(__file__) )]
 import log
 import base
 from base import roots, platform, bits, LD_LIBRARY_PATH, depotRoot
@@ -28,12 +29,12 @@ from base import getPackage, win, osx, lin, name
 from base import distro as gcc
 from base import distroName as distro
 import baseApp
-from baseApp import version, versionLib, appsDB, app, libsDB, lib
+from baseApp import versionMajor, versionSort, version, versionLib, appsDB, app, libsDB, lib
 from baseApp import baseLib, disable
 
 from output import output
 import frame
-import build
+import pipe.build as build
 import cached
 import farm
 import apps
@@ -120,21 +121,6 @@ def whatQt():
     if _Qt:
         return "pyside"
     return "pyqt"
-
-
-def versionMajor(versionString):
-    ''' return the version major of a normal version number '''
-    if not versionString:
-        return 0.0
-    return float('.'.join(versionString.split('.')[:2]))
-
-
-def versionSort(versions):
-    ''' sort a list of versions properly (versions as ##.##.##) '''
-    def method(v):
-        v = filter(lambda x: x.isdigit() or x in '.', v.split('b')[0])
-        return str(float(v.split('.')[0])*10000+float(v.split('.')[:2][-1])) + v.split('b')[-1]
-    return sorted( versions, key=method, reverse=True )
 
 
 class LD_PRELOAD:

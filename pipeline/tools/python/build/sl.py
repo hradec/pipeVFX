@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -29,11 +29,11 @@ import os, sys
 version = '!VERSION!'
 
 DELIGHT=None
-if os.environ.has_key('DELIGHT'):
+if 'DELIGHT' in os.environ:
 	DELIGHT=os.environ['DELIGHT']
 
 DL_SHADER_PATH=None
-if os.environ.has_key('DL_SHADER_PATH'):
+if 'DL_SHADER_PATH' in os.environ:
 	DL_SHADER_PATH=os.environ['DL_SHADER_PATH']
 
 class sl:
@@ -43,7 +43,7 @@ class sl:
 						dlpath=DELIGHT,
 						include=DL_SHADER_PATH,
 						options='',
-						#versionControled=os.environ.has_key('PIPE_DEP'),
+						#versionControled='PIPE_DEP' in os.environ,
 						versionControled=False,
 						env=None,
 						prefix=None,

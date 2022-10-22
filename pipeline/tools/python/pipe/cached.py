@@ -34,11 +34,12 @@ def __cached_name__(path):
     return ret+path
 
 def __save__(data, cache):
-    pickle.dump(data,open(cache,'w'))
-    os.chmod(cache,0777)
+    pickle.dump(data,open(cache,'wb'))
+    os.chmod(cache,0o777)
 
 def __load__(cache):
-    return pickle.load(open(cache,'rb'))
+    with open(cache,'rb') as file:
+        return pickle.loads(file.read())
 
 def __exists__(cache):
     return os.path.exists( cache )
