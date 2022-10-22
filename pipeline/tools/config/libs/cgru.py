@@ -73,10 +73,9 @@ class cgru(baseLib):
 
             pipe.apps.houdini.addon(self, otl=self.path('plugins/houdini'))
 
-
         pipe.apps.natron.addon(self, plugins=self.path('plugins/natron'))
         pipe.apps.blender.addon(self, plugin=self.path('plugins/blender'))
-        pipe.apps.blender.addon(self, plugin=self.path('plugins/blender/addons'))
+        # pipe.apps.blender.addon(self, plugin=self.path('plugins/blender/addons'))
 
         #sys.stderr.write('CGRU_VERSION %s : %s\n' %  (self.version(), self.path()))
         #self.update( python() )
