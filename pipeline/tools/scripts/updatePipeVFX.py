@@ -28,6 +28,10 @@ hosts = [
 rsync = "rsync -avpP --no-perms --no-owner --no-group %s %s %s & "
 # the rsync command used to sync up using pipe (not working)
 rsync_pipe = "rsync -avpP --no-perms --no-owner --no-group --files-from=%s / %s"
+# exclude these files/folders at startup, when the first rsync runs (besides what's in .gitignore)
+exclude_first_sync = ['.git','licenses', 'apps', 'build', 'wxmaya', 'mayaLibrary', '.mayaSwatches', 'hosts', 'tags', 'init']
+# ignore syncing these files/folders at runtime (besides what's in .gitignore)
+exclude_runtime = ['versions.py', 'licenses.py', 'job_config.py','*pipeline/tools/init/*']
 # ==============================================================================
 
 import os, sys
@@ -62,7 +66,7 @@ class nightwatch:
 	FAIL_DARK = '\033[0;31m'
 	END = '\033[0m'
 	BOLD = '\033[1m'
-	def __init__(self, path, exclude_first_sync = ['.git','licenses', 'apps', 'build', 'wxmaya', 'mayaLibrary', '.mayaSwatches', 'hosts', 'tags'], pipe=False):
+	def __init__(self, path, exclude_first_sync = exclude_first_sync, exclude_runtime=exclude_runtime, pipe=False):
 		self.path = path
 		self.inotify = INotify()
 		self.hashCache = {}
@@ -94,7 +98,7 @@ class nightwatch:
 			if parent != -1:
 				name = '/'.join([ self.inotify.get_path(parent), basename ])
 				name = name.split(self.path)[-1].lstrip('/')
-				for pattern in gitignore:
+				for pattern in gitignore+exclude_runtime:
 					if '/' in pattern:
 						if fnmatch.fnmatch( name, pattern ):
 							ret = False
