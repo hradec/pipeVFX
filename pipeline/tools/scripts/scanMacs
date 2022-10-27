@@ -1,0 +1,12 @@
+#!/bin/bash
+
+subnet=$(route -n | grep UG | grep 0.0.0.0 | awk '{print $2}' | awk -F'.' '{print $1"."$2"."$3".1/24"}')
+echo "Scanning subnet $subnet..."
+echo $(sudo nmap -sn $subnet) \
+        | sed 's/MAC/\nMAC/g' \
+        | grep -v Starting \
+        | sed 's/ Nmap scan report for /\t/g' \
+        | sed 's/MAC Address: //g' \
+        | sed 's/Host is up.*//g' \
+        | awk -F'(' '{printf "%-20s %s\n",$1,$2}' \
+        | awk -F')' '{printf "%-55s %s\n",$1,$2}'
