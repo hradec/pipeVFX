@@ -50,7 +50,7 @@ pipe.version.set( vray      = '5.2.31206' )
 # set global library versions
 # ===================================================================
 if 'PIPEVFX_LIBS_VERSION' in os.environ:
-    exr = '2.4.0'
+    exr = '2.4.1'
     python = '2.7'
     pipe.libs.version.set( openexr  = exr )
     pipe.libs.version.set( ilmbase  = exr )
