@@ -56,7 +56,7 @@ class wine(baseApp):
         ''' A static method to return the cache version of a wine prefix
         This can be called by other app classes if they need to edit
         the wine local cache in some way! '''
-#        return '/tmp/pipe_%s/%s' % ( os.environ['USER'], p.split('apps/')[1])
+        # return '/tmp/pipe_%s/%s' % ( os.environ['USER'], p.split('apps/')[1])
         return '%s/wine/cache/%s/' % ( os.environ['HOME'], p.split('apps/')[1])
 
     def localCache(self, binFullName):

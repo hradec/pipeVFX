@@ -31,6 +31,10 @@ import assetUtils
 import traceback
 from functools import wraps
 
+# python3 workaround for reload
+try: from importlib import reload
+except: pass
+
 import nodeMD5
 reload(nodeMD5)
 

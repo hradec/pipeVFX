@@ -112,7 +112,7 @@ class OpaMode( GafferUI.BrowserEditor.Mode ) :
 
 
     def __menu( self, pathListing ) :
-        print "XXXX:%s" % str(pathListing)
+        # print "XXXX:%s" % str(pathListing)
         menuDefinition = IECore.MenuDefinition()
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )

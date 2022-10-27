@@ -147,7 +147,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
 
     def isValid( self ) :
         path = str(self.getPath()['fullName'])
-        print path
+        # print( path )
         if not path:
             return False
 
@@ -156,7 +156,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
         # classes = Asset.AssetParameter().classLoader.classNames( "*" )
         # print path, '/'.join(path.strip('/').split('/')[0:2]) in classes, classes
         # sys.stdout.flush()
-        print '/'.join(path.strip('/').split('/')[0:2]), classes
+        # print( '/'.join(path.strip('/').split('/')[0:2]), classes )
         return '/'.join(path.strip('/').split('/')[0:2]) in classes
 
     def getPath(self):
@@ -510,7 +510,7 @@ class assetPreview( GafferUI.DeferredPathPreview ) :
                 button.cmd(scene)
             else:
                 cmd = button.cmd.replace('"','\"') % scene +' &'
-                print  cmd
+                print( cmd )
                 os.system( cmd  )
 
             # wait a few seconds before enable the button again!
@@ -754,7 +754,7 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
 
     def __pathSelected( self, pathListing ) :
         selectedPaths = pathListing.getSelectedPaths()
-        print "======>",selectedPaths
+        # print( "======>",selectedPaths )
         sys.stdout.flush()
         if not len( selectedPaths ) :
             return
@@ -772,13 +772,13 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
     def _initialColumns( self ) :
         class IconColumn( object ):
             def data(self, path, role = QtCore.Qt.DisplayRole ):
-                print "bum"
+                print( "bum" )
                 if  role == QtCore.Qt.DisplayRole:
                     return "status"
                 return QtCore.QVariant()
 
             def headerData(self, role = QtCore.Qt.DisplayRole ):
-                print "bum2"
+                print( "bum2" )
                 if  role == QtCore.Qt.DisplayRole:
                     return "status"
                 return QtCore.QVariant()

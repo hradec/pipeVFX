@@ -441,8 +441,8 @@ class job(baseFarmJobClass):
         else:
             self.preFarmCmd = self.farmSetupPre()
             self.posFarmCmd = self.farmSetupPos()
-            print "==========> self.preFarmCmd:",self.preFarmCmd
-            print "==========> self.posFarmCmd:",self.posFarmCmd
+            print( "==========> self.preFarmCmd:",self.preFarmCmd )
+            print( "==========> self.posFarmCmd:",self.posFarmCmd )
 
             # we use su to run the tasks as the user who submitted it!
             cmd = self.farmCmd(self.cmd, self.preFarmCmd, self.posFarmCmd)

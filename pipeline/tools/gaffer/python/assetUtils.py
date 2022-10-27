@@ -8,6 +8,12 @@ import Asset
 import math
 import pipe
 import os
+
+# python3 workaround for reload
+try: from importlib import reload
+except: pass
+
+
 try:
     import GafferCortex
     GafferCortex_ClassLoaderPath = GafferCortex.ClassLoaderPath
@@ -452,12 +458,12 @@ class assetOP(object):
 
     def printParameters( self ):
         ''' just print the parameters of the op class for the current asset '''
-        print "="*120
+        print( "="*120 )
         for each in  self.op.parameters()['Asset']['type'].keys():
-            print 'Asset type',each, self.op.parameters()['Asset']['type'][each].getValue()
+            print( 'Asset type',each, self.op.parameters()['Asset']['type'][each].getValue() )
         for each in  self.op.parameters()['Asset']['info'].keys():
-            print 'Asset info', each, self.op.parameters()['Asset']['info'][each].getValue()
-        print "="*120
+            print( 'Asset info', each, self.op.parameters()['Asset']['info'][each].getValue() )
+        print( "="*120 )
 
     def parameterChanged( self , printBefore=False, printAfter=False, newVersion=True):
         ''' does the same evaluation of parameters as the ui does.
@@ -488,7 +494,7 @@ class assetOP(object):
             try:
                 current = os.path.basename(self.op.assetParameter.getCurrent().strip('/'))
             except:
-                print 'WARNING: asset %s doesnt exist!' % self.pathPar
+                print( 'WARNING: asset %s doesnt exist!' % self.pathPar )
 
             if current:
                 version = [ int(x) for x in current.split('.') ]
@@ -822,7 +828,7 @@ class assetOP(object):
         else:
             scene='\\\"'+scene+'\\\"'
             cmd = cmd.replace('"','\"') % scene +' &'
-            print  'assetUtil: os.system(',cmd,')'
+            print(  'assetUtil: os.system(',cmd,')' )
             os.system( cmd  )
 
         # restore the job/shot to the original one

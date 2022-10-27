@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import Asset
 
 
 class gather( Op ) :
-    
+
 
     def __init__( self ) :
         Op.__init__( self, "Publish assets.",
@@ -39,7 +39,7 @@ class gather( Op ) :
                 name = "result",
                 description = "",
                 defaultValue = StringData(),
-                userData = {"UI" : {	
+                userData = {"UI" : {
                     "showResult" : BoolData( True ),
                     "showCompletionMessage" : BoolData( True ),
                     "saveResult" : BoolData( True ),
@@ -53,22 +53,22 @@ class gather( Op ) :
         self.parameters().addParameters([
                 self.assetParameter
             ])
-        
+
     def parameterChanged(self, parameter):
         if hasattr( parameter, 'parameterChanged' ):
             parameter.parameterChanged( parameter )
         return self.assetParameter.parameterChanged(parameter)
-        
+
 
     def doOperation( self, operands ) :
-        
-        print operands
+
+        print( operands )
         result = StringData("")
-        
-            
+
+
         # we indeed found a assetPath parameter, so we can proceed with the publishing
         if 1:
-            
+
             # load the type op so we can run it
             opNames = self.assetParameter.classLoader.classNames( "*" + str(operands['Asset']['type']) )
             op = self.assetParameter.classLoader.load(opNames[0])()
@@ -79,9 +79,9 @@ class gather( Op ) :
 #            assetType    = self.assetParameter.getAssetType()[0]
 #            publishPath = self.assetParameter.job.path( 'sam/%s/%s/%s/' % (assetType, assetName, '.'.join(assetVersion),) )
 #            publishFile = "%s/%s%s" % ( publishPath, assetName, os.path.splitext(assetPath)[-1] )
-            
-                
-            # we use this errocheck function so we can run postPublish in case of 
+
+
+            # we use this errocheck function so we can run postPublish in case of
             # failure!
             def errorCheck(result):
                 result = str(result)
@@ -91,19 +91,19 @@ class gather( Op ) :
                         op.postPublish(operands)
                     # raise exception!
                     raise Exception(result)
-                    
+
             if hasattr( op, 'preGather' ):
                 op.preGather(operands, True)
-            
+
             # run the type op gather method to gather the asset
             if hasattr( op, 'gather' ):
                 result = op.gather(operands)
                 errorCheck(result)
-            
+
             if hasattr( op, 'postGather' ):
                 op.postGather(operands, True)
-            
+
         return result
-    
-    
+
+
 registerRunTimeTyped( gather )

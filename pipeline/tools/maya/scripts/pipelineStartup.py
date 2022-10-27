@@ -36,7 +36,7 @@ if 'DISPLAY' in os.environ:
     except: pass
 
 
-print "Loading Pipeline Startup from %s" % __file__
+print( "Loading Pipeline Startup from %s" % __file__ )
 
 
 # import alembic here to prevent problems when prman import it
@@ -56,29 +56,32 @@ def prependPythonPath( libs ):
 
 if float(os.environ["MAYA_VERSION"]) > 2017:
     import imath
-    import alembic
-    import IECore
-    import Gaffer
-    # now we add maya pythonpath to the top!
-    prependPythonPath(pipe.apps.maya())
-
-    # prependPythonPath([
-    #     pipe.libs.pyilmbase(),
-    #     pipe.libs.alembic(),
-    #     pipe.libs.openvdb(),
-    #     pipe.libs.usd(),
-    # ])
-    # import imath
     # import alembic
-    # import IECore
-    # import Gaffer
+    import IECore
+    try:
+        import Gaffer
+        # now we add maya pythonpath to the top!
+        prependPythonPath(pipe.apps.maya())
 
-    if not m.about(batch=1):
-        # force PySide2 to load from maya folder!
-        import PySide2
-        import shiboken2
-        reload(PySide2)
-        reload(shiboken2)
+        # prependPythonPath([
+        #     pipe.libs.pyilmbase(),
+        #     pipe.libs.alembic(),
+        #     pipe.libs.openvdb(),
+        #     pipe.libs.usd(),
+        # ])
+        # import imath
+        # import alembic
+        # import IECore
+        # import Gaffer
+
+        if not m.about(batch=1):
+            # force PySide2 to load from maya folder!
+            import PySide2
+            import shiboken2
+            reload(PySide2)
+            reload(shiboken2)
+    except:
+        pass
 
 
 
@@ -91,7 +94,7 @@ from time import time
 
 startTime = time()
 
-print 'Pipeline Startup...'
+print( 'Pipeline Startup...' )
 sys.stdout.flush()
 
 # pipeline startup!
@@ -102,7 +105,7 @@ def pipeIdleStartup():
     import pipe, os
     import traceback
 
-    print 'PipeIdleStartup...'
+    print( 'PipeIdleStartup...' )
     sys.stdout.flush()
     # if we're in a job/shot, set workspace current to the
     # current user maya folder
@@ -146,16 +149,16 @@ def pipeIdleStartup():
 
     if plugs:
         for each in plugs:
-            print '='*80
-            print 'PIPE: auto-loading %s plugin...\n' % each
+            print( '='*80 )
+            print( 'PIPE: auto-loading %s plugin...\n' % each )
             sys.stdout.flush()
             try:
                 m.loadPlugin( each )
             except:
-                print "Can't load %s plugin!!" % each
+                print( "Can't load %s plugin!!" % each )
                 traceback.print_exc()
-        print '='*80
-        print "Finished plugin auto-loading..."
+        print( '='*80 )
+        print( "Finished plugin auto-loading..." )
         sys.stdout.flush()
 
     # re-initialize cortex menu to filter out admin ops!
@@ -217,7 +220,7 @@ def pipeIdleStartup():
     # force unload of Alembic plugins!!
     # m.unloadPlugin('AbcExport')
     # m.unloadPlugin('AbcImport')
-    print 'pipeIdleStartup done: %.02f secs' % (time()-startTime)
+    print( 'pipeIdleStartup done: %.02f secs' % (time()-startTime) )
 
 
 # asset manager
@@ -285,7 +288,7 @@ def loadAssetManager():
         def __gather() :
             import IECore
             c = IECore.ClassLoader.defaultLoader( "GAFFER_APP_PATHS" )
-            a = c.load( "sam" )()
+            a = c.load( "test" )()
             a.run()
 
         import assetListWidget
@@ -341,7 +344,7 @@ def loadAssetManager():
     m.menu("AESamMenu", e=1, pmc=AESamMenu)
 
 
-    print 'loadAssetManager() done: %.02f secs' % (time()-startTime)
+    print( 'loadAssetManager() done: %.02f secs' % (time()-startTime) )
 
 
 
@@ -363,7 +366,7 @@ def RMS_setup():
     meval('rman setPref LocalQueueLaunchPath "%s/prman/bin/LocalQueue"' % pipe.roots().tools())
     meval('source "renderManNodes";rmanCreateGlobals')
     m.select(cl=1)
-    print 'RMS_setup() done: %.02f secs' % (time()-startTime)
+    print( 'RMS_setup() done: %.02f secs' % (time()-startTime) )
 
 
 
@@ -380,7 +383,7 @@ else:
     def __runAll__():
         # if float(os.environ["MAYA_VERSION"]) < 2018:
             import maya.OpenMayaUI as omui
-            print omui.MQtUtil.getCurrentParent()
+            print( omui.MQtUtil.getCurrentParent() )
             import time
             import genericAsset
             # pb = genericAsset.progressBar(3,"Finishing maya startup... ")
@@ -389,7 +392,7 @@ else:
             # pb.step()
             loadAssetManager()
             # pb.step()
-            # print float(os.environ["MAYA_VERSION"])
+            # print( float(os.environ["MAYA_VERSION"]) )
             if float(os.environ["MAYA_VERSION"]) < 2018:
                 if pipe.isEnable('prman'):
                     RMS_setup()
@@ -400,5 +403,5 @@ else:
 
 # import pipe
 # for classes in [ "pipe.apps.%s" % x for x in dir(pipe.apps) if "startup" in eval("dir(pipe.apps.%s)" % x)]:
-#     print "Running startup method of %s..." % classes
+#     print( "Running startup method of %s..." % classes )
 #     eval("%s().startup()" % classes)

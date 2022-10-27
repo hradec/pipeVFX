@@ -25,16 +25,16 @@
 #   author: rhadec - march/2013
 #
 #=================================================================================
+from __future__ import print_function
 
 gdata = '2.0.17'
-
 import sys, os, traceback
 # add gdata to pythonpath so gdata can find atom!
 sys.path.append( "%s/gdata-%s/src/" % (os.path.dirname( __file__ ), gdata) )
 
 
 #set proxy if needed
-if os.environ.has_key('PIPE_PROXY_SERVER'):
+if 'PIPE_PROXY_SERVER' in os.environ:
     os.environ['http_proxy']  = "http://%s" % os.environ['PIPE_PROXY_SERVER']
     os.environ['https_proxy'] = "http://%s" % os.environ['PIPE_PROXY_SERVER']
 
@@ -78,17 +78,17 @@ class clients(object):
      ''' dump data - perfect for debugging '''
      for i, entry in enumerate(feed.entry):
       if isinstance(feed, gdata.spreadsheet.SpreadsheetsCellsFeed):
-        print '-%s %s\n' % (entry.title.text, entry.content.text)
+        print( '-%s %s\n' % (entry.title.text, entry.content.text) )
       elif isinstance(feed, gdata.spreadsheet.SpreadsheetsListFeed):
-        print '+%s %s %s' % (i, entry.title.text, entry.content.text)
+        print( '+%s %s %s' % (i, entry.title.text, entry.content.text) )
         # Print this row's value for each column (the custom dictionary is
         # built using the gsx: elements in the entry.)
-        print 'Contents:'
+        print( 'Contents:' )
         for key in entry.custom:
-          print '  %s: %s' % (key, entry.custom[key].text)
-        print '\n',
+          print( '  %s: %s' % (key, entry.custom[key].text) )
+        print( '\n', )
       else:
-        print '=%s %s\n' % (i, entry.title.text)
+        print( '=%s %s\n' % (i, entry.title.text) )
 
     def _returnDict(self, feed):
         ''' convert xml data from google to a dictionary '''
@@ -181,9 +181,9 @@ class clients(object):
 
         except:
             if refresh:
-                print '='*80
+                print( '='*80 )
                 traceback.print_exc()
-                print '='*80
+                print( '='*80 )
 
         finally:
             # if less than 30 mins, just grab the cached data

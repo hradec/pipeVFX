@@ -29,6 +29,10 @@ import os, datetime, sys
 import pipe
 import samDB
 import Asset
+# python3 workaround for reload
+try: from importlib import reload
+except: pass
+
 reload(Asset)
 try:
     import IECoreMaya
@@ -180,7 +184,7 @@ class publish( Op ) :
                 data_txt['multiplePublishedFiles'] = []
                 for f in data_txt['multipleFiles']:
                     data_txt['multiplePublishedFiles'].append( data_txt['publishFile'] % f )
-                    print '===>',data_txt['assetPath'] % f, data_txt['multiplePublishedFiles'][-1]
+                    # print( '===>',data_txt['assetPath'] % f, data_txt['multiplePublishedFiles'][-1] )
                     sudo.cp( data_txt['assetPath'] % f, data_txt['multiplePublishedFiles'][-1] )
                     sudo.chown( 'root:artists', data_txt['multiplePublishedFiles'][-1] )
                     sudo.chmod( 'a+r', data_txt['multiplePublishedFiles'][-1] )
@@ -197,19 +201,19 @@ class publish( Op ) :
             if 'extraFiles' in data_txt:
                 assert( type( data_txt['extraFiles'] ) == list )
                 for each in data_txt['extraFiles']:
-                    print 'cp ', each, "%s/%s" % (publishPath, os.path.basename(each))
+                    print( 'cp ', each, "%s/%s" % (publishPath, os.path.basename(each)) )
                     sudo.cp( each, "%s/%s" % (publishPath, os.path.basename(each)) )
 
 
             # only publish if the type op execution returns correctly!
             ret = sudo.run()
-            print ret
+            print( ret )
             errorCheck(ret)
 
             # after running the op, we call submission method to do farm stuff, if any!
             if hasattr( op, 'submission' ):
                 result = op.submission(operands['Asset']['type'])
-                print result
+                print( result )
                 errorCheck(result)
 
             # run the type op postPublish method to finish

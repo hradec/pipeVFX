@@ -58,7 +58,7 @@ class assets(sqlitedict.SqliteDict):
                                 if os.path.exists('%s/data.txt' % each):
                                     # data = Asset.AssetParameter(each.replace(j.path('sam/'),'')).getData()
                                     op = assetUtils.assetOP(each.split(folderName)[1][1:])
-                                    print op.pathPar
+                                    # print( op.pathPar )
                                     op.loadOP()
                                     data = op.data
                                     data['whoCanImport'] = op.subOP._whoCanImport
@@ -97,14 +97,14 @@ class assets(sqlitedict.SqliteDict):
             t = time.time()
 
             # ret = recursiveTree("%s/sam" % (j.path()), ret, ret_sem_shot, filter)
-            print "populateAssets->starting: %0.04f" %  (time.time()-t)
+            print( "populateAssets->starting: %0.04f" %  (time.time()-t) )
             # types = assetUtils.types()
             # print "populateAssets->gettingTypes: %0.04f" %  (time.time()-t)
 
             #recursiveTree("%s/sam" % j.path(), ret)
             ret = getAll("%s/sam" % j.path())
 
-            print "populateAssets: %0.04f" %  (time.time()-t)
+            print( "populateAssets: %0.04f" %  (time.time()-t) )
 
             # print ret[0]
             for r in ret:
@@ -112,7 +112,7 @@ class assets(sqlitedict.SqliteDict):
                     self[k] = r[k]
 
 
-            print "done: %0.04f" %  (time.time()-t)
+            print( "done: %0.04f" %  (time.time()-t) )
 
 
 _loadOP_all = {}
@@ -250,7 +250,7 @@ class asset2(dict):
         path = "%s/sam" % pipe.admin.job().path()
 
         t = time.time()
-        print "populateAssets->starting: %0.04f" %  (time.time()-t)
+        print( "populateAssets->starting: %0.04f" %  (time.time()-t) )
 
         paths = glob( "%s/*/*/*/*" % path )
 
@@ -265,7 +265,7 @@ class asset2(dict):
         # for p in glob( "%s/*/*/*/*" % path ):
         #     ret.append( _getData(p) )
 
-        print "populateAssets->commit to db: %0.04f" %  (time.time()-t)
+        print( "populateAssets->commit to db: %0.04f" %  (time.time()-t) )
         current = glob( "%s/*/*/*/current" % path )
         for each in ret:
             if '/current' not in each['asset']:
@@ -286,7 +286,7 @@ class asset2(dict):
         #         self[k] = r[k]
         #
         #
-        print "done: %0.04f" %  (time.time()-t)
+        print( "done: %0.04f" %  (time.time()-t) )
 
 
 
@@ -318,12 +318,12 @@ class asset2(dict):
         k = k.strip('/')
         p = k.split('/')
         if len(p)<4:
-            print k
+            # print( k )
             raise Exception('A key need to be a path with at least 4 levels. Ex: /model/maya/name/01.00.00')
 
         v = p[3].split('.')
         if len(v) < 3:
-            print v
+            # print( v )
             raise Exception('The 4th level of a path needs to be a version, specified as 1.0.0 . Ex: /model/maya/name/01.00.00')
 
         # format version number as 00.00.00

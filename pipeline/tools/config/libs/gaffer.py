@@ -19,15 +19,33 @@
 # =================================================================================
 
 class gaffer(baseLib):
-    # def versions(self):
-    #     pipe.libs.version.set( cortex   = '10.3.4.0' )
+    def versions(self):
+        ''' set the pipe python version according to houdinis python version '''
+        if self.parent() in ['gaffer']:
+            gv = float('.'.join(pipe.libs.version.get( 'gaffer' ).split('.')[:2]))
+            if gv >= 1.1:
+                pipe.version.set( python = '3.9' )
+                pipe.libs.version.set( python = '3.9' )
+                pipe.libs.version.set( openexr = '2.4.1' )
+                pipe.libs.version.set( usd = '21.11.1' )
+                pipe.libs.version.set( usd_non_monolithic = '21.11.1' )
+            else:
+                pipe.version.set( python = '2.7' )
+                pipe.libs.version.set( python = '2.7' )
+                pipe.libs.version.set( openexr = '2.4.0' )
+                pipe.libs.version.set( openvdb = '8.2.0' )
+                pipe.libs.version.set( boost = '1.66.0' )
+
+    def vglrun(self, vglrun_cmd ):
+        ''' adjust the vglrun command line when running on a remote connection '''
+        return vglrun_cmd + ' -nodl '
 
     def environ(self):
         ''' as this is a python application, we don't have to setup anything
             since python is already setting it for us! '''
 
         # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
-        # self.ignorePipeLib( "freetype" )
+        self.ignorePipeLib( "freetype" )
 
         self['PYTHONPATH'] = self.path('python')
 
@@ -39,6 +57,8 @@ class gaffer(baseLib):
 
         # our standard OCIO color space
         self.update( pipe.libs.ocio() )
+        self.update( pipe.libs.cuda() )
+        self.update( pipe.libs.cycles() )
 
         # add all versions of OIIO libraries to search path
         if hasattr(pipe.libs, 'oiio'):
@@ -103,6 +123,7 @@ class gaffer(baseLib):
                 ],
         )
 
+        self.update( pipe.libs.cortex() )
         cortex.addon(self,
             procedurals = self.path('procedurals'),
             ops = self.path('ops'),
@@ -152,6 +173,20 @@ class gaffer(baseLib):
             self['GAFFER_JEMALLOC'] = '0'
             self['LD_PRELOAD'] = pipe.libs.jemalloc().LD_PRELOAD()
 
+        # to enable cycles
+        self['GAFFERCYCLES_FEATURE_PREVIEW'] = '1'
+        # $CYCLES_ROOT/$(ldd  $GAFFER_ROOT/lib/libGafferUSD.so  | grep -i usd | awk '{print $(NF-1)}' | awk -F'/' '{print $(NF-2)"-usd."$(NF-3)"-gaffer."}' | sort | uniq)$GAFFER_VERSION/
+        self['CYCLES_TARGET_FOLDER'] = ''.join([
+            pipe.libs.cycles().path(),
+            '/',
+            cached.popen('''ldd  %s/lib/libGafferUSD.so  | grep -i usd | awk '{print $(NF-1)}' | awk -F'/' '{print $(NF-2)"-usd."$(NF-3)"-gaffer."}' | sort | uniq''' % self.path()).readlines()[0].strip(),
+            self.version().strip(),
+        ]).replace(' ','').strip()
+
+
+    def preRun(self, cmd):
+        os.environ['CYCLES_ROOT'] = self['CYCLES_TARGET_FOLDER']
+        return cmd
 
     # def runUserSetup(self, bin):
     #     ''' only create a user folder structure if it's the main gaffer app.'''

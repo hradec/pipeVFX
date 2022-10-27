@@ -2,7 +2,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -43,13 +43,13 @@ class output(object):
         cls.__outputs[label].pad = pad
 
     def labels(self):
-        ids = self.__outputs.keys()
+        ids = list(self.__outputs.keys())
         ids.sort()
-        ret = map( lambda x: self.__outputs[x].hlabel, ids )
+        ret = list(map( lambda x: self.__outputs[x].hlabel, ids ))
         return ret
 
     def keys( self ):
-        return self.__outputs.keys()
+        return list(self.__outputs.keys())
 
     def asPreset(self):
         return tuple( map( lambda x: (x,x), self.labels() ) )
@@ -58,11 +58,11 @@ class output(object):
         ret = None
         if key in self.keys():
             ret = self.__outputs[key]
-            
+
         if key in self.labels():
             ret = filter( lambda x: key == self.__outputs[x].hlabel, self.__outputs.keys() )[0]
             ret = self.__outputs[ret]
-                
+
         return ret
 
 

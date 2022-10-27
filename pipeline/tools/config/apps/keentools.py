@@ -22,21 +22,19 @@
 class keentools(baseApp):
     def environ(self):
         ''' set all environment variables is here '''
-
         #License server: GENARTS_LICENSE = 5053@192.168.0.249
         #Plugin Path: OFX_PLUGINS_PATH = /path/to/Monsters.ofx.bundle (/usr/genarts/OFX default)
         #Libs: LD_LIBRARY_PATH = /path/to/genarts/monsters-ofx64/lib64
         #Nuke: NUKE_PATH = /path/to/genarts/OFX/Plugins
         #Also symbolic link to both libcudart.so.2.2 → libcudart.so.2 and libcufft.so.2.2 → libcufft.so.2 which hare in monsters-ofx64/lib64 folder.
-
         nuke.addon ( self,
-        #            nukepath = self.path('$NUKE_VERSION/manual/KeenTools/'),
-        #            lib      = self.path('$NUKE_VERSION/manual/KeenTools/libs/'),
+            # nukepath = self.path('$NUKE_VERSION/manual/KeenTools/'),
+            # lib      = self.path('$NUKE_VERSION/manual/KeenTools/libs/'),
             nukepath = self.path('$NUKE_VERSION/'),
             lib      = self.path('$NUKE_VERSION/plugin_libs/'),
         )
 
-        #        self['KEENTOOLS_DATA_PATH'] = self.path('$NUKE_VERSION/manual/KeenTools/data/')
+        # self['KEENTOOLS_DATA_PATH'] = self.path('$NUKE_VERSION/manual/KeenTools/data/')
         self['KEENTOOLS_DATA_PATH'] = self.path('$NUKE_VERSION/data/')
 
 

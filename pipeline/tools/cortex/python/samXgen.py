@@ -41,7 +41,7 @@ def xgenGlobalEditor():
                         v = pm.floatField( pars[attrName], v=1, q=1)
                         a = '_'.join(attrName.split('_')[0:-1])
                         m = attrName.split('_')[-1]
-                        print a, v, pal, each, m
+                        print( a, v, pal, each, m )
                         xg.setAttr( a, str(v), pal, each, m )
 
         def createWin(name):
@@ -100,7 +100,7 @@ def xgenGlobalEditor():
                 for mod in desc[pal][each]['mods']:
                   if mod not in frames:
                       frames[mod]=pm.frameLayout(mod+' Parameters', parent=l, w=160,collapsable=1, collapse=0, backgroundColor=(0.2,0.2,0.7),backgroundShade=1)
-                  print pal,each,mod
+                  print( pal,each,mod )
                   if 'true' in xg.getAttr( 'active', pal, each, mod ):
                     modules = desc[pal][each]['mods']
                     for mod_attr in modules[mod]['attrs']:
@@ -166,7 +166,7 @@ def xgen_export_for_ribbox(selection=None, frame=1):
         for col in collection:
             m.currentTime(frame,e=1)
             path = str(xgen_collection_path(col))
-            print col, path
+            print( col, path )
             xg.exportPalette( str(col), path )
             descriptions = [ m.listRelatives(x, p=1)[0] for x in m.ls(col, type='xgmDescription', dag=1, l=1) ]
             patchName = ','.join( [ ','.join(m.listConnections(patchName+'.geometry')) for patchName in m.ls(selection, type='xgmSubdPatch', dag=1, l=1) ] )
@@ -216,7 +216,7 @@ def xgen_ribbox(collection='collection8', descriptions='tranca_1_,trance_2_,tran
             res += '''
                 Procedural "DynamicLoad" ["XGenProcPrim" " -frame %s -file %s -palette %s -geom %s -patch %s -description %s -fps %s  %s"] [-1000 1000 -1000 1000 -1000 1000]
             ''' % (str(farmTime()), xgen_file_tmp, pal, abc, patch_name, desc, fps, extra)
-        print res
+        print( res )
     return res
 
 def xgen_create_ribbox(collection='collection8', descriptions=['tranca_1_', 'trance_2_', 'trance_3_'], abc='/tmp/xx.abc', patch_name='baseCabeloXgen', xgen_path=''):
@@ -234,7 +234,7 @@ def xgen_create_ribbox(collection='collection8', descriptions=['tranca_1_', 'tra
              select -r -ne $sg;
              $attr=($sg+"."+$attrName);
         ''')
-        
+
         value = '''[mel "python(\\"import sys;sys.path.insert(0,'%s');import %s;reload(%s);%s.xgen_ribbox('%s','%s','%s','%s','%s')\\")"]''' % (
             pythonpath,
             thisModule, thisModule, thisModule,
@@ -244,6 +244,6 @@ def xgen_create_ribbox(collection='collection8', descriptions=['tranca_1_', 'tra
             patch_name,
             xgen_path
         )
-        print "===>",value
+        print( "===>",value )
         m.setAttr( ribbox, value, type='string' )
         m.setAttr( ribbox.split('.')[0]+".rman__torattr___ribBoxInterpolation", 'TCL', type='string' )

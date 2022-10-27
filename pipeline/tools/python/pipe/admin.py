@@ -159,9 +159,10 @@ class sudo():
                                         if 'progr:' in std:
                                             std = std.replace('progr:', 'PROGRESS:')
                                         else:
-                                            std = filter(lambda x: x.strip(), std.strip().split(' '))
+                                            std = [ x.strip() for x in std.strip().split(' ') ]
                                             #std = ' '.join(std[:-1]+['PROGRESS: ']+[std[-1]])+"\n"
-                                            std = map(lambda x: "PROGRESS: "+x if '%' in x else x, std)
+                                            if len(std.strip()) < 5:
+                                                std = list( map( lambda x: "PROGRESS: "+x if '%' in x else x, std ) )
                                             std = ' '.join(std)+"\n"
                                     secs = '%s | ' % str(datetime.timedelta( seconds = int(time.time()-_start) ))
                                     sys.stdout.write( secs + prefix + std )

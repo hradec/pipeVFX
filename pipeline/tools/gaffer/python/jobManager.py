@@ -104,19 +104,19 @@ class jobPreview( GafferUI.DeferredPathPreview ) :
         self.__node["parameters"]["jobName"].setValue( jobName )
 
         self.__node["parameters"]["assets"].setValue( IECore.StringVectorData( [] ) )
-        if self.jobs[job].has_key('assets'):
-            assets = self.jobs[job]['assets'].keys()
+        if 'assets' in self.jobs[job]:
+            assets = list(self.jobs[job]['assets'].keys())
             assets.sort()
             self.__node["parameters"]["assets"].setValue( IECore.StringVectorData( assets ) )
 
         self.__node["parameters"]["shots"].setValue( IECore.StringVectorData( [] ) )
-        if self.jobs[job].has_key('shots'):
-            shots = self.jobs[job]['shots'].keys()
+        if 'shots' in self.jobs[job]:
+            shots = list(self.jobs[job]['shots'].keys())
             shots.sort()
             self.__node["parameters"]["shots"].setValue( IECore.StringVectorData( shots ) )
 
         self.__node["parameters"]["client"].setValue( '' )
-        if self.jobs[job].has_key('client'):
+        if 'client' in self.jobs[job]:
             self.__node["parameters"]["client"].setValue( self.jobs[job]['client'] )
 
         self.__node["parameters"]["defaultOutput"].setValue( '' )
@@ -124,7 +124,7 @@ class jobPreview( GafferUI.DeferredPathPreview ) :
             self.__node["parameters"]["jobIndex"].getValue(),
             self.__node["parameters"]["jobName"].getValue(),
         ).getData()
-        if jobData.has_key('output'):
+        if 'output' in jobData:
             self.__node["parameters"]["defaultOutput"].setValue( jobData['output'] )
 
 
@@ -133,7 +133,7 @@ class jobPreview( GafferUI.DeferredPathPreview ) :
             GafferUI.NodeUI.create( self.__node )
 
             button = GafferUI.Button( "Execute" )
-            self.__executeClickedConnection = button.clickedSignal().connect( self.__executeClicked )
+            self.__executeClickedConnection = button.clickedSignal().connect( self.__executeClicked, scoped = True )
 
     def __executeClicked( self, button ) :
 #        with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
@@ -169,9 +169,11 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
         self.__contextMenuConnection = None
         self.__pathSelectedConnection = self.browser().pathChooser().pathListingWidget().pathSelectedSignal().connect(
             Gaffer.WeakMethod( self.__pathSelected )
+            , scoped = True
         )
         self.__contextMenuConnection  = self.browser().pathChooser().pathListingWidget().contextMenuSignal().connect(
             Gaffer.WeakMethod( self._menu )
+            , scoped = True
         )
 
     def disconnect( self ) :
@@ -187,7 +189,7 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
 
     def __pathSelected( self, pathListing ) :
         selectedPaths = pathListing.getSelectedPaths()
-        print selectedPaths[0]
+        # print( selectedPaths[0] )
         if not len( selectedPaths ) :
             return
 
@@ -197,7 +199,7 @@ class JobMode(  GafferUI.BrowserEditor.Mode ) :
 #        opaDialogue.setVisible( True )
 
     def _menu( self, pathListing ) :
-        print "XXXX:%s" % str(pathListing)
+        # print( "XXXX:%s" % str(pathListing) )
         menuDefinition = IECore.MenuDefinition()
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )
         menuDefinition.append( "/%s " % str(dir(pathListing)), { "active" : True } )

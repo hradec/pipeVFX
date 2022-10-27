@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -22,24 +22,21 @@
 class genarts_monsters_gt_ofx(baseApp):
     def environ(self):
         ''' set all environment variables is here '''
-        
-#License server: GENARTS_LICENSE = 5053@192.168.0.249
-#Plugin Path: OFX_PLUGINS_PATH = /path/to/Monsters.ofx.bundle (/usr/genarts/OFX default)
-#Libs: LD_LIBRARY_PATH = /path/to/genarts/monsters-ofx64/lib64
-#Nuke: NUKE_PATH = /path/to/genarts/OFX/Plugins
-#Also symbolic link to both libcudart.so.2.2 → libcudart.so.2 and libcufft.so.2.2 → libcufft.so.2 which hare in monsters-ofx64/lib64 folder.
+        # License server: GENARTS_LICENSE = 5053@192.168.0.249
+        # Plugin Path: OFX_PLUGINS_PATH = /path/to/Monsters.ofx.bundle (/usr/genarts/OFX default)
+        # Libs: LD_LIBRARY_PATH = /path/to/genarts/monsters-ofx64/lib64
+        # Nuke: NUKE_PATH = /path/to/genarts/OFX/Plugins
+        # Also symbolic link to both libcudart.so.2.2 → libcudart.so.2 and libcufft.so.2.2 → libcufft.so.2 which hare in monsters-ofx64/lib64 folder.
 
         nuke.addon ( self,
             nukepath = self.path('usr/OFX/Plugins/'),
             lib      = self.path('usr/genarts/monsters-ofx64/lib64'),
         )
-
         self['OFX_PLUGINS_PATH'] = self.path('usr/OFX/Plugins/Monsters.ofx.bundle')
-        
-        
+
     def bins(self):
         return []
-        
+
     def license(self):
         self['genarts_LICENSE']=os.environ['PIPE_GENARTS_LICENSE']
 

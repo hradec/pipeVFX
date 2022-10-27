@@ -57,7 +57,11 @@ from IECore import BoolParameter, CompoundParameter, registerRunTimeTyped, IntDa
 from IECore import CompoundObject, IntParameter, DateTimeParameter, StringVectorParameter
 from glob import glob
 import os, datetime, sys
-import pipe , clients
+import pipe
+try:
+    import clients
+except:
+    clients = None
 
 
 
@@ -77,7 +81,7 @@ class mkjob( Op ) :
         lastProjectOld = 0
         jobList = glob( "/mnt/Projetos/*"  )
         jobList = map( lambda x: os.path.basename(x), jobList )
-        jobList = filter( lambda x: x[0].isdigit(), jobList )
+        jobList = [ x for x in jobList if x[0].isdigit() ]
         jobList.sort()
         if jobList:
             lastProjectOld = int(jobList[-1].split('_')[0].split('.')[0])
@@ -86,7 +90,7 @@ class mkjob( Op ) :
         lastProject = 0
         jobList = glob( "%s/*" % pipe.roots.jobs() )
         jobList = map( lambda x: os.path.basename(x), jobList )
-        jobList = filter( lambda x: x[0].isdigit() and int(x[0]) < 9, jobList )
+        jobList = [ x for x in jobList if x[0].isdigit() and int(x.split('.')[0]) < 9000 ]
         jobList.sort()
         if jobList:
             lastProject = int(jobList[-1].split('_')[0].split('.')[0])
@@ -110,6 +114,11 @@ class mkjob( Op ) :
             )
         )
 
+        clients_preset = ("no client")
+        if clients:
+            clients_preset = clients.asPreset()
+
+
         output = pipe.output()
         self.parameters().addParameters(
             [
@@ -120,7 +129,7 @@ class mkjob( Op ) :
                 ),
                 ValidatedStringParameter(
                     name="jobName",
-                    description = "O nome do job a ser criado/editado",
+                    description = "The name of the job to be created/edited",
                     defaultValue = "",
                     regex = "^\S+$",
                     regexDescription = "jobName must be a name without any spaces in it.",
@@ -128,14 +137,14 @@ class mkjob( Op ) :
                 ),
                 StringParameter(
                     name="client",
-                    description = "O nome do job a ser criado/editado",
+                    description = "",
                     defaultValue = "no client",
-                    presets = clients.asPreset(),
-                    presetsOnly = True,
+                    # presets = clients_preset,
+                    # presetsOnly = True,
                 ),
                 StringParameter(
                     name="defaultOutput",
-                    description = "A configuracao padrao de output do project (resolucao padrao).",
+                    description = "The default resolution for the project.",
                     defaultValue = output.labels()[0],
                     presets = output.asPreset(),
                     presetsOnly = True,
@@ -143,18 +152,18 @@ class mkjob( Op ) :
 
                 StringVectorParameter(
                     name = "assets",
-                    description = "Entre com os assets do projeto."
-                                  "Para adicionar assets, clique uma vez no + ."
-                                  "Caso queira adicionar varias linhas de forma rapida, tecle space apos clicar no + ."
-                                  "Para remover shots, selecione as linhas que deseja remover e click no - .",
+                    description = "Input the assets for the project."
+                                  "To add, click once on the + sign."
+                                  "To quickly add more lines, press space after clicking the + sign."
+                                  "To remove select the lines and click on the - sign.",
                     defaultValue = StringVectorData( [''] ),
                 ),
                 StringVectorParameter(
                     name = "shots",
-                    description = "Entre com os shots do projeto."
-                                  "Para adicionar shots, clique uma vez no + ."
-                                  "Caso queira adicionar varias linhas de forma rapida, tecle space apos clicar no + ."
-                                  "Para remover shots, selecione as linhas que deseja remover e click no - .",
+                    description = "Input the shots for the project."
+                                  "To add, click once on the + sign."
+                                  "To quickly add more lines, press space after clicking the + sign."
+                                  "To remove select the lines and click on the - sign.",
                     defaultValue = StringVectorData( [''] ),
                 ),
             ])
@@ -178,7 +187,7 @@ class mkjob( Op ) :
         } )
 
         result = job.create()
-        print result
+        print( result )
 
         return StringData( result )
 
