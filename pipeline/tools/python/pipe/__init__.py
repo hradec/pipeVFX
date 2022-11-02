@@ -19,7 +19,13 @@
 # =================================================================================
 
 
+
+# python3 workaround for reload
 from __future__ import print_function
+try: from importlib import reload
+except: pass
+
+
 import os, glob, sys, traceback
 sys.path += [os.path.abspath( os.path.dirname(__file__) )]
 import log
@@ -296,10 +302,10 @@ def pathPythonpath():
         pythonpath += ':%s' % tmp
 
     # add dbus and pygobject from pipeVFX, if we have it!
-    if hasattr(libs, 'dbus'):
-        pythonpath += ':'+':'.join(libs.dbus()['PYTHONPATH'])
-    if hasattr(libs, 'pygobject'):
-        pythonpath += ':'+':'.join(libs.pygobject()['PYTHONPATH'])
+    # if hasattr(libs, 'dbus'):
+    #     pythonpath += ':'+':'.join(libs.dbus()['PYTHONPATH'])
+    # if hasattr(libs, 'pygobject'):
+    #     pythonpath += ':'+':'.join(libs.pygobject()['PYTHONPATH'])
 
     # custom init for OSX
     # sets pythonpath to use pipe python-dbus so things work

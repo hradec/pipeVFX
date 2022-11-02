@@ -27,6 +27,13 @@
 # TODO: Add a vertical toolbar with custom buttons for generic tools and
 #       project specific tools.
 
+
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
+
 import os
 import sys
 import re
@@ -42,11 +49,15 @@ import pipe
 import assetUtils
 import genericAsset
 
+
 # backward compatibility
 import imath
 for c in [ x for x in dir(imath) if 'V' in x[0] or 'C' in x[0] ]:
+    # print('IECore.%s=imath.%s' % (c,c))
     exec( 'IECore.%s=imath.%s' % (c,c) )
 
+try: _long = long
+except: _long = int
 
 if assetUtils.m:
     reload(assetUtils)
@@ -101,12 +112,12 @@ def getMayaWindow():
             import shiboken2
             import maya.OpenMayaUI as apiUI
             ptr = apiUI.MQtUtil.mainWindow()
-            return shiboken2.wrapInstance(long(ptr), QtGui.QMainWindow)
+            return shiboken2.wrapInstance(_long(ptr), QtGui.QMainWindow)
         else:
             import sip
             import maya.OpenMayaUI as mui
             ptr = mui.MQtUtil.mainWindow()
-            return sip.wrapinstance(long(ptr), QtCore.QObject)
+            return sip.wrapinstance(_long(ptr), QtCore.QObject)
     return None
 
 def findMayaWindowWidgets(_hasattr, widget=getMayaWindow()):
@@ -134,7 +145,7 @@ def toQtObject(mayaName):
             if ptr is None:
                 ptr = apiUI.MQtUtil.findMenuItem(mayaName)
             if ptr is not None:
-                return shiboken2.wrapInstance(long(ptr), QtGui.QMainWindow)
+                return shiboken2.wrapInstance(_long(ptr), QtGui.QMainWindow)
         else:
             import sip
             import maya.OpenMayaUI as apiUI
@@ -144,7 +155,7 @@ def toQtObject(mayaName):
             if ptr is None:
                 ptr = apiUI.MQtUtil.findMenuItem(mayaName)
             if ptr is not None:
-                return sip.wrapinstance(long(ptr), QtCore.QObject)
+                return sip.wrapinstance(_long(ptr), QtCore.QObject)
     return None
 
 
@@ -176,32 +187,32 @@ class SAMPanel( GafferUI.Editor ):
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "samShelfPanelx20.png", toolTip="Refresh the panel from the most up-to-date data"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.refreshPanel ) ) )
-                    # self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.refreshPanelHard ) ) )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.refreshPanel ), scoped = True ) )
+                    # self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.refreshPanelHard ), scoped = True  ) )
 
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "samShelfx20.png", toolTip="Open sam browser"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.openSAMBrowser ) ) )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.openSAMBrowser ), scoped = True ) )
 
                     GafferUI.Spacer(IECore.V2i(10,10))
 
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "Autodesk-open-maya-icon_20.png", toolTip="Open selected asset in the current maya session"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.mayaImportDependency() ) )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.mayaImportDependency(), scoped = True ) )
                     self.__buttons[-1].setEnabled(assetUtils.m != None)
 
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "Autodesk-maya-icon-edit_20.png", toolTip="Open selected asset in a new maya session"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.openDependency() ) )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.openDependency(), scoped = True ) )
 
 
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "gaffer-20.png", toolTip="Open selected asset in a new gaffer session"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.openDependency( 'gaffer' ) ) )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.openDependency( 'gaffer' ), scoped = True ) )
 
 
                 self.al = assetListWidget( self.__scriptNode, hostApp )
@@ -219,7 +230,7 @@ class SAMPanel( GafferUI.Editor ):
                 #         self.__buttons[-1] = GafferUI.Button( "", "assets/%s-15.png" % t, toolTip="Show assets of type %s" % t  )
                 #         self.__buttons[-1]._qtWidget().setMaximumSize( 15, 15 )
                 #         self.__buttons[-1].type = t
-                #         self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.filter ) ) )
+                #         self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.filter ), scoped = True  ) )
                 #
                 #     GafferUI.Spacer(IECore.V2i(10,1))
 
@@ -259,7 +270,7 @@ class SAMPanel( GafferUI.Editor ):
             self.al._mayaNodeDeleted(force=True)
 
         self.al._model.setColumnName(self.columnName)
-        print "SAMPanel(%s).refreshPanel():" % self.al.hostApp(),time.time()-t
+        print( "SAMPanel(%s).refreshPanel():" % self.al.hostApp(),time.time()-t )
 
     def openSAMBrowser(self, button):
         import IECore
@@ -320,11 +331,11 @@ class assetListWidget( GafferUI.Editor ):
         t = time.time()
         # print "setTreeModel:",__populateAssets ; sys.stdout.flush()
         self._model = TreeModel(__populateAssets[0], self)
-        print "self._model = TreeModel(__populateAssets[0]):", time.time()-t, self._model ; sys.stdout.flush()
+        print( "self._model = TreeModel(__populateAssets[0]):", time.time()-t, self._model ); sys.stdout.flush()
         self._qtWidget().setModel(self._model)
         # self._qtWidget().expandToDepth(0)
         self._qtWidget().setSelectionMode( QtGui.QAbstractItemView.ExtendedSelection )
-        self.__selectionChangedSlot = Gaffer.WeakMethod( self.__selectionChanged )
+        self.__selectionChangedSlot = Gaffer.WeakMethod( self.__selectionChanged, scoped = True  )
         self._qtWidget().selectionModel().selectionChanged.connect( self.__selectionChangedSlot )
         self._qtWidget().setSelectionMode( QtGui.QAbstractItemView.ExtendedSelection )
 
@@ -473,19 +484,19 @@ class assetListWidget( GafferUI.Editor ):
         # members for implementing drag and drop
         self.__emittingButtonPress = False
         self.__borrowedButtonPress = None
-        self.__doubleClick = self.buttonDoubleClickSignal().connect( Gaffer.WeakMethod( self.__buttonDoubleClick ) )
-        self.__buttonPressConnection = self.buttonPressSignal().connect( Gaffer.WeakMethod( self.__buttonPress ) )
-        self.__buttonReleaseConnection = self.buttonReleaseSignal().connect( Gaffer.WeakMethod( self.__buttonRelease ) )
-        self.__mouseMoveConnection = self.mouseMoveSignal().connect( Gaffer.WeakMethod( self.__mouseMove ) )
+        self.__doubleClick = self.buttonDoubleClickSignal().connect( Gaffer.WeakMethod( self.__buttonDoubleClick ), scoped = True  )
+        self.__buttonPressConnection = self.buttonPressSignal().connect( Gaffer.WeakMethod( self.__buttonPress ), scoped = True  )
+        self.__buttonReleaseConnection = self.buttonReleaseSignal().connect( Gaffer.WeakMethod( self.__buttonRelease ), scoped = True  )
+        self.__mouseMoveConnection = self.mouseMoveSignal().connect( Gaffer.WeakMethod( self.__mouseMove ), scoped = True  )
         if 'SAM_DISABLE_DRAG' not in os.environ:
-            self.__dragBeginConnection = self.dragBeginSignal().connect( Gaffer.WeakMethod( self.__dragBegin ) )
-            self.__dragEndConnection = self.dragEndSignal().connect( Gaffer.WeakMethod( self.__dragEnd ) )
-            self.__dragEnterConnection = self.dragEnterSignal().connect( Gaffer.WeakMethod( self.__dragEnter ) )
+            self.__dragBeginConnection = self.dragBeginSignal().connect( Gaffer.WeakMethod( self.__dragBegin ), scoped = True  )
+            self.__dragEndConnection = self.dragEndSignal().connect( Gaffer.WeakMethod( self.__dragEnd ), scoped = True  )
+            self.__dragEnterConnection = self.dragEnterSignal().connect( Gaffer.WeakMethod( self.__dragEnter ), scoped = True  )
             self.__dragPointer = "paths"
 
-        self.__contextMenuConnection = self.contextMenuSignal().connect( Gaffer.WeakMethod( self.__contextMenu ) )
+        self.__contextMenuConnection = self.contextMenuSignal().connect( Gaffer.WeakMethod( self.__contextMenu ), scoped = True  )
 
-        # self.__dragEnterConnection = self.dragEnterSignal().connect( Gaffer.WeakMethod( self.__dragEnter ) )
+        # self.__dragEnterConnection = self.dragEnterSignal().connect( Gaffer.WeakMethod( self.__dragEnter ), scoped = True  )
 
         self.__path = None
         self._nodeGraph = None
@@ -502,7 +513,7 @@ class assetListWidget( GafferUI.Editor ):
         # self.timer.singleShot( 60*1000,forceRefresh)
         if 'pyqt' in pipe.whatQt():
             self._qtWidget().connect(self._qtWidget(), QtCore.SIGNAL("selectionChangedSignal(PyQt_PyObject)"), self.handleValue)
-        # bundleListWidget.bundleListWidget._selectionChangedSignal().connect( Gaffer.WeakMethod( self.handleValue ) )
+        # bundleListWidget.bundleListWidget._selectionChangedSignal().connect( Gaffer.WeakMethod( self.handleValue ), scoped = True  )
 
         # genericAsset.updateCurrentLoadedAssets(True)
         genericAsset.updateCurrentLoadedAssets()
@@ -597,9 +608,9 @@ class assetListWidget( GafferUI.Editor ):
 
         menuDefinition = IECore.MenuDefinition()
         selectedData = pathListing.getSelectedColumns()
-    	selectedPaths = selectedData['assetFullPath']
-    	selectedPathsOP = selectedData['assetOP']
-    	selectedPathsExistInHost = selectedData['assetOPSourceExistsInHost']
+        selectedPaths = selectedData['assetFullPath']
+        selectedPathsOP = selectedData['assetOP']
+        selectedPathsExistInHost = selectedData['assetOPSourceExistsInHost']
         selectedPathsEditable = [ x for x in selectedData['assetEditable'] if x ]
 
         # if selection exists in host app
@@ -668,7 +679,7 @@ class assetListWidget( GafferUI.Editor ):
                     op.newPublish()
 
             # create a menu item for each data type of the selected type!
-            for t in [ x for x in types.keys() if selected_type in x.split('/') ]:
+            for t in [ x for x in list(types.keys()) if selected_type in x.split('/') ]:
                 if self.hostApp() in types.whoCanPublish(t):
                 # if [ x for x in publishable_data if '/%s' % x in t ]:
                     menuDefinition.append( "/publish new asset of type %s" % t.replace('/','_'), { "command" : IECore.curry(createNewAsset, selectedPaths, t) } )
@@ -678,11 +689,11 @@ class assetListWidget( GafferUI.Editor ):
         if hasattr( custom, 'assetListRightClickMenu' ):
             menuDefinition = custom.assetListRightClickMenu( self, pathListing, menuDefinition )
 
-    	self.__menu = GafferUI.Menu( menuDefinition )
-    	if len( menuDefinition.items() ) :
-    		self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )
+        self.__menu = GafferUI.Menu( menuDefinition )
+        if len( menuDefinition.items() ) :
+        	self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )
 
-    	return True
+        return True
 
     def checkout( self, paths = None ):
         ''' import an asset to the host app '''
@@ -902,7 +913,7 @@ class assetListWidget( GafferUI.Editor ):
                     GafferUI.Playback.acquire( self._script.context() ).setFrameRange( start, end )
 
             # delete previous preview nodes
-            for each in [ x for x in self._script.keys() if x[0:2] == '__' ]:
+            for each in [ x for x in list(self._script.keys()) if x[0:2] == '__' ]:
                 del self._script[each]
 
             # grab the viewer from gaffer
@@ -931,9 +942,10 @@ class assetListWidget( GafferUI.Editor ):
                     if not data:
                         versions = glob.glob("%s/*" % path)
                         versions.sort()
-                        path = versions[-1]
+                        if versions:
+                            path = versions[-1]
 
-                print path, assetFullPath
+                # print( path, assetFullPath )
                 # gather alembic / USD files
                 abc  = glob.glob("%s/*.abc" % path)
                 abc += glob.glob("%s/*.usd" % path)
@@ -944,7 +956,7 @@ class assetListWidget( GafferUI.Editor ):
                 nodePrefix = str(assetFullPath).replace('/','_').replace('.','_').replace('-','_').replace('-','_')
 
                 # alembic/USD geometry
-                print abc, images
+                # print( abc, images )
                 if abc:
                     GafferScene.MergeScenes
                     for each in abc:
@@ -964,7 +976,7 @@ class assetListWidget( GafferUI.Editor ):
                         frameRange( data )
                         nodes = 0
                         for each in [aovs[0]]:
-                            print each
+                            # print( each )
                             node = "__imageReader%s%02d" % (nodePrefix, nodes)
                             self._script[node] = GafferImage.ImageReader()
                             self._script[node]["fileName"].setValue( each+'####.exr' )
@@ -1077,7 +1089,7 @@ class assetListWidget( GafferUI.Editor ):
 
     ## This signal is emitted when the user double clicks on a leaf path.
     def pathSelectedSignal( self ) :
-        print 'pathSelectedSignal';sys.stdout.flush()
+        print( 'pathSelectedSignal' );sys.stdout.flush()
         return self.__pathSelectedSignal
 
     def __buttonPress( self, widget, event ) :
@@ -1086,7 +1098,7 @@ class assetListWidget( GafferUI.Editor ):
             return False
 
         self.__borrowedButtonPress = None
-        if event.buttons == event.Buttons.Left and event.modifiers == event.Modifiers.None :
+        if event.buttons == event.Buttons.Left and event.modifiers == event.Modifiers.None_ :
 
             # We want to implement drag and drop of the selected items, which means borrowing
             # mouse press events that the QTreeView needs to perform selection and expansion.
@@ -1274,7 +1286,7 @@ class assetListWidget( GafferUI.Editor ):
                                 # set asset path and override mask
                                 assetStr = os.path.dirname(asset)
                                 assetOvrMsk = assetStr.replace('model','[animation|model]')
-                                assetOvrMsk = "%s[\/.*\.|\/]%s" % ( os.path.dirname(assetOvrMsk), os.path.basename(assetStr) )
+                                assetOvrMsk = r"%s[\/.*\.|\/]%s" % ( os.path.dirname(assetOvrMsk), os.path.basename(assetStr) )
 
                                 node["asset"].setValue( assetStr )
                                 # node["name"].setValue( assetStr.replace('/','|') )
@@ -1433,9 +1445,9 @@ def populateAssets(hostApp='gaffer',filter="", folderName='sam', forceCache=None
         t = time.time()
 
         # ret = recursiveTree("%s/sam" % (j.path()), ret, ret_sem_shot, filter)
-        print "populateAssets->starting: %0.04f" %  (time.time()-t)
+        print( "populateAssets->starting: %0.04f" %  (time.time()-t) )
         types = assetUtils.types()
-        print "populateAssets->gettingTypes: %0.04f" %  (time.time()-t)
+        print( "populateAssets->gettingTypes: %0.04f" %  (time.time()-t) )
 
         db = None
         if 0: #samDB.exists() and not forceCache:
@@ -1445,7 +1457,7 @@ def populateAssets(hostApp='gaffer',filter="", folderName='sam', forceCache=None
             for t1,t2 in [ x.split('/')[:2] for x in whoCanImport.keys() ]:
                 if not hostApp or hostApp in whoCanImport[ '%s/%s' % (t1,t2) ]:
                     ret2[t1] = db[t1]
-            print "populateAssets->usingCache: %0.04f" %  (time.time()-t)
+            print( "populateAssets->usingCache: %0.04f" %  (time.time()-t) )
 
         else:
             whoCanImport = {}
@@ -1470,10 +1482,10 @@ def populateAssets(hostApp='gaffer',filter="", folderName='sam', forceCache=None
             if not hostApp:
                 samDB.cacheAssetList( (ret2, whoCanImport) )
                 # print ret2
-                print "populateAssets->writeCache: %0.04f" %  (time.time()-t)
+                print( "populateAssets->writeCache: %0.04f" %  (time.time()-t) )
 
 
-        print "populateAssets: %0.04f" %  (time.time()-t)
+        print( "populateAssets: %0.04f" %  (time.time()-t) )
         # print ret2
         # cleanup empty ones
         # for n in ret.keys():
@@ -1790,14 +1802,14 @@ class TreeModel(QtCore.QAbstractItemModel):
 
                     # using gathered data show if things are up2date, loaded or editable
                     nodesInTheScene = None
-                    match = re.search('_\d\d_\d\d_\d\d', node)
+                    match = re.search(r'_\d\d_\d\d_\d\d', node)
                     mask_any_version = 'SAM_%s_.*' % ( node )
                     # if this asset has a version number
                     if match:
                         # check if the node is loaded!
                         versionPosition = match.start()
                         if self.hostApp() == 'maya':
-                            mask_any_version = '.*SAM_%s_\d\d_\d\d_\d\d_' % ( node[:versionPosition] )
+                            mask_any_version = r'.*SAM_%s_\d\d_\d\d_\d\d_' % ( node[:versionPosition] )
                             # nodesInTheScene =  assetUtils.m.ls( '|SAM_%s_??_??_??_*' % node[:versionPosition] )
                         elif self.hostApp() == 'gaffer':
                             _node = asset.split('/')
@@ -1806,7 +1818,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                     # if no version number, just check for the type and subtype
                     else:
                         # if self.hostApp() == 'maya':
-                            mask_any_version = 'SAM_%s_*' % ( node )
+                            mask_any_version = r'SAM_%s_*' % ( node )
 
                     nodesInTheScene = [ x for x in self.ls if re.match(mask_any_version, x) ]
 
@@ -1971,7 +1983,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         def recurseProcessData(data, parents = parent, depth=0, atype=[]):
             if not hasattr( data, 'keys' ) or depth==4:
                 return
-            keys = data.keys()
+            keys = list(data.keys())
             keys.sort()
             current = [depth]
             if '__current__' in keys:
@@ -2003,7 +2015,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         self.ready = None
         recurseProcessData(data)
         # print parent
-        print 'setupModelData:', time.time() -t
+        print( 'setupModelData:', time.time() -t )
 
         # threading.Thread( target = lambda: recurseProcessData(data) ).start()
         #
@@ -2108,7 +2120,7 @@ if assetUtils.m:
             sys.mixinWindows[controlName] = self
             # print "##====>>",workspaceControl, omui.MQtUtil.findControl(self.objectName()), self;sys.stdout.flush()
             #     workspaceControl = omui.MQtUtil.getCurrentParent()
-            #     print "##====>>",omui.MQtUtil.getLayoutChildren(long(workspaceControl))
+            #     print "##====>>",omui.MQtUtil.getLayoutChildren(_long(workspaceControl))
             #     sys.mixinWindows[controlName]=None
 
         def close(self):
@@ -2134,7 +2146,7 @@ if assetUtils.m:
                 mixinPtr = omui.MQtUtil.findControl(self.controlName)
                 workspaceControl = omui.MQtUtil.findControl("%sWorkspaceControl" % self.controlName)
                 if mixinPtr:
-                    name = omui.MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(workspaceControl))
+                    name = omui.MQtUtil.addWidgetToMayaLayout(_long(mixinPtr), _long(workspaceControl))
 
 
         @classmethod
@@ -2161,8 +2173,8 @@ if assetUtils.m:
             # mixinPtr = omui.MQtUtil.findControl(instance.objectName())
             # print "====>>",mixinPtr,instance;sys.stdout.flush()
             # # Add our UI to the WorkspaceControl
-            # name = omui.MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(workspaceControl))
-            # print " omui.MQtUtil.addWidgetToMayaLayout(long(mixinPtr), long(workspaceControl))", name
+            # name = omui.MQtUtil.addWidgetToMayaLayout(_long(mixinPtr), _long(workspaceControl))
+            # print " omui.MQtUtil.addWidgetToMayaLayout(_long(mixinPtr), _long(workspaceControl))", name
             # sys.stdout.flush()
             # controlName = name.split('WorkspaceControl')[0]
 
@@ -2220,12 +2232,12 @@ if assetUtils.m:
 #                         self.__buttons += [1]
 #                         self.__buttons[-1] = GafferUI.Button( "", "samShelfPanelx20.png", toolTip="Refresh the panel from the most up-to-date data"  )
 #                         self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-#                         self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.refreshPanel ) ) )
+#                         self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.refreshPanel ), scoped = True  ) )
 #
 #                         self.__buttons += [1]
 #                         self.__buttons[-1] = GafferUI.Button( "", "samShelfx20.png", toolTip="Open sam browser"  )
 #                         self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-#                         self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.openSAMBrowser ) ) )
+#                         self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( Gaffer.WeakMethod( self.openSAMBrowser ), scoped = True  ) )
 #
 #                         GafferUI.Spacer(IECore.V2i(10,10))
 #

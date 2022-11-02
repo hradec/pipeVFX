@@ -37,6 +37,10 @@ import Gaffer
 import GafferUI
 import pipe
 
+
+try: from importlib import reload
+except: pass
+
 import  assetListWidget
 reload(assetListWidget)
 
@@ -179,9 +183,9 @@ class bundleListWidget( GafferUI.EditorWidget ):
 
         menuDefinition = IECore.MenuDefinition()
         selectedData = pathListing.getSelectedColumns()
-    	selectedPaths = selectedData['assetFullPath']
-    	selectedPathsOP = selectedData['assetOP']
-    	selectedPathsExistInHost = selectedData['assetOPSourceExistsInHost']
+        selectedPaths = selectedData['assetFullPath']
+        selectedPathsOP = selectedData['assetOP']
+        selectedPathsExistInHost = selectedData['assetOPSourceExistsInHost']
         # for path in selectedPaths:
 
         selected_source_exists_in_host = False if [ x for x in selectedPathsExistInHost if x ] else True
@@ -196,7 +200,7 @@ class bundleListWidget( GafferUI.EditorWidget ):
                     pb = genericAsset.progressBar( len(paths)+1, "Importing assets..." )
                     for path in paths:
                         pb.step()
-                        print path
+                        # print( path )
                         op = assetUtils.assetOP( path )
                         op.doImport( )
                     pb.step()
@@ -268,11 +272,11 @@ class bundleListWidget( GafferUI.EditorWidget ):
 
                 menuDefinition.append( "/publish new asset of type %s" % t.replace('/','_'), { "command" : IECore.curry(createNewAsset, selectedPaths, t) } )
 
-    	self.__menu = GafferUI.Menu( menuDefinition )
-    	if len( menuDefinition.items() ) :
-    		self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )
+        self.__menu = GafferUI.Menu( menuDefinition )
+        if len( menuDefinition.items() ) :
+        	self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )
 
-    	return True
+        return True
 
 
     def refresh( self , lastLS=None):
@@ -406,7 +410,7 @@ class bundleListWidget( GafferUI.EditorWidget ):
             return False
 
         self.__borrowedButtonPress = None
-        if event.buttons == event.Buttons.Left and event.modifiers == event.Modifiers.None :
+        if event.buttons == event.Buttons.Left and event.modifiers == event.Modifiers.None_ :
 
             # We want to implement drag and drop of the selected items, which means borrowing
             # mouse press events that the QTreeView needs to perform selection and expansion.
@@ -463,7 +467,7 @@ class bundleListWidget( GafferUI.EditorWidget ):
         if len( selectedPaths ) :
             GafferUI.Pointer.setCurrent( self.__dragPointer )
             each =str(selectedPaths[0])
-            print each
+            # print( each )
             node =  Gaffer.Node( '_'.join(each.split('/')[:-1]) )
             node['in']= Gaffer.Plug(  )
             node['out']= Gaffer.Plug( direction = Gaffer.Plug.Direction.Out )
@@ -478,9 +482,9 @@ class bundleListWidget( GafferUI.EditorWidget ):
 
 
     def __dragEnter( self, widget, event ) :
-        print widget
-        print event.destinationGadget
-        print event.destinationWidget
+        print( widget )
+        print( event.destinationGadget )
+        print( event.destinationWidget )
         sys.stdout.flush()
 
 
@@ -493,9 +497,9 @@ class bundleListWidget( GafferUI.EditorWidget ):
             if event.destinationGadget:
                 event.destinationGadget.ScriptNode.addChild( node )
         # print dir(event)
-        print widget
-        print event.destinationGadget
-        print event.destinationWidget
+        print( widget )
+        print( event.destinationGadget )
+        print( event.destinationWidget )
         sys.stdout.flush()
 
         # self.__viewportGadget.dragEndSignal()( self.__viewportGadget, event )
@@ -544,7 +548,7 @@ def populateAssets(filter="", folderName='sam'):
             if l<2:
                 for each in glob( "%s/*" % path ):
                     id = each.replace(path,'')[1:].strip()
-                    print each,id,[ x for x in ['shots/','assets/'] if x in each ]
+                    # print( each,id,[ x for x in ['shots/','assets/'] if x in each ] )
                     if os.path.isdir(each) and [ x for x in ['/shots','/assets'] if x in each ]:
                         # try:
                         #     data = Asset.AssetParameter(each.replace(j.path('sam/'),'')).getData()
@@ -832,7 +836,7 @@ class TreeModel(QtCore.QAbstractItemModel): #assetListWidget.TreeModel):
 
 
         self.ready = None
-        print data
+        # print( data )
         recurseProcessData(data)
 
         # threading.Thread( target = lambda: recurseProcessData(data) ).start()

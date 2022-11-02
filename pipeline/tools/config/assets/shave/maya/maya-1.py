@@ -24,6 +24,10 @@ from glob import glob
 import os, datetime, sys
 from multiprocessing import cpu_count
 
+try: from importlib import reload
+except: pass
+
+
 import genericAsset
 reload(genericAsset)
 
@@ -85,7 +89,7 @@ class maya( genericAsset.maya ) :
         genericAsset.maya.doPublishMayaExport(self, fileName, operands)
 
         for n in range(0,len(connectionsToRestore),2):
-            print connectionsToRestore[n+1], connectionsToRestore[n]
+            # print( connectionsToRestore[n+1], connectionsToRestore[n] )
             m.connectAttr( connectionsToRestore[n+1], connectionsToRestore[n], f=1 )
 
         for node in createOnlyOne:

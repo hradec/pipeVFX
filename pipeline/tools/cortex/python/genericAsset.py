@@ -23,6 +23,12 @@
 # maya.app.general.fileTexturePathResolver.findAllFilesForPattern("/BTRFS10TB/atomo/jobs/0704.hi_chew/assets/sala/users/iinaja/maya/sourceimages/personagem_maca/textura/corpo/Base_maca_Color_<UDIM>.png",0)
 
 
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
+
 import IECore, Gaffer, GafferUI, pipe, tempfile
 import Asset
 from glob import glob
@@ -125,7 +131,7 @@ def push(nodes):
     import re
     attrPOP={}
     for node in nodes:
-        versionPosition = re.search('_\d\d_\d\d_\d\d', node).start()
+        versionPosition = re.search(r'_\d\d_\d\d_\d\d', node).start()
         _node = '|%s_??_??_??_*' % ( node[:versionPosition] )
         attrPOP[_node]={}
         for each in ['']+['|'.join(x.split('|')[2:]) for x in m.ls(node, dag=1, v=1,l=1) if x[1:] not in nodes]:
@@ -520,7 +526,7 @@ class _genericAssetClass( IECore.Op ) :
             nodeName = nodeName.replace('-','_')
             if anyVersion:
                 import re
-                versionPosition = re.search('_\d\d_\d\d_\d\d', nodeName).start()
+                versionPosition = re.search(r'_\d\d_\d\d_\d\d', nodeName).start()
                 mask = '|%s_??_??_??_*' % ( nodeName[:versionPosition] )
                 # print( mask, m.ls(mask) )
                 nodes = m.ls(mask)

@@ -1,10 +1,18 @@
 
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
+
 
 import os, sys
 import IECore
 import GafferUI
 import nodeMD5
 import pipe.maya
+
+
 
 try:
     import maya.cmds as m

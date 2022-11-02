@@ -23,11 +23,15 @@ import IECore, pipe, tempfile
 from glob import glob
 import os, datetime, sys
 
+try: from importlib import reload
+except: pass
+
+
 import genericAsset
 reload(genericAsset)
 
 class maya( genericAsset.maya ) :
-    _color = IECore.Color3f( 0.7, 0.5, 0.0 ) 
+    _color = IECore.Color3f( 0.7, 0.5, 0.0 )
 
     def __init__( self ) :
         genericAsset.maya.__init__(self, 'lighting')

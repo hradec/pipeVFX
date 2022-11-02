@@ -1,5 +1,8 @@
 
-
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
 
 import IECore
 import Gaffer
@@ -9,9 +12,6 @@ import math
 import pipe
 import os
 
-# python3 workaround for reload
-try: from importlib import reload
-except: pass
 
 
 try:
@@ -110,7 +110,7 @@ class types(object):
         return globals()['_types'][assetType].whoCanImport()
 
     def keys(self):
-        k = globals()['_types'].keys()
+        k = list( globals()['_types'].keys() )
         k.sort()
         return k
 
@@ -224,6 +224,12 @@ def __scriptJob( **kk ):
         m.scriptJob( **kk )
 
 def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnlyOne=True, event=None):
+    #python3 compatibility
+    if deleteEvent and not hasattr(deleteEvent, 'func_name'):
+        deleteEvent.func_name = deleteEvent.__name__
+    if idleEvent and not hasattr(idleEvent, 'func_name'):
+        idleEvent.func_name = idleEvent.__name__
+
     if m:
         _jobs=[]
         if allowOnlyOne:
@@ -248,7 +254,13 @@ def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnl
             # print [ str(x).strip().split(':') for x in m.scriptJob(listJobs=True) if idleEvent.func_name in x ]
 
         if event:
+            #python3 compatibility
+            for n in range(len(event)):
+                if not hasattr(event[n], 'func_name') and hasattr(event[n], '__name__'):
+                    # print(event[n], type(event[n]), dir(event[n]))
+                    event[n].func_name = event[n].__name__
             # print '====>',idleEvent.func_name
+
             if _jobs:
                 jobs =  [ str(x).strip().split(':') for x in _jobs if event[1].func_name in x and "'%s'" % event[0] in x ]
                 for job in jobs:
@@ -562,11 +574,11 @@ class assetOP(object):
         ''' return the nodes of the current asset, in the host app'''
         import re
         if self.path and self.hostApp()=='maya' and m and len(self.pathPar.split('/'))>2:
-            self.__maya_ls = m.ls('|SAM*',l=1)
+            self.__maya_ls = m.ls(r'|SAM*',l=1)
             nodeName = '_'.join(self.path.split('sam/')[-1].split('/')[:-1]).replace('.','_').replace('-','_').replace('-','_')
-            versionPosition = re.search('_\d\d_\d\d_\d\d', nodeName).start()
+            versionPosition = re.search(r'_\d\d_\d\d_\d\d', nodeName).start()
             # mask = '^\|SAM_%s_\d\d_\d\d_\d\d_' % ( nodeName[:versionPosition] )
-            return m.ls( '|SAM_%s*_??_??_??_*' % nodeName[:versionPosition], l=1 )
+            return m.ls( r'|SAM_%s*_??_??_??_*' % nodeName[:versionPosition], l=1 )
         return []
 
 
@@ -719,7 +731,7 @@ class assetOP(object):
 
     def mayaOpenDependency(self):
         ''' run a new maya to open a dependency'''
-        self._openDependency( cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\(\\\\\\\\"%s\\\\\\\\")\\\\\\")" ''', app=pipe.apps.maya )
+        self._openDependency( cmd = r'''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\(\\\\\\\\"%s\\\\\\\\")\\\\\\")" ''', app=pipe.apps.maya )
 
     def gafferOpenDependency(self):
         ''' open the asset dependency (original scene)
@@ -748,7 +760,7 @@ class assetOP(object):
 
         elif self.hostApp()=='gaffer':
             def __runGaffer(scene):
-                s = GafferUI.root()['scripts'].keys()
+                s = list( GafferUI.root()['scripts'].keys() )
                 script = GafferUI.root()['scripts'][s[0]]
                 script['fileName'].setValue( scene )
                 script.load()
@@ -760,7 +772,7 @@ class assetOP(object):
 
 
 
-    def _openDependency( self, cmd = '''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', copyToFolder=None, app=None ):
+    def _openDependency( self, cmd = r'''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', copyToFolder=None, app=None ):
         '''
         open asset dependency main funtion, used by all others methods that open the original asset dependency (scene) in the proper environment:
 

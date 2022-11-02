@@ -19,6 +19,11 @@
 # =================================================================================
 
 
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
 
 import os
 import re

@@ -19,6 +19,13 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
+
 import os, sys
 from glob import glob
 import pipe
@@ -91,7 +98,7 @@ def types(refresh=False):
             return d
 
         __asset_types__ = recursiveTree(root, __asset_types__)
-    ret = __asset_types__.keys()
+    ret = list(__asset_types__.keys())
     ret.sort()
     return ret
 
@@ -102,7 +109,7 @@ class AssetParameter( CompoundParameter ):
             CompoundParameter.__init__(self, 'Asset',"", userData = { "UI": {"collapsed" : BoolData(False),}},)
 
         opfilter = '*'
-        if os.environ.has_key('PIPE_PUBLISH_FILTER'):
+        if 'PIPE_PUBLISH_FILTER' in os.environ:
             opfilter = os.environ['PIPE_PUBLISH_FILTER']
 
         if IECore:
@@ -163,7 +170,7 @@ class AssetParameter( CompoundParameter ):
             #             # check if version is current!
             #             cur = os.path.dirname(each)
             #             if os.path.exists('%s/current' % cur):
-            #                 if not current.has_key(cur):
+            #                 if cur not in current:
             #                     current[cur] = open('%s/current' % cur,'r').readlines()[0].strip()
             #                 # and add a '(current)' suffix to show to the user!
             #                 if each == current[cur][:-1]:
@@ -176,9 +183,9 @@ class AssetParameter( CompoundParameter ):
 
         allAssets = []
         #if publish:
-        allAssets = recursiveGatherAllAssets().keys()
+        allAssets = list( recursiveGatherAllAssets().keys() )
         allAssets.sort()
-        AssetsPublicados = map( lambda x: (x,x), allAssets )
+        AssetsPublicados = list( map( lambda x: (x,x), allAssets ) )
         self.published = allAssets
 
         assetName = ""
@@ -199,7 +206,7 @@ class AssetParameter( CompoundParameter ):
 
         # set version and description to be the last one published
         if assetName:
-            f = filter(lambda x: str(assetName) in x, self.published)
+            f = list( filter(lambda x: str(assetName) in x, self.published) )
             if f:
                 f.sort()
                 # print f
@@ -215,7 +222,7 @@ class AssetParameter( CompoundParameter ):
 
 
         if IECore:
-            assetVersion = map( lambda x: int(x), assetVersion.split('.') )
+            assetVersion = [ int(x) for x in assetVersion.split('.') ]
             assetVersion = V3i(assetVersion[0], assetVersion[1]+1, assetVersion[2])
 
             if publish:
@@ -234,7 +241,7 @@ class AssetParameter( CompoundParameter ):
                                 name="name",
                                 description = "Asset name, without spaces or weird characters. Right-click shows all published assets!",
                                 defaultValue = assetName,
-                                regex = "^\S+$",
+                                regex = r"^\S+$",
                                 regexDescription = "no spaces allowed.",
                                 allowEmptyString = False,
                                 presets = AssetsPublicados,
@@ -277,7 +284,7 @@ class AssetParameter( CompoundParameter ):
                         name="name",
                         description = "Asset name, without spaces or weird characters. Right-click shows all published assets!",
                         defaultValue = assetName,
-                        #regex = "^\S+$",
+                        #regex = r"^\S+$",
                         #regexDescription = "no spaces allowed.",
                         #allowEmptyString = True,
                         presets = AssetsPublicados,
@@ -394,7 +401,7 @@ class AssetParameter( CompoundParameter ):
         assetPath = None
         assetPathParameter = None
         for each in self['type'].keys():
-            if self['type'][each].userData().has_key('assetPath'):
+            if 'assetPath' in self['type'][each].userData():
                 assetPathParameter = str(each)
                 assetPath = str(self['type'][each].getValue())
                 break
@@ -404,7 +411,7 @@ class AssetParameter( CompoundParameter ):
         ''' we can add a dataName user data to parameters to specify an alternative
         name for that parameter to be used inside the data file for an asset!'''
         ud = parameter.userData()
-        if ud.has_key('dataName'):
+        if 'dataName' in ud:
             return str( ud['dataName'] )
         return str( parameter.name )
 
@@ -420,7 +427,7 @@ class AssetParameter( CompoundParameter ):
     def getDataDict(self):
         ''' load data file based on current set name parameters '''
         assetData = {}
-        if self.has_key('info'):
+        if 'info' in self:
             assetName = str(self['info']['name'].getValue())
             if '/' in assetName:
                 assetName = assetName.split()[0].strip()
@@ -473,23 +480,23 @@ class AssetParameter( CompoundParameter ):
 
                         # get assetData from data.txt and fill up ui!
                         if assetData:
-                            if hasattr( assetData, 'has_key' ):
+                            if hasattr( assetData, '__getitem__' ):
                                 if not self.publish:
                                     if 'type' in self.keys():
                                         for par in self['type'].keys():
                                             dataName = self.getDataName(self['type'][par])
-                                            if assetData.has_key(dataName):
+                                            if dataName in assetData:
                                                 data = assetData[dataName]
                                                 if type(data)==type([]):
                                                     data = ','.join(data)
                                                 self['type'][par].smartSetValue( data )
 
-                                if assetData.has_key('assetInfo'):
+                                if 'assetInfo' in assetData:
                                     for each in assetData['assetInfo'].keys():
                                         if each in self['info'].keys():
                                             self['info'][each].smartSetValue( assetData['assetInfo'][each] )
 
-                                    if assetData['assetInfo'].has_key('description'):
+                                    if 'description' in assetData['assetInfo']:
                                         if 'description' in self['info'].keys():
                                             self['info']['description'].smartSetValue( "\n%s (desc versao: %s)" % (assetData['assetInfo']['description'], assetOldVersion) )
 
@@ -497,10 +504,10 @@ class AssetParameter( CompoundParameter ):
                     assetType = self.getAssetType()
                     if assetType:
                         published = self.gatherAssets( assetType[0] )
-                        if published.has_key(assetName):
+                        if assetName in published:
                             versions = published[assetName]
                             versions.sort()
-                            version = map(lambda x: int(x), os.path.basename(versions[-1]).split('.'))
+                            version = list( map( lambda x: int(x), os.path.basename(versions[-1]).split('.') ) )
                             self['info']['version'].smartSetValue(V3i(version[0],version[1]+1,version[2]))
                         else:
                             self['info']['version'].smartSetValue(V3i(1,0,0))

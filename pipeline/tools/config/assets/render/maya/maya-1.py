@@ -43,9 +43,9 @@ class maya( render ) :
         currentRenderer = '3delight'
 
         filter='*'
-        if os.environ.has_key('IECORE_ASSET_RENDER_MAYA_OP_FILTER'):
+        if 'IECORE_ASSET_RENDER_MAYA_OP_FILTER' in os.environ:
             filter = os.environ['IECORE_ASSET_RENDER_MAYA_OP_FILTER']
-        if not os.environ.has_key('IECORE_ASSET_RENDER_MAYA_OP_PATHS'):
+        if 'IECORE_ASSET_RENDER_MAYA_OP_PATHS' not in os.environ:
             os.environ['IECORE_ASSET_RENDER_MAYA_OP_PATHS'] = "%s/renderer" % os.path.dirname(__file__)
 
 #        self.classLoader = IECore.ClassLoader.defaultLoader( "IECORE_ASSET_RENDER_MAYA_OP_PATHS" )
@@ -125,7 +125,7 @@ class maya( render ) :
 
 
     def parameterChanged(self, parameter):
-        print parameter
+        print( "maya/renderer/maya.parameterChanged:", parameter )
         # self.parameters()['delightRenderPasses'].userData()['UI']['visible'] = IECore.BoolData(False)
         # if parameter.name == 'RenderEngine':
         #    if m:
@@ -443,7 +443,7 @@ class maya( render ) :
                 group       = 'pipe',
                 description = data['assetDescription'],
             ).submit()
-            print 'job id: %s' % str(jobid)
+            print( 'job id: %s' % str(jobid) )
             jobids.append(str(jobid))
 
 

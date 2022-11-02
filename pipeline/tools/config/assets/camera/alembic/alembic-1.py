@@ -25,6 +25,10 @@ import os, datetime, sys
 
 # TODO: parameter shake enable and shake values not being exported
 
+try: from importlib import reload
+except: pass
+
+
 import genericAsset
 reload(genericAsset)
 

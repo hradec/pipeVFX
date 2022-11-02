@@ -76,28 +76,28 @@ Gaffer.Metadata.registerValue( preferences["displayColorSpace"]["context"], "lay
 
 # update the display transform from the plugs
 
-def __setDisplayTransform() :
-
-	d = OCIO.DisplayTransform()
-	d.setInputColorSpaceName( OCIO.Constants.ROLE_SCENE_LINEAR )
-	d.setDisplay( defaultDisplay )
-	d.setView( preferences["displayColorSpace"]["view"].getValue() )
-
-	context = config.getCurrentContext().createEditableCopy()
-	for variable in preferences["displayColorSpace"]["context"] :
-		if variable["enabled"].getValue() :
-			context.setStringVar( variable["name"].getValue(), variable["value"].getValue() )
-
-	processor = config.getProcessor( d, context = context )
-
-	def f( c ) :
-
-		cc = processor.applyRGB( [ c.r, c.g, c.b ] )
-		return imath.Color3f( *cc )
-
-	GafferUI.DisplayTransform.set( f )
-
-__setDisplayTransform()
+# def __setDisplayTransform() :
+#
+# 	d = OCIO.DisplayTransform()
+# 	d.setInputColorSpaceName( OCIO.Constants.ROLE_SCENE_LINEAR )
+# 	d.setDisplay( defaultDisplay )
+# 	d.setView( preferences["displayColorSpace"]["view"].getValue() )
+#
+# 	context = config.getCurrentContext().createEditableCopy()
+# 	for variable in preferences["displayColorSpace"]["context"] :
+# 		if variable["enabled"].getValue() :
+# 			context.setStringVar( variable["name"].getValue(), variable["value"].getValue() )
+#
+# 	processor = config.getProcessor( d, context = context )
+#
+# 	def f( c ) :
+#
+# 		cc = processor.applyRGB( [ c.r, c.g, c.b ] )
+# 		return imath.Color3f( *cc )
+#
+# 	GafferUI.DisplayTransform.set( f )
+#
+# __setDisplayTransform()
 
 # and connect to plug changed to update things again when the user asks
 

@@ -24,6 +24,10 @@ from glob import glob
 import os, datetime, sys, tempfile
 import pipe
 
+try: from importlib import reload
+except: pass
+
+
 try:
     import maya.cmds as m
     m.ls()

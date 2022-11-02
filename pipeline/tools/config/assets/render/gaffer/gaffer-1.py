@@ -22,12 +22,16 @@
 import IECore, pipe
 exec( pipe.include( __file__ ) )
 
+try: from importlib import reload
+except: pass
+
+
 class gaffer( render ) :
 
     def __init__( self ) :
         self._whoCanPublish = ['gaffer']
         self._whoCanImport = ['maya','nuke','houdini']
-        self._whoCanOpen = ["gaffer"]        
+        self._whoCanOpen = ["gaffer"]
         render.__init__(self, 'gaffer', 'grf',  'gaffer/')
 
 IECore.registerRunTimeTyped( gaffer )

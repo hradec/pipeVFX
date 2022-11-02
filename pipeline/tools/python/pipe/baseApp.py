@@ -18,6 +18,12 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
 import log
 from environ import environ as _environ
 from base import depotRoot, roots, platform, py, arch, WIN, OSX, LIN, runProcess, taskset, vglrun
@@ -1550,7 +1556,7 @@ class baseApp(_environ):
             bin = filter(lambda x: x[1] == binName, self.bins())
             if bin:
                 ret = self.bg(cmd,bin[0])
-                if ret:
+                if ret and not runWithOsSystem:
                     cmd += ' & '
 
         # force affinity to be the number of cores in the machine, just in case.
@@ -1680,6 +1686,10 @@ class baseLib(baseApp):
         return False
 
     def LD_PRELOAD(self):
+        ''' a default LD_PRELOAD that returns all .so files in a library install
+        path, to be added to the LD_PRELOAD environment variable.
+        This is special usefull when we want to force our QT .so libraries to
+        be loaded.'''
         pv = versionLib.get('python')
         bv = versionLib.get('boost')
         pvm = '.'.join(pv.split('.')[:2])

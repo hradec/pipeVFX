@@ -23,6 +23,10 @@ import IECore, pipe, tempfile
 from glob import glob
 import os, datetime, sys
 
+try: from importlib import reload
+except: pass
+
+
 import genericAsset
 from genericAsset import m
 if m:

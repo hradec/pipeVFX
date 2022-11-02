@@ -23,6 +23,8 @@
 import IECore
 import IECoreAlembic
 
+try: from importlib import reload
+except: pass
 
 class alembic( IECore.Op ):
 

@@ -23,6 +23,10 @@ import IECore, pipe, tempfile
 from glob import glob
 import os, datetime, sys
 
+try: from importlib import reload
+except: pass
+
+
 import genericAsset
 reload(genericAsset)
 
@@ -58,7 +62,7 @@ class maya( genericAsset.maya ) :
     def doPublishMayaExport(self, fileName, operands):
         ''' we override doPublishMaya just to force meshPrimitives to be the default nodes! '''
         self.data['meshPrimitives'] = [ str(x) for x in self.selectNodes() ]
-        print self.data['meshPrimitives']
+        # print( self.data['meshPrimitives'] )
 
         ret = genericAsset.maya.doPublishMayaExport(self, fileName, operands)
 
@@ -170,8 +174,8 @@ class maya( genericAsset.maya ) :
 
 
                     pb.close()
-                print '\n\nDone'
-            print time.time()-t
+                print( '\n\nDone' )
+            print( time.time()-t )
 
 
     @staticmethod

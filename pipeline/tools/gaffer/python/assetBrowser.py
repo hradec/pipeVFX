@@ -18,6 +18,11 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
 
 
 import os

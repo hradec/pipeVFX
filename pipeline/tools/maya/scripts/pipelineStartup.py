@@ -18,6 +18,13 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
+
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
+
 import os, sys
 # if float(os.environ["MAYA_VERSION"]) > 2017:
 #     # make sure md5 works!!
@@ -204,17 +211,17 @@ def pipeIdleStartup():
         )
 
 
-        if not m.about(batch=1):
-            #delete default cortex menu!
-            for each in filter( lambda x: m.menu( x, q=1, l=1)=='Cortex', m.window( "MayaWindow", query=True, menuArray=True ) ):
-                m.deleteUI( each, menu=True )
-
-            #create our custom one!
-            global __cortexMenu
-            try:
-                __cortexMenu = IECoreMaya.createMenu( menu, "MayaWindow", "Cortex" )
-            except:
-                __cortexMenu = IECoreMaya.Menus.createMenu( "Cortex", menu, "MayaWindow" )
+        # if not m.about(batch=1):
+        #     #delete default cortex menu!
+        #     for each in filter( lambda x: m.menu( x, q=1, l=1)=='Cortex', m.window( "MayaWindow", query=True, menuArray=True ) ):
+        #         m.deleteUI( each, menu=True )
+        #
+        #     #create our custom one!
+        #     global __cortexMenu
+        #     try:
+        #         __cortexMenu = IECoreMaya.createMenu( menu, "MayaWindow", "Cortex" )
+        #     except:
+        #         __cortexMenu = IECoreMaya.Menus.createMenu( "Cortex", menu, "MayaWindow" )
 
 
     # force unload of Alembic plugins!!

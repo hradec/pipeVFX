@@ -117,7 +117,7 @@ class houdini( render ) :
                 range       = range(int(frameRange.x), int(frameRange.y+frameRange.z), int(frameRange.z)),
                 group       = 'pipe'
             ).submit()
-            print 'job id: %s' % str(jobid)
+            print( 'job id: %s' % str(jobid) )
             jobids.append(str(jobid))
 
 

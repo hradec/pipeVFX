@@ -21,6 +21,10 @@
 
 import IECore, pipe
 
+try: from importlib import reload
+except: pass
+
+
 import genericAsset
 reload(genericAsset)
 

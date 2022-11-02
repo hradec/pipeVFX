@@ -24,6 +24,10 @@ from glob import glob
 import os, datetime, sys
 import pipe
 
+try: from importlib import reload
+except: pass
+
+
 try:
     import maya.cmds as m
     from maya.mel import eval as meval
@@ -42,13 +46,13 @@ class render( IECore.Op ) :
                 ret = (True,'')
                 if args:
                     argExt = os.path.splitext(str(args[0]))[1].lower()
-                    print argExt
-                    print map(lambda x: '.%s' % x, ext.split(','))
+                    print( argExt )
+                    print( map(lambda x: '.%s' % x, ext.split(',')) )
                     if argExt not in map(lambda x: '.%s' % x, ext.split(',')):
                         ret = (False, 'Extensions %s not allowed!' % argExt)
 
-                print args
-                print ret
+                print( args )
+                print( ret )
                 return ret
 
         IECore.Op.__init__( self, "Publish %s assets." % self.__class__,
@@ -70,7 +74,7 @@ class render( IECore.Op ) :
 
         j = pipe.admin.job()
         jobData = j.getData()
-        if jobData.has_key('output'):
+        if 'output' in jobData:
             outputDefault = jobData['output']
 
         currentUser = pipe.admin.job.shot.user()

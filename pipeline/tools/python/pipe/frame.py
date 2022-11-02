@@ -52,8 +52,8 @@ def check(frames, returnLog=""):
         openexr = pipe.libs.openexr()
         # we add here a list of commands to execute for each filetype, to check if the file is readable!
         checks={
-            '.exr' : '''%s %%s 2>&1 | grep \.exr''' % openexr.path('bin/%s' % filter( lambda x: 'exrheader' in x,openexr.bins() )[0][1]),
-            '.tif' : '''%s %%s 2>&1 ''' % pipe.libs.tiff().path('bin/tiffinfo'),
+            '.exr' : r'''%s %%s 2>&1 | grep \.exr''' % openexr.path('bin/%s' % filter( lambda x: 'exrheader' in x,openexr.bins() )[0][1]),
+            '.tif' : r'''%s %%s 2>&1 ''' % pipe.libs.tiff().path('bin/tiffinfo'),
         }
         # this is the string list for each filetype to search for errors in the check command result lines
         errors={

@@ -21,11 +21,14 @@
 
 import IECore, pipe, tempfile
 
+try: from importlib import reload
+except: pass
+
 import genericAsset
 reload(genericAsset)
 
 class gaffer( genericAsset.gaffer ) :
-    _color = IECore.Color3f( 0.15 ) 
+    _color = IECore.Color3f( 0.15 )
 
     def __init__( self ) :
         genericAsset.gaffer.__init__( self, 'bundle' )

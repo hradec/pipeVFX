@@ -24,6 +24,12 @@
 ############################################################################
 
 
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
+
 
 
 import os
@@ -214,7 +220,7 @@ class test( Gaffer.Application ) :
         # them all to GafferUI functionality?
         QtCore, QtGui = pipe.importQt()
 
-        self.__clipboardContentsChangedConnection = self.root().clipboardContentsChangedSignal().connect( Gaffer.WeakMethod( self.__clipboardContentsChanged ) )
+        self.__clipboardContentsChangedConnection = self.root().clipboardContentsChangedSignal().connect( Gaffer.WeakMethod( self.__clipboardContentsChanged ), scoped = True )
         QtGui.QApplication.clipboard().dataChanged.connect( Gaffer.WeakMethod( self.__qtClipboardContentsChanged ) )
         self.__ignoreQtClipboardContentsChanged = False
 
@@ -306,9 +312,9 @@ if __name__ == '__main__':
         def _key( widget, event ):
             import sys
             # print dir(kw[0])
-            print dir(event)
-            print event.modifiers
-            print event.key
+            print( dir(event) )
+            print( event.modifiers )
+            print( event.key )
             if event.key in ["Delete","Backspace"] and not event.modifiers :
                 for each in script.selection():
                     script.removeChild( each )

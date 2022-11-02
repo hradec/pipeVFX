@@ -1,7 +1,7 @@
 # =================================================================================
 #    This file is part of pipeVFX.
 #
-#    pipeVFX is a software system initally authored back in 2006 and currently 
+#    pipeVFX is a software system initally authored back in 2006 and currently
 #    developed by Roberto Hradec - https://bitbucket.org/robertohradec/pipevfx
 #
 #    pipeVFX is free software: you can redistribute it and/or modify
@@ -24,6 +24,10 @@ from glob import glob
 import os, datetime, sys
 import pipe, clients
 
+try: from importlib import reload
+except: pass
+
+
 try:
     import maya.cmds as m
     m.ls()
@@ -31,7 +35,7 @@ except:
     m = None
 
 class sequence( IECore.Op ) :
-    
+
     def __init__( self ) :
         IECore.Op.__init__( self, "Publish %s assets." % self.__class__,
             IECore.Parameter(

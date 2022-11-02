@@ -39,6 +39,12 @@
 # But it still depends on GafferCortex.ParameterisedHolderNode(), which is C++
 # Let's see how we can replace this in the future.
 
+# python3 workaround for reload
+from __future__ import print_function
+try: from importlib import reload
+except: pass
+
+
 import sys
 import threading
 import traceback

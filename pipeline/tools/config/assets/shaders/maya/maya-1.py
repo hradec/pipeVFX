@@ -27,6 +27,10 @@ from glob import glob
 import os, datetime, sys
 from multiprocessing import cpu_count
 
+try: from importlib import reload
+except: pass
+
+
 import genericAsset
 reload(genericAsset)
 
@@ -119,7 +123,7 @@ class maya( genericAsset.maya ) :
                         cmd  = "mkdir -p %s/ ;" % ( tmpFolder )
                         cmd += "rm -rf %s/%s ;" % ( tmpFolder, tex )
                         cmd +='LD_LIBRARY_PATH=$RMANTREE/lib/ $RMANTREE/bin/txmake -resize down -t:%s -mode periodic "%s" %s/%s' % ( cores, t, tmpFolder, tex )
-                        print cmd
+                        # print( cmd )
                         os.popen( cmd ).readlines()
                         self.data['extraFiles'].append( '%s/%s' % (tmpFolder, tex) )
                         publishedText = "%s/%s" % ( self.data['publishPath'], tex )
@@ -235,7 +239,7 @@ class maya( genericAsset.maya ) :
         self.data['RLF'] = {}
         for r in rlf:
             pb.step()
-            print '######>',rlf[r]
+            # print( '######>',rlf[r] )
             newrlf_file      = os.path.dirname(rlf[r][0])+'/asset.%s.rlf' % rlf[r][0].split('/')[-2]
             newrlf           = open(newrlf_file, 'w')
             # in case we missed any .tex file, grab it from rlf!
