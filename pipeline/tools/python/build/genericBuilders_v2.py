@@ -17,7 +17,7 @@
 #    You should have received a copy of the GNU Lesser General Public License
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
-
+from __future__ import print_function
 from  SCons.Environment import *
 from  SCons.Builder import *
 from  SCons.Action import *
@@ -571,8 +571,8 @@ class pkg_superdict(dict):
             ret.obj = None
             ret.version = str("0.0.0")
             ret.requested_key = key
-            if 'ilmbase' not in key:
-                print( ":: WARNING: key",key,"doesn't exist" )
+            # if 'ilmbase' not in key:
+            #     print( ":: WARNING: key",key,"doesn't exist" )
         return ret
 
     def __setitem__(self, key, v):
@@ -1865,7 +1865,7 @@ class generic:
         ''' the main method to run system calls, like configure, make, cmake, etc  '''
 
         target = str(target_original[0])
-        self_env = env
+        self_env = env.Clone()
 
         # for each in  source:
         #     print str(each)
@@ -1932,7 +1932,7 @@ class generic:
             # ======================================================================
             # dependencies with version
             baselib = 'noBaseLib'
-            ENVIRON_DEPEND_VERSION = env['ENVIRON_DEPEND_VERSION'].split(' ')
+            ENVIRON_DEPEND_VERSION = self_env['ENVIRON_DEPEND_VERSION'].split(' ')
             # get python version from ENVIRON_DEPEND_VERSION
             env_python_dependence = [ x.split('@')[-1].split('/')[-1] for x in ENVIRON_DEPEND_VERSION if x.strip() and (pkgVersion in x.split('@')[0]) and (baselib in x.split('@')[0]) and ('python' in x.split('@')[-1]) ]
             if env_python_dependence:
@@ -2224,32 +2224,6 @@ class generic:
 
 
 
-
-
-        # here we check if the last build was finished suscessfully
-        if not self.shouldBuild( target_original, source, env ):
-            return False
-
-        # fix PYTHON_VERSION_MAJOR based on PYTHON_VERSION
-        # from dependent classes
-        if 'PYTHON_VERSION' in os_environ:
-            os_environ['PYTHON_VERSION_MAJOR'] = '.'.join(os_environ['PYTHON_VERSION'].split('.')[:2])
-            os_environ['PYTHON_TARGET_FOLDER'] = '/'.join([ os_environ['PYTHON_TARGET_FOLDER'].split('python')[0]+'python/', os_environ['PYTHON_VERSION'] ])
-            if '/python/' not in target:
-                os_environ['PYTHON_ROOT'] = os_environ['PYTHON_TARGET_FOLDER']
-            PATH += [ "%s/bin/" % os_environ['PYTHON_TARGET_FOLDER'] ]
-
-        # set lastlog filename
-        extraLabel = ''
-        lastlog = self.__lastlog( target, '1.0' )
-        if 'GCC_VERSION' in os_environ:
-            extraLabel = '(gcc %s)' % os_environ['GCC_VERSION']
-        if 'noBaseLib' not in target:
-            extraLabel = '(python %s)' % ( os_environ['PYTHON_VERSION'] )
-            if 'GCC_VERSION' in os_environ:
-                extraLabel = '(gcc %s / python %s)' % (  os_environ['GCC_VERSION'], os_environ['PYTHON_VERSION'] )
-            lastlog = self.__lastlog( target,  os_environ['PYTHON_VERSION_MAJOR'] )
-
         # set TARGET_FOLDER and INSTALL_FOLDER
         os_environ['TARGET_FOLDER'] = self_env['TARGET_FOLDER_%s' % pkgVersion.replace('.','_')]
         # os_environ['SOURCE_FOLDER'] = os.path.abspath(os.path.dirname(str(source[0])))
@@ -2260,39 +2234,16 @@ class generic:
             if self.targetSuffix.strip() and len(self.targetSuffix.split('.'))>1:
                 os_environ['INSTALL_FOLDER'] = '/'.join([ os_environ['TARGET_FOLDER'], self.targetSuffix ]).replace('//','/')
 
-        # create current package bin/libs folders so paths are not
-        # removed from env vars
-        folders = ['bin', 'lib', 'lib64']
-        _p = '.'.join( os.path.basename(lastlog).split('-')[0].split('.')[-2:] )
-        if float(_p) > 1.0:
-            folders += ['lib/python%s/site-packages' % _p]
 
-        if not hasattr(self,'no_folder_install_checking') or not self.no_folder_install_checking:
-            for n in folders:
-                path = '%s/%s' % (os_environ['INSTALL_FOLDER'], n )
-                os.system( 'mkdir -p "%s"' % path )
+        # fix PYTHON_VERSION_MAJOR based on PYTHON_VERSION
+        # from dependent classes
+        if 'PYTHON_VERSION' in os_environ:
+            os_environ['PYTHON_VERSION_MAJOR'] = '.'.join(os_environ['PYTHON_VERSION'].split('.')[:2])
+            os_environ['PYTHON_TARGET_FOLDER'] = '/'.join([ os_environ['PYTHON_TARGET_FOLDER'].split('python')[0]+'python/', os_environ['PYTHON_VERSION'] ])
+            if '/python/' not in target:
+                os_environ['PYTHON_ROOT'] = os_environ['PYTHON_TARGET_FOLDER']
+            PATH += [ "%s/bin/" % os_environ['PYTHON_TARGET_FOLDER'] ]
 
-        # PATH         = ['$INSTALL_FOLDER/bin'] + PATH
-        # LIBRARY_PATH = [
-        #     '$INSTALL_FOLDER/lib',
-        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib',
-        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload',
-        # ] + LIBRARY_PATH
-        # PYTHONPATH   = [
-        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
-        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages',
-        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload',
-        # ] + PYTHONPATH
-
-        # make sure all paths from the dependency loop exist and remove duplicates
-        # print PYTHONPATH
-        # C_INCLUDE_PATH  = [ p for p in set(C_INCLUDE_PATH)  if '$' in p or os.path.exists(p) ]
-        # LIBRARY_PATH    = [ p for p in set(LIBRARY_PATH)    if '$' in p or os.path.exists(p) ]
-        # PKG_CONFIG_PATH = [ p for p in set(PKG_CONFIG_PATH) if '$' in p or os.path.exists(p) ]
-        # PYTHONPATH      = [ p for p in set(PYTHONPATH)      if '$' in p or os.path.exists(p) ]
-        # PATH            = [ p for p in set(PATH)            if '$' in p or os.path.exists(p) ]
-        # print PYTHONPATH
 
         # transfer all lists to env vars now
         os_environ['CPATH']     = ':'.join(C_INCLUDE_PATH+[os_environ['CPATH']])
@@ -2334,6 +2285,61 @@ class generic:
             os_environ['LIBRARY_PATH'],
             '/usr/lib/x86_64-linux-gnu/',
         ])
+
+        # here we check if the last build was finished suscessfully
+        if not self.shouldBuild( target_original, source, self_env ):
+            # store the os_environ in scons env
+            for nn in os_environ.keys():
+                env["RUN_OS_ENVIRON_%s" % nn] = str(os_environ[nn])
+            return False
+
+        # set lastlog filename
+        extraLabel = ''
+        lastlog = self.__lastlog( target, '1.0' )
+        if 'GCC_VERSION' in os_environ:
+            extraLabel = '(gcc %s)' % os_environ['GCC_VERSION']
+        if 'noBaseLib' not in target:
+            extraLabel = '(python %s)' % ( os_environ['PYTHON_VERSION'] )
+            if 'GCC_VERSION' in os_environ:
+                extraLabel = '(gcc %s / python %s)' % (  os_environ['GCC_VERSION'], os_environ['PYTHON_VERSION'] )
+            lastlog = self.__lastlog( target,  os_environ['PYTHON_VERSION_MAJOR'] )
+
+
+        # create current package bin/libs folders so paths are not
+        # removed from env vars
+        folders = ['bin', 'lib', 'lib64']
+        _p = '.'.join( os.path.basename(lastlog).split('-')[0].split('.')[-2:] )
+        if float(_p) > 1.0:
+            folders += ['lib/python%s/site-packages' % _p]
+
+        if not hasattr(self,'no_folder_install_checking') or not self.no_folder_install_checking:
+            for n in folders:
+                path = '%s/%s' % (os_environ['INSTALL_FOLDER'], n )
+                os.system( 'mkdir -p "%s"' % path )
+
+        # PATH         = ['$INSTALL_FOLDER/bin'] + PATH
+        # LIBRARY_PATH = [
+        #     '$INSTALL_FOLDER/lib',
+        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib',
+        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload',
+        # ] + LIBRARY_PATH
+        # PYTHONPATH   = [
+        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR',
+        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages',
+        #     '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/lib-dynload',
+        # ] + PYTHONPATH
+
+        # make sure all paths from the dependency loop exist and remove duplicates
+        # print PYTHONPATH
+        # C_INCLUDE_PATH  = [ p for p in set(C_INCLUDE_PATH)  if '$' in p or os.path.exists(p) ]
+        # LIBRARY_PATH    = [ p for p in set(LIBRARY_PATH)    if '$' in p or os.path.exists(p) ]
+        # PKG_CONFIG_PATH = [ p for p in set(PKG_CONFIG_PATH) if '$' in p or os.path.exists(p) ]
+        # PYTHONPATH      = [ p for p in set(PYTHONPATH)      if '$' in p or os.path.exists(p) ]
+        # PATH            = [ p for p in set(PATH)            if '$' in p or os.path.exists(p) ]
+        # print PYTHONPATH
+
+
 
         # reset lastlog
         open(lastlog,'w').close()
@@ -2435,7 +2441,7 @@ class generic:
 
 
         # set internet proxies, if needed
-        proxies = { x[0]:x[1] for x in env.items() if '_PROXY' in x[0] }
+        proxies = { x[0]:x[1] for x in self_env.items() if '_PROXY' in x[0] }
         for each in proxies:
             os_environ[each.lower()] = proxies[each].strip()
 
@@ -2747,7 +2753,7 @@ class generic:
             time.sleep(1)
         sys.stdout.write('\033[2K\033[1G')
 
-        ret = self.__check_target_log__(lastlog, env)
+        ret = self.__check_target_log__(lastlog, self_env)
         _elapsed = time.gmtime(time.time()-_start)
         _print( bcolors.WARNING+':\ttotal build time: %s %02d:%02d:%02d' % (
             bcolors.GREEN,
@@ -2816,13 +2822,17 @@ class generic:
             raise Exception(bcolors.FAIL+':: Error [%d] during build of package %s.%s - check log file: %s' % (ret, pkgName, pkgVersion, lastlog) )
 
         # cleanup so we have space to build.
-        keep_source = filter(lambda x: 'KEEP_SOURCE_FOLDER' in x[0], env.items())
+        keep_source = list(filter(lambda x: 'KEEP_SOURCE_FOLDER' in x[0], self_env.items()))
         if keep_source and keep_source[0][1].strip() != '1':
             os.system( 'mv %s %s__ ; rm -rf %s__ &' % (os_environ['SOURCE_FOLDER'], os_environ['SOURCE_FOLDER'], os_environ['SOURCE_FOLDER']) )
 
         self.installer(target, source, os_environ)
 
         _print( bcolors.END, )
+
+        # store the os_environ in scons env
+        for nn in os_environ.keys():
+            env["RUN_OS_ENVIRON_%s" % nn] = str(os_environ[nn])
 
         return True
 
@@ -2931,7 +2941,7 @@ class generic:
         ''' virtual method may be implemented by derivated classes in case installation needs to be done by copying or moving files.
         this method is called after the build (not at install), since we want to provide the os_environ env var to run shell commands
         in the same environment as the build'''
-        pass
+        return None
 
     def _installer(self, target, source, env):
         ''' a wrapper class to create target in case installer method is suscessfull!
@@ -2941,9 +2951,15 @@ class generic:
         buildCounter += 1
         doneAndDone = str(target[0])+'.install'
 
-
         ret = None
-        # ret = self.installer( target, source, env )
+
+        # run only if this func was called from scons, which means
+        # it's running after the build.
+        if hasattr(env, 'items'):
+            # restore os_environ from what we saved on scons env
+            # in the runCMD action
+            os_environ = { x[0].replace('RUN_OS_ENVIRON_','') : x[1] for x in env.items() if 'RUN_OS_ENVIRON_' in x[0] }
+            self.installer( target, source, os_environ )
 
         # write .install file!
         f=open(str(target[0]),'w')
@@ -3422,10 +3438,9 @@ class generic:
 
     def install(self, target, source):
         ret = source
-        if self.installer:
-            bld = Builder(action = Action( self._installer, self.sconsPrint) )
-            self.env.Append(BUILDERS = {'installer' : bld})
-            ret = self.env.installer( target, ret)
+        bld = Builder(action = Action( self._installer, self.sconsPrint) )
+        self.env.Append(BUILDERS = {'installer' : bld})
+        ret = self.env.installer( target, ret)
         return ret
 
     def _download(self,target):
