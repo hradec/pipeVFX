@@ -6,3 +6,4 @@
 !pipeline/tools/config
 !pipeline/tools/scripts/pipevfx_docker_init.sh
 !docker
+!.github
