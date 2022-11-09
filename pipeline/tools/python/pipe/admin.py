@@ -697,6 +697,15 @@ class job(sudo):
         pass
 
     @staticmethod
+    def set(job, **kargs):
+        ''' set a job and shot/asset '''
+        os.environ['PIPE_JOB'] = job
+        for each in ['shot', 'asset']:
+            if each in kargs:
+                os.environ['PIPE_SHOT'] = '%s@%s' % (each, kargs[each])
+                break
+
+    @staticmethod
     def currentJob(job=None):
         import os
         if not job:
