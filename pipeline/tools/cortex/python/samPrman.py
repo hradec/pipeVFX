@@ -51,7 +51,7 @@ def rlf2rib():
                 if frame not in rlfs:
                     ids = rlfs.keys()
                     ids.sort()
-                    print "SAM WARNING: No frame %s found in RLF files list from asset %s/(%s-%s)" % ( frame, os.path.dirname(rlfs[ids[0]]).split('sam/')[-1], ids[0], ids[-1] )
+                    print( "SAM WARNING: No frame %s found in RLF files list from asset %s/(%s-%s)" % ( frame, os.path.dirname(rlfs[ids[0]]).split('sam/')[-1], ids[0], ids[-1] ) )
                     frame = ids[0]
                 attachRLF( rlfs[frame] )
 
@@ -59,7 +59,7 @@ def attachRLF(rlfFile):
     if prman:
         # meval('RiArchiveRecord("comment", "#RLF ScopeEnd\\n##RLF ScopeBegin -rlffilename %s -namespace")' % rlfFile)
         mel = 'RiArchiveRecord("comment", "\\n##RLF ScopeBegin -rlffilename %s -namespace")' % rlfFile
-        print mel
+        print( mel )
         meval(mel)
 
 def getRibFolder(frame=m.currentTime(q=1)):

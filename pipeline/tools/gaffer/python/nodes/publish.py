@@ -1,5 +1,6 @@
 
-
+try:from importlib import reload
+except: pass
 
 import IECore
 import Gaffer

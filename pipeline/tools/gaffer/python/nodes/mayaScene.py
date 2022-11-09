@@ -34,6 +34,9 @@
 #
 ##########################################################################
 
+try:from importlib import reload
+except: pass
+
 import ast
 import os
 import sys
@@ -56,7 +59,6 @@ from pipe.bcolors import bcolors as colors
 QtCore, QtGui = pipe.importQt()
 
 sys._stdout = sys.stdout
-
 
 class _StatePlugValueWidget( GafferUI.PlugValueWidget ) :
 
@@ -244,13 +246,13 @@ class mayaScene( GafferScene.SceneNode ) :
         return '+'.join( ret )
 
     def execute(self):
-        print 'bum'
+        print( 'execute_bum' )
 
     def compute( self, plug, context ) :
         assert( plug.isSame( self["out"] ) )
 
         with context:
-            print self['sceneIn']['childNames'].getValue()
+            print( self['sceneIn']['childNames'].getValue() )
 
         ret = [ '%s' % p.getValue() for p in self['in'] if p.getValue().strip() ]
         plug.setValue( '+'.join(ret) )
@@ -328,18 +330,18 @@ class mayaScene( GafferScene.SceneNode ) :
                     self.mp_renderIPR()
                 else:
                     mcmd = 'm.currentTime(%s, e=1)' % self.scriptNode().context().getFrame()
-                    print mcmd
+                    # print( mcmd )
                     self.mp( mcmd )
                 return
 
             self.mp_syncronizeViewerWithMayaPersp()
             # nodes = self.networkAssets().replace('@app@','gaffer')
-            # # print nodes
+            # # print( nodes )
             # if nodes.strip():
             #     import assetUtils
             #     for node in eval(nodes):
             #         mcmd = '[ m.setAttr( x+".visibility" , int(%s) ) for x in m.ls("|%s*") ]' % (node['enable'], '_'.join(node['op'].nodeName().split('_')[:-4]) )
-            #         print mcmd
+            #         print( mcmd )
             #         self.mp( mcmd )
 
 
@@ -379,21 +381,21 @@ class mayaScene( GafferScene.SceneNode ) :
             # node.mayapy.communicate(node.mayaCode)
 
             # we need to init maya before anything or else IECore and Gaffer won't work
-            self.mp("print '__progressStep__mayapy__'")
+            self.mp("print( '__progressStep__mayapy__' )")
             self.mp("import os,sys")
             self.mp("from time import time")
 
             self.mp("t=time()")
             self.mp("import pymel.core")
-            self.mp("print '__progressStep__mayapy__'")
+            self.mp("print( '__progressStep__mayapy__' )")
             self.mp("import maya.cmds as m")
             self.mp("from maya.mel import eval as meval")
 
             self.mp("sys.tmaya = time()-t")
-            self.mp("print '='*100")
-            self.mp("print 'Maya initialization:', sys.tmaya")
-            self.mp("print '='*100")
-            self.mp("print '__progressDone__mayapy__'")
+            self.mp("print( '='*100 )")
+            self.mp("print( 'Maya initialization:', sys.tmaya )")
+            self.mp("print( '='*100 )")
+            self.mp("print( '__progressDone__mayapy__' )")
 
             # we use this so the button doesn't turn to pause before prman starts!
             self.__prman_running = False
@@ -564,7 +566,7 @@ class mayaScene( GafferScene.SceneNode ) :
             if cmd:
         	    self.mayapy.stdin.write(cmd+'\n')
         	    self.mayapy.stdin.flush()
-            self.mayapy.stdin.write('print "OK"\n')
+            self.mayapy.stdin.write('print( "OK" )\n')
             self.mayapy.stdin.flush()
 
     def mp_bundleLoad(self, sceneName='bundle'):
@@ -612,7 +614,7 @@ class mayaScene( GafferScene.SceneNode ) :
                     mcmd += [ "m.setAttr('persp.focalLength', %s)" % c[0]['camera'].parameters()['projection:fov'] ]
 
                 self.__last_c_transfrom = c[0]['camera'].getTransform().matrix
-                print ';'.join(mcmd)
+                print( ';'.join(mcmd) )
                 self.mp( ';'.join(mcmd) )
 
 
@@ -620,7 +622,7 @@ class mayaScene( GafferScene.SceneNode ) :
 
     @staticmethod
     def bundleLoad(gafferNodes, sceneName='bundle'):
-        print "__progressStep__load__"
+        print( "__progressStep__load__" )
         import os,sys
         from time import time
         import maya.cmds as m
@@ -636,16 +638,16 @@ class mayaScene( GafferScene.SceneNode ) :
             import genericAsset
             genericAsset.hostApp("maya")
             import assetUtils
-            print gafferNodes
+            print( gafferNodes )
             nodes = eval( gafferNodes )
-            print nodes[0]['op'].path
-            print nodes[0]['op'].data
+            print( nodes[0]['op'].path )
+            print( nodes[0]['op'].data )
             for node in m.ls("|SAM_*"):
                 m.setAttr( "%s.visibility" % node, 0)
             for node in nodes:
-                print "="*80
-                print node['op'].path
-                print "-"*80
+                print( "="*80 )
+                print( node['op'].path )
+                print( "-"*80 )
                 try:
                     node['op'].hostApp('maya')
                     ns = node['op'].doesAssetExists()
@@ -657,12 +659,12 @@ class mayaScene( GafferScene.SceneNode ) :
                     raise( Exception('') )
                 if not ns and node['enable']:
                     node['op'].doImport()
-                    print "#"*80
+                    print( "#"*80 )
 
                 for n in ns:
                     m.setAttr( "%s.visibility" % n, int(node['enable']) )
 
-                print "__progressStep__load__"
+                print( "__progressStep__load__" )
 
 
         m.file(rename="%s.ma" % sceneName)
@@ -672,12 +674,12 @@ class mayaScene( GafferScene.SceneNode ) :
         tbundle=time()-t
 
 
-        print "="*80
-        print "Time to initialize maya:", sys.tmaya
-        print "Time to construct bundle scene:", tbundle
-        print "Total time before render:", tbundle+sys.tmaya
-        print "="*80
-        print "__progressDone__load__"
+        print( "="*80 )
+        print( "Time to initialize maya:", sys.tmaya )
+        print( "Time to construct bundle scene:", tbundle )
+        print( "Total time before render:", tbundle+sys.tmaya )
+        print( "="*80 )
+        print( "__progressDone__load__" )
 
     @staticmethod
     def bundleRib(frame):
@@ -685,7 +687,7 @@ class mayaScene( GafferScene.SceneNode ) :
         import maya.cmds as m
         from maya.mel import eval as meval
 
-        print "="*80
+        print( "="*80 )
         trib=time()
 
         m.currentTime(frame,e=1)
@@ -709,8 +711,8 @@ class mayaScene( GafferScene.SceneNode ) :
         meval('renderManExecCmdlineRender("", 1, 1, 0)')
 
         trib = time()-trib
-        print "="*80
-        print "Time to export rib:", trib
+        print( "="*80 )
+        print( "Time to export rib:", trib )
 
     @staticmethod
     def bundleRenderStop():
@@ -719,7 +721,7 @@ class mayaScene( GafferScene.SceneNode ) :
 
     @staticmethod
     def bundleRender(frame, camera='camera'):
-        print "__progressStep__IPR__"
+        print( "__progressStep__IPR__" )
         import os
         from time import time
         import maya.cmds as m
@@ -762,15 +764,14 @@ class mayaScene( GafferScene.SceneNode ) :
         meval('rmanRerenderStart(0)')
 
         trender = time()-trender
-        print "__progressStep__IPR__"
+        print( "__progressStep__IPR__" )
 
-        print "="*80
-        # print "Time to initialize maya:", tmaya
-        # print "Time to construct bundle scene:", tbundle
-        print "Time to start render:", trender
-        print "="*80
-
-        print '__progressDone__IPR__'
+        print( "="*80 )
+        # print( "Time to initialize maya:", tmaya )
+        # print( "Time to construct bundle scene:", tbundle )
+        print( "Time to start render:", trender )
+        print( "="*80 )
+        print( '__progressDone__IPR__' )
 
 
 

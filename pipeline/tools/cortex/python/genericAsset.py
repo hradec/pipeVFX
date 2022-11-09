@@ -2047,7 +2047,7 @@ class alembic(  _genericAssetClass ) :
 
                     # print( data )
                     if 'frameCallback' in data:
-                        frames = data['frameCallback'].keys()
+                        frames = list(data['frameCallback'].keys())
                         if frames and 'xgen' in data['frameCallback'][frames[0]]:
                             for c in data['frameCallback'][frames[0]]['xgen']:
                                 abc = filename

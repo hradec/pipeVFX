@@ -1,3 +1,21 @@
+# backward compatibility
+try:from importlib import reload
+except: pass
+import sys, os
+sys.path.insert( 0, os.path.abspath( os.path.dirname(__file__) ) )
+# print(  os.path.abspath( os.path.dirname(__file__) ) )
+
+# backward compatibility
+import IECore
+try:
+    import imath
+    for c in [ x for x in dir(imath) if 'V' in x[0] or 'C' in x[0] ]:
+        # print('IECore.%s=imath.%s' % (c,c))
+        exec( 'IECore.%s=imath.%s' % (c,c) )
+except:
+    pass
+
+
 import mayaScene
 import publish
 reload(mayaScene)

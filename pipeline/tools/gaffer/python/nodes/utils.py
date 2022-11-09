@@ -1,4 +1,6 @@
 
+try:from importlib import reload
+except: pass
 
 import Gaffer
 import GafferUI
@@ -35,7 +37,7 @@ def viewerCameraParameters(node):
     for v in viewers:
         c = v.view().viewportGadget().getCamera()
         s, h, r, t = c.getTransform().transform().extractSHRT()
-    	ret += [{
+        ret += [{
             'camera' : c,
             'translate' : t,
             'rotate' : r  * 180.0 / math.pi,
