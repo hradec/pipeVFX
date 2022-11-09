@@ -441,6 +441,7 @@ class tbb(cmake):
         by copying files over.'''
         import build
         lines = []
+        cmake_target_folder = os_environ['CMAKE_TARGET_FOLDER']
         sourceFolder = os_environ['SOURCE_FOLDER']
         targetFolder = os_environ['INSTALL_FOLDER']
         versionMajor = float( os_environ['VERSION_MAJOR'] )
@@ -452,7 +453,8 @@ class tbb(cmake):
 
         # create the tbb_config.cmake file!
         if os.path.exists('%s/cmake' % targetFolder):
-            lines += os.popen('LD_PRELOAD=/lib64/libstdc++.so.6 cmake -DTBB_ROOT=%s -DTBB_OS=Linux -P %s/cmake/tbb_config_generator.cmake' % (targetFolder, sourceFolder) ).readlines()
+            # lines += os.popen('LD_PRELOAD=/lib64/libstdc++.so.6 %s/bin/cmake -DTBB_ROOT=%s -DTBB_OS=Linux -P %s/cmake/tbb_config_generator.cmake' % (cmake_target_folder, targetFolder, sourceFolder) ).readlines()
+            lines += os.popen('%s/bin/cmake -DTBB_ROOT=%s -DTBB_OS=Linux -P %s/cmake/tbb_config_generator.cmake 2>&1' % (cmake_target_folder, targetFolder, sourceFolder) ).readlines()
 
         # workaround for the missing advisor-annotate.h, so we don't have to
         # install the whole intel advisor just for this include file.
@@ -460,5 +462,6 @@ class tbb(cmake):
         # need anything else.
         # it seems we need this include when building a package with TBB
         # and GCC 6.3.1!! If we build with GCC 4.N.N we don't need it!
-        lines += os.popen('cp /.docker/2022.advisor-annotate.h %s/include/advisor-annotate.h' % targetFolder).readlines()
+        if not os.path.exists('%s/include/advisor-annotate.h' % targetFolder):
+            lines += os.popen('cp /.docker/2022.advisor-annotate.h %s/include/advisor-annotate.h' % targetFolder).readlines()
         return lines
