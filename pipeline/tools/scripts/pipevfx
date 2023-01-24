@@ -95,15 +95,16 @@ else
         done
     fi
 
-    latest_tag=$(echo $pkg_image | awk -F':' '{print $1}'):$(
-        curl -L \
-        https://registry.hub.docker.com/v1/repositories/"$(echo $pkg_image | awk -F: '{print $1}')"/tags  \
-        | tr -d '[]" ' \
-        | tr '}' '\n' \
-        | awk -F: '{print $3}' \
-        | grep -v latest \
-        | sort -h | tail -1
-    )
+    # latest_tag=$(echo $pkg_image | awk -F':' '{print $1}'):$(
+    #     curl -L \
+    #     https://registry.hub.docker.com/v1/repositories/"$(echo $pkg_image | awk -F: '{print $1}')"/tags  \
+    #     | tr -d '[]" ' \
+    #     | tr '}' '\n' \
+    #     | awk -F: '{print $3}' \
+    #     | grep -v latest \
+    #     | sort -h | tail -1
+    # )
+    latest_tag=$(make -C $CD list | grep $pkg_image | grep -v latest | sort -h | tail -1 )
     if [ "$latest_tag" == "$(echo $pkg_image | awk -F':' '{print $1}'):" ] ; then
         latest_tag=$pkg_image
         previous_tag=$raw_image
@@ -156,7 +157,7 @@ else
     # if no image in docker hub or we used -b to force a build, build it
     # and push it to docker hub!
     if [ "$UPLOAD" == "1" ] ; then
-        # we have to push pkg cache tags first, since the dockerfile needs it. 
+        # we have to push pkg cache tags first, since the dockerfile needs it.
         docker push $latest_tag
         docker push $pkg_image_tag
 

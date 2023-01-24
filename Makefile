@@ -139,7 +139,9 @@ list:
 		echo "Please define HUB_USER and HUB_PASS as env vars or as parameter to make!!" ;\
 	else \
 		for n in $$(docker search $$HUB_USER | grep pipevfx | awk '{print $$1}') ; do \
-			curl -L https://registry.hub.docker.com/v1/repositories/$$n/tags 2>/dev/null | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print "'$$n':"$$3}' ; \
+			curl -L https://registry.hub.docker.com/v2/repositories/$$n/tags 2>/dev/null  | sed 's/,/\n/g' | egrep '^.name' | awk -F'"' '{print $$(NF-1)}' | while read tag ; \
+				do echo $$n:$$tag ; \
+			done ; \
 		done ;\
 	fi
 
