@@ -21,13 +21,13 @@
 
 
 os.environ['PIPE_MAYA_PRMAN']        = '0'
-os.environ['PIPE_MAYA_ARNOLD']       = '0'
-os.environ['PIPE_MAYA_VRAY']         = '1'
+os.environ['PIPE_MAYA_ARNOLD']       = '1'
+os.environ['PIPE_MAYA_VRAY']         = '0'
 os.environ['PIPE_MAYA_ZYNC']         = '0'
 os.environ['PIPE_MAYA_FABRICENGINE'] = '1'
-os.environ['PIPE_MAYA_OCTANE']       = '1'
+os.environ['PIPE_MAYA_OCTANE']       = '0'
 os.environ['PIPE_MAYA_HOUDINI']      = '0'
-os.environ['PIPE_REDSHIFT']          = '1'
+os.environ['PIPE_REDSHIFT']          = '0'
 
 os.environ['PIPE_NUKE_CRYPTOMATTE']  = '1'
 os.environ['PIPE_NUKE_GENARTS']      = '0'
