@@ -26,7 +26,7 @@ except: pass
 
 import log
 from environ import environ as _environ
-from base import depotRoot, roots, platform, py, arch, WIN, OSX, LIN, runProcess, taskset, vglrun
+from base import depotRoot, roots, platform, py, arch, WIN, OSX, LIN, runProcess, taskset, vglrun, setDistro
 from base import distroName as distro
 import admin
 
@@ -72,7 +72,7 @@ def versionSort(versions):
             FinalList.append(a)
         return FinalList
     # print versions
-    if str(versions) not in __versionSort_cache:
+    if True: #str(versions) not in __versionSort_cache:
         d = { '.'.join([ str(int(v)) for v in fix("".join( [ y for y in fix(x) if y.isdigit() or y in '.' ] ) ).strip('.').split('.') ]):x for x in versions if x[0].isdigit() }
         v = d.keys()
         # print d
@@ -1397,7 +1397,7 @@ class baseApp(_environ):
             # if self.className == 'maya':
             #     binName += ' -d gdb '
             # else:
-            debug = 'gdb -ex run --args'
+            debug = 'gdb -ex run --args '
             del sys.argv[sys.argv.index('--debug')]
             runWithOsSystem = True
 
@@ -1606,6 +1606,9 @@ class baseApp(_environ):
         if 'TBB_VERSION' in os.environ:
             del os.environ['TBB_VERSION']
 
+        # store the parent app as an env var, pipevfx can query from within app
+        os.environ['PIPE_PARENT'] = self.parent()
+
 
         # NOW WE EXECUTE IT!
         # =====================================================================
@@ -1661,7 +1664,7 @@ class baseApp(_environ):
         # if we got an error, return a parseable string so farm erro parser
         # can be triggered!
         if ret:
-            print( '[ PARSER ERROR ]' )
+            print( '[ PARSER ERROR ] - return code:', ret )
             ret = -2
         sys.exit(ret)
 

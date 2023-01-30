@@ -46,12 +46,12 @@ def runProcess(exe):
               if '%' in std:
                     if 'progr:' in std:
                         std = std.replace('progr:', 'PROGRESS:')
-                    else:
-                        std = filter(lambda x: x.strip(), std.strip().split(' '))
-                        #std = ' '.join(std[:-1]+['PROGRESS: ']+[std[-1]])+"\n"
-                        std = map(lambda x: "PROGRESS: "+x if '%' in x else x, std)
-                        std = ' '.join(std)+"\n"
-              secs = '%s | ' % str(datetime.timedelta( seconds = int(time.time()-_start) ))
+                    # else:
+                    #     std = filter(lambda x: x.strip(), std.strip().split(' '))
+                    #     #std = ' '.join(std[:-1]+['PROGRESS: ']+[std[-1]])+"\n"
+                    #     std = map(lambda x: "PROGRESS: "+x if '%' in x else x, std)
+                    #     std = ' '.join(std)+"\n"
+              secs = '%s ' % str(datetime.timedelta( seconds = int(time.time()-_start) ))
               if 'Fontconfig' not in std:
                   log += std
                   sys.stdout.write( secs + prefix + std )
@@ -259,6 +259,15 @@ def getDistro(check=True):
     return distro
 
 distro = getDistro()
+def setDistro():
+    global distro
+    # we can specify our current pipevfx libs version in versions.py, globally or on an per job/user basis!!
+    if 'PIPEVFX_LIBS_VERSION' in os.environ:
+        distro = os.environ['PIPEVFX_LIBS_VERSION']
+        # we do this for compatibility!!
+        os.environ['GCC_VERSION'] = os.environ['PIPEVFX_LIBS_VERSION']
+    return distro
+
 
 # set the distro Name
 distroName = "Unknown"
