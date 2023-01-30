@@ -89,4 +89,6 @@ class arnold(baseApp):
 
     def license(self):
         #self['solidangle_LICENSE'] = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/license')
-        self['solidangle_LICENSE'] = os.environ['PIPE_FABRIC_ENGINE_LICENSE']
+        self['ADSKFLEX_LICENSE_FILE']=os.environ['PIPE_MAYA_LICENSE']
+        self['solidangle_LICENSE'] = os.environ['PIPE_ARNOLD_LICENSE']
+        self['ARNOLD_LICENSE_ORDER'] = 'network'
