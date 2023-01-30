@@ -34,6 +34,9 @@ class nuke(baseApp):
             )
 
     def environ(self):
+        # fix for: symbol lookup error: /usr/lib/libfontconfig.so.1: undefined symbol: FT_Done_MM_Var
+        self.ignorePipeLib( "freetype" )
+
         nukeMajorVersion = int(self.version().split('.')[0])
         if self.parent() in ['nuke']:
             if nukeMajorVersion >= 13:
@@ -216,10 +219,11 @@ class nuke(baseApp):
 
         # force nuke qt libraries to be preloaded, as well as
         # system libstdc++ for mesa
-        os.environ['LD_PRELOAD'] = ':'.join(
-            cached.glob(self.path()+'/*Qt*.so')+
-            [pipe.LD_PRELOAD.systemGCCLibrary("libstdc++.so.6")]
-        )
+        if self.parent() in ['nuke']:
+            os.environ['LD_PRELOAD'] = ':'.join(
+                cached.glob(self.path()+'/*Qt*.so')+
+                [pipe.LD_PRELOAD.systemGCCLibrary("libstdc++.so.6")]
+            )
 
         return cmd
 
