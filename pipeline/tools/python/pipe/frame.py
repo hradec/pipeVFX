@@ -40,7 +40,7 @@ def check(frames, returnLog=""):
         for each in frames:
             each = each.strip()
             ext = os.path.splitext(each)[-1]
-            if not displays.has_key(ext):
+            if ext not in displays:
                 displays[ext] = []
             displays[ext].append(each)
 
@@ -368,7 +368,7 @@ def publishLog(log, assetPath, className):
     asset = Asset.AssetParameter(assetPath)
     # if we have asset data, means this maya scene is an asset, so
     # we move the images to its folder
-    if asset.isValid() and os.environ.has_key('FRAME_NUMBER'):
+    if asset.isValid() and 'FRAME_NUMBER' in os.environ:
         logPath = "%s/logs/" % asset.getFilePath()
 
         hostname = ''.join(os.popen('hostname').readlines()).strip()

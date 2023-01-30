@@ -237,7 +237,7 @@ def alias(withlibs=True):
         except:
             appClass = None
 
-        if withlibs or os.environ.has_key('PIPE_RUN_WITH_LIBS'):
+        if withlibs or 'PIPE_RUN_WITH_LIBS' in os.environ:
             try:
                 classType = 'libs'
                 appClass = eval("libs.%s()" % appname)
@@ -286,7 +286,7 @@ def pathPythonpath():
     path = ''
 
     # user level:
-    if  os.environ.has_key('HOME'):
+    if  'HOME' in os.environ:
         user_pythonpath = '%s/tools/python' % os.environ['HOME']
         if os.path.exists(user_pythonpath):
             pythonpath += user_pythonpath+':'
@@ -296,7 +296,7 @@ def pathPythonpath():
             path += user_path+':'
 
     pythonpath += '%s/python' % root
-    if os.environ.has_key('PYTHONPATH'):
+    if 'PYTHONPATH' in os.environ:
         tmp = os.environ['PYTHONPATH']
         tmp = tmp.replace(pythonpath,'').replace('::',':')
         pythonpath += ':%s' % tmp
@@ -325,7 +325,7 @@ def pathPythonpath():
 
 def init():
     import os
-    if os.environ.has_key('UID'):
+    if 'UID' in os.environ:
         #only run if enviroment is set and not root!
         if os.environ['UID'] == '0':
             return ""
@@ -377,7 +377,7 @@ def init():
 
 
     # if running in Qube, set PIPE_FARM_USER
-    if os.environ.has_key('QBJOBID'):
+    if 'QBJOBID' in os.environ:
         user = ''
         for line in os.popen('%s/qube/current/qube-core/local/pfx/qube/bin/qbjobs --expression "id==%s" --user "" ' % (pipe.roots().apps(), os.environ['QBJOBID']).readlines()):
             if os.environ['QBJOBID'] in line:
@@ -405,16 +405,16 @@ def go():
     import sys, os
 
     goHist=None
-    if os.environ.has_key('HOME'):
+    if 'HOME' in os.environ:
         goHist = '%s/.go' % os.environ['HOME']
     args = sys.argv[sys.argv.index(filter(lambda x: '/scripts/go' in x,sys.argv)[0]):]
 
     job = None
-    if os.environ.has_key('PIPE_JOB'):
+    if 'PIPE_JOB' in os.environ:
         job = os.environ['PIPE_JOB']
 
     shot = None
-    if os.environ.has_key('PIPE_SHOT'):
+    if 'PIPE_SHOT' in os.environ:
         shot = os.environ['PIPE_SHOT']
 
     # if go was called without any arguments, and we have PIPE_JOB and PIPE_SHOT set,
@@ -628,8 +628,8 @@ def __go(args):
         pythonpath += ':%s/tools/python' % currentShot(job, shot)
         pythonpath += ':%s/users/%s/tools/python' % (currentShot(job, shot), admin.username())
 
-
-    env.append( 'export PATH=$__PATH:%s' % path )
+    _path = '%s/scripts' % roots.tools()
+    env.append( 'export PATH=$__PATH:%s:%s' % (path, _path) )
     env.append( 'export PYTHONPATH=%s:%s' % (pythonpath, _pythonpath) )
 
     env.append( 'echo "Job: %s\n%s: %s\nPath: $(pwd)"' % (job, values[0], values[1] ) )
@@ -638,7 +638,7 @@ def __go(args):
 
 
     # if running in Qube, set PIPE_FARM_USER
-    if os.environ.has_key('QBJOBID'):
+    if 'QBJOBID' in os.environ:
         user = ''
         for line in os.popen('%s/qube/current/qube-core/local/pfx/qube/bin/qbjobs --expression "id==%s" --user "" ' % (pipe.roots().apps(), os.environ['QBJOBID']).readlines()):
             if os.environ['QBJOBID'] in line:
@@ -651,5 +651,23 @@ def __go(args):
         del os.environ['PIPE_JOB']
     return '%s \n %s' % (init(), '\n'.join(env))
 
+
+# version comparing functions, also used in build module
+def vComp(versionString):
+    v = versionString.split('.')
+    vv = range(len(v))
+    vv=range(6)
+    # vv.reverse()
+    ret = 0
+    for n in vv:
+        if len(v) > n:
+            ret += float(v[n])*pow(1000,len(vv)-n)
+    return ret
+
+def versionBiggerEqualThan(v1, v2):
+    return vComp(v1) >= vComp(v2)
+
+def versionSmallerEqualThan(v1, v2):
+    return vComp(v1) <= vComp(v2)
 
 sys.path.remove(moduleRootPath)

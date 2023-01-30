@@ -26,9 +26,9 @@ class baseFarmJobClass(object):
     def __init__(self, cmdLine='', name='', CPUS=0, extra={}, priority = 9999, range = range(1,11,1), group = 'pipe', pad=4, asset='', retry=5, description='', maxRunTime=60*60*3):
         self.job        = "NO_JOB"
         self.shot       = "NO_SHOT"
-        if os.environ.has_key('PIPE_JOB'):
+        if 'PIPE_JOB' in os.environ:
             self.job    = os.environ['PIPE_JOB']
-        if os.environ.has_key('PIPE_SHOT'):
+        if 'PIPE_SHOT' in os.environ:
             self.shot   = os.environ['PIPE_SHOT'].split('@')
         self.name       = name
         self.asset      = asset

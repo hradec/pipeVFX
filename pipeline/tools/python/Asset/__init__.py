@@ -390,7 +390,8 @@ class AssetParameter( CompoundParameter ):
         assets = {}
         for each in glob(self.job.path('sam/%s/*' % assetType)):
             assetName = os.path.basename(each)
-            assets[assetName] = filter( lambda x: os.path.basename(x)[0].isdigit(), glob('%s/*' % each) )
+            # assets[assetName] = filter( lambda x: os.path.basename(x)[0].isdigit(), glob('%s/*' % each) )
+            assets[assetName] = [ x for x in  glob('%s/*' % each) if os.path.basename(x)[0].isdigit() ]
         return assets
 
     def getAssetPathParameter(self):
@@ -507,7 +508,9 @@ class AssetParameter( CompoundParameter ):
                         if assetName in published:
                             versions = published[assetName]
                             versions.sort()
-                            version = list( map( lambda x: int(x), os.path.basename(versions[-1]).split('.') ) )
+                            # version = list( map( lambda x: int(x), os.path.basename(versions[-1]).split('.') ) )
+                            # print(versions)
+                            version = [ int(x) for x in os.path.basename(versions[-1]).split('.') ]
                             self['info']['version'].smartSetValue(V3i(version[0],version[1]+1,version[2]))
                         else:
                             self['info']['version'].smartSetValue(V3i(1,0,0))

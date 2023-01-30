@@ -29,7 +29,7 @@ class simple( object ):
 
     def getRunningJobs(self, filter=''):
         self._getJobList(filter)
-        return [ x for x in self.list if x.has_key('state') and ('RUN' in x['state'] or 'RDY' in x['state']) ]
+        return [ x for x in self.list if 'state' in x and ('RUN' in x['state'] or 'RDY' in x['state']) ]
 
     def getJobsByID(self, id):
         self._getJobList()

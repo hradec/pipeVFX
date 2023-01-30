@@ -83,19 +83,19 @@ class job(baseFarmJobClass):
         return ret
 
     def runningJobs(self, filter=''):
-        ret=[ x for x in self.list(filter) if x.has_key('state') and ('OFF' not in x['state'] and ('RDY' in x['state'] or 'RUN' in x['state'])) ]
+        ret=[ x for x in self.list(filter) if 'state' in x and ('OFF' not in x['state'] and ('RDY' in x['state'] or 'RUN' in x['state'])) ]
         for r in ret:
             for b in r['blocks']:
-                if not b.has_key('p_tasks_done'):
+                if 'p_tasks_done' not in b():
                     b['p_tasks_done'] = 0
-                if not b.has_key('running_tasks_counter'):
+                if 'running_tasks_counter' not in b:
                     b['running_tasks_counter'] = 0
         return ret
 
     def runningJobsFramesToFinish(self, filter='', need_os='google'):
         ret = 0
         for x in self.runningJobs(filter):
-            if not need_os or ( x.has_key('need_os') and need_os in x['need_os']):
+            if not need_os or ( 'need_os' in x and need_os in x['need_os']):
                 for b in x['blocks']:
                     ret +=  (int(b['frame_last']) - int(b['frame_first']) + 1 ) \
                             - int(b['p_tasks_done'])
@@ -105,7 +105,7 @@ class job(baseFarmJobClass):
         return ret
 
     def _totalTasksToRun(self, filter=''):
-        jobs = [ x for x in self.list(filter) if x.has_key('state') and ('OFF' not in x['state'] and ('RDY' in x['state'] or 'RUN' in x['state'])) ]
+        jobs = [ x for x in self.list(filter) if 'state' in x and ('OFF' not in x['state'] and ('RDY' in x['state'] or 'RUN' in x['state'])) ]
         tasks = 0
         for j in jobs:
             for b in j['blocks']:
@@ -193,7 +193,7 @@ class job(baseFarmJobClass):
         ret={}
         for r in tmp:
 
-            if not r.has_key('tasks'): # no tasks running
+            if 'tasks' not in r: # no tasks running
                 ret[ r['name'] ] = {
                     'idle_minutes' : ( time.time() - r['task_start_finish_time'] ) / 60.0,
                 }
@@ -219,7 +219,7 @@ class job(baseFarmJobClass):
             remValue = '-' in value
             value = value.replace('+','').replace('-','')
             v = value
-            if j.has_key(par):
+            if par in j:
                 v = j[par]
                 if addValue and value not in v:
                     v += '|'+value
@@ -227,7 +227,7 @@ class job(baseFarmJobClass):
                     v = v.replace(value,'').replace('||','|').strip('|')
 
             # print( par, v, None if not j.has_key(par) else j[par] )
-            if not j.has_key(par) or v != j[par]:
+            if par not in j or v != j[par]:
                 json = {"action":{
                     "user_name":"coord",
                     "host_name":"pc",
@@ -246,7 +246,7 @@ class job(baseFarmJobClass):
             v = value
 
             # print par, v, None if not j.has_key(par) else j[par]
-            if not j.has_key(par) or v != j[par]:
+            if par not in j or v != j[par]:
                 json = {"action":{
                     "user_name":"coord",
                     "host_name":"pc",
