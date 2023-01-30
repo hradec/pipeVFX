@@ -25,24 +25,41 @@ class yeti(baseApp):
         ''' set all environment variables is here '''
 
         maya.addon ( self,
-            plugin = self.path('$MAYA_VERSION/plug-ins'),
-            script = self.path('$MAYA_VERSION/scripts'),
-            icon   = self.path('$MAYA_VERSION/icons'),
-            renderDesc = self.path('mtoadeploy/$MAYA_VERSION/'),
+            plugin = self.path('$MAYA_VERSION_MAJOR_ONLY/plug-ins'),
+            script = self.path('$MAYA_VERSION_MAJOR_ONLY/scripts'),
+            icon   = self.path('$MAYA_VERSION_MAJOR_ONLY/icons'),
+            renderDesc = self.path('mtoadeploy/$MAYA_VERSION_MAJOR_ONLY/'),
         )
 
         delight.addon( self,
-            shader = self.path('$MAYA_VERSION/shaders')
+            shader = self.path('$MAYA_VERSION_MAJOR_ONLY/shaders')
+        )
+        arnold.addon( self,
+            shader = self.path('$MAYA_VERSION_MAJOR_ONLY/shaders'),
+            extensions = [
+                self.path('$MAYA_VERSION_MAJOR_ONLY/bin'),
+                self.path('$MAYA_VERSION_MAJOR_ONLY/plug-ins'),
+            ],
+            plugins = [
+                self.path('$MAYA_VERSION_MAJOR_ONLY/bin'),
+                self.path('$MAYA_VERSION_MAJOR_ONLY/plug-ins'),
+            ],
         )
 
-        self['LD_LIBRARY_PATH'] = self.path('bin')
+        # set yeti temp folder to a local disk, if any
+        for tmp in ['/nuke_sd_cache/', '/mnt/CACHE/']:
+            if os.path.exists(tmp):
+                self['YETI_TMP'] = tmp
+                break
+
+        self['LD_LIBRARY_PATH'] = self.path('$MAYA_VERSION_MAJOR_ONLY/bin')
+        self['LD_LIBRARY_PATH'] = self.path('$MAYA_VERSION_MAJOR_ONLY/lib')
 
     def bins(self):
         return []
 
     def license(self):
         self['peregrinel_LICENSE']=os.environ['PIPE_YETI_LICENSE']
-        # PEREGRINEL_LICENSE =
 
     def userSetup(self, jobuser):
         os.chdir( jobuser.pwd )
