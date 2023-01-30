@@ -497,6 +497,10 @@ class job(sudo):
 │                   └── _hora
 │                       └── _projeto_info_data_hora
 '''
+        customStructure = roots.jobs()+'/.jobStructure'
+        if os.path.exists(customStructure):
+            structure = ''.join(open(customStructure,'r').readlines())
+
         clean = ['|','└','─','├','│','\xc2','\xa0','\xc2','\xa0']
         for each in clean:
             structure = structure.replace(each,' ')
