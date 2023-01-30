@@ -24,5 +24,6 @@ from pipe.farm.current import engine as job
 from pipe.farm.maya import maya
 from pipe.farm.nuke import nuke
 from pipe.farm.daily import daily
+from pipe.farm.gaffer import gaffer
 from pipe.farm.houdini import houdini
 from pipe.farm.cmds import cmds
