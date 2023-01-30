@@ -27,6 +27,21 @@ class maya(baseApp):
             if mv >= 2023:
                 pipe.version.set( python = '3.9' )
                 pipe.libs.version.set( python = '3.9' )
+                pipe.libs.version.set( usd = '21.11.0' )
+                pipe.libs.version.set( gaffer = '1.1.15' )
+                # pipe.libs.version.set( openexr = '3.1.5' )
+            elif mv >= 2022:
+                pipe.version.set( python = '2.7' )
+                pipe.libs.version.set( python = '2.7' )
+                # pipe.libs.version.set( cortex = '10.4.1.2' )
+                # pipe.libs.version.set( gaffer = '1.0.1.0' )
+                pipe.libs.version.set( cortex = '10.3.6.1' )
+                pipe.libs.version.set( gaffer = '0.61.14.0' )
+                pipe.libs.version.set( oiio = '2.2.15.1' )
+                pipe.libs.version.set( boost = '1.66.0' )
+                pipe.libs.version.set( openvdb = '8.2.0' )
+                pipe.libs.version.set( usd = '21.5.0' )
+                pipe.libs.version.set( usd_non_monolithic = '21.5.0' )
             elif mv >= 2014:
                 pipe.version.set( python = '2.7' )
                 pipe.libs.version.set( python = '2.7' )
@@ -107,6 +122,7 @@ class maya(baseApp):
             self.update( shave() )
             self.update( substance() )
             self.update( mgear() )
+            self.update( yeti() )
 
             if mv > 2016:
                 # substance that comes with maya
@@ -207,11 +223,12 @@ class maya(baseApp):
             self['AUTODESK_ADLM_THINCLIENT_ENV'] = "%s/licenses/maya/2016_config.xml" % each
 
         # don't use pipe openvdb since prman 21 comes with its own.
-        prman_version = float(pipe.version.get('prman'))
-        if prman_version >= 21.0 and prman_version < 22.0:
-            self.ignorePipeLib( "openvdb" )
-        else:
-            self.update(pipe.libs.openvdb())
+        if pipe.version.get('prman'):
+            prman_version = float(pipe.version.get('prman'))
+            if prman_version >= 21.0 and prman_version < 22.0:
+                self.ignorePipeLib( "openvdb" )
+            else:
+                self.update(pipe.libs.openvdb())
 
         self['PYTHONPATH'] = self.path('scripts')
         self['PYTHONPATH'] = self.path('plugins')
@@ -269,6 +286,10 @@ class maya(baseApp):
                 if mv < 2022 or 'gcc-multi' in os.environ["GCC_VERSION"]:
                     if os.path.exists('/usr/lib/libfreetype.so.6'):
                         self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
+                # if mv < 2023:
+                #     self.ignorePipeLib( "freetype" )
+                #     if os.path.exists('/usr/lib/libfreetype.so.6'):
+                #         self['LD_PRELOAD'] = '/usr/lib/libfreetype.so.6'
 
             # set the proper sip/pyqt so gaffer works
             elif mv > 2015:
@@ -276,13 +297,13 @@ class maya(baseApp):
                 pipe.libs.version.set( pyqt = '4.11.4.maya%s' % self.version() )
 
 
+
         # force to use mayas python
         if self.parent() in ['maya','arnold']:
-            # or else we see a error on os module were it can't find urandom!!
-            # we need this to force maya to read its own python distribution files
-            self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
-
-            if int(self['MAYA_PYTHON_VERSION']) == 2:
+            # if int(self['MAYA_PYTHON_VERSION']) == 2:
+                # we need this to force maya to read its own python distribution files
+                # or else we see a error on os module were it can't find urandom!!
+                self['LD_PRELOAD'] = self.path('lib/libpython%s.so' % pythonVer)
                 maya_support_python = cached.glob( self.path('support/python/%s*/' % pythonVer ) )
                 if maya_support_python:
                     self.insert('PYTHONPATH',0, maya_support_python[0])
@@ -291,6 +312,8 @@ class maya(baseApp):
                 self.insert('PYTHONPATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
                 self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer.replace('.','')))
                 self.insert('LD_LIBRARY_PATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
+            # else:
+            #     self['LD_PRELOAD'] = pipe.libs.python().path('lib/libpython%s.so' % pythonVer)
 
         # xgen libraries
         self['XGEN_GLOBAL'] = self.path('plug-ins/xgen/')
@@ -384,9 +407,9 @@ class maya(baseApp):
         firt element is the command the user will type, and second is the command line executed
         '''
         ret = [
-            ('maya', 'maya'),
-            ('mayapy', 'mayapy'),
-            ('Render', 'Render'),
+            # ('maya', 'maya'),
+            # ('mayapy', 'mayapy'),
+            # ('Render', 'Render'),
             ('fcheck', 'fcheck'),
         ]
         return ret
@@ -447,6 +470,8 @@ class maya(baseApp):
         if 'LM_LICENSE_FILE' in self:
             del self['LM_LICENSE_FILE']
         self['MAYA_ALT_EN'] = '/var/flexlm/maya.lic'
+
+        self['ADSKFLEX_LICENSE_FILE']=os.environ['PIPE_MAYA_LICENSE']
 
         # else:
         #     self['LM_LICENSE_FILE'] = "%s/licenses/%s/%s" % (roots.tools(), self.className.lower(), self.appFromDB.version() )
@@ -509,15 +534,24 @@ class maya(baseApp):
                 # as maya comes with pyilmbase and alembic python, we want to
                 # force it to load ours instead, so IECore and renderman works,
                 # as well alembic and pyalembic latest versions.
+                # if mv < 2023:
                 if hasattr(pipe.libs, 'pyilmbase'):
                     top += [ os.path.expandvars(x) for x in pipe.libs.pyilmbase()['PYTHONPATH'] ]
-                top += [ os.path.expandvars(x) for x in pipe.libs.alembic()['PYTHONPATH'] ]
-                pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
-                os.environ['PYTHONPATH'] = ':'.join(top+[
-                    # we need this to force maya to read its own python distribution files
-                    # or else we see a error on os module were it can't find urandom!!
-                    self.path('lib/python%s.zip:' % pythonVer.replace('.','')),
-                    os.environ['PYTHONPATH']
+                if hasattr(pipe.libs, 'alembic'):
+                    top += [ os.path.expandvars(x) for x in pipe.libs.alembic()['PYTHONPATH'] ]
+
+                # we need this to force maya to read its own python distribution files
+                # or else we see a error on os module were it can't find urandom!!
+                # top += cached.glob( self.path('lib/python*/site-packages') )
+                top += cached.glob( self.path('lib/python*.zip') )
+                os.environ['PYTHONPATH'] = ':'.join( top + [os.environ['PYTHONPATH']] )
+            if mv >= 2023:
+                # gaffer 1.1.2.0 only runs on python 3.7, so we have to force
+                # it's site-packages into pythonpath, since we don't set
+                # our pipeline python into pythonpath for maya!
+                os.environ['PYTHONPATH'] = ':'.join([
+                    os.environ['PYTHONPATH'],
+                    pipe.libs.python().path('lib/python$PYTHON_VERSION_MAJOR/site-packages/')
                 ])
 
         return cmd
@@ -526,6 +560,11 @@ class maya(baseApp):
     def postRun(self, cmd, returnCode, returnLog=""):
         ''' this is called after a binary of this class has exited.
         it's the perfect method to do post render frame checks, for example!'''
+        if self.parent() in ['maya']:
+            if returnCode != 0:
+                print('WARNING: Maya exited with error code %d, but due to some segfaults caused by Arnold, we have to assume return code 0 or else renders will fail!' % returnCode)
+                returnCode = 0
+
         error = returnCode!=0
         extensions = [
             '.exr',

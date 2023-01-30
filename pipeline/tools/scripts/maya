@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# source the pipeline init script, if it hasn't being sourced yet!
+source $(dirname $BASH_SOURCE)/../init/bash
+
+export PIPEVFX_LIBS_VERSION='pipevfx.5.0.0'
+
+# PIPE_PARENT="" PYTHONPATH=$___PYTHONPATH LD_LIBRARY_PATH=""
+echo "$0" "$@"
+app=$(basename $0)
+LD_PRELOAD="" /usr/bin/python2 -c "import pipe;pipe.apps.maya().run(\"$app\")" "$@"
