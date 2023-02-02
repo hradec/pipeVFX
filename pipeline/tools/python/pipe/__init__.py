@@ -449,10 +449,24 @@ def go():
 
             # show the history list
             if '-h' in args:
+                sys.stderr.write('\nPipeVFX go command version 1.0\n\n')
+                sys.stderr.write('\t-h = this little help\n')
+                sys.stderr.write('\t-l = list all available jobs\n')
+                sys.stderr.write('\n')
                 id=0-len(argsHist)
                 for each in argsHist:
                     sys.stderr.write('\t%d = go %s\n' % (id, ' '.join(each[1:])))
                     id += 1
+                return ''
+
+            if '-l' in args:
+                from glob import glob
+                sys.stderr.write('\nThe available jobs are:\n\n')
+                jobs = list(glob( '%s/*' % (roots.jobs()) ))
+                jobs.sort()
+                for line in jobs:
+                    sys.stderr.write('\t'+line.split('/')[-1]+'\n')
+                sys.stderr.write('\n\n')
                 return ''
 
             # if go was called without arguments, grab the last one from the history
@@ -480,8 +494,13 @@ def go():
     if newArgs:
         args = newArgs
 
+    # run go and cache results so subsequent go is faster
+    ret = cached.cache_func( lambda: __go(args), cache_name='source_go_'+''.join(args) )
+
     # if we have no arguments from history, create a new history entry
     # for the passed ones!
+    if 'ERROR' in ret:
+        return ret
     try:
         f = open( goHist, 'w' )
         if lines:
@@ -493,15 +512,10 @@ def go():
     except:
         pass
 
-    # run go and cache results so subsequent go is faster
-    ret = cached.cache_func( lambda: __go(args), cache_name='source_go_'+''.join(args) )
-
     # check if the job being set is legacy code or not.
     checkPipeVersion = ret+'''\n python2 -c 'import pipe,os;print os.environ["GCC_VERSION"]' '''
     if 'pipevfx.' not in cached.popen(checkPipeVersion, 'go_'+''.join(args)).readlines()[-1]:
         ret = '\nunset ___PYTHONPATH\n'+'\nunset __PYTHONPATH\n'+ret
-
-
 
     if 'pipevfx.' not in cached.popen(checkPipeVersion, 'go_'+''.join(args)).readlines()[-1]:
         sys.stderr.write("\n\nRunning legacy pipevfx code in requested job.\n\n")
@@ -527,6 +541,7 @@ def __go(args):
 
     args = map( lambda x: x.lower(), args )
 
+
     if 'reset' in args or '-r' in args:
         return "\n".join([
             'unset PIPE_JOB',
@@ -546,13 +561,22 @@ def __go(args):
 
     env = []
     # passed arguments
+    def insensitive_glob(pattern):
+        return glob(
+            ''.join([
+            '[' + c.lower() + c.upper() + ']'
+            if c.isalpha() else c
+            for c in pattern
+            ])
+        )
+
     if len(args)>1:
 
         if args[1].lower() not in reserved:
             jobs = filter( lambda x: args[1] in x, cached.glob( "%s/*" % roots.jobs() ) )
             if not jobs:
                 ret = ["echo 'ERROR: job %s doesnt exist! \n\nOptions are:'\n" % args[1].lower()]
-                for each in cached.glob( '%s/*' % (roots.jobs()) ):
+                for each in insensitive_glob( '%s/*' % (roots.jobs()) ):
                     beach = os.path.basename(each)
                     if beach[:4] != '0000':
                         ret.append( "echo '\t %s'" % beach )
@@ -577,17 +601,28 @@ def __go(args):
             if each in args:
                 value = ""
                 shotPrefix = each.rstrip('s')
+                ret = []
                 try:
                     value = args[args.index(each)+1]
-                    if not os.path.exists('%s/%s/%ss/%s' % (roots.jobs(), job, shotPrefix, value) ):
-                        raise
-                    shot = "%s@%s" %  (shotPrefix, value)
+                    _shotPaths = insensitive_glob('%s/%s/%ss/%s' % (roots.jobs(), job, shotPrefix, value) )
+                    if len(_shotPaths) != 1:
+                        _shotPaths = insensitive_glob('%s/%s/%ss/*%s*' % (roots.jobs(), job, shotPrefix, value) )
+                        if len(_shotPaths) != 1:
+                            if len(_shotPaths) > 1:
+                                ret += ["echo '\nERROR: There is more than one %s that contains the word %s':" % (shotPrefix, value)]
+                                for n in _shotPaths:
+                                    ret += ["echo '\t%s %s'" % (each, n.split('/')[-1])]
+                            else:
+                                ret += ["echo '\nERROR: %s %s doesnt exist!'" % (each, value)]
+                            raise
+                    shot = "%s@%s" %  (shotPrefix, _shotPaths[0].split('/')[-1])
                     env.append( 'export PIPE_SHOT="%s"' %  shot )
 
                 except:
-                    ret = ["echo 'ERROR: %s %s doesnt exist!\n\nOptions are:'" % (each, value)]
-
-                    for l in cached.glob( '%s/%s/%ss/*' % (roots.jobs(), job, shotPrefix) ):
+                    ret += ["echo '\n\nAvailable %ss:'" % shotPrefix]
+                    _shots = list( glob( '%s/%s/%ss/*' % (roots.jobs(), job, shotPrefix) ) )
+                    _shots.sort()
+                    for l in _shots:
                         ret.append( "echo '\t%s %s'" % (each, os.path.basename(l)) )
                     ret.append( "echo ' '")
                     return "\n".join(ret)
@@ -623,10 +658,10 @@ def __go(args):
         values[0] = "%s%s" % (values[0][0].upper(), values[0][1:])
 
         # add shot/user/tools/python to pythonpath
-        path += ':%s/tools/scripts' % currentShot(job, shot)
-        path += ':%s/users/%s/tools/scripts' % (currentShot(job, shot), admin.username())
-        pythonpath += ':%s/tools/python' % currentShot(job, shot)
-        pythonpath += ':%s/users/%s/tools/python' % (currentShot(job, shot), admin.username())
+        path = ':'.join(['%s/tools/scripts' % currentShot(job, shot), path])
+        path = ':'.join(['%s/users/%s/tools/scripts' % (currentShot(job, shot), admin.username()), path])
+        pythonpath = ':'.join(['%s/tools/python' % currentShot(job, shot), pythonpath])
+        pythonpath = ':'.join(['%s/users/%s/tools/python' % (currentShot(job, shot), admin.username()), pythonpath])
 
     _path = '%s/scripts' % roots.tools()
     env.append( 'export PATH=$__PATH:%s:%s' % (path, _path) )
