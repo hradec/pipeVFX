@@ -21,18 +21,23 @@
 
 class ocio(baseLib):
     def environ(self):
+        # Work around OCIO bug that causes parsing to fail for certain locales.
+        # See https://github.com/imageworks/OpenColorIO/issues/297
+        ##########################################################################
+        self['LC_NUMERIC']='C'
+
         # OCIO needs a config file, so we set it her for now.
         # we have a default one in the central tools/ocio folder,
         # but we can override it jobs/shots/users!l /
 
-        # for now, we only need it in gaffer!
+        ocioConfig = '%s/ocio/config.ocio' % roots.tools()
         if self.parent in ['gaffer','natron', 'maya', 'houdini']:
             if 'OCIO' in os.environ:
-                self['OCIO'] = os.environ['OCIO']
+                ocioConfig = os.environ['OCIO']
             else:
                 for each in self.toolsPaths():
                     ocioConfig = '%s/ocio/config.ocio' % each
-                self['OCIO'] = ocioConfig
+        self['OCIO'] = ocioConfig
 
         # if hasattr( pipe.libs, 'ocio' ):
         #     # self['LD_PRELOAD'] = pipe.libs.ocio().path('lib/libOpenColorIO.so.1')
