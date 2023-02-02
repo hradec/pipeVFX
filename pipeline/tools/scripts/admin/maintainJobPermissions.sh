@@ -20,19 +20,21 @@ if [ "$(pgrep -fa chmod)" == "" ] ; then
 
     #chmod 2777 -R /$STUDIO/jobs/*/*/*/users/MAC/
     find /$STUDIO/jobs/*/*/*/users/MAC/ \! -perm a+rwx -type d -exec chmod 00777 -v {} \;
+
     # we made all user folders writable since covid!
-    find /$STUDIO/jobs/*/*/*/users/     \! -perm a+rwx -type d -exec chmod 00777 -v {} \;
+    # find /$STUDIO/jobs/*/*/*/users/     \! -perm a+rwx -type d -exec chmod 00777 -v {} \;
+
+    # fix permissions for tools folders
+    find /$STUDIO/pipeline/tools/               \! -perm 00755 -type d -exec chmod 00755 -v {} \;
+    find /$STUDIO/jobs/*/*/*/users/*/tools/     \! -perm 00755 -type d -exec chmod 00755 -v {} \;
 
     #chmod a+rwx -R /$STUDIO/jobs/*/*/*/published/
     find /$STUDIO/jobs/*/*/*/published/ \! -perm a+rwx  -exec chmod 00777 -v {} \;
-    #chmod a+rwx -R /$STUDIO/jobs/*/SAIDAS/
-    find /$STUDIO/jobs/*/SAIDAS/        \! -perm a+rwx  -exec chmod 00777 -v {} \;
-    #chmod a+rwx -R /$STUDIO/jobs/*/ARTWORKS/
-    find /$STUDIO/jobs/*/ARTWORKS/      \! -perm a+rwx  -exec chmod 00777 -v {} \;
-    #chmod a+rwx -R /$STUDIO/jobs/*/OFFLINE_XML/
-    find /$STUDIO/jobs/*/OFFLINE_XML/   \! -perm a+rwx  -exec chmod 00777 -v {} \;
-    #chmod a+rwx -R /$STUDIO/jobs/*/PRODUCAO/
-    find /$STUDIO/jobs/*/PRODUCAO/      \! -perm a+rwx  -exec chmod 00777 -v {} \;
+
+    ls -d /$STUDIO/jobs/*/* | egrep '[A-Z]' | while read path ; do
+        #chmod a+rwx -R $path
+        find $path        \! -perm a+rwx  -exec chmod 00777 -v {} \;
+    done
 
     echo "$(date) - Done"
 fi
