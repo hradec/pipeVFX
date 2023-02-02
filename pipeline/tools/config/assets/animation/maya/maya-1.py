@@ -34,6 +34,8 @@ if m:
 
 class maya( genericAsset.maya ) :
     _color = IECore.Color3f( 0.1, 0.3, 0.2 ) + IECore.Color3f( 0.1 )
+    _whoCanImport = ['maya']
+    # _importAsReference = True
     def __init__( self ) :
         genericAsset.maya.__init__(self, 'animation')
 
@@ -60,10 +62,10 @@ class maya( genericAsset.maya ) :
         ret = genericAsset.maya.doPublishMayaExport(self, fileName, operands)
         return ret
 
-    def doImportMaya( self, filename, nodeName ):
-        ''' called by SAM when import an asset in maya '''
-        ret = genericAsset.maya.doImportMaya( self, filename, nodeName )
-        return ret
+    # def doImportMaya( self, filename, nodeName ):
+    #     ''' called by SAM when import an asset in maya '''
+    #     ret = genericAsset.maya.doImportMaya( self, filename, nodeName )
+    #     return ret
 
 
 

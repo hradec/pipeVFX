@@ -243,7 +243,7 @@ class maya( render ) :
         self.ribs           = []
 
         if not str(operands['mayaScene']).strip():
-             raise Exception("\nERROR: A Cena precisa ser salva antes de ser publicada!")
+             raise Exception("\nERROR: The scene needs to saved before publishing!")
 
         if not m:
             return IECore.StringData( 'ERROR - We need to submit from within maya!' )

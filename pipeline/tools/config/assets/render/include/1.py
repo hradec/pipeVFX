@@ -122,7 +122,9 @@ class render( IECore.Op ) :
             self.parameters()["%sScene" % self.prefix].setValue(  IECore.StringData(scene) )
 
     def doOperation( self, operands ) :
-        if not str(operands['mayaScene']).strip():
-             raise Exception("\nERROR: A Cena precisa ser salva antes de ser publicada!")
+        sceneName           = str(operands["%sScene" % self.prefix])
+        if not sceneName.strip():
+            raise Exception("\nERROR: The scene needs to be saved before publishing!")
+
         result = 'done'
         return IECore.StringData( result )
