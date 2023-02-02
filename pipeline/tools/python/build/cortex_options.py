@@ -44,7 +44,7 @@ def expandvars(path, env=os.environ, default=None, skip_escaped=False):
 def pushPrint(d=locals()):
     print( '='*80 )
     globals()['oldDir'] = d.copy()
-    for each in globals()['oldDir'].keys():
+    for each in d.keys():
         if '_ROOT' in each:
             del globals()['oldDir'][each]
 
@@ -117,12 +117,14 @@ if pipe.versionMajor(os.environ['BOOST_VERSION']) >= 1.61:
 # cortex 10.4 switched to c++17
 if build.versionMajor(os.environ['CORTEX_VERSION']) >= 10.4:
     CXXSTD = "c++17"
+    WARNINGS_AS_ERRORS=False
 
 # python
 # =============================================================================================================================================================
 PYTHON_ROOT 		    = os.environ['PYTHON_TARGET_FOLDER']
 PYTHON 			        = 'python'
-PYTHON_CONFIG 		    = '%s %s/bin/python-config' % (PYTHON, PYTHON_ROOT)
+# PYTHON_CONFIG 		    = '%s %s/bin/python-config' % (PYTHON, PYTHON_ROOT)
+PYTHON_CONFIG 		    = '%s/bin/python-config' % (PYTHON_ROOT)
 # PYTHON_INCLUDE_PATH 	= os.popen( '%s --includes' % PYTHON_CONFIG ).readlines()[0].strip().split(' ')[0][2:]
 # PYTHON_LINK_FLAGS 	    = os.popen( '%s --ldflags' % PYTHON_CONFIG ).readlines()[0].strip()
 cmd 			        = '%s -c "import sys;print( sys.version[:3] )"' % PYTHON
@@ -132,6 +134,7 @@ try:
 except:
 #    PYTHON_LIB_PATH = '%s/config' % PYTHON_INCLUDE_PATH.replace('include','lib')
     PYTHON_LIB_PATH = '%s/lib' % PYTHON_ROOT
+    print ('%s --ldflags' % PYTHON_CONFIG)
     PYTHON_LINK_FLAGS 	    = os.popen( '%s --ldflags' % PYTHON_CONFIG ).readlines()[0].strip()
     PYTHON_LINK_FLAGS = '-L%s %s' % (PYTHON_LIB_PATH, PYTHON_LINK_FLAGS)
 
@@ -200,10 +203,28 @@ TBB_INCLUDE_PATH        = "%s/include" % os.environ['TBB_TARGET_FOLDER']
 TBB_LIB_PATH 	        = "%s/lib"     % os.environ['TBB_TARGET_FOLDER']
 
 OPENEXR_INCLUDE_PATH    = "%s/include" % os.environ['OPENEXR_TARGET_FOLDER']
-OPENEXR_LIB_PATH 	    = "%s/lib"     % os.environ['OPENEXR_TARGET_FOLDER']
+OPENEXR_LIB_PATH 	    = [
+    "%s/lib"     % os.environ['OPENEXR_TARGET_FOLDER'],
+    "%s/lib"     % os.environ['ILMBASE_TARGET_FOLDER'],
+]
 
 ILMBASE_INCLUDE_PATH    = "%s/include" % os.environ['ILMBASE_TARGET_FOLDER']
 ILMBASE_LIB_PATH        = "%s/lib"     % os.environ['ILMBASE_TARGET_FOLDER']
+
+OIIO_INCLUDE_PATH    = [
+    "%s/include" % os.environ['OIIO_TARGET_FOLDER'],
+    "%s/include/OpenImageIO" % os.environ['OIIO_TARGET_FOLDER'],
+]
+OIIO_LIB_PATH        = "%s/lib"     % os.environ['OIIO_TARGET_FOLDER']
+
+VDB_INCLUDE_PATH    = [
+    "%s/include" % os.environ['OPENVDB_TARGET_FOLDER'],
+    "%s/include/openvdb" % os.environ['OPENVDB_TARGET_FOLDER'],
+    "%s/include/openvdb_ax" % os.environ['OPENVDB_TARGET_FOLDER'],
+    "%s/include/nanovdb" % os.environ['OPENVDB_TARGET_FOLDER'],
+]
+VDB_LIB_PATH        = "%s/lib"     % os.environ['OPENVDB_TARGET_FOLDER']
+
 
 if 'HDF5_TARGET_FOLDER' in os.environ:
     HDF5_INCLUDE_PATH       = "%s/include" % os.environ['HDF5_TARGET_FOLDER']
@@ -221,7 +242,7 @@ for each in [ x for x in os.environ.keys() if '_TARGET_FOLDER' in x ]:
 PNG_INCLUDE_PATH        = "%s/include" % os.environ['LIBPNG_TARGET_FOLDER']
 PNG_LIB_PATH            = "%s/lib"     % os.environ['LIBPNG_TARGET_FOLDER']
 
-GLEW_INCLUDE_PATH       = "%s/include/GL" % os.environ['GLEW_TARGET_FOLDER']
+GLEW_INCLUDE_PATH       = ["%s/include/GL" % os.environ['GLEW_TARGET_FOLDER'], "%s/include" % os.environ['GLEW_TARGET_FOLDER']]
 GLEW_LIB_PATH           = "%s/lib"        % os.environ['GLEW_TARGET_FOLDER']
 
 GLUT_INCLUDE_PATH       = "%s/include/"   % os.environ['FREEGLUT_TARGET_FOLDER']
@@ -232,9 +253,6 @@ FREETYPE_LIB_PATH 	    = "%s/lib"     % os.environ['FREETYPE_TARGET_FOLDER']
 
 BOOST_INCLUDE_PATH      = "%s/include" % os.environ['BOOST_TARGET_FOLDER']
 BOOST_LIB_PATH          = "%s/lib/python%s/"  % (os.environ['BOOST_TARGET_FOLDER'], os.environ['PYTHON_VERSION_MAJOR'])
-BOOST_LIB_SUFFIX        = ""
-# if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the only version that uses -mt as suffix.
-#     BOOST_LIB_SUFFIX        = "-mt"
 
 
 ALEMBIC_EXTRA_LIBS      = ''
@@ -250,12 +268,24 @@ if ' alembic ' in os.environ['DEPEND']:
     ALEMBIC_INCLUDE_PATH    = "%s/include" % os.environ['ALEMBIC_TARGET_FOLDER']
     ALEMBIC_LIB_PATH        = "%s/lib" % os.environ['ALEMBIC_TARGET_FOLDER']
 
-WITH_USD_MONOLITHIC = False
-if ' usd ' in os.environ['DEPEND']:
-    WITH_USD_MONOLITHIC = os.path.exists("%s/lib/lib*_ms.so" % os.environ['USD_TARGET_FOLDER'])
+if 'USD_NON_MONOLITHIC_TARGET_FOLDER' in os.environ:
+    WITH_USD_MONOLITHIC = False
+    USD_INCLUDE_PATH    = "%s/include" % os.environ['USD_NON_MONOLITHIC_TARGET_FOLDER']
+    USD_LIB_PATH        = "%s/lib"     % os.environ['USD_NON_MONOLITHIC_TARGET_FOLDER']
+    os.environ['USD_VERSION'] = os.environ['USD_NON_MONOLITHIC_VERSION']
 
-if versionMajor(app_environ('USD_VERSION')) > 21.5:
+elif ' usd ' in os.environ['DEPEND']:
+    WITH_USD_MONOLITHIC = os.path.exists("%s/lib/lib*_ms.so" % os.environ['USD_TARGET_FOLDER'])
+    USD_INCLUDE_PATH    = "%s/include" % os.environ['USD_TARGET_FOLDER']
+    USD_LIB_PATH        = "%s/lib"     % os.environ['USD_TARGET_FOLDER']
+
+USD_LIB_PREFIX = ''
+if build.vComp(app_environ('USD_VERSION')) > build.vComp('21.5.0'):
     USD_LIB_PREFIX = 'usd_'
+
+# print(USD_LIB_PREFIX,  build.vComp(app_environ('USD_VERSION')) > build.vComp('21.5.0'))
+# sys.exit(1)
+
 
 # for each in glob( '%s/../*' % os.environ['BOOST_TARGET_FOLDER'] ):
 #     os.environ['LIBRARY_PATH'] += ':%s/lib/python%s' % (each, os.environ['PYTHON_VERSION_MAJOR'])
@@ -275,12 +305,16 @@ ENV_VARS_TO_IMPORT = " ".join([ x for x in os.environ.keys() if
     'CORE' in x or
     'JEMALLOC' in x or
     'LD_PRELOAD' in x
-])
+]+['RPATH','CORTEX_TARGET_FOLDER'])
 
 
+BOOST_LIB_SUFFIX = ""
+# if os.environ['BOOST_VERSION'] == "1.56.0": # 1.56 seems to be the only version that uses -mt as suffix.
+#     BOOST_LIB_SUFFIX        = "-mt"
 LINKFLAGS = os.environ['LDFLAGS'].split(' ')
 LINKFLAGS += '-ltiff -lpng -ljpeg -lraw_r -lraw'.split(' ')
-LINKFLAGS += [ x+BOOST_LIB_SUFFIX for x in '-lboost_filesystem -lboost_system -lboost_thread -lboost_regex'.split(' ') ]
+# LINKFLAGS += [ x+BOOST_LIB_SUFFIX for x in '-lboost_filesystem -lboost_system -lboost_thread -lboost_regex'.split(' ') ]
+LINKFLAGS += [ x for x in '-lboost_filesystem -lboost_system -lboost_thread -lboost_regex'.split(' ') ]
 
 
 # app paths
@@ -332,6 +366,12 @@ extraInstallPath   = '/boost.%s' % os.environ['BOOST_VERSION']
 INSTALL_PREFIX                  = os.environ['INSTALL_FOLDER']
 os.environ['INSTALL_PREFIX']    = os.environ['INSTALL_FOLDER']
 
+CORTEX_TARGET_FOLDER = INSTALL_PREFIX
+if 'CORTEX_TARGET_FOLDER' in os.environ:
+    CORTEX_TARGET_FOLDER = os.environ['CORTEX_TARGET_FOLDER']
+else:
+    os.environ['CORTEX_TARGET_FOLDER'] = CORTEX_TARGET_FOLDER
+
 # if houdini != '0.0.0':
 #     # if we're installing houdini, make installPrefix be the houdini folder+version
 #     # so we can build the whole IECore* libraries with the houdini dependency!
@@ -339,58 +379,58 @@ os.environ['INSTALL_PREFIX']    = os.environ['INSTALL_FOLDER']
 #     extraInstallPath                = ""
 
 
-INSTALL_LIB_NAME                = "$INSTALL_PREFIX%s/lib%s/$IECORE_NAME" % (installRoot, extraInstallPath)
-INSTALL_PYTHONLIB_NAME          = "$INSTALL_PREFIX%s/lib%s/python%s/$IECORE_NAME" % (installRoot, extraInstallPath, PYTHON_MAJOR_VERSION)
-INSTALL_PYTHON_DIR              = "$INSTALL_PREFIX%s/lib%s/python%s/site-packages" % (installRoot, extraInstallPath, PYTHON_MAJOR_VERSION)
+INSTALL_LIB_NAME                = "%s/%s/lib%s/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRoot, extraInstallPath)
+INSTALL_PYTHONLIB_NAME          = "%s/%s/lib%s/python%s/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRoot, extraInstallPath, PYTHON_MAJOR_VERSION)
+INSTALL_PYTHON_DIR              = "%s/%s/lib%s/python%s/site-packages" % (CORTEX_TARGET_FOLDER, installRoot, extraInstallPath, PYTHON_MAJOR_VERSION)
 
 
-INSTALL_ALEMBICLIB_NAME         = "$INSTALL_PREFIX/alembic/%s/lib%s/$IECORE_NAME" % (abc, extraInstallPath)
-INSTALL_ALEMBICPYTHON_DIR       = "$INSTALL_PREFIX/alembic/%s/lib%s/python%s/site-packages" % (abc, extraInstallPath, PYTHON_MAJOR_VERSION)
+INSTALL_ALEMBICLIB_NAME         = "%s//alembic/%s/lib%s/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, abc, extraInstallPath)
+INSTALL_ALEMBICPYTHON_DIR       = "%s//alembic/%s/lib%s/python%s/site-packages" % (CORTEX_TARGET_FOLDER, abc, extraInstallPath, PYTHON_MAJOR_VERSION)
 
-INSTALL_VDBLIB_NAME             = "$INSTALL_PREFIX/openvdb/%s/lib%s/$IECORE_NAME" % (app_environ('OPENVDB_VERSION'), extraInstallPath)
-INSTALL_VDBPYTHON_DIR           = "$INSTALL_PREFIX/openvdb/%s/lib%s/python%s/site-packages" % (app_environ('OPENVDB_VERSION'), extraInstallPath, PYTHON_MAJOR_VERSION)
+INSTALL_VDBLIB_NAME             = "%s//openvdb/%s/lib%s/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, app_environ('OPENVDB_VERSION'), extraInstallPath)
+INSTALL_VDBPYTHON_DIR           = "%s//openvdb/%s/lib%s/python%s/site-packages" % (CORTEX_TARGET_FOLDER, app_environ('OPENVDB_VERSION'), extraInstallPath, PYTHON_MAJOR_VERSION)
 
-INSTALL_USDLIB_NAME             = "$INSTALL_PREFIX/usd/%s/lib%s/$IECORE_NAME" % (app_environ('USD_VERSION'), extraInstallPath)
-INSTALL_USDPYTHON_DIR           = "$INSTALL_PREFIX/usd/%s/lib%s/python%s/site-packages" % (app_environ('USD_VERSION'), extraInstallPath, PYTHON_MAJOR_VERSION)
+INSTALL_USDLIB_NAME             = "%s//usd/%s/lib%s/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, app_environ('USD_VERSION'), extraInstallPath)
+INSTALL_USDPYTHON_DIR           = "%s//usd/%s/lib%s/python%s/site-packages" % (CORTEX_TARGET_FOLDER, app_environ('USD_VERSION'), extraInstallPath, PYTHON_MAJOR_VERSION)
 
 if APPLESEED_VERSION:
-    INSTALL_APPLESEEDLIB_NAME          = "$INSTALL_PREFIX/appleseed/%s/lib/$IECORE_NAME" % (APPLESEED_VERSION)
-    INSTALL_APPLESEEDOUTPUTDRIVER_NAME = "$INSTALL_PREFIX/appleseed/%s/displays/$IECORE_NAME" % (APPLESEED_VERSION)
-    INSTALL_APPLESEEDPYTHON_DIR        = "$INSTALL_PREFIX/appleseed/%s/lib/python%s/site-packages" % (APPLESEED_VERSION, PYTHON_MAJOR_VERSION)
+    INSTALL_APPLESEEDLIB_NAME          = "%s//appleseed/%s/lib/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, APPLESEED_VERSION)
+    INSTALL_APPLESEEDOUTPUTDRIVER_NAME = "%s//appleseed/%s/displays/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, APPLESEED_VERSION)
+    INSTALL_APPLESEEDPYTHON_DIR        = "%s//appleseed/%s/lib/python%s/site-packages" % (CORTEX_TARGET_FOLDER, APPLESEED_VERSION, PYTHON_MAJOR_VERSION)
 
 
-INSTALL_NUKELIB_NAME            = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootNuke
-INSTALL_NUKEPLUGIN_NAME         = "$INSTALL_PREFIX%s/plugins/$IECORE_NAME" % installRootNuke
-INSTALL_NUKEPYTHON_DIR          = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootNuke, PYTHON_MAJOR_VERSION)
+INSTALL_NUKELIB_NAME            = "%s/%s/lib/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootNuke)
+INSTALL_NUKEPLUGIN_NAME         = "%s/%s/plugins/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootNuke)
+INSTALL_NUKEPYTHON_DIR          = "%s/%s/lib/python%s/site-packages" % (CORTEX_TARGET_FOLDER, installRootNuke, PYTHON_MAJOR_VERSION)
 
-INSTALL_MAYALIB_NAME            = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootMaya
-INSTALL_MAYAICON_DIR            = "$INSTALL_PREFIX%s/icons" % installRootMaya
-INSTALL_MAYAPLUGIN_NAME         = "$INSTALL_PREFIX%s/plugins/$IECORE_NAME" % installRootMaya
-INSTALL_MEL_DIR                 = "$INSTALL_PREFIX%s/mel/$IECORE_NAME" % installRootMaya
-INSTALL_MAYAPYTHON_DIR          = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootMaya, PYTHON_MAJOR_VERSION)
+INSTALL_MAYALIB_NAME            = "%s/%s/lib/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootMaya)
+INSTALL_MAYAICON_DIR            = "%s/%s/icons" % (CORTEX_TARGET_FOLDER, installRootMaya)
+INSTALL_MAYAPLUGIN_NAME         = "%s/%s/plugins/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootMaya)
+INSTALL_MEL_DIR                 = "%s/%s/mel/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootMaya)
+INSTALL_MAYAPYTHON_DIR          = "%s/%s/lib/python%s/site-packages" % (CORTEX_TARGET_FOLDER, installRootMaya, PYTHON_MAJOR_VERSION)
 
-INSTALL_RMANLIB_NAME            = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootPrman
-INSTALL_RMANPROCEDURAL_NAME     = "$INSTALL_PREFIX%s/procedurals/$IECORE_NAME" % installRootPrman
-INSTALL_RMANDISPLAY_NAME        = "$INSTALL_PREFIX%s/displays/$IECORE_NAME" % installRootPrman
-INSTALL_RSL_HEADER_DIR          = "$INSTALL_PREFIX%s/rsl" % installRootPrman
-INSTALL_RMANPYTHON_DIR          = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootPrman, PYTHON_MAJOR_VERSION)
+INSTALL_RMANLIB_NAME            = "%s/%s/lib/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootPrman)
+INSTALL_RMANPROCEDURAL_NAME     = "%s/%s/procedurals/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootPrman)
+INSTALL_RMANDISPLAY_NAME        = "%s/%s/displays/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootPrman)
+INSTALL_RSL_HEADER_DIR          = "%s/%s/rsl" % (CORTEX_TARGET_FOLDER, installRootPrman)
+INSTALL_RMANPYTHON_DIR          = "%s/%s/lib/python%s/site-packages" % (CORTEX_TARGET_FOLDER, installRootPrman, PYTHON_MAJOR_VERSION)
 
-INSTALL_ARNOLDLIB_NAME          = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootArnold
-INSTALL_ARNOLDPROCEDURAL_NAME   = "$INSTALL_PREFIX%s/procedurals/$IECORE_NAME" % installRootArnold
-INSTALL_ARNOLDOUTPUTDRIVER_NAME = "$INSTALL_PREFIX%s/displays/$IECORE_NAME" % installRootArnold
-INSTALL_ARNOLDPYTHON_DIR        = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootArnold, PYTHON_MAJOR_VERSION)
-INSTALL_MTOAEXTENSION_NAME      = "$INSTALL_PREFIX%s/mtoaExtensions/%s/$IECORE_NAME" % (installRootArnold, maya)
+INSTALL_ARNOLDLIB_NAME          = "%s/%s/lib/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootArnold)
+INSTALL_ARNOLDPROCEDURAL_NAME   = "%s/%s/procedurals/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootArnold)
+INSTALL_ARNOLDOUTPUTDRIVER_NAME = "%s/%s/displays/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootArnold)
+INSTALL_ARNOLDPYTHON_DIR        = "%s/%s/lib/python%s/site-packages" % (CORTEX_TARGET_FOLDER, installRootArnold, PYTHON_MAJOR_VERSION)
+INSTALL_MTOAEXTENSION_NAME      = "%s/%s/mtoaExtensions/%s/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootArnold, maya)
 
-INSTALL_HOUDINILIB_NAME         = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootHoudini
-INSTALL_HOUDINIOTL_DIR          = "$INSTALL_PREFIX%s/otls/" % installRootHoudini
-INSTALL_HOUDINIICON_DIR         = "$INSTALL_PREFIX%s/icons" % installRootHoudini
-INSTALL_HOUDINITOOLBAR_DIR      = "$INSTALL_PREFIX%s/toolbar" % installRootHoudini
-INSTALL_HOUDINIPLUGIN_NAME      = "$INSTALL_PREFIX%s/dso/$IECORE_NAME" % installRootHoudini
-INSTALL_HOUDINIPYTHON_DIR       = "$INSTALL_PREFIX%s/lib/python%s/site-packages" % (installRootHoudini, PYTHON_MAJOR_VERSION)
+INSTALL_HOUDINILIB_NAME         = "%s/%s/lib/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootHoudini)
+INSTALL_HOUDINIOTL_DIR          = "%s/%s/otls/" % (CORTEX_TARGET_FOLDER, installRootHoudini)
+INSTALL_HOUDINIICON_DIR         = "%s/%s/icons" % (CORTEX_TARGET_FOLDER, installRootHoudini)
+INSTALL_HOUDINITOOLBAR_DIR      = "%s/%s/toolbar" % (CORTEX_TARGET_FOLDER, installRootHoudini)
+INSTALL_HOUDINIPLUGIN_NAME      = "%s/%s/dso/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootHoudini)
+INSTALL_HOUDINIPYTHON_DIR       = "%s/%s/lib/python%s/site-packages" % (CORTEX_TARGET_FOLDER, installRootHoudini, PYTHON_MAJOR_VERSION)
 
-INSTALL_MANTRALIB_NAME          = "$INSTALL_PREFIX%s/lib/$IECORE_NAME" % installRootHoudini
-INSTALL_MANTRAPROCEDURAL_NAME   = "$INSTALL_PREFIX%s/dso/mantra/$IECORE_NAME" % installRootHoudini
-INSTALL_HOUDINIMENU_DIR         = "$INSTALL_PREFIX%s/dso/" % installRootHoudini
+INSTALL_MANTRALIB_NAME          = "%s/%s/lib/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootHoudini)
+INSTALL_MANTRAPROCEDURAL_NAME   = "%s/%s/dso/mantra/$IECORE_NAME" % (CORTEX_TARGET_FOLDER, installRootHoudini)
+INSTALL_HOUDINIMENU_DIR         = "%s/%s/dso/" % (CORTEX_TARGET_FOLDER, installRootHoudini)
 
 os.environ['PYTHONPATH'] = ':'.join([
     INSTALL_PYTHON_DIR,
@@ -530,14 +570,14 @@ LINKFLAGS.append('-L%s' % '/'.join([ os.environ['INSTALL_FOLDER'], 'usd/%s/lib%s
 # CPP = os.environ['CPP']
 # CXX = os.environ['CXX']
 #"-D'uint64_t=boost::ulong_long_type'"
-CXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-DAtUInt=AtUInt32', '-DCORTEX_HAS_NO_RSL']  + os.environ['CXXFLAGS'].split(' ')
+CXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-DAtUInt=AtUInt32', '-DCORTEX_HAS_NO_RSL', '-std=%s' % CXXSTD]  + os.environ['CXXFLAGS'].split(' ')
 
 # if boost == '1.51.0':
 # this fixes uint64_t ambiquos problem with boost
 CXXFLAGS += ["-D__GLIBC_HAVE_LONG_LONG"]
 
-TESTCXXFLAGS = ['-pipe', '-Wall', '-O0'] + os.environ['CXXFLAGS'].split(' ')
-PYTHONCXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive'] + os.environ['CXXFLAGS'].split(' ')
+TESTCXXFLAGS = ['-pipe', '-Wall', '-O0', '-std=%s' % CXXSTD] + os.environ['CXXFLAGS'].split(' ')
+PYTHONCXXFLAGS = ['-pipe', '-Wall', '-O2', '-DNDEBUG', '-g', '-DBOOST_DISABLE_ASSERTS', '-fpermissive', '-std=%s' % CXXSTD] + os.environ['CXXFLAGS'].split(' ')
 
 os.environ['LD_LIBRARY_PATH'] = '%s:%s' % (BOOST_LIB_PATH, os.environ['LD_LIBRARY_PATH'])
 
@@ -552,6 +592,7 @@ TEST_LIBPATH = ':'.join([PYTHON_LIB_PATH])
 
 
 popPrint('All Cortex Paths...')
+
 
 # install a cortexPython wrapper to simplify our lives!!
 # =============================================================================================================================================================

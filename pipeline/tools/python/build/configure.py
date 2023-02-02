@@ -167,11 +167,20 @@ class pip(configure):
 
         # bootstrap python version to download pip packages
         self.bootstrap_python_versions(env, _source)
+        # print("==========================>", _source)
 
         self.error = None
         pv = _source.lower().split(self.pip_pkg.lower()+'.')[-1]
         pvv = pv.split('.')[0]
+        pvm = '.'.join(pv.split('.')[0:2])
         download_path=os.path.abspath(os.path.dirname(_source)+'/../.download/pip'+pv+'/'+self.pip_pkg+'/')
+
+        pip_version = [ x for x in self.pip_pkg_versions if pvm in x ]
+        if pip_version:
+            pip_version = pip_version[0].split(pvm)[1]
+        else:
+            pip_version = ""
+
 
         # check if already downloaded:
         os.environ['PYTHON_TARGET_FOLDER'] = "%s/%s" % (os.path.dirname(os.environ['PYTHON_TARGET_FOLDER']), pv)
@@ -182,18 +191,24 @@ class pip(configure):
             genericBuilders.s_print( bcolors.GREEN, "\tDownloading pip module %s for python version %s..." % (self.pip_pkg, pvv) )
             genericBuilders.s_print( bcolors.END )
 
+            # when running outside the docker download cache container.
+            if 'DOCKER_PYTHON' not in os.environ:
+                import devRoot
+                os.environ['DOCKER_PYTHON'] = devRoot.installRoot(self.args)+'/python'
+
             cmd  = "mkdir -p '%s' && " % download_path
             cmd += "cd '%s' && " % download_path
+            cmd += 'export PYTHON_VERSION=%s && ' % pv
             cmd += 'export PYTHON_VERSION_MAJOR=%s && ' % pvv
             cmd += 'export LD_LIBRARY_PATH=$DOCKER_PYTHON/%s/lib:$PYTHON_TARGET_FOLDER/lib/ && ' % pv
             cmd += 'export PATH=$DOCKER_PYTHON/%s/bin:$PYTHON_TARGET_FOLDER/bin:$PATH && ' % pv
             cmd += 'export PYTHONPATH=$DOCKER_PYTHON/%s/lib/python$PYTHON_VERSION_MAJOR/site-packages && ' % pv
             cmd += 'echo "PATH=$PATH" && '
             cmd += 'echo "PYTHONPATH=$PYTHONPATH" && '
-            cmd += 'python$PYTHON_VERSION_MAJOR -m ensurepip && '
-            cmd += 'python$PYTHON_VERSION_MAJOR -m pip install setuptools && '
+            cmd += '$DOCKER_PYTHON/$PYTHON_VERSION/bin/python$PYTHON_VERSION_MAJOR -m ensurepip && '
+            cmd += '$DOCKER_PYTHON/$PYTHON_VERSION/bin/python$PYTHON_VERSION_MAJOR -m pip install setuptools && '
             # cmd += 'python$PYTHON_VERSION_MAJOR -m pip install --upgrade pip &&'
-            cmd += 'python$PYTHON_VERSION_MAJOR -m pip download "%s" ' % self.pip_pkg
+            cmd += 'python$PYTHON_VERSION_MAJOR -m pip download "%s" ' % (self.pip_pkg+pip_version)
             genericBuilders.s_print(cmd)
             # print cmd
             os.system(cmd)
@@ -209,14 +224,21 @@ class pip(configure):
 
     def __init__(self, args, pip_pkg, python, depend=[], python_versions=None ):
 
-        self.pip_pkg = pip_pkg
+        pip_pkgz = pip_pkg.split('(')
+        self.pip_pkg = pip_pkgz[0].strip()
+        self.pip_pkg_versions = []
+        if len(pip_pkgz) > 1:
+            self.pip_pkg_versions = [ x.strip() for x in pip_pkgz[1].split(')')[0].split(',') ]
 
         # create the download list from the python dowload list
         # (we pip install for all python versions)
-        download = [ (None,"python.%s.%s.%s" % (python.name,pip_pkg,x[2]),x[2],None,dict({python: x[2]}, **x[4])) for x in python.download ]
+        suffix = self.pip_pkg
+        # if self.pip_pkg_versions:
+        #     suffix = self.pip_pkg+'-'+'_'.join(self.pip_pkg_versions)+'-'
+        download = [ (None,"python.%s.%s.%s" % (python.name,suffix,x[2]),x[2],None,dict({python: x[2]}, **x[4])) for x in python.download ]
         if python_versions:
             download = [
-                (None,"python.%s.%s.%s" % (python.name,pip_pkg,x[2]),x[2],None,dict({python: x[2]}, **x[4]))
+                (None,"python.%s.%s.%s" % (python.name,suffix,x[2]),x[2],None,dict({python: x[2]}, **x[4]))
                 for x in python.download
                 if x[2] in python_versions
             ]
@@ -227,8 +249,8 @@ class pip(configure):
             python.name,
             download,
             src='build.sh',
-            targetSuffix=pip_pkg, # we need this to build on top of an already built pkg
-            real_name='pip_'+pip_pkg,
+            targetSuffix=suffix, # we need this to build on top of an already built pkg
+            real_name='pip_'+suffix,
             apps=None, # we need this so building on top of an already built pkg won't delete the target folder!
             depend=depend
             # depend=python.depend+[python]+depend
@@ -258,8 +280,8 @@ class pip(configure):
             #download=$(PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip download "%s" | grep whl | awk -F'/' '{print $(NF)}' | head -1)
             cd ./download
             d=$(ls -1 ./)
-            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install ./$d # || \
-            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install %s
+            PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install ./$d \
+            # || PYTHONHOME=$PYTHON_TARGET_FOLDER/ $PYTHON_TARGET_FOLDER/bin/python -m pip install %s
         ''' % (self.pip_pkg, self.pip_pkg)
         f.write("#!/bin/bash\n\n"+build_sh+"\n")
         f.close()
@@ -610,7 +632,8 @@ class gccBuild(configure):
         return cmd
 
     def installer(self, target, source, os_environ): # noqa
-        targetFolder = os_environ['INSTALL_FOLDER']
+        ret = None
+        targetFolder = os_environ['TARGET_FOLDER']
         versionMajor = float( os_environ['VERSION_MAJOR'] )
         ret = []
         for each in glob("%s/bin/*" % targetFolder):
@@ -649,6 +672,7 @@ class openssl(configure):
         'make -j $DCORES && make install -j $DCORES' ,
     ]
     def installer(self, target, source, os_environ): # noqa
+        # print("::===> "+str(os_environ))
         targetFolder = os_environ['INSTALL_FOLDER']
         versionMajor = float( os_environ['VERSION_MAJOR'] )
 
@@ -755,11 +779,12 @@ class boost(configure):
                 # cmd += ['( x=$(ls $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python??.so) ; [ "$x" != "" ] && ln -s $(basename $x) $(dirname $x)/libboost_python.so )']
                 cmd = [
                     "./bootstrap.sh --prefix=$INSTALL_FOLDER --with-python=$PYTHON_TARGET_FOLDER/bin/python --with-python-root=$PYTHON_TARGET_FOLDER/", #" --without-libraries=log --without-icu",
-    		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17' cxxstd=17 variant=release link=shared threading=multi install",
+    		        # "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17' cxxstd=17 variant=release link=shared threading=multi install",
+    		        "./b2 -d+2 -j $DCORES --disable-icu cxxflags='-D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17' cxxstd=17 variant=debug link=shared threading=multi install",
                 ]
 
         cmd += [
-            "([ -e $INSTALL_FOLDER/lib/cmake ] && rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ || true)",
+            "([ -e $INSTALL_FOLDER/lib/cmake ] && rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/cmake && mv $INSTALL_FOLDER/lib/cmake $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ || true)",
             "([ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] && ln -s $(basename $(ls  $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python*.so | head -n 1)) $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so || true)",
             "([ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy.so ] && ln -s $(basename $(ls  $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy*.so | head -n 1)) $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy.so || true)",
         ]
@@ -782,6 +807,27 @@ class boost(configure):
                 'done'
             ') || true )'
         ])
+
+    def installer(self, target, source, os_environ):
+        ''' create a symlink to libboost_python.so if it doesn't exist '''
+        from subprocess import Popen
+        # print(":: "+str(os_environ) )
+        cmd = '''
+            if [ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so ] ; then
+                python_so=$(ls  $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python*.so | head -n 1)
+                if [ "$python_so" != "" ] ; then
+                    ln -s $(basename $python_so) $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_python.so
+                fi
+            fi
+            if [ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy.so ] ; then
+                numpy_so=$(ls  $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy*.so 2>/dev/null | head -n 1)
+                if [ "$numpy_so" != "" ] ; then
+                    ln -s $(basename $numpy_so) $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/libboost_numpy.so
+                fi
+            fi
+        '''
+        proc = Popen(cmd, bufsize=-1, shell=True, executable='/bin/bash', env=os_environ, close_fds=True)
+        proc.wait()
 
     # def installer(self, target, source, os_environ):
     #     ''' in case boost was build with -mt sufix, create link without it so everything works as it should'''
@@ -829,8 +875,8 @@ class python(configure):
         'make -j $DCORES',
         'PYTHONHOME="" make -j $DCORES install',
         'export PYTHONHOME=$INSTALL_FOLDER',
-        '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
-        '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config || true)',
+        '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python 2>/dev/null || true)',
+        '(ln -s python$PYTHON_VERSION_MAJOR-config  $INSTALL_FOLDER/bin/python-config 2>/dev/null || true)',
         # install easy_install version 45
         # '( [ ! -e  $INSTALL_FOLDER/bin/easy_install ] && '
         #     'curl -L -O https://github.com/pypa/setuptools/archive/refs/tags/v45.3.0.tar.gz && '
@@ -843,14 +889,24 @@ class python(configure):
         # '( [ ! -e  $INSTALL_FOLDER/bin/pip$PYTHON_VERSION_MAJOR ] && $INSTALL_FOLDER/bin/easy_install pip==9 || true)',
         'PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/python$PYTHON_VERSION_MAJOR -m ensurepip',
         'PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/python$PYTHON_VERSION_MAJOR -m pip install setuptools',
-        '(ln -s pip$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/pip || true)',
+        '(ln -s pip$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/pip 2>/dev/null || true)',
         # "( [ $( echo $PYTHON_VERSION_MAJOR | awk -F'.' '{print $1}') -lt 3 ] && $INSTALL_FOLDER/bin/pip install  readline || true)",
-        '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python || true)',
+        '(ln -s python$PYTHON_VERSION_MAJOR  $INSTALL_FOLDER/bin/python 2>/dev/null || true)',
         # '$INSTALL_FOLDER/bin/easy_install scons',
+
+        # fix the damn "m" added to the libpython so file.
+        '''(for n in $(ls -1 $INSTALL_FOLDER/lib/libpython3.*m.so* 2>/dev/null) ; do ln -s $n $(echo $n | sed 's/m.so/.so/g') ; done)''',
     ]
 
     def fixCMD(self, cmd, os_environ):
-        cmd = configure.fixCMD(self,cmd, os_environ)
+        cmdz = []
+        for each in cmd.split('&&'):
+            line = each
+            if './configure' in each:
+                if float(os_environ['VERSION_MAJOR']) >= 3.9:
+                    line = './configure  --enable-unicode=ucs4 --with-openssl=$OPENSSL_TARGET_FOLDER  --with-bz2 --with-ensurepip=install --with-system-ffi --enable-shared '
+            cmdz += [line]
+        cmd = configure.fixCMD(self, ' && '.join(cmdz), os_environ)
         if self.kargs.has_key('easy_install'):
             for each in self.kargs['easy_install']:
                 cmd += ' && PYTHONHOME=$INSTALL_FOLDER/ $INSTALL_FOLDER/bin/easy_install %s ' % each
@@ -1227,9 +1283,10 @@ class gaffer(cortex):
     we need this just to add some links to the shared libraries, in order to support redhat and ubuntu distros'''
     src='SConstruct'
     environ = {
+        'BUILD_TYPE' : 'RELEASE',
     }
     cmd=[
-        ' scons OPTIONS=%s/gaffer_options.py -j $DCORES BUILD_TYPE=RELEASE ' % os.path.abspath( os.path.dirname(__file__)),
+        ' scons OPTIONS=%s/gaffer_options.py -j $DCORES BUILD_TYPE=$BUILD_TYPE ' % os.path.abspath( os.path.dirname(__file__)),
         # ' scons OPTIONS=%s/gaffer_options.py -j $DCORES' % os.path.abspath( os.path.dirname(__file__)),
     ]
     # disable Appleseed build since we don't have it building yet!
@@ -1245,7 +1302,7 @@ class gaffer(cortex):
 
     def fixCMD(self, cmd, os_environ):
         cmd = ' && '.join([
-            '(Xvfb :99 -screen 0 1280x1024x24 &)',
+            '(PYTHONPATH="" PYTHONHOME="" LD_LIBRARY_PATH="" PATH=/usr/bin:/bin Xvfb :99 -screen 0 1280x1024x24 +extension GLX +extension RANDR +render +iglx &)',
             'export DISPLAY=:99',
             'mkdir -p $INSTALL_FOLDER/fonts/',
             'mkdir -p $INSTALL_FOLDER/openColorIO/',

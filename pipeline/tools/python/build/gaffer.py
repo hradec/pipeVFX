@@ -29,117 +29,261 @@ build.s_print('build.installRoot() = '+build.installRoot())
 import pipe
 
 # cortex versions we build for now.
-download = [[
-    'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
-    'cortex-9.18.0.tar.gz',
-    '9.18.0',
-    'b3c55cc5e0e95668208713a01a145869',
-    {},
-    # we introduce a 5th element to the download array here, the compatibility
-    # dictionary, which tells the min and max version of a compatible
-    # package, so we don't build if that version is imcompatible.
-    {"boost" : ("0.0.0", "1.51.0")}
- ],[
-    'https://github.com/ImageEngine/cortex/archive/refs/tags/10.2.3.1.tar.gz',
-    'cortex-10.2.3.1.tar.gz',
-    '10.2.3.1',
-    '1a09b3ac5d59c43c36d958ea7875d532',
-    {},
-    {"boost" : ("1.66.0", "1.66.0"),
-     "usd"   : ("21.5.0", "21.5.0")}
- ],[
-    'https://github.com/ImageEngine/cortex/archive/refs/tags/10.3.2.1.tar.gz',
-    'cortex-10.3.2.1.tar.gz',
-    '10.3.2.1',
-    '4437543f90238f69082b7ac0178d9115',
-    {},
-    {"boost" : ("1.66.0", "99.99.99"),
-     "usd"   : ("21.5.0", "21.5.0")}
- ],[
-    'https://github.com/ImageEngine/cortex/archive/refs/tags/10.3.6.1.tar.gz',
-    'cortex-10.3.6.1.tar.gz',
-    '10.3.6.1',
-    '884dc61c6c624b96e3e6acc45468fff0',
-    {},
-    {"boost" : ("1.66.0", "99.99.99"),
-     "usd"   : ("21.5.0", "21.5.0")}
- ],[
-    'https://github.com/ImageEngine/cortex/archive/refs/tags/10.4.0.0.tar.gz',
-    'cortex-10.4.0.0.tar.gz',
-    '10.4.0.0',
-    '550795bccb6fda410f88eacafcf0e76e',
-    { },
-    {"boost" : ("1.76.0", "99.99.99"),
-     "usd"   : ("21.5.0", "21.11.0")}
-]]
+def cortex_download(pkgs):
+    download = [[
+        'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
+        'cortex-9.18.0.tar.gz',
+        '9.18.0',
+        'b3c55cc5e0e95668208713a01a145869',
+        { pkgs.gcc: '4.1.2', },
+        # we introduce a 5th element to the download array here, the compatibility
+        # dictionary, which tells the min and max version of a compatible
+        # package, so we don't build if that version is imcompatible.
+        {"boost" : ("0.0.0", "1.51.0"),
+         "maya"  : ("2016", "2016.99")}
+     ],[
+        'https://github.com/ImageEngine/cortex/archive/refs/tags/10.2.3.1.tar.gz',
+        'cortex-10.2.3.1.tar.gz',
+        '10.2.3.1',
+        '1a09b3ac5d59c43c36d958ea7875d532',
+        { pkgs.gcc: '6.3.1', },
+        {"boost" : ("1.66.0", "1.66.0"),
+         "oiio"  : ("2.2.15.1", "2.2.15.1"),
+         "maya"  : ("2018", "2018.99"),
+         "usd"   : ("21.5.0", "21.5.0")}
+     ],[
+        'https://github.com/ImageEngine/cortex/archive/refs/tags/10.3.2.1.tar.gz',
+        'cortex-10.3.2.1.tar.gz',
+        '10.3.2.1',
+        '4437543f90238f69082b7ac0178d9115',
+        { pkgs.gcc: '6.3.1', },
+        {"boost" : ("1.66.0", "99.99.99"),
+         "usd"   : ("21.5.0", "21.5.0"),
+         "maya"  : ("2018", "2018.99"),
+         "oiio"  : ("2.2.15.1", "2.2.15.1")}
+     ],[
+        'https://github.com/ImageEngine/cortex/archive/refs/tags/10.3.6.1.tar.gz',
+        'cortex-10.3.6.1.tar.gz',
+        '10.3.6.1',
+        '884dc61c6c624b96e3e6acc45468fff0',
+        { pkgs.gcc: '6.3.1', },
+        {"boost" : ("1.66.0", "99.99.99"),
+         "oiio"  : ("2.2.15.1", "2.2.15.1"),
+         "maya"  : ("2018", "2018.99"),
+         "usd"   : ("21.5.0", "21.5.0")}
+     ],[
+        'https://github.com/ImageEngine/cortex/archive/refs/tags/10.4.0.0.tar.gz',
+        'cortex-10.4.0.0.tar.gz',
+        '10.4.0.0',
+        '550795bccb6fda410f88eacafcf0e76e',
+        { pkgs.gcc: '9.3.1', },
+        {"boost" : ("1.76.0", "99.99.99"),
+         "maya"  : ("2018", "2018.99"),
+         "usd"   : ("21.11.0", "21.11.0")}
+     ],[
+        'https://github.com/ImageEngine/cortex/archive/refs/tags/10.4.1.2.tar.gz',
+        'cortex-10.4.1.2.tar.gz',
+        '10.4.1.2',
+        '599b5964d81fb4345f41c07fa3151c26',
+        { pkgs.gcc: '9.3.1', },
+        {"boost" : ("1.76.0", "99.99.99"),
+         "maya"  : ("2022", "2022.99"),
+         "usd"   : ("21.11.0", "21.11.0")}
+     ],[
+        'https://github.com/ImageEngine/cortex/archive/refs/tags/10.4.2.1.tar.gz',
+        'cortex-10.4.2.1.tar.gz',
+        '10.4.2.1',
+        '699adf93be240a8cce458ac492188125',
+        { pkgs.gcc: '9.3.1',
+          pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+          pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+          pkgs.ocio: '2.1.1',
+          # pkgs.python: '3.9.13',
+        },
+        {"boost" : ("1.76.0", "99.99.99"),
+         "maya"  : ("2022", "2023.99"),
+         "usd"   : ("21.11.0", "21.11.0")}
+    ]]
+    return download
+
 def cortex_depency(pkgs):
     return [
         pkgs.icu, pkgs.tbb, pkgs.jpeg, pkgs.libraw,
         pkgs.freeglut, pkgs.freetype, pkgs.libpng,
         pkgs.tiff, pkgs.jpeg, pkgs.openssl,
-        pkgs.glew, pkgs.blosc, pkgs.opensubdiv,
-        pkgs.ptex,  #, pkgs.appleseed
+        pkgs.glew, pkgs.blosc, pkgs.ptex,  #, pkgs.appleseed
     ]
-def cortex_dependency_dict(pkgs, version=None):
-    ret = {}
-    if version:
-        if version:
-            # if a version is specified, these pkg versions will
-            # override any default set.
-            if build.vComp(version) >= build.vComp('10.4.0'):
-                ret.update({ pkgs.gcc : '9.3.1' })
+
+def gaffer_download(pkgs):
+    ret = [[
+    #     'https://github.com/hradec/gaffer/archive/refs/tags/0.61.1.1-gaffercortex.tar.gz',
+    #     'gaffer-0.61.1.1-gaffercortex.tar.gz',
+    #     '0.61.1.1',
+    #     '31b22fb2999873c92aeefea4999ccc3e',
+    #     { pkgs.gcc: '6.3.1', pkgs.ocio: '1.1.1',
+    #       pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+    #       pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+    #       # pkgs.python: '2.7.16',
+    #     },
+    #     {"boost" : ("1.66.0", "1.66.0"),
+    #      "usd"   : ("21.5.0", "21.5.0"),
+    #      "cortex": "10.3.2.1",
+    #     }
+    # ],[
+    #     'https://github.com/hradec/gaffer/archive/refs/tags/0.61.14.0-gafferCortex.tar.gz',
+    #     'gaffer-0.61.14.0-gafferCortex.tar.gz',
+    #     '0.61.14.0',
+    #     'a9509c23d97a4d0d3a602d4668a901d4',
+    #     { pkgs.gcc: '6.3.1', pkgs.ocio: '1.1.1',
+    #       pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+    #       pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+    #       # pkgs.python: '2.7.16',
+    #     },
+    #     {"boost" : ("1.66.0", "1.66.0"),
+    #      "usd"   : ("21.5.0", "21.5.0"),
+    #      "cortex": "10.3.6.1",
+    #     }
+    # ],[
+    #     'https://github.com/hradec/gaffer/archive/refs/tags/1.0.1.0_gafferCortex.tar.gz',
+    #     'gaffer-1.0.1.0_gafferCortex.tar.gz',
+    #     '1.0.1.0',
+    #     '266f24c33f8998b579f42d6ad79d7b1b',
+    #     { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
+    #       pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+    #       pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+    #       # pkgs.python: '2.7.16',
+    #     },
+    #     {"boost" : ("1.76.0", "1.76.0"),
+    #      "usd"   : ("21.11.0", "21.11.0"),
+    #      "cortex": "10.4.1.2",
+    #     }
+    # ],[
+    #     'https://github.com/hradec/gaffer/archive/refs/tags/1.1.1.0_gafferCortex.tar.gz',
+    #     'gaffer-1.1.1.0_gafferCortex.tar.gz',
+    #     '1.1.1.0',
+    #     '50004958b149259517b022408ae28ecf',
+    #     { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
+    #       pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+    #       pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+    #       pkgs.llvm: '10.0.1',
+    #       # pkgs.python: '3.9.13',
+    #     },
+    #     {"boost" : ("1.76.0", "1.76.0"),
+    #      "usd"   : ("21.11.0", "21.11.0"),
+    #      "cortex": "10.4.2.1",
+    #     }
+    # ],[
+    #     'https://github.com/hradec/gaffer/archive/refs/tags/1.1.2.0_gafferCortex.tar.gz',
+    #     'gaffer-1.1.2.0_gafferCortex.tar.gz',
+    #     '1.1.2.0',
+    #     '10a3e649e6fe79db8a2c2ef0e3c9845a',
+    #     { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
+    #       pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+    #       pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+    #       pkgs.llvm: '10.0.1',
+    #       # pkgs.python: '3.9.13',
+    #     },
+    #     {"boost" : ("1.76.0", "1.76.0"),
+    #      "usd"   : ("21.11.0", "21.11.0"),
+    #      "cortex": "10.4.2.1",
+    #     }
+    # ],[
+        'https://github.com/hradec/gaffer/archive/refs/tags/1.1.4.0_gafferCortex.tar.gz',
+        'gaffer-1.1.4.0_gafferCortex.tar.gz',
+        '1.1.4.0',
+        'bc0967da4305103bfeac98db08af6b86',
+        { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
+          pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+          pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+          pkgs.llvm: '10.0.1',
+          # pkgs.python: '3.9.13',
+        },
+        {"boost" : ("1.76.0", "1.76.0"),
+         "usd"   : ("21.11.0", "21.11.0"),
+         "cortex": "10.4.2.1",
+        }
+    # ],[
+    #     'https://github.com/hradec/gaffer/archive/refs/tags/1.1.5.0_gafferCortex.tar.gz',
+    #     'gaffer-1.1.5.0_gafferCortex.tar.gz',
+    #     '1.1.5.0',
+    #     'bc0967da4305103bfeac98db08af6b86',
+    #     { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
+    #       pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+    #       pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+    #       pkgs.llvm: '10.0.1',
+    #       # pkgs.python: '3.9.13',
+    #     },
+    #     {"boost" : ("1.76.0", "1.76.0"),
+    #      "usd"   : ("21.11.0", "21.11.0"),
+    #      "cortex": "10.4.2.1",
+    #     }
+    ],[
+        'https://github.com/hradec/gaffer/archive/refs/tags/1.1.5.1_gafferCortex.tar.gz',
+        'gaffer-1.1.5.1_gafferCortex.tar.gz',
+        '1.1.5.1',
+        '0f5ab76d5cd6301ff946f2dce269199f',
+        { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
+          pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+          pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+          pkgs.llvm: '10.0.1',
+          # pkgs.python: '3.9.13',
+        },
+        {"boost" : ("1.76.0", "1.76.0"),
+         "usd"   : ("21.11.0", "21.11.0"),
+         "cortex": "10.4.2.1",
+        }
+    ],[
+        'https://github.com/hradec/gaffer/archive/refs/tags/1.1.7.0_gafferCortex.tar.gz',
+        'gaffer-1.1.7.0_gafferCortex.tar.gz',
+        '1.1.7.0',
+        '5dd05ae740e07ab61d3c62d2d2545e2d',
+        { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
+          pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+          pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+          pkgs.llvm: '10.0.1',
+          # pkgs.python: '3.9.13',
+        },
+        {"boost" : ("1.76.0", "1.76.0"),
+         "usd"   : ("21.11.0", "21.11.0"),
+         "cortex": "10.4.2.1",
+        }
+    ]]
+    for n in range(len(ret)):
+        ret[n][4] = ret[n][4].copy()
     return ret
 
-
-gaffer_download = [(
-    'https://github.com/hradec/gaffer/archive/refs/tags/0.61.1.1-gaffercortex.tar.gz',
-    'gaffer-0.61.1.1-gaffercortex.tar.gz',
-    '0.61.1.1',
-    '31b22fb2999873c92aeefea4999ccc3e',
-    {},
-    {"boost" : ("1.66.0", "1.66.0"),
-     "usd"   : ("21.5.0", "21.5.0"),
-     "cortex": '10.3.2.1'}
-),(
-    'https://github.com/hradec/gaffer/archive/refs/tags/0.61.14.0-gafferCortex.tar.gz',
-    'gaffer-0.61.14.0-gafferCortex.tar.gz',
-    '0.61.14.0',
-    'a9509c23d97a4d0d3a602d4668a901d4',
-    {},
-    {"boost" : ("1.66.0", "1.66.0"),
-     "usd"   : ("21.5.0", "21.5.0"),
-     "cortex": '10.3.6.1'}
-),(
-    'https://github.com/hradec/gaffer/archive/refs/tags/1.0.1.0_gafferCortex.tar.gz',
-    'gaffer-1.0.1.0_gafferCortex.tar.gz',
-    '1.0.1.0',
-    '266f24c33f8998b579f42d6ad79d7b1b',
-    {},
-    {"boost" : ("1.76.0", "1.76.0"),
-     "usd"   : ("21.11.0", "21.11.0"),
-     "cortex": '10.3.6.1'}
-)]
-def gaffer_dependency_dict(pkgs, version=None):
-    ret = {pkgs.pyside: '5.15.2', pkgs.qt: '5.15.2'}
-    if version:
-        # if a version is specified, these pkg versions will
-        # override any default set.
-        if build.vComp(version) >= build.vComp('1.0.0'):
-            ret.update({ pkgs.ocio : '2.1.1', pkgs.gcc : '9.3.1' })
-    return ret
-
-
+def cycles_download(pkgs):
+    return [[
+        'https://github.com/blender/cycles/archive/refs/tags/v3.2.0.tar.gz',
+        'cycles-3.2.0.tar.gz',
+        '3.2.0',
+        'e21382fbde81d7419617d60d00e90daa',
+        {},
+        {"gaffer" : ("1.0.4.0", "9.9.9.9")}
+    # ],[
+    #     'https://github.com/blender/cycles/archive/refs/tags/v3.4.0.tar.gz',
+    #     'cycles-3.4.0.tar.gz',
+    #     '3.4.0',
+    #     'e21382fbde81d7419617d60d00e90daa',
+    #     {},
+    #     {"gaffer" : ("1.0.4.0", "9.9.9.9")}
+    ]]
 
 # download and install arnold versions to build arnold gaffer extension
 arnold_versions = {
     '7.0.0.0' : {'gaffer': ['0.61.1.1']},
-    "7.1.1.0" : {'gaffer': ['0.61.14.0', '1.0.1.0']},
-    '7.1.2.0' : {'gaffer': []},
+    "7.1.1.0" : {'gaffer': ['0.61.14.0', '1.0.4.0']},
+    '7.1.2.0' : {'gaffer': ['1.1.1.0']},
+    # '7.1.2.0' : {'gaffer': ['1.1.1.0', '1.1.2.0']},
+    '7.1.3.2' : {'gaffer': ['1.1.2.0', '1.1.4.0', '1.1.5.1']},
+    '7.1.4.1' : {'gaffer': ['1.1.7.0']},
 }
 mtoa_versions = {
     '5.0.0.2' : {'maya' : ['2022'        ], 'arnold' : '7.0.0.0'},
     '5.1.1'   : {'maya' : ['2022', '2023'], 'arnold' : '7.1.1.0'},
     '5.1.3'   : {'maya' : ['2022', '2023'], 'arnold' : '7.1.2.0'},
+    '5.2.1.1' : {'maya' : ['2022', '2023'], 'arnold' : '7.1.3.2'},
+    '5.2.2.1' : {'maya' : ['2022', '2023'], 'arnold' : '7.1.4.1'},
 }
 # download and install arnold for us, based on the table above
 for arnold_version in arnold_versions:
@@ -190,6 +334,9 @@ if os.path.exists( patchFile ):
 
 def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_monolithic=False):
     ''' build cortex '''
+    if not hasattr(pkgs, 'cortex'):
+        pkgs.cortex = {}
+
     if not usd:
         usd = pkgs.masterVersion['usd']
     if not boost:
@@ -202,13 +349,10 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
     extraInstall = ""
 
     # only build versions that are compatible with the current boost!
+    download = []+cortex_download(pkgs)
     _download = download
     _download = [ []+x for x in _download if build.vComp(boost_version) >= build.vComp(x[5]["boost"][0]) and build.vComp(boost_version) <= build.vComp(x[5]["boost"][1])   ]
     _download = [ []+x for x in _download if build.vComp(usd) >= build.vComp(x[5]["usd"][0]) and build.vComp(usd) <= build.vComp(x[5]["usd"][1])   ]
-    # since USD was introduced in cortex 10, only build for version >= 10
-    # we select only the cortex version that uses the current version of USD to build in this step
-    # the []+x is to create a new list!
-    __download = [ []+x for x in _download if build.versionMajor(x[2]) >= 10.0 ]
 
     cortex_environ = pkgs.exr_rpath_environ.copy()
 
@@ -223,9 +367,24 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         version = apps[0][1]
         sufix = "-%s.%s" % (str(apps[0][0]).split("'")[1].split(".")[-1], version)
         dontUseTargetSuffixForFolders = 1
+        print('############>', build.vComp(version))
+        for x in _download:
+            if "maya" in x[5]:
+                print('################>', build.vComp(version), build.vComp(version) >= build.vComp(x[5]["maya"][0]), build.vComp(version) <= build.vComp(x[5]["maya"][1]), x[2] )
+        _download = [ []+x for x in _download
+            if "maya" in x[5] and
+            build.vComp(version) >= build.vComp(x[5]["maya"][0]) and
+            build.vComp(version) <= build.vComp(x[5]["maya"][1])
+        ]
+    print(_download)
 
     sufix = "boost.%s-usd.%s%s" % (boost_version, usd_version, sufix)
     # build.s_print( "cortex: "+sufix, __download )
+
+    # since USD was introduced in cortex 10, only build for version >= 10
+    # we select only the cortex version that uses the current version of USD to build in this step
+    # the []+x is to create a new list!
+    __download = [ []+x for x in _download if build.versionMajor(x[2]) >= 10.0 ]
 
     # retrieve the latest version of the package, no matter what boost version
     openvdbOBJ = build.pkgVersions('openvdb').latestVersionOBJ()
@@ -235,42 +394,58 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         if usd_monolithic:
             osl = usd['osl'].obj[usd['osl'].version]
             alembic = usd['alembic'].obj[usd['alembic'].version]
+            oiio_version = usd['oiio'].version
+            if 'oiio' in __download[n][5]:
+                oiio_version = __download[n][5]['oiio'][0]
+            oiio = usd['oiio'].obj[oiio_version]
             __download[n][4] = __download[n][4].copy()
-            __download[n][4][ pkgs.boost           ] = boost_version
-            __download[n][4][ usd.obj              ] = usd.version
-            __download[n][4][ alembic.obj          ] = alembic.version
-            __download[n][4][ alembic['hdf5' ].obj ] = alembic['hdf5'].version
-            __download[n][4][ pkgs.gcc             ] = usd['gcc'      ].version
-            __download[n][4][ usd['osl'      ].obj ] = usd['osl'      ].version
-            __download[n][4][ usd['oiio'     ].obj ] = usd['oiio'     ].version
-            __download[n][4][ usd['ilmbase'  ].obj ] = usd['openexr'  ].version
-            __download[n][4][ usd['openexr'  ].obj ] = usd['openexr'  ].version
-            __download[n][4][ usd['pyilmbase'].obj ] = usd['openexr'  ].version
-            __download[n][4][ usd['tbb'].obj       ] = usd['tbb'      ].version
-            __download[n][4][ usd['ocio'].obj      ] = usd['ocio'     ].version
-            __download[n][4][ usd['openvdb'  ].obj ] = usd['openvdb'  ].version
+            # __download[n][4][ pkgs.gcc              ] = pkgs.boost[boost_version]['gcc'].version
+            # __download[n][4][ pkgs.gcc              ] = usd['gcc'       ].version
+            __download[n][4][ pkgs.boost            ] = boost_version
+            __download[n][4][ usd.obj               ] = usd.version
+            __download[n][4][ alembic.obj           ] = alembic.version
+            __download[n][4][ oiio['openvdb'  ].obj ] = oiio['openvdb'  ].version
+            __download[n][4][ alembic['hdf5'  ].obj ] = alembic['hdf5'  ].version
+            __download[n][4][ usd['python'    ].obj ] = usd['python'    ].version
+            __download[n][4][ usd['osl'       ].obj ] = usd['osl'       ].version
+            __download[n][4][ usd['oiio'      ].obj ] = oiio_version
+            __download[n][4][ usd['ilmbase'   ].obj ] = usd['openexr'   ].version
+            __download[n][4][ usd['openexr'   ].obj ] = usd['openexr'   ].version
+            __download[n][4][ usd['pyilmbase' ].obj ] = usd['openexr'   ].version
+            __download[n][4][ usd['tbb'       ].obj ] = usd['tbb'       ].version
+            # __download[n][4][ usd['ocio'      ].obj ] = usd['ocio'      ].version
+            __download[n][4][ usd['opensubdiv'].obj ] = usd['opensubdiv'].version
         else:
             osl = usd_non_monolithic['osl'].obj[usd_non_monolithic['osl'].version]
+            oiio_version = usd_non_monolithic['oiio'].version
+            if 'oiio' in __download[n][5]:
+                oiio_version = __download[n][5]['oiio'][0]
+            oiio = usd_non_monolithic['oiio'].obj[oiio_version]
             # print usd_non_monolithic['alembic'], usd_non_monolithic['alembic'].obj.versions, boost_version, usd_version, __download[n][2]
             alembic = usd_non_monolithic['alembic'].obj[usd_non_monolithic['alembic'].version]
             __download[n][4] = __download[n][4].copy()
-            __download[n][4][ pkgs.boost             ] = boost_version
-            __download[n][4][ usd_non_monolithic.obj ] = usd_non_monolithic.version
-            __download[n][4][ alembic.obj            ] = alembic.version
-            __download[n][4][ alembic['hdf5' ].obj   ] = alembic['hdf5'].version
-            __download[n][4][ pkgs.gcc                      ]       = usd_non_monolithic['gcc'      ].version
-            __download[n][4][ usd_non_monolithic['osl'      ].obj ] = usd_non_monolithic['osl'      ].version
-            __download[n][4][ usd_non_monolithic['oiio'     ].obj ] = usd_non_monolithic['oiio'     ].version
-            __download[n][4][ usd_non_monolithic['ilmbase'  ].obj ] = usd_non_monolithic['openexr'  ].version
-            __download[n][4][ usd_non_monolithic['openexr'  ].obj ] = usd_non_monolithic['openexr'  ].version
-            __download[n][4][ usd_non_monolithic['pyilmbase'].obj ] = usd_non_monolithic['openexr'  ].version
-            __download[n][4][ usd_non_monolithic['tbb'].obj       ] = usd_non_monolithic['tbb'      ].version
-            __download[n][4][ usd_non_monolithic['ocio'].obj      ] = usd_non_monolithic['ocio'     ].version
-            __download[n][4][ usd_non_monolithic['openvdb'  ].obj ] = usd_non_monolithic['openvdb'  ].version
+            # __download[n][4][ pkgs.gcc                       ] = pkgs.boost[boost_version]['gcc'].version
+            # __download[n][4][ pkgs.gcc                       ] = usd_non_monolithic['gcc'       ].version
+            __download[n][4][ pkgs.boost                     ] = boost_version
+            __download[n][4][ usd_non_monolithic.obj         ] = usd_non_monolithic.version
+            __download[n][4][ alembic.obj                    ] = alembic.version
+            __download[n][4][ oiio['openvdb'                 ].obj ] = oiio['openvdb'                 ].version
+            __download[n][4][ alembic['hdf5'                 ].obj ] = alembic['hdf5'                 ].version
+            __download[n][4][ usd_non_monolithic['python'    ].obj ] = usd_non_monolithic['python'    ].version
+            __download[n][4][ usd_non_monolithic['osl'       ].obj ] = usd_non_monolithic['osl'       ].version
+            __download[n][4][ usd_non_monolithic['oiio'      ].obj ] = oiio_version
+            __download[n][4][ usd_non_monolithic['ilmbase'   ].obj ] = usd_non_monolithic['openexr'   ].version
+            __download[n][4][ usd_non_monolithic['openexr'   ].obj ] = usd_non_monolithic['openexr'   ].version
+            __download[n][4][ usd_non_monolithic['pyilmbase' ].obj ] = usd_non_monolithic['openexr'   ].version
+            __download[n][4][ usd_non_monolithic['tbb'       ].obj ] = usd_non_monolithic['tbb'       ].version
+            # __download[n][4][ usd_non_monolithic['ocio'      ].obj ] = usd_non_monolithic['ocio'      ].version
+            __download[n][4][ usd_non_monolithic['opensubdiv'].obj ] = usd_non_monolithic['opensubdiv'].version
             cortex_environ['USD_VERSION'] = usd_non_monolithic.version
-        # and after default, we can override with packages for the specific version
-        __download[n][4].update( cortex_dependency_dict(pkgs, __download[n][2]) )
 
+        # we need this in cortex_options.py, so RPATH works!
+        cortex_environ['CORTEX_TARGET_FOLDER'] = '$INSTALL_TARGET'
+
+        # build.s_print( "cortex version: %s (%s)" % ( __download[n][2], sufix ) )
 
     # now build the version of cortex with the usd version
     pkgs.cortex[sufix] = build._cortex(
@@ -285,7 +460,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         dontUseTargetSuffixForFolders = dontUseTargetSuffixForFolders,
         cmd = [
             # fixes for cortex version < 10.4
-            '''if awk awk "BEGIN {exit !($VERSION_MAJOR < 10.4)}" ; then
+            '''if awk "BEGIN {exit !($VERSION_MAJOR < 10.4)}" ; then
                 # Boost removed signals library starting on 1.69.0
                 if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then
                     sed -i.bak -e 's/boost_signals//g' SConstruct
@@ -302,15 +477,17 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
             # build cortex
             build._cortex.cmd[0]+"installLib"+";"+\
             build._cortex.cmd[0]+"installCore"+";"+\
+            build._cortex.cmd[0]+"installVDB"+";"+\
             build._cortex.cmd[0]+";"+\
             build._cortex.cmd[0]+" build ;"+\
             build._cortex.cmd[0]+" install",
         ],
         environ = cortex_environ,
         apps = apps,
-        # environ = { 'LD' : 'ld' },
     )
-    build.github_phase_one_version(ARGUMENTS, {pkgs.cortex[sufix] : version for version in pkgs.cortex[sufix].keys()})
+    for v in pkgs.cortex[sufix].keys():
+        build.github_phase_one_version(ARGUMENTS, {pkgs.cortex[sufix] : v})
+
     return pkgs.cortex
 
 
@@ -318,11 +495,13 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
 # GAFFER
 # ===========================================================================================
 def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_monolithic=False):
+    if not hasattr(pkgs, 'gaffer'):
+        pkgs.gaffer = {}
 
     if not usd:
         usd = pkgs.masterVersion['usd']
     if not boost:
-        usd = pkgs.masterVersion['boost']
+        boost = pkgs.masterVersion['boost']
 
     depend = cortex_depency(pkgs)
     version=0
@@ -334,6 +513,7 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         dontUseTargetSuffixForFolders = 1
 
     # grab the latest version of cortex to build gaffer.
+    download = cortex_download(pkgs)
     _downloadCortex9 = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
     cortex9version = _downloadCortex9[-1][2]
     _downloadCortex10 = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
@@ -341,10 +521,10 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
 
     # define sufix from required boost/usd versions
     suffix = "boost.%s-usd.%s%s" % (boost, usd, suffix)
-    build.s_print( "gaffer: "+suffix )
+    # build.s_print( "gaffer: "+suffix )
 
     # replace the whole dowload list with a custom one
-    _download = gaffer_download
+    _download = []+gaffer_download(pkgs)
     if __download__:
         _download=__download__
 
@@ -359,44 +539,75 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
             _download = [ list(x) for x in _download if x[2] in arnold_versions[av]['gaffer'] ]
 
     # update dependencies, retrieving the versions from the boost/usd main versions
-    usd_version = usd
     # only build gaffer for the allowed cortex version
-    _download = [ list(x) for x in _download if x[5]['cortex'] in pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)].versions ]
+    _download = [ list(x) for x in _download if x[5]['cortex'] in pkgs.cortex["boost.%s-usd.%s" % (boost, usd)].versions ]
     if _download:
         for n in range(len(_download)):
-            cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd_version)][_download[n][5]['cortex']]
+            gaffer_version = _download[n][2]
+            cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd)][_download[n][5]['cortex']]
 
             # default packages for gaffer
-            _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
+            # _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
 
             if usd_monolithic:
-                usd = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
+                usdOBJ = cortexOBJ['usd'].obj[ cortexOBJ['usd'].version ]
             else:
-                usd = cortexOBJ['usd_non_monolithic'].obj[ cortexOBJ['usd_non_monolithic'].version ]
+                usdOBJ = cortexOBJ['usd_non_monolithic'].obj[ cortexOBJ['usd_non_monolithic'].version ]
 
-            osl = usd['osl'].obj[usd['osl'].version]
+            # print(_download[n][4][pkgs.ocio])
+            ocio    = pkgs.ocio[ _download[n][4][pkgs.ocio] ]
+            osl     = usdOBJ['osl'          ].obj[ usdOBJ['osl'          ].version ]
+            oiio    = usdOBJ['oiio'         ].obj[ usdOBJ['oiio'         ].version ]
+            embree  = usdOBJ['embree'       ].obj[ usdOBJ['embree'       ].version ]
+            # openvdb = usdOBJ['openvdb'      ].obj[ usdOBJ['openvdb'      ].version ]
+            openvdb = cortexOBJ['openvdb'   ].obj[ cortexOBJ['openvdb'   ].version ]
 
             # pull gaffer defaults from package versions used by usd and cortex
             _download[n][4].update({
-                pkgs.gcc: '6.3.1',
                 pkgs.boost: boost,
-                usd.obj: usd.version,
-                pkgs.ocio: usd['ocio'].version,
-                usd['jemalloc'].obj: usd['jemalloc' ].version,
-                usd['tbb'     ].obj: usd['tbb'      ].version,
-                usd['osl'     ].obj: usd['osl'      ].version,
-                osl['llvm'    ].obj: osl['llvm'     ].version,
-                cortexOBJ.obj: cortexOBJ.version,
-                cortexOBJ['hdf5'     ].obj: cortexOBJ['hdf5'     ].version,
-                cortexOBJ['alembic'  ].obj: cortexOBJ['alembic'  ].version,
-                cortexOBJ['oiio'     ].obj: cortexOBJ['oiio'     ].version,
-                cortexOBJ['openexr'  ].obj: cortexOBJ['openexr'  ].version,
-                cortexOBJ['ilmbase'  ].obj: cortexOBJ['openexr'  ].version,
-                cortexOBJ['pyilmbase'].obj: cortexOBJ['openexr'  ].version,
-                cortexOBJ['openvdb'  ].obj: cortexOBJ['openvdb'  ].version,
+                # pkgs.ocio: usdOBJ['ocio'].version,
+                usdOBJ.obj                 : usdOBJ.version,
+                usdOBJ['jemalloc'     ].obj: usdOBJ['jemalloc'     ].version,
+                usdOBJ['embree'       ].obj: usdOBJ['embree'       ].version,
+                usdOBJ['tbb'          ].obj: usdOBJ['tbb'          ].version,
+                usdOBJ['osl'          ].obj: usdOBJ['osl'          ].version,
+                usdOBJ['qt'           ].obj: usdOBJ['qt'           ].version,
+                usdOBJ['pyside'       ].obj: usdOBJ['pyside'       ].version,
+                usdOBJ['python'       ].obj: usdOBJ['python'       ].version,
+                # usdOBJ['ocio'         ].obj: usdOBJ['ocio'         ].version,
+                cortexOBJ.obj              : cortexOBJ.version,
+                cortexOBJ['hdf5'      ].obj: cortexOBJ['hdf5'      ].version,
+                cortexOBJ['alembic'   ].obj: cortexOBJ['alembic'   ].version,
+                cortexOBJ['oiio'      ].obj: cortexOBJ['oiio'      ].version,
+                cortexOBJ['openexr'   ].obj: cortexOBJ['openexr'   ].version,
+                cortexOBJ['ilmbase'   ].obj: cortexOBJ['openexr'   ].version,
+                cortexOBJ['pyilmbase' ].obj: cortexOBJ['openexr'   ].version,
+                cortexOBJ['openvdb'   ].obj: cortexOBJ['openvdb'   ].version,
+                cortexOBJ['opensubdiv'].obj: cortexOBJ['opensubdiv'].version,
+                # pkgs.llvm     : osl['llvm'].version,
+                # pkgs.clang    : osl['llvm'].version,
+                pkgs.yaml     : ocio['yaml'].version,
+                pkgs.yaml_cpp : ocio['yaml_cpp'].version,
+                pkgs.pugixml  : oiio['pugixml'],
+                pkgs.jpeg     : oiio['jpeg'].version,
+                pkgs.glew     : embree['glew'].version,
+                pkgs.ispc     : embree['ispc'].version,
+                pkgs.cuda     : openvdb['cuda'].version,
+                pkgs.optix    : openvdb['optix'].version,
             })
-            # and after default, we can override with packages for the specific version
-            _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
+
+            # build.s_print( "gaffer version: %s (%s)" % (_download[n][2], suffix))
+            print( "::======> build.vComp(%s) <= build.vComp('9.9.9.9') = %s" % (gaffer_version, build.vComp(gaffer_version) <= build.vComp('9.9.9.9')) )
+            cyclesOBJ = None
+            if build.vComp(gaffer_version) >= build.vComp('1.0.3.0') and build.vComp(gaffer_version) <= build.vComp('9.9.9.9'):
+                # build cycles for the given boost/usd/gaffer version
+                deps = {}
+                deps.update(_download[n][4].copy())
+                cyclesOBJ = cycles(boost, usd, pkgs, deps, gaffer_version, llvm='10.0.1')
+                # and it to as dependencie to gaffer
+                _download[n][4].update({
+                    cyclesOBJ : cyclesOBJ.latestVersion(),
+                })
 
         pkgs.gaffer[ suffix ] =  build._gaffer(
             ARGUMENTS, # noqa
@@ -407,11 +618,18 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
             download = _download,
             depend =  depend + [
                 pkgs.qt, pkgs.pyside,
-                pkgs.python, pkgs.qtpy, pkgs.fonts,
+                pkgs.qtpy, pkgs.fonts,
                 pkgs.ocio_profiles, pkgs.gaffer_resources
             ],
             apps = apps,
-            cmd = [
+            cmd = ['''
+                # patch SConstruct for cycles with cuda/hip support
+                if python -c "exit(0 if $VERSION_MAJOR >= 1.1 else 1)" ; then
+                    if [ "$(grep embree3 SConstruct)" != "" ] &&  [ "$(egrep 'embree3.*cuda' SConstruct)" == "" ]  ; then
+                        sed -i.bak SConstruct -e 's/.embree3../"embree3", "cuda", "extern_cuew", "extern_hipew", "glog", "gflags",/'
+                    fi
+                fi
+                '''+\
                 build._gaffer.cmd[0]+";"+\
                 build._gaffer.cmd[0]+' build ;'+\
                 build._gaffer.cmd[0]+' install',
@@ -419,6 +637,7 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
             dontUseTargetSuffixForFolders = dontUseTargetSuffixForFolders,
             dontAddLLVMtoEnviron = 1,
             environ = {
+                'BUILD_TYPE' : 'DEBUG',
                 'CXXFLAGS' : ' '.join([
                     # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/',
                     # '-isystem $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/',
@@ -433,8 +652,8 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
                     pkgs.exr_rpath_environ['CXXFLAGS'],
                     '$CXXFLAGS',
                 ]),
-                # we need this for pre-compiled appleseed (binary tarball),
-                # since centos 7 libc is too old
+                # # we need this for pre-compiled appleseed (binary tarball),
+                # # since centos 7 libc is too old
                 'LD_PRELOAD': ':'.join([
                     '/usr/lib64/libstdc++.so.6',
                     '/lib64/libexpat.so.1',
@@ -442,18 +661,128 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
                     # '$GCC_TARGET_FOLDER/lib64/libgcc_s.so.1'
                 ]) if 'fedora' in  pipe.distro else '',
                 'LDFLAGS': pkgs.exr_rpath_environ['LDFLAGS'],
-                'USD_VERSION': usd_version,
-                'DCORES' : os.environ['CORES'],
+                'USD_VERSION': usd,
+                'DCORES' : os.environ['MEMGB'] if int(os.environ['MEMGB']) < int(os.environ['CORES']) else os.environ['CORES'],
                 # 'DCORES' : '1',
             },
         )
-        build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[suffix] : version for version in pkgs.gaffer[suffix].keys()})
+        # for v in pkgs.gaffer[suffix].keys():
+        #     build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[suffix] : v})
 
     return pkgs.gaffer
 
+# /frankbarton/pipeline/libs/linux/x86_64/pipevfx.5.0.1/cycles/3.2.0/.build.noBaseLib-boost.1.76.0-usd.21.11.0-gaffer.1.1.5.0.done ->
+# /frankbarton/pipeline/libs/linux/x86_64/pipevfx.5.0.1/cycles/3.2.0/.build.noBaseLib-boost.1.76.0-usd.21.11.0-gaffer.1.1.5.0.done
+# /frankbarton/pipeline/libs/linux/x86_64/pipevfx.5.0.1/cycles/3.2.0/.install.noBaseLib-boost.1.76.0-usd.21.11.0-gaffer.1.1.5.0.done ->
+# .build/gaffer-1.0.1.0_gafferCortex.noBaseLib-boost.1.76.0-usd.21.11.0/SConstruct ->
+# /frankbarton/pipeline/libs/linux/x86_64/pipevfx.5.0.1/gaffer/1.0.1.0/.build.noBaseLib-boost.1.76.0-usd.21.11.0.done ->
+# /frankbarton/pipeline/libs/linux/x86_64/pipevfx.5.0.1/gaffer/1.0.1.0/.install.noBaseLib-boost.1.76.0-usd.21.11.0.done ->
+# .build/wait4.phase64.1.0.1.0/configure -> /frankbarton/pipeline/libs/linux/x86_64/pipevfx.5.0.1/gaffer/1.0.1.0/.build.noBaseLib-phase64.done ->
+# /frankbarton/pipeline/libs/linux/x86_64/pipevfx.5.0.1/gaffer/1.0.1.0/.install.noBaseLib-phase64.done ->
+# .build/cycles-3.2.0.noBaseLib-boost.1.76.0-usd.21.11.0-gaffer.1.1.5.0/CMakeLists.txt ->
 
+def cycles(boost=None, usd=None, pkgs=None, gaffer_dependencies={}, gaffer_version='', llvm='10.0.1'):
+    if not hasattr(pkgs, 'cycles'):
+        pkgs.cycles = {}
 
+    # derivated package versions from gaffer dependencies
+    usdOBJ = [ x for x in gaffer_dependencies.keys() if x and 'usd' in x.name ][0][usd]
+    openvdb = [ x for x in gaffer_dependencies.keys() if x and 'openvdb' in x.name ][0]
+    openvdbOBJ = openvdb[ gaffer_dependencies[openvdb] ]
+    oslOBJ = usdOBJ['osl'].obj[usdOBJ['osl'].version]
+    dependencies = gaffer_dependencies.copy()
 
+    suffix = "boost.%s-usd.%s-gaffer.%s" % (boost, usd, gaffer_version)
+
+    # add clang source with the same version as llvm, since cycles need it.
+    dependencies[pkgs.clang] = dependencies[pkgs.llvm]
+
+    # build the version compatible with for the requested gaffer
+    download = []
+    for each in cycles_download(pkgs):
+        gaffer_min_version = build.vComp(each[5]['gaffer'][0])
+        gaffer_max_version = build.vComp(each[5]['gaffer'][1])
+        if build.vComp(gaffer_version) >= gaffer_min_version and build.vComp(gaffer_version) <= gaffer_max_version:
+            download += [(
+                each[0],
+                each[1],
+                each[2],
+                each[3],
+                dependencies.copy(),
+            )]
+
+    pkgs.cycles[suffix] = build.cmake(
+        build.ARGUMENTS,
+        'cycles',
+        targetSuffix = suffix,
+        # src='build-hradec.sh',
+        download=download,
+        cmd=['''
+            if [ "$USD_NON_MONOLITHIC_TARGET_FOLDER" != "" ] ; then
+                export USD_TARGET_FOLDER="$USD_NON_MONOLITHIC_TARGET_FOLDER"
+                export USD_VERSION="$USD_NON_MONOLITHIC_VERSION"
+            fi ; '''
+            "mkdir -p build",
+        	"cd build",
+    		"cmake"
+                ' -D DCMAKE_CC="$CC"'
+                ' -D DCMAKE_CXX="$CXX"'
+                " -D CMAKE_CXX_COMPILER=$CXX"
+    			" -D CMAKE_BUILD_TYPE=Release"
+    			" -D WITH_CYCLES_OPENIMAGEDENOISE=ON"
+    			" -D WITH_CYCLES_DEVICE_CUDA=ON"
+    			" -D WITH_CYCLES_DEVICE_OPTIX=ON"
+    			" -D CMAKE_POSITION_INDEPENDENT_CODE=ON"
+    			" -D PXR_ROOT=$USD_TARGET_FOLDER"
+                " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
+                " -D EMBREE_ROOT_DIR=$EMBREE_TARGET_FOLDER"
+                " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
+                " -D LLVM_ROOT_DIR=$LLVM_TARGET_FOLDER"
+                " -D OPENCOLORIO_ROOT_DIR=$OCIO_TARGET_FOLDER"
+                " -D OPENIMAGEIO_ROOT_DIR=$OIIO_TARGET_FOLDER"
+                " -D OSL_ROOT_DIR=$OSL_TARGET_FOLDER"
+                " -D OPENEXR_ROOT_DIR=$OPENEXR_TARGET_FOLDER"
+                " -D JPEG_ROOT_DIR=$JPEG_ROOT_DIR"
+                " -D PUGIXML_ROOT_DIR=$PUGIXML_ROOT_DIR"
+                " -D WITH_OPENCOLORIO=ON"
+                " -D OCIO_PATH=$OCIO_TARGET_FOLDER"
+                " -D GLEW_ROOT_DIR=$GLEW_TARGET_FOLDER"
+                " -D WITH_OPENVDB=ON"
+                " -D BLOSC_ROOT_DIR=$BLOSC_TARGET_FOLDER"
+                " -D OPENVDB_ROOT_DIR=$OPENVDB_TARGET_FOLDER"
+                " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
+                " -D GAFFER_ROOT=$GAFFER_TARGET_FOLDER"
+                " -D WITH_CYCLES_DEVICE_CUDA=ON"
+                " -D WITH_CYCLES_CUDA_BINARIES=ON"
+                " -D WITH_CYCLES_DEVICE_OPTIX=ON"
+                " -D OPTIX_ROOT_DIR=$OPTIX_TARGET_FOLDER"
+                " -D WITH_CYCLES_DEVICE_CUDA=ON"
+                " -D WITH_CYCLES_DEVICE_HIP=OFF"
+                " -D WITH_CYCLES_HIP_BINARIES=OFF"
+                " -D WITH_HIP_DYNLOAD=OFF"
+                " -D WITH_CYCLES_EMBREE=ON"
+                " -D WITH_CYCLES_OPENSUBDIV=ON"
+                " -D WITH_CYCLES_LOGGING=ON"
+                " -D WITH_OPENIMAGEDENOISE=ON"
+                " -D WITH_NANOVDB=ON"
+                # " -D WITH_CYCLES_SDF=OFF"
+                # " -D WITH_CYCLES_CORNER_NORMALS=ON"
+                " -D PYTHON_VARIANT=$PYTHON_VERSION_MAJOR"
+                # instruct cmake to use new behaviour (which is to use pkg_ROOT as pkg root folders)
+                " -D CMAKE_POLICY_DEFAULT_CMP0074=NEW"
+    			" ..",
+    		"make install -j $DCORES VERBOSE=1",
+    		"mkdir -p ${INSTALL_FOLDER}/include",
+            "cd ${SOURCE_FOLDER}/src && find . -name '*.h' | cpio -pdm ${INSTALL_FOLDER}/include ",
+            "cd ${SOURCE_FOLDER}/",
+    		"cp -rfv ${SOURCE_FOLDER}/third_party/atomic/* ${INSTALL_FOLDER}/include",
+    		"mkdir -p ${INSTALL_FOLDER}/bin",
+    		"mv ${INSTALL_FOLDER}/cycles ${INSTALL_FOLDER}/bin/cycles",
+    		"cp -rfv ${SOURCE_FOLDER}/build/lib ${INSTALL_FOLDER}",
+        ],
+        environ = pkgs.llvm_plus_gcc_adjustment(forCMake=True),
+    )
+    return pkgs.cycles[suffix]
 
 
 
@@ -476,6 +805,7 @@ def legacy(pkgs):
         extraInstall = ""
 
         # only build versions below 10.0 (legacy)
+        download = cortex_download(pkgs)
         tmp = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
 
         # only build the versions that are compatible with the current boost version!
@@ -558,7 +888,7 @@ def legacy(pkgs):
                     # alembic_boost = [ x[4][pkgs.boost] for x in pkgs.alembic.download if x[2] == alembic_version ][0]
                     if 'boost' in alembic and alembic['boost'] == boost_version:
                         sufix = "boost.%s-alembic.%s" % (boost_version, alembic_version)
-                        build.s_print( "cortex (legacy): "+sufix )
+                        # build.s_print( "cortex (legacy): "+sufix )
 
                         # cortex 9 is only compatible with alembic below 1.6
                         if build.versionMajor(alembic_version) < 1.6:

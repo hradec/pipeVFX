@@ -42,16 +42,24 @@ except:
 def versionMajor(versionString):
     return float('.'.join(versionString.split('.')[:2]))
 
-def vComp(versionString):
-    v = versionString.split('.')
-    vv = range(len(v))
-    vv=range(6)
-    # vv.reverse()
-    ret = 0
-    for n in vv:
-        if len(v) > n:
-            ret += float(v[n])*pow(1000,len(vv)-n)
-    return ret
+
+from pipe import vComp, versionBiggerEqualThan, versionSmallerEqualThan
+# def vComp(versionString):
+#     v = versionString.split('.')
+#     vv = range(len(v))
+#     vv=range(6)
+#     # vv.reverse()
+#     ret = 0
+#     for n in vv:
+#         if len(v) > n:
+#             ret += float(v[n])*pow(1000,len(vv)-n)
+#     return ret
+#
+# def versionBiggerEqualThan(v1, v2):
+#     return build.vComp(v1) >= build.vComp(v2)
+#
+# def versionSmallerEqualThan(v1, v2):
+#     return build.vComp(v1) <= build.vComp(v2)
 
 
 DB={}
@@ -994,7 +1002,8 @@ class generic:
                             if self.targetSuffix:
                                 ts=" (%s)" % self.targetSuffix+self.extraTargetSuffix
                             if 'ilmbase' not in  self.dependOn[download_version][each].obj.name:
-                                _print( "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name,self.dependOn[download_version][each].obj.className, self.dependOn[download_version][each].version, "does not exist!")#, self.dependOn[download_version][each].obj.download_versions )
+                                if self.dependOn[download_version][each].version != '0.0.0':
+                                    _print( "::==> deleting dependency for ",self.name," (",download_version+ts,"): ", self.dependOn[download_version][each].obj.name,self.dependOn[download_version][each].obj.className, self.dependOn[download_version][each].version, "does not exist!")#, self.dependOn[download_version][each].obj.download_versions )
                             del self.dependOn[download_version][each]
 
         # set gcc_version for instalation purposes
@@ -1067,6 +1076,10 @@ class generic:
         if kargs.has_key('dontUseTargetSuffixForFolders'):
             self.dontUseTargetSuffixForFolders = kargs['dontUseTargetSuffixForFolders']
 
+        self.custom_installer = None
+        if kargs.has_key('installer'):
+            self.custom_installer = kargs['installer']
+
 
         # make sure our build folder exists!
         os.popen( "mkdir -p %s" % buildFolder(self.args) )
@@ -1134,7 +1147,10 @@ class generic:
             v=kargs[each]
             if type(v)==type(""):
                 v=[kargs[each]]
-            if type(v) not in [int, float, bool, dict]:
+
+            # type(os.path.exists) == type(<class 'function'>)
+            # its just a way to test if v is a function
+            elif type(v) not in [int, float, bool, dict, type(os.path.exists)]:
                 if v:
                     for nn in range(len(v)):
                         self.set("%s_%s_%s_%02d" % (each.upper(),self.className,self.name,nn), v[nn])
@@ -1282,7 +1298,8 @@ class generic:
                     if not self._installer_final_check( [install], [build], tmp_env ):
                         # if not installed, remove build folder!
                         if os.path.exists(self.buildFolder[p][-1]) and not self.github_matrix:
-                            cmd = "mv %s %s__ ; rm -rf %s__ &" % (self.buildFolder[p][-1], self.buildFolder[p][-1], self.buildFolder[p][-1])
+                            # cmd = "mv %s %s__ ; rm -rf %s__ " % (self.buildFolder[p][-1], self.buildFolder[p][-1], self.buildFolder[p][-1])
+                            cmd = "rm -rf %s" % (self.buildFolder[p][-1])
                             # _print( ":: __init__:",cmd,"\r" )
                             os.popen(cmd).readlines()
                     # else:
@@ -2133,6 +2150,10 @@ class generic:
                                 dependOn.targetSuffix
                             ])
 
+
+                    if 'OPENVDB' in dependOn.name.upper():
+                        _print('::================>',self.name, k ,p, os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()], target_folder, str(target_original))
+
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
                     else:
@@ -2185,11 +2206,11 @@ class generic:
                     # set python searchpath for dependencies
                     PYTHONPATH += [
                         "${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/"                   %  dependOn.name.upper(),
-                        "${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/"     %  dependOn.name.upper(),
                         '${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/lib-dynload/'       %  dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib/python${PYTHON_VERSION_MAJOR}/site-packages/"     %  dependOn.name.upper(),
                         "${%s_TARGET_FOLDER}/lib/boost.$BOOST_VERSION/python${PYTHON_VERSION_MAJOR}/"                   %  dependOn.name.upper(),
-                        "${%s_TARGET_FOLDER}/lib/boost.$BOOST_VERSION/python${PYTHON_VERSION_MAJOR}/site-packages/"     %  dependOn.name.upper(),
                         '${%s_TARGET_FOLDER}/lib/boost.$BOOST_VERSION/python${PYTHON_VERSION_MAJOR}/lib-dynload/'       %  dependOn.name.upper(),
+                        "${%s_TARGET_FOLDER}/lib/boost.$BOOST_VERSION/python${PYTHON_VERSION_MAJOR}/site-packages/"     %  dependOn.name.upper(),
                     ]
 
                     # set PATH searchpath for dependencies binaries
@@ -2461,7 +2482,7 @@ class generic:
                 # os.path.basename(x.replace('/bin/gcc','')) for x in glob('%s/../*/bin/gcc' % os_environ['GCC_TARGET_FOLDER'])
                 os.path.basename(x.strip('/')) for x in glob('%s/../*' % os_environ['GCC_TARGET_FOLDER'])
             ] )
-            os_environ['LATESTGCC_VERSION'] = versions[0]
+            os_environ['LATESTGCC_VERSION'] = versions[-1]
             os_environ['LATESTGCC_TARGET_FOLDER'] = '%s/%s' % (
                 os.path.dirname(os_environ['GCC_TARGET_FOLDER']),
                 os_environ['LATESTGCC_VERSION']
@@ -2824,9 +2845,13 @@ class generic:
         # cleanup so we have space to build.
         keep_source = list(filter(lambda x: 'KEEP_SOURCE_FOLDER' in x[0], self_env.items()))
         if keep_source and keep_source[0][1].strip() != '1':
-            os.system( 'mv %s %s__ ; rm -rf %s__ &' % (os_environ['SOURCE_FOLDER'], os_environ['SOURCE_FOLDER'], os_environ['SOURCE_FOLDER']) )
+            # os.system( 'mv %s %s__ ; rm -rf %s__ ' % (os_environ['SOURCE_FOLDER'], os_environ['SOURCE_FOLDER'], os_environ['SOURCE_FOLDER']) )
+            os.system( 'rm -rf %s' % (os_environ['SOURCE_FOLDER']) )
 
-        self.installer(target, source, os_environ)
+        if self.custom_installer != None:
+            self.custom_installer( self, target, source, os_environ )
+        else:
+            self.installer( target, source, os_environ )
 
         _print( bcolors.END, )
 
@@ -2959,7 +2984,11 @@ class generic:
             # restore os_environ from what we saved on scons env
             # in the runCMD action
             os_environ = { x[0].replace('RUN_OS_ENVIRON_','') : x[1] for x in env.items() if 'RUN_OS_ENVIRON_' in x[0] }
-            self.installer( target, source, os_environ )
+            # print( type(self.custom_installer), self.custom_installer );sys.stdout.flush()
+            if self.custom_installer != None:
+                self.custom_installer( self, target, source, os_environ )
+            else:
+                self.installer( target, source, os_environ )
 
         # write .install file!
         f=open(str(target[0]),'w')
@@ -3064,10 +3093,10 @@ class generic:
                 # _print(     ":: _installer_final_check: error! (%s)" % _TARGET )
                 for c in cmd:
                     if c[0] == ':':
-                        # _print( c )
+                        _print( c )
                         pass
                     else:
-                        # _print( "::                       "+c )
+                        _print( "::                       "+c )
                         os.system(c)
 
             if ret:
@@ -3177,7 +3206,7 @@ class generic:
                         lines = os.popen(cmd).readlines()
                         # _print( bcolors.FAIL )
                         # _print(cmd)
-                        # _print(''.join(lines))
+                        # print(''.join(lines))
                         # os.system('cat %s.log' % source[n])
                         # _print( bcolors.END )
 
@@ -3191,7 +3220,10 @@ class generic:
                         raise Exception ("\nerror downloading %s" % download_file)
                     if url[3] and not '.git' in os.path.splitext(url[0])[-1]:
                         md5 = self.md5(download_file)
+                        # _print( "\tmd5 for file:", url[1], md5, url[3], md5==url[3] )
+                        assert( type(url[3])==type("") )
                         if md5 != url[3]:
+                            # if md5 of downloaded file doesn't match, delete cache!
                             sys.stdout.write( bcolors.WARNING )
                             _print( "\tmd5 for file:", url[1], md5 )
                             sys.stdout.write( bcolors.FAIL )
@@ -3255,7 +3287,8 @@ class generic:
                     _print( "\n: uncompressing... ", os.path.basename(s), '->', os.path.dirname(t).split('.build')[-1], lastlog )
 
                     # remove build folder
-                    os.popen( "mv %s %s__ ; rm -rf %s/*__ &" % (buildFolder, buildFolder, os.path.dirname(buildFolder)) ).readlines()
+                    # os.popen( "mv %s %s__ ; rm -rf %s/*__ " % (buildFolder, buildFolder, os.path.dirname(buildFolder)) ).readlines()
+                    os.popen( "rm -rf %s" % (buildFolder) ).readlines()
                     uncompressed_folder = self.fix_uncompressed_path( os.path.basename(s.replace('.tar.gz','').replace('.zip','')) )
                     b = buildFolder
 
@@ -3311,7 +3344,7 @@ class generic:
                     # f.write(' ')
                     # f.close()
                     if not os.path.exists(buildFolder):
-                        os.mkdirs(buildFolder)
+                        os.makedirs(buildFolder)
                         open(t, 'a').close()
         return ret
 

@@ -17,6 +17,16 @@ def get(var, value):
 sys.path.insert( 0, os.path.abspath( os.path.dirname(build.__file__) ) )
 from cortex_options import *
 
+os.environ['PYTHONPATH'] = ':'.join([
+    INSTALL_PYTHON_DIR,
+    INSTALL_ALEMBICPYTHON_DIR,
+    INSTALL_VDBPYTHON_DIR,
+    INSTALL_USDPYTHON_DIR,
+    INSTALL_RMANPYTHON_DIR,
+    os.environ['PYTHONPATH']
+])
+print( [ x for x in os.environ['PYTHONPATH'].split(':') if 'cortex' in x.lower() ])
+
 pushPrint()
 
 BUILD_TYPE="RELEASE"
@@ -63,6 +73,9 @@ LOCATE_DEPENDENCY_LIBPATH=[]
 libs = os.path.dirname( INSTALL_PREFIX )
 apps = pipe.roots().apps()
 
+if 'USD_NON_MONOLITHIC_TARGET_FOLDER' in os.environ:
+    os.environ['USD_VERSION']       = os.environ['USD_VERSION']
+    os.environ['USD_TARGET_FOLDER'] = os.environ['USD_NON_MONOLITHIC_TARGET_FOLDER']
 
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['PYTHON_TARGET_FOLDER'] ) )
@@ -135,6 +148,7 @@ LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['QT_TARGE
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['PYSIDE_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['PYSIDE_TARGET_FOLDER'] ) )
+LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib/python%s'     % ( os.environ['PYSIDE_TARGET_FOLDER'], '.'.join(python.split('.')[:2]) ) )
 
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['OIIO_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['OIIO_TARGET_FOLDER'] ) )
@@ -152,7 +166,23 @@ LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['OSL_TARG
 LOCATE_DEPENDENCY_CPPPATH.append( '%s/include/OSL'      % ( os.environ['OSL_TARGET_FOLDER'] ) )
 LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['OSL_TARGET_FOLDER'] ) )
 
-if 'APPLESEED_ROOT' in os.environ:
+if 'USD_TARGET_FOLDER' in os.environ:
+    LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['USD_TARGET_FOLDER'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['USD_TARGET_FOLDER'] ) )
+
+if 'USD_NON_MONOLITHIC_TARGET_FOLDER' in os.environ:
+    LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['USD_NON_MONOLITHIC_TARGET_FOLDER'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['USD_NON_MONOLITHIC_TARGET_FOLDER'] ) )
+
+if 'EMBREE_TARGET_FOLDER' in os.environ:
+    LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['EMBREE_TARGET_FOLDER'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['EMBREE_TARGET_FOLDER'] ) )
+
+if 'CYCLES_TARGET_FOLDER' in os.environ:
+    LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['CYCLES_TARGET_FOLDER'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['CYCLES_TARGET_FOLDER'] ) )
+
+if 'APPLESEED_TARGET_FOLDER' in os.environ:
     LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['APPLESEED_TARGET_FOLDER'] ) )
     LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['APPLESEED_TARGET_FOLDER'] ) )
 
@@ -164,34 +194,70 @@ if 'ARNOLD_ROOT' in os.environ:
     LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'          % ( os.environ['ARNOLD_ROOT'] ) )
     LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'              % ( os.environ['ARNOLD_ROOT'] ) )
 
+if 'CUDA_TARGET_FOLDER' in os.environ:
+    LOCATE_DEPENDENCY_CPPPATH.append( '%s/include'                          % ( os.environ['CUDA_TARGET_FOLDER'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/lib'                              % ( os.environ['CUDA_TARGET_FOLDER'] ) )
+    LOCATE_DEPENDENCY_LIBPATH.append( '%s/targets/x86_64-linux/lib/stubs/'  % ( os.environ['CUDA_TARGET_FOLDER'] ) )
+
+
+if 'CYCLES_TARGET_FOLDER' in os.environ:
+    paths=[
+        '%s/targets/x86_64-linux/lib/stubs/' % os.environ['CUDA_TARGET_FOLDER'],
+        '%s/lib' % os.environ['CUDA_TARGET_FOLDER'],
+        '%s/lib' % os.environ['GFLAGS_TARGET_FOLDER'],
+        '%s/lib' % os.environ['GLOG_TARGET_FOLDER'],
+        '%s/lib' % os.environ['OIDN_TARGET_FOLDER'],
+    ]
+    LINKFLAGS += ['-Wl,-rpath,'+x for x in paths]
+    LINKFLAGS += ['-L'+x for x in paths]
+    LINKFLAGS += [
+        '-lglog',
+        '-lOpenImageDenoise',
+        '-lgflags',
+        # '-lcuda',
+    ]
+    # os.environ['LD_LIBRARY_PATH'] = '%s:%s' % (
+    #     '%s/targets/x86_64-linux/lib/stubs/' % os.environ['CUDA_TARGET_FOLDER'],
+    #     os.environ['LD_LIBRARY_PATH']
+    # )
+
+
+
 
 GAFFERCORTEX = True
 
 
-LOCATE_DEPENDENCY_PYTHONPATH = [
+from genericBuilders import expandvars
+LOCATE_DEPENDENCY_PYTHONPATH=[]
+_LOCATE_DEPENDENCY_PYTHONPATH = [
     '$CORTEX_TARGET_FOLDER/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
     '$CORTEX_TARGET_FOLDER/openvdb/$OPENVDB_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
     '$CORTEX_TARGET_FOLDER/alembic/$ALEMBIC_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
     '$CORTEX_TARGET_FOLDER/usd/$USD_VERSION/lib/boost.$BOOST_VERSION/python$PYTHON_VERSION_MAJOR/site-packages',
     '$USD_TARGET_FOLDER/python/',
+    '$USD_TARGET_FOLDER/lib/python/',
     '$OPENVDB_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
+    '$OPENEXR_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
     '$PYILMBASE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
     '$QTPY_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
+    '$PYSIDE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/',
     '$PYSIDE_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
     '$OCIO_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/',
-]
-LOCATE_DEPENDENCY_PYTHONPATH = [ build.expandvars( x ) for x in LOCATE_DEPENDENCY_PYTHONPATH ]
+] # + os.environ['PYTHONPATH'].split(':')
+for each in _LOCATE_DEPENDENCY_PYTHONPATH:
+    LOCATE_DEPENDENCY_PYTHONPATH.append( expandvars(each) )
 
-os.environ['PYTHONPATH'                     ] = ':'.join(LOCATE_DEPENDENCY_PYTHONPATH+[os.environ['PYTHONPATH']])
+os.environ['PYTHONPATH'                     ] = ':'.join(LOCATE_DEPENDENCY_PYTHONPATH + os.environ['PYTHONPATH'].split(':'))
 os.environ['GAFFER_JEMALLOC'                ] = '0'
-# os.environ['OCIO'                           ] =  genericBuilders.expandvars('$OCIO_PROFILES_TARGET_FOLDER/aces/luts/rrt/rrt_v0_1_1_sRGB.spi3d', os.environ)
-os.environ['QT_QWS_FONTDIR'                 ] = genericBuilders.expandvars('$INSTALL_FOLDER/fonts/', os.environ)
+# os.environ['OCIO'                           ] =  expandvars('$OCIO_PROFILES_TARGET_FOLDER/aces/luts/rrt/rrt_v0_1_1_sRGB.spi3d', os.environ)
+os.environ['QT_QWS_FONTDIR'                 ] = expandvars('$INSTALL_FOLDER/fonts/', os.environ)
 os.environ['QT_QPA_FONTDIR'                 ] = os.environ['QT_QWS_FONTDIR']
-os.environ['IECOREGL_SHADER_PATHS'          ] =  genericBuilders.expandvars('$CORTEX_TARGET_FOLDER/glsl', os.environ)
+os.environ['IECOREGL_SHADER_PATHS'          ] =  expandvars('$CORTEX_TARGET_FOLDER/glsl', os.environ)
 os.environ['IECOREGL_SHADER_INCLUDE_PATHS'  ] = os.environ['IECOREGL_SHADER_PATHS']
-ENV_VARS_TO_IMPORT += ' GAFFER_JEMALLOC DISPLAY QT_QPA_FONTDIR QT_QWS_FONTDIR OCIO IECOREGL_SHADER_PATHS IECOREGL_SHADER_INCLUDE_PATHS '
+ENV_VARS_TO_IMPORT += ' GAFFER_JEMALLOC DISPLAY QT_QPA_FONTDIR QT_QWS_FONTDIR OCIO IECOREGL_SHADER_PATHS IECOREGL_SHADER_INCLUDE_PATHS RPATH'
 
 os.environ['PATH'] = ':'.join([
+    '%s/bin/' % os.environ['PYTHON_TARGET_FOLDER'],
     '$OSL_TARGET_FOLDER/bin',
     os.environ['PATH']
 ])
@@ -199,8 +265,14 @@ os.environ['PATH'] = ':'.join([
 # sphinx in python 2.7 can't build docs in gaffer anymore!
 if os.environ['PYTHON_VERSION_MAJOR'] == '2.7':
     SPHINX="none"
+SPHINX="none"
+
+
+
 
 popPrint('All Gaffer Paths...')
+print(LOCATE_DEPENDENCY_PYTHONPATH)
+
 
 
 # print os.environ['LD_LIBRARY_PATH']

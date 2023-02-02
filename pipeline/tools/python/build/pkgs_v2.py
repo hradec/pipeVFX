@@ -34,7 +34,7 @@ class all: # noqa
     # =============================================================================================================================================
     masterVersion = {
         'boost'   : '1.76.0',
-        'openexr' : '2.4.0',
+        'openexr' : '2.4.1',
         'usd'     : '21.11.0',
         'tbb'     : '2020_U3',
         'jpeg'    : '6b'
@@ -655,6 +655,7 @@ class all: # noqa
                 'openssl-OpenSSL_1_0_2s.tar.gz',
                 '1.0.2s',
                 '24886418211ec05e3f1c764a489b29c1',
+                { self.gcc : '4.1.2' }
             )],
             parallel = 0,
             globalDependency = True,
@@ -687,18 +688,39 @@ class all: # noqa
                     '3.7.5',
                     '1cd071f78ff6d9c7524c95303a3057aa',
                     { self.gcc : '4.8.5', readline : '7.0.0', openssl : '1.0.2s' },
+                # ),(
+                #     # CY2020
+                #     'https://www.python.org/ftp/python/3.7.6/Python-3.7.6.tgz',
+                #     'Python-3.7.6.tar.gz',
+                #     '3.7.6',
+                #     '3ef90f064506dd85b4b4ab87a7a83d44',
+                #     { self.gcc : '4.8.5', readline : '7.0.0', openssl : '1.0.2s' },
                 ),(
                     # CY2022
-                    'https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tar.xz',
-                    'Python-3.9.13.tar.gz',
-                    '3.9.13',
-                    '5e2411217b0060828d5f923eb422a3b8',
-                    { self.gcc : '9.3.1', readline : '7.0.0', openssl : '1.0.2s' },
+                    'https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tar.xz',
+                    'Python-3.9.7.tar.gz',
+                    '3.9.7',
+                    'fddb060b483bc01850a3f412eea1d954',
+                    { self.gcc : '6.3.1', readline : '7.0.0', openssl : '1.0.2s' },
+                # ),(
+                #     # CY2022
+                #     'https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tar.xz',
+                #     'Python-3.9.13.tar.gz',
+                #     '3.9.13',
+                #     '5e2411217b0060828d5f923eb422a3b8',
+                #     { self.gcc : '6.3.1', readline : '7.0.0', openssl : '1.0.2s' },
+                # ),(
+                #     # CY2022
+                #     'https://www.python.org/ftp/python/3.9.15/Python-3.9.15.tar.xz',
+                #     'Python-3.9.15.tar.gz',
+                #     '3.9.15',
+                #     '8adc5662c9fd10a23ae8ae9f28b65b49',
+                #     { self.gcc : '6.3.1', readline : '7.0.0', openssl : '1.0.2s' },
             )],
-            # this fixes https not finding certificate in easy_install
             environ = {
-                "PYTHONHTTPSVERIFY" : "0",
                 'LD' : 'ld',
+                # this fixes https not finding certificate in easy_install
+                "PYTHONHTTPSVERIFY" : "0",
             },
             depend = [readline,bzip2,icu],
             # globalDependency = True,
@@ -709,25 +731,10 @@ class all: # noqa
         #     build.github_phase_one_version(ARGUMENTS, {self.python : v})
 
         # a dummy build that stalls until the passed build is done!
-        wait4python = build.wait4dependencies(self.python, 'wait_python_finish', cmd=["echo DONE"])
-
-        # install extra python modules using pip, for all python versions
-        # installed by python build.
-        self.pip = { p:build.pip( ARGUMENTS, p, self.python, depend=[wait4python] ) for p in [
-            'readline',
-            'epydoc',
-            'PyOpenGL',
-            'PyOpenGL-accelerate',
-            'cython',
-            'subprocess32',
-            'numpy',
-            'scons',
-            'six',      # needed by CortexVFX > 10
-            'jinja2',   # needed by USD
-            'sphinx',   # needed by pyside
-            'psutil',   # needed by sam
-            # 'pybind11[Global]',
-        ]}
+        # wait4python = build.wait4dependencies(self.python, 'wait_python_finish', cmd=["echo DONE"])
+        wait4python = []
+        for v in self.python.keys():
+            wait4python += [build.github_phase_one_version(ARGUMENTS, {self.python : v})]
 
         cmake = build.configure(
             ARGUMENTS,
@@ -864,17 +871,13 @@ class all: # noqa
         )
         self.tbb = tbb
 
-        for pip in self.pip:
-            build.globalDependency(self.pip[pip])
         build.globalDependency(self.tbb)
         build.globalDependency(self.cmake)
 
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.pip['numpy'])
         build.github_phase(self.cmake)
-
 
         # =============================================================================================================================================
         # build all other generic packages
@@ -886,17 +889,39 @@ class all: # noqa
                 'glew-1.13.0.tar.gz',
                 '1.13.0',
                 '7cbada3166d2aadfc4169c4283701066',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', self.python: '2.7.16' }
             ),(
                 'https://github.com/nigels-com/glew/releases/download/glew-2.1.0/glew-2.1.0.tgz',
                 'glew-2.1.0.tar.gz',
                 '2.1.0',
                 'b2ab12331033ddfaa50dc39345343980',
-                { self.gcc : '4.1.2', python: '2.7.16' }
+                { self.gcc : '4.1.2', self.python: '2.7.16' }
             )],
+            depend = [self.python],
         )
         self.glew = glew
         build.globalDependency(self.glew)
+
+        # install extra python modules using pip, for all python versions
+        # installed by python build.
+        self.pip = { p:build.pip( ARGUMENTS, p, self.python, depend=[self.glew]) for p in [
+            'numpy(2.7==1.16.6, 3.7==1.22.4, 3.9==1.22.4)',
+            'readline',
+            'epydoc',
+            'PyOpenGL',
+            'PyOpenGL-accelerate',
+            'cython',
+            'subprocess32',
+            'scons',
+            'six',      # needed by CortexVFX > 10
+            'jinja2',   # needed by USD
+            'sphinx',   # needed by pyside
+            'psutil',   # needed by sam
+            # 'pybind11[Global]',
+        ]}
+        for pip in self.pip:
+            build.globalDependency(self.pip[pip])
+        build.github_phase(self.pip[pip])
 
         freeglut = build.configure(
             ARGUMENTS,
@@ -1063,7 +1088,8 @@ class all: # noqa
                 'https://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz',
                 'gperf-3.1.tar.gz',
                 '3.1.0',
-                '9e251c0a618ad0824b51117d5d9db87e'
+                '9e251c0a618ad0824b51117d5d9db87e',
+                { self.gcc : '6.3.1' }
             )],
             noMinTime=True,
             environ = { 'LD' : 'ld' },
@@ -1076,12 +1102,14 @@ class all: # noqa
                 'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.13.92.tar.gz',
                 'fontconfig-2.13.92.tar.gz',
                 '2.13.92',
-                'eda1551685c25c4588da39222142f063'
+                'eda1551685c25c4588da39222142f063',
+                { self.gcc : '4.8.5' }
             ) if 'fedora' in distro else (
                 'https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.12.1.tar.gz',
                 'fontconfig-2.12.1.tar.gz',
                 '2.12.1',
-                'ce55e525c37147eee14cc2de6cc09f6c'
+                'ce55e525c37147eee14cc2de6cc09f6c',
+                { self.gcc : '4.8.5' }
             )],
             depend = [gperf],
             environ = { 'LD' : 'ld' },
@@ -1255,6 +1283,7 @@ class all: # noqa
                 'pybind11-2.6.2.tar.gz',
                 '2.6.2',
                 'c5ea9c4c57082e05efe14e4b34323bfd',
+                { self.gcc : '6.3.1' }
             )],
             flags = [
                 "-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER",
@@ -1577,64 +1606,96 @@ class all: # noqa
         self.openexr ={}
         self.ilmbase = {}
         self.pyilmbase = {}
+
+        def ilmbase_installer(self, target, source, os_environ):
+            if build.versionMajor(os_environ['VERSION']) > 3.0:
+                pyilmbase_target_folder = os_environ['TARGET_FOLDER'].replace('ilmbase','pyilmbase').rstrip('/')
+                os.system('''[ ! -e %s ] &&  ln -s ../ilmbase/%s %s''' % (
+                    pyilmbase_target_folder,
+                    os_environ['VERSION'],
+                    pyilmbase_target_folder,
+                ))
+
         environ = self.exr_rpath_environ.copy()
         environ.update({
             'LDFLAGS' : "$LDFLAGS -Wl,-rpath-link,$ILMBASE_TARGET_FOLDER/lib/:$OPENEXR_TARGET_FOLDER/lib/ ",
             'LD'      : 'ld',
         })
         for boost_version in ['1.51.0']+self.boost_versions_for_gaffer:
-            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
+            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else self.boost[boost_version]['gcc'].version
             sufix = "boost.%s" % boost_version
             ilmbase = build.configure(
                 ARGUMENTS,
                 'ilmbase',
-                targetSuffix=sufix,
+                targetSuffix = sufix,
+                installer = ilmbase_installer,
                 download=[(
                     'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.0.0.tar.gz',
                     'ilmbase-2.0.0.tar.gz',
                     '2.0.0',
                     '70f1413840c2a228783d1332b8b168e6',
-                    { self.gcc : gcc_version, python: '2.7.16', boost: boost_version }
+                    { self.gcc : gcc_version, python: '2.7.16', boost: boost_version },
+                    { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.60.0')} # not implemented yet
                 ),(
                     'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.1.0.tar.gz',
                     'ilmbase-2.1.0.tar.gz',
                     '2.1.0',
                     '8ba2f608191ad020e50277d8a3ba0850',
-                    { self.gcc : gcc_version, python: '2.7.16', boost: boost_version }
+                    { self.gcc : gcc_version, python: '2.7.16', boost: boost_version },
+                    { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.60.0')} # not implemented yet
                 ),(
                     # CY2016 - CY2018
                     'http://download.savannah.nongnu.org/releases/openexr/ilmbase-2.2.0.tar.gz',
                     'ilmbase-2.2.0.tar.gz',
                     '2.2.0',
                     'b540db502c5fa42078249f43d18a4652',
-                    { self.gcc : gcc_version, python: '2.7.16', boost: boost_version }
+                    { self.gcc : gcc_version, python: '2.7.16', boost: boost_version },
+                    { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.70.0')} # not implemented yet
                 ),(
                     # CY2022 -  *** ilmbase was deprecated, and now imath is used by openexr, so we install it as ilmbase
                     'https://github.com/AcademySoftwareFoundation/Imath/archive/refs/tags/v3.1.5.tar.gz',
                     'Imath-3.1.5.tar.gz',
                     '3.1.5',
                     'dd375574276c54872b7b3d54053baff0',
-                    { self.gcc : '6.3.1', python: '3.9.13', boost: boost_version, build.override.src: 'CMakeLists.txt' }
+                    { self.gcc : '9.3.1', python: '3.7.5', boost: boost_version, build.override.src: 'CMakeLists.txt' },
+                    { 'python' : ('3.0.0','9.9.9'), "boost" : ('1.70.0', '2.0.0')} # not implemented yet
                 )],
                 depend=[gcc, python, openssl],
+                baseLibs=[python],
                 environ=environ,
-                cmd = [
-                    ' if python -c "exit(0 if $VERSION_MAJOR >= 3.0 else 1)" ; then '
-                        'mkdir -p build && cd build',
-                        'cmake $SOURCE_FOLDER -DPYTHON=1 -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
-                        'make -j $DCORES',
-                        'make -j $DCORES install '
-                    '; else '
-                        './configure  --enable-shared ',
-                        'make -j $DCORES',
-                        'make -j $DCORES install'
-                    '; fi',
-                    'if python -c "exit(0 if $VERSION_MAJOR <= 2.2 else 1)" ; then '
-                        'cp -rfv $SOURCE_FOLDER/Half/halfExport.h $INSTALL_FOLDER/include/OpenEXR/ ;'
-                        'cp -rfv $SOURCE_FOLDER/Half/halfExport.h $INSTALL_FOLDER/include/ '
-                    '; fi'
-
-                ],
+                cmd = ['''(\
+                    if python -c "exit(0 if $VERSION_MAJOR >= 3.0 else 1)" ; then
+                        # only build version 3 for python 3 and above
+                        if python -c "exit(0 if $PYTHON_VERSION_MAJOR >= 3.0 else 1)" ; then
+                            mkdir -p build ; cd build
+                            cmake $SOURCE_FOLDER \
+                                -DPYTHON=1 \
+                                -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ \
+                                -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER \
+                                -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include \
+                                '''+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags)+'''
+                            make -j $DCORES
+                            make -j $DCORES install
+                        else
+                            # just wait so the build wont fail for being too fast
+                            sleep 10
+                        fi
+                    else
+                        # only build version 2 for below python 3
+                        if python -c "exit(0 if $PYTHON_VERSION_MAJOR < 3.0 else 1)" ; then
+                            ./configure  --enable-shared
+                            make -j $DCORES
+                            make -j $DCORES install
+                            if python -c "exit(0 if $VERSION_MAJOR <= 2.2 else 1)" ; then
+                                cp -rfv $SOURCE_FOLDER/Half/halfExport.h $INSTALL_FOLDER/include/OpenEXR/
+                                cp -rfv $SOURCE_FOLDER/Half/halfExport.h $INSTALL_FOLDER/include/
+                            fi
+                        else
+                            # just wait so the build wont fail for being too fast
+                            sleep 10
+                        fi
+                    fi
+                )'''],
             )
             self.ilmbase[sufix] = ilmbase
 
@@ -1698,27 +1759,30 @@ class all: # noqa
         })
 
         for boost_version in ['1.51.0']+self.boost_versions_for_gaffer:
-            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
+            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else self.boost[boost_version]['gcc'].version
             sufix = "boost.%s" % boost_version
             download=[(
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.0.0.tar.gz',
                 'openexr-2.0.0.tar.gz',
                 '2.0.0',
                 '0820e1a8665236cb9e728534ebf8df18',
-                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.0.0', boost: boost_version }
+                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.0.0', boost: boost_version },
+                { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.60.0')}
             ),(
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.1.0.tar.gz',
                 'openexr-2.1.0.tar.gz',
                 '2.1.0',
                 '33735d37d2ee01c6d8fbd0df94fb8b43',
-                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.1.0', boost: boost_version }
+                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.1.0', boost: boost_version },
+                { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.60.0')}
             ),(
                 # CY2016 - CY2018
                 'http://download.savannah.nongnu.org/releases/openexr/openexr-2.2.0.tar.gz',
                 'openexr-2.2.0.tar.gz',
                 '2.2.0',
                 'b64e931c82aa3790329c21418373db4e',
-                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.2.0', boost: boost_version }
+                { self.gcc : gcc_version, python: '2.7.16', self.ilmbase[sufix]: '2.2.0', boost: boost_version },
+                { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.60.0')}
             # ),(
             #     # CY2019
             #     'https://github.com/AcademySoftwareFoundation/openexr/releases/download/v2.3.0/openexr-2.3.0.tar.gz',
@@ -1735,16 +1799,27 @@ class all: # noqa
                     'openexr-2.4.0.tar.gz',
                     '2.4.0',
                     '9e4d69cf2a12c6fb19b98af7c5e0eaee',
-                    { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version, build.override.src: 'CMakeLists.txt'  }
+                    { self.gcc : '6.3.1', python: '2.7.16', boost: boost_version, build.override.src: 'CMakeLists.txt'  },
+                    { 'python' : ('2.0.0','3.0.0'), "boost" : ('1.61.0', '2.0.0')}
                 )]
-            if build.versionMajor(boost_version) >= 1.76:
+            if build.versionMajor(boost_version) >= 1.66:
+                download += [(
+                    # CY2020 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
+                    'https://github.com/AcademySoftwareFoundation/openexr/archive/v2.4.1.tar.gz',
+                    'openexr-2.4.1.tar.gz',
+                    '2.4.1',
+                    'f7f7f893cf38786f88c306dec127113f',
+                    { self.gcc : '6.3.1', python: '3.7.5', boost: boost_version, build.override.src: 'CMakeLists.txt'  },
+                    { 'python' : ('2.0.0','9.9.9'), "boost" : ('1.66.0', '2.0.0')}
+                )]
                 download += [(
                     # CY2022 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
                     'https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.1.5.tar.gz',
                     'openexr-3.1.5.tar.gz',
                     '3.1.5',
                     'a92f38eedd43e56c0af56d4852506886',
-                    { self.gcc : '6.3.1', python: '3.9.13', boost: boost_version, build.override.src: 'CMakeLists.txt'  }
+                    { self.gcc : '6.3.1', python: '3.7.5', boost: boost_version, build.override.src: 'CMakeLists.txt'  },
+                    { 'python' : ('3.0.0','9.9.9'), "boost" : ('1.66.0', '2.0.0')}
                 )]
             openexr = build.configure(
                 ARGUMENTS,
@@ -1753,9 +1828,10 @@ class all: # noqa
                 download=download,
                 sed = { '0.0.0' : { './configure' : [('-L/usr/lib64','')]}}, # disable looking for system  ilmbase
                 depend=[gcc, python, openssl ],
+                baseLibs=[python],
                 environ=environ,
                 cmd = [
-                    'rm -rf /usr/include/numpy;'
+                    'rm -rf /usr/include/numpy;mv /usr/bin/python2 /usr/bin/__python2;mv /usr/lib64/libpython* /dev/shm/;'
                     'if python -c "exit(0 if $VERSION_MAJOR == 2.4 else 1)" ; then '
                         'mkdir -p build',
                         'cd build',
@@ -1786,7 +1862,8 @@ class all: # noqa
                         # 'rm -rf $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
                         # 'mkdir -p $INSTALL_FOLDER/../../../pyilmbase/',
                         # 'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION'
-                    ' ; fi',
+                    ' ; fi ;'
+                    'mv /usr/bin/__python2 /usr/bin/python2;mv /dev/shm/libpython* /usr/lib64/;true',
                 ],
             )
             self.openexr[sufix] = openexr
@@ -1827,7 +1904,7 @@ class all: # noqa
             ]),
         })
         for boost_version in ['1.51.0']+self.boost_versions_for_gaffer:
-            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else '6.3.1'
+            gcc_version = '4.8.5' if build.versionMajor(boost_version) < 1.61 else self.boost[boost_version]['gcc'].version
             sufix = "boost.%s" % boost_version
             pyilmbase = build.configure(
                 ARGUMENTS,
@@ -1841,19 +1918,22 @@ class all: # noqa
                     'pyilmbase-2.0.0.tar.gz',
                     '2.0.0',
                     '4585eba94a82f0b0916445990a47d143',
-                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.0.0', self.openexr[sufix]: '2.0.0', self.boost: boost_version }
+                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.0.0', self.openexr[sufix]: '2.0.0', self.boost: boost_version },
+                    { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.61.0')}
                 ),(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.1.0.tar.gz',
                     'pyilmbase-2.1.0.tar.gz',
                     '2.1.0',
                     'af1115f4d759c574ce84efcde9845d29',
-                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.1.0', self.openexr[sufix]: '2.1.0', self.boost: boost_version }
+                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.1.0', self.openexr[sufix]: '2.1.0', self.boost: boost_version },
+                    { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.61.0')}
                 ),(
                     'http://download.savannah.gnu.org/releases/openexr/pyilmbase-2.2.0.tar.gz',
                     'pyilmbase-2.2.0.tar.gz',
                     '2.2.0',
                     'e84a6a4462f90b5e14d83d67253d8e5a',
-                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0', self.boost: boost_version }
+                    { self.gcc : gcc_version, self.python: '2.7.16', self.ilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0', self.boost: boost_version },
+                    { 'python' : ('2.0.0','3.0.0'), "boost" : ('0.0.0', '1.61.0')}
                 # ),(
                 #     'https://github.com/openexr/openexr/releases/download/v2.3.0/pyilmbase-2.3.0.tar.gz',
                 #     'pyilmbase-2.3.0.tar.gz',
@@ -2079,9 +2159,9 @@ class all: # noqa
                     self.yaml : '0.2.5',
                     self.yaml_cpp : '0.7.0',
                     # self.pystring : '1.1.3',
-                    self.openexr  [sufix] : '2.4.0',
-                    self.ilmbase  [sufix] : '2.4.0',
-                    self.pyilmbase[sufix] : '2.4.0',
+                    self.openexr  [sufix] : '2.4.1',
+                    self.ilmbase  [sufix] : '2.4.1',
+                    self.pyilmbase[sufix] : '2.4.1',
                 }
             ),(
                 # CY2020
@@ -2134,7 +2214,7 @@ class all: # noqa
 
 
 
-        exr_version = '2.4.0'
+        exr_version = '2.4.1'
 
 
 
@@ -2244,13 +2324,13 @@ class all: # noqa
             #     '4.8.5',
             #     '89c5ecba180cae74c66260ac732dc5cb',
             # ),(
-                # VFXPLATFORM CY2015 (maya 2016)
-                'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
-                'qt-everywhere-opensource-src-4.8.7.tar.gz',
-                '4.8.7',
-                'd990ee66bf7ab0c785589776f35ba6ad',
-                { self.gcc : '4.1.2' }
-            ),(
+            #     # VFXPLATFORM CY2015 (maya 2016)
+            #     'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
+            #     'qt-everywhere-opensource-src-4.8.7.tar.gz',
+            #     '4.8.7',
+            #     'd990ee66bf7ab0c785589776f35ba6ad',
+            #     { self.gcc : '4.1.2' }
+            # ),(
                 # VFXPLATFORM CY2016-CY2018 (maya 2018)
                 # http://www.autodesk.com/lgplsource
                 # 'http://mirror.csclub.uwaterloo.ca/qtproject/archive/qt/5.6/5.6.1/single/qt-everywhere-opensource-src-5.6.1.tar.gz',
@@ -2266,7 +2346,7 @@ class all: # noqa
                 'http://download.qt.io/official_releases/qt/5.15/5.15.2/single/qt-everywhere-src-5.15.2.tar.xz',
                 'qt-everywhere-src-5.15.2.tar.gz',
                 '5.15.2',
-                'e1447db4f06c841d8947f0a6ce83a7b5',
+                'b5a1f65b10b01662daa2c96b684068c8',
                 { self.gcc : '6.3.1' }
             )],
             sed = { '5.6.1' : {
@@ -2372,6 +2452,7 @@ class all: # noqa
                 'ln -s python $INSTALL_FOLDER/lib/python3.6',
                 'ln -s python $INSTALL_FOLDER/lib/python3.7',
                 'ln -s python $INSTALL_FOLDER/lib/python3.8',
+                'ln -s python $INSTALL_FOLDER/lib/python3.9',
                 'ln -s lib $INSTALL_FOLDER/lib64',
                 'echo "This build was done suscessfully!!"',
             ],
@@ -2539,7 +2620,7 @@ class all: # noqa
                 'pyside2-maya2018.4' : 'pyside-setup',
                 'pyside2-maya2018.6' : 'pyside-setup',
             },
-            # baseLibs=[python],
+            baseLibs=[python],
             depend=[self.patchelf],
             environ = self.llvm_plus_gcc_adjustment(),
             # environ={
@@ -2583,6 +2664,7 @@ class all: # noqa
             cmd = [
                 # we need to setup differently for pyside < 5
                 '''[ $(basename $TARGET_FOLDER | awk -F'.' '{print $1}') -lt 5 ] ''',
+                'rm -rf /usr/include/numpy;mv /usr/bin/python2 /usr/bin/__python2;mv /usr/lib64/libpython* /dev/shm/;'
                 # since pyside 5 needs llvm, patchelf won't build in pyside 2
                 # so we use the one we already have in the pipe by symlinking it
                 '(rm -rf ./patchelf ',
@@ -2597,13 +2679,14 @@ class all: # noqa
                     '-DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER '
                     '-DCMAKE_PATH_PREFIX="'+self.cmake_prefix()+'" '
                     '-DQT_SRC_DIR=$QT_TARGET_FOLDER/',
-                'make -j $DCORES install ) || true',
+                'make -j $DCORES install ) || sleep 10',
                 # create symbolic links of the libraries in the correct place,
                 # so pipeVFX can find it - this is needed when building maya related
                 # code to avoid picking up maya version of those libraries.
                 '[ -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/PySide2/lib ]',
                 'ln -s $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/PySide2/lib* '
                       '$INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/ || true'
+                '; (mv /usr/bin/__python2 /usr/bin/python2;mv /dev/shm/libpython* /usr/lib64/ ; true)',
             ],
         )
         self.pyside = pyside
@@ -2657,6 +2740,13 @@ class all: # noqa
             'ptex',
             sed = {},
             download=[(
+                # CY CY2022
+                'https://github.com/wdas/ptex/archive/refs/tags/v2.4.2.tar.gz',
+                'ptex-2.4.2.tar.gz',
+                '2.4.2',
+                '286a63357de9cbc41511a54231891f61',
+                { cmake: '3.8.2', self.gcc : '6.3.1', build.override.src: 'CMakeLists.txt' }
+            ),(
                 # CY 2020
                 'https://github.com/wdas/ptex/archive/v2.3.2.tar.gz',
                 'ptex-2.3.2.tar.gz',
@@ -2676,13 +2766,6 @@ class all: # noqa
                 'ptex-2.1.28.tar.gz',
                 '2.1.28',
                 'ce4eb665f686f8391968fa137113bc69',
-                { cmake: '3.8.2', self.gcc : '4.1.2' }
-            ),(
-                # CY 2016
-                'https://github.com/wdas/ptex/archive/v2.0.42.tar.gz',
-                'ptex-2.0.42.tar.gz',
-                '2.0.42',
-                '09450bd49dab3db878504a6e51c0745d',
                 { cmake: '3.8.2', self.gcc : '4.1.2' }
             )],
             src = 'README',
@@ -2871,26 +2954,26 @@ class all: # noqa
                         'Field3D-1.7.2.tar.gz',
                         '1.7.2',
                         '61660c2400213ca9adbb3e17782cccfb',
-                        {   hdf5 : '1.8.11',
-                            boost : boost_version,
-                            gcc: gcc_version,
+                        {   self.hdf5 : '1.8.11',
+                            self.boost : boost_version,
+                            self.gcc: self.boost[boost_version]['gcc'].version,
                             self.ilmbase  [sufix] : '2.2.0',
                             self.pyilmbase[sufix] : '2.2.0',
                             self.openexr  [sufix] : '2.2.0',
                         },
                 )]
-                if build.versionMajor(boost_version) >= 1.6:
+                if build.versionMajor(boost_version) >= 1.76:
                     download += [(
                             'https://github.com/imageworks/Field3D/archive/refs/tags/v1.7.3.tar.gz',
                             'Field3D-1.7.3.tar.gz',
                             '1.7.3',
                             '536198b1b4840a5b35400ccf05d4431c',
-                            {   hdf5 : '1.8.11',
-                                boost : boost_version,
-                                gcc: gcc_version,
-                                self.openexr  [sufix] : '2.4.0',
-                                self.ilmbase  [sufix] : '2.4.0',
-                                self.pyilmbase[sufix] : '2.4.0',
+                            {   self.hdf5 : '1.8.11',
+                                self.boost : boost_version,
+                                self.gcc: self.boost[boost_version]['gcc'].version,
+                                self.openexr  [sufix] : '2.4.1',
+                                self.ilmbase  [sufix] : '2.4.1',
+                                self.pyilmbase[sufix] : '2.4.1',
                             },
                     )]
                 if build.versionMajor(boost_version) >= 1.7:
@@ -2924,18 +3007,23 @@ class all: # noqa
             # need this fix on the environment for things to work!
             openvdb_environ = self.gcc_llvm_environ
             download_openvdb = []
+            baseLibs = []
             if build.vComp(boost_version) >= build.vComp('1.70.0'):
+                baseLibs = [self.python]
                 download_openvdb += [(
                     # CY 2022 (9.x)
                     'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v9.0.0.tar.gz',
                     'openvdb-9.0.0.tar.gz',
                     '9.0.0',
                     '684ce40c2f74f3a0c9cac530e1c7b07e',
-                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '2020_U3',
+                    { self.gcc : self.boost[boost_version]['gcc'].version,
+                    self.boost : boost_version,
+                    self.python: '2.7.16', self.tbb: '2020_U3',
                     self.llvm: '7.1.0',
-                    self.ilmbase[sufix]: exr_version,
-                    self.openexr[sufix]: exr_version,
-                    self.pyilmbase[sufix]: exr_version,
+                    self.tbb: '2020_U3',
+                    self.ilmbase[sufix]: '2.4.0',
+                    self.openexr[sufix]: '2.4.0',
+                    self.pyilmbase[sufix]: '2.4.0',
                     self.gtest: self.gtest.latestVersion(),
                     self.cuda: self.cuda.latestVersion(),
                     self.optix: self.optix.latestVersion(),}
@@ -2945,11 +3033,14 @@ class all: # noqa
                     'openvdb-9.1.0.tar.gz',
                     '9.1.0',
                     '8918de645a737734e577e16753325703',
-                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '2020_U3',
+                    { self.gcc : self.boost[boost_version]['gcc'].version,
+                    self.boost : boost_version,
                     self.llvm: '7.1.0',
-                    self.ilmbase[sufix]: exr_version,
-                    self.openexr[sufix]: exr_version,
-                    self.pyilmbase[sufix]: exr_version,
+                    self.tbb: '2020_U3',
+                    self.ilmbase[sufix]: '2.4.1',
+                    self.pyilmbase[sufix]: '2.4.1',
+                    self.openexr[sufix]: '2.4.1',
+                    self.openexr[sufix]['2.4.1']['python'].obj: self.openexr[sufix]['2.4.1']['python'].version,
                     self.gtest: self.gtest.latestVersion(),
                     self.cuda: self.cuda.latestVersion(),
                     self.optix: self.optix.latestVersion(),}
@@ -2963,60 +3054,51 @@ class all: # noqa
                     '9ba08c29dda60ec625acb8a5928875e5',
                     { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6',
                     self.llvm: '7.1.0',
-                    self.ilmbase[sufix]: exr_version,
-                    self.openexr[sufix]: exr_version,
-                    self.pyilmbase[sufix]: exr_version,}
+                    self.ilmbase[sufix]: '2.4.0',
+                    self.openexr[sufix]: '2.4.0',
+                    self.pyilmbase[sufix]: '2.4.0',}
                 ),(
                     # CY 2019
                     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v6.0.0.tar.gz',
                     'openvdb-6.0.0.tar.gz',
                     '6.0.0',
                     '43604208441b1f3625c479ef0a36d7ad',
-                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6',
+                    { self.gcc : self.boost[boost_version]['gcc'].version,
+                    self.boost : boost_version, python: '2.7.16', tbb: '4.4.6',
                     self.llvm: '7.1.0',
-                    self.ilmbase[sufix]: exr_version,
-                    self.openexr[sufix]: exr_version,
-                    self.pyilmbase[sufix]: exr_version,}
+                    self.ilmbase[sufix]: '2.4.0',
+                    self.openexr[sufix]: '2.4.0',
+                    self.pyilmbase[sufix]: '2.4.0',}
                 ),(
                     # CY 2020
                     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v7.0.0.tar.gz',
                     'openvdb-7.0.0.tar.gz',
                     '7.0.0',
                     'fd6c4f168282f7e0e494d290cd531fa8',
-                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6',
+                    { self.gcc : self.boost[boost_version]['gcc'].version,
+                    self.boost : boost_version, python: '2.7.16', tbb: '4.4.6',
                     self.llvm: '7.1.0',
-                    self.ilmbase[sufix]: exr_version,
-                    self.openexr[sufix]: exr_version,
-                    self.pyilmbase[sufix]: exr_version,}
+                    self.ilmbase[sufix]: '2.4.0',
+                    self.openexr[sufix]: '2.4.0',
+                    self.pyilmbase[sufix]: '2.4.0',}
                 ),(
                     # CY 2021
                     'https://github.com/AcademySoftwareFoundation/openvdb/archive/refs/tags/v8.2.0.tar.gz',
                     'openvdb-8.2.0.tar.gz',
                     '8.2.0',
                     '2852fe7176071eaa18ab9ccfad5ec403',
-                    { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '2020_U3',
+                    { self.gcc : self.boost[boost_version]['gcc'].version,
+                    self.boost : boost_version, python: '2.7.16', tbb: '2020_U3',
                     self.llvm: '7.1.0',
-                    self.ilmbase[sufix]: exr_version,
-                    self.openexr[sufix]: exr_version,
-                    self.pyilmbase[sufix]: exr_version,}
-                # ),(
-                #     # CY 2017
-                #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v4.0.0.tar.gz',
-                #     'openvdb-4.0.0.tar.gz',
-                #     '4.0.0',
-                #     'c56d8a1a460f1d3327f2568e3934ca6a',
-                #     { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6',
-                #     self.ilmbase[sufix]: exr_version, self.openexr[sufix]: exr_version,  self.pyilmbase[sufix]: exr_version,}
-                # ),(
-                #     # CY 2015-2016
-                #     'https://github.com/AcademySoftwareFoundation/openvdb/archive/v3.0.0.tar.gz',
-                #     'openvdb-3.0.0.tar.gz',
-                #     '3.0.0',
-                #     '3ca8f930ddf759763088e265654f4084',
-                #     { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16', tbb: '4.4.6', build.override.src: 'README',
-                #     self.ilmbase[sufix]: exr_version, self.openexr[sufix]: exr_version, self.pyilmbase[sufix]: exr_version, }
+                    self.ilmbase[sufix]: '2.4.0',
+                    self.openexr[sufix]: '2.4.0',
+                    self.pyilmbase[sufix]: '2.4.0',}
                 )]
 
+
+            openvdb_environ['DCORES'] = str(int(os.environ['MEMGB'] if int(os.environ['MEMGB']) < int(os.environ['CORES']) else os.environ['CORES'])/4)
+            openvdb_environ['HCORES'] = openvdb_environ['DCORES']
+            openvdb_environ['CORES' ] = openvdb_environ['DCORES']
             if 'OPENVDB_CORES' in ARGUMENTS:
                 openvdb_environ['CORES']  = str(int(ARGUMENTS['OPENVDB_CORES'])/2)
                 openvdb_environ['DCORES'] = ARGUMENTS['OPENVDB_CORES']
@@ -3031,14 +3113,18 @@ class all: # noqa
                 ARGUMENTS,
                 'openvdb',
                 targetSuffix=sufix,
+                baseLibs = baseLibs,
                 download = download_openvdb,
                 environ = openvdb_environ,
                 depend=[self.glfw, self.jemalloc, self.cmake],
                 src = "README.md",
                 cmake_prefix = self.cmake_prefix(),
                 cmd = [
+                    "rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR",
+                    "rm -rf $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR",
                     "if [ -d openvdb/openvdb ] ; then ( "
-                        # force boost 1.66
+                        "mv /lib64/libLLVM-13.so /lib64/libLLVM-13.so__ ; "
+                        # force minimum boost 1.66
                         "sed -i.bak CMakeLists.txt -e 's/set.MINIMUM_BOOST_VERSION ..../set(MINIMUM_BOOST_VERSION 1.66/g'",
                         # force cmake to use our CC/CXX env vars, since the damn thing wont!!
                         # 'mkdir -p tools',
@@ -3047,11 +3133,17 @@ class all: # noqa
                         # now we can build
                         "mkdir ./build",
                         "cd ./build",
-                        "cmake ../ ",
+                        'export CMAKE_CXX_STANDARD=11',
+                        'if python -c "exit(0 if $VERSION_MAJOR >= 8.0 else 1)" ; then '
+                            'export CMAKE_CXX_STANDARD=14 ;'
+                        'fi',
+                        "cmake ../ -DCMAKE_CXX_STANDARD=$CMAKE_CXX_STANDARD",
                         "make -j $DCORES VERBOSE=1",
                         "make -j $DCORES install",
                         # if we're building a bigger than 1.70 boost version, create a
                         # 1.66 folder for compatibility
+                        # TODO: this should go into the boost build class, not here!
+                        "mv /lib64/libLLVM-13.so /lib64/libLLVM-13.so__ ; "
                         '''if [ ! -e $INSTALL_FOLDER/../boost.1.66.0 ] ; then if awk "BEGIN {exit !($BOOST_VERSION_MAJOR >= 1.70)}" ; then ln -s boost.$BOOST_VERSION $INSTALL_FOLDER/../boost.1.66.0 ; fi ; fi '''
                     ") ; else ( cd openvdb ;"
                         " make install -j $DCORES"
@@ -3076,7 +3168,15 @@ class all: # noqa
             			" EPYDOC= ",
                         "cp $INSTALL_FOLDER/python/lib/python$PYTHON_VERSION_MAJOR/pyopenvdb.so $INSTALL_FOLDER/python",
             		    "cp $INSTALL_FOLDER/python/include/python$PYTHON_VERSION_MAJOR/pyopenvdb.h $INSTALL_FOLDER/include"
-                    " ) ; fi"
+                    " ) ; fi",
+                    '''\
+                    if [ ! -e $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR ] ; then
+                        ln -s $INSTALL_FOLDER/lib64/python$PYTHON_VERSION_MAJOR $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR
+                    fi
+                    if [ ! -e $INSTALL_FOLDER/lib64/python$PYTHON_VERSION_MAJOR ] ; then
+                        ln -s $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR $INSTALL_FOLDER/lib64/python$PYTHON_VERSION_MAJOR
+                    fi \
+                    ''',
                 ],
                 flags = [
                     '-D LLVM_DIR=$LLVM_TARGET_FOLDER ',
@@ -3091,7 +3191,7 @@ class all: # noqa
                     '-D OPENVDB_BUILD_AX=1 ',
                     '-D OPENVDB_BUILD_AX_BINARIES=1 ',
                     '-D OPENVDB_ENABLE_RPATH=1 ',
-                    '-D CONCURRENT_MALLOC=Jemalloc ',
+                    '-D CONCURRENT_MALLOC=None ',
                     '-D DOPENVDB_BUILD_NANOVDB=ON ',
                 ]
             )
@@ -3126,7 +3226,8 @@ class all: # noqa
                     'oiio-Release-1.5.24.tar.gz',
                     '1.5.24',
                     '8c1f9a0ec5b55a18eeea76d33ca7a02c',
-                    { self.gcc : gcc_version,  boost : boost_version, python: '2.7.16',
+                    { self.gcc : self.boost[boost_version]['gcc'].version,
+                    self.boost : boost_version, python: '2.7.16',
                     self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0'}
                 ]]
             if build.versionMajor(boost_version) >= 1.51 and build.versionMajor(boost_version) < 1.70:
@@ -3136,7 +3237,8 @@ class all: # noqa
                             'oiio-Release-1.6.15.tar.gz',
                             '1.6.15',
                             '3fe2cef4fb5f7bc78b136d2837e1062f',
-                            { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
+                            { self.gcc : self.boost[boost_version]['gcc'].version,
+                            self.boost: boost_version, python: '2.7.16',
                             self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0'}
                     ]]
             if build.versionMajor(boost_version) > 1.53:
@@ -3145,16 +3247,18 @@ class all: # noqa
                         'oiio-Release-1.8.10.tar.gz',
                         '1.8.10',
                         'a129a4caa39d7ad79aa1a3dc60cb0418',
-                        { self.gcc : gcc_version, boost : boost_version, python: '2.7.16',
+                        { self.gcc : self.boost[boost_version]['gcc'].version,
+                        self.boost : boost_version, python: '2.7.16',
                         self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0'}
                     ],[
                         'https://github.com/OpenImageIO/oiio/archive/Release-2.0.11.tar.gz',
                         'oiio-Release-2.0.11.tar.gz',
                         '2.0.11',
                         '4fa0ce4538fb2d7eb72f54f4036972d5',
-                        { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
+                        { self.gcc : self.boost[boost_version]['gcc'].version,
+                        self.boost : boost_version, python: '2.7.16',
                         self.ilmbase[sufix]: '2.2.0', self.pyilmbase[sufix]: '2.2.0', self.openexr[sufix]: '2.2.0',
-                        self.jpeg: '9a', self.tbb: self.masterVersion['tbb']}
+                        self.jpeg: '9a', self.tbb: '2020_U3'}
                     ]]
                 # add field3d if we have it for the current boost
                 if sufix in self.field3d:
@@ -3167,24 +3271,27 @@ class all: # noqa
                 if build.versionMajor(boost_version) >= 1.76:
                     # field3d_version = '1.7.3'
                     openvdb_version = '9.1.0'
-                    # download += [[
-                    #         'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.3.11.0.tar.gz',
-                    #         'oiio-2.3.11.0.tar.gz',
-                    #         '2.3.11.0',
-                    #         '568a1efb4fc41711e2dae8c39450a83e',
-                    #         { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
-                    #         self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
-                    #         self.field3d[sufix]: '1.7.3', self.jpeg: '9a', self.tbb: self.masterVersion['tbb'],
-                    #         self.openvdb[sufix]: openvdb_version, self.ocio: '2.1.1' }
-                    #     ]]
                 download += [[
                         'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.2.15.1.tar.gz',
                         'oiio-2.2.15.1.tar.gz',
                         '2.2.15.1',
                         '568a1efb4fc41711e2dae8c39450a83e',
-                        { self.gcc : '6.3.1', boost : boost_version, python: '2.7.16',
+                        { self.gcc : self.boost[boost_version]['gcc'].version,
+                        self.boost : boost_version, python: '2.7.16',
                         self.ilmbase[sufix]: '2.4.0', self.pyilmbase[sufix]: '2.4.0', self.openexr[sufix]: '2.4.0',
-                        self.field3d[sufix]: '1.7.3', self.jpeg: '9a', self.tbb: self.masterVersion['tbb'],
+                        self.field3d[sufix]: '1.7.3', self.jpeg: '9a', self.tbb: '2020_U3',
+                        self.openvdb[sufix]: openvdb_version, self.ocio: '2.1.1' }
+                    ]]
+
+                download += [[
+                        'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.3.11.0.tar.gz',
+                        'oiio-2.3.11.0.tar.gz',
+                        '2.3.11.0',
+                        '04dfc101095929e5da6ffc1aeeb06ab8',
+                        { self.gcc : self.boost[boost_version]['gcc'].version,
+                        self.boost : boost_version, python: '2.7.16',
+                        self.ilmbase[sufix]: '2.4.1', self.pyilmbase[sufix]: '2.4.1', self.openexr[sufix]: '2.4.1',
+                        self.field3d[sufix]: '1.7.3', self.jpeg: '9a', self.tbb: '2020_U3',
                         self.openvdb[sufix]: openvdb_version, self.ocio: '2.1.1' }
                     ]]
 
@@ -3199,9 +3306,9 @@ class all: # noqa
                 # force to minimun gcc 4.8.5
                 if build.versionMajor( _download[n][4][ gcc ] ) < 4.8:
                     _download[n][4][ gcc ] = '4.8.5'
-                # _download[n][4][ self.ilmbase  [sufix] ] = exr_version
-                # _download[n][4][ self.pyilmbase[sufix] ] = exr_version
-                # _download[n][4][ self.openexr  [sufix] ] = exr_version
+                # _download[n][4][ self.ilmbase  [sufix] ] = '2.4.1'
+                # _download[n][4][ self.pyilmbase[sufix] ] = '2.4.1'
+                # _download[n][4][ self.openexr  [sufix] ] = '2.4.1'
                 # _download[n][4][ self.field3d  [sufix] ] = '1.7.2'
 
             oiio = build.cmake(
@@ -3237,8 +3344,10 @@ class all: # noqa
                     'cd build',
                     'if [ "$ILMBASE_TARGET_FOLDER" == "" ] ; then export ILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER ; fi',
                     'export USE_PYTHON=0',
+                    'export CMAKE_CXX_STANDARD=11 ;'
                     'if python -c "exit(0 if $VERSION_MAJOR >= 2.2 else 1)" ; then '
                         'export USE_PYTHON=1 ;'
+                        'export CMAKE_CXX_STANDARD=14 ;'
                     'fi'
                 ]+build.cmake.cmd,
                 flags = [
@@ -3246,6 +3355,7 @@ class all: # noqa
                     '-DUSE_PYTHON=$USE_PYTHON',
                     '-DUSE_PTEX=0',
                     '-DUSE_OCIO=1',
+                    '-DCMAKE_CXX_STANDARD=$CMAKE_CXX_STANDARD',
                     '-DImath_DIR=$ILMBASE_TARGET_FOLDER',
                     '-DCMAKE_PREFIX_PATH="'+";".join([
                         '$OPENEXR_TARGET_FOLDER',
@@ -3262,7 +3372,9 @@ class all: # noqa
                 environ = environ,
             )
             self.oiio[sufix] = oiio
-            build.github_phase(self.oiio[sufix])
+            # build.github_phase(self.oiio[sufix])
+            for v in self.oiio[sufix].keys():
+                build.github_phase_one_version(ARGUMENTS, {self.oiio[sufix] : v})
 
 
         # =============================================================================================================================================
@@ -3327,7 +3439,7 @@ class all: # noqa
             bsufix = "boost.%s" % bv
             oiio_version = '2.0.11'
             if build.versionMajor(boost_version) >= 1.61:
-                oiio_version = '2.2.15.1'
+                oiio_version = '2.3.11.0'
 
             # =============================================================================================================================================
             # EMBREE - actually build it using dependencies from this build (for USD)
@@ -3341,18 +3453,21 @@ class all: # noqa
                     'embree-3.13.3.tar.gz',
                     '3.13.3',
                     '61aee19db0341a8353289043617975a7',
-                    {self.gcc: '6.3.1',
-                    self.tbb: '2020_U3',
+                    {self.gcc: self.boost[bv]['gcc'].version,
                     self.oiio[bsufix]: oiio_version,
+                    self.oiio[bsufix][oiio_version]['tbb'    ].obj : self.oiio[bsufix][oiio_version]['tbb'],
+                    self.oiio[bsufix][oiio_version]['openvdb'].obj : self.oiio[bsufix][oiio_version]['openvdb'],
                     self.ispc: self.ispc.latestVersion()},
                 ),(
                     'https://github.com/embree/embree/archive/refs/tags/v3.13.4.tar.gz',
                     'embree-3.13.4.tar.gz',
                     '3.13.4',
                     '561149f7e34768437ae2d9f96c0bf614',
-                    {self.gcc: '6.3.1',
+                    {self.gcc: self.boost[bv]['gcc'].version,
                     self.tbb: '2020_U3',
                     self.oiio[bsufix]: oiio_version,
+                    self.oiio[bsufix][oiio_version]['tbb'    ].obj : self.oiio[bsufix][oiio_version]['tbb'],
+                    self.oiio[bsufix][oiio_version]['openvdb'].obj : self.oiio[bsufix][oiio_version]['openvdb'],
                     self.ispc: self.ispc.latestVersion()},
                 )],
                 depend = [self.glfw, self.glew],
@@ -3386,13 +3501,10 @@ class all: # noqa
                 # '-D CMAKE_CXX_STANDARD={c++Standard}',
                 # '-D USE_OPTIX=1',
                 # '-D CUDA_ROOT=$CUDA_TARGET_FOLDER',
-                '-D USE_CPP11=1 ',
                 '-D USE_PYTHON=1 ',
-                '-D OSL_BUILD_CPP11=1',
                 '-D INSTALLDIR=$INSTALL_FOLDER ',
                 '-D INSTALL_PREFIX=$INSTALL_FOLDER ',
                 '-D OPENIMAGEHOME=$OIIO_TARGET_FOLDER ',
-                '-D BOOST_ROOT=$BOOST_TARGET_FOLDER ',
                 '-D LLVM_DIRECTORY=$LLVM_TARGET_FOLDER ',
                 '-D LLVM_STATIC=1 ',
                 '-D OSL_BUILD_MATERIALX=1 ',
@@ -3440,7 +3552,7 @@ class all: # noqa
                     'OpenShadingLanguage-Release-1.10.7.tar.gz',
                     '1.10.7',
                     '53f66e12c3e29c62dc51b070f027a0ad',
-                    { self.llvm: "7.1.0", self.gcc: "6.3.1",
+                    { self.llvm: "7.1.0", self.gcc: self.boost[bv]['gcc'].version,
                     self.boost: bv, self.qt: '5.6.1',
                     self.oiio[bsufix]: "1.8.10",
                     self.oiio[bsufix]["1.8.10"]['ilmbase'].obj:  self.oiio[bsufix]["1.8.10"]['ilmbase'],
@@ -3450,11 +3562,25 @@ class all: # noqa
                     'OpenShadingLanguage-Release-1.11.14.1.tar.gz',
                     '1.11.14',
                     '1abd7ce40481771a9fa937f19595d2f2',
-                    { self.llvm: "7.1.0", self.gcc: "6.3.1",
+                    { self.llvm: "7.1.0", self.gcc: self.boost[bv]['gcc'].version,
                     self.boost: bv, self.qt: '5.15.2',
                     self.oiio[bsufix]: "2.2.15.1",
                     self.oiio[bsufix]["2.2.15.1"]['ilmbase'].obj:  self.oiio[bsufix]["2.2.15.1"]['ilmbase'],
-                    self.oiio[bsufix]["2.2.15.1"]['openexr'].obj:  self.oiio[bsufix]["2.2.15.1"]['openexr']}
+                    self.oiio[bsufix]["2.2.15.1"]['openexr'].obj:  self.oiio[bsufix]["2.2.15.1"]['openexr'],
+                    self.oiio[bsufix]["2.2.15.1"]['openvdb'].obj:  self.oiio[bsufix]["2.2.15.1"]['openvdb'],
+                    self.oiio[bsufix]["2.2.15.1"]['tbb'    ].obj:  self.oiio[bsufix]["2.2.15.1"]['tbb']}
+                ),(
+                    'https://github.com/AcademySoftwareFoundation/OpenShadingLanguage/archive/refs/tags/v1.11.17.0.tar.gz',
+                    'OpenShadingLanguage-1.11.17.0.tar.gz',
+                    '1.11.17',
+                    'cce01ffe1dd8bffc525c2ee8dfaa7337',
+                    { self.llvm: "7.1.0", self.gcc: self.boost[bv]['gcc'].version,
+                    self.boost: bv, self.qt: '5.15.2',
+                    self.oiio[bsufix]: "2.3.11.0",
+                    self.oiio[bsufix]["2.3.11.0"]['ilmbase' ].obj:  self.oiio[bsufix]["2.3.11.0"]['ilmbase'],
+                    self.oiio[bsufix]["2.3.11.0"]['openexr' ].obj:  self.oiio[bsufix]["2.3.11.0"]['openexr'],
+                    self.oiio[bsufix]["2.3.11.0"]['openvdb' ].obj:  self.oiio[bsufix]["2.3.11.0"]['openvdb'],
+                    self.oiio[bsufix]["2.3.11.0"]['tbb'     ].obj:  self.oiio[bsufix]["2.3.11.0"]['tbb']}
                 )],
                 depend=[self.icu, self.cmake, self.pugixml, self.freetype,
                         self.openssl, self.bzip2, self.libraw, self.pybind,
@@ -3467,7 +3593,11 @@ class all: # noqa
                         export ILMBASE_TARGET_FOLDER=$OPENEXR_TARGET_FOLDER
                     fi
                     mkdir -p build && cd build && \
-                    cmake ../ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DCMAKE_INSTALL_RPATH=$RPATH && \
+                    if python -c "exit(0 if $VERSION_MAJOR >= 1.11 else 1)" ; then
+                        cmake ../ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DCMAKE_INSTALL_RPATH=$RPATH  -DCMAKE_CXX_STANDARD=14
+                    else
+                        cmake ../ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DCMAKE_INSTALL_RPATH=$RPATH -D USE_CPP11=1 -D OSL_BUILD_CPP11=1
+                    fi
                     make -j $DCORES''',
                     # 'MY_CMAKE_FLAGS="-DENABLERTTI=1 -DPUGIXML_HOME=$PUGIXML_TARGET_FOLDER -DLLVM_STATIC=0  -DOSL_BUILD_CPP11=1 '+" ".join(build.cmake.flags).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ")+'" '
                     # 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
@@ -3486,7 +3616,6 @@ class all: # noqa
             # MATERIALX
             # =============================================================================================================================================
             # materialx don't need boost.
-            latest_osl = self.osl[bsufix].latestVersionOBJ()
             materialx = build.cmake(
                 ARGUMENTS,
                 'materialx',
@@ -3502,30 +3631,36 @@ class all: # noqa
                     'MaterialX-1.37.4.tar.gz',
                     '1.37.4',
                     'fdc0efb49f3170fc1e7baaf714df3e31',
-                    { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
-                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
+                    { self.gcc : '6.3.1', python: '2.7.16', self.osl[bsufix]: '1.11.14',
+                    self.boost: bv,
+                    self.osl[bsufix]['1.11.14']['tbb'    ].obj: self.osl[bsufix]['1.11.14']['tbb'].version,
+                    self.osl[bsufix]['1.11.14']['oiio'   ].obj: self.osl[bsufix]['1.11.14']['oiio'].version,
+                    self.osl[bsufix]['1.11.14']['openexr'].obj: self.osl[bsufix]['1.11.14']['openexr'].version,
+                    self.osl[bsufix]['1.11.14']['ilmbase'].obj: self.osl[bsufix]['1.11.14']['ilmbase'].version}
                 ),(
                     # USD 21.X moved to 1.38.0
                     'https://github.com/materialx/MaterialX/releases/download/v1.38.0/MaterialX-1.38.0.tar.gz',
                     'MaterialX-1.38.0.tar.gz',
                     '1.38.0',
                     'b8bc253454164b0c19600eb0f925d654',
-                    { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
-                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
+                    { self.gcc : '6.3.1', python: '2.7.16', self.osl[bsufix]: '1.11.17',
+                    self.boost: bv,
+                    self.osl[bsufix]['1.11.17']['tbb'    ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                    self.osl[bsufix]['1.11.17']['oiio'   ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                    self.osl[bsufix]['1.11.17']['openexr'].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                    self.osl[bsufix]['1.11.17']['ilmbase'].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version}
 
                 ),(
                     'https://github.com/materialx/MaterialX/releases/download/v1.38.1/MaterialX-1.38.1.tar.gz',
                     'MaterialX-1.38.1.tar.gz',
                     '1.38.1',
                     '578a1b63263281414e1594d44409b882',
-                    { self.gcc : '6.3.1', python: '2.7.16', latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
-                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
+                    { self.gcc : '6.3.1', python: '2.7.16', self.osl[bsufix]: '1.11.17',
+                    self.boost: bv,
+                    self.osl[bsufix]['1.11.17']['tbb'    ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                    self.osl[bsufix]['1.11.17']['oiio'   ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                    self.osl[bsufix]['1.11.17']['openexr'].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                    self.osl[bsufix]['1.11.17']['ilmbase'].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version}
 
                 ),(
                     'https://github.com/materialx/MaterialX/releases/download/v1.38.4/MaterialX-1.38.4.tar.gz',
@@ -3533,23 +3668,40 @@ class all: # noqa
                     '1.38.4',
                     'a9d3ffc920a6d1e85aef83ef531dae5f',
                     { self.gcc : '9.3.1', python: '3.7.5', #self.pybind : '2.6.2',
-                    latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
-                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
+                    self.boost: bv,
+                    self.osl[bsufix]['1.11.17'].obj: self.osl[bsufix]['1.11.17'].version,
+                    self.osl[bsufix]['1.11.17']['tbb'    ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                    self.osl[bsufix]['1.11.17']['oiio'   ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                    self.osl[bsufix]['1.11.17']['openexr'].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                    self.osl[bsufix]['1.11.17']['ilmbase'].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version}
 
                 ),(
                     'https://github.com/materialx/MaterialX/releases/download/v1.38.2/MaterialX-1.38.2.tar.gz',
                     'MaterialX-1.38.2.tar.gz',
                     '1.38.2',
                     '9916b1d732ffe43a6f1c6822e6da1d28',
-                    { self.gcc : '6.3.1', python: '3.7.5', latest_osl.obj: latest_osl.version,
-                    latest_osl['oiio'   ].obj: latest_osl['oiio'].version,
-                    latest_osl['openexr'].obj: latest_osl['openexr'].version,
-                    latest_osl['ilmbase'].obj: latest_osl['ilmbase'].version}
+                    { self.gcc : '6.3.1', python: '3.7.5', self.osl[bsufix]: '1.11.17',
+                    self.boost: bv, self.tbb: "2020_U3",
+                    self.osl[bsufix]['1.11.17']['oiio'   ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                    self.osl[bsufix]['1.11.17']['openexr'].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                    self.osl[bsufix]['1.11.17']['ilmbase'].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version}
 
                 )],
+                baseLibs=[self.python],
                 depend=[self.python, self.freeglut],
+                cmd = ['''
+                    if python -c "exit(0 if $PYTHON_VERSION_MAJOR >= 3.0 else 1)" ; then
+                        cp ./CMakeLists.txt /dev/shm/
+                        grep -v CMAKE_CXX_STANDARD /dev/shm/CMakeLists.txt > ./CMakeLists.txt
+                        cmake $SOURCE_FOLDER -DCMAKE_CXX_STANDARD=14 '''+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags)+'''
+                        make -j $DCORES
+                        make -j $DCORES install
+                    else
+                        # just wait so the build wont fail for being too fast
+                        echo "not compatible with python $PYTHON_VERSION"
+                        sleep 10
+                    fi \
+                '''],
                 flags = [
                     '-DMATERIALX_BUILD_SHARED_LIBS=1', ## we need this to build in fedora!!
                     '-DMATERIALX_BUILD_PYTHON=1',
@@ -3573,6 +3725,8 @@ class all: # noqa
                 environ = build.update_environ_dict(
                     build.update_environ_dict( build.include_environ(disable='NOBOOST'), build.rpath_environ(disable='NOBOOST') ),
                     {
+                        # Resolve "DSO missing from command line" error
+                        'LDFLAGS' : '$LDFLAGS -Wl,--copy-dt-needed-entries',
                         'LD_LIBRARY_PATH' : '/lib64/:$/usr/lib64/:/lib/:/usr/lib/:$LD_LIBRARY_PATH',
                     }
                 ),
@@ -3587,6 +3741,7 @@ class all: # noqa
         for bv in ['1.51.0']+self.boost_versions_for_gaffer:
             bsufix = "boost.%s" % bv
             # build alembic without apps plugins
+            baseLibs=[]
             download=[]
             if bv == '1.51.0':
                 download += [(
@@ -3612,37 +3767,43 @@ class all: # noqa
                     self.openexr  ['boost.1.55.0']: '2.2.0',
                     self.pyilmbase['boost.1.55.0']: '2.2.0' },
                 )]
-            elif build.versionMajor(bv) > 1.6:
+            if build.versionMajor(bv) > 1.6:
                 download += [(
                     # CY2018 - CY2020
                     'https://github.com/alembic/alembic/archive/1.7.11.tar.gz',
                     'alembic-1.7.11.tar.gz',
                     '1.7.11',
                     'e156568a8d8b48c4da4fe2496386243d',
-                    {self.gcc: '6.3.1', self.boost: bv, self.hdf5: '1.8.11',
-                    self.ilmbase  [bsufix]: exr_version,
-                    self.openexr  [bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version },
+                    {self.gcc: self.boost[bv]['gcc'].version, self.boost: bv, self.hdf5: '1.8.11',
+                    self.ilmbase  [bsufix]: '2.4.0',
+                    self.openexr  [bsufix]: '2.4.0',
+                    self.pyilmbase[bsufix]: '2.4.0' },
                 ),(
                     # CY2018 - CY2020 (USD Version)
                     'https://github.com/alembic/alembic/archive/1.7.1.tar.gz',
                     'alembic-1.7.1.tar.gz',
                     '1.7.1',
                     'c8e2c8f951af09cfdacb2ca1fd5823a5',
-                    {self.gcc: '6.3.1', self.boost: bv, self.hdf5: '1.8.11',
-                    self.ilmbase  [bsufix]: exr_version,
-                    self.openexr  [bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version },
-                ),(
+                    {self.gcc: self.boost[bv]['gcc'].version, self.boost: bv, self.hdf5: '1.8.11',
+                    self.ilmbase  [bsufix]: '2.4.0',
+                    self.openexr  [bsufix]: '2.4.0',
+                    self.pyilmbase[bsufix]: '2.4.0' },
+                )]
+            if build.versionMajor(bv) >= 1.76:
+                baseLibs=[self.python]
+                download += [(
                     # CY2018 - CY2020 (USD Version)
                     'https://github.com/alembic/alembic/archive/refs/tags/1.8.3.tar.gz',
                     'alembic-1.8.3.tar.gz',
                     '1.8.3',
                     '2cd8d6e5a3ac4a014e24a4b04f4fadf9',
-                    {self.gcc: '6.3.1', self.boost: bv, self.hdf5: '1.8.11',
-                    self.ilmbase  [bsufix]: exr_version,
-                    self.openexr  [bsufix]: exr_version,
-                    self.pyilmbase[bsufix]: exr_version },
+                    {self.gcc: self.boost[bv]['gcc'].version,
+                    self.boost: bv, self.hdf5: '1.8.11',
+                    self.ilmbase  [bsufix]: '2.4.1',
+                    self.pyilmbase[bsufix]: '2.4.1',
+                    self.openexr  [bsufix]: '2.4.1',
+                    self.openexr[sufix]['2.4.1']['python'].obj: self.openexr[sufix]['2.4.1']['python'].version,
+                    },
                 )]
 
             alembic = build.alembic(
@@ -3663,7 +3824,7 @@ class all: # noqa
                 },'1.7.0' : {}
                 },
                 download=download,
-                # baseLibs=[python],
+                baseLibs=baseLibs,
                 depend=[hdf5],
                 environ = {
                     # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
@@ -3700,9 +3861,9 @@ class all: # noqa
                     'clew-0.10.2016.zip',
                     '0.10.2016',
                     None,
-                    {gcc: '4.8.5', boost: bv},
+                    {gcc: self.boost[bv]['gcc'].version, self.boost: bv},
                 )],
-                depend=[boost, glfw, glew],
+                depend=[glfw, glew],
                 verbose=1,
                 environ = { 'LD' : 'ld' },
                 flags = [
@@ -3764,7 +3925,7 @@ class all: # noqa
                     'OpenSubdiv-3_4_0.tar.gz',
                     '3.4.0',
                     '2eea21ef2d85bcbbcee94e287c34a07e',
-                    {self.gcc: '6.3.1', self.boost: bv, self.ptex: '2.3.2',
+                    {self.gcc: self.boost[bv]['gcc'].version, self.boost: bv, self.ptex: '2.3.2',
                     self.hdf5: self.alembic[bsufix]['1.7.11']['hdf5'],
                     self.llvm: '7.1.0' },
                 )]
@@ -3819,7 +3980,7 @@ class all: # noqa
                     'lz4-1.9.2.tar.gz',
                     '1.9.2',
                     '3898c56c82fb3d9455aefd48db48eaad',
-                    { self.gcc: '6.3.1', self.cmake: '3.9.0', self.tbb: '4.4.6',
+                    { self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.9.0', self.tbb: '4.4.6',
                     self.qt: '5.6.1', self.boost: bv, },
                 )],
                 depend = [python],
@@ -3860,7 +4021,7 @@ class all: # noqa
                     'SeExpr-appleseed-qt5.zip',
                     '2.1.0.beta',
                     'c73820b50ebb15ce8a5affcab60722a2',
-                    { self.gcc: '6.3.1', self.cmake: '3.9.0', self.tbb: '4.4.6',
+                    { self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.9.0', self.tbb: '4.4.6',
                     self.qt: '5.15.2', self.boost: bv, },
                 )],
                 depend = [python, qt],
@@ -3891,7 +4052,7 @@ class all: # noqa
                     'xerces-c-3.2.2.tar.gz',
                     '3.2.2',
                     'bd91a5583212e77035a5d524eda17555',
-                    { self.gcc: '6.3.1', self.cmake: '3.9.0', self.tbb: '4.4.6',
+                    { self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.9.0', self.tbb: '4.4.6',
                     self.qt: '5.6.1', self.boost: bv, },
                 )],
                 depend = [python],
@@ -3922,12 +4083,11 @@ class all: # noqa
                     }
                 }
             }
-
-            oslOBJ = self.osl[bsufix].latestVersionOBJ()
-            openvdbOBJ = build.pkgVersions('openvdb').latestVersionOBJ()
-            # print 'usd',bsufix,self.openvdb[bsufix].latestVersion()
             usd_sed['21.5.0']  = usd_sed['20.8.0']
             usd_sed['21.11.0'] = usd_sed['20.8.0']
+
+            # openvdbOBJ = build.pkgVersions('openvdb').latestVersionOBJ()
+            # print 'usd',bsufix,self.openvdb[bsufix].latestVersion()
             icores = int(os.environ['CORES'])
             usd_CORES  = "%d" % (icores if icores<16 else 16)
             if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
@@ -3939,71 +4099,112 @@ class all: # noqa
                     # print self.alembic[bsufix].versions.keys(), bsufix
 
                 usd_download = []
-                if build.versionMajor(bv) < 1.7:
+                if build.versionMajor(bv) >= 1.76:
+                    oiio = self.osl[bsufix]['1.11.17']['oiio'].obj[self.osl[bsufix]['1.11.17']['oiio'].version]
                     usd_download += [(
-                        # this is the latest for now - sept/2020
+                        # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
                         'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
                         'USD-20.08.tar.gz',
                         '20.8.0',
                         'e7f31719ef2359c939d23871333a763a',
-                        {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                        self.tbb: '2020_U3', self.embree_bin: '3.2.2',
+                        {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                        self.embree_bin: '3.2.2', self.ocio : '1.1.1',
                         self.boost: bv,
-                        self.ptex: self.ptex.latestVersion(),
+                        self.python: '3.7.5',
+                        self.ptex: '2.3.2',
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.37.4',
-                        self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
+                        self.openvdb[bsufix] : oiio['openvdb'].version,
                         self.alembic[bsufix] : '1.7.11',
                         self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
-                        oslOBJ.obj : oslOBJ.version,
-                        oslOBJ['oiio'     ].obj: oslOBJ['oiio'].version,
-                        oslOBJ['ilmbase'  ].obj: oslOBJ['ilmbase'].version,
-                        oslOBJ['openexr'  ].obj: oslOBJ['openexr'].version,
-                        self.pyilmbase[bsufix]     : oslOBJ['openexr'].version}
+                        self.osl[bsufix]: '1.11.17',
+                        self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                        self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
+                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                        self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
                     ),(
-                        # this is the latest for now - sept/2020
+                        # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
                         'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
                         'USD-21.05.tar.gz',
                         '21.5.0',
                         'f63736f66fe7f81d17c7a046cb6dbc39',
-                        {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                        self.tbb: '2020_U3', self.embree[bsufix]: '3.13.3',
+                        {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                        self.embree[bsufix]: '3.13.3', self.ocio : '1.1.1',
+                        self.qt : '5.15.2', self.pyside: '5.15.2',
+                        self.python: '3.7.5',
                         self.boost: bv,
-                        self.ptex: self.ptex.latestVersion(),
-                        # openvdbOBJ.obj : openvdbOBJ.version,
-                        self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
+                        self.ptex: '2.3.2',
+                        self.openvdb[bsufix] : oiio['openvdb'].version,
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.38.0',
                         self.alembic[bsufix] : '1.7.11',
                         self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
-                        oslOBJ.obj : oslOBJ.version,
-                        oslOBJ['oiio'     ].obj: oslOBJ['oiio'].version,
-                        oslOBJ['ilmbase'  ].obj: oslOBJ['ilmbase'].version,
-                        oslOBJ['openexr'  ].obj: oslOBJ['openexr'].version,
-                        self.pyilmbase[bsufix]     : oslOBJ['openexr'].version}
+                        self.osl[bsufix]: '1.11.17',
+                        self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                        self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
+                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                        self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'].version,
+                        self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
                 )]
-                if build.versionMajor(bv) >= 1.6:
+                if build.versionMajor(bv) >= 1.76:
+                    oiio = self.osl[bsufix]['1.11.17']['oiio'].obj[self.osl[bsufix]['1.11.17']['oiio'].version]
+                    exr = self.osl[bsufix]['1.11.17']['openexr'].version
                     usd_download += [(
-                        # this is the latest for now - sept/2020
+                        # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
                         'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.11.tar.gz',
                         'USD-21.11.tar.gz',
                         '21.11.0',
                         '7fe232df5c732fedf466d33ff431ce33',
-                        {self.gcc: '6.3.1', self.cmake: '3.18.2',
-                        self.tbb: '2020_U3', self.embree[bsufix]: '3.13.4',
+                        {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                        self.embree[bsufix]: '3.13.4', self.ocio : '1.1.1',
+                        self.qt: '5.15.2', self.pyside: '5.15.2',
+                        self.python: '3.9.7',
                         self.boost: bv,
-                        self.ptex: self.ptex.latestVersion(),
+                        self.ptex: '2.3.2',
+                        # self.python: self.openexr[bsufix][exr]['python'].version,
                         # openvdbOBJ.obj : openvdbOBJ.version,
-                        self.openvdb[bsufix] : self.openvdb[bsufix].latestVersion(),
+                        self.openvdb[bsufix] : oiio['openvdb'].version,
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.38.4',
                         self.alembic[bsufix] : '1.8.3',
                         self.alembic[bsufix]['1.8.3']['hdf5'].obj : self.alembic[bsufix]['1.8.3']['hdf5'].version,
-                        oslOBJ.obj : oslOBJ.version,
-                        oslOBJ['oiio'     ].obj: oslOBJ['oiio'].version,
-                        oslOBJ['ilmbase'  ].obj: oslOBJ['ilmbase'].version,
-                        oslOBJ['openexr'  ].obj: oslOBJ['openexr'].version,
-                        self.pyilmbase[bsufix]     : oslOBJ['openexr'].version}
+                        self.osl[bsufix]: '1.11.17',
+                        self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                        self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: exr,
+                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: exr,
+                        self.osl[bsufix]['1.11.17']['openvdb'  ].obj: exr,
+                        self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
+                    )]
+                if build.versionMajor(bv) >= 1.76:
+                    oiio = self.osl[bsufix]['1.11.17']['oiio'].obj[self.osl[bsufix]['1.11.17']['oiio'].version]
+                    usd_download += [(
+                        'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v22.08.tar.gz',
+                        'USD-22.08.tar.gz',
+                        '22.08.0',
+                        'e017cc77977691ab6374bde7304060ec',
+                        {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                        self.embree[bsufix]: '3.13.4', self.ocio : '2.1.1',
+                        self.qt : '5.15.2', self.pyside: '5.15.2',
+                        self.python: '3.9.7',
+                        self.boost: bv,
+                        self.ptex: '2.3.2',
+                        # openvdbOBJ.obj : openvdbOBJ.version,
+                        self.openvdb[bsufix] : oiio['openvdb'].version,
+                        self.opensubdiv[bsufix]: '3.4.0',
+                        self.materialx[bsufix] : '1.38.4',
+                        self.alembic[bsufix] : '1.8.3',
+                        self.alembic[bsufix]['1.8.3']['hdf5'].obj : self.alembic[bsufix]['1.8.3']['hdf5'].version,
+                        # self.alembic[bsufix]['1.8.3']['python'].obj : self.alembic[bsufix]['1.8.3']['python'].version,
+                        self.osl[bsufix]: '1.11.17',
+                        self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                        self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
+                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                        self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'].version,
+                        self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
                     )]
 
 
@@ -4016,9 +4217,8 @@ class all: # noqa
                     # baseLibs=[python],
                     depend=[
                         self.clew[bsufix], self.lz4[bsufix], self.clew[bsufix],
-                        self.seexpr[bsufix], self.xerces[bsufix],
-                        self.icu, self.ocio,
-                        self.glfw, self.glew,
+                        self.seexpr[bsufix], self.xerces[bsufix], self.openvdb[bsufix],
+                        self.icu, self.glfw, self.glew,
                         self.pyside, self.qt, self.python, self.jemalloc
                     ],
                     cmd = [
@@ -4027,6 +4227,8 @@ class all: # noqa
                         "cd build",
                         # we need to do this since USD 21 will insist in using the system tbb!!
                         "( mv /usr/lib64/libtbb.so.2 /usr/lib64/__libtbb.so.2__ || true )",
+                        "( mv /usr/bin/python* /dev/shm/ || true )",
+                        "( mv /usr/lib64/libpython* /dev/shm/ || true )",
                         # "export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH" % os.popen("dirname $(ldconfig -p | grep libc.so.6 | awk '{print $(NF)}')").readlines()[0].strip(),
                         # "echo $LD_LIBRARY_PATH",
                         "cmake --build --target install --parallel $CORES ..",
@@ -4038,6 +4240,8 @@ class all: # noqa
                         "( ln -s lib/python/pxr $INSTALL_FOLDER/python || true )",
                         # now we can return the system tbb back
                         "( mv /usr/lib64/__libtbb.so.2__ /usr/lib64/libtbb.so.2 | true )",
+                        "( mv /dev/shm/libpython* /usr/lib64/ || true )",
+                        "( mv /dev/shm/python* /usr/bin/ || true )",
 
                     ],
                     flags=[
@@ -4061,6 +4265,7 @@ class all: # noqa
                         "-D MATERIALX_LIB_DIRS=$MATERIALX_TARGET_FOLDER/lib/",
                         "-D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/",
                         "-D PYSIDEUICBINARY=$PYSIDE_TARGET_FOLDER/bin/uic",
+                        "-D PXR_PYTHON_SHEBANG='$PYTHON_TARGET_FOLDER/bin/python'",
 
                         # boost options
                         "-D Boost_NO_SYSTEM_PATHS=ON",
@@ -4071,8 +4276,8 @@ class all: # noqa
                         "-D PXR_MALLOC_LIBRARY=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
 
                         # embree
-                        # " -D PXR_BUILD_EMBREE_PLUGIN=ON"
-                        # " -D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER"
+                        "-D PXR_BUILD_EMBREE_PLUGIN=ON",
+                        "-D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER",
 
                         # enable plugins
                         "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
@@ -4081,13 +4286,14 @@ class all: # noqa
                         "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
                         "-D PXR_BUILD_IMAGING=ON",
                         "-D PXR_BUILD_USD_IMAGING=ON",
+                        "-D PXR_ENABLE_HDF5_SUPPORT=ON",
+                        "-D PXR_ENABLE_OSL_SUPPORT=ON",
+                        "-D PXR_ENABLE_PTEX_SUPPORT=ON",
+                        "-D PXR_ENABLE_OPENVDB_SUPPORT=ON",
 
                         # enable support to different components.
                         "-D PXR_BUILD_TESTS=ON",
                         "-D PXR_BUILD_GPU_SUPPORT=ON",
-                        "-D PXR_ENABLE_HDF5_SUPPORT=ON",
-                        "-D PXR_ENABLE_OSL_SUPPORT=ON",
-                        "-D PXR_ENABLE_PTEX_SUPPORT=ON",
 
                         # build options to improve compatibility (gaffer/cortex)
                         "-D PXR_BUILD_MONOLITHIC=%d" % MONOLITHIC,
@@ -4198,9 +4404,9 @@ class all: # noqa
                 '9feafcfa865ac3cdfe61b77d0cc901f3',
                 {   self.gcc : '6.3.1',
                     self.boost: cgru_boost_version,
-                    self.ilmbase  [cgru_boost_sufix] : '2.4.0',
-                    self.pyilmbase[cgru_boost_sufix] : '2.4.0',
-                    self.openexr  [cgru_boost_sufix] : '2.4.0'}
+                    self.ilmbase  [cgru_boost_sufix] : '2.4.1',
+                    self.pyilmbase[cgru_boost_sufix] : '2.4.1',
+                    self.openexr  [cgru_boost_sufix] : '2.4.1'}
             )],
             cmd=[
                 'rm -rf /bin/python*',
@@ -4318,6 +4524,54 @@ class all: # noqa
             self.glog,
             self.gflags,
         ])
+
+
+        # self.gdb = build.configure(
+        #     build.ARGUMENTS,
+        #     'gdb',
+        #     download=[(
+        #         'https://ftp.gnu.org/gnu/gdb/gdb-9.2.tar.gz',
+        #         'gdb-9.2.tar.gz',
+        #         '9.2.0',
+        #         '3899ef01c672b19ec63ced445b8abc42', # 9.2
+        #         # 'b6f0807334c273c78fd17df0f9b1c13a', # 9.1
+        #         # '67b01c95c88ab8e05a08680904bd6c92', # 10.1
+        #         # 'eb6596d83bdccea06caa6d49d923e119', # 11.1
+        #         # '0c7339e33fa347ce4d7df222d8ce86af', # 12.1
+        #         { self.gcc : '6.3.1' }
+        #     )],
+        #     cmd = ['''\
+        #         export LDFLAGS=""
+        #         export CC="gcc"
+        #         export CXX="g++ -fPIC -w -nostdinc -nostdinc++ -Wno-error \
+        #         -include $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/plugin/include/config.h \
+        #         -include /usr/include/sys/ptrace.h \
+        #         -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/ \
+        #         -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/ \
+        #         -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/ \
+        #         -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/ \
+        #         -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++ \
+        #         -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/ \
+        #         -isystem/usr/include \"
+        #         export CXXFLAGS="\
+        #             -fPIC -w -nostdinc -nostdinc++ -Wno-error \
+        #             -include $GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/plugin/include/config.h \
+        #             -include /usr/include/sys/ptrace.h \
+        #             -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include-fixed/ \
+        #             -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/ \
+        #             -isystem$GCC_TARGET_FOLDER/include/c++/$GCC_VERSION/x86_64-pc-linux-gnu/ \
+        #             -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/ \
+        #             -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++ \
+        #             -isystem$GCC_TARGET_FOLDER/lib/gcc/x86_64-pc-linux-gnu/$GCC_VERSION/include/c++/x86_64-pc-linux-gnu/ \
+        #             -isystem/usr/include \
+        #         "
+        #         mkdir -p build
+        #         cd build && \
+        #         ../configure --disable-python --disable-werror && \
+        #         make -j $DCORES && \
+        #         make -j $DCORES install \
+        #     '''],
+        # )
 
 
         # self.gdb = build.configure(
