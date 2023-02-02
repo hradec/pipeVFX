@@ -20,6 +20,15 @@
 
 
 class mayausd(baseLib):
+    def versions(self):
+        ''' set the required dependency version '''
+        if self.parent() in ['maya']:
+            muv = float('.'.join(pipe.libs.version.get( 'mayausd' ).split('.')[:2]))
+            if muv >= 0.18:
+                pipe.libs.version.set( usd = '21.11' )
+                pipe.libs.version.set( usd_non_monolithic = '21.11' )
+                pipe.libs.version.set( ptex = '2.3.2' )
+
 
     def environ(self):
         if hasattr(pipe.libs, "usd"):
