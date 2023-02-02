@@ -131,7 +131,7 @@ class mkjob( Op ) :
                     name="jobName",
                     description = "The name of the job to be created/edited",
                     defaultValue = "",
-                    regex = "^\S+$",
+                    regex = r'^\S+$',
                     regexDescription = "jobName must be a name without any spaces in it.",
                     allowEmptyString = False,
                 ),

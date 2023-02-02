@@ -33,12 +33,11 @@ class python(baseLib):
         # compiled with the system libraries.
         # we have to remove this once OIIO and OCIO are properly build with the pipe gcc!
         if self.parent() not in ['nuke']:
-            try:
-                self.update(pipe.LD_PRELOAD.gcc.system())
-            except: pass
+            self.update(pipe.LD_PRELOAD.gcc.system())
+
 
         # if nuke version < 8.0 or gaffer, force to load our libpython shared lib
-        if parent in ['nuke','gaffer']:
+        if parent in ['nuke', 'gaffer']:
             sharedLib = self.path('lib/libpython%s.so.1.0' % pipe.libs.version.get('python')[:3])
             if os.path.exists(sharedLib):
                 if (self.parent()=='nuke' and float(pipe.version.get('nuke')[:3])<8) or self.parent() in ['gaffer']:
@@ -57,8 +56,10 @@ class python(baseLib):
             #     self.ignorePipeLib( "qt" )
 
             # initialize cortex environment so we can load its modules.
-            # self.update( cortex() )
-            # self.update( gaffer() )
+            if self.parent() in ['python']:
+                self.update( cortex() )
+                self.update( gaffer() )
+
             self.update( pipe.libs.cortex() )
             self.update( pipe.libs.gaffer() )
 
@@ -73,11 +74,17 @@ class python(baseLib):
             if hasattr(pipe.apps, 'cgru'):
                 self.update( pipe.apps.cgru() )
 
-        self['PYTHONPATH'] = self.path('/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/')
+        # starting of python 3.7, lib-dynload needs to be before site-packages,
+        # or else python interactive crashes
+        self.insert('PYTHONPATH', 0, self.path('/lib/python$PYTHON_VERSION_MAJOR/lib-dynload/'))
 
         if self.parent() in ['maya']:
             for each in glob('%s/lib/python*/site-packages/*.egg' % self.path()):
                 self['PYTHONPATH'] = each
+
+        # python 3 fixes
+        self['PYTHONINTMAXSTRDIGITS'] = '0'
+        self['PYTHONUNBUFFERED'] = '1'
 
     def bins(self):
         return [('python', 'python')]
