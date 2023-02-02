@@ -34,7 +34,9 @@ class alembic(baseLib):
             plugin = self.path('maya/plug-ins/'),
             lib = self.path('lib'),
         )
-
-        self['LD_PRELOAD'] = self.path('lib/libAlembic.so')
+        self['PYTHONPATH'] = self.path('boost.$BOOST_VERSION/lib/python$PYTHON_VERSION_MAJOR/')
+        self['PYTHONPATH'] = self.path('boost.$BOOST_VERSION/lib/python$PYTHON_VERSION_MAJOR/site-packages/')
+        if self.parent() not in ['maya']:
+            self['LD_PRELOAD'] = self.path('lib/libAlembic.so')
 
         self['HDF5_DISABLE_VERSION_CHECK'] = '1'
