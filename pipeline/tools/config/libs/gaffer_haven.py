@@ -25,13 +25,12 @@ class gaffer_haven(baseLib):
         ''' as this is a python application, we don't have to setup anything
             since python is already setting it for us! '''
 
-        gaffer.addon(self,
-            libs     = self.path("lib"),
-            scripts  = self.path('python'),
-            shaders  = self.path("shader"),
-            startups = self.path('startup'),
-            extensions = self.path()
-        )
+        if self.parent() in ['gaffer']:
+            self['ftp_proxy'  ] = os.environ['PIPE_PROXY_SERVER']
+            self['http_proxy' ] = os.environ['PIPE_PROXY_SERVER']
+            self['https_proxy'] = os.environ['PIPE_PROXY_SERVER']
+
+        gaffer.addon( self, extensions = self.path() )
         for each in self.toolsPaths():
-            self['HAVENLIBRARY' ] = "%s/gaffer/gaffer_heave/" % each
+            self['HAVENLIBRARY' ] = "%s/gaffer/gaffer_heaven/" % each
         self['SSL_CERT_FILE'] = "/etc/ssl/certs/ca-bundle.crt"
