@@ -40,7 +40,8 @@ class cortex(baseLib):
     def environ(self):
         parent = self.parent()
 
-        self['PYTHON_VERSION_MAJOR'] = '.'.join(pipe.libs.version.get('python').split('.')[:2])
+        if parent in ['python']:
+            self['PYTHON_VERSION_MAJOR'] = '.'.join(pipe.libs.version.get('python').split('.')[:2])
 
         # workaround to prevent a bug in environ class!! TODO: Fix the bug!!
         if type(self['PYTHONPATH']) == str:
