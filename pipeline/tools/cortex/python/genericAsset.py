@@ -18,16 +18,13 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-
 # import maya.app
 # maya.app.general.fileTexturePathResolver.findAllFilesForPattern("/BTRFS10TB/atomo/jobs/0704.hi_chew/assets/sala/users/iinaja/maya/sourceimages/personagem_maca/textura/corpo/Base_maca_Color_<UDIM>.png",0)
-
 
 # python3 workaround for reload
 from __future__ import print_function
 try: from importlib import reload
 except: pass
-
 
 import IECore, Gaffer, GafferUI, pipe, tempfile
 import Asset
@@ -37,10 +34,6 @@ import assetUtils
 import traceback
 from functools import wraps
 
-# python3 workaround for reload
-try: from importlib import reload
-except: pass
-
 import nodeMD5
 reload(nodeMD5)
 
@@ -49,6 +42,7 @@ reload(samXgen)
 
 DEBUG = 'SAM_DEBUG' in os.environ
 
+m = None
 try:
     from pymel import core as pm
     import maya.cmds as m
@@ -58,8 +52,14 @@ try:
     import IECoreMaya
     # hostApp('maya')
     import maya.utils as mu
-    import pymel.core as pm
     import maya.app as ma
+except:
+    if m:
+        print( traceback.print_exc() )
+
+try:
+    import maya.cmds as m
+    _m = m
 except:
     # print( traceback.print_exc() )
     m = None
@@ -105,7 +105,6 @@ def viewportOff( func ):
 
     return wrap
 
-
 def cleanAllShapeName():
     for each in m.ls(sl=1, dag=1, type='mesh', l=1):
         last = each.split('|')[-1]
@@ -125,58 +124,75 @@ def cleanAllShapeName():
         each = '|'.join(each.split('|')[:-1]+[last])
         # print( each )
 
-
-
 def push(nodes):
     import re
     attrPOP={}
-    for node in nodes:
-        versionPosition = re.search(r'_\d\d_\d\d_\d\d', node).start()
-        _node = '|%s_??_??_??_*' % ( node[:versionPosition] )
-        attrPOP[_node]={}
-        for each in ['']+['|'.join(x.split('|')[2:]) for x in m.ls(node, dag=1, v=1,l=1) if x[1:] not in nodes]:
-            attrPOP[_node][each]={}
-            for attr in m.listAttr('|'+'|'.join([node,each]).rstrip('|'), w=1, o=1, se=1,m=0):
-                try: attrPOP[_node][each][attr] = m.getAttr('|'+'|'.join([node,each]).rstrip('|')+'.'+attr)
+    if m:
+        for node in nodes:
+            versionPosition = re.search(r'_\d\d_\d\d_\d\d', node).start()
+            _node = '|%s_??_??_??_*' % ( node[:versionPosition] )
+            # print(['|'.join(x.split('|')[2:]) for x in m.ls(node, dag=1, v=1,l=1) if x[1:] not in nodes],_node)
+            attrPOP[_node]={}
+            for each in ['|'.join(x.split('|')[2:]) for x in m.ls(node, dag=1, v=1,l=1) if x[1:] not in nodes]:
+                attrPOP[_node][each]={}
+                try:
+                    for attr in m.listAttr('|'+'|'.join([node,each]).rstrip('|'), w=1, o=1, se=1,m=0):
+                        attrPOP[_node][each][attr] = m.getAttr('|'+'|'.join([node,each]).rstrip('|')+'.'+attr)
                 except: pass
     return attrPOP
 
 def pop(attrPOP):
-    for mask in attrPOP:
-        nodes = m.ls(mask)
-        for node in nodes:
-            for each in attrPOP[mask]:
-                for attr in attrPOP[mask][each]:
-                    v = attrPOP[mask][each][attr]
-                    attrName = '|'+'|'.join([node,each]).rstrip('|')+'.'+attr
-                    attrName = attrName.replace('||','|')
-                    try:
-                        if type(v) in [ float, int ]:
-                            m.setAttr( attrName, v)
-                        if type(v) in [ str ]:
-                            m.setAttr( attrName, v, type='string')
-                    except:
-                        if DEBUG:
-                            print( "pop(attrPOP) Exception: "+str(attrName) )
-
-
+    if m:
+        for mask in attrPOP:
+            nodes = m.ls(mask)
+            for node in nodes:
+                for each in attrPOP[mask]:
+                    for attr in attrPOP[mask][each]:
+                        v = attrPOP[mask][each][attr]
+                        attrName = '|'+'|'.join([node,each]).rstrip('|')+'.'+attr
+                        attrName = attrName.replace('||','|')
+                        try:
+                            if type(v) in [ float, int ]:
+                                m.setAttr( attrName, v)
+                            if type(v) in [ str ]:
+                                m.setAttr( attrName, v, type='string')
+                        except:
+                            if DEBUG:
+                                print( "pop(attrPOP) Exception: "+str(attrName) )
 
 def hostApp(app=None):
-    if '_hostApp_' not in globals():
-        globals()['_hostApp_'] = 'gaffer'
-    if app:
-        globals()['_hostApp_'] = app
+    return os.environ['PIPE_PARENT']
+    # if '_hostApp_' not in globals():
+    #     globals()['_hostApp_'] = 'gaffer'
+    # if app:
+    #     globals()['_hostApp_'] = app
+    #
+    # try:
+    #     if globals()['_hostApp_']=='maya':
+    #         globals()['m']=globals()['_m']
+    #     else:
+    #         raise
+    # except:
+    #     globals()['m']=None
+    # # print( app, globals()['m'], globals().keys() )
+    # return globals()['_hostApp_']
 
-    try:
-        if globals()['_hostApp_']=='maya':
-            globals()['m']=globals()['_m']
-        else:
-            raise
-    except:
-        globals()['m']=None
-    # print( app, globals()['m'], globals().keys() )
-    return globals()['_hostApp_']
+def _fixJobPrefix( file ):
+    ret = file
+    if '/sam/' in file:
+        ret = pipe.admin.job().path('sam/')+file.split('/sam/')[1]
+    return ret
 
+def _nameCleanup( name ):
+    ret = name
+    d = {
+        '/' : '_',
+        '.' : '_',
+        '-' : '_',
+    }
+    for each in d:
+        ret = ret.replace(each, d[each])
+    return ret
 
 def _nodeNameTemplate(prefix=False):
     ret = "SAM_%s_%s_%02d_%02d_%02d_%s"
@@ -187,8 +203,8 @@ def _nodeNameTemplate(prefix=False):
 def _nodeName(data=None):
     ret = 'SAM_none_none_none_none'
     ret =  _nodeNameTemplate() % (
-        data['assetType'].replace('/','_'),
-        data['assetName'].replace('.','_').replace('-','_'), #split('.')[-1],
+        _nameCleanup(data['assetType']),
+        _nameCleanup(data['assetName']),
         data['assetInfo']['version'].value.x,
         data['assetInfo']['version'].value.y,
         data['assetInfo']['version'].value.z,
@@ -198,8 +214,8 @@ def _nodeName(data=None):
 
     try:
         ret =  _nodeNameTemplate() % (
-            data['assetType'].replace('/','_'),
-            data['assetName'].replace('.','_').replace('-','_'), #split('.')[-1],
+            _nameCleanup(data['assetType']),
+            _nameCleanup(data['assetName']),
             data['assetInfo']['version'].value.x,
             data['assetInfo']['version'].value.y,
             data['assetInfo']['version'].value.z,
@@ -258,7 +274,6 @@ def updateCurrentLoadedAssets(forceRefresh=False):
                     # print( 'SAM REFRESH =>',t, nodeNamePrefix )
                     op.op.typeOP.onRefreshCallback( t, nodeNamePrefix )
 
-
 class progressBar():
     def __init__(self, length, msg= "Processing shaders..."):
         qt = True
@@ -283,13 +298,11 @@ class progressBar():
             #          this method can be called when inside a idle event already!
             #          we can only enable it, if we find a way to detect when
             #          inside an idle event!
-            # if m:
-            #     mu.processIdleEvents()
+            if m:
+                mu.processIdleEvents()
     def close(self):
         if self.w:
             del self.w
-
-
 
 class _genericAssetClass( IECore.Op ) :
     _whoCanImport = ["gaffer"]
@@ -391,8 +404,9 @@ class _genericAssetClass( IECore.Op ) :
         '''update UI from host data'''
         self._host = []
         # print( 'updateFromHost:',hostApp() )
-        if hostApp()=='maya' and m:
+        if hostApp()=='maya':
             self._host += ["maya"]
+        if  m:
             if self.animation:
                 timeSlider = {
                     'animationStartTime' : m.playbackOptions(q=1,animationStartTime=1),
@@ -430,11 +444,11 @@ class _genericAssetClass( IECore.Op ) :
             self.parameters()["%s%s" % (self.prefix, self.nameGroup)].setValue(  IECore.StringData(selected) )
             self.parameters()["%s%s" % (self.prefix, self.nameDependency)].setValue(  IECore.StringData(scene) )
 
-        elif hostApp()=='gaffer' and hasattr(GafferUI, 'root'):
-            self.root = GafferUI.root
-            scene = self.root()['scripts'][0]["fileName"].getValue()
-
-            self.parameters()["%s%s" % (self.prefix, self.nameDependency)].setValue(  IECore.StringData(scene) )
+        # elif hostApp()=='gaffer' and hasattr(GafferUI, 'root'):
+        #     self.root = GafferUI.root
+        #     scene = self.root()['scripts'][0]["fileName"].getValue()
+        #
+        #     self.parameters()["%s%s" % (self.prefix, self.nameDependency)].setValue(  IECore.StringData(scene) )
 
 
     def parameterChanged(self, parameter):
@@ -485,12 +499,18 @@ class _genericAssetClass( IECore.Op ) :
                 #Grab the last active 3d viewport
                 view = apiUI.M3dView.active3dView()
 
+                # disable highlight selection
+                state = m.displayPref(q=True, wsa=True)
+                m.displayPref(wsa="none")
+
                 #read the color buffer from the view, and save the MImage to disk
                 image = api.MImage()
                 view.readColorBuffer(image, True)
                 image.writeToFile("/dev/shm/maya-preview.png", 'png')
                 os.system( "%s /dev/shm/maya-preview.png %s" % ( pipe.libs.cgru().path("bin/convert"), data['extraFiles'][-1] ) )
                 m.select(sl)
+
+                m.displayPref(wsa=state)
 
         elif hostApp() == 'gaffer':
             data['extraFiles'] += [ '%s/data/preview.jpg' % m.workspace(q=1, rd=1) ]
@@ -529,10 +549,38 @@ class _genericAssetClass( IECore.Op ) :
                 versionPosition = re.search(r'_\d\d_\d\d_\d\d', nodeName).start()
                 mask = '|%s_??_??_??_*' % ( nodeName[:versionPosition] )
                 # print( mask, m.ls(mask) )
-                nodes = m.ls(mask)
+                nodes += m.ls(mask)
+
+                # check for second level as weel.
+                # animation/maya are maya scenes with referenced maya/rig, so
+                # we can trigger version check and updating of the rig in an
+                # animation asset
+                mask = '|*|%s_??_??_??_*' % ( nodeName[:versionPosition] )
+                nodes += m.ls(mask)
             else:
                 nodes = m.ls('|' + nodeName + '*')
         return nodes
+
+    # def doesAssetSourceExists( self, nodeName, anyVersion=True):
+    #     ''' find the asset in the scene, no matter what version it is! '''
+    #     nodes=[]
+    #     if m:
+    #         self.__data()
+    #         if self.hostApp()=='maya' and m:
+    #             if len(self.pathPar.split('/'))>2 and self.data:
+    #                 if 'meshPrimitives' in self.data:
+    #                     selection = m.ls(self.data['mayaNodesLsMask'], l=1)
+    #
+    #                     if 'renderSettings/maya' in self.pathPar:
+    #                         return selection
+    #
+    #                     return selection # if self.data['mayaNodesLsMask']==selection else []
+    #                 if  'render/' in self.data['assetType']:
+    #                     if m.objExists( 'defaultRenderGlobals.pipe_asset_name' ):
+    #                         assetName = m.getAttr( 'defaultRenderGlobals.pipe_asset_name' )
+    #                         if '%s/%s/' % (self.data['assetType'], assetName) in self.pathPar:
+    #                             return [assetName]
+    #     return nodes
 
 
     def getAssetDataHistory(self, parameters):
@@ -609,8 +657,9 @@ class _genericAssetClass( IECore.Op ) :
         '''return the nodename based on the asset data '''
         return _nodeName(data)
 
-    def doImport(self, asset, data=None, replace=True):
+    def doImport(self, asset, data=None, replace=True, **kargs):
         ''' method called by host to import asset into host scene '''
+        self.kargs = kargs
         self.asset = Asset.AssetParameter(asset)
         if not data:
             data = self.asset.getData()
@@ -626,6 +675,7 @@ class _genericAssetClass( IECore.Op ) :
                 filename = self.data['multiplePublishedFiles'][n]
                 # print( filename )
 
+            filename = _fixJobPrefix(filename)
             nodeName = self.nodeName(self.data) + each
 
             stack = []
@@ -648,7 +698,7 @@ class _genericAssetClass( IECore.Op ) :
             if filename:
                 canPublish += self.doImportToHost(filename, nodeName)
 
-            if not canPublish:
+            if canPublish == 0:
                 raise Exception("Can't import asset!!")
 
             updateCurrentLoadedAssets()
@@ -669,7 +719,6 @@ class _genericAssetClass( IECore.Op ) :
                 for ns in namespaces:
                     # print( ns )
                     m.namespace( removeNamespace = ns, mergeNamespaceWithRoot = True)
-
 
 __maya__attach__shaders__lazyCount = 0
 class maya( _genericAssetClass ) :
@@ -1295,7 +1344,7 @@ class maya( _genericAssetClass ) :
         m.select(self.data['meshPrimitives'])
 
         # print( "mayaBinary" if mayaExt=='.mb'else 'mayaAscii' )
-        m.file(fileName, force=1, pr=1, es=1, typ=("mayaBinary" if mayaExt=='.mb'else 'mayaAscii'))
+        m.file(fileName, force=1, preserveReferences=1, exportSelected=1, typ=("mayaBinary" if mayaExt=='.mb'else 'mayaAscii'))
 
     def doPublishMaya(self, operands):
         ''' called by SAM when exporintg an asset in maya '''
@@ -1372,6 +1421,8 @@ class maya( _genericAssetClass ) :
             for each in data['extraFiles']:
                 if 'xgen' in each:
                     samFile  = os.path.dirname(data['publishFile'])+'/'+os.path.basename(each)
+                    # fix samFile for the current job
+                    samFile = _fixJobPrefix(samFile)
                     userFile = m.workspace(q=True, dir=True, rd=True)+'/'.join(each.split('maya')[1:])
                     # xgen files need to be copied to the user maya folder and adjusted before importing the scene
                     if os.path.splitext(each)[-1] in ['.xgen']:
@@ -1394,10 +1445,12 @@ class maya( _genericAssetClass ) :
 
     def doImportToHost( self, filename, nodeName ):
         ret = 0
-        if m:
+        if self.hostApp() in ['maya'] and m:
             ret = self.doImportMaya( filename, nodeName )
             if ret:
                 self.fixRIGMeshCTRLS()
+        elif self.hostApp() in ['gaffer']:
+            pass
         return ret
 
     def mayaFileIn( self, filename, nodeName ):
@@ -1416,14 +1469,18 @@ class maya( _genericAssetClass ) :
                                 referenceName = reference
                                 group = sam
                     m.file(filename, loadReference=referenceName)
+                    m.file(filename, e=1, ns=nodeName)
                     m.rename( group, nodeName)
                     # cleanup trash that maya leaves behind!!
                     m.delete('sharedReferenceNode')
                 else:
                     # import as reference
-                    m.file(filename, r=1, gr=1 )
+                    # m.file(filename, r=1, gr=1)
+
+                    # namespace or reference kills animation for some reason!!
+                    m.file(filename, r=1, preserveReferences=1, gr=1, ns=nodeName )
             else:
-                m.file(filename, i=1, gr=1 )
+                m.file(filename, i=1, preserveReferences=1, gr=1 )
 
     def doImportMaya( self, filename, nodeName ):
         # maya import code!
@@ -1889,16 +1946,29 @@ class alembic(  _genericAssetClass ) :
 
     def doImportToHost( self, filename, nodeName ):
         ret = 0
-        if m:
+
+        if self.hostApp() in ['maya']:
             ret = self.doImportMaya( filename, nodeName )
+            print('====>',self.hostApp(),ret, self.hostApp() in ['maya'],'<====')
             if ret:
                 self.fixRIGMeshCTRLS()
+        elif self.hostApp() in ['gaffer']:
+            import nodes
+            # print( self.kargs['root'].keys() )
+            print( filename )
+            assetPath = os.path.dirname(filename.split('/sam/')[1])
+            assetPathParts = assetPath.split('/')
+            gafferNodeName = 'SAM_%s' % _nameCleanup( os.path.dirname(assetPath) )
+            self.kargs['root'][gafferNodeName] = eval( 'nodes.SAM%s%s()' % (assetPathParts[0], assetPathParts[1].capitalize()) )
+            self.kargs['root'][gafferNodeName]['asset'].setValue( assetPath )
+            ret = True
         return ret
 
     def doImportMaya(self, filename, nodeName, gpucache=False ):
         if m:
             # print( self.__setImportAsGPU )
             # print( gpucache )
+            # print( filename )
             node = alembic.importAlembic( filename, nodeName, self.__setImportAsGPU or gpucache, self.data )
 
             if 'shadingMap' in self.data:
@@ -2082,11 +2152,6 @@ class alembic(  _genericAssetClass ) :
     def cleanupOldVersions( self, nodeName ):
         maya.cleanupOldVersions( self, nodeName )
 
-
-
-
-
-
 class gaffer( _genericAssetClass ):
     _whoCanImport = ['maya', 'houdini','gaffer']
     _whoCanPublish = ['gaffer']
@@ -2097,7 +2162,7 @@ class gaffer( _genericAssetClass ):
 
 
     def doPublish(self, operands):
-        ''' called by SAM when import an asset '''
+        ''' called by SAM when publishing an asset '''
         if hasattr(GafferUI, 'root'):
             self.root = GafferUI.root
             script = self.root()['scripts'][0]
@@ -2208,6 +2273,342 @@ class gaffer( _genericAssetClass ):
     #         m.setAttr( "renderManRISGlobals.rman__torattr___postRenderScript", "shave_rmanInjectCleanup", type="string" )
     #         m.setAttr( "renderManRISGlobals.rman__torattr___postTransformScript", "shave_rmanInsertArchive", type="string" )
 
+class usd(  alembic ) :
+    _whoCanImport = ['gaffer','maya', 'houdini']
+    _whoCanPublish = ['gaffer','houdini','maya']
+    _whoCanOpen = ['gaffer','houdini','maya']
+
+    def __init__( self, prefix, animation=True, nameGroup='Group', nameDependency='Dependency' ) :
+        _genericAssetClass.__init__( self, prefix, animation, nameGroup, nameDependency )
+        self.meshOnly()
+        self.setSubDivMeshesMask(None)
+        self.__setImportAsGPU = False
+
+    def publishFile(self, publishFile, parameters):
+        path = os.path.dirname(publishFile)
+        name = os.path.splitext(os.path.basename(publishFile))[0]
+        file = "%s/%s.%%s.usd" % (path, name)
+        return file
+
+    @staticmethod
+    def _perFrameCallback(frame, outRIB, selection, tmpfile=None):
+        ''' wrapper function just to take care of passing data back to asset '''
+        pass
+        # data = self.perFrameCallback(frame, outRIB, selection)
+
+        # # write the collected data to tempfile
+        # if tmpfile:
+        #     f = open(tmpfile,'a')
+        #     f.write( "%d %s\n" % (frame, str(data)) )
+        #     f.close()
+
+    @staticmethod
+    def perFrameCallback(frame, outRIB, selection):
+        ''' a frame callback function to execute extra exporting
+        during alembic export '''
+        data = {}
+        #
+        # # xgen ribarchive!
+        # data['shave'] = alembic.shaveRibExport( frame, outRIB, selection )
+        #
+        # # xgen export!
+        # data['xgen'] = samXgen.xgen_export_for_ribbox( selection, frame )
+        #
+        # data['extraFiles'] = [ x[0] for x in data['xgen'] ]
+        #
+        return data
+        # Special callback information:
+        # On the callbacks, special tokens are replaced with other data, these tokens
+        # and what they are replaced with are as follows:
+        #
+        # #FRAME# replaced with the frame number being evaluated.
+        # #FRAME# is ignored in the post callbacks.
+        #
+        # #BOUNDS# replaced with a string holding bounding box values in minX minY minZ
+        # maxX maxY maxZ space seperated order.
+        #
+        # #BOUNDSARRAY# replaced with the bounding box values as above, but in
+        # array form.
+        # In Mel: {minX, minY, minZ, maxX, maxY, maxZ}
+        # In Python: [minX, minY, minZ, maxX, maxY, maxZ]
+
+    @viewportOff
+    def USDExport(self, mfile, start, end, sl, extra='-renderableOnly -uvWrite -writeUVSets', shaveTmp='/tmp/shave.%04d.cob'):
+        if m:
+            import tempfile
+            m.select( sl )
+            slall = m.ls(sl=1,dag=1)
+            cleanup = []
+            m.file("/frankbarton/jobs/0403.teste/assets/rnd/users/rhradec/maya/scenes/stich.usd",
+                force=1,
+                options="-boundingBox;-mask 6399;-lightLinks 1;-shadowLinks 1;-fullPath",
+                typ="Arnold-USD",
+                pr=1,
+                es=1,
+            )
+
+
+            # shave = [ x for x in slall  if m.nodeType(x)=='shaveHair']
+            # for s in shave:
+            #     m.select(s)
+            #     try:
+            #         maya.cleanNodes(
+            #             [x for x in m.listRelatives(m.listRelatives(s,p=1)[0],c=1) if 'Mesh' in x] +
+            #             m.ls("shaveHairMesh*")
+            #         )
+            #     except:
+            #         pass
+            #     m.shaveCreatePolysFromHairs()
+            #     for n in m.ls("shaveHairMeshShape*", dag=1):
+            #         cleanup.append(
+            #             m.rename(m.listRelatives(n,p=1)[0], m.listRelatives(s,p=1)[0]+"Mesh")
+            #         )
+            #         m.parent(
+            #             cleanup[-1],
+            #             m.listRelatives(s,p=1)[0]
+            #         )
+
+            attributesToExport = [
+                'rman__torattr___subdivScheme',
+                'rman__torattr___subdivFacevaryingInterp',
+                'castsShadows',
+                'receiveShadows',
+                'holdOut',
+                'motionBlur',
+                'primaryVisibility',
+                'smoothShading',
+                'visibleInReflections',
+                'visibleInRefractions',
+                'doubleSided',
+                'opposite',
+            ]
+
+
+            curves = m.ls( sl, dag=1, ni=1, type='nurbsCurve' )
+            meshes = m.ls( sl, dag=1, visible=1, ni=1, type='mesh' )
+            # print( "BUMM",sl, len(curves), len(meshes) )
+            if curves and not meshes:
+                extra = ''
+            else:
+                if not self.__anyNode:
+                    meshes = m.ls( sl=1, dag=1, visible=1, ni=1, type='mesh' )
+                    # convert rman attributos to a cleaner version
+                    attrs  = [ a for a in attributesToExport if 'rman__torattr___' in a ]
+                    pb = progressBar(len(attrs)*len(meshes)+1, 'setting up geometry for export...')
+                    pb.step()
+                    for n in meshes:
+                        pb.step()
+                        for attr in attrs:
+                            pb.step()
+                            if m.objExists( '%s.%s' % (n, attr) ):
+                                cleanAttr = attr.replace('rman__torattr___','')
+                                if not m.objExists( '%s.%s' % (n, cleanAttr) ):
+                                    m.addAttr( n, ln=cleanAttr, at="long" )
+                                m.setAttr( '%s.%s' % (n, cleanAttr), m.getAttr( '%s.%s' % (n, attr) ) )
+                                if cleanAttr not in attributesToExport:
+                                    attributesToExport.append(cleanAttr)
+
+                        for attr in [ a for a in m.listAttr(n) if 'rman_' in a ]:
+                            if attr not in attributesToExport:
+                                attributesToExport += [attr]
+
+                    pb.close()
+
+                    m.select( meshes )
+                else:
+                    m.select( m.ls( sl, dag=1) )
+
+                if attributesToExport:
+                    extra += ' -attr '+' -attr '.join(attributesToExport)
+
+                extra += ' -noNormals  -sl '
+
+
+            className = str(self.__class__).split('.')[-1]
+            root = ' '.join([ '-root '+x for x in sl ])
+
+            # just make sure we have the extra keys we need.
+            if 'frameCallback' not in self.data:
+                self.data['frameCallback'] = {}
+            if 'extraFiles' not in self.data:
+                self.data['extraFiles'] = []
+
+            # create a temp file so frameCallback can generate data to input
+            # into asset data file. The temp file will contain a str(dict) so
+            # we can just read it and eval() the content of the file.
+            ftmp = tempfile.mkstemp()
+            os.close( ftmp[0] )
+            ftmp = ftmp[1]
+
+            abcJob = "%s %s  -step %s -wv -fr %s %s %s -file %s" % (
+                extra,
+                '''-pythonPerFrameCallback "import genericAsset;genericAsset.alembic._perFrameCallback(#FRAME#, '%s', %s, '%s' )"''' % (shaveTmp,sl,ftmp),
+                1.0,
+                start,
+                end,
+                root,
+                mfile,
+            )
+            # we have to call the callback here since it seems it won't call if just one frame is being exported
+            if start==end:
+                alembic._perFrameCallback(start, shaveTmp, sl, ftmp )
+            print( "m.AbcExport( j=abcJob) : ", abcJob ) ; sys.stdout.flush()
+            m.AbcExport( j=abcJob)
+
+            # retrieve temp file data and pipe into asset data file.
+            f = open(ftmp,'r')
+            for line in f.readlines():
+                # for each line, theres a frame, and the dict for that frame!
+                l = line.split(' ')
+                frame = int(l[0])
+                data = eval(' '.join(l[1:]))
+                # store it in the asset data
+                self.data['frameCallback'][frame] = data
+                self.data['extraFiles'] += data['extraFiles']
+
+            f.close()
+            os.remove(ftmp)
+
+            alembic.shaveRibExport(END=True)
+
+            # finishing touch!
+            maya.cleanNodes(cleanup)
+
+    def doPublishMaya( self, operands ):
+        if m:
+            globals()['self']  = self
+            frameRange   = operands['FrameRange']['range'].value
+            self.data['assetPath'] = "%s%%s.abc"  % tempfile.mkstemp()[1]
+            self.data['multipleFiles'] = [ 'asset' ]
+            self.pb = progressBar(3 + (int(frameRange[1])-int(frameRange[0])), 'Publishing alebic geometry...')
+            self.pb.step()
+
+            tmp = '%s/data/sam_tmp/'  % m.workspace(q=1, rd=1)
+            os.system('mkdir -p %s/%s_cob/' % (tmp, os.environ['USER']))
+            shaveTmp = '%s/%s_cob/shave.%%04d.cob'  % (tmp, os.environ['USER'])
+
+            self.data['assetPath'] = "%s/data/%%s.abc" % m.workspace(q=1, rd=1)
+            self.USDExport(
+                self.data['assetPath'] % self.data['multipleFiles'][0],
+                int(frameRange[0]),
+                int(frameRange[1]),
+                self.data['meshPrimitives'],
+                extra=self.extra,
+                shaveTmp=shaveTmp,
+            )
+            self.pb.step()
+
+            # publish ribs with alembic, if any!
+            # if 'extraFiles' not in self.data:
+            #     self.data['extraFiles'] = []
+            # self.data['extraFiles'] += [ shaveTmp % x for x in range(int(frameRange[0]),int(frameRange[2])) if os.path.path.exists(shaveTmp % x) ]
+            #
+            # # cleanup ribs after publishing
+            # if 'extraFilesDelete' not in self.data:
+            #     self.data['extraFilesDelete'] = []
+            # self.data['extraFilesDelete'] += [ shaveTmp % x for x in range(int(frameRange[0]),int(frameRange[2])) if os.path.path.exists(shaveTmp % x) ]
+
+            # for n in range(len(self.data['multipleFiles'])):
+            #     m.AbcExport( j="%s -step %s -frs 0.3 -frs 0.60 -wv -fr %s %s -root %s -file %s" % (
+            #         '-pythonPerFrameCallback %s.perFrameCallback()' % className,
+            #         str(self.frameRange.z),
+            #         str(self.frameRange.y),
+            #         str(self.frameRange.x),
+            #         self.data['meshPrimitives'][n],
+            #         self.data['assetPath'] % self.data['multipleFiles'][n],
+            #     ))
+
+
+            maya.extraFiles(self.data, self.data['assetPath'] % "asset")
+            m.file(s=1)
+            self.pb.close()
+
+
+            return True
+        return False
+
+    def setSubDivMeshesMask(self, mask):
+        self.__subDivMeshesMask = mask
+
+    def setImportAsGPU(self, b):
+        self.__setImportAsGPU = b
+
+    def doImportToHost( self, filename, nodeName ):
+        ret = 0
+        if self.hostApp() in ['maya'] and m:
+            ret = self.doImportMaya( filename, nodeName )
+            if ret:
+                alembic.fixRIGMeshCTRLS()
+        elif self.hostApp() in ['gaffer']:
+            import nodes
+            # print( self.kargs['root'].keys() )
+            print( filename )
+            assetPath = os.path.dirname(filename.split('/sam/')[1])
+            assetPathParts = assetPath.split('/')
+            gafferNodeName = 'SAM_%s' % _nameCleanup( os.path.dirname(assetPath) )
+            self.kargs['root'][gafferNodeName] = eval( 'nodes.SAM%s%s()' % (assetPathParts[0], assetPathParts[1].capitalize()) )
+            self.kargs['root'][gafferNodeName]['asset'].setValue( assetPath )
+            ret = True
+        return ret
+
+    def doImportMaya(self, filename, nodeName, gpucache=False ):
+        if m:
+            # print( self.__setImportAsGPU )
+            # print( gpucache )
+            # print( filename )
+            node = alembic.importAlembic( filename, nodeName, self.__setImportAsGPU or gpucache, self.data )
+
+            if 'shadingMap' in self.data:
+                m.addAttr( node, ln="SAM_SHADINGMAP", dt="string" )
+                m.setAttr( node + '.SAM_SHADINGMAP', str(self.data['shadingMap']), type="string"  )
+
+            def idleSetup():
+                if self.__subDivMeshesMask:
+                    nodes = m.ls(node+self.__subDivMeshesMask,  dag=1, visible=1, ni=1, type='mesh' )
+                    pb = progressBar(len(nodes)+1, 'Updating subdiv prman attributes...')
+                    for n in nodes:
+                        pb.step()
+                        if not m.objExists(n + '.rman__torattr___subdivScheme'):
+                            m.addAttr( n, ln="rman__torattr___subdivScheme", at="long" )
+                        m.setAttr( n + '.rman__torattr___subdivScheme', 0 )
+
+                        if not m.objExists(n + '.rman__torattr___subdivFacevaryingInterp'):
+                            m.addAttr( n, ln="rman__torattr___subdivFacevaryingInterp", at="long" )
+                        m.setAttr( n + '.rman__torattr___subdivFacevaryingInterp', 3 )
+                    pb.close()
+                else:
+                    nodes = m.ls(node,  dag=1, visible=1, ni=1, type='mesh' )
+                    pb = progressBar(len(nodes)+1, 'Updating subdiv prman attributes...')
+                    for n in nodes:
+                        pb.step()
+                        if m.objExists( '%s.subdivScheme' % n ):
+                            if not m.objExists(n + '.rman__torattr___subdivScheme'):
+                                m.addAttr( n, ln="rman__torattr___subdivScheme", at="long" )
+                            m.setAttr( n + '.rman__torattr___subdivScheme', m.getAttr( '%s.subdivScheme' % n ) )
+
+                        if m.objExists( '%s.subdivFacevaryingInterp' % n ):
+                            if not m.objExists(n + '.rman__torattr___subdivFacevaryingInterp'):
+                                m.addAttr( n, ln="rman__torattr___subdivFacevaryingInterp", at="long" )
+                            m.setAttr( n + '.rman__torattr___subdivFacevaryingInterp',  m.getAttr( '%s.subdivFacevaryingInterp' % n )  )
+
+                    pb.close()
+
+
+            # m.scriptJob( runOnce=True,  idleEvent=idleSetup )
+            # assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=alembic.fixDefaultUVSet() )
+            maya.attachShadersLazy()
+            alembic.fixDefaultUVSet()
+            maya.setTimeSliderRangeToAvailableAnim()
+
+            idleSetup()
+            return True
+
+        return False
+
+
+    @staticmethod
+    def cleanupOldVersions( self, nodeName ):
+        maya.cleanupOldVersions( self, nodeName )
 
 # m.AbcExport( j="-step 0.25 -frs 0.3 -frs 0.60 -fr 1 5 -root foo -file test.abc")
 #
