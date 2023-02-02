@@ -112,7 +112,7 @@ class SamEditor( GafferUI.BrowserEditor ) :
                     self.refresh()
 
 
-                self.__headerImg = self.samIcon.clickedSignal().connect( samIconButton )
+                self.__headerImg = self.samIcon.clickedSignal().connect( samIconButton, scoped=True )
                 header.addChild( self.samIcon, (3,0) )
 
                 self.timer = QtCore.QTimer()
@@ -127,7 +127,7 @@ class SamEditor( GafferUI.BrowserEditor ) :
                 )
                 for mode in self.__modes :
                     modeMenu.append( mode[0] )
-                self.__modeChangedConnection = modeMenu.selectionChangedSignal().connect(  Gaffer.WeakMethod( self.__modeChanged ) )
+                self.__modeChangedConnection = modeMenu.selectionChangedSignal().connect(  Gaffer.WeakMethod( self.__modeChanged ), scoped=True )
 
             self.__pathChooser = GafferUI.PathChooserWidget( Gaffer.DictPath( {}, "/" ), previewTypes=GafferUI.PathPreviewWidget.types(), allowMultipleSelection=False )
             self.__pathChooser.pathWidget().setVisible( False )
@@ -155,7 +155,7 @@ class SamEditor( GafferUI.BrowserEditor ) :
             for b in Asset.types(): #['render/maya', 'animation/alembic', 'particle/nParticles']:
                 self.buttons[b] = GafferUI.Button( "Create a NEW %s asset" % b  ) #, "arrowRight10.png" )
                 pathButtonRow.append(self.buttons[b])
-                self.__buttonsSignals.append( self.buttons[b].clickedSignal().connect( Gaffer.WeakMethod( self.createButton ) ) )
+                self.__buttonsSignals.append( self.buttons[b].clickedSignal().connect( Gaffer.WeakMethod( self.createButton ), scoped=True ) )
                 self.buttons[b].type = b
             if not self._debug:
                 # hide then by default
@@ -281,7 +281,7 @@ class SamEditor( GafferUI.BrowserEditor ) :
             return self._menu(pathListing)
 
         def importAsset( self, parameterValue) :
-            print  '===>',parameterValue
+            print ( '===>',parameterValue)
 
 
 

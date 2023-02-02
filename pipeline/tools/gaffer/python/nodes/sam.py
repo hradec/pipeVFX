@@ -18,6 +18,12 @@ QtCore, QtGui = pipe.importQt()
 
 sys._stdout = sys.stdout
 
+try:
+    IECore.Color3f()
+except:
+    import imath
+    IECore.Color3f = imath.Color3f
+
 
 class _EditAssetPlugValueWidget( GafferUI.PlugValueWidget ) :
 
@@ -271,7 +277,7 @@ class samAssetNode( GafferScene.SceneNode ) :
         self['camera'].setInput( self["__computeNode"]['outCAMERAs'] )
         self['alembic'].setInput( self["__computeNode"]['outABC'] )
 
-        self["__alembic"] = GafferScene.AlembicSource()
+        self["__alembic"] = GafferScene.SceneReader()
         self["__alembic"]["enabled"].setInput( self["previewAlembic"] )
         self["__alembic"]['fileName'].setInput( self["__computeNode"]['outABC'] )
 
