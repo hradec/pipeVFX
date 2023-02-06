@@ -1,5 +1,9 @@
 #!/bin/bash
 
+python -c 'print("="*120)'
+date
+python -c 'print("="*120)'
+
 tools=$(dirname $(dirname $(readlink -f $BASH_SOURCE)))
 export PYTHONPATH=$tools/python/
 CD=$(pwd)
@@ -27,7 +31,7 @@ curl -k -s -L 'https://download.blender.org/release/' \
             | while read fileName ; do
                 folder=$(echo $fileName | awk -F'.tar' '{print $1}')
                 version=$(echo $fileName | awk -F'-' '{print $2}')
-                blender_root=$(/bin/python2 -c "import pipe;print '%s/blender/' % pipe.roots.apps()")
+                blender_root=$(python2 -c "import pipe;print '%s/blender/' % pipe.roots.apps()")
                 if [ ! -e $blender_root/$version/blender ] ; then
                     rm -rf ./*
                     echo "Downloading and uncompressing $fileName..."
@@ -55,7 +59,7 @@ curl -k -s -L 'https://download.blender.org/release/' \
                     echo -n $chrome_root/$version
                     echo ": this version is already installed."
                 fi
-                /bin/python2 -c 'print "="*80'
+                python2 -c 'print "="*80'
             done
     done
 cd $CD
@@ -63,7 +67,7 @@ cd $CD
 echo "Done!"
 
 # version=$(./opt/google/chrome/google-chrome --version | awk '{print $(NF)}')
-# chrome_root=$(/bin/python2 -c "import pipe;print '%s/chrome/' % pipe.roots.apps()")
+# chrome_root=$(python2 -c "import pipe;print '%s/chrome/' % pipe.roots.apps()")
 # echo "Detected version $version..."
 # if [ ! -e $chrome_root/$version ] ; then
 #     echo "Installing since it's a new version..."

@@ -7,16 +7,13 @@
 # this pulling method can run in a docker container, in a client machine
 STUDIO=frankbarton
 
-if [ "$(pgrep -fa chmod)" == "" ] ; then
+if [ "$(pgrep -fa find.*chmod)" == "" ] ; then
     python -c 'print("="*120)'
     date
     python -c 'print("="*120)'
 
     # mode  2777 = rwxrwsrwx (s on group)
     # mode 00777 = rwxrwxrwx and clears sSt
-
-    #chmod 2777 -R /$STUDIO/jobs/*/*/*/users/MAC/
-    find /$STUDIO/apps/*/*/*            \! -perm 0555 -type d -exec chmod 00555 -v {} \;
 
     #chmod 2777 -R /$STUDIO/jobs/*/*/*/users/MAC/
     find /$STUDIO/jobs/*/*/*/users/MAC/ \! -perm a+rwx -type d -exec chmod 00777 -v {} \;
@@ -27,6 +24,11 @@ if [ "$(pgrep -fa chmod)" == "" ] ; then
     # fix permissions for tools folders
     find /$STUDIO/pipeline/tools/               \! -perm 00755 -type d -exec chmod 00755 -v {} \;
     find /$STUDIO/jobs/*/*/*/users/*/tools/     \! -perm 00755 -type d -exec chmod 00755 -v {} \;
+
+    # fix permissions for apps folders
+    find /$STUDIO/apps/*/*/                \! -perm 00755 -type d -exec chmod 00755 -v {} \;
+    find /$STUDIO/apps/*/*/                \! -group artists -exec chown root:artists {} \;
+    find /$STUDIO/apps/*/*/                \! -user  root    -exec chown root:artists {} \;
 
     #chmod a+rwx -R /$STUDIO/jobs/*/*/*/published/
     find /$STUDIO/jobs/*/*/*/published/ \! -perm a+rwx  -exec chmod 00777 -v {} \;
