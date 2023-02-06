@@ -50,6 +50,7 @@ administrators = [
 
 nonAdmCmds = [
     'ln',
+    'rsync',
     'mkdir',
     'chmod',
     'chown',
