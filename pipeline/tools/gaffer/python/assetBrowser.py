@@ -685,13 +685,13 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
 
     def _menu(self, pathListing):
 
-    	menuDefinition = IECore.MenuDefinition()
+        menuDefinition = IECore.MenuDefinition()
 
-    	selectedPaths = pathListing.getSelectedPaths()
-    	if len( selectedPaths ) == 1 :
-    		self.parameterValue = selectedPaths[0]
-    	else :
-    		self.parameterValue = selectedPaths
+        selectedPaths = pathListing.getSelectedPaths()
+        if len( selectedPaths ) == 1 :
+        	self.parameterValue = selectedPaths[0]
+        else :
+        	self.parameterValue = selectedPaths
 
         def createNewInApp(app, value):
             os.system('run %s &' % app)
@@ -719,11 +719,11 @@ class AssetMode(  samEditor.SamEditor.Mode ) :
             menuDefinition.append( "/ " , { } )
             menuDefinition.append( "/Delete version %s" % os.path.basename(str(self.parameterValue)), { "command" : IECore.curry(deleteVersion, self.parameterValue ) } )
 
-    	self.__menu = GafferUI.Menu( menuDefinition )
-    	if len( menuDefinition.items() ) :
-    		self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )
+        self.__menu = GafferUI.Menu( menuDefinition )
+        if len( menuDefinition.items() ) :
+        	self.__menu.popup( parent = pathListing.ancestor( GafferUI.Window ) )
 
-    	return True
+        return True
 
     # def _actionsSubMenu( self, parameterValue ) :
     #
