@@ -2324,13 +2324,13 @@ class all: # noqa
             #     '4.8.5',
             #     '89c5ecba180cae74c66260ac732dc5cb',
             # ),(
-            #     # VFXPLATFORM CY2015 (maya 2016)
-            #     'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
-            #     'qt-everywhere-opensource-src-4.8.7.tar.gz',
-            #     '4.8.7',
-            #     'd990ee66bf7ab0c785589776f35ba6ad',
-            #     { self.gcc : '4.1.2' }
-            # ),(
+                # VFXPLATFORM CY2015 (maya 2016)
+                'http://ftp.fau.de/qtproject/archive/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz',
+                'qt-everywhere-opensource-src-4.8.7.tar.gz',
+                '4.8.7',
+                'd990ee66bf7ab0c785589776f35ba6ad',
+                { self.gcc : '4.1.2' }
+            ),(
                 # VFXPLATFORM CY2016-CY2018 (maya 2018)
                 # http://www.autodesk.com/lgplsource
                 # 'http://mirror.csclub.uwaterloo.ca/qtproject/archive/qt/5.6/5.6.1/single/qt-everywhere-opensource-src-5.6.1.tar.gz',
@@ -2346,7 +2346,8 @@ class all: # noqa
                 'http://download.qt.io/official_releases/qt/5.15/5.15.2/single/qt-everywhere-src-5.15.2.tar.xz',
                 'qt-everywhere-src-5.15.2.tar.gz',
                 '5.15.2',
-                'b5a1f65b10b01662daa2c96b684068c8',
+                # 'b5a1f65b10b01662daa2c96b684068c8',
+                'e1447db4f06c841d8947f0a6ce83a7b5',
                 { self.gcc : '6.3.1' }
             )],
             sed = { '5.6.1' : {
