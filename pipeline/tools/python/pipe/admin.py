@@ -228,6 +228,13 @@ class sudo():
         if os.path.exists(fromPath):
             self.cmd( "cp -rf '%s' '%s'" % (fromPath, toPath) )
 
+    def rsync(self, fromPath, toPath, ignore=[]):
+        if os.path.exists(fromPath):
+            extra = ""
+            for each in ignore:
+                extra += " --exclude '%s'" % each
+            self.cmd( "rsync -avpP "+extra+" '%s' '%s'" % (fromPath, toPath) )
+
     def cpmvlink(self, fromPath, toPath, fromUser, toUser):
         if os.path.exists(fromPath):
             self.rm( "rm -rf '%s'" % (toPath) )
@@ -285,6 +292,8 @@ class job(sudo):
                 raise Exception("ERROR: No Job Set!!")
 
         if type(projectID) == type(""):
+            if '.' in projectID and not projectName:
+                projectID, projectName = projectID.split('.')
             job = [ x for x in jobs() if projectID in x ]
             if job and len(job[0].split('.'))>1:
                 projectID, projectName = job[0].split('.')
@@ -320,6 +329,14 @@ class job(sudo):
         if username:
             self.chown( "%s:artists" % username, toPath )
 
+    def rsync(self, fromPath, toPath, username='', perm=[], ignore=[], recursive=False):
+        perms=["u+rwx","a+rx"]
+        perms.extend( perm )
+        sudo.rsync(self, fromPath, toPath, ignore)
+        self.fixPerm(toPath, perms)
+        if username:
+            self.chown( "%s:artists" % username, toPath, recursive=False )
+
     def mkdir(self, path, username='', perm=[]):
         perms=["u+rwx","a+rx"]
         perms.extend( perm )
@@ -331,15 +348,17 @@ class job(sudo):
     def symlink(self, source, target):
         sudo.ln(self, source, target)
 
-    def _mktools(self, path='tools', username=''):
-        ''' create the tools folder as a copy of pipeline/tools '''
-        ignore = ['init', 'licenses']
-        for each in glob.glob( "%s/*" % roots.tools() ):
-            beach = os.path.basename(each)
-            if os.path.isdir(each) and beach not in ignore:
-                self.mkdir( "%s/%s" % (path, beach), username )
-
     def mktools(self, path='tools', username=''):
+        ''' create the tools folder as a copy of pipeline/tools '''
+        ignore = ['/init', '/licenses']
+        # for each in glob.glob( "%s/*" % roots.tools() ):
+        #     beach = os.path.basename(each)
+        #     if os.path.isdir(each) and beach not in ignore:
+        #         # self.mkdir( "%s/%s" % (path, beach), username )
+        #         self.rsync( "%s/%s" % (path, beach), username,  recursive=True )
+        self.rsync( "%s/" % roots.tools(), "%s/" % path, username, ignore=ignore, recursive=True )
+
+    def _mktools(self, path='tools', username=''):
         ''' create the tools folder as a link to the latest tag of pipeline/tools '''
         from distutils.version import StrictVersion
         if not os.path.exists( path ):
@@ -626,7 +645,8 @@ class job(sudo):
                 self.basePath = values[0]
                 self.shot = values[1]
             else:
-                 raise Exception("ERROR: No Shot Set!")
+                os.environ['PIPE_SHOT'] = self.job.proj
+                # raise Exception("ERROR: No Shot Set!")
 
             if shot:
                 shot = str(shot)
