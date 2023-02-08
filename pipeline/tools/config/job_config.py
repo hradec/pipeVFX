@@ -33,3 +33,5 @@ os.environ['PIPE_NUKE_CRYPTOMATTE']  = '1'
 os.environ['PIPE_NUKE_GENARTS']      = '0'
 
 os.environ['PIPE_DISABLE_THREADS']   = '0'
+
+os.environ['MAYA_ENABLE_LEGACY_RENDER_LAYERS']   = '1'

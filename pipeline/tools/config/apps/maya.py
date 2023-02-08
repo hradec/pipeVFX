@@ -339,7 +339,7 @@ class maya(baseApp):
         self['MAYA_DISABLE_CER']='1'
         self['MAYA_FORCE_SHOW_ACTIVATE'] = '1'
         self['MAYA_DEBUG_ENABLE_CRASH_REPORTING'] = '1'
-        self['MAYA_ENABLE_LEGACY_RENDER_LAYERS'] = '1'
+        # self['MAYA_ENABLE_LEGACY_RENDER_LAYERS'] = '1'
         self['MAYA_OPENCL_IGNORE_DRIVER_VERSION'] = '1'
         # self['MAYA_USE_MALLOC'] = '1'
         # self['MAYA_DISABLE_CASCADING'] = '1'
