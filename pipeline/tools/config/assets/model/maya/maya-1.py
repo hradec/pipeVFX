@@ -31,6 +31,8 @@ import genericAsset
 reload(genericAsset)
 
 class maya( genericAsset.maya ) :
+    _whoCanImport = ['maya', 'maffer']
+    _importAsReference = True
     _color = IECore.Color3f( 0.1, 0.3, 0.2 )
 
     def __init__( self ) :
