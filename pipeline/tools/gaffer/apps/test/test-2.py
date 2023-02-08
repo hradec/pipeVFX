@@ -57,6 +57,7 @@ import GafferSceneUI
 import pipe
 import genericAsset
 import assetUtils
+import functools
 
 if assetUtils.m:
     reload(genericAsset)
@@ -189,6 +190,7 @@ class test( Gaffer.Application ) :
 
         # self.setSize()
 
+        GafferUI.EventLoop.addIdleCallback( functools.partial( self.__addScripts, args ) )
 
         GafferUI.EventLoop.mainEventLoop().start()
 
@@ -204,6 +206,26 @@ class test( Gaffer.Application ) :
     #     geometry.adjust( ww, hh, -ww, -hh )
     #     primaryWindow._qtWidget().setGeometry( geometry )
 
+    def __addScripts( self, args ):
+
+        if len( args["scripts"] ):
+        	for fileName in args["scripts"] :
+        		GafferUI.FileMenu.addScript( self.root(), fileName )
+        	if not len( self.root()["scripts"] ) :
+        		# Loading was cancelled, in which case we should quit the app.
+        		GafferUI.EventLoop.mainEventLoop().stop()
+        		return False # Remove idle callback
+        else :
+        	scriptNode = Gaffer.ScriptNode()
+        	Gaffer.NodeAlgo.applyUserDefaults( scriptNode )
+        	self.root()["scripts"].addChild( scriptNode )
+
+        if args["fullScreen"].value :
+        	primaryScript = self.root()["scripts"][-1]
+        	primaryWindow = GafferUI.ScriptWindow.acquire( primaryScript )
+        	primaryWindow.setFullScreen( True )
+
+        return False # Remove idle callback
 
     def __setupClipboardSync( self ) :
 
