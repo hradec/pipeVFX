@@ -2,10 +2,10 @@
 
 
 python -c 'print("="*120)'
-date
+echo "$(basename $0) - $(date)"
 python -c 'print("="*120)'
 
-tools=$(dirname $(dirname $(readlink -f $BASH_SOURCE)))
+tools=$(dirname $(dirname $(dirname $(readlink -f $BASH_SOURCE))))
 export PYTHONPATH=$tools/python/
 CD=$(pwd)
 rm -rf  /dev/shm/chrome-install/
