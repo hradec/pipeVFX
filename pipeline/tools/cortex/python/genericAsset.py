@@ -1480,7 +1480,7 @@ class maya( _genericAssetClass ) :
                             if sam_reference in reference.split(':')[-1] and 'RN' in reference[-2:]:
                                 referenceName = reference
                                 group = sam
-                                if len(referenceName.split(':'))>2:
+                                if len(referenceName.split(':'))>1:
                                     path=[]
                                     for n in [-1, -2]:
                                         p = referenceName.split(':')[n].replace('SAM_','').split('_asset')[0]
@@ -1488,16 +1488,20 @@ class maya( _genericAssetClass ) :
                                         p = p.split('_')
                                         p = '/'.join([ p[0], p[1], '_'.join(p[2:]) ])
                                         path += [p]
-                                    error += ["ERROR: SAM can't update %s because it's a reference embeded in %s.\n\nPlease update it in the the original file for %s and publish a new version to be updated in this scene!" % (path[0], path[1], path[1])]
+                                    error += ["\n\nSAM: Can't update %s because it's a reference embeded in %s.\nPlease update it in the the original file for %s and publish a new version to be updated in this scene!" % (path[0], path[1], path[1])]
+                                    error += ["\nIf %s is green now, it's probably because %s was just updated and %s was already up to date in it!" % (path[0], path[1], path[0])]
                                 else:
                                     m.file(filename, loadReference=referenceName)
-                                    # m.file(filename, e=1, ns=namespace)
+                                    m.file(filename, e=1, ns=namespace)
                                     try:m.rename( group, nodeName)
                                     except:pass
                                     # cleanup trash that maya leaves behind!!
                                     m.delete('sharedReferenceNode')
                     if error:
-                        raise Exception('\n\n'.join(error))
+                        def __warning__():
+                            print('='*80)
+                            m.warning(''.join(error)+'\n\n'+'='*80)
+                        assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__warning__ )
                 else:
                     # import as reference
                     # m.file(filename, r=1, gr=1)
