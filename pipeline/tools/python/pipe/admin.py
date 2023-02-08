@@ -348,7 +348,7 @@ class job(sudo):
     def symlink(self, source, target):
         sudo.ln(self, source, target)
 
-    def mktools(self, path='tools', username=''):
+    def _mktools(self, path='tools', username=''):
         ''' create the tools folder as a copy of pipeline/tools '''
         ignore = ['/init', '/licenses']
         # for each in glob.glob( "%s/*" % roots.tools() ):
@@ -358,7 +358,7 @@ class job(sudo):
         #         self.rsync( "%s/%s" % (path, beach), username,  recursive=True )
         self.rsync( "%s/" % roots.tools(), "%s/" % path, username, ignore=ignore, recursive=True )
 
-    def _mktools(self, path='tools', username=''):
+    def mktools(self, path='tools', username=''):
         ''' create the tools folder as a link to the latest tag of pipeline/tools '''
         from distutils.version import StrictVersion
         if not os.path.exists( path ):
@@ -639,14 +639,14 @@ class job(sudo):
                 self.job = job()
             self.user._shot = self
             import os
-            if 'PIPE_SHOT' in os.environ:
+            if 'PIPE_SHOT' in os.environ and os.environ['PIPE_SHOT'].strip() != "":
                 values = os.environ['PIPE_SHOT']
                 values = values.split('@')
                 self.basePath = values[0]
                 self.shot = values[1]
-            else:
-                os.environ['PIPE_SHOT'] = self.job.proj
-                # raise Exception("ERROR: No Shot Set!")
+            # else:
+            #     os.environ['PIPE_SHOT'] = self.job.proj
+            #     # raise Exception("ERROR: No Shot Set!")
 
             if shot:
                 shot = str(shot)
@@ -699,7 +699,7 @@ class job(sudo):
 
             def mktools(self):
                 self.mkdir('tools')
-                self.job.mktools( self.path( 'tools' ), username() )
+                # self.job.mktools( self.path( 'tools' ), username() )
 
             def mkdir(self, subpath=''):
                 self.job.mkdir( self.path( subpath ), username() )
@@ -716,6 +716,7 @@ class job(sudo):
 
             def create(self):
                 self.job.create()
+                self.mktools()
 
     class asset(shot):
         pass

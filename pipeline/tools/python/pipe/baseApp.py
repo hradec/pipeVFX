@@ -1088,7 +1088,6 @@ class baseApp(_environ):
         if j:
             if j and self.className not in ignore:
                 user = j.shot.user()
-                user.mktools()
                 user.create()
                 user.mkdir( self.className )
                 user.create()
