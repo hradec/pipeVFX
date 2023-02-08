@@ -551,11 +551,18 @@ class _genericAssetClass( IECore.Op ) :
                 # print( mask, m.ls(mask) )
                 nodes += m.ls(mask)
 
-                # check for second level as weel.
-                # animation/maya are maya scenes with referenced maya/rig, so
-                # we can trigger version check and updating of the rig in an
-                # animation asset
-                mask = '|*|%s_??_??_??_*' % ( nodeName[:versionPosition] )
+                for level in range(2):
+                    # check for n levels as weel.
+                    # animation/maya are maya scenes with referenced maya/rig, so
+                    # we can trigger version check and updating of the rig in an
+                    # animation asset
+                    mask = '|*' + mask
+                    nodes += m.ls(mask)
+
+                # check for assets imported as references inside
+                # a imported asset
+                mask = '|*|*:%s_??_??_??_*' % ( nodeName[:versionPosition] )
+                print(mask)
                 nodes += m.ls(mask)
             else:
                 nodes = m.ls('|' + nodeName + '*')
@@ -1459,26 +1466,44 @@ class maya( _genericAssetClass ) :
                 # file -r -type "mayaBinary" -gr  -ignoreVersion -gn "SAM" -gl -mergeNamespacesOnClash false -namespace "eric_animation_test"
                 #  -options "v=0;" "/frankbarton/jobs/9990.rnd/assets/sophia/users/rhradec/maya/scenes/eric-animation-test.mb";
                 nodes = self.doesAssetExists(nodeName)
+                namespace = nodeName #'_'.join(nodeName.split('_')[:-4])
+                # namespace = nodeName.split(':')[-1].split('_asset')[0][:-8] #'_'.join(nodeName.split('_')[:-4])
                 if nodes:
                     # replace reference with the requested import (updates)
                     referenceName = None
                     group = None
+                    error = []
                     for sam in nodes:
                         for reference in m.ls(type='reference', dag=0):
-                            if  m.referenceQuery(reference, n=1):
+                            sam_reference = sam.split(':')[-1].split('_asset')[0][:-8]
+                            print(sam_reference, reference, referenceName)
+                            if sam_reference in reference.split(':')[-1] and 'RN' in reference[-2:]:
                                 referenceName = reference
                                 group = sam
-                    m.file(filename, loadReference=referenceName)
-                    m.file(filename, e=1, ns=nodeName)
-                    m.rename( group, nodeName)
-                    # cleanup trash that maya leaves behind!!
-                    m.delete('sharedReferenceNode')
+                                if len(referenceName.split(':'))>2:
+                                    path=[]
+                                    for n in [-1, -2]:
+                                        p = referenceName.split(':')[n].replace('SAM_','').split('_asset')[0]
+                                        p = p[:-9]
+                                        p = p.split('_')
+                                        p = '/'.join([ p[0], p[1], '_'.join(p[2:]) ])
+                                        path += [p]
+                                    error += ["ERROR: SAM can't update %s because it's a reference embeded in %s.\n\nPlease update it in the the original file for %s and publish a new version to be updated in this scene!" % (path[0], path[1], path[1])]
+                                else:
+                                    m.file(filename, loadReference=referenceName)
+                                    # m.file(filename, e=1, ns=namespace)
+                                    try:m.rename( group, nodeName)
+                                    except:pass
+                                    # cleanup trash that maya leaves behind!!
+                                    m.delete('sharedReferenceNode')
+                    if error:
+                        raise Exception('\n\n'.join(error))
                 else:
                     # import as reference
                     # m.file(filename, r=1, gr=1)
 
                     # namespace or reference kills animation for some reason!!
-                    m.file(filename, r=1, preserveReferences=1, gr=1, ns=nodeName )
+                    m.file(filename, r=1, preserveReferences=1, gr=1, ns=namespace )
             else:
                 m.file(filename, i=1, preserveReferences=1, gr=1 )
 
@@ -1486,7 +1511,7 @@ class maya( _genericAssetClass ) :
         # maya import code!
         if m:
             self.importXgen(self.data)
-
+            print(")))))))))))",nodeName)
             old_groups = m.ls('|*', type='transform')
             self.mayaFileIn(filename, nodeName)
             for groups in [ g for g in m.ls('|*', type='transform') if g not in old_groups ]:

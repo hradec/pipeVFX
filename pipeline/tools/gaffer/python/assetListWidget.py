@@ -200,19 +200,19 @@ class SAMPanel( GafferUI.Editor ):
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "Autodesk-open-maya-icon_20.png", toolTip="Open selected asset in the current maya session"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.mayaImportDependency(), scoped = True ) )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al._menu_mayaImportDependency(), scoped = True ) )
                     self.__buttons[-1].setEnabled(assetUtils.m != None)
 
                     self.__buttons += [1]
                     self.__buttons[-1] = GafferUI.Button( "", "Autodesk-maya-icon-edit_20.png", toolTip="Open selected asset in a new maya session"  )
                     self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.openDependency(), scoped = True ) )
+                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al._menu_openDependency(), scoped = True ) )
 
 
-                    self.__buttons += [1]
-                    self.__buttons[-1] = GafferUI.Button( "", "gaffer-20.png", toolTip="Open selected asset in a new gaffer session"  )
-                    self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
-                    self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al.openDependency( 'gaffer' ), scoped = True ) )
+                    # self.__buttons += [1]
+                    # self.__buttons[-1] = GafferUI.Button( "", "gaffer-20.png", toolTip="Open selected asset in a new gaffer session"  )
+                    # self.__buttons[-1]._qtWidget().setMaximumSize( 22, 22 )
+                    # self.__buttonsSignals.append( self.__buttons[-1].clickedSignal().connect( lambda b: self.al._menu_openDependency( 'gaffer' ), scoped = True ) )
 
 
                 self.al = assetListWidget( self.__scriptNode, hostApp )
@@ -236,7 +236,7 @@ class SAMPanel( GafferUI.Editor ):
 
                 with GafferUI.ListContainer( GafferUI.SplitContainer.Orientation.Horizontal ) as filterBar:
                     self.__searchString = GafferUI.TextWidget()
-                    self.__buttonsSignals.append( self.__searchString.editingFinishedSignal().connect( lambda b: self.al.assetFilter( self.__searchString  ) ) )
+                    self.__buttonsSignals.append( self.__searchString.editingFinishedSignal().connect( lambda b: self.al.assetFilter(self.__searchString), scoped = True ) )
 
 
                 # make bg of filter bar black!
@@ -503,12 +503,12 @@ class assetListWidget( GafferUI.Editor ):
         self._script = scriptNode
 
 
-        self.timer = QtCore.QTimer()
-        def forceRefresh():
-            # import threading
-            # threading.Thread( target = ).start()
-            self._mayaNodeDeleted(force=True)
-            self.timer.singleShot( 60*1000,forceRefresh)
+        # self.timer = QtCore.QTimer()
+        # def forceRefresh():
+        #     # import threading
+        #     # threading.Thread( target = ).start()
+        #     self._mayaNodeDeleted(force=True)
+        #     self.timer.singleShot( 60*1000,forceRefresh)
 
         # self.timer.singleShot( 60*1000,forceRefresh)
         if 'pyqt' in pipe.whatQt():
@@ -530,11 +530,11 @@ class assetListWidget( GafferUI.Editor ):
         #     # selectedPathsExistInHost = selectedData['assetOPSourceExistsInHost']
         #     if self.hostApp()=='maya':
         #         if 'maya' in selectedPathsOP[0].whoCanOpen() and os.path.splitext(selectedPathsOP[0].assetDependencyFilename())[-1] in ['.ma','.mb']:
-        #             self.openDependency('maya', selectedPaths)
+        #             self._menu_openDependency('maya', selectedPaths)
         #
         #     if self.hostApp()=='gaffer' or self.hostApp()=='maya':
         #         if 'gaffer' in selectedPathsOP[0].whoCanOpen() and '.gfr' in selectedPathsOP[0].assetDependencyFilename()[-5:]:
-        #             self.openDependency('gaffer', selectedPaths)
+        #             self._menu_openDependency('gaffer', selectedPaths)
         # else:
         # t = time.time()
         for index in self._qtWidget().selectionModel().selectedRows():
@@ -548,6 +548,7 @@ class assetListWidget( GafferUI.Editor ):
 
 
     def handleValue(self, kk):
+        print("handleValue");sys.stdout.flush()
         pass
         # print kk
         # sys.stdout.flush()
@@ -564,6 +565,7 @@ class assetListWidget( GafferUI.Editor ):
     def _mayaNodeDeleted(self, force=False):
         ls=[]
         self.treeModelStateSave()
+
         if assetUtils.m:
             ls = assetUtils.m.ls("|*")
             # this accounts for <f4> expression in ribArchiveNodes, for prman 21.n.
@@ -575,31 +577,37 @@ class assetListWidget( GafferUI.Editor ):
         if ls != self._lastLS or force:
             self.refresh(ls)
 
-        def __SAM_assetList_mayaNodeDeleted__(forceRefresh=False):
-            genericAsset.updateCurrentLoadedAssets()
-            self._mayaNodeDeleted(forceRefresh)
+        if assetUtils.m:
+            def __SAM_assetList_mayaNodeDeleted__(forceRefresh=False):
+                genericAsset.updateCurrentLoadedAssets()
+                self._mayaNodeDeleted(forceRefresh)
 
-        assetUtils.mayaLazyScriptJob( runOnce=False,  deleteEvent=__SAM_assetList_mayaNodeDeleted__ )
-        assetUtils.mayaLazyScriptJob( runOnce=False,  event=['DagObjectCreated',lambda: __SAM_assetList_mayaNodeDeleted__()] )
-        assetUtils.mayaLazyScriptJob( runOnce=False,  event=['NameChanged',lambda: __SAM_assetList_mayaNodeDeleted__()] )
-        assetUtils.mayaLazyScriptJob( runOnce=False,  event=['deleteAll',lambda: __SAM_assetList_mayaNodeDeleted__()] )
-        assetUtils.mayaLazyScriptJob( runOnce=False,  event=['NewSceneOpened',lambda: __SAM_assetList_mayaNodeDeleted__(True)] )
-        assetUtils.mayaLazyScriptJob( runOnce=False,  event=['SceneOpened',lambda: __SAM_assetList_mayaNodeDeleted__(True)] )
+            assetUtils.mayaLazyScriptJob( runOnce=False,  deleteEvent=__SAM_assetList_mayaNodeDeleted__ )
+            assetUtils.mayaLazyScriptJob( runOnce=False,  event=['DagObjectCreated',lambda: __SAM_assetList_mayaNodeDeleted__()] )
+            assetUtils.mayaLazyScriptJob( runOnce=False,  event=['NameChanged',lambda: __SAM_assetList_mayaNodeDeleted__()] )
+            assetUtils.mayaLazyScriptJob( runOnce=False,  event=['deleteAll',lambda: __SAM_assetList_mayaNodeDeleted__()] )
+            assetUtils.mayaLazyScriptJob( runOnce=False,  event=['NewSceneOpened',lambda: __SAM_assetList_mayaNodeDeleted__(True)] )
+            assetUtils.mayaLazyScriptJob( runOnce=False,  event=['SceneOpened',lambda: __SAM_assetList_mayaNodeDeleted__(True)] )
 
-        # def __SAM_assetList_mayaSelectSam__():
-        #     print m.ls(sl=1)
-        # assetUtils.mayaLazyScriptJob( runOnce=False,  event=['SomethingSelected',__SAM_assetList_mayaSelectSam__] )
+            # def __SAM_assetList_mayaSelectSam__():
+            #     print m.ls(sl=1)
+            # assetUtils.mayaLazyScriptJob( runOnce=False,  event=['SomethingSelected',__SAM_assetList_mayaSelectSam__] )
 
     def hostApp(self, hostAppName=None):
-        if hostAppName:
-            self.__hostApp = hostAppName
-        else:
-            return self.__hostApp
+        ''' returns in what app this widget is running'''
+        return os.environ['PIPE_PARENT']
+        # if hostAppName:
+        #     self.__hostApp = hostAppName
+        # else:
+        #     return self.__hostApp
 
     def __contextMenu( self, pathListing ) :
+        ''' right click menu '''
+        self.treeModelStateSave()
         return self._menu(pathListing)
 
     def _menu(self, pathListing):
+        ''' the actual popup menu showed when right-click '''
         # asset=0
         # assetData=1
         # assetFullPath=2
@@ -612,6 +620,9 @@ class assetListWidget( GafferUI.Editor ):
         selectedPathsOP = selectedData['assetOP']
         selectedPathsExistInHost = selectedData['assetOPSourceExistsInHost']
         selectedPathsEditable = [ x for x in selectedData['assetEditable'] if x ]
+
+        if not selectedPathsOP or not selectedPathsOP[0]:
+            selectedPathsOP = [ assetUtils.assetOP( path, self.hostApp() ) for path in selectedPaths ]
 
         # if selection exists in host app
         selected_source_exists_in_host = False if [ x for x in selectedPathsExistInHost if x ] else True
@@ -637,34 +648,34 @@ class assetListWidget( GafferUI.Editor ):
                 if 'render/' in selectedPaths[0]:
                     canImport = False
 
-                menuDefinition.append( "/import or update selected" , { "command" : IECore.curry(self.checkout, selectedPaths), "active" : canImport  } )
+                menuDefinition.append( "/import or update selected" , { "command" : IECore.curry(self._menu_checkout, selectedPaths), "active" : canImport  } )
 
                 # add the publish menu, if the item can be published
                 if selectedPathsEditable or 'render/maya' in selectedPaths[0]:
-                    menuDefinition.append( "/Publish an UPDATE to the selected asset" , { "command" : IECore.curry(self.publishAssetUpdate, selectedPaths) }) #, "active" : not selected_source_exists_in_host  } )
+                    menuDefinition.append( "/Publish an UPDATE to the selected asset" , { "command" : IECore.curry(self._menu_publishAssetUpdate, selectedPaths) }) #, "active" : not selected_source_exists_in_host  } )
 
 
         # updateall
         menuDefinition.append( "/d2" , {"divider":True } )
-        menuDefinition.append( "/update all assets", { "command" :  IECore.curry( self.updateAllAssetsInScene) } )
+        menuDefinition.append( "/update all assets", { "command" :  IECore.curry( self._menu_updateAllAssetsInScene) } )
         menuDefinition.append( "/d3" , {"divider":True } )
 
         # asset menu!
         if isAssetMenu:
             # if only one asset is selected, we can add some more menu itens
-            if len(selectedPaths)==1:
+            if len(selectedPaths)==1 and selectedPathsOP[0].assetDependencyFilename().strip():
 
                 # if the asset is publishable in maya add the edit in maya menus
                 # we do an extra check if the extension of the dependency files is a .ma/.mb to garantee its a maya scene!
                 if 'maya' in selectedPathsOP[0].whoCanPublish() and os.path.splitext(selectedPathsOP[0].assetDependencyFilename())[-1] in ['.ma','.mb']:
                     if self.hostApp() == 'maya':
-                        menuDefinition.append( "/edit original scene in this maya session " , { "command" : IECore.curry(self.mayaImportDependency, selectedPaths) } )
-                    menuDefinition.append( "/edit original scene in a new maya session " , { "command" : IECore.curry(self.openDependency, 'maya', selectedPaths) } )
+                        menuDefinition.append( "/edit original scene in this maya session " , { "command" : IECore.curry(self._menu_mayaImportDependency, selectedPaths) } )
+                    menuDefinition.append( "/edit original scene in a new maya session " , { "command" : IECore.curry(self._menu_openDependency, 'maya', selectedPaths) } )
 
                 # if the asset is publishable in gaffer add the edit in gaffer menus
                 # also check if dependency extension is '.gfr'!
                 if 'gaffer' in selectedPathsOP[0].whoCanPublish() and '.gfr' in selectedPathsOP[0].assetDependencyFilename()[-5:]:
-                    menuDefinition.append( "/edit original scene in gaffer " , { "command" : IECore.curry(self.openDependency, 'gaffer', selectedPaths) } )
+                    menuDefinition.append( "/edit original scene in gaffer " , { "command" : IECore.curry(self._menu_openDependency, 'gaffer', selectedPaths) } )
 
         # publish NEW menu only shows if only one is selected!
         if isPublishMenu and len(selectedPaths)==1:
@@ -676,7 +687,7 @@ class assetListWidget( GafferUI.Editor ):
             def createNewAsset(paths, assetType):
                 with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
                     op = assetUtils.assetOP( assetType, self.hostApp() )
-                    op.newPublish()
+                    op.newPublish( root=self._script )
 
             # create a menu item for each data type of the selected type!
             for t in [ x for x in list(types.keys()) if selected_type in x.split('/') ]:
@@ -695,7 +706,7 @@ class assetListWidget( GafferUI.Editor ):
 
         return True
 
-    def checkout( self, paths = None ):
+    def _menu_checkout( self, paths = None ):
         ''' import an asset to the host app '''
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
             if not paths:
@@ -707,7 +718,7 @@ class assetListWidget( GafferUI.Editor ):
                     pb.step()
                     # print path
                     op = assetUtils.assetOP( path , self.hostApp() )
-                    op.doImport( )
+                    op.doImport( root=self._script )
 
                 pb.step()
                 pb.close()
@@ -723,20 +734,25 @@ class assetListWidget( GafferUI.Editor ):
         else:
             self._mayaNodeDeleted()
 
-    def updateAllAssetsInScene(self):
-        ''' update all assets in the host app'''
+    def _menu_updateAllAssetsInScene(self):
+        ''' update all assets in the host app (import the current version of every asset present in the host app)'''
+        nodes = assetUtils.assetOP.ls()
+        # print("====>",nodes)
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
-            nodes = []
-            if self.hostApp() == 'maya':
-                nodes = assetUtils.m.ls('|SAM_*')
+            # if self.hostApp() == 'maya':
+            #     nodes = assetUtils.m.ls('|SAM_*')
             pb = genericAsset.progressBar( len(nodes)+1, "Updating all assets in scene..." )
             for n in nodes:
                 pb.step()
                 if not checkIfNodeIsUpToDate(n):
+                    if ':' in n:
+                        n = n.split(':')[-1]
+                    else:
+                        n = n.split('|')[-1]
                     n = n.split('_')
                     path = '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4]))
                     op = assetUtils.assetOP( path, self.hostApp() )
-                    # print '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4])), op.path, op.data
+                    print (path);sys.stdout.flush()
                     op.doImport()
                     # run custom code, if any!
 
@@ -750,21 +766,21 @@ class assetListWidget( GafferUI.Editor ):
         else:
             self._mayaNodeDeleted()
 
-    def publishAssetUpdate(self, asset = None):
-        ''' publishs an updated version to an asset that already exists
-        '''
+    def _menu_publishAssetUpdate(self, asset = None):
+        ''' publishs an updated version of an asset '''
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
             if not asset:
                 asset = self.getSelectedColumns()['assetFullPath']
             op = assetUtils.assetOP( asset[0], self.hostApp() )
-            op.updatePublish()
+            op.updatePublish( root=self._script )
 
         if self.hostApp() == 'maya':
             assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=lambda: self._mayaNodeDeleted())
         else:
             self._mayaNodeDeleted()
 
-    def mayaImportDependency(self, paths = None):
+    def _menu_mayaImportDependency(self, paths = None):
+        ''' import the asset dependency scene (the original scene used to create the asset) in the hostapp '''
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
             icon = '%s/gaffer/graphics/Autodesk-maya-icon_48.jpg' % __tools__
             if not paths:
@@ -807,9 +823,13 @@ class assetListWidget( GafferUI.Editor ):
             if GafferUI.ConfirmationDialogue( "SAM", msg ).waitForConfirmation():
                 __SAM_assetList_mayaImportDependency__()
 
-        self.refreshPanel()
+        # self.refreshPanel()
+        self.refresh()
 
-    def openDependency(self, app='maya', paths = None):
+    def _menu_openDependency(self, app='maya', paths = None):
+        ''' open the asset dependency scene (the original scene used to create
+        the asset) in the hostapp used to create the scene. (it opens the
+        application after setting job/(shot/asset)) '''
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
             icon = _search.find('Autodesk-maya-icon_48.jpg')
             if app=='gaffer':
@@ -874,11 +894,13 @@ class assetListWidget( GafferUI.Editor ):
         self._script = script
 
     def getSelectedPaths( self ) :
+        ''' return the asset path of the selected line in the dialog '''
         selectedRows = self._qtWidget().selectionModel().selectedRows()
         # print [ index.internalPointer().data(TreeItem.assetFullPath) for index in selectedRows ]
         return [ index.internalPointer().data(TreeItem.assetFullPath) for index in selectedRows ]
 
     def getSelectedColumns( self ) :
+        ''' return the treeitem colum '''
         selectedRows = self._qtWidget().selectionModel().selectedRows()
         # print selectedRows
         ret = {}
@@ -890,11 +912,13 @@ class assetListWidget( GafferUI.Editor ):
         return ret
 
     def __selectionChanged( self, selected, deselected ) :
+        ''' called when a selection is changed in the treeWidget '''
         # print selected, deselected;sys.stdout.flush()
         self.selectionChangedSignal()( self )
         return True
 
     def selectionChangedSignal( self ) :
+        ''' selection has changed '''
         # print 'selectionChangedSignal', os.environ['SAM_VIEWER_MODE']
         if 'SAM_VIEWER_MODE' in os.environ:
             import Asset
@@ -916,9 +940,6 @@ class assetListWidget( GafferUI.Editor ):
             for each in [ x for x in list(self._script.keys()) if x[0:2] == '__' ]:
                 del self._script[each]
 
-            # grab the viewer from gaffer
-            scriptWindow = GafferUI.ScriptWindow.acquire( self._script )
-            viewer = scriptWindow.getLayout().editors( GafferUI.Viewer )[0]
 
             # now we create the nodes needed to display the selection
             # group node in case we have mode than one geometry node selected
@@ -987,6 +1008,12 @@ class assetListWidget( GafferUI.Editor ):
                     os.system("ls -lh %s/*" % path)
 
             if gset.size():
+                # grab the viewer from gaffer
+                scriptWindow = GafferUI.ScriptWindow.acquire( self._script )
+                viewer = scriptWindow.getLayout().editors( GafferUI.Viewer )
+                if viewer:
+                    viewer = viewer[0]
+
                 # add the nodes created in the loop above to the viewer
                 # (the same as clinking on the target icon at the right-top
                 # corner of the node in gaffer!)
@@ -1063,18 +1090,15 @@ class assetListWidget( GafferUI.Editor ):
         return self.__selectionChangedSignal
 
     def __pathForIndex( self, modelIndex ) :
-        ret = self.___pathForIndex( modelIndex )
+        ''' converts a treeitem index to an asset path '''
+        ret = Gaffer.Path( modelIndex.internalPointer().data(TreeItem.assetFullPath) )
+        if type( modelIndex ) == list :
+            ret = [ Gaffer.Path( index.internalPointer().data(TreeItem.assetFullPath) ) for index in modelIndex ]
         # print ret
         return ret
 
-    def ___pathForIndex( self, modelIndex ) :
-        if type( modelIndex ) == list :
-            return [ Gaffer.Path( index.internalPointer().data(TreeItem.assetFullPath) ) for index in modelIndex ]
-        else:
-            return Gaffer.Path( modelIndex.internalPointer().data(TreeItem.assetFullPath) )
-
     def __activated( self, modelIndex ) :
-
+        ''' activate the item for the index '''
         activatedPath = self.__pathForIndex( modelIndex )
 
         self.__path = activatedPath
@@ -1087,19 +1111,18 @@ class assetListWidget( GafferUI.Editor ):
 
         return False
 
-    ## This signal is emitted when the user double clicks on a leaf path.
     def pathSelectedSignal( self ) :
+        '''## This signal is emitted when the user double clicks on a leaf path.'''
         print( 'pathSelectedSignal' );sys.stdout.flush()
         return self.__pathSelectedSignal
 
     def __buttonPress( self, widget, event ) :
-
+        ''' called when a mouse button is pressed '''
         if self.__emittingButtonPress :
             return False
 
         self.__borrowedButtonPress = None
         if event.buttons == event.Buttons.Left and event.modifiers == event.Modifiers.None_ :
-
             # We want to implement drag and drop of the selected items, which means borrowing
             # mouse press events that the QTreeView needs to perform selection and expansion.
             # This makes things a little tricky. There are are two cases :
@@ -1132,7 +1155,7 @@ class assetListWidget( GafferUI.Editor ):
         return False
 
     def __buttonRelease( self, widget, event ) :
-
+        ''' called when the mouse button is released '''
         if self.__borrowedButtonPress is not None :
             self.__emitButtonPress( self.__borrowedButtonPress )
             self.__borrowedButtonPress = None
@@ -1140,7 +1163,7 @@ class assetListWidget( GafferUI.Editor ):
         return False
 
     def __mouseMove( self, widget, event ) :
-        # print '__mouseMove'
+        # print('__mouseMove');sys.stdout.flush()
         # print dir(widget)
         # print event.line
 
@@ -1181,13 +1204,14 @@ class assetListWidget( GafferUI.Editor ):
         self.nodeGraph.graphGadgetWidget().getViewportGadget().frame( self.__box )
 
     def __dragBegin( self, widget, event ) :
+        ''' method called when a drag/drop event starts (when an item is dragged but not dropped)'''
         # print '__dragBegin'
         # print widget
         # print event.destinationGadget
         # print dir(event)
         # print event.line
-        self._saveNodeGraphFrame()
-
+        # self._saveNodeGraphFrame()
+        #
         self.__borrowedButtonPress = None
         selectedData = self.getSelectedColumns()
         selectedPaths = selectedData['assetFullPath']
@@ -1196,36 +1220,42 @@ class assetListWidget( GafferUI.Editor ):
 
         if len( selectedPaths ) :
             GafferUI.Pointer.setCurrent( self.__dragPointer )
-            s = Gaffer.ScriptNode()
-            # print selectedPaths
-            for each in  selectedPaths:
-                # print each
-                asset = each
-                each = each.replace('.','__')
-                node =  Gaffer.Node( '_'.join(each.split('/')) )
-                node['in']= Gaffer.ArrayPlug(  "in", )
-                node['out']= Gaffer.Plug( "out", direction = Gaffer.Plug.Direction.Out)
-                node['__mapping']= Gaffer.ObjectPlug( "__mapping", direction = Gaffer.Plug.Direction.Out, defaultValue = IECore.CompoundObject(), )
-                node._name ='_'.join(each.split('/')[:-1])
-                node["asset"] = Gaffer.StringPlug()
-                node["asset"].setValue( asset )
-                s.addChild(node)
-            return s
-
-
             return IECore.StringVectorData(
                 [ str( p ) for p in selectedPaths ],
             )
+
+        # if len( selectedPaths ) :
+        #     GafferUI.Pointer.setCurrent( self.__dragPointer )
+        #     s = Gaffer.ScriptNode()
+        #     # print selectedPaths
+        #     for each in  selectedPaths:
+        #         # print each
+        #         asset = each
+        #         each = each.replace('.','__')
+        #         node =  Gaffer.Node( '_'.join(each.split('/')) )
+        #         node['in']= Gaffer.ArrayPlug(  "in", )
+        #         node['out']= Gaffer.Plug( "out", direction = Gaffer.Plug.Direction.Out)
+        #         node['__mapping']= Gaffer.ObjectPlug( "__mapping", direction = Gaffer.Plug.Direction.Out, defaultValue = IECore.CompoundObject(), )
+        #         node._name ='_'.join(each.split('/')[:-1])
+        #         node["asset"] = Gaffer.StringPlug()
+        #         node["asset"].setValue( asset )
+        #         s.addChild(node)
+        #     return s
+
+
         return None
 
 
     def __dragEnter( self, widget, event ) :
         pass
-        # print '__dragEnter'
-        # print widget
-        # print dir(event)
-        # print event.line
-        # print widget, event.destinationWidget
+        print( '__dragEnter' )
+        # print( widget )
+        # print( event )
+        # print( dir(event) )
+        # print( event.destinationGadget )
+        # print( event.destinationWidget )
+        # print( type(event.line),event.line )
+        # print(self.hostApp())
         # if  event.destinationWidget:
         #     nodeGraph = event.destinationWidget.ancestor(GafferUI.NodeGraph)
         #     assert( nodeGraph is not None )
@@ -1241,25 +1271,52 @@ class assetListWidget( GafferUI.Editor ):
 
 
     def __dragEnd( self, widget, event ) :
-        import sys
-        # print '__dragEnd2'
-        # print widget
-        # print event.destinationGadget
-        # print dir(event)
-        # print type(event.line),event.line
-        # print event.destinationWidget.__class__
+        ''' method called when a drag/drop event ends (when the dragged item is dropped)'''
+        GafferUI.Pointer.setCurrent( None )
+
+        print( '__dragEnd' )
+        # print(globals()['root'].keys())
+        print( widget )
+        print( event )
+        print( dir(event) )
+        print( event.destinationGadget )
+        print( event.destinationWidget )
+        print( event.sourceGadget )
+        print( event.sourceWidget )
+        print( event.dropResult )
+        print( event.data )
+        print( type(event.line),event.line )
+        print(self.hostApp())
+        print(self._script.keys())
+
+
+        # if dropped an asset path
+        for data in event.data:
+            if len(data.split('/')) > 3:
+                    self._menu_checkout( event.data )
+
+        return
 
         # if in maya, just do the same as the import menu
         if self.hostApp() == 'maya':
             selectedData = self.getSelectedColumns()
             selectedPaths = selectedData['assetFullPath']
             # self.checkout( selectedPaths )
-
         # if in gaffer, we create sam nodes!
         elif self.hostApp() == 'gaffer':
 
             # we have to restore the original framing of the nodegraph, since its default is to frame the nodes in the scene
-            self._restoreNodeGraphFrame()
+            # self._restoreNodeGraphFrame()
+            root = globals()['root']
+            print(globals().keys())
+
+            if  event.destinationWidget:
+                nodeGraph = event.destinationWidget.ancestor(GafferUI.NodeGraph)
+                gadgetWidget = nodeGraph.graphGadgetWidget()
+                graphGadget = nodeGraph.graphGadget()
+                root = nodeGraph.scriptNode()
+                print(root.keys())
+
 
             def dropNodes():
                 if  event.destinationWidget:
@@ -1333,7 +1390,7 @@ class assetListWidget( GafferUI.Editor ):
                             for n in _nodez:
                                 script.selection().add( n )
                             nodeGraph.frame( _nodez, extend = True )
-            dropNodes()
+            # dropNodes()
 
 
 
@@ -1349,10 +1406,10 @@ class assetListWidget( GafferUI.Editor ):
         ''' when we click on the treeview, this method is called and it's responsible
         for emitting a mouseMovent to the widget. This allows for us to intercept
         the mouse coordinates and correct the y position, since pulling the y from
-        the event in QT5 is coming with an offset of 27. '''
+        the event in QT5 is coming with an offset of 20. '''
         qEvent = QtGui.QMouseEvent(
             QtCore.QEvent.MouseButtonPress,
-            QtCore.QPoint( event.line.p0.x, event.line.p0.y-27 ),
+            QtCore.QPoint( event.line.p0.x, event.line.p0.y-20 ),
             QtCore.Qt.LeftButton,
             QtCore.Qt.LeftButton,
             QtCore.Qt.NoModifier
@@ -1414,10 +1471,11 @@ def populateAssets(hostApp='gaffer',filter="", folderName='sam', forceCache=None
         def recursiveTree(path, d={}, d2={}, f='',l=0):
             if l>=4:
                 return d
+            print(path, glob( "%s/*" % path ))
             for each in glob( "%s/*" % path ):
                 if f in os.path.basename(each):
                     id = each.replace(path,'')[1:]
-                    # print '====>',f
+                    # print( '====>',f )
                     if os.path.isdir(each):
                         # try:
                         #     data = Asset.AssetParameter(each.replace(j.path('sam/'),'')).getData()
@@ -1687,10 +1745,10 @@ class TreeModel(QtCore.QAbstractItemModel):
 
     def parentWidget(self, parent):
         self.__parent = parent
-        self.__hostApp = self.__parent.hostApp()
+        self.__hostApp = os.environ['PIPE_PARENT']
 
     def hostApp(self):
-        return self.__hostApp
+        return os.environ['PIPE_PARENT']
         # return self.__parent.hostApp()
 
     def refresh(self, ls=[]):
@@ -1699,20 +1757,14 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         self.ls = ls
         if not self.ls:
-            if self.hostApp() == 'maya':
-                    if assetUtils.m:
-                        self.ls = assetUtils.m.ls( '|SAM*' )
-            elif self.hostApp() == 'gaffer':
-                self.ls = []
-                for script in GafferUI.root()['scripts'].keys():
-                    script = GafferUI.root()['scripts'][script]
-                    self.ls += [ str(script[x]['asset'].getValue()) for x in script.keys() if 'asset' in script[x].keys() ]
-
+            self.ls = assetUtils.assetOP.ls()
             self.__old_ls = self.ls
 
         # self.dataChanged.emit(QtCore.QModelIndex(),QtCore.QModelIndex())
-        self.layoutChanged.emit()
         # self.updateFinished.emit()
+
+        # this causes excessive usage of cpu!
+        # self.layoutChanged.emit()
         return True
 
 
@@ -1729,17 +1781,18 @@ class TreeModel(QtCore.QAbstractItemModel):
             return None
 
         item = index.internalPointer()
-        # print item ; sys.stdout.flush()
         # we don't cache ops for versions at initialization, so we do it in here,
         # that way it's only cached as needed!
         # this makes the panel shows up earlier!
         # print TreeItem.assetOP, TreeItem.assetData, item.data(TreeItem.assetData), item.data(TreeItem.assetOP) ;sys.stdout.flush()
-        if item.data(TreeItem.assetData) and  item.data(TreeItem.assetData)[0] >= 2:
-            if not item.data(TreeItem.assetOP):
-                op = assetUtils.assetOP( item.data(TreeItem.assetFullPath), self.hostApp() )#, self.__data[item.data(TreeItem.assetFullPath)] )
-                item.data(TreeItem.assetOP , op)
-                assetSourceExistsInHost = item.data(TreeItem.assetOP).assetSourceExistsInHost()
-                item.data(TreeItem.assetOPSourceExistsInHost , assetSourceExistsInHost)
+        # print(item.data(TreeItem.assetData),type(item.data(TreeItem.assetData)), item.data(TreeItem.assetOP), item.data(TreeItem.assetFullPath))
+        if item.data(TreeItem.assetData):
+            if (type(item.data(TreeItem.assetData))==type([]) and item.data(TreeItem.assetData)[0] >= 2) or item.data(TreeItem.assetFullPath) in item.data(TreeItem.assetData):
+                if not item.data(TreeItem.assetOP):
+                    op = assetUtils.assetOP( item.data(TreeItem.assetFullPath), self.hostApp() )#, self.__data[item.data(TreeItem.assetFullPath)] )
+                    item.data(TreeItem.assetOP , op)
+                    assetSourceExistsInHost = item.data(TreeItem.assetOP).assetSourceExistsInHost()
+                    item.data(TreeItem.assetOPSourceExistsInHost , assetSourceExistsInHost)
 
 
         # tells if an asset is editable or not
@@ -1747,7 +1800,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         t = time.time()
         # if host app is maya!
-        if self.hostApp() == 'maya' and  assetUtils.m and item.data(TreeItem.assetData)[0]>=2:
+        if self.hostApp() == 'maya' and  assetUtils.m and (type(item.data(TreeItem.assetData))==type([]) and item.data(TreeItem.assetData)[0] >= 2):
             # rendersettings in maya are allways editable!
             if 'renderSettings/' in item.data(TreeItem.assetFullPath):
                 assetForPublishExists = True
@@ -1759,13 +1812,14 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         # if host app is gaffer!
         elif self.hostApp() == 'gaffer':
-            # if gaffer was called to edit an specific asset, we make ONLY that asset editable
-            if  GafferUI.root().asset:
-                assetForPublishExists = os.path.dirname(item.data(TreeItem.assetFullPath)) in GafferUI.root().asset
-            # if no asset was specified, we call assetSourceExistsInHost() for the app to difine if its editable or not!
-            else:
-                if item.data(TreeItem.assetData) and item.data(TreeItem.assetData)[0]>=2:
-                    assetForPublishExists = item.data(TreeItem.assetOPSourceExistsInHost) #
+            pass
+            # # if gaffer was called to edit an specific asset, we make ONLY that asset editable
+            # if  GafferUI.root().asset:
+            #     assetForPublishExists = os.path.dirname(item.data(TreeItem.assetFullPath)) in GafferUI.root().asset
+            # # if no asset was specified, we call assetSourceExistsInHost() for the app to difine if its editable or not!
+            # else:
+            #     if item.data(TreeItem.assetData) and item.data(TreeItem.assetData)[0]>=2:
+            #         assetForPublishExists = item.data(TreeItem.assetOPSourceExistsInHost) #
 
 
         # ICONS!!
@@ -1824,7 +1878,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 
                     # if nodesInTheScene:
                     # set the light status for the highest hierarqui
-                    if item.data(TreeItem.assetData)[0]<2:
+                    if (type(item.data(TreeItem.assetData))==type([]) and item.data(TreeItem.assetData)[0] < 2):
                         icons = self.assetMainTypes
                         if item.data(TreeItem.assetData)[0]:
                             icons = self.assetTypes
@@ -1837,7 +1891,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                                     ret = icons[item.data(0)]['red']
 
                     # if we are on the asset name level
-                    if nodesInTheScene and item.data(TreeItem.assetData)[0]==2:
+                    if nodesInTheScene and (type(item.data(TreeItem.assetData))==type([]) and item.data(TreeItem.assetData)[0] == 2):
                         ret = self.lights['red']
                         # if node version matches current version, make it green!
                         if [ x for x in nodesInTheScene if node in x ]:
@@ -1865,7 +1919,7 @@ class TreeModel(QtCore.QAbstractItemModel):
 
 
                     item.data(TreeItem.assetEditable, False)
-                    if assetForPublishExists and item.data(TreeItem.assetData)[0] == 2:
+                    if assetForPublishExists and (type(item.data(TreeItem.assetData))==type([]) and item.data(TreeItem.assetData)[0] == 2):
                         item.data(TreeItem.assetEditable, True)
                         if ret == self.lights['green']:
                             ret = self.lights['editGreen']
@@ -2335,7 +2389,7 @@ class SAMShelf(assetUtils.shelf):
         self.addShelfButton(
             '',
             'Open/Refresh SAM panel',
-            cmd='import assetListWidget;reload(assetListWidget);assetListWidget.SAMPanelUI()',
+            cmd='try: from importlib import reload\nexcept: pass\nimport assetListWidget;reload(assetListWidget);assetListWidget.SAMPanelUI()',
             icon='%s/gaffer/graphics/samShelfPanelx32.png' % __tools__,
             menu=[('RELOAD SHELF', 'import assetListWidget;reload(assetListWidget);assetListWidget.SAMShelf()')]
         )

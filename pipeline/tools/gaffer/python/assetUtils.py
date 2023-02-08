@@ -224,13 +224,13 @@ def __scriptJob( **kk ):
         m.scriptJob( **kk )
 
 def mayaLazyScriptJob( runOnce=True,  idleEvent=None, deleteEvent=None, allowOnlyOne=True, event=None):
-    #python3 compatibility
-    if deleteEvent and not hasattr(deleteEvent, 'func_name'):
-        deleteEvent.func_name = deleteEvent.__name__
-    if idleEvent and not hasattr(idleEvent, 'func_name'):
-        idleEvent.func_name = idleEvent.__name__
-
     if m:
+        #python3 compatibility
+        if deleteEvent and not hasattr(deleteEvent, 'func_name'):
+            deleteEvent.func_name = deleteEvent.__name__
+        if idleEvent and not hasattr(idleEvent, 'func_name'):
+            idleEvent.func_name = idleEvent.__name__
+
         _jobs=[]
         if allowOnlyOne:
             _jobs = m.scriptJob(listJobs=1)
@@ -312,7 +312,7 @@ class assetOP(object):
         return path
 
 
-    def __init__( self, path, hostApp='gaffer', data=None ) :
+    def __init__( self, path, hostApp=os.environ['PIPE_PARENT'], data=None ) :
         ''' load an asset op class, fills up with the asset data, and returns the object ready to run methods '''
         self.asset = Asset.AssetParameter( assetOP._fixShotPath(path) )
         try:
@@ -354,9 +354,18 @@ class assetOP(object):
                 ret = self.subOP._color
         return ret
 
+    def setGafferDataForOps(self, kargs):
+        if 'PIPE_PARENT' in os.environ and os.environ['PIPE_PARENT'] == 'gaffer':
+            if 'root' in kargs:
+                root = self.kargs['root']
+                os.environ['GAFFER_CURRENT_FILENAME'    ] = root['fileName'].getValue()
+                os.environ['GAFFER_CURRENT_PROJECT'     ] = root['variables']["projectRootDirectory"]['value'].getValue()
+                os.environ['GAFFER_CURRENT_FRAME_START' ] = str(root['frameRange']['start'].getValue())
+                os.environ['GAFFER_CURRENT_FRAME_END'   ] = str(root['frameRange']['end'].getValue())
 
-    def newPublish(self, run=True):
+    def newPublish(self, run=True, **kargs):
         ''' publish a new asset '''
+        self.kargs = kargs
         import os
         if m:
             import samPrman
@@ -371,6 +380,9 @@ class assetOP(object):
         app.parameters()['arguments'] = IECore.StringVectorData(['-Asset.type',self.pathPar,'0','IECORE_ASSET_OP_PATHS'])
         app.parameters()['op'] = 'publish'
         app.parameters()['gui'] = 1
+        self.setGafferDataForOps(kargs)
+
+        #     app.gaffer_root( self.kargs['root'] )
         # print 'newPublish:',app.hostApp(),self.hostApp()
         if run:
             app.run()
@@ -379,8 +391,9 @@ class assetOP(object):
 
         # self.ancestor( GafferUI.Window ).close()
 
-    def updatePublish(self, run=True):
+    def updatePublish(self, run=True, **kargs):
         ''' publish an updated version to an asset that already exists'''
+        self.kargs = kargs
         self.__data()
         if self.data:
             if m:
@@ -398,6 +411,8 @@ class assetOP(object):
             a.parameters()['action'] = 'publish'
             a.parameters()['asset'] = self.pathPar
             a.hostApp(self.hostApp())
+            self.setGafferDataForOps(kargs)
+
             if run:
                 a.run()
             else:
@@ -539,6 +554,21 @@ class assetOP(object):
             ret =  self.__maya_ls
         return ret
 
+    def doesAssetExistOnDisk(self, anyVersion=True):
+        ''' check if the asset is a new asset or an existing asset '''
+        self.__data()
+        if self.data:
+            return True
+        return False
+
+    def doesAssetExists(self, anyVersion=True):
+        ''' check if an asset exist in the host app, calling the actual asset
+        function with the same name!'''
+        self.__data()
+        if self.loadOP():
+            return self.subOP.doesAssetExists( self.subOP.nodeName(self.data), anyVersion)
+        return []
+
     def assetSourceExistsInHost( self ):
         ''' check if the source of the current asset is opened in the current host app
         returns true if so - used to display the little edit icon on the assetListWidget'''
@@ -559,27 +589,48 @@ class assetOP(object):
                             return [assetName]
 
 
-        elif self.hostApp()=='gaffer' and hasattr(GafferUI, 'root'):
+            # elif self.hostApp()=='gaffer' and hasattr(GafferUI, 'root'):
+            #     ret = []
+            #     if GafferUI.root().asset :
+            #         ret = os.path.dirname(self.pathPar) in GafferUI.root().asset
+            #     else:
+            #         ret = 'gaffer/' in self.pathPar
+            #     return ret
+        return ""
+
+    @staticmethod
+    def ls():
+        ret = []
+        if os.environ['PIPE_PARENT']=='maya':
+            ret = m.ls(r'|SAM*',l=1)
+            ret += m.ls(r'|*|SAM*',l=1)
+            ret += m.ls(r'|*|*:SAM*',l=1)
+            # ret += m.ls(r'|*|*|*:SAM*',l=1)
+
+
+        elif os.environ['PIPE_PARENT'] == 'gaffer':
             ret = []
-            if GafferUI.root().asset :
-                ret = os.path.dirname(self.pathPar) in GafferUI.root().asset
-            else:
-                ret = 'gaffer/' in self.pathPar
-            return ret
+            # for script in GafferUI.root()['scripts'].keys():
+            #     script = GafferUI.root()['scripts'][script]
+            #     ret += [ str(script[x]['asset'].getValue()) for x in script.keys() if 'asset' in script[x].keys() ]
 
-        return False
-
+        return ret
 
     def nodes( self ):
         ''' return the nodes of the current asset, in the host app'''
-        import re
-        if self.path and self.hostApp()=='maya' and m and len(self.pathPar.split('/'))>2:
-            self.__maya_ls = m.ls(r'|SAM*',l=1)
-            nodeName = '_'.join(self.path.split('sam/')[-1].split('/')[:-1]).replace('.','_').replace('-','_').replace('-','_')
-            versionPosition = re.search(r'_\d\d_\d\d_\d\d', nodeName).start()
-            # mask = '^\|SAM_%s_\d\d_\d\d_\d\d_' % ( nodeName[:versionPosition] )
-            return m.ls( r'|SAM_%s*_??_??_??_*' % nodeName[:versionPosition], l=1 )
-        return []
+        ret = []
+        if self.hostApp()=='maya':
+            self.__maya_ls = self.ls()
+            if self.path and m and len(self.pathPar.split('/'))>2:
+                import re
+                nodeName = '_'.join(self.path.split('sam/')[-1].split('/')[:-1]).replace('.','_').replace('-','_').replace('-','_')
+                versionPosition = re.search(r'_\d\d_\d\d_\d\d', nodeName).start()
+                # mask = '^\|SAM_%s_\d\d_\d\d_\d\d_' % ( nodeName[:versionPosition] )
+                ret = m.ls( r'|SAM_%s*_??_??_??_*' % nodeName[:versionPosition], l=1 )
+                ret += m.ls( r'|*|SAM_%s*_??_??_??_*' % nodeName[:versionPosition], l=1 )
+                ret += m.ls( r'|*|*:SAM_%s*_??_??_??_*' % nodeName[:versionPosition], l=1 )
+                # ret += m.ls( r'|*|*|*:SAM_%s*_??_??_??_*' % nodeName[:versionPosition], l=1 )
+        return ret
 
 
     def selectNodes( self ):
@@ -646,31 +697,19 @@ class assetOP(object):
             return self.subOP.nodeName(self.data)
         return ''
 
-    def doesAssetExists(self, anyVersion=True):
-        ''' check if an asset exist in the host app, calling the actual asset
-        function with the same name!'''
-        self.__data()
-        if self.loadOP():
-            return self.subOP.doesAssetExists( self.subOP.nodeName(self.data), anyVersion)
-        return []
-
-    def doesAssetExistOnDisk(self, anyVersion=True):
-        ''' check if the asset is a new asset or an existing asset '''
-        self.__data()
-        if self.data:
-            return True
-        return False
-
-
-    def doImport( self ):
+    def doImport( self, **kargs ):
         ''' do a checkout of the asset into the current application '''
         self.__data()
         if self.loadOP():
             # print self.pathPar
             # print self.data.keys()
-            self.subOP.doImport( self.path, self.data )
+            self.subOP.doImport( self.path, self.data, **kargs )
             if self.hostApp()=='maya' and m:
-                self.__maya_ls = m.ls('|SAM*')
+                self.__maya_ls = m.ls(r'|SAM*')
+                self.__maya_ls += m.ls(r'|*|SAM*')
+                self.__maya_ls += m.ls(r'|*|*:SAM*')
+                # self.__maya_ls += m.ls(r'|*|*|*:SAM*')
+
 
 
     def getJobShot(self):
@@ -731,7 +770,8 @@ class assetOP(object):
 
     def mayaOpenDependency(self):
         ''' run a new maya to open a dependency'''
-        self._openDependency( cmd = r'''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\(\\\\\\\\"%s\\\\\\\\")\\\\\\")" ''', app=pipe.apps.maya )
+        # self._openDependency( cmd = r'''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\(\\\\\\\\"%s\\\\\\\\")\\\\\\")" ''', app=pipe.apps.maya )
+        self._openDependency( cmd = r'''run maya "%s" ''', app=pipe.apps.maya )
 
     def gafferOpenDependency(self):
         ''' open the asset dependency (original scene)
@@ -756,23 +796,23 @@ class assetOP(object):
                 a.run()
                 a.setSize(6,6)
 
-            __runGaffer = __runGafferInHost
+            # __runGaffer = __runGafferInHost
 
-        elif self.hostApp()=='gaffer':
-            def __runGaffer(scene):
-                s = list( GafferUI.root()['scripts'].keys() )
-                script = GafferUI.root()['scripts'][s[0]]
-                script['fileName'].setValue( scene )
-                script.load()
-                ng = GafferUI.NodeGraph.acquire(script)
-                ng.frame( script.selection() )
+        # elif self.hostApp()=='gaffer':
+        #     def __runGaffer(scene):
+        #         s = list( GafferUI.root()['scripts'].keys() )
+        #         script = GafferUI.root()['scripts'][s[0]]
+        #         script['fileName'].setValue( scene )
+        #         script.load()
+        #         ng = GafferUI.NodeGraph.acquire(script)
+        #         ng.frame( script.selection() )
+        #
+        # # __runGaffer will be a different function depending on the host software this is running in
+        # self._openDependency( __runGaffer, copyToFolder=pipe.admin.job.shot.user().path('gaffer/'), app=pipe.apps.gaffer )
 
-        # __runGaffer will be a different function depending on the host software this is running in
-        self._openDependency( __runGaffer, copyToFolder=pipe.admin.job.shot.user().path('gaffer/'), app=pipe.apps.gaffer )
 
-
-
-    def _openDependency( self, cmd = r'''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', copyToFolder=None, app=None ):
+    # def _openDependency( self, cmd = r'''run maya -command "python(\\\\\\"import assetUtils;assetUtils.assetOP.openScene\('%s'\)\\\\\\")" ''', copyToFolder=None, app=None ):
+    def _openDependency( self, cmd = r'''run maya "%s" ''', copyToFolder=None, app=None ):
         '''
         open asset dependency main funtion, used by all others methods that open the original asset dependency (scene) in the proper environment:
 
@@ -838,8 +878,9 @@ class assetOP(object):
         if type( cmd ) != str:
             cmd(scene)
         else:
-            scene='\\\"'+scene+'\\\"'
-            cmd = cmd.replace('"','\"') % scene +' &'
+            # scene='\\\"'+scene+'\\\"'
+            # cmd = cmd.replace('"','\"')
+            cmd = cmd % scene +' &'
             print(  'assetUtil: os.system(',cmd,')' )
             os.system( cmd  )
 
