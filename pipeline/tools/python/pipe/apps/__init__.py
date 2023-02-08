@@ -49,6 +49,7 @@ if pipe.admin:
 
 if not sourced or not appz:
     sourceApps( "%s/config/apps" % roots.tools() )
+    sourceApps( "%s/tools/config/apps" % os.environ['HOME'] )
 
 
 
