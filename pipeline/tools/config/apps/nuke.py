@@ -39,7 +39,10 @@ class nuke(baseApp):
 
         nukeMajorVersion = int(self.version().split('.')[0])
         if self.parent() in ['nuke']:
-            if nukeMajorVersion >= 13:
+            if nukeMajorVersion >= 14:
+                pipe.version.set( python = '3.9.7' )
+                pipe.libs.version.set( python = '3.9.7' )
+            elif nukeMajorVersion >= 13:
                 pipe.version.set( python = '3.7.5' )
                 pipe.libs.version.set( python = '3.7.5' )
             elif nukeMajorVersion >= 8:
@@ -201,9 +204,9 @@ class nuke(baseApp):
 
         # run the application
         cmd = app.split(' ')
-        nukeBin = cached.glob('%s/Nuke*.*' % self.bin())
+        nukeBin = cached.glob('%s/Nuke??.*' % self.bin())
         if not nukeBin:
-            nukeBin = cached.glob('%s/../Nuke*.*' % self.bin())
+            nukeBin = cached.glob('%s/../Nuke??.*' % self.bin())
             if not nukeBin:
                 raise Exception( "\n\nCan't find Nuke executable at %s. Are you sure Nuke %s is installed?\n" % ('%s/Nuke*.*' % self.bin(), self.version()) )
 
