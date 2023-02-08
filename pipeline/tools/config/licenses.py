@@ -38,6 +38,7 @@ os.environ['PIPE_GOLAEM_LICENSE']             = '5054@192.168.0.247'
 os.environ['PIPE_GENARTS_LICENSE']            = '2701@192.168.0.247'
 os.environ['PIPE_YETI_LICENSE']               = '8833@192.168.0.2'
 os.environ['PIPE_MAYA_LICENSE']               = '192.168.0.247'
+os.environ['PIPE_ARNOLD_LICENSE']             = '192.168.0.247'
 os.environ['PIPE_REALFLOW_LICENSE']           = '5056@192.168.0.247'
 os.environ['PIPE_REDSHIFT_LICENSE']           = '5053@192.168.0.247'
 
@@ -51,4 +52,4 @@ os.environ['PIPE_FABRIC_ENGINE_LICENSE']      = '5053@192.168.0.247'
 #defaultGateway = os.popen("echo $(route -n | grep UG ) | cut -d' ' -f2").readlines()
 #if not defaultGateway:
 
-os.environ['PIPE_PROXY_SERVER'] = '192.168.0.17:8001'
+os.environ['PIPE_PROXY_SERVER'] = '192.168.10.13:8001'
