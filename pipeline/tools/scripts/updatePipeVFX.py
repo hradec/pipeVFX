@@ -20,7 +20,7 @@
 path="/mnt/nvme/nfs-pool/dev/pipevfx-atomo-git/"
 # folders/hosts to sync to
 hosts = [
-	'rhradec@10.144.0.10:/mnt/pipevfx-qnap/dev/pipevfx-git/',
+	'root@10.144.0.10:/root/dev/pipevfx-git/',
 	'root@192.168.0.196:/root/dev/pipevfx-atomo-git/',
 	'/ST16TB/fedora_frankbarton_devteam/pipevfx/',
 ]
@@ -29,7 +29,7 @@ rsync = "rsync -avpP --no-perms --no-owner --no-group %s %s %s & "
 # the rsync command used to sync up using pipe (not working)
 rsync_pipe = "rsync -avpP --no-perms --no-owner --no-group --files-from=%s / %s"
 # exclude these files/folders at startup, when the first rsync runs (besides what's in .gitignore)
-exclude_first_sync = ['.git','licenses', 'apps', 'build', 'wxmaya', 'mayaLibrary', '.mayaSwatches', 'hosts', 'tags', 'init']
+exclude_first_sync = ['.git','licenses', 'apps', 'wxmaya', 'mayaLibrary', '.mayaSwatches', 'hosts', 'tags', 'init']
 # ignore syncing these files/folders at runtime (besides what's in .gitignore)
 exclude_runtime = ['versions.py', 'licenses.py', 'job_config.py','*pipeline/tools/init/*']
 # ==============================================================================
