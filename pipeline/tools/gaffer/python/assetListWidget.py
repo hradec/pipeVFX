@@ -648,7 +648,8 @@ class assetListWidget( GafferUI.Editor ):
                 if 'render/' in selectedPaths[0]:
                     canImport = False
 
-                menuDefinition.append( "/import or update selected" , { "command" : IECore.curry(self._menu_checkout, selectedPaths), "active" : canImport  } )
+                menuDefinition.append( "/import selected" , { "command" : IECore.curry(self._menu_checkout, selectedPaths, False), "active" : canImport  } )
+                menuDefinition.append( "/update selected" , { "command" : IECore.curry(self._menu_checkout, selectedPaths), "active" : canImport  } )
 
                 # add the publish menu, if the item can be published
                 if selectedPathsEditable or 'render/maya' in selectedPaths[0]:
@@ -706,7 +707,7 @@ class assetListWidget( GafferUI.Editor ):
 
         return True
 
-    def _menu_checkout( self, paths = None ):
+    def _menu_checkout( self, paths = None, update=True ):
         ''' import an asset to the host app '''
         with GafferUI.ErrorDialogue.ExceptionHandler( parentWindow=self.ancestor( GafferUI.Window ) ) :
             if not paths:
@@ -718,7 +719,7 @@ class assetListWidget( GafferUI.Editor ):
                     pb.step()
                     # print path
                     op = assetUtils.assetOP( path , self.hostApp() )
-                    op.doImport( root=self._script )
+                    op.doImport( root=self._script, update=update )
 
                 pb.step()
                 pb.close()

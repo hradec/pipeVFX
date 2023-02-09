@@ -664,7 +664,7 @@ class _genericAssetClass( IECore.Op ) :
         '''return the nodename based on the asset data '''
         return _nodeName(data)
 
-    def doImport(self, asset, data=None, replace=True, **kargs):
+    def doImport(self, asset, data=None, update=True, **kargs):
         ''' method called by host to import asset into host scene '''
         self.kargs = kargs
         self.asset = Asset.AssetParameter(asset)
@@ -686,7 +686,7 @@ class _genericAssetClass( IECore.Op ) :
             nodeName = self.nodeName(self.data) + each
 
             stack = []
-            if replace:
+            if update:
                 # allways import the asset, if the current version is different than the one
                 # to be imported!
                 if self.doesAssetExists(nodeName, anyVersion=False):
@@ -695,15 +695,15 @@ class _genericAssetClass( IECore.Op ) :
                 # push attributes values of to be deleted nodes so we can restore after update
                 stack = push(self.doesAssetExists(nodeName))
                 self.cleanupOldVersions(self, nodeName)
-            else:
-                # if the scene already has a version of the node,
-                # don't import another!
-                if self.doesAssetExists(nodeName, anyVersion=True):
-                    continue
+            # else:
+            #     # if the scene already has a version of the node,
+            #     # don't import another!
+            #     if self.doesAssetExists(nodeName, anyVersion=True):
+            #         continue
 
             canPublish = 0
             if filename:
-                canPublish += self.doImportToHost(filename, nodeName)
+                canPublish += self.doImportToHost(filename, nodeName, update=update)
 
             if canPublish == 0:
                 raise Exception("Can't import asset!!")
@@ -712,7 +712,7 @@ class _genericAssetClass( IECore.Op ) :
 
             pop(stack)
 
-    def doImportToHost(self, filename, nodeName):
+    def doImportToHost(self, filename, nodeName, **kargs):
         '''virtual function to be implement by type specific asset classes'''
         return 0
 
@@ -1450,74 +1450,27 @@ class maya( _genericAssetClass ) :
                         # print( each, cmd )
                         os.system( cmd  )
 
-    def doImportToHost( self, filename, nodeName ):
+    def doImportToHost( self, filename, nodeName, **kargs ):
         ret = 0
         if self.hostApp() in ['maya'] and m:
-            ret = self.doImportMaya( filename, nodeName )
+            ret = self.doImportMaya( filename, nodeName, **kargs )
             if ret:
                 self.fixRIGMeshCTRLS()
         elif self.hostApp() in ['gaffer']:
             pass
         return ret
 
-    def mayaFileIn( self, filename, nodeName ):
-        if m:
-            if self._importAsReference:
-                # file -r -type "mayaBinary" -gr  -ignoreVersion -gn "SAM" -gl -mergeNamespacesOnClash false -namespace "eric_animation_test"
-                #  -options "v=0;" "/frankbarton/jobs/9990.rnd/assets/sophia/users/rhradec/maya/scenes/eric-animation-test.mb";
-                nodes = self.doesAssetExists(nodeName)
-                namespace = nodeName #'_'.join(nodeName.split('_')[:-4])
-                # namespace = nodeName.split(':')[-1].split('_asset')[0][:-8] #'_'.join(nodeName.split('_')[:-4])
-                if nodes:
-                    # replace reference with the requested import (updates)
-                    referenceName = None
-                    group = None
-                    error = []
-                    for sam in nodes:
-                        for reference in m.ls(type='reference', dag=0):
-                            sam_reference = sam.split(':')[-1].split('_asset')[0][:-8]
-                            print(sam_reference, reference, referenceName)
-                            if sam_reference in reference.split(':')[-1] and 'RN' in reference[-2:]:
-                                referenceName = reference
-                                group = sam
-                                if len(referenceName.split(':'))>1:
-                                    path=[]
-                                    for n in [-1, -2]:
-                                        p = referenceName.split(':')[n].replace('SAM_','').split('_asset')[0]
-                                        p = p[:-9]
-                                        p = p.split('_')
-                                        p = '/'.join([ p[0], p[1], '_'.join(p[2:]) ])
-                                        path += [p]
-                                    error += ["\n\nSAM: Can't update %s because it's a reference embeded in %s.\nPlease update it in the the original file for %s and publish a new version to be updated in this scene!" % (path[0], path[1], path[1])]
-                                    error += ["\nIf %s is green now, it's probably because %s was just updated and %s was already up to date in it!" % (path[0], path[1], path[0])]
-                                else:
-                                    m.file(filename, loadReference=referenceName)
-                                    m.file(filename, e=1, ns=namespace)
-                                    try:m.rename( group, nodeName)
-                                    except:pass
-                                    # cleanup trash that maya leaves behind!!
-                                    m.delete('sharedReferenceNode')
-                    if error:
-                        def __warning__():
-                            print('='*80)
-                            m.warning(''.join(error)+'\n\n'+'='*80)
-                        assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__warning__ )
-                else:
-                    # import as reference
-                    # m.file(filename, r=1, gr=1)
-
-                    # namespace or reference kills animation for some reason!!
-                    m.file(filename, r=1, preserveReferences=1, gr=1, ns=namespace )
-            else:
-                m.file(filename, i=1, preserveReferences=1, gr=1 )
-
-    def doImportMaya( self, filename, nodeName ):
+    def doImportMaya( self, filename, nodeName, **kargs ):
         # maya import code!
         if m:
+            update=True
+            if 'update' in kargs:
+                update = kargs['update']
+
             self.importXgen(self.data)
-            print(")))))))))))",nodeName)
+            # print(")))))))))))",nodeName)
             old_groups = m.ls('|*', type='transform')
-            self.mayaFileIn(filename, nodeName)
+            self._mayaFileIn(filename, nodeName, update)
             for groups in [ g for g in m.ls('|*', type='transform') if g not in old_groups ]:
                 if m.objExists(groups):
                     newNodeName = m.rename( groups, nodeName)
@@ -1539,6 +1492,58 @@ class maya( _genericAssetClass ) :
 
             return True
         return False
+
+
+    def _mayaFileIn( self, filename, nodeName, update=True ):
+        if m:
+            if self._importAsReference:
+                # file -r -type "mayaBinary" -gr  -ignoreVersion -gn "SAM" -gl -mergeNamespacesOnClash false -namespace "eric_animation_test"
+                #  -options "v=0;" "/frankbarton/jobs/9990.rnd/assets/sophia/users/rhradec/maya/scenes/eric-animation-test.mb";
+                nodes = self.doesAssetExists(nodeName)
+                namespace = nodeName #'_'.join(nodeName.split('_')[:-4])
+                # namespace = nodeName.split(':')[-1].split('_asset')[0][:-8] #'_'.join(nodeName.split('_')[:-4])
+                if update and nodes:
+                    print("\n)))))))))))".join(['']+nodes))
+                    # replace reference with the requested import (updates)
+                    group = None
+                    error = []
+                    for sam in nodes:
+                        for reference in m.ls(type='reference', dag=0):
+                            sam_reference = sam.split(':')[-1].split('_asset')[0][:-8]
+                            # print(sam_reference, reference)
+                            if sam_reference in reference.split(':')[-1] and 'RN' in reference[-4:]:
+                                group = sam
+                                if len(reference.split(':'))>1:
+                                    path=[]
+                                    for n in [-1, -2]:
+                                        p = reference.split(':')[n].replace('SAM_','').split('_asset')[0]
+                                        p = p[:-9]
+                                        p = p.split('_')
+                                        p = '/'.join([ p[0], p[1], '_'.join(p[2:]) ])
+                                        path += [p]
+                                    error += ["\n\nSAM: Can't update %s because it's a reference embeded in %s.\nPlease update it in the the original file for %s and publish a new version to be updated in this scene!" % (path[0], path[1], path[1])]
+                                    error += ["\nIf %s is green now, it's probably because %s was just updated and %s was already up to date in it!" % (path[0], path[1], path[0])]
+                                else:
+                                    m.file(filename, loadReference=reference)
+                                    _resolved_filename = m.referenceQuery(reference, f=1)
+                                    m.file(_resolved_filename, e=1, ns=namespace)
+                                    try:m.rename( group, nodeName)
+                                    except:pass
+                                    # cleanup trash that maya leaves behind!!
+                                    m.delete('sharedReferenceNode')
+                    if error:
+                        def __warning__():
+                            print('='*80)
+                            m.warning(''.join(error)+'\n\n'+'='*80)
+                        assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__warning__ )
+                else:
+                    # import as reference
+                    # m.file(filename, r=1, gr=1)
+
+                    # namespace or reference kills animation for some reason!!
+                    m.file(filename, r=1, preserveReferences=1, gr=1, ns=namespace )
+            else:
+                m.file(filename, i=1, preserveReferences=1, gr=1 )
 
     @staticmethod
     def fixRIGMeshCTRLS(grp='|CTRLS|'):
@@ -1973,7 +1978,7 @@ class alembic(  _genericAssetClass ) :
             print( '='*80 )
         pb.close()
 
-    def doImportToHost( self, filename, nodeName ):
+    def doImportToHost( self, filename, nodeName, **kargs ):
         ret = 0
 
         if self.hostApp() in ['maya']:
@@ -2207,7 +2212,7 @@ class gaffer( _genericAssetClass ):
             return True
         return False
 
-    def doImportToHost( self, filename, nodeName ):
+    def doImportToHost( self, filename, nodeName, **kargs ):
         ret = 0
         if m:
             ret = self.doImportMaya( filename, nodeName )
@@ -2562,7 +2567,7 @@ class usd(  alembic ) :
     def setImportAsGPU(self, b):
         self.__setImportAsGPU = b
 
-    def doImportToHost( self, filename, nodeName ):
+    def doImportToHost( self, filename, nodeName, **kargs ):
         ret = 0
         if self.hostApp() in ['maya'] and m:
             ret = self.doImportMaya( filename, nodeName )
