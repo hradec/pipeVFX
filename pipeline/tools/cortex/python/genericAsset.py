@@ -539,12 +539,12 @@ class _genericAssetClass( IECore.Op ) :
         ''' virtual function to delete any other version - called before importing/update an asset '''
         return
 
-    def doesAssetExists( self, nodeName, anyVersion=True):
+    def doesAssetExists( self, nodeName, anyVersion=True, allOtherVersionsOnly=False):
         ''' find the asset in the scene, no matter what version it is! '''
         nodes=[]
         if m:
             nodeName = nodeName.replace('-','_')
-            if anyVersion:
+            if anyVersion or allOtherVersionsOnly:
                 import re
                 versionPosition = re.search(r'_\d\d_\d\d_\d\d', nodeName).start()
                 mask = '|%s_??_??_??_*' % ( nodeName[:versionPosition] )
@@ -562,10 +562,13 @@ class _genericAssetClass( IECore.Op ) :
                 # check for assets imported as references inside
                 # a imported asset
                 mask = '|*|*:%s_??_??_??_*' % ( nodeName[:versionPosition] )
-                print(mask)
+                # print(mask)
                 nodes += m.ls(mask)
             else:
                 nodes = m.ls('|' + nodeName + '*')
+
+        if allOtherVersionsOnly:
+            nodes = [ x for x in nodes if nodeName not in x ]
         return nodes
 
     # def doesAssetSourceExists( self, nodeName, anyVersion=True):
@@ -690,10 +693,11 @@ class _genericAssetClass( IECore.Op ) :
                 # allways import the asset, if the current version is different than the one
                 # to be imported!
                 if self.doesAssetExists(nodeName, anyVersion=False):
-                    continue
+                    if not self.doesAssetExists(nodeName, allOtherVersionsOnly=True):
+                        continue
 
                 # push attributes values of to be deleted nodes so we can restore after update
-                stack = push(self.doesAssetExists(nodeName))
+                stack = push(self.doesAssetExists(nodeName, allOtherVersionsOnly=True))
                 self.cleanupOldVersions(self, nodeName)
             # else:
             #     # if the scene already has a version of the node,
@@ -1499,7 +1503,7 @@ class maya( _genericAssetClass ) :
             if self._importAsReference:
                 # file -r -type "mayaBinary" -gr  -ignoreVersion -gn "SAM" -gl -mergeNamespacesOnClash false -namespace "eric_animation_test"
                 #  -options "v=0;" "/frankbarton/jobs/9990.rnd/assets/sophia/users/rhradec/maya/scenes/eric-animation-test.mb";
-                nodes = self.doesAssetExists(nodeName)
+                nodes = self.doesAssetExists(nodeName, allOtherVersionsOnly=True)
                 namespace = nodeName #'_'.join(nodeName.split('_')[:-4])
                 # namespace = nodeName.split(':')[-1].split('_asset')[0][:-8] #'_'.join(nodeName.split('_')[:-4])
                 if update and nodes:
@@ -1509,8 +1513,14 @@ class maya( _genericAssetClass ) :
                     error = []
                     for sam in nodes:
                         for reference in m.ls(type='reference', dag=0):
+                            if not m.objExists(reference):
+                                continue
+
+                            _resolved_filename = m.referenceQuery(reference, f=1)
+                            if filename in _resolved_filename:
+                                continue
+
                             sam_reference = sam.split(':')[-1].split('_asset')[0][:-8]
-                            # print(sam_reference, reference)
                             if sam_reference in reference.split(':')[-1] and 'RN' in reference[-4:]:
                                 group = sam
                                 if len(reference.split(':'))>1:
@@ -1572,8 +1582,8 @@ class maya( _genericAssetClass ) :
     def cleanupOldVersions( self, nodeName ):
         ''' delete any other version! '''
         if m and not self._importAsReference:
-            nodes = self.doesAssetExists(nodeName)
-            maya.cleanNodes( self.doesAssetExists(nodeName) )
+            nodes = self.doesAssetExists(nodeName, anyVersion=True)
+            maya.cleanNodes( self.doesAssetExists(nodeName, anyVersion=True) )
             # cleanup shader leftovers
             # maya.cleanUnusedShadingNodes()
             maya.cleanNodes( m.ls("SAMIMPORT*") )
@@ -2266,7 +2276,7 @@ class gaffer( _genericAssetClass ):
     def cleanupOldVersions( self, nodeName ):
         ''' delete any other version! '''
         if m:
-            nodes = self.doesAssetExists(nodeName)
+            nodes = self.doesAssetExists(nodeName, anyVersion=True)
 
             maya.cleanNodes( nodes+self.childrenNodes(nodes) )
 
