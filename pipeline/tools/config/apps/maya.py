@@ -123,6 +123,8 @@ class maya(baseApp):
             self.update( substance() )
             self.update( mgear() )
             self.update( yeti() )
+            if hasattr(pipe.apps, "fbMayaTools"):
+                self.update( fbMayaTools() )
 
             if mv > 2016:
                 # substance that comes with maya
