@@ -1472,7 +1472,7 @@ def populateAssets(hostApp='gaffer',filter="", folderName='sam', forceCache=None
         def recursiveTree(path, d={}, d2={}, f='',l=0):
             if l>=4:
                 return d
-            print(path, glob( "%s/*" % path ))
+            # print(path, glob( "%s/*" % path ))
             for each in glob( "%s/*" % path ):
                 if f in os.path.basename(each):
                     id = each.replace(path,'')[1:]
@@ -1768,7 +1768,6 @@ class TreeModel(QtCore.QAbstractItemModel):
         # self.layoutChanged.emit()
         return True
 
-
     def data(self, index, role=QtCore.Qt.DecorationRole):
         ret = self._data(index, role)
         # print "---------->", ret,'<---------------'
@@ -1796,20 +1795,17 @@ class TreeModel(QtCore.QAbstractItemModel):
                     item.data(TreeItem.assetOPSourceExistsInHost , assetSourceExistsInHost)
 
 
+        t = time.time()
+
         # tells if an asset is editable or not
         assetForPublishExists = False
-
-        t = time.time()
-        # if host app is maya!
         if self.hostApp() == 'maya' and  assetUtils.m and (type(item.data(TreeItem.assetData))==type([]) and item.data(TreeItem.assetData)[0] >= 2):
             # rendersettings in maya are allways editable!
             if 'renderSettings/' in item.data(TreeItem.assetFullPath):
                 assetForPublishExists = True
-
             # others must have the original meshPrimitives used to publish present in the scene!
             else:
                 assetForPublishExists = item.data(TreeItem.assetOP).assetSourceExistsInHost() #item.data(TreeItem.assetOPSourceExistsInHost)
-            # item.data(TreeItem.assetOPSourceExistsInHost , assetSourceExistsInHost)
 
         # if host app is gaffer!
         elif self.hostApp() == 'gaffer':
@@ -1857,39 +1853,46 @@ class TreeModel(QtCore.QAbstractItemModel):
 
                     # using gathered data show if things are up2date, loaded or editable
                     nodesInTheScene = None
-                    match = re.search(r'_\d\d_\d\d_\d\d', node)
-                    mask_any_version = 'SAM_%s_.*' % ( node )
+                    mask_any_version = u'SAM_%s_.*' % ( node )
                     # if this asset has a version number
+                    match = re.search(r'_\d\d_\d\d_\d\d', node)
                     if match:
                         # check if the node is loaded!
                         versionPosition = match.start()
                         if self.hostApp() == 'maya':
-                            mask_any_version = r'.*SAM_%s_\d\d_\d\d_\d\d_' % ( node[:versionPosition] )
+                            mask_any_version = u'.*SAM_%s_\d\d_\d\d_\d\d_' % ( node[:versionPosition] )
                             # nodesInTheScene =  assetUtils.m.ls( '|SAM_%s_??_??_??_*' % node[:versionPosition] )
                         elif self.hostApp() == 'gaffer':
                             _node = asset.split('/')
                             mask_any_version = '/'.join(_node[:-1])
 
+                        nodesInTheScene = [ x for x in self.ls if re.search(mask_any_version, x) ]
                     # if no version number, just check for the type and subtype
                     else:
-                        # if self.hostApp() == 'maya':
-                            mask_any_version = r'SAM_%s_*' % ( node )
+                        mask_any_version = u'SAM_%s_*' % ( node )
+                        nodesInTheScene = [ x for x in self.ls if re.search(mask_any_version, x) ]
 
-                    nodesInTheScene = [ x for x in self.ls if re.match(mask_any_version, x) ]
 
                     # if nodesInTheScene:
                     # set the light status for the highest hierarqui
                     if (type(item.data(TreeItem.assetData))==type([]) and item.data(TreeItem.assetData)[0] < 2):
+                        # print(')))',node, mask_any_version, nodesInTheScene )
+                        # from pprint import pprint;pprint(self.__data)
+
                         icons = self.assetMainTypes
                         if item.data(TreeItem.assetData)[0]:
                             icons = self.assetTypes
 
                         ret = icons[item.data(0)]['plain']
                         if nodesInTheScene:
-                            ret = icons[item.data(0)]['green']
+                            # ret = icons[item.data(0)]['green']
+                            ret = icons[item.data(0)]['red']
                             for each in nodesInTheScene:
-                                if not checkIfNodeIsUpToDate(each):
-                                    ret = icons[item.data(0)]['red']
+                                # if not checkIfNodeIsUpToDate(each):
+                                    if each in self.__data_icons:
+                                        # print(node, each, self.__data_icons[each])
+                                        ret = icons[item.data(0)][ self.__data_icons[each] ]
+
 
                     # if we are on the asset name level
                     if nodesInTheScene and (type(item.data(TreeItem.assetData))==type([]) and item.data(TreeItem.assetData)[0] == 2):
@@ -2069,6 +2072,25 @@ class TreeModel(QtCore.QAbstractItemModel):
         t = time.time()
         self.ready = None
         recurseProcessData(data)
+
+        self.__data_icons = {}
+        self.__data_icons_ = {}
+        if self.hostApp() == 'maya':
+            self.refresh()
+            from pprint import pprint;pprint(self.ls)
+            for each in [ x for x in self.ls if re.search(u'SAM_*', x) ]:
+                a = each.split('|')[-1]
+                if ':' in a:
+                    a = a.split(':')[-1]
+                a = a.split('_')
+                a3 = [ x for x in self.__data[a[1]][a[2]].keys() if re.search('.'.join(a[3:-4]), x) ]
+                current = self.__data[a[1]][a[2]][a3[0]]['__current__'].strip('/').split('/')[-1]
+                if current.replace('.','_') in each:
+                    self.__data_icons[each] = 'green'
+
+        from pprint import pprint;pprint(self.__data_icons)
+        from pprint import pprint;pprint(self.__data_icons_)
+
         # print parent
         print( 'setupModelData:', time.time() -t )
 
