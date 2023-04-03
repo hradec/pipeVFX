@@ -19,6 +19,7 @@ DEBUG?=
 HUB_USER?=$(shell echo $$HUB_USER)
 HUB_PASS?=$(shell echo $$HUB_PASS)
 PIPEVFX_LIBS_VERSION?=$(shell echo $$PIPEVFX_LIBS_VERSION)
+EXTRA_MOUNTS?=$(shell echo $$EXTRA_MOUNTS)
 
 all: help
 
