@@ -1506,14 +1506,17 @@ class maya( _genericAssetClass ) :
                 nodes = self.doesAssetExists(nodeName, allOtherVersionsOnly=True)
                 namespace = nodeName #'_'.join(nodeName.split('_')[:-4])
                 # namespace = nodeName.split(':')[-1].split('_asset')[0][:-8] #'_'.join(nodeName.split('_')[:-4])
-                if update and nodes:
-                    print("\n)))))))))))".join(['']+nodes))
-                    # replace reference with the requested import (updates)
+                if update:
+                    # UPDATE ONLY - replace reference with the requested updates
                     group = None
                     error = []
                     for sam in nodes:
-                        for reference in m.ls(type='reference', dag=0):
+                        # find loaded references
+                        for reference in [x for x in m.ls(type='reference', dag=0) if 'sharedReferenceNode' != x]:
                             if not m.objExists(reference):
+                                continue
+
+                            if not m.referenceQuery(reference, dp=1,n=1):
                                 continue
 
                             _resolved_filename = m.referenceQuery(reference, f=1)
@@ -1521,8 +1524,11 @@ class maya( _genericAssetClass ) :
                                 continue
 
                             sam_reference = sam.split(':')[-1].split('_asset')[0][:-8]
+                            # print('=>',sam_reference)
+
+                            # now only act on the references of the select sam nodes
                             if sam_reference in reference.split(':')[-1] and 'RN' in reference[-4:]:
-                                group = sam
+                                # if the reference is a reference imported inside another reference
                                 if len(reference.split(':'))>1:
                                     path=[]
                                     for n in [-1, -2]:
@@ -1533,20 +1539,35 @@ class maya( _genericAssetClass ) :
                                         path += [p]
                                     error += ["\n\nSAM: Can't update %s because it's a reference embeded in %s.\nPlease update it in the the original file for %s and publish a new version to be updated in this scene!" % (path[0], path[1], path[1])]
                                     error += ["\nIf %s is green now, it's probably because %s was just updated and %s was already up to date in it!" % (path[0], path[1], path[0])]
+                                # it's a top level reference, so update it!
                                 else:
                                     m.file(filename, loadReference=reference)
                                     _resolved_filename = m.referenceQuery(reference, f=1)
                                     m.file(_resolved_filename, e=1, ns=namespace)
-                                    try:m.rename( group, nodeName)
-                                    except:pass
-                                    # cleanup trash that maya leaves behind!!
-                                    m.delete('sharedReferenceNode')
+                                    if m.objExists(sam):
+                                        m.rename( sam, nodeName)
+
+                    # cleanup trash that maya leaves behind!!
+                    if m.objExists('sharedReferenceNode'):
+                        m.delete('sharedReferenceNode')
                     if error:
                         def __warning__():
                             print('='*80)
                             m.warning(''.join(error)+'\n\n'+'='*80)
                         assetUtils.mayaLazyScriptJob( runOnce=True,  idleEvent=__warning__ )
+                    else:
+                        # fix sam names according to namespaces, so sam
+                        # node names match whats loaded!
+                        for sam in self.doesAssetExists(nodeName, allOtherVersionsOnly=True):
+                            if m.objExists(sam):
+                                print("-->", sam)
+                                for r in m.listRelatives(sam, c=1):
+                                    ns=m.referenceQuery(r, namespace=1).split(':')[1]
+                                    if ns.split('_asset')[0] != sam.split('_asset')[0]:
+                                        try: m.rename( sam, ns)
+                                        except: pass
                 else:
+                    # IMPORT ONLY
                     # import as reference
                     # m.file(filename, r=1, gr=1)
 
@@ -1587,7 +1608,6 @@ class maya( _genericAssetClass ) :
             # cleanup shader leftovers
             # maya.cleanUnusedShadingNodes()
             maya.cleanNodes( m.ls("SAMIMPORT*") )
-
 
 class alembic(  _genericAssetClass ) :
     _whoCanImport = ['gaffer','maya', 'houdini']

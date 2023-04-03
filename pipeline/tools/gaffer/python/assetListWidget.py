@@ -754,7 +754,7 @@ class assetListWidget( GafferUI.Editor ):
                     path = '%s/%s/%s' % (n[1], n[2], '_'.join(n[3:-4]))
                     op = assetUtils.assetOP( path, self.hostApp() )
                     print (path);sys.stdout.flush()
-                    op.doImport()
+                    op.doImport(update=True)
                     # run custom code, if any!
 
             if hasattr( custom, 'assetListAssetImport' ):
