@@ -19,7 +19,7 @@ if [ "$(nmap -Pn -p 650$port $ip | grep open)" == "" ] ; then
 		echo -n .
 		sleep 1
 	done
-	cmd="/bin/xpra start --start-via-proxy=no --video-encoders=nvenc --bind-tcp=$ip:650$port :$port --start=terminology"
+	cmd="/usr/bin/xpra start --start-via-proxy=no --video-encoders=nvenc --bind-tcp=$ip:650$port :$port --start=terminology"
 	echo ssh $1 "$cmd"
 	ssh -p $sport $1 "$cmd"
 	echo -n "Waiting xpra start up in $1."
@@ -30,4 +30,4 @@ if [ "$(nmap -Pn -p 650$port $ip | grep open)" == "" ] ; then
 	echo
 fi
 echo Attaching...
-/bin/xpra attach tcp:$ip:650$port
+/usr/bin/xpra attach tcp:$ip:650$port
