@@ -28,10 +28,14 @@ class keentools(baseApp):
         #Nuke: NUKE_PATH = /path/to/genarts/OFX/Plugins
         #Also symbolic link to both libcudart.so.2.2 → libcudart.so.2 and libcufft.so.2.2 → libcufft.so.2 which hare in monsters-ofx64/lib64 folder.
         nuke.addon ( self,
-            # nukepath = self.path('$NUKE_VERSION/manual/KeenTools/'),
-            # lib      = self.path('$NUKE_VERSION/manual/KeenTools/libs/'),
-            nukepath = self.path('$NUKE_VERSION/'),
-            lib      = self.path('$NUKE_VERSION/plugin_libs/'),
+            nukepath = [
+                self.path('$NUKE_VERSION/'),
+                self.path('$NUKE_VERSION/manual/KeenTools/'),
+            ],
+            lib      = [
+                self.path('$NUKE_VERSION/plugin_libs/'),
+                self.path('$NUKE_VERSION/manual/KeenTools/libs/'),
+            ]
         )
 
         # self['KEENTOOLS_DATA_PATH'] = self.path('$NUKE_VERSION/manual/KeenTools/data/')
