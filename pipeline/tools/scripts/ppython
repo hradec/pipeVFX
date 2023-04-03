@@ -1,8 +1,11 @@
 #!/usr/bin/python2
 
-import sys, pipe
+import sys,os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))+'/python/' )
+import pipe
+os.environ['STUDIO']=os.path.dirname(pipe.roots().jobs().strip('/'))
 
+if 'dbusService' not in sys.argv[1]:
+    pipe.libs.version.set( python = '3.9' )
 
-
-pipe.apps.python().run('python')
-
+pipe.libs.python().run('python')
