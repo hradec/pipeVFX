@@ -29,12 +29,11 @@ if [ $ps -lt 2 ] ; then
 
         # user paths
         ls -d /$STUDIO/jobs/*/* | egrep '[A-Z]' | while read path ; do
-            find $path        \! -perm a+rwx    -exec chmod 00777 -v {} \;
-            # find $path        \! -group artists -exec chown root:artists -v {} \;
+            find $path        \! -perm 00777 -exec chmod 00777 -v {} \;
         done &
-        find /$STUDIO/jobs/*/*/*/users/*/tools/ \! -perm 00755 -type d -exec chmod 00755 {} \; &
-        find /$STUDIO/jobs/*/*/*/users/MAC/     \! -perm 00777 -type d -exec chmod 00777 -v {} \; &
-        find /$STUDIO/jobs/*/*/*/published/     \! -perm 00777         -exec chmod 00777 -v {} \; &
+        find /$STUDIO/jobs/*/*/*/users/*/tools/ \! -perm 00755  -exec chmod 00755 {} \; &
+        find /$STUDIO/jobs/*/*/*/users/MAC/     \! -perm 00777  -exec chmod 00777 -v {} \; &
+        find /$STUDIO/jobs/*/*/*/published/     \! -perm 00777  -exec chmod 00777 -v {} \; &
         # we made all user folders writable since covid!
         if [ "$STUDIO" == "atomo" ] ; then
             find /$STUDIO/jobs/*/*/*/users/     \! -perm a+rwx \! -path '*/tools/*'  \! -path '*/tools' -type d -exec chmod 00777 -v {} \; &
