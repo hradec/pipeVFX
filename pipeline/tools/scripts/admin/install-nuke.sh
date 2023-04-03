@@ -12,6 +12,7 @@ CD=$(pwd)
 nuke_root=$(python2 -c "import pipe;print '%s/nuke/' % pipe.roots.apps()")
 chrome_root=$(python2 -c "import pipe;print '%s/chrome/' % pipe.roots.apps()")
 
+echo $nuke_root
 temp=$nuke_root/.nuke-install
 mkdir -p $temp/
 cd $temp/
@@ -19,7 +20,7 @@ cd $temp/
 
 
 
-before_versions=$($chrome_root/$(ls -1 $chrome_root/ | sort -V | grep -v current | tail -1)/google-chrome --no-sandbox --headless --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36' --dump-dom 'https://support.foundry.com/hc/en-us/articles/360019296599-Q100600-Downloading-a-previous-version-of-Nuke' 2>/dev/null \
+before_versions=$($chrome_root/$(ls -1 $chrome_root/ | sort -V | grep -v current | tail -1)/google-chrome --no-sandbox --headless --ignore-certificate-errors --run-all-compositor-stages-before-draw --virtual-time-budget=1000000 --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36' --dump-dom 'https://support.foundry.com/hc/en-us/articles/360019296599-Q100600-Downloading-a-previous-version-of-Nuke' 2>/dev/null \
     | grep linux | while read l ; do echo $l | sed 's/ /\n/g' | grep linux.x86 | awk -F'"' '{print $2}' ; done \
     | sort -h | while read link ; do \
         echo $(echo $link | awk -F'/' '{print $(NF-1)}') $link ; \
