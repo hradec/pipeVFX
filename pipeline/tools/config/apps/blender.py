@@ -96,7 +96,7 @@ class blender(baseApp):
             if 'Saved:' in returnLog:
 
                 # collect image files from output log
-                images = [ x.split('Saved: ')[-1].strip().split("'")[1] for x in returnLog.split('\n') if 'Saved:' in x]
+                images = [ x.split('Saved: ')[-1].strip().strip("'") for x in returnLog.split('\n') if 'Saved:' in x]
 
         # run our pipe.frame.check generic frame check for the gathered image list
         if images:
