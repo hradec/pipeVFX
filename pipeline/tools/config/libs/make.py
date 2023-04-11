@@ -22,9 +22,9 @@
 
 class make(baseLib):
     flags = []
-    def versions(self):
-        if self.parent()  in ["make"]:
-            pipe.libs.version.set( python='2.7.6' )
+    # def versions(self):
+    #     if self.parent()  in ["make"]:
+    #         pipe.libs.version.set( python='2.7.6' )
 
     def environ(self):
         # update with all env vars for all libraries
