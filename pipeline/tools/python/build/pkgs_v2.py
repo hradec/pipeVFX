@@ -769,6 +769,12 @@ class all: # noqa
                 '3.18.2',
                 '7a882b3764f42981705286ac9daa29c2',
                 { self.gcc : '6.3.1' }
+            ),(
+                'https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3.tar.gz',
+                'cmake-3.26.3.tar.gz',
+                '3.26.3',
+                'a99c7c7d5d127834ff3923b4cd4a1612',
+                { self.gcc : '6.3.1' }
             )],
             cmd = [
                 "mkdir -p ./build",
@@ -4136,7 +4142,7 @@ class all: # noqa
                         self.python: '3.7.5',
                         self.boost: bv,
                         self.ptex: '2.3.2',
-                        self.openvdb[bsufix] : oiio['openvdb'].version,
+                        # self.openvdb[bsufix] : oiio['openvdb'].version,
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.38.0',
                         self.alembic[bsufix] : '1.7.11',
@@ -4166,7 +4172,7 @@ class all: # noqa
                         self.ptex: '2.3.2',
                         # self.python: self.openexr[bsufix][exr]['python'].version,
                         # openvdbOBJ.obj : openvdbOBJ.version,
-                        self.openvdb[bsufix] : oiio['openvdb'].version,
+                        # self.openvdb[bsufix] : oiio['openvdb'].version,
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.38.4',
                         self.alembic[bsufix] : '1.8.3',
@@ -4174,9 +4180,9 @@ class all: # noqa
                         self.osl[bsufix]: '1.11.17',
                         self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
                         self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
-                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: exr,
-                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: exr,
-                        self.osl[bsufix]['1.11.17']['openvdb'  ].obj: exr,
+                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
+                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                        self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'  ].version,
                         self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
                     )]
                 if build.versionMajor(bv) >= 1.76:
@@ -4193,7 +4199,7 @@ class all: # noqa
                         self.boost: bv,
                         self.ptex: '2.3.2',
                         # openvdbOBJ.obj : openvdbOBJ.version,
-                        self.openvdb[bsufix] : oiio['openvdb'].version,
+                        # self.openvdb[bsufix] : oiio['openvdb'].version,
                         self.opensubdiv[bsufix]: '3.4.0',
                         self.materialx[bsufix] : '1.38.4',
                         self.alembic[bsufix] : '1.8.3',
