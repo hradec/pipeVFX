@@ -217,13 +217,14 @@ OIIO_INCLUDE_PATH    = [
 ]
 OIIO_LIB_PATH        = "%s/lib"     % os.environ['OIIO_TARGET_FOLDER']
 
-VDB_INCLUDE_PATH    = [
-    "%s/include" % os.environ['OPENVDB_TARGET_FOLDER'],
-    "%s/include/openvdb" % os.environ['OPENVDB_TARGET_FOLDER'],
-    "%s/include/openvdb_ax" % os.environ['OPENVDB_TARGET_FOLDER'],
-    "%s/include/nanovdb" % os.environ['OPENVDB_TARGET_FOLDER'],
-]
-VDB_LIB_PATH        = "%s/lib"     % os.environ['OPENVDB_TARGET_FOLDER']
+if 'OPENVDB_TARGET_FOLDER' in os.environ:
+    VDB_INCLUDE_PATH    = [
+        "%s/include" % os.environ['OPENVDB_TARGET_FOLDER'],
+        "%s/include/openvdb" % os.environ['OPENVDB_TARGET_FOLDER'],
+        "%s/include/openvdb_ax" % os.environ['OPENVDB_TARGET_FOLDER'],
+        "%s/include/nanovdb" % os.environ['OPENVDB_TARGET_FOLDER'],
+    ]
+    VDB_LIB_PATH        = "%s/lib"     % os.environ['OPENVDB_TARGET_FOLDER']
 
 
 if 'HDF5_TARGET_FOLDER' in os.environ:
