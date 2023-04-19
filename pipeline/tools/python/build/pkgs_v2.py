@@ -769,24 +769,26 @@ class all: # noqa
                 '3.18.2',
                 '7a882b3764f42981705286ac9daa29c2',
                 { self.gcc : '6.3.1' }
-            ),(
-                'https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3.tar.gz',
-                'cmake-3.26.3.tar.gz',
-                '3.26.3',
-                'a99c7c7d5d127834ff3923b4cd4a1612',
-                { self.gcc : '6.3.1' }
+            # ),( # stdlib.h error!!
+            #     'https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3.tar.gz',
+            #     'cmake-3.26.3.tar.gz',
+            #     '3.26.3',
+            #     'a99c7c7d5d127834ff3923b4cd4a1612',
+            #     { self.gcc : '6.3.1' }
             )],
-            cmd = [
-                "mkdir -p ./build",
-                "mount -t tmpfs tmpfs ./build",
-                "cd ./build",
-                "../configure --system-curl --no-system-libs --parallel=$DCORES",
-                "./Bootstrap.cmk/cmake",
-                "make -j $DCORES VERBOSE=1",
-                "make -j $DCORES install",
-                "cd ../",
-                "umount ./build",
-            ],
+            cmd = ['''
+                mkdir -p ./build
+                mount -t tmpfs tmpfs ./build
+                cd ./build
+                if python -c "exit(0 if $VERSION_MAJOR <= 3.20 else 1)" ; then
+                    ../configure --system-curl --no-system-libs --parallel=$DCORES
+                    ./Bootstrap.cmk/cmake
+                    make -j $DCORES VERBOSE=1
+                    make -j $DCORES install
+                fi
+                cd ../
+                umount ./build
+            '''],
             sed = { '0.0.0' : {
                 'Source/kwsys/Terminal.c' : [
                     ('/* If running inside emacs the terminal is not VT100.  Some emacs','return 1;'),
@@ -797,10 +799,7 @@ class all: # noqa
                 ]},
             },
             depend = [ self.bzip2 ],
-            # environ={
-            #     # 'LDFLAGS' : "-Wl,-rpath-link,/usr/lib64/ -Wl,-rpath,/usr/lib64/ $LDFLAGS",
-            #     'LD'      : 'ld',
-            # },
+            # stdlib_error_fix = True,
         )
         self.cmake = cmake
         build.globalDependency(self.cmake)
@@ -1394,7 +1393,7 @@ class all: # noqa
             'boost_1_51_0.tar.gz',
             '1.51.0',
             '6a1f32d902203ac70fbec78af95b3cf8',
-            { self.gcc : '4.8.5' },
+            { self.gcc : '4.1.2' },
         ),(
             # CY2015 - CY2016
             'http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.gz', # houdini!!!
@@ -1447,7 +1446,8 @@ class all: # noqa
 
         )
         self.boost = boost
-        self.boost_versions_for_gaffer = [ '1.66.0', '1.76.0' ]
+        # self.boost_versions_for_gaffer = [ '1.66.0', '1.76.0' ]
+        self.boost_versions_for_gaffer = [ '1.76.0' ]
 
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
@@ -2398,9 +2398,11 @@ class all: # noqa
                     '-qt-harfbuzz -qt-libpng -qt-libjpeg -qt-sqlite -qt-webp '
                     # '-qt-assimp -qt-webengine-icu '
                     # '-qt-webengine-ffmpeg -qt-webengine-webp -qt-webengine-opus '
+                    # openrv needs this!
+                    # "-skip qtwebengine -skip qtdeclarative "
                     # these are from gaffer dependencies
-                    "-skip qtconnectivity -skip qtwebengine -skip qt3d "
-        			"-skip qtdeclarative -skip qtwebchannel -no-libudev "
+                    "-skip qtconnectivity -skip qt3d "
+        			"-skip qtwebchannel -no-libudev "
         			"-no-icu -no-dbus "
                 '; fi )',
                 'make -j $DCORES',
@@ -3697,12 +3699,15 @@ class all: # noqa
                 baseLibs=[self.python],
                 depend=[self.python, self.freeglut],
                 cmd = ['''
-                    if python -c "exit(0 if $PYTHON_VERSION_MAJOR >= 3.0 else 1)" ; then
+                    # don't build python 2 if version is bigger than 1.38
+                    if python -c "exit(1 if ($PYTHON_VERSION_MAJOR < 3.0 and $MATERIALX_VERSION_MAJOR >= 1.38 ) else 0)" ; then
                         cp ./CMakeLists.txt /dev/shm/
                         grep -v CMAKE_CXX_STANDARD /dev/shm/CMakeLists.txt > ./CMakeLists.txt
                         cmake $SOURCE_FOLDER -DCMAKE_CXX_STANDARD=14 '''+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags)+'''
                         make -j $DCORES
                         make -j $DCORES install
+                        mv $INSTALL_FOLDER/python/* $INSTALL_FOLDER/lib/python$PYTHON_VERSION_MAJOR/site-packages/
+                        rmdir $INSTALL_FOLDER/python/
                     else
                         # just wait so the build wont fail for being too fast
                         echo "not compatible with python $PYTHON_VERSION"
@@ -3710,6 +3715,7 @@ class all: # noqa
                     fi \
                 '''],
                 flags = [
+                    '-DCMAKE_INSTALL_RPATH=$RPATH',
                     '-DMATERIALX_BUILD_SHARED_LIBS=1', ## we need this to build in fedora!!
                     '-DMATERIALX_BUILD_PYTHON=1',
                     '-DMATERIALX_BUILD_VIEWER=1',
@@ -3735,6 +3741,7 @@ class all: # noqa
                         # Resolve "DSO missing from command line" error
                         'LDFLAGS' : '$LDFLAGS -Wl,--copy-dt-needed-entries',
                         'LD_LIBRARY_PATH' : '/lib64/:$/usr/lib64/:/lib/:/usr/lib/:$LD_LIBRARY_PATH',
+                        'RPATH'  : '$RPATH:'+self.exr_rpath_environ['RPATH'],
                     }
                 ),
             )
@@ -3835,6 +3842,8 @@ class all: # noqa
                 depend=[hdf5],
                 environ = {
                     # 'CXXFLAGS'  : '$CXXFLAGS -std=c++0x',
+                    'DCORES': '16' if build.CORES > 16 else build.CORES,
+                    'CORES' : '16' if build.CORES > 16 else build.CORES,
                     'CPATH' : '$CPATH:'+self.exr_rpath_environ['CPATH'],
                     'RPATH' : '$RPATH:'+self.exr_rpath_environ['RPATH'],
                     'LDFLAGS'   : ' -L$GLEW_TARGET_FOLDER/lib -lhdf5_hl  $LDFLAGS ',
@@ -4099,252 +4108,254 @@ class all: # noqa
             usd_CORES  = "%d" % (icores if icores<16 else 16)
             if 'TRAVIS' in os.environ and os.environ['TRAVIS']=='1':
                 usd_CORES  = "1"
-            for MONOLITHIC in [1,0]:
-                name = 'usd'
-                if MONOLITHIC == 0:
-                    name = 'usd_non_monolithic'
-                    # print self.alembic[bsufix].versions.keys(), bsufix
+            for pv in self.python.keys():
+                pvm = '.'.join(pv.split('.')[:2])
+                fpvm = build.versionMajor(pv)
+                usdsuffix = bsufix+'.python'+pv
+                for MONOLITHIC in [1,0]:
+                    name = 'usd'
+                    if MONOLITHIC == 0:
+                        name = 'usd_non_monolithic'
+                        # print self.alembic[bsufix].versions.keys(), bsufix
 
-                usd_download = []
-                if build.versionMajor(bv) >= 1.76:
-                    oiio = self.osl[bsufix]['1.11.17']['oiio'].obj[self.osl[bsufix]['1.11.17']['oiio'].version]
-                    usd_download += [(
-                        # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
-                        'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
-                        'USD-20.08.tar.gz',
-                        '20.8.0',
-                        'e7f31719ef2359c939d23871333a763a',
-                        {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
-                        self.embree_bin: '3.2.2', self.ocio : '1.1.1',
-                        self.boost: bv,
-                        self.python: '3.7.5',
-                        self.ptex: '2.3.2',
-                        self.opensubdiv[bsufix]: '3.4.0',
-                        self.materialx[bsufix] : '1.37.4',
-                        self.openvdb[bsufix] : oiio['openvdb'].version,
-                        self.alembic[bsufix] : '1.7.11',
-                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
-                        self.osl[bsufix]: '1.11.17',
-                        self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
-                        self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
-                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
-                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
-                        self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
-                    ),(
-                        # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
-                        'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
-                        'USD-21.05.tar.gz',
-                        '21.5.0',
-                        'f63736f66fe7f81d17c7a046cb6dbc39',
-                        {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
-                        self.embree[bsufix]: '3.13.3', self.ocio : '1.1.1',
-                        self.qt : '5.15.2', self.pyside: '5.15.2',
-                        self.python: '3.7.5',
-                        self.boost: bv,
-                        self.ptex: '2.3.2',
-                        # self.openvdb[bsufix] : oiio['openvdb'].version,
-                        self.opensubdiv[bsufix]: '3.4.0',
-                        self.materialx[bsufix] : '1.38.0',
-                        self.alembic[bsufix] : '1.7.11',
-                        self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
-                        self.osl[bsufix]: '1.11.17',
-                        self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
-                        self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
-                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
-                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
-                        self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'].version,
-                        self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
-                )]
-                if build.versionMajor(bv) >= 1.76:
-                    oiio = self.osl[bsufix]['1.11.17']['oiio'].obj[self.osl[bsufix]['1.11.17']['oiio'].version]
-                    exr = self.osl[bsufix]['1.11.17']['openexr'].version
-                    usd_download += [(
-                        # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
-                        'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.11.tar.gz',
-                        'USD-21.11.tar.gz',
-                        '21.11.0',
-                        '7fe232df5c732fedf466d33ff431ce33',
-                        {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
-                        self.embree[bsufix]: '3.13.4', self.ocio : '1.1.1',
-                        self.qt: '5.15.2', self.pyside: '5.15.2',
-                        self.python: '3.9.7',
-                        self.boost: bv,
-                        self.ptex: '2.3.2',
-                        # self.python: self.openexr[bsufix][exr]['python'].version,
-                        # openvdbOBJ.obj : openvdbOBJ.version,
-                        # self.openvdb[bsufix] : oiio['openvdb'].version,
-                        self.opensubdiv[bsufix]: '3.4.0',
-                        self.materialx[bsufix] : '1.38.4',
-                        self.alembic[bsufix] : '1.8.3',
-                        self.alembic[bsufix]['1.8.3']['hdf5'].obj : self.alembic[bsufix]['1.8.3']['hdf5'].version,
-                        self.osl[bsufix]: '1.11.17',
-                        self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
-                        self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
-                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
-                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
-                        self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'  ].version,
-                        self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
-                    )]
-                if build.versionMajor(bv) >= 1.76:
-                    oiio = self.osl[bsufix]['1.11.17']['oiio'].obj[self.osl[bsufix]['1.11.17']['oiio'].version]
-                    usd_download += [(
-                        'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v22.08.tar.gz',
-                        'USD-22.08.tar.gz',
-                        '22.08.0',
-                        'e017cc77977691ab6374bde7304060ec',
-                        {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
-                        self.embree[bsufix]: '3.13.4', self.ocio : '2.1.1',
-                        self.qt : '5.15.2', self.pyside: '5.15.2',
-                        self.python: '3.9.7',
-                        self.boost: bv,
-                        self.ptex: '2.3.2',
-                        # openvdbOBJ.obj : openvdbOBJ.version,
-                        # self.openvdb[bsufix] : oiio['openvdb'].version,
-                        self.opensubdiv[bsufix]: '3.4.0',
-                        self.materialx[bsufix] : '1.38.4',
-                        self.alembic[bsufix] : '1.8.3',
-                        self.alembic[bsufix]['1.8.3']['hdf5'].obj : self.alembic[bsufix]['1.8.3']['hdf5'].version,
-                        # self.alembic[bsufix]['1.8.3']['python'].obj : self.alembic[bsufix]['1.8.3']['python'].version,
-                        self.osl[bsufix]: '1.11.17',
-                        self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
-                        self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
-                        self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
-                        self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
-                        self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'].version,
-                        self.pyilmbase[bsufix]     : self.osl[bsufix]['1.11.17']['openexr'].version}
-                    )]
+                    usd_download = []
+                    if build.versionMajor(bv) == 1.76:
+                        if build.vComp(pv) > build.vComp('2.0.0') and build.vComp(pv) < build.vComp('3.0.0'):
+                            usd_download += [(
+                                # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
+                                'https://github.com/PixarAnimationStudios/USD/archive/v20.08.tar.gz',
+                                'USD-20.08.tar.gz',
+                                '20.8.0',
+                                'e7f31719ef2359c939d23871333a763a',
+                                {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                                self.embree_bin: '3.2.2', self.ocio : '1.1.1',
+                                self.boost: bv,
+                                self.python: pv,
+                                self.ptex: '2.3.2',
+                                self.opensubdiv[bsufix]: '3.4.0',
+                                self.materialx[bsufix] : '1.37.4',
+                                self.alembic[bsufix] : '1.7.11',
+                                self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
+                                self.osl[bsufix]: '1.11.17',
+                                self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                                self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                                self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
+                                self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                                self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'].version,
+                                self.pyilmbase[bsufix]                      : self.osl[bsufix]['1.11.17']['openexr'].version}
+                            )]
 
+                    if build.versionMajor(bv) == 1.76:
+                        if build.vComp(pv) > build.vComp('3.5.0') and build.vComp(pv) < build.vComp('3.10.0'):
+                            usd_download += [(
+                                # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
+                                'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
+                                'USD-21.05.tar.gz',
+                                '21.5.0',
+                                'f63736f66fe7f81d17c7a046cb6dbc39',
+                                {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                                self.embree[bsufix]: '3.13.3', self.ocio : '1.1.1',
+                                self.qt : '5.15.2', self.pyside: '5.15.2',
+                                self.python: pv,
+                                self.boost: bv,
+                                self.ptex: '2.3.2',
+                                self.opensubdiv[bsufix]: '3.4.0',
+                                self.materialx[bsufix] : '1.38.0',
+                                self.alembic[bsufix] : '1.7.11',
+                                self.alembic[bsufix]['1.7.11']['hdf5'].obj : self.alembic[bsufix]['1.7.11']['hdf5'].version,
+                                self.osl[bsufix]: '1.11.17',
+                                self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                                self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                                self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
+                                self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                                self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'].version,
+                                self.pyilmbase[bsufix]                      : self.osl[bsufix]['1.11.17']['openexr'].version}
+                            )]
+                    if build.versionMajor(bv) == 1.76:
+                        if build.vComp(pv) > build.vComp('3.5.0') and build.vComp(pv) < build.vComp('3.10.0'):
+                            usd_download += [(
+                                # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
+                                'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.11.tar.gz',
+                                'USD-21.11.tar.gz',
+                                '21.11.0',
+                                '7fe232df5c732fedf466d33ff431ce33',
+                                {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                                self.embree[bsufix]: '3.13.4', self.ocio : '1.1.1',
+                                self.qt: '5.15.2', self.pyside: '5.15.2',
+                                self.python: pv,
+                                self.boost: bv,
+                                self.ptex: '2.3.2',
+                                self.opensubdiv[bsufix]: '3.4.0',
+                                self.materialx[bsufix] : '1.38.4',
+                                self.alembic[bsufix] : '1.8.3',
+                                self.alembic[bsufix]['1.8.3']['hdf5'].obj : self.alembic[bsufix]['1.8.3']['hdf5'].version,
+                                self.osl[bsufix]: '1.11.17',
+                                self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                                self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                                self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
+                                self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                                self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'  ].version,
+                                self.pyilmbase[bsufix]                      : self.osl[bsufix]['1.11.17']['openexr'].version}
+                            )]
+                    if build.versionMajor(bv) == 1.76:
+                        if build.vComp(pv) > build.vComp('3.5.0') and build.vComp(pv) < build.vComp('3.10.0'):
+                            usd_download += [(
+                                'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v22.08.tar.gz',
+                                'USD-22.08.tar.gz',
+                                '22.08.0',
+                                'e017cc77977691ab6374bde7304060ec',
+                                {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                                self.embree[bsufix]: '3.13.4', self.ocio : '2.1.1',
+                                self.qt : '5.15.2', self.pyside: '5.15.2',
+                                self.python: pv,
+                                self.boost: bv,
+                                self.ptex: '2.3.2',
+                                self.opensubdiv[bsufix]: '3.4.0',
+                                self.materialx[bsufix] : '1.38.4',
+                                self.alembic[bsufix] : '1.8.3',
+                                self.alembic[bsufix]['1.8.3']['hdf5'].obj : self.alembic[bsufix]['1.8.3']['hdf5'].version,
+                                self.osl[bsufix]: '1.11.17',
+                                self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
+                                self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
+                                self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
+                                self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
+                                self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'].version,
+                                self.pyilmbase[bsufix]                      : self.osl[bsufix]['1.11.17']['openexr'].version}
+                            )]
+                    # print("++++++++++++++++++++:", pv, int(build.vComp(pv)) , int(build.vComp('3.5.0')) , int(build.vComp('3.10.0')), usdsuffix)
+                    # from pprint import pprint
+                    # pprint([ x[2] for x in usd_download ])
 
-                usd = build.cmake(
-                    ARGUMENTS,
-                    name,
-                    sed = usd_sed,
-                    targetSuffix = bsufix,
-                    download = usd_download,
-                    # baseLibs=[python],
-                    depend=[
-                        self.clew[bsufix], self.lz4[bsufix], self.clew[bsufix],
-                        self.seexpr[bsufix], self.xerces[bsufix], self.openvdb[bsufix],
-                        self.icu, self.glfw, self.glew,
-                        self.pyside, self.qt, self.python, self.jemalloc
-                    ],
-                    cmd = [
-                        "rm -rf build",
-                        "mkdir build",
-                        "cd build",
-                        # we need to do this since USD 21 will insist in using the system tbb!!
-                        "( mv /usr/lib64/libtbb.so.2 /usr/lib64/__libtbb.so.2__ || true )",
-                        "( mv /usr/bin/python* /dev/shm/ || true )",
-                        "( mv /usr/lib64/libpython* /dev/shm/ || true )",
-                        # "export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH" % os.popen("dirname $(ldconfig -p | grep libc.so.6 | awk '{print $(NF)}')").readlines()[0].strip(),
-                        # "echo $LD_LIBRARY_PATH",
-                        "cmake --build --target install --parallel $CORES ..",
-                        # patch generated files to remove any "-isystem /usr/include" from the build cmd lines, to avoid gcc errors!
-                        "( grep '.isystem /usr/include' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak -e 's/.isystem .usr.include/-I \/usr\/include/g' $p ; done )",
-                        # now we can build!
-                        "make -j $CORES",
-                        "make -j $CORES install",
-                        "( ln -s lib/python/pxr $INSTALL_FOLDER/python || true )",
-                        # now we can return the system tbb back
-                        "( mv /usr/lib64/__libtbb.so.2__ /usr/lib64/libtbb.so.2 | true )",
-                        "( mv /dev/shm/libpython* /usr/lib64/ || true )",
-                        "( mv /dev/shm/python* /usr/bin/ || true )",
+                    usd = build.cmake(
+                        ARGUMENTS,
+                        name,
+                        sed = usd_sed,
+                        targetSuffix = usdsuffix,
+                        download = usd_download,
+                        # baseLibs=[python],
+                        depend=[
+                            self.clew[bsufix], self.lz4[bsufix], self.clew[bsufix],
+                            self.seexpr[bsufix], self.xerces[bsufix], self.openvdb[bsufix],
+                            self.icu, self.glfw, self.glew,
+                            self.pyside, self.qt, self.python, self.jemalloc
+                        ],
+                        cmd = [
+                            "rm -rf build",
+                            "mkdir build",
+                            "cd build",
+                            # we need to do this since USD 21 will insist in using the system tbb!!
+                            "( mv /usr/lib64/libtbb.so.2 /usr/lib64/__libtbb.so.2__ || true )",
+                            "( mv /usr/bin/python* /dev/shm/ || true )",
+                            "( mv /usr/lib64/libpython* /dev/shm/ || true )",
+                            # "export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH" % os.popen("dirname $(ldconfig -p | grep libc.so.6 | awk '{print $(NF)}')").readlines()[0].strip(),
+                            # "echo $LD_LIBRARY_PATH",
+                            "cmake --build --target install --parallel $CORES ..",
+                            # patch generated files to remove any "-isystem /usr/include" from the build cmd lines, to avoid gcc errors!
+                            "( grep '.isystem /usr/include' ./* -R | awk -F':' '{print $1}' | while read p ; do sed -i.bak -e 's/.isystem .usr.include/-I \/usr\/include/g' $p ; done )",
+                            # now we can build!
+                            "make -j $CORES",
+                            "make -j $CORES install",
+                            "( ln -s lib/python/pxr $INSTALL_FOLDER/python || true )",
+                            # now we can return the system tbb back
+                            "( mv /usr/lib64/__libtbb.so.2__ /usr/lib64/libtbb.so.2 | true )",
+                            "( mv /dev/shm/libpython* /usr/lib64/ || true )",
+                            "( mv /dev/shm/python* /usr/bin/ || true )",
 
-                    ],
-                    flags=[
-                        # installation prefix
-                        "-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER",
-                        "-D CMAKE_PREFIX_PATH=$INSTALL_FOLDER",
+                        ],
+                        flags=[
+                            # installation prefix
+                            "-D CMAKE_INSTALL_PREFIX=$INSTALL_FOLDER",
+                            "-D CMAKE_PREFIX_PATH=$INSTALL_FOLDER",
 
-                        # libraries locations
-                        "-D TBB_ROOT_DIR=$TBB_TARGET_FOLDER",
-                        "-D BOOST_ROOT=$BOOST_TARGET_FOLDER",
-                        "-D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR",
-                        "-D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER",
-                        "-D HDF5_LOCATION=$HDF5_TARGET_FOLDER",
-                        "-D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib",
-                        "-D GLEW_LOCATION=$GLEW_TARGET_FOLDER/",
-                        "-D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER",
-                        "-D OIIO_LOCATION=$OIIO_TARGET_FOLDER",
-                        "-D OSL_LOCATION=$OSL_TARGET_FOLDER",
-                        "-D PTEX_LOCATION=$PTEX_TARGET_FOLDER",
-                        "-D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER",
-                        "-D MATERIALX_LIB_DIRS=$MATERIALX_TARGET_FOLDER/lib/",
-                        "-D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/",
-                        "-D PYSIDEUICBINARY=$PYSIDE_TARGET_FOLDER/bin/uic",
-                        "-D PXR_PYTHON_SHEBANG='$PYTHON_TARGET_FOLDER/bin/python'",
+                            # libraries locations
+                            "-D TBB_ROOT_DIR=$TBB_TARGET_FOLDER",
+                            "-D BOOST_ROOT=$BOOST_TARGET_FOLDER",
+                            "-D BOOST_LIBRARYDIR=$BOOST_TARGET_FOLDER/lib/python$PYTHON_VERSION_MAJOR",
+                            "-D ALEMBIC_DIR=$ALEMBIC_TARGET_FOLDER",
+                            "-D HDF5_LOCATION=$HDF5_TARGET_FOLDER",
+                            "-D OPENEXR_LOCATION=$OPENEXR_TARGET_FOLDER/lib",
+                            "-D GLEW_LOCATION=$GLEW_TARGET_FOLDER/",
+                            "-D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER",
+                            "-D OIIO_LOCATION=$OIIO_TARGET_FOLDER",
+                            "-D OSL_LOCATION=$OSL_TARGET_FOLDER",
+                            "-D PTEX_LOCATION=$PTEX_TARGET_FOLDER",
+                            "-D MATERIALX_ROOT=$MATERIALX_TARGET_FOLDER",
+                            "-D MATERIALX_LIB_DIRS=$MATERIALX_TARGET_FOLDER/lib/",
+                            "-D MATERIALX_STDLIB_DIR=$MATERIALX_TARGET_FOLDER/Libraries/",
+                            "-D PYSIDEUICBINARY=$PYSIDE_TARGET_FOLDER/bin/uic",
+                            "-D PXR_PYTHON_SHEBANG='$PYTHON_TARGET_FOLDER/bin/python'",
 
-                        # boost options
-                        "-D Boost_NO_SYSTEM_PATHS=ON",
-                        "-D Boost_NO_BOOST_CMAKE=ON",
+                            # boost options
+                            "-D Boost_NO_SYSTEM_PATHS=ON",
+                            "-D Boost_NO_BOOST_CMAKE=ON",
 
-                        # fix malloc problem with newer glibc (better performance too)
-                        "-D PXR_MALLOC_LIBRARY:path=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
-                        "-D PXR_MALLOC_LIBRARY=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
+                            # fix malloc problem with newer glibc (better performance too)
+                            "-D PXR_MALLOC_LIBRARY:path=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
+                            "-D PXR_MALLOC_LIBRARY=$JEMALLOC_TARGET_FOLDER/lib/libjemalloc.so",
 
-                        # embree
-                        "-D PXR_BUILD_EMBREE_PLUGIN=ON",
-                        "-D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER",
+                            # embree
+                            "-D PXR_BUILD_EMBREE_PLUGIN=ON",
+                            "-D EMBREE_LOCATION=$EMBREE_TARGET_FOLDER",
 
-                        # enable plugins
-                        "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
-                        "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
-                        "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
-                        "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
-                        "-D PXR_BUILD_IMAGING=ON",
-                        "-D PXR_BUILD_USD_IMAGING=ON",
-                        "-D PXR_ENABLE_HDF5_SUPPORT=ON",
-                        "-D PXR_ENABLE_OSL_SUPPORT=ON",
-                        "-D PXR_ENABLE_PTEX_SUPPORT=ON",
-                        "-D PXR_ENABLE_OPENVDB_SUPPORT=ON",
+                            # enable plugins
+                            "-D PXR_BUILD_ALEMBIC_PLUGIN=ON",
+                            "-D PXR_BUILD_OPENIMAGEIO_PLUGIN=ON",
+                            "-D PXR_BUILD_OPENCOLORIO_PLUGIN=ON",
+                            "-D PXR_BUILD_MATERIALX_PLUGIN=ON",
+                            "-D PXR_BUILD_IMAGING=ON",
+                            "-D PXR_BUILD_USD_IMAGING=ON",
+                            "-D PXR_ENABLE_HDF5_SUPPORT=ON",
+                            "-D PXR_ENABLE_OSL_SUPPORT=ON",
+                            "-D PXR_ENABLE_PTEX_SUPPORT=ON",
+                            "-D PXR_ENABLE_OPENVDB_SUPPORT=ON",
 
-                        # enable support to different components.
-                        "-D PXR_BUILD_TESTS=ON",
-                        "-D PXR_BUILD_GPU_SUPPORT=ON",
+                            # enable support to different components.
+                            "-D PXR_BUILD_TESTS=ON",
+                            "-D PXR_BUILD_GPU_SUPPORT=ON",
 
-                        # build options to improve compatibility (gaffer/cortex)
-                        "-D PXR_BUILD_MONOLITHIC=%d" % MONOLITHIC,
-                        "-D VERBOSE=1",
-                        "-D CMAKE_CXX_STANDARD=11",
-                        "-D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
-                        "-D_GLIBCXX_USE_CXX11_ABI=0",
-                    ],
-                    environ = {
-                        # we need boost first of everything else since icu also has regex.h
-                        'LD'        : 'ld',
-                        'CFLAGS'    : ' '.join([
-                            ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w ',#'-isystem $BOOST_TARGET_FOLDER/include/boost ',
-                        ]),
-                        'CXXFLAGS'  : ' '.join([
-                            ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w ',#'-isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options ',
-                        ]),
-                        'LDFLAGS'   : ' '.join([
-                            '$LDFLAGS -lboost_regex -lboost_program_options',
-                        ]),
-                        'LD_PRELOAD': ':'.join([
-                            '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
-                            '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
-                        ]),
-                        'CORES'  : usd_CORES,
-                        'DCORES' : usd_CORES,
-                        'HCORES' : usd_CORES,
-                        'CPATH'  : '$CPATH:'+self.exr_rpath_environ['CPATH'],
-                        'RPATH'  : '$RPATH:'+self.exr_rpath_environ['RPATH'],
-                    },
-                    # verbose=1,
-                )
-                if MONOLITHIC:
-                    self.usd[bsufix] = usd
-                else:
-                    self.usd_non_monolithic[bsufix] = usd
+                            # build options to improve compatibility (gaffer/cortex)
+                            "-D PXR_BUILD_MONOLITHIC=%d" % MONOLITHIC,
+                            "-D VERBOSE=1",
+                            "-D CMAKE_CXX_STANDARD=11",
+                            "-D CMAKE_CXX_STANDARD_COMPUTED_DEFAULT=11",
+                            "-D_GLIBCXX_USE_CXX11_ABI=0",
+                        ],
+                        environ = {
+                            # we need boost first of everything else since icu also has regex.h
+                            'LD'        : 'ld',
+                            'CFLAGS'    : ' '.join([
+                                ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w ',#'-isystem $BOOST_TARGET_FOLDER/include/boost ',
+                            ]),
+                            'CXXFLAGS'  : ' '.join([
+                                ' -D_GLIBCXX_USE_CXX11_ABI=0 -fopenmp -O2 -fPIC -w ',#'-isystem $BOOST_TARGET_FOLDER/include/boost -lboost_program_options ',
+                            ]),
+                            'LDFLAGS'   : ' '.join([
+                                '$LDFLAGS -lboost_regex -lboost_program_options',
+                            ]),
+                            'LD_PRELOAD': ':'.join([
+                                '$LATESTGCC_TARGET_FOLDER/lib64/libstdc++.so.6',
+                                '$LATESTGCC_TARGET_FOLDER/lib64/libgcc_s.so.1',
+                            ]),
+                            'CORES'  : usd_CORES,
+                            'DCORES' : usd_CORES,
+                            'HCORES' : usd_CORES,
+                            'CPATH'  : '$CPATH:'+self.exr_rpath_environ['CPATH'],
+                            'RPATH'  : '$RPATH:'+self.exr_rpath_environ['RPATH'],
+                        },
+                        # verbose=1,
+                    )
+                    if MONOLITHIC:
+                        self.usd[usdsuffix] = usd
+                    else:
+                        self.usd_non_monolithic[usdsuffix] = usd
 
-            # ============================================================================================================================================
-            # github build point so we can split the build in multiple matrix jobs in github actions
-            # ============================================================================================================================================
-            for v in self.usd[bsufix].keys():
-                build.github_phase_one_version(ARGUMENTS, {self.usd[bsufix] : v})
-            for v in self.usd_non_monolithic[bsufix].keys():
-                build.github_phase_one_version(ARGUMENTS, {self.usd_non_monolithic[bsufix] : v})
+                # ============================================================================================================================================
+                # github build point so we can split the build in multiple matrix jobs in github actions
+                # ============================================================================================================================================
+                for v in self.usd[usdsuffix].keys():
+                    build.github_phase_one_version(ARGUMENTS, {self.usd[usdsuffix] : v})
+                for v in self.usd_non_monolithic[usdsuffix].keys():
+                    build.github_phase_one_version(ARGUMENTS, {self.usd_non_monolithic[usdsuffix] : v})
 
 
 
@@ -4388,8 +4399,8 @@ class all: # noqa
         # ============================================================================================================================================
         # CGRU
         # ============================================================================================================================================
-        cgru_boost_version = '1.66.0'
-        cgru_boost_sufix = 'boost.1.66.0'
+        cgru_boost_version = '1.76.0'
+        cgru_boost_sufix = 'boost.1.76.0'
         self.cgru = build.configure(
             build.ARGUMENTS,
             'cgru',

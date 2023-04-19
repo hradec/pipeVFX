@@ -35,7 +35,7 @@ def cortex_download(pkgs):
         'cortex-9.18.0.tar.gz',
         '9.18.0',
         'b3c55cc5e0e95668208713a01a145869',
-        { pkgs.gcc: '4.1.2', },
+        { pkgs.gcc: '4.8.5', },
         # we introduce a 5th element to the download array here, the compatibility
         # dictionary, which tells the min and max version of a compatible
         # package, so we don't build if that version is imcompatible.
@@ -277,6 +277,7 @@ arnold_versions = {
     # '7.1.2.0' : {'gaffer': ['1.1.1.0', '1.1.2.0']},
     '7.1.3.2' : {'gaffer': ['1.1.2.0', '1.1.4.0', '1.1.5.1']},
     '7.1.4.1' : {'gaffer': ['1.1.7.0']},
+    # '7.2.0.0' : {'gaffer': ['1.1.7.0']},
 }
 mtoa_versions = {
     '5.0.0.2' : {'maya' : ['2022'        ], 'arnold' : '7.0.0.0'},
@@ -284,6 +285,7 @@ mtoa_versions = {
     '5.1.3'   : {'maya' : ['2022', '2023'], 'arnold' : '7.1.2.0'},
     '5.2.1.1' : {'maya' : ['2022', '2023'], 'arnold' : '7.1.3.2'},
     '5.2.2.1' : {'maya' : ['2022', '2023'], 'arnold' : '7.1.4.1'},
+    # '5.3.0'   : {'maya' : ['2022', '2023'], 'arnold' : '7.2.0.0'},
 }
 # download and install arnold for us, based on the table above
 for arnold_version in arnold_versions:
@@ -332,7 +334,7 @@ if os.path.exists( patchFile ):
     devPatch = [ ''.join(open(patchFile).readlines()) ]
 
 
-def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_monolithic=False):
+def cortex(apps=[], boost=None, usd=None, python=None, pkgs=None, __download__=None, usd_monolithic=False):
     ''' build cortex '''
     if not hasattr(pkgs, 'cortex'):
         pkgs.cortex = {}
@@ -343,9 +345,11 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         boost = pkgs.masterVersion['boost']
 
     legacy(pkgs=pkgs)
+    python_version = python #'.'.join(python.split('.')[:2])
     depend = cortex_depency(pkgs)
     boost_version = boost
     bsufix = "boost.%s" % boost_version
+    usd_suffix = bsufix+'.python%s' % python_version
     extraInstall = ""
 
     # only build versions that are compatible with the current boost!
@@ -358,8 +362,8 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
 
     # build the usd cortex only for the boost version used to build the current usd version.
     usd_version = usd
-    usd = pkgs.usd[bsufix][usd_version]
-    usd_non_monolithic = pkgs.usd_non_monolithic[bsufix][usd_version]
+    usd = pkgs.usd[usd_suffix][usd_version]
+    usd_non_monolithic = pkgs.usd_non_monolithic[usd_suffix][usd_version]
 
     sufix = ''
     dontUseTargetSuffixForFolders = 1
@@ -367,18 +371,18 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
         version = apps[0][1]
         sufix = "-%s.%s" % (str(apps[0][0]).split("'")[1].split(".")[-1], version)
         dontUseTargetSuffixForFolders = 1
-        print('############>', build.vComp(version))
-        for x in _download:
-            if "maya" in x[5]:
-                print('################>', build.vComp(version), build.vComp(version) >= build.vComp(x[5]["maya"][0]), build.vComp(version) <= build.vComp(x[5]["maya"][1]), x[2] )
+        # print('############>', build.vComp(version))
+        # for x in _download:
+        #     if "maya" in x[5]:
+        #         print('################>', build.vComp(version), build.vComp(version) >= build.vComp(x[5]["maya"][0]), build.vComp(version) <= build.vComp(x[5]["maya"][1]), x[2] )
         _download = [ []+x for x in _download
             if "maya" in x[5] and
             build.vComp(version) >= build.vComp(x[5]["maya"][0]) and
             build.vComp(version) <= build.vComp(x[5]["maya"][1])
         ]
-    print(_download)
+    # print(_download)
 
-    sufix = "boost.%s-usd.%s%s" % (boost_version, usd_version, sufix)
+    sufix = "boost.%s-usd.%s-python%s%s" % (boost_version, usd_version, python_version, sufix)
     # build.s_print( "cortex: "+sufix, __download )
 
     # since USD was introduced in cortex 10, only build for version >= 10
@@ -494,7 +498,7 @@ def cortex(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
 # ===========================================================================================
 # GAFFER
 # ===========================================================================================
-def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_monolithic=False):
+def gaffer(apps=[], boost=None, usd=None, python=None, pkgs=None, __download__=None, usd_monolithic=False):
     if not hasattr(pkgs, 'gaffer'):
         pkgs.gaffer = {}
 
@@ -503,6 +507,7 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
     if not boost:
         boost = pkgs.masterVersion['boost']
 
+    python_version = python #'.'.join(python.split('.')[:2])
     depend = cortex_depency(pkgs)
     version=0
     suffix = ''
@@ -515,12 +520,14 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
     # grab the latest version of cortex to build gaffer.
     download = cortex_download(pkgs)
     _downloadCortex9 = [ []+x for x in download if build.versionMajor(x[2]) < 10.0 ]
-    cortex9version = _downloadCortex9[-1][2]
+    cortex9version = []
+    if _downloadCortex9:
+        cortex9version = _downloadCortex9[-1][2]
     _downloadCortex10 = [ []+x for x in download if build.versionMajor(x[2]) >= 10.0 ]
     cortex10version = _downloadCortex10[-1][2]
 
     # define sufix from required boost/usd versions
-    suffix = "boost.%s-usd.%s%s" % (boost, usd, suffix)
+    suffix = "boost.%s-usd.%s-python%s%s" % (boost, usd, python_version, suffix)
     # build.s_print( "gaffer: "+suffix )
 
     # replace the whole dowload list with a custom one
@@ -540,11 +547,12 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
 
     # update dependencies, retrieving the versions from the boost/usd main versions
     # only build gaffer for the allowed cortex version
-    _download = [ list(x) for x in _download if x[5]['cortex'] in pkgs.cortex["boost.%s-usd.%s" % (boost, usd)].versions ]
+    cortex_sufix = "boost.%s-usd.%s-python%s" % (boost, usd, python_version)
+    _download = [ list(x) for x in _download if x[5]['cortex'] in pkgs.cortex[cortex_sufix].versions ]
     if _download:
         for n in range(len(_download)):
             gaffer_version = _download[n][2]
-            cortexOBJ = pkgs.cortex["boost.%s-usd.%s" % (boost, usd)][_download[n][5]['cortex']]
+            cortexOBJ = pkgs.cortex[cortex_sufix][_download[n][5]['cortex']]
 
             # default packages for gaffer
             # _download[n][4].update( gaffer_dependency_dict(pkgs, _download[n][2]) )
@@ -597,7 +605,7 @@ def gaffer(apps=[], boost=None, usd=None, pkgs=None, __download__=None, usd_mono
             })
 
             # build.s_print( "gaffer version: %s (%s)" % (_download[n][2], suffix))
-            print( "::======> build.vComp(%s) <= build.vComp('9.9.9.9') = %s" % (gaffer_version, build.vComp(gaffer_version) <= build.vComp('9.9.9.9')) )
+            # print( "::======> build.vComp(%s) <= build.vComp('9.9.9.9') = %s" % (gaffer_version, build.vComp(gaffer_version) <= build.vComp('9.9.9.9')) )
             cyclesOBJ = None
             if build.vComp(gaffer_version) >= build.vComp('1.0.3.0') and build.vComp(gaffer_version) <= build.vComp('9.9.9.9'):
                 # build cycles for the given boost/usd/gaffer version
@@ -836,7 +844,8 @@ def legacy(pkgs):
             # delete usd, alembic and openvdb from dependency
             # in the _download template!
             for pkg in _download[n][4].keys():
-                if pkg.name in ['usd', 'openvdb', 'alembic']:
+                # if pkg.name in ['usd', 'openvdb', 'alembic']:
+                if pkg.name in ['usd', 'alembic']:
                     del _download[n][4][pkg]
 
             _download[n][4] = _download[n][4].copy()
