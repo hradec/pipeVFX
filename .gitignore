@@ -28,3 +28,5 @@ cuda*.run
 mtoaRoot
 arnoldRoot
 updates
+
+*.env

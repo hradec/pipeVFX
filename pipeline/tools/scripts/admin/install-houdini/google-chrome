@@ -1,0 +1,7 @@
+#!/bin/bash
+CD=$(dirname $(readlink -f $0))
+
+export PYTHONPATH=$CD/../../../python
+# env LD_PRELOAD="" /usr/bin/python2 -c "import pipe;pipe.apps.chrome().run(\"chrome\")" --password-store=basic "$@"
+chrome_root=$(python2 -c "import pipe;print '%s/chrome/' % pipe.roots.apps()")
+$chrome_root/$(ls -1 $chrome_root/ | sort -V | grep -v current | tail -1)/google-chrome  --no-sandbox  --password-store=basic "$@"
