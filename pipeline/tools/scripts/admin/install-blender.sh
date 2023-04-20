@@ -36,7 +36,7 @@ curl -k -s -L 'https://download.blender.org/release/' \
                     rm -rf ./*
                     echo "Downloading and uncompressing $fileName..."
                     curl -k -L "https://download.blender.org/release/$p/$fileName" | tar xJf -
-                    find ./ -type f -name blender | while read p ; do
+                    find ./ -type f -name blender-softwaregl | while read p ; do
                         for version in $($p --version | grep Blender | awk '{print $2}') ; do
                             if [ ! -e $blender_root/$version/blender ] ; then
                                 folder=$(dirname $p)
