@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env ppython
 # =================================================================================
 #    This file is part of pipeVFX.
 #
@@ -27,6 +27,8 @@ import pipe
 try:
 	import gobject
 except:
+	from pkg_resources import require
+	require("PyGObject")
 	from gi.repository import GLib
 	gobject = GLib
 
