@@ -544,12 +544,12 @@ class all: # noqa
 
         # a dummy build that stalls until the passed build is done!
         if 'TRAVIS' not in os.environ:
-            build.wait4dependencies(self.gcc, 'cleanup_after_gcc', cmd=["rm -rvf $GCC_TARGET_FOLDER/../../../gcc-* ; echo DONE"])
+            build.wait4dependencies(ARGUMENTS, self.gcc, 'cleanup_after_gcc', cmd=["rm -rvf $GCC_TARGET_FOLDER/../../../gcc-* ; echo DONE"])
 
         # everythin will depend on this dummy post-gcc build, so everything
         # will wait for gcc to finish before start.
         # this is essential when building packages in parallel (scons -j)
-        build.github_phase(self.gcc, version='6.3.1')
+        build.github_phase(ARGUMENTS, self.gcc, version='6.3.1')
 
 
         self.patchelf = build.configure(
@@ -895,7 +895,7 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.cmake)
+        build.github_phase(ARGUMENTS, self.cmake)
 
         # =============================================================================================================================================
         # build all other generic packages
@@ -941,7 +941,7 @@ class all: # noqa
             build.globalDependency(self.pip[pip])
 
         build.github_phase_one_version(ARGUMENTS, depend=[ self.pip[x] for x in self.pip ])
-        # build.github_phase(self.pip[pip])
+        # build.github_phase(ARGUMENTS, self.pip[pip])
 
         freeglut = build.configure(
             ARGUMENTS,
@@ -1370,7 +1370,7 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.pythonldap)
+        build.github_phase(ARGUMENTS, self.pythonldap)
 
 
         # ============================================================================================================================================
@@ -1467,7 +1467,7 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.boost)
+        build.github_phase(ARGUMENTS, self.boost)
 
         # =============================================================================================================================================
         # update rpath for all packages from here
@@ -1869,12 +1869,18 @@ class all: # noqa
                         'mkdir -p $INSTALL_FOLDER/../../../ilmbase/',
                         'mkdir -p $INSTALL_FOLDER/../../../pyilmbase/',
                         'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../pyilmbase/$OPENEXR_VERSION',
-                        'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../ilmbase/$OPENEXR_VERSION'
-                    ' ; elif python -c "exit(0 if $VERSION_MAJOR < 2.4 else 1)" ; then '
-                        './configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER',
-                        'make -j $DCORES',
-                        'make -j $DCORES install'
-                    ' ; else '
+                        'ln -s ../openexr/$OPENEXR_VERSION $INSTALL_FOLDER/../../../ilmbase/$OPENEXR_VERSION ;'
+                    '''\
+                    elif python -c "exit(0 if $VERSION_MAJOR < 2.4 else 1)" ; then
+                            if python -c "exit(0 if $PYTHON_VERSION_MAJOR < 3.0 else 1)" ; then
+                                ./configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER
+                                make -j $DCORES
+                                make -j $DCORES install
+                            else
+                                sleep 10
+                                echo "Python version $PYTHON_VERSION_MAJOR is not build for this package"
+                            fi
+                     else ; '''
                         'mkdir -p build',
                         'cd build',
                         'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DImath_DIR=$INSTALL_FOLDER/../../../ilmbase/$VERSION/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
@@ -2003,7 +2009,7 @@ class all: # noqa
             # github build point so we can split the build in multiple matrix jobs in github actions
             # ============================================================================================================================================
             # build.github_phase_one_version(ARGUMENTS, {self.pyilmbase[sufix] : v for v in self.pyilmbase[sufix].keys()})
-            build.github_phase(self.pyilmbase[sufix])
+            build.github_phase(ARGUMENTS, self.pyilmbase[sufix])
 
 
 
@@ -2291,7 +2297,7 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.glfw, depend=[
+        build.github_phase(ARGUMENTS, self.glfw, depend=[
             self.pugixml,
             self.ocio,
             self.hdf5,
@@ -2445,7 +2451,7 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.qt)
+        build.github_phase(ARGUMENTS, self.qt)
 
 
         # qt packages
@@ -2717,7 +2723,7 @@ class all: # noqa
         # ============================================================================================================================================
         # github build point so we can split the build in multiple matrix jobs in github actions
         # ============================================================================================================================================
-        build.github_phase(self.pyside)
+        build.github_phase(ARGUMENTS, self.pyside)
 
 
         log4cplus = build.configure(
@@ -3396,7 +3402,7 @@ class all: # noqa
                 environ = environ,
             )
             self.oiio[sufix] = oiio
-            # build.github_phase(self.oiio[sufix])
+            # build.github_phase(ARGUMENTS, self.oiio[sufix])
             for v in self.oiio[sufix].keys():
                 build.github_phase_one_version(ARGUMENTS, {self.oiio[sufix] : v})
 
@@ -4607,6 +4613,18 @@ class all: # noqa
             )],
         )
 
+        self.epoxy = build.cmake(
+            build.ARGUMENTS,
+            'epoxy',
+            download=[(
+                'https://github.com/anholt/libepoxy/archive/refs/tags/1.5.10.tar.gz',
+                'libepoxy-1.5.10.tar.gz',
+                '1.5.10',
+                'f0730aad115c952e77591fcc805b1dc1',
+                { self.gcc : '6.3.1' }
+            )],
+        )
+
         build.github_phase_one_version(ARGUMENTS, depend=[
                         self.cgru,
                         self.gaffer_resources,
@@ -4616,6 +4634,7 @@ class all: # noqa
                         self.gflags,
                         self.oidn,
                         self.openjpeg,
+                        self.epoxy,
                     ])
         # for pkg in [
         #                 self.cgru,

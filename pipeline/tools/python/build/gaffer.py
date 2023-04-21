@@ -807,6 +807,7 @@ def cycles(boost=None, usd=None, pkgs=None, gaffer_dependencies={}, gaffer_versi
                     # " -D WITH_CYCLES_SDF=OFF"
                     # " -D WITH_CYCLES_CORNER_NORMALS=ON"
                     " -D PYTHON_VARIANT=$PYTHON_VERSION_MAJOR"
+                    " -D PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
                     # instruct cmake to use new behaviour (which is to use pkg_ROOT as pkg root folders)
                     " -D CMAKE_POLICY_DEFAULT_CMP0074=NEW"
         			" ..",

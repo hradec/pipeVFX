@@ -1626,7 +1626,7 @@ class generic:
             # print env.get( "ENVIRON_DEPEND_VERSION" )
             d = [ x.split('@')[-1] for x in env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ') if x.strip() and (v in x.split('@')[0].split('_')[1]) and (baselib in x.split('@')[0].split('_')[0]) ]
             # print d, v, baselib, env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
-            d=list(set(d))
+            d=[ x for x in set(d) if 'phase' not in x ] 
             d.sort()
             # if not d:
             #     print env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')

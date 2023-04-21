@@ -60,7 +60,8 @@ class wait4dependencies(configure):
     do_not_use=True
     globalDependency = True
     no_folder_install_checking=True
-    def __init__(self, wait4, msg, version=None, cmd=["echo Done!!!!!"], depend=[], dependVersion={}, **kargs):
+    def __init__(self, args, wait4, msg, version=None, cmd=["echo Done!!!!!"], depend=[], dependVersion={}, **kargs):
+        self.args = args
         self.cmd = cmd
         self.wait4 = wait4
         d = self.wait4.download
@@ -71,7 +72,7 @@ class wait4dependencies(configure):
 
         download = [ (None,"wait4.%s.%s.%s" % (self.wait4.name,msg,x[2]), x[2], None, {self.wait4: x[2]}) for x in d ]
         for d in download:
-            os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
+            os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/%s/configure"' % (d[1], d[1], buildFolder(self.args), d[1]))
             d[4].update(dependVersion)
 
         configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, real_name="wait4_"+wait4.name)
@@ -83,11 +84,11 @@ class wait4dependencies(configure):
 globals()['github_phases']=0
 class github_phase(wait4dependencies):
     ''' used to create a default alias for the build of the packages we want. '''
-    def __init__(self, wait4,version=None, cmd=["echo Done!!!!!"], depend=[], **kargs):
+    def __init__(self, args, wait4,version=None, cmd=["echo Done!!!!!"], depend=[], **kargs):
         globals()['github_phases'] += 1
         alias = 'phase'+'%02d' % (globals()['github_phases'])
         genericBuilders.s_print( 'github phase: %s => %s(%s)' % (alias, wait4.name, version) )
-        wait4dependencies.__init__(self, wait4, alias, version=version, cmd=cmd, depend=depend, **kargs)
+        wait4dependencies.__init__(self, args, wait4, alias, version=version, cmd=cmd, depend=depend, **kargs)
 
 class github_phase_one_version(wait4dependencies):
     ''' used to create a default alias for the build of the packages we want. '''
@@ -97,6 +98,7 @@ class github_phase_one_version(wait4dependencies):
     globalDependency = True
     no_folder_install_checking=True
     def __init__(self, args, wait4={}, cmd=["echo Done!!!!!"], depend=[], **kargs):
+        self.args = args
         self.cmd = cmd
         self.wait4 = wait4.copy()
         globals()['github_phases'] += 1
@@ -125,7 +127,7 @@ class github_phase_one_version(wait4dependencies):
         #     for version in dep.keys():
         #         target += [dep.target[version]]
         for d in download:
-            os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (d[1], d[1], d[1]))
+            os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/%s/configure"' % (d[1], d[1], buildFolder(self.args), d[1]))
 
         # configure.__init__(self, args, name, download, targetSuffix=alias, src='configure', depend=depend, real_name="github_"+name, **kargs )
         configure.__init__(self, args, name, download, targetSuffix=alias, src='configure', real_name="github_"+name, **kargs )
