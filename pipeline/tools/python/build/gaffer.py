@@ -117,7 +117,7 @@ def cortex_download(pkgs):
         },
         {"boost" : ("1.76.0", "99.99.99"),
          "maya"  : ("2022", "2023.99"),
-         "usd"   : ("21.11.0", "21.11.0")}
+         "usd"   : ("23.05.0", "23.05.0")}
     ]]
     return download
 
@@ -274,8 +274,8 @@ def gaffer_download(pkgs):
           # pkgs.python: '3.9.13',
         },
         {"boost" : ("1.76.0", "1.76.0"),
-         "usd"   : ("21.11.0", "21.11.0"),
-         "cortex": "10.4.2.1",
+         "usd"   : ("23.05.0", "23.05.0"),
+         "cortex": "10.4.7.0",
         }
     ]]
     for n in range(len(ret)):
@@ -294,7 +294,7 @@ def cycles_download(pkgs):
         'https://github.com/blender/cycles/archive/refs/tags/v3.5.0.tar.gz',
         'cycles-3.5.0.tar.gz',
         '3.5.0',
-        'e21382fbde81d7419617d60d00e90daa',
+        '4aa7310931c0da455d4c3cd4e1b9cdf8',
         {},
         {"gaffer" : ("1.2.0.0", "9.9.9.9")}
     ]]

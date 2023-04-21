@@ -543,7 +543,8 @@ class all: # noqa
         build.globalDependency(self.gcc)
 
         # a dummy build that stalls until the passed build is done!
-        build.wait4dependencies(self.gcc, 'cleanup_after_gcc', cmd=["rm -rvf $GCC_TARGET_FOLDER/../../../gcc-* ; echo DONE"])
+        if 'TRAVIS' not in os.environ:
+            build.wait4dependencies(self.gcc, 'cleanup_after_gcc', cmd=["rm -rvf $GCC_TARGET_FOLDER/../../../gcc-* ; echo DONE"])
 
         # everythin will depend on this dummy post-gcc build, so everything
         # will wait for gcc to finish before start.
@@ -764,13 +765,13 @@ class all: # noqa
                 '3.9.0',
                 '180e23b4c9b55915d271b315297f6951',
                 { self.gcc : '4.8.5' }
-            # ),(
+            ),(
             #     'https://cmake.org/files/v3.9/cmake-3.9.6.tar.gz',
             #     'cmake-3.9.6.tar.gz',
             #     '3.9.6',
             #     '084b1c8b2efc1c1ba432dea37243c0ae',
             #     { self.gcc : '4.8.5' }
-            ),(
+            # ),(
                 'https://github.com/Kitware/CMake/releases/download/v3.18.2/cmake-3.18.2.tar.gz',
                 'cmake-3.18.2.tar.gz',
                 '3.18.2',
@@ -2768,28 +2769,28 @@ class all: # noqa
                 'ptex-2.4.2.tar.gz',
                 '2.4.2',
                 '286a63357de9cbc41511a54231891f61',
-                { cmake: '3.8.2', self.gcc : '6.3.1', build.override.src: 'CMakeLists.txt' }
+                { cmake: '3.18.2', self.gcc : '6.3.1', build.override.src: 'CMakeLists.txt' }
             ),(
                 # CY 2020
                 'https://github.com/wdas/ptex/archive/v2.3.2.tar.gz',
                 'ptex-2.3.2.tar.gz',
                 '2.3.2',
                 'd409eecde96f89517bc271b1d4909bc5',
-                { cmake: '3.8.2', self.gcc : '6.3.1' }
+                { cmake: '3.18.2', self.gcc : '6.3.1' }
             ),(
                 # CY 2019
                 'https://github.com/wdas/ptex/archive/v2.1.33.tar.gz',
                 'ptex-2.1.33.tar.gz',
                 '2.1.33',
                 'ce1f1af2a151a2bf1057e0456c91dbb6',
-                { cmake: '3.8.2', self.gcc : '4.1.2' }
+                { cmake: '3.18.2', self.gcc : '4.1.2' }
             ),(
                 # CY 2017-2018
                 'https://github.com/wdas/ptex/archive/v2.1.28.tar.gz',
                 'ptex-2.1.28.tar.gz',
                 '2.1.28',
                 'ce4eb665f686f8391968fa137113bc69',
-                { cmake: '3.8.2', self.gcc : '4.1.2' }
+                { cmake: '3.18.2', self.gcc : '4.1.2' }
             )],
             src = 'README',
             depend = [self.doxygen],
@@ -3721,6 +3722,17 @@ class all: # noqa
                     self.osl[bsufix]['1.11.17']['openexr'].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
                     self.osl[bsufix]['1.11.17']['ilmbase'].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version}
 
+                ),(
+                    'https://github.com/AcademySoftwareFoundation/MaterialX/releases/download/v1.38.6/MaterialX-1.38.6.tar.gz',
+                    'MaterialX-1.38.6.tar.gz',
+                    '1.38.6',
+                    'b4ec41ff0955c4233847eace52f416bf',
+                    { self.gcc : '9.3.1', python: '3.7.5', self.osl[bsufix]: '1.12.9.0',
+                    self.boost: bv, self.tbb: "2020_U3",
+                    self.osl[bsufix]['1.12.9.0']['oiio'   ].obj: self.osl[bsufix]['1.12.9.0']['oiio'].version,
+                    self.osl[bsufix]['1.12.9.0']['openexr'].obj: self.osl[bsufix]['1.12.9.0']['openexr'].version,
+                    self.osl[bsufix]['1.12.9.0']['ilmbase'].obj: self.osl[bsufix]['1.12.9.0']['ilmbase'].version}
+
                 )],
                 baseLibs=[self.python],
                 depend=[self.python, self.freeglut],
@@ -4262,16 +4274,16 @@ class all: # noqa
                                 self.boost: bv,
                                 self.ptex: '2.3.2',
                                 self.opensubdiv[bsufix]: '3.4.0',
-                                self.materialx[bsufix] : '1.38.4',
+                                self.materialx[bsufix] : '1.38.6',
                                 self.alembic[bsufix] : '1.8.3',
                                 self.alembic[bsufix]['1.8.3']['hdf5'].obj : self.alembic[bsufix]['1.8.3']['hdf5'].version,
-                                self.osl[bsufix]: '1.11.17',
-                                self.osl[bsufix]['1.11.17']['tbb'      ].obj: self.osl[bsufix]['1.11.17']['tbb'].version,
-                                self.osl[bsufix]['1.11.17']['oiio'     ].obj: self.osl[bsufix]['1.11.17']['oiio'].version,
-                                self.osl[bsufix]['1.11.17']['ilmbase'  ].obj: self.osl[bsufix]['1.11.17']['ilmbase'].version,
-                                self.osl[bsufix]['1.11.17']['openexr'  ].obj: self.osl[bsufix]['1.11.17']['openexr'].version,
-                                self.osl[bsufix]['1.11.17']['openvdb'  ].obj: self.osl[bsufix]['1.11.17']['openvdb'].version,
-                                self.pyilmbase[bsufix]                      : self.osl[bsufix]['1.11.17']['openexr'].version}
+                                self.osl[bsufix]: '1.12.9.0',
+                                self.osl[bsufix]['1.12.9.0']['tbb'      ].obj: self.osl[bsufix]['1.12.9.0']['tbb'].version,
+                                self.osl[bsufix]['1.12.9.0']['oiio'     ].obj: self.osl[bsufix]['1.12.9.0']['oiio'].version,
+                                self.osl[bsufix]['1.12.9.0']['ilmbase'  ].obj: self.osl[bsufix]['1.12.9.0']['ilmbase'].version,
+                                self.osl[bsufix]['1.12.9.0']['openexr'  ].obj: self.osl[bsufix]['1.12.9.0']['openexr'].version,
+                                self.osl[bsufix]['1.12.9.0']['openvdb'  ].obj: self.osl[bsufix]['1.12.9.0']['openvdb'].version,
+                                self.pyilmbase[bsufix]                       : self.osl[bsufix]['1.12.9.0']['openexr'].version}
                             )]
                     # print("++++++++++++++++++++:", pv, int(build.vComp(pv)) , int(build.vComp('3.5.0')) , int(build.vComp('3.10.0')), usdsuffix)
                     # from pprint import pprint
