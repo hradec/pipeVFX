@@ -159,13 +159,12 @@ if canBuildCortexNow:
     pkgs.maya_openvdb = {}
 
     maya_dependency = {}
-    # maya_dependency['2016.5'] = { 'usd' :  '20.8.0', 'python': '2.7.16', 'boost' : '1.61.0' }
-    # maya_dependency['2022'  ] = { 'usd' :  '20.8.0', 'python': '2.7.16', 'boost' : '1.76.0', 'mayausd' : ['0.16.0'], 'usd_monolithic' : False }
-    # maya_dependency['2022.2'] = { 'usd' :  '20.8.0', 'python': '2.7.16', 'boost' : '1.76.0', 'mayausd' : ['0.17.0'], 'usd_monolithic' : False }
-    maya_dependency['2022.3'] = { 'usd' :  '20.8.0', 'python': '2.7.16', 'boost' : '1.76.0', 'mayausd' : ['0.18.0'], 'usd_monolithic' : False }
-    # maya_dependency['2023.2'] = { 'usd' : '21.11.0', 'python': '3.9.7', 'boost' : '1.76.0', 'mayausd' : ['0.19.0'], 'usd_monolithic' : False }
-    # maya_dependency['2023.2'] = { 'usd' : '21.11.0', 'python': '3.9.7', 'boost' : '1.76.0', 'mayausd' : ['0.20.0'], 'usd_monolithic' : False }
-    maya_dependency['2023.3'] = { 'usd' : '21.11.0', 'python': '3.9.7', 'boost' : '1.76.0', 'mayausd' : ['0.23.0'], 'usd_monolithic' : False }
+    # maya_dependency['2016.5'] = { 'usd' :  '20.8.0', 'python': '2.7.16', 'boost' : '1.76.0' }
+    maya_dependency['2022'  ] = { 'usd' :  '21.5.0', 'python': '2.7.16', 'boost' : '1.76.0', 'mayausd' : ['0.18.0'], 'usd_monolithic' : False }
+    maya_dependency['2022.2'] = { 'usd' :  '21.5.0', 'python': '2.7.16', 'boost' : '1.76.0', 'mayausd' : ['0.18.0'], 'usd_monolithic' : False }
+    maya_dependency['2022.3'] = { 'usd' :  '21.5.0', 'python': '2.7.16', 'boost' : '1.76.0', 'mayausd' : ['0.18.0'], 'usd_monolithic' : False }
+    maya_dependency['2023.2'] = { 'usd' : '21.11.0', 'python':  '3.9.7', 'boost' : '1.76.0', 'mayausd' : ['0.23.0'], 'usd_monolithic' : False }
+    maya_dependency['2023.3'] = { 'usd' : '21.11.0', 'python':  '3.9.7', 'boost' : '1.76.0', 'mayausd' : ['0.23.0'], 'usd_monolithic' : False }
 
     for mv in maya_dependency:
         version = mv
@@ -179,7 +178,7 @@ if canBuildCortexNow:
         usd_monolithic  = maya_dependency[version]['usd_monolithic']
         python_version  = maya_dependency[version]['python']
         for mayausd in maya_dependency[version]['mayausd']:
-            targetSuffix = "maya.%s.mayausd.%s" % (str(version), mayausd)
+            targetSuffix = "maya.%s.usd.%s" % (str(version), usd_version)
 
             boost_sufix = "boost.%s" % boost_version
             usd_suffix = 'boost.%s.python%s' % ( boost_version, python_version )
@@ -241,7 +240,7 @@ if canBuildCortexNow:
                         usd['boost'     ].obj : usd['boost'     ].version,
                         usd['materialx' ].obj : usd['materialx' ].version,
                         usd['qt'        ].obj : usd['qt'        ].version,
-                        usd['tbb'       ].obj : usd['tbb'       ].version,
+                        # usd['tbb'       ].obj : usd['tbb'       ].version,
                     }),
                 '0.19.0' : (
                     'https://github.com/Autodesk/maya-usd/archive/refs/tags/v0.19.0.tar.gz',
@@ -317,17 +316,19 @@ if canBuildCortexNow:
                 cmd['0.16.0'] = [
                     '''sed -i.bak -e 's/^........sys.exit.1./    return "release","nogit"/' ./build.py''',
                     _USD_ENV,
-                    # 'if [ "$VERSION_MAJOR" == "0.16" ] ; then export _USD="$USD_NON_MONOLITHIC_TARGET_FOLDER" ; fi',
                     '''export MAYA_DEVKIT=$MAYA_ROOT/devkit
-                    python build.py -v 2 --install-location $INSTALL_FOLDER
-                        --maya-location $MAYA_ROOT
-                        --pxrusd-location $_USD
-                        --devkit-location $MAYA_DEVKIT
-                        --qt-location $QT_TARGET_FOLDER
-                        --build-release
+                    python build.py -v 2 --install-location $INSTALL_FOLDER \
+                        --maya-location $MAYA_ROOT \
+                        --pxrusd-location $_USD \
+                        --devkit-location $MAYA_DEVKIT \
+                        --qt-location $QT_TARGET_FOLDER \
+                        --build-release \
                         --build-args "\
                             -DMAYA_EXECUTABLE=$MAYA_ROOT/bin/maya.bin\
-                        " -j $DCORES .
+                            -DBUILD_WITH_PYTHON_3=OFF \
+                            -DPXR_USD_LOCATION=$_USD/lib/python/pxr/ \
+                            -DUSD_CONFIG_FILE=$_USD/$USD_CONFIG_FILE \
+                        " -j $DCORES . \
                     ''',
                 ]
                 cmd['0.17.0'] = cmd['0.16.0']
@@ -356,11 +357,22 @@ if canBuildCortexNow:
                 cmd['0.22.0'] = cmd['0.19.0']
                 cmd['0.23.0'] = cmd['0.19.0']
 
+                sed = {
+                    "0.18.0" : {
+                        # patch IECoreRI to build with prman 20!
+                        'lib/mayaUsd/render/vp2RenderDelegate/material.cpp' : [
+                            ('.include .material.h.','''#include <GL/glew.h>\n#include "material.h"'''),
+                        ],
+                    },
+                    "0.19.0" : {},
+                }
+
                 icores = int(os.environ['CORES'])
                 DCORES  = "%d" % (icores if icores<16 else 16)
                 pkgs.maya_usd[targetSuffix] = build.cmake(
                     ARGUMENTS,
                     'mayausd',
+                    sed = sed,
                     targetSuffix = targetSuffix,
                     apps         = [ (pipe.apps.maya, version) ],
                     download     = [ mayausd_download[ mayausd ] ],

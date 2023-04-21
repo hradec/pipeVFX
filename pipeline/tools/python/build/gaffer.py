@@ -31,17 +31,18 @@ import pipe
 # cortex versions we build for now.
 def cortex_download(pkgs):
     download = [[
-        'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
-        'cortex-9.18.0.tar.gz',
-        '9.18.0',
-        'b3c55cc5e0e95668208713a01a145869',
-        { pkgs.gcc: '4.8.5', },
-        # we introduce a 5th element to the download array here, the compatibility
-        # dictionary, which tells the min and max version of a compatible
-        # package, so we don't build if that version is imcompatible.
-        {"boost" : ("0.0.0", "1.51.0"),
-         "maya"  : ("2016", "2016.99")}
-     ],[
+     # need to build exr 2.2 and alembic 1.5.8 with gcc 4.1.2!!!
+     #    'https://github.com/ImageEngine/cortex/archive/9.18.0.tar.gz',
+     #    'cortex-9.18.0.tar.gz',
+     #    '9.18.0',
+     #    'b3c55cc5e0e95668208713a01a145869',
+     #    { pkgs.gcc: '4.1.2', },
+     #    # we introduce a 5th element to the download array here, the compatibility
+     #    # dictionary, which tells the min and max version of a compatible
+     #    # package, so we don't build if that version is imcompatible.
+     #    {"boost" : ("0.0.0", "1.51.0"),
+     #     "maya"  : ("2016", "2016.99")}
+     # ],[
         'https://github.com/ImageEngine/cortex/archive/refs/tags/10.2.3.1.tar.gz',
         'cortex-10.2.3.1.tar.gz',
         '10.2.3.1',
@@ -94,6 +95,20 @@ def cortex_download(pkgs):
         'cortex-10.4.2.1.tar.gz',
         '10.4.2.1',
         '699adf93be240a8cce458ac492188125',
+        { pkgs.gcc: '9.3.1',
+          pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+          pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+          pkgs.ocio: '2.1.1',
+          # pkgs.python: '3.9.13',
+        },
+        {"boost" : ("1.76.0", "99.99.99"),
+         "maya"  : ("2022", "2023.99"),
+         "usd"   : ("21.11.0", "21.11.0")}
+     ],[
+        'https://github.com/ImageEngine/cortex/archive/refs/tags/10.4.7.0.tar.gz',
+        'cortex-10.4.7.0.tar.gz',
+        '10.4.7.0',
+        'bea06b7d2de6777a39d985eda898098f',
         { pkgs.gcc: '9.3.1',
           pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
           pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
@@ -247,6 +262,21 @@ def gaffer_download(pkgs):
          "usd"   : ("21.11.0", "21.11.0"),
          "cortex": "10.4.2.1",
         }
+    ],[
+        'https://github.com/GafferHQ/gaffer/archive/refs/tags/1.2.3.0.tar.gz',
+        'gaffer-1.2.3.0.tar.gz',
+        '1.2.3.0',
+        '2924db2f59a7b4a132b316f43a5c1388',
+        { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
+          pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
+          pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
+          pkgs.llvm: '10.0.1',
+          # pkgs.python: '3.9.13',
+        },
+        {"boost" : ("1.76.0", "1.76.0"),
+         "usd"   : ("21.11.0", "21.11.0"),
+         "cortex": "10.4.2.1",
+        }
     ]]
     for n in range(len(ret)):
         ret[n][4] = ret[n][4].copy()
@@ -259,14 +289,14 @@ def cycles_download(pkgs):
         '3.2.0',
         'e21382fbde81d7419617d60d00e90daa',
         {},
-        {"gaffer" : ("1.0.4.0", "9.9.9.9")}
-    # ],[
-    #     'https://github.com/blender/cycles/archive/refs/tags/v3.4.0.tar.gz',
-    #     'cycles-3.4.0.tar.gz',
-    #     '3.4.0',
-    #     'e21382fbde81d7419617d60d00e90daa',
-    #     {},
-    #     {"gaffer" : ("1.0.4.0", "9.9.9.9")}
+        {"gaffer" : ("1.0.4.0", "1.2.0.0")}
+    ],[
+        'https://github.com/blender/cycles/archive/refs/tags/v3.5.0.tar.gz',
+        'cycles-3.5.0.tar.gz',
+        '3.5.0',
+        'e21382fbde81d7419617d60d00e90daa',
+        {},
+        {"gaffer" : ("1.2.0.0", "9.9.9.9")}
     ]]
 
 # download and install arnold versions to build arnold gaffer extension
@@ -277,7 +307,7 @@ arnold_versions = {
     # '7.1.2.0' : {'gaffer': ['1.1.1.0', '1.1.2.0']},
     '7.1.3.2' : {'gaffer': ['1.1.2.0', '1.1.4.0', '1.1.5.1']},
     '7.1.4.1' : {'gaffer': ['1.1.7.0']},
-    # '7.2.0.0' : {'gaffer': ['1.1.7.0']},
+    '7.2.1.1' : {'gaffer': ['1.2.3.0']},
 }
 mtoa_versions = {
     '5.0.0.2' : {'maya' : ['2022'        ], 'arnold' : '7.0.0.0'},
@@ -285,7 +315,7 @@ mtoa_versions = {
     '5.1.3'   : {'maya' : ['2022', '2023'], 'arnold' : '7.1.2.0'},
     '5.2.1.1' : {'maya' : ['2022', '2023'], 'arnold' : '7.1.3.2'},
     '5.2.2.1' : {'maya' : ['2022', '2023'], 'arnold' : '7.1.4.1'},
-    # '5.3.0'   : {'maya' : ['2022', '2023'], 'arnold' : '7.2.0.0'},
+    '5.3.1.1' : {'maya' : ['2022', '2023'], 'arnold' : '7.2.1.1'},
 }
 # download and install arnold for us, based on the table above
 for arnold_version in arnold_versions:
@@ -674,8 +704,8 @@ def gaffer(apps=[], boost=None, usd=None, python=None, pkgs=None, __download__=N
                 # 'DCORES' : '1',
             },
         )
-        # for v in pkgs.gaffer[suffix].keys():
-        #     build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[suffix] : v})
+        for v in pkgs.gaffer[suffix].keys():
+            build.github_phase_one_version(ARGUMENTS, {pkgs.gaffer[suffix] : v})
 
     return pkgs.gaffer
 
@@ -719,77 +749,81 @@ def cycles(boost=None, usd=None, pkgs=None, gaffer_dependencies={}, gaffer_versi
                 dependencies.copy(),
             )]
 
-    pkgs.cycles[suffix] = build.cmake(
-        build.ARGUMENTS,
-        'cycles',
-        targetSuffix = suffix,
-        # src='build-hradec.sh',
-        download=download,
-        cmd=['''
-            if [ "$USD_NON_MONOLITHIC_TARGET_FOLDER" != "" ] ; then
-                export USD_TARGET_FOLDER="$USD_NON_MONOLITHIC_TARGET_FOLDER"
-                export USD_VERSION="$USD_NON_MONOLITHIC_VERSION"
-            fi ; '''
-            "mkdir -p build",
-        	"cd build",
-    		"cmake"
-                ' -D DCMAKE_CC="$CC"'
-                ' -D DCMAKE_CXX="$CXX"'
-                " -D CMAKE_CXX_COMPILER=$CXX"
-    			" -D CMAKE_BUILD_TYPE=Release"
-    			" -D WITH_CYCLES_OPENIMAGEDENOISE=ON"
-    			" -D WITH_CYCLES_DEVICE_CUDA=ON"
-    			" -D WITH_CYCLES_DEVICE_OPTIX=ON"
-    			" -D CMAKE_POSITION_INDEPENDENT_CODE=ON"
-    			" -D PXR_ROOT=$USD_TARGET_FOLDER"
-                " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
-                " -D EMBREE_ROOT_DIR=$EMBREE_TARGET_FOLDER"
-                " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
-                " -D LLVM_ROOT_DIR=$LLVM_TARGET_FOLDER"
-                " -D OPENCOLORIO_ROOT_DIR=$OCIO_TARGET_FOLDER"
-                " -D OPENIMAGEIO_ROOT_DIR=$OIIO_TARGET_FOLDER"
-                " -D OSL_ROOT_DIR=$OSL_TARGET_FOLDER"
-                " -D OPENEXR_ROOT_DIR=$OPENEXR_TARGET_FOLDER"
-                " -D JPEG_ROOT_DIR=$JPEG_ROOT_DIR"
-                " -D PUGIXML_ROOT_DIR=$PUGIXML_ROOT_DIR"
-                " -D WITH_OPENCOLORIO=ON"
-                " -D OCIO_PATH=$OCIO_TARGET_FOLDER"
-                " -D GLEW_ROOT_DIR=$GLEW_TARGET_FOLDER"
-                " -D WITH_OPENVDB=ON"
-                " -D BLOSC_ROOT_DIR=$BLOSC_TARGET_FOLDER"
-                " -D OPENVDB_ROOT_DIR=$OPENVDB_TARGET_FOLDER"
-                " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
-                " -D GAFFER_ROOT=$GAFFER_TARGET_FOLDER"
-                " -D WITH_CYCLES_DEVICE_CUDA=ON"
-                " -D WITH_CYCLES_CUDA_BINARIES=ON"
-                " -D WITH_CYCLES_DEVICE_OPTIX=ON"
-                " -D OPTIX_ROOT_DIR=$OPTIX_TARGET_FOLDER"
-                " -D WITH_CYCLES_DEVICE_CUDA=ON"
-                " -D WITH_CYCLES_DEVICE_HIP=OFF"
-                " -D WITH_CYCLES_HIP_BINARIES=OFF"
-                " -D WITH_HIP_DYNLOAD=OFF"
-                " -D WITH_CYCLES_EMBREE=ON"
-                " -D WITH_CYCLES_OPENSUBDIV=ON"
-                " -D WITH_CYCLES_LOGGING=ON"
-                " -D WITH_OPENIMAGEDENOISE=ON"
-                " -D WITH_NANOVDB=ON"
-                # " -D WITH_CYCLES_SDF=OFF"
-                # " -D WITH_CYCLES_CORNER_NORMALS=ON"
-                " -D PYTHON_VARIANT=$PYTHON_VERSION_MAJOR"
-                # instruct cmake to use new behaviour (which is to use pkg_ROOT as pkg root folders)
-                " -D CMAKE_POLICY_DEFAULT_CMP0074=NEW"
-    			" ..",
-    		"make install -j $DCORES VERBOSE=1",
-    		"mkdir -p ${INSTALL_FOLDER}/include",
-            "cd ${SOURCE_FOLDER}/src && find . -name '*.h' | cpio -pdm ${INSTALL_FOLDER}/include ",
-            "cd ${SOURCE_FOLDER}/",
-    		"cp -rfv ${SOURCE_FOLDER}/third_party/atomic/* ${INSTALL_FOLDER}/include",
-    		"mkdir -p ${INSTALL_FOLDER}/bin",
-    		"mv ${INSTALL_FOLDER}/cycles ${INSTALL_FOLDER}/bin/cycles",
-    		"cp -rfv ${SOURCE_FOLDER}/build/lib ${INSTALL_FOLDER}",
-        ],
-        environ = pkgs.llvm_plus_gcc_adjustment(forCMake=True),
-    )
+    if suffix not in pkgs.cycles:
+        pkgs.cycles[suffix] = build.cmake(
+            build.ARGUMENTS,
+            'cycles',
+            targetSuffix = suffix,
+            # src='build-hradec.sh',
+            download=download,
+            cmd=['''
+                if [ "$USD_NON_MONOLITHIC_TARGET_FOLDER" != "" ] ; then
+                    export USD_TARGET_FOLDER="$USD_NON_MONOLITHIC_TARGET_FOLDER"
+                    export USD_VERSION="$USD_NON_MONOLITHIC_VERSION"
+                fi ; '''
+                "mkdir -p build",
+            	"cd build",
+        		"cmake"
+                    ' -D DCMAKE_CC="$CC"'
+                    ' -D DCMAKE_CXX="$CXX"'
+                    " -D CMAKE_CXX_COMPILER=$CXX"
+        			" -D CMAKE_BUILD_TYPE=Release"
+        			" -D WITH_CYCLES_OPENIMAGEDENOISE=ON"
+        			" -D WITH_CYCLES_DEVICE_CUDA=ON"
+        			" -D WITH_CYCLES_DEVICE_OPTIX=ON"
+        			" -D CMAKE_POSITION_INDEPENDENT_CODE=ON"
+        			" -D PXR_ROOT=$USD_TARGET_FOLDER"
+                    " -D OPENSUBDIV_ROOT_DIR=$OPENSUBDIV_TARGET_FOLDER"
+                    " -D EMBREE_ROOT_DIR=$EMBREE_TARGET_FOLDER"
+                    " -D BOOST_ROOT=$BOOST_TARGET_FOLDER"
+                    " -D LLVM_ROOT_DIR=$LLVM_TARGET_FOLDER"
+                    " -D OPENCOLORIO_ROOT_DIR=$OCIO_TARGET_FOLDER"
+                    " -D OPENIMAGEIO_ROOT_DIR=$OIIO_TARGET_FOLDER"
+                    " -D OSL_ROOT_DIR=$OSL_TARGET_FOLDER"
+                    " -D OPENEXR_ROOT_DIR=$OPENEXR_TARGET_FOLDER"
+                    " -D JPEG_ROOT_DIR=$JPEG_ROOT_DIR"
+                    " -D PUGIXML_ROOT_DIR=$PUGIXML_ROOT_DIR"
+                    " -D WITH_OPENCOLORIO=ON"
+                    " -D OCIO_PATH=$OCIO_TARGET_FOLDER"
+                    " -D GLEW_ROOT_DIR=$GLEW_TARGET_FOLDER"
+                    " -D WITH_OPENVDB=ON"
+                    " -D BLOSC_ROOT_DIR=$BLOSC_TARGET_FOLDER"
+                    " -D OPENVDB_ROOT_DIR=$OPENVDB_TARGET_FOLDER"
+                    " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
+                    " -D GAFFER_ROOT=$GAFFER_TARGET_FOLDER"
+                    " -D WITH_CYCLES_DEVICE_CUDA=ON"
+                    " -D WITH_CYCLES_CUDA_BINARIES=ON"
+                    " -D WITH_CYCLES_DEVICE_OPTIX=ON"
+                    " -D OPTIX_ROOT_DIR=$OPTIX_TARGET_FOLDER"
+                    " -D WITH_CYCLES_DEVICE_CUDA=ON"
+                    " -D WITH_CYCLES_DEVICE_HIP=OFF"
+                    " -D WITH_CYCLES_HIP_BINARIES=OFF"
+                    " -D WITH_HIP_DYNLOAD=OFF"
+                    " -D WITH_CYCLES_EMBREE=ON"
+                    " -D WITH_CYCLES_OPENSUBDIV=ON"
+                    " -D WITH_CYCLES_LOGGING=ON"
+                    " -D WITH_OPENIMAGEDENOISE=ON"
+                    " -D WITH_NANOVDB=ON"
+                    # " -D WITH_CYCLES_SDF=OFF"
+                    # " -D WITH_CYCLES_CORNER_NORMALS=ON"
+                    " -D PYTHON_VARIANT=$PYTHON_VERSION_MAJOR"
+                    # instruct cmake to use new behaviour (which is to use pkg_ROOT as pkg root folders)
+                    " -D CMAKE_POLICY_DEFAULT_CMP0074=NEW"
+        			" ..",
+        		"make install -j $DCORES VERBOSE=1",
+        		"mkdir -p ${INSTALL_FOLDER}/include",
+                "cd ${SOURCE_FOLDER}/src && find . -name '*.h' | cpio -pdm ${INSTALL_FOLDER}/include ",
+                "cd ${SOURCE_FOLDER}/",
+        		"cp -rfv ${SOURCE_FOLDER}/third_party/atomic/* ${INSTALL_FOLDER}/include",
+        		"mkdir -p ${INSTALL_FOLDER}/bin",
+        		"mv ${INSTALL_FOLDER}/cycles ${INSTALL_FOLDER}/bin/cycles",
+        		"cp -rfv ${SOURCE_FOLDER}/build/lib ${INSTALL_FOLDER}",
+            ],
+            environ = pkgs.llvm_plus_gcc_adjustment(forCMake=True),
+        )
+        for v in pkgs.cycles[suffix].keys():
+            build.github_phase_one_version(ARGUMENTS, {pkgs.cycles[suffix] : v})
+
     return pkgs.cycles[suffix]
 
 
@@ -882,7 +916,8 @@ def legacy(pkgs):
                     'export DCORES=$CORES',
                     build._cortex.cmd[0]+"installLib",
                     build._cortex.cmd[0]+"installCore",
-                    build._cortex.cmd[0]+extraInstall+"installGL installStubs",
+                    build._cortex.cmd[0]+extraInstall+" installStubs",
+                    # build._cortex.cmd[0]+extraInstall+"installGL installStubs",
                 ],
                 environ = cortex_environ,
             )

@@ -174,8 +174,8 @@ def _print(*args):
         p = False
         if '[' in l[0:40] and ']' in l[0:40]:
             p = True
-        if '::' in l[0:20]:
-            p = True
+        # if '::' in l[0:20]:
+        #     p = True
         if 'github' in l[0:20]:
             p = True
         if 'TRAVIS' in os.environ and os.environ['TRAVIS']!='1':
@@ -809,6 +809,9 @@ class generic:
         if 'MATRIX' in self.args:
             self.github_matrix = True
 
+        self.is_it_finished = self.github_matrix
+
+
         # store a list of versions and version dependency versions if
         # one exist.
         self.download_versions = {}
@@ -867,7 +870,7 @@ class generic:
         depend      = self.depend
 
         # now we can reset it
-        if not self.environ.keys():
+        if kargs.has_key('stdlib_error_fix') and kargs('stdlib_error_fix'):
             self.environ = update_environ_dict(self.environ,{
                 # this fixes the problem with missing stdlib.h
                 'CXX':  'g++'
@@ -1295,7 +1298,8 @@ class generic:
 
                     tmp_env = Environment()
                     tmp_env["ENVIRON_DEPEND_VERSION"] =  ' '.join( _ENVIRON_DEPEND_VERSION )
-                    if not self._installer_final_check( [install], [build], tmp_env ):
+                    self.is_it_finished =  self._installer_final_check( [install], [build], tmp_env )
+                    if not self.is_it_finished:
                         # if not installed, remove build folder!
                         if os.path.exists(self.buildFolder[p][-1]) and not self.github_matrix:
                             # cmd = "mv %s %s__ ; rm -rf %s__ " % (self.buildFolder[p][-1], self.buildFolder[p][-1], self.buildFolder[p][-1])
@@ -1333,7 +1337,8 @@ class generic:
                         # this accounts for builds like python pip
                         s = os.path.join(buildFolder(self.args),downloadFile,self.src)
                         if not self.github_matrix:
-                            os.system( 'rm -rf "%s" ; mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s), os.path.dirname(s), s) )
+                            if not self.is_it_finished:
+                                os.system( 'rm -rf "%s" ; mkdir -p "%s" ; touch "%s"' % (os.path.dirname(s), os.path.dirname(s), s) )
 
 
 
@@ -1670,8 +1675,10 @@ class generic:
         target = os.path.abspath(str(target)).replace('pipeline/build', 'pipeline/libs')
         if not pythonVersion:
             pythonVersion = "1.0"
-            if len(str(target).split('.python')) > 1:
-                pythonVersion = str(target).split('.python')[-1].split('-')[0].split('.done')[0][:3]
+            if 'noBaseLib' not in str(self.baseLibs):
+                # if we're building with baselibs, add the python version to the filename
+                if len(str(target).split('.python')) > 1:
+                    pythonVersion = str(target).split('.python')[-1].split('-')[0].split('.done')[0][:3]
 
         lastlogFile = "%s/%s.%s" % (os.path.dirname(str(target)), crtl_file_lastlog, pythonVersion)
         if self.targetSuffix.strip():
@@ -1687,7 +1694,7 @@ class generic:
         return the lastlog error result'''
         lastlogFile = self.__lastlog(target[0])
         lastlog = self.__check_target_log__( lastlogFile, env, stage='pre-build' )
-        # _print( ': shouldBuild =====>',target[0], lastlogFile, lastlog)
+        # _print( ': shouldBuild =====>',target[0], lastlogFile, lastlog, self.baseLibs)
 
         if lastlog==0:
             pass
@@ -2151,8 +2158,8 @@ class generic:
                             ])
 
 
-                    if 'OPENVDB' in dependOn.name.upper():
-                        _print('::================>',self.name, k ,p, os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()], target_folder, str(target_original))
+                    # if 'OPENVDB' in dependOn.name.upper():
+                    #     _print('::================>',self.name, k ,p, os_environ['%s_TARGET_FOLDER' % dependOn.name.upper()], target_folder, str(target_original))
 
                     if p in dependOn.buildFolder:
                         os_environ['%s_SRC_FOLDER' % dependOn.name.upper()   ] = os.path.abspath(dependOn.buildFolder[p][depend_n])
@@ -3007,8 +3014,9 @@ class generic:
     def _installer_final_check(self, target, source, env={}, ret=None):
         ''' check if something was installed
         this garantees things get installed!'''
-        if self.github_matrix:
+        if self.github_matrix or self.is_it_finished:
             return False
+
 
         # double check if the dependency list changed!!
         # if a dependency changes version or a new dependency is added to
@@ -3041,6 +3049,10 @@ class generic:
         #                             return False
 
         _TARGET = str(target[0])
+        finished = buildFolder(self.args)+'/scons_pipevfx_'+os.environ['STUDIO']+'_'+_TARGET.replace('/','_')+".finished"
+        if pipe.cached.exists(finished): # we use cached here since we're building in docker, so the cache is erased everytime.
+            return True
+
         TARGET_FOLDER = self.extractBuildFolder(_TARGET)
         _TARGET_SUFIX = ''
         if '-' in _TARGET:
@@ -3124,6 +3136,14 @@ class generic:
         #         # if ret:
         #         # _print( ":: _installer_final_check: done - ",cmd, each )
         #         os.system(cmd)
+
+        if result:
+            f=open(finished,'w')
+            f.close()
+            # cmd = "touch "+finished
+            # # print("@@@@@@@@@@@@@@@:", cmd   )
+            # os.system(cmd)
+
 
         return result
 
@@ -3240,7 +3260,7 @@ class generic:
         return _source
 
     def _uncompressor( self, target, source, env):
-        if not self.github_matrix:
+        if not self.github_matrix: # and not self.is_it_finished:
             self.uncompressor( target, source, env )
 
     def extractBuildFolder(self, t):
@@ -3478,7 +3498,7 @@ class generic:
 
     def _download(self,target):
         ret = target
-        if self.downloader and not self.github_matrix:
+        if self.downloader and not self.github_matrix: #and not self.is_it_finished:
             ret = self.env.downloader( target )
             self.env.Clean( ret, target )
         return ret
