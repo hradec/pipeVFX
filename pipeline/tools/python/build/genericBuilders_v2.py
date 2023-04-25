@@ -1626,7 +1626,7 @@ class generic:
             # print env.get( "ENVIRON_DEPEND_VERSION" )
             d = [ x.split('@')[-1] for x in env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ') if x.strip() and (v in x.split('@')[0].split('_')[1]) and (baselib in x.split('@')[0].split('_')[0]) ]
             # print d, v, baselib, env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
-            d=[ x for x in set(d) if 'phase' not in x ] 
+            d=[ x for x in set(d) if 'phase' not in x ]
             d.sort()
             # if not d:
             #     print env.get( "ENVIRON_DEPEND_VERSION" ).strip().split(' ')
@@ -1666,7 +1666,7 @@ class generic:
         buildTotal += 1
         return self.registerSconsBuilder(self.builder)( target, source )
 
-    def fixCMD(self, cmd):
+    def fixCMD(self, cmd, os_environ):
         ''' virtual method to fix cmd lines before execution, like adding --prefix to configure '''
         return cmd
 
@@ -3050,8 +3050,8 @@ class generic:
 
         _TARGET = str(target[0])
         finished = buildFolder(self.args)+'/scons_pipevfx_'+os.environ['STUDIO']+'_'+_TARGET.replace('/','_')+".finished"
-        if pipe.cached.exists(finished): # we use cached here since we're building in docker, so the cache is erased everytime.
-            return True
+        # if pipe.cached.exists(finished): # we use cached here since we're building in docker, so the cache is erased everytime.
+        #     return True
 
         TARGET_FOLDER = self.extractBuildFolder(_TARGET)
         _TARGET_SUFIX = ''
@@ -3137,12 +3137,9 @@ class generic:
         #         # _print( ":: _installer_final_check: done - ",cmd, each )
         #         os.system(cmd)
 
-        if result:
-            f=open(finished,'w')
-            f.close()
-            # cmd = "touch "+finished
-            # # print("@@@@@@@@@@@@@@@:", cmd   )
-            # os.system(cmd)
+        # if result:
+        #     f=open(finished,'w')
+        #     f.close()
 
 
         return result

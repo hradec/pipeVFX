@@ -270,7 +270,8 @@ def gaffer_download(pkgs):
         { pkgs.gcc: '9.3.1', pkgs.ocio: '2.1.1',
           pkgs.openjpeg: '2.4.0', pkgs.glog: '0.5.0',
           pkgs.gflags: '2.2.2', pkgs.oidn: '1.4.3',
-          pkgs.llvm: '10.0.1',
+          pkgs.llvm: '10.0.1', pkgs.epoxy: '1.5.10',
+          pkgs.fmt: '9.1.0', pkgs.openpgl: '0.4.1'
           # pkgs.python: '3.9.13',
         },
         {"boost" : ("1.76.0", "1.76.0"),
@@ -295,6 +296,13 @@ def cycles_download(pkgs):
         'cycles-3.5.0.tar.gz',
         '3.5.0',
         '4aa7310931c0da455d4c3cd4e1b9cdf8',
+        {},
+        {"gaffer" : ("1.3.0.0", "9.9.9.9")}
+    ],[
+        'https://github.com/blender/cycles/archive/refs/tags/v3.4.0.tar.gz',
+        'cycles-3.4.0.tar.gz',
+        '3.4.0',
+        '03103b74f848297c0eb544f64289ce6b',
         {},
         {"gaffer" : ("1.2.0.0", "9.9.9.9")}
     ]]
@@ -664,7 +672,7 @@ def gaffer(apps=[], boost=None, usd=None, python=None, pkgs=None, __download__=N
                 # patch SConstruct for cycles with cuda/hip support
                 if python -c "exit(0 if $VERSION_MAJOR >= 1.1 else 1)" ; then
                     if [ "$(grep embree3 SConstruct)" != "" ] &&  [ "$(egrep 'embree3.*cuda' SConstruct)" == "" ]  ; then
-                        sed -i.bak SConstruct -e 's/.embree3../"embree3", "cuda", "extern_cuew", "extern_hipew", "glog", "gflags",/'
+                        sed -i.bak SConstruct -e 's/.embree3../"embree3", "cuda", "extern_cuew", "extern_hipew", "glog", "gflags", "openpgl", /'
                     fi
                 fi
                 '''+\
@@ -791,11 +799,9 @@ def cycles(boost=None, usd=None, pkgs=None, gaffer_dependencies={}, gaffer_versi
                     " -D OPENVDB_ROOT_DIR=$OPENVDB_TARGET_FOLDER"
                     " -D TBB_ROOT_DIR=$TBB_TARGET_FOLDER"
                     " -D GAFFER_ROOT=$GAFFER_TARGET_FOLDER"
-                    " -D WITH_CYCLES_DEVICE_CUDA=ON"
                     " -D WITH_CYCLES_CUDA_BINARIES=ON"
                     " -D WITH_CYCLES_DEVICE_OPTIX=ON"
                     " -D OPTIX_ROOT_DIR=$OPTIX_TARGET_FOLDER"
-                    " -D WITH_CYCLES_DEVICE_CUDA=ON"
                     " -D WITH_CYCLES_DEVICE_HIP=OFF"
                     " -D WITH_CYCLES_HIP_BINARIES=OFF"
                     " -D WITH_HIP_DYNLOAD=OFF"
@@ -810,6 +816,9 @@ def cycles(boost=None, usd=None, pkgs=None, gaffer_dependencies={}, gaffer_versi
                     " -D PYTHON_VERSION=$PYTHON_VERSION_MAJOR"
                     # instruct cmake to use new behaviour (which is to use pkg_ROOT as pkg root folders)
                     " -D CMAKE_POLICY_DEFAULT_CMP0074=NEW"
+                    " -D WITH_CYCLES_PATH_GUIDING=ON"
+                    " -D WITH_CYCLES_USD=OFF"
+                    " -D WITH_CYCLES_HYDRA_RENDER_DELEGATE=OFF"
         			" ..",
         		"make install -j $DCORES VERBOSE=1",
         		"mkdir -p ${INSTALL_FOLDER}/include",

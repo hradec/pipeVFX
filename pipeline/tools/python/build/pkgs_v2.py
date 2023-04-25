@@ -1017,16 +1017,25 @@ class all: # noqa
                 '0.17.2',
                 '7de042bcffb58864fd93d5209620e08d',
                 { self.gcc : '4.1.2', python: '2.7.16' }
+            ),(
+                'https://github.com/LibRaw/LibRaw/archive/refs/tags/0.21.1.tar.gz',
+                'LibRaw-0.21.1.tar.gz',
+                '0.21.1',
+                '3ad334296a7a2c8ee841f353cc1b450b',
+                { self.gcc : '6.3.1', python: '3.7.5' }
             )],
             depend=[gcc],
             cmd = [
                 './mkdist.sh',
                 './configure --enable-shared --prefix=$INSTALL_FOLDER',
                 # it seems there's UTF-8 characters in the source code, so we need to clena it up!
-                'cp src/../internal/libraw_x3f.cpp ./xx',
-                'iconv -f UTF-8 -t ASCII -c ./xx -o src/../internal/libraw_x3f.cpp',
-                'sed -i.bak $SOURCE_FOLDER/internal/dcraw_common.cpp -e "s/powf64/dc_powf64/g"' if 'fedora' in distro else '',
-                'make install INSTALL="/usr/bin/install -D"',
+                '''if python -c "exit(0 if $VERSION_MAJOR < 0.21 else 1)" ; then
+                    cp src/../internal/libraw_x3f.cpp ./xx
+                    iconv -f UTF-8 -t ASCII -c ./xx -o src/../internal/libraw_x3f.cpp
+                    sed -i.bak $SOURCE_FOLDER/internal/dcraw_common.cpp -e "s/powf64/dc_powf64/g" # if 'fedora' in distro else '
+                fi
+                make install INSTALL="/usr/bin/install -D" \
+                ''',
             ],
             environ = { 'LD' : 'ld' },
         )
@@ -1680,6 +1689,14 @@ class all: # noqa
                     'dd375574276c54872b7b3d54053baff0',
                     { self.gcc : '9.3.1', python: '3.7.5', boost: boost_version, build.override.src: 'CMakeLists.txt' },
                     { 'python' : ('3.0.0','9.9.9'), "boost" : ('1.70.0', '2.0.0')} # not implemented yet
+                ),(
+                    # CY2022 -  *** ilmbase was deprecated, and now imath is used by openexr, so we install it as ilmbase
+                    'https://github.com/AcademySoftwareFoundation/Imath/archive/refs/tags/v3.1.7.tar.gz',
+                    'Imath-3.1.7.tar.gz',
+                    '3.1.7',
+                    '5cedab446ab296c080957c3037c6d097',
+                    { self.gcc : '9.3.1', python: '3.7.5', boost: boost_version, build.override.src: 'CMakeLists.txt' },
+                    { 'python' : ('3.0.0','9.9.9'), "boost" : ('1.70.0', '2.0.0')} # not implemented yet
                 )],
                 depend=[gcc, python, openssl],
                 baseLibs=[python],
@@ -1842,6 +1859,15 @@ class all: # noqa
                     { self.gcc : '6.3.1', python: '3.7.5', boost: boost_version, build.override.src: 'CMakeLists.txt'  },
                     { 'python' : ('3.0.0','9.9.9'), "boost" : ('1.66.0', '2.0.0')}
                 )]
+                download += [(
+                    # CY2022 - starting with 2.4.0, seems ilmbase and pyilmbase is included in openexr
+                    'https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v3.1.7.tar.gz',
+                    'openexr-3.1.7.tar.gz',
+                    '3.1.7',
+                    'ae68f0cb8b30a49c961fa87d31c60394',
+                    { self.gcc : '9.3.1', python: '3.7.5', boost: boost_version, build.override.src: 'CMakeLists.txt'  },
+                    { 'python' : ('3.0.0','9.9.9'), "boost" : ('1.66.0', '2.0.0')}
+                )]
             openexr = build.configure(
                 ARGUMENTS,
                 'openexr',
@@ -1873,6 +1899,9 @@ class all: # noqa
                     '''\
                     elif python -c "exit(0 if $VERSION_MAJOR < 2.4 else 1)" ; then
                             if python -c "exit(0 if $PYTHON_VERSION_MAJOR < 3.0 else 1)" ; then
+                                if python -c "exit(0 if $GCC_VERSION_MAJOR == 4.1 else 1)" ; then
+                                    export CXXFLAGS=$(echo $CXXFLAGS | sed 's/.std.c++11//g')
+                                fi
                                 ./configure  --enable-shared --with-ilmbase-prefix=$ILMBASE_TARGET_FOLDER
                                 make -j $DCORES
                                 make -j $DCORES install
@@ -1880,8 +1909,8 @@ class all: # noqa
                                 sleep 10
                                 echo "Python version $PYTHON_VERSION_MAJOR is not build for this package"
                             fi
-                     else ; '''
-                        'mkdir -p build',
+                     else
+                        mkdir -p build''',
                         'cd build',
                         'cmake $SOURCE_FOLDER -DCMAKE_PREFIX_PATH=$INSTALL_FOLDER/ -DImath_DIR=$INSTALL_FOLDER/../../../ilmbase/$VERSION/ -DCMAKE_INSTALL_PREFIX=$INSTALL_FOLDER -DBoost_INCLUDE_DIR=$BOOST_TARGET_FOLDER/include '+' '.join(build.cmake.needed_flags)+' '.join(build.cmake.flags),
                         'make -j $DCORES ',
@@ -1980,6 +2009,12 @@ class all: # noqa
                 environ=environ,
                 cmd = [
                     'rm -rf  /usr/include/numpy',
+                    # if building with gcc 4.1.2, remove -std=c++11 from CXXFLAGS
+                    '''if python -c "exit(0 if $VERSION_MAJOR == 2.2 else 1)" ; then
+                            if python -c "exit(0 if $GCC_VERSION_MAJOR == 4.1 else 1)" ; then
+                                export CXXFLAGS=$(echo $CXXFLAGS | sed 's/.std.c++11//g')
+                            fi
+                    fi''',
                     'LD_LIBRARY_PATH=$OPENSSL_TARGET_FOLDER/lib:$LD_LIBRARY_PATH  ./configure  --enable-shared ', #'--disable-boostpythontest ',
                     # we have to forcely build libPyImath first, since the build
                     # in parallel builds imathmodule without libPyImath, since
@@ -3234,6 +3269,30 @@ class all: # noqa
                 build.github_phase_one_version(ARGUMENTS, {self.openvdb[sufix] : v})
 
 
+        self.openjpeg = build.cmake(
+            build.ARGUMENTS,
+            'openjpeg',
+            download=[(
+                'https://github.com/uclouvain/openjpeg/archive/refs/tags/v2.4.0.tar.gz',
+                'openjpeg-2.4.0.tar.gz',
+                '2.4.0',
+                '4d388298335947367e91f1d100468af1',
+                { self.gcc : '6.3.1' }
+            )],
+        )
+        self.fmt = build.cmake(
+            build.ARGUMENTS,
+            'fmt',
+            download=[(
+                'https://github.com/fmtlib/fmt/archive/refs/tags/9.1.0.tar.gz',
+                'fmt-9.1.0.tar.gz',
+                '9.1.0',
+                '21fac48cae8f3b4a5783ae06b443973a',
+                { self.gcc : '6.3.1' }
+            )],
+        )
+
+
         # ============================================================================================================================================
         # build OIIO for all boost versions
         # ============================================================================================================================================
@@ -3324,6 +3383,18 @@ class all: # noqa
                         self.field3d[sufix]: '1.7.3', self.jpeg: '9a', self.tbb: '2020_U3',
                         self.openvdb[sufix]: openvdb_version, self.ocio: '2.1.1' }
                     ]]
+                download += [[
+                        'https://github.com/OpenImageIO/oiio/archive/refs/tags/v2.4.8.0.tar.gz',
+                        'oiio-2.4.8.0.tar.gz',
+                        '2.4.8.0',
+                        '2fcdfe645218dd08cc951936d1a969cb',
+                        { self.gcc : '9.3.1', #self.boost[boost_version]['gcc'].version,
+                        self.boost : boost_version, python: '3.7.5',
+                        self.ilmbase[sufix]: '2.4.1', self.pyilmbase[sufix]: '2.4.1', self.openexr[sufix]: '2.4.1',
+                        self.field3d[sufix]: '1.7.3', self.jpeg: '9a', self.tbb: '2020_U3',
+                        self.openvdb[sufix]: openvdb_version, self.ocio: '2.1.1',
+                        self.ptex: '2.4.2', self.openjpeg: '2.4.0', self.fmt: '9.1.0' }
+                    ]]
 
             # add the version of exr pkgs (build for the current boost) to all versions
             # we also need to set the current boost version to all versions since we're building
@@ -3378,6 +3449,10 @@ class all: # noqa
                     'if python -c "exit(0 if $VERSION_MAJOR >= 2.2 else 1)" ; then '
                         'export USE_PYTHON=1 ;'
                         'export CMAKE_CXX_STANDARD=14 ;'
+                    'fi',
+                    'if python -c "exit(0 if $VERSION_MAJOR >= 2.4 else 1)" ; then '
+                        'export LDFLAGS="$LDFLAGS -ltbb -ltbbmalloc -ltbbmalloc_proxy"',
+                        'export CMAKE_CXX_STANDARD=14 ;'
                     'fi'
                 ]+build.cmake.cmd,
                 flags = [
@@ -3397,6 +3472,9 @@ class all: # noqa
                         '$FIELD3D_TARGET_FOLDER',
                         '$OCIO_TARGET_FOLDER',
                         '$PYBIND_TARGET_FOLDER',
+                        '$TBB_TARGET_FOLDER',
+                        '$PTEX_TARGET_FOLDER',
+                        '$FMT_TARGET_FOLDER',
                     ])+'"'
                 ]+build.cmake.flags,
                 environ = environ,
@@ -3616,13 +3694,14 @@ class all: # noqa
                     'OpenShadingLanguage-1.12.9.0.tar.gz',
                     '1.12.9.0',
                     'd2de71d3f089d2f5b6ebc1182b613503',
-                    { self.llvm: '10.0.1', self.gcc: self.boost[bv]['gcc'].version,
+                    { self.llvm: '10.0.1', self.gcc: '9.3.1', #self.boost[bv]['gcc'].version,
                     self.boost: bv, self.qt: '5.15.2',
-                    self.oiio[bsufix]: "2.3.11.0",
-                    self.oiio[bsufix]["2.3.11.0"]['ilmbase' ].obj:  self.oiio[bsufix]["2.3.11.0"]['ilmbase'],
-                    self.oiio[bsufix]["2.3.11.0"]['openexr' ].obj:  self.oiio[bsufix]["2.3.11.0"]['openexr'],
-                    self.oiio[bsufix]["2.3.11.0"]['openvdb' ].obj:  self.oiio[bsufix]["2.3.11.0"]['openvdb'],
-                    self.oiio[bsufix]["2.3.11.0"]['tbb'     ].obj:  self.oiio[bsufix]["2.3.11.0"]['tbb']}
+                    self.oiio[bsufix]: '2.4.8.0',
+                    self.oiio[bsufix]['2.4.8.0']['ilmbase' ].obj:  self.oiio[bsufix]['2.4.8.0']['ilmbase'],
+                    self.oiio[bsufix]['2.4.8.0']['openexr' ].obj:  self.oiio[bsufix]['2.4.8.0']['openexr'],
+                    self.oiio[bsufix]['2.4.8.0']['openvdb' ].obj:  self.oiio[bsufix]['2.4.8.0']['openvdb'],
+                    self.oiio[bsufix]['2.4.8.0']['tbb'     ].obj:  self.oiio[bsufix]['2.4.8.0']['tbb'],
+                    self.oiio[bsufix]['2.4.8.0']['fmt'     ].obj:  self.oiio[bsufix]['2.4.8.0']['fmt']}
                 )],
                 depend=[self.icu, self.cmake, self.pugixml, self.freetype,
                         self.openssl, self.bzip2, self.libraw, self.pybind,
@@ -3645,7 +3724,22 @@ class all: # noqa
                     # 'MY_MAKE_FLAGS=" USE_CPP11=1 '+" ".join(map(lambda x: x.replace('-D',''),build.cmake.flags)).replace('\\','\\\\').replace('"','\\"').replace(';',"';'").replace(" ';' "," ; ").replace("CMAKE_VERBOSE","MAKE_VERBOSE")+' ENABLERTTI=1" '
                     'make -j $DCORES install',
                 ],
-                cmake_prefix = self.cmake_prefix()+';$QT_TARGET_FOLDER',
+                cmake_prefix = self.cmake_prefix()+';'+";".join([
+                    '$QT_TARGET_FOLDER',
+                    '$OPENEXR_TARGET_FOLDER',
+                    '$ILMBASE_TARGET_FOLDER',
+                    '$JPEG_TARGET_FOLDER',
+                    '$LIBRAW_TARGET_FOLDER',
+                    '$LIBPNG_TARGET_FOLDER',
+                    '$LIBTIFF_TARGET_FOLDER',
+                    '$FIELD3D_TARGET_FOLDER',
+                    '$OCIO_TARGET_FOLDER',
+                    '$PYBIND_TARGET_FOLDER',
+                    '$TBB_TARGET_FOLDER',
+                    '$PTEX_TARGET_FOLDER',
+                    '$FMT_TARGET_FOLDER',
+                    '$INSTALL_FOLDER',
+                ]),
                 flags = osl_flags+build.cmake.flags,
                 environ = environ,
                 verbose=1,
@@ -4190,7 +4284,7 @@ class all: # noqa
                             )]
 
                     if build.versionMajor(bv) == 1.76:
-                        if build.vComp(pv) > build.vComp('2.0.0') and build.vComp(pv) < build.vComp('3.10.0'):
+                        if build.vComp(pv) > build.vComp('2.0.0') and build.vComp(pv) < build.vComp('3.0.0'):
                             usd_download += [(
                                 # this is the latest for now - sept/2020 (not compatible with OCIO 2.1.1)
                                 'https://github.com/PixarAnimationStudios/USD/archive/refs/tags/v21.05.tar.gz',
@@ -4273,7 +4367,8 @@ class all: # noqa
                                 'USD-23.05.tar.gz',
                                 '23.05.0',
                                 '56684f4fdd1a9209dabf03856be5eca6',
-                                {self.gcc: self.boost[bv]['gcc'].version, self.cmake: '3.18.2',
+                                {self.gcc: '9.3.1', #self.boost[bv]['gcc'].version,
+                                self.cmake: '3.18.2',
                                 self.embree[bsufix]: '3.13.4', self.ocio : '2.1.1',
                                 self.qt : '5.15.2', self.pyside: '5.15.2',
                                 self.python: pv,
@@ -4601,19 +4696,7 @@ class all: # noqa
         #         flags = ['-D ISPC_EXECUTABLE=$ISPC_TARGET_FOLDER/bin/ispc']
         #     )
 
-        self.openjpeg = build.cmake(
-            build.ARGUMENTS,
-            'openjpeg',
-            download=[(
-                'https://github.com/uclouvain/openjpeg/archive/refs/tags/v2.4.0.tar.gz',
-                'openjpeg-2.4.0.tar.gz',
-                '2.4.0',
-                '4d388298335947367e91f1d100468af1',
-                { self.gcc : '6.3.1' }
-            )],
-        )
-
-        self.epoxy = build.cmake(
+        self.epoxy = build.meson(
             build.ARGUMENTS,
             'epoxy',
             download=[(
@@ -4624,6 +4707,28 @@ class all: # noqa
                 { self.gcc : '6.3.1' }
             )],
         )
+
+        self.openpgl = build.cmake(
+            build.ARGUMENTS,
+            'openpgl',
+            download=[(
+                'https://github.com/OpenPathGuidingLibrary/openpgl/archive/refs/tags/v0.4.1-beta.tar.gz',
+                'openpgl-0.4.1-beta.tar.gz',
+                '0.4.1',
+                'c592da759f8d9195400370d192265e47',
+                { self.gcc : '9.3.1', self.tbb: "2020_U3" }
+            )],
+            cmds = ['''\
+                mkdir -p build ; cd build
+                cmake -B . -S $SOURCE_FOLDER
+                make -j $DCORES
+                make -j $DCORES install \
+            '''],
+            flags = build.cmake.flags+[
+                " -D OPENPGL_BUILD_STATIC=ON",
+            ],
+        )
+
 
         build.github_phase_one_version(ARGUMENTS, depend=[
                         self.cgru,

@@ -31,6 +31,27 @@ import os,sys
 from pipe.bcolors import bcolors
 
 
+class meson(generic):
+    src = 'meson.build'
+    # for now, we use the distro python3 to install meson and ninja.
+    # we may need to build meson and ninja in the future!
+    cmd=['''\
+        pipeversion=$(basename $(dirname $(dirname $INSTALL_FOLDER)))
+        name=$(basename $(dirname $INSTALL_FOLDER))
+        folder=$STUDIO-$pipeversion-$name-$VERSION
+        export DESTDIR=/tmp/$folder
+        mkdir -p $DESTDIR
+        PYTHONPATH="" PYTHONHOME="" LD_PRELOAD="" LD_LIBRARY_PATH="" /bin/python3 -m ensurepip
+        PYTHONPATH="" PYTHONHOME="" LD_PRELOAD="" LD_LIBRARY_PATH="" /bin/python3 -m pip install meson
+        PYTHONPATH="" PYTHONHOME="" LD_PRELOAD="" LD_LIBRARY_PATH="" /bin/python3 -m pip install ninja
+        mkdir -p _build && cd _build
+        PYTHONPATH="" PYTHONHOME="" meson
+        PYTHONPATH="" PYTHONHOME="" ninja
+        PYTHONPATH="" PYTHONHOME="" ninja install
+        rsync -avpP --delete --delete-excluded /tmp/$folder/usr/local/* $INSTALL_FOLDER/
+        rm -rf /tmp/$folder/ \
+    ''']
+
 class configure(generic):
     ''' a generic build class to build packages with configure scripts and make'''
     src = 'configure'
@@ -39,8 +60,6 @@ class configure(generic):
         'make -j $DCORES',
         'make -j $DCORES install',
     ]
-
-
     def fixCMD(self, cmd, os_environ):
         if [x for x in cmd.split('&&') if 'configure' in x and '--prefix=' not in x]:
             cmd = cmd.replace('configure', 'configure --prefix=$INSTALL_FOLDER ')
@@ -72,12 +91,16 @@ class wait4dependencies(configure):
 
         download = [ (None,"wait4.%s.%s.%s" % (self.wait4.name,msg,x[2]), x[2], None, {self.wait4: x[2]}) for x in d ]
         for d in download:
-            os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/%s/configure"' % (d[1], d[1], buildFolder(self.args), d[1]))
+            self.touchConfigure(d[1])
             d[4].update(dependVersion)
 
         configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, real_name="wait4_"+wait4.name)
         # configure.__init__(self, wait4.args, wait4.name, download, targetSuffix=msg, src='configure', depend=depend, **kargs )
         self.env.Alias( msg, wait4.name )
+
+    def touchConfigure(self, d):
+        path = '%s/%s' % (buildFolder(self.args), d)
+        os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/configure"' % (path, path, path))
 
 
 
@@ -127,7 +150,8 @@ class github_phase_one_version(wait4dependencies):
         #     for version in dep.keys():
         #         target += [dep.target[version]]
         for d in download:
-            os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/%s/configure"' % (d[1], d[1], buildFolder(self.args), d[1]))
+            self.touchConfigure(d[1])
+            # os.system('rm -rf "%s" ; mkdir -p "%s" ; touch "%s/%s/configure"' % (d[1], d[1], buildFolder(self.args), d[1]))
 
         # configure.__init__(self, args, name, download, targetSuffix=alias, src='configure', depend=depend, real_name="github_"+name, **kargs )
         configure.__init__(self, args, name, download, targetSuffix=alias, src='configure', real_name="github_"+name, **kargs )
@@ -367,12 +391,13 @@ class gccBuild(configure):
             if self.targetSuffix == 'pos':
                 return cmd
             if self.use_bin_tarball:
+                pipevfx_version = os_environ['INSTALL_FOLDER'].rstrip('/').split('/')[-3]
                 cmd = ';'.join([
                     # here we have to use $TARGET_FOLDER since version 4.1.2  has a targetSuffix -pre, but we don't want to use it as a subfolder.
                     'cp -ruvf ./* $TARGET_FOLDER/',
                     'mkdir -p $TARGET_FOLDER/../../../gcc-6.2.120160830/gcc/',
                     'rm -rf $TARGET_FOLDER/../../../gcc-6.2.120160830/gcc/4.1.2',
-                    '''grep 'gcc-multi' $TARGET_FOLDER/* -R 2>/dev/null | awk -F':' '{print $1}' | while read p ; do cp "$p" "$p.bak" ; cat "$p.bak" | sed 's/gcc.multi/pipevfx.5.0.0/g' > "$p" ; done''',
+                    '''grep 'gcc-multi' $TARGET_FOLDER/* -R 2>/dev/null | awk -F':' '{print $1}' | while read p ; do cp "$p" "$p.bak" ; cat "$p.bak" | sed 's/gcc.multi/%s/g' > "$p" ; done''' % pipevfx_version,
                     "echo 'output something so we dont trigger a no-log error!!'",
                 ])
             else:

@@ -216,12 +216,12 @@ if 'CYCLES_TARGET_FOLDER' in os.environ:
         '-lgflags',
         # '-lcuda',
     ]
-    # os.environ['LD_LIBRARY_PATH'] = '%s:%s' % (
-    #     '%s/targets/x86_64-linux/lib/stubs/' % os.environ['CUDA_TARGET_FOLDER'],
-    #     os.environ['LD_LIBRARY_PATH']
-    # )
 
-
+if 'OPENPGL_TARGET_FOLDER' in os.environ:
+    LINKFLAGS += [
+        '-L%s/lib/' % os.environ['OPENPGL_TARGET_FOLDER'],
+        '-lopenpgl',
+    ]
 
 
 GAFFERCORTEX = True
