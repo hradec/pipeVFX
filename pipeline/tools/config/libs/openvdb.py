@@ -21,7 +21,6 @@
 
 class openvdb(baseLib):
     def environ(self):
-        self['LD_PRELOAD'] = "%s/lib/liblog4cplus-1.2.so.5" % pipe.libs.log4cplus().path()
         self['PYTHONPATH'] = self.path('python')
 
         pipe.apps.maya.addon( self,
@@ -32,3 +31,7 @@ class openvdb(baseLib):
                 self.path('maya/lib'),
             ],
         )
+
+        # AdskLicensingAgent doesn't like our log4cplus
+        if self.parent() not in ['maya']:
+            self['LD_PRELOAD'] = "%s/lib/liblog4cplus-1.2.so.5" % pipe.libs.log4cplus().path()

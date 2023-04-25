@@ -25,12 +25,14 @@ class maya(baseApp):
         if self.parent() in ['maya','arnold']:
             mv = float(pipe.version.get( 'maya' ).split('.')[0])
             if mv >= 2023:
+                pipe.libs.version.set( freetype = '2.10.0' )
                 pipe.version.set( python = '3.9' )
                 pipe.libs.version.set( python = '3.9' )
                 pipe.libs.version.set( usd = '21.11.0' )
                 pipe.libs.version.set( gaffer = '1.1.15' )
                 # pipe.libs.version.set( openexr = '3.1.5' )
             elif mv >= 2022:
+                pipe.libs.version.set( freetype = '2.10.0' )
                 pipe.version.set( python = '2.7' )
                 pipe.libs.version.set( python = '2.7' )
                 # pipe.libs.version.set( cortex = '10.4.1.2' )
@@ -429,6 +431,14 @@ class maya(baseApp):
         if '--debug' in sys.argv:
             self['MAYA_DEBUG_NO_SIGNAL_HANDLERS'] = '1'
 
+        if '--crd' in sys.argv or 'CRD' in os.environ:
+            if '--crd' in sys.argv:
+                del sys.argv[sys.argv.index('--crd')]
+            m += '.fix'
+        else:
+            self.startLicenseServer()
+
+
         pythonVer = ''.join(pipe.libs.version.get( 'python' )[:3])
         self.insert('LD_LIBRARY_PATH',0, self.path('lib/python%s/lib-dynload/' % pythonVer))
         self.insert('PYTHONPATH',0, self.path('lib/python%s.zip' % pythonVer))
@@ -465,7 +475,7 @@ class maya(baseApp):
         baseApp.run( self, __run )
 
 
-    def license(self):
+    def __license(self):
         # if float(self.version()) >= 2016.5:
         #     self['MAYA_LICENSE_METHOD']='standalone'
         self['MAYA_LICENSE']='unlimited'
@@ -477,6 +487,86 @@ class maya(baseApp):
 
         # else:
         #     self['LM_LICENSE_FILE'] = "%s/licenses/%s/%s" % (roots.tools(), self.className.lower(), self.appFromDB.version() )
+
+
+
+    def startLicenseServer(self):
+        if 'PIPE_PROXY_SERVER' in os.environ:
+            os.environ['http_proxy'] = os.environ['PIPE_PROXY_SERVER']
+            os.environ['https_proxy'] = os.environ['PIPE_PROXY_SERVER']
+            os.environ['ftp_proxy'] = os.environ['PIPE_PROXY_SERVER']
+            self['LD_PRELOAD'] = pipe.libs.freetype().LD_PRELOAD()
+            from glob import glob
+            adskVersion = cached.glob(self.path('../../../opt/Autodesk/AdskLicensing/*'))
+            if adskVersion:
+                mv = float(self.version().split('.')[0])
+                adskVersion = os.path.basename(adskVersion[0])
+                adsklic = self.path('../../../opt/Autodesk/AdskLicensing/%s/AdskLicensingService/AdskLicensingService' % adskVersion)
+                adskhelp = self.path('../../../opt/Autodesk/AdskLicensing/%s/helper/AdskLicensingInstHelper' % adskVersion)
+                mtoa_path = arnold().path("mtoadeploy")
+                mtoa_version =  os.path.basename(os.readlink(mtoa_path))
+                apit =  mtoa_path+"/$MAYA_VERSION_MAJOR_ONLY/license/pit/ArnoldConfig.pit"
+
+                register = False
+                if os.path.exists(adsklic):
+                    if not os.path.exists('/opt/Autodesk/AdskLicensing/%s/AdskLicensingService/AdskLicensingService' % adskVersion):
+                        print("Please wait - installing Autodesk License for Maya version %s..." % self.version())
+                        register = True
+                        cmdz = [
+                            "su -c 'getent group adsklic &>/dev/null || groupadd adsklic'",
+                            "su -c 'id -u adsklic &>/dev/null || useradd -M -r -g adsklic adsklic -d / -s /usr/sbin/nologin'",
+                            "su -c 'mkdir -p /var/opt/'",
+                            "su -c 'mkdir -p /opt/Autodesk/arnold/maya%d-%s/license/'" % (mv, mtoa_version),
+                            "su -c 'rsync -avpP %s/%d/license/pit/ArnoldConfig.pit /opt/Autodesk/arnold/maya%d-%s/license/ArnoldConfig.pit'" % (mtoa_path, mv, mv, mtoa_version),
+                            "su -c 'rsync -avpP %s/opt/Autodesk /opt/'" % self.path('../../..'),
+                            "su -c 'rsync -avpP %s/var/opt/Autodesk /var/opt/'" % self.path('../../..'),
+                            "su -c 'chmod a+rwx /opt/Autodesk/ -R'",
+                            "su -c 'chmod a+rwx /var/opt/Autodesk/ -R'",
+                        ]
+                        sudo = pipe.admin.sudo()
+                        for cmd in cmdz:
+                            sudo.cmd(cmd)
+                            # print(cmd)
+                        print(sudo.run())
+
+
+                    # print("Please wait - starting Autodesk License for Maya version %s..." % self.version())
+                    os.system('pkill -fc -9 AdskLicensingService 2>&1 >/dev/null')
+                    cmd = '/opt/Autodesk/AdskLicensing/%s/AdskLicensingService/AdskLicensingService --run > /tmp/adskLicenseService.log 2>&1 &' % adskVersion
+                    # print(cmd)
+                    os.system(cmd)
+
+                    if register:
+                        maya_code="657K1"
+                        mtoa_code="C0PK1"
+                        if mv == 2020:
+                            maya_code="657L1"
+                            mtoa_code="C0PL1"
+                        if mv == 2022:
+                            maya_code="657N1"
+                            mtoa_code="C0PN1"
+                        if mv == 2023:
+                            maya_code="657O1"
+                            mtoa_code="C0PO1"
+                        if mv == 2024:
+                            maya_code="657P1"
+                            mtoa_code="C0PP1"
+
+                        # sudo /opt/Autodesk/AdskLicensing/$adskVersion/helper/AdskLicensingInstHelper register -pk $maya_code -pv $MAYA_VERSION_MAJOR.0.0.F -el EN_US -cf /var/opt/Autodesk/Adlm/Maya$MAYA_VERSION_MAJOR/MayaConfig.pit
+                        # #sudo /opt/Autodesk/AdskLicensing/Current/helper/AdskLicensingInstHelper register -pk C0PL1 -pv 2020.0.0.F -lm NETWORK -cf /opt/Autodesk/arnold/maya2019-4.2.0/license/ArnoldConfig.pit
+                        # sudo /opt/Autodesk/AdskLicensing/$adskVersion/helper/AdskLicensingInstHelper register -pk $mtoa_code -pv $MAYA_VERSION_MAJOR.0.0.F -lm NETWORK -cf /data/linux/apps/linux/x86_64/mtoa/$MTOA_VERSION/$MAYA_VERSION_MAJOR/license/pit/ArnoldConfig.pit
+                        cmdz = [
+                            # we have to make sure the AdskLicensingService is running!!
+                            '''su -c 'while [ "$(pgrep -fa /opt/Autodesk/AdskLicensing/%s/AdskLicensingService/AdskLicensingService | grep -v grep)" == "" ] ; do sleep 1 ; done' ''' % adskVersion,
+                            "su -c '%s register -pk %s -pv %d.0.0.F -el EN_US    -cf /var/opt/Autodesk/Adlm/Maya%d/MayaConfig.pit'" % (adskhelp, maya_code, mv, mv),
+                            "su -c '%s register -pk %s -pv %d.0.0.F -lm NETWORK  -cf /opt/Autodesk/arnold/maya%d-%s/license/ArnoldConfig.pit'" % (adskhelp, mtoa_code, mv, mv, mtoa_version),
+                        ]
+                        sudo = pipe.admin.sudo()
+                        for cmd in cmdz:
+                            print( cmd)
+                            sudo.cmd(cmd)
+                        print(sudo.run())
+
 
     # def bg(self,cmd,bin):
     #     ''' return True if a cmd or binary should run in background '''
@@ -736,6 +826,7 @@ class maya(baseApp):
                 error = True
                 print( filter(lambda x: s in x, str(returnLog).split('\n')) )
                 break
+
 
 
         # return a posix error code if we got an error, so the farm engine
