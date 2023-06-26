@@ -18,13 +18,17 @@
 #    along with pipeVFX.  If not, see <http://www.gnu.org/licenses/>.
 # =================================================================================
 
-import pickle, os, pwd
+import pickle, os, pwd, sys
 import glob as _glob
 
 def __get_username():
-    return pwd.getpwuid( os.getuid() )[ 0 ]
+    ''' return the username + the python version, so pickle files are saved
+    for their correct python version '''
+    return pwd.getpwuid( os.getuid() )[ 0 ] + '_' + sys.version.split(' ')[0]
 
 def __cached_name__(path):
+    ''' construct the cache filename - use /dev/shm which is
+    a ramdisk for speed '''
     dir = '/dev/shm/cached__'+__get_username()
     ret = dir+'/___'
     if not os.path.exists(dir):
@@ -34,70 +38,82 @@ def __cached_name__(path):
     return ret+path
 
 def __save__(data, cache):
+    ''' save result into cache memory '''
     pickle.dump(data,open(cache,'wb'))
     os.chmod(cache,0o777)
 
 def __load__(cache):
-    with open(cache,'rb') as file:
-        return pickle.loads(file.read())
+    ''' load result from cache '''
+    ret = None
+    if __exists__( cache ):
+        with open(cache,'rb') as file:
+            try:
+                ret = pickle.loads(file.read())
+            except:
+                os.system('rm -rf "%s"' % cache)
+    return ret
 
 def __exists__(cache):
-    return os.path.exists( cache )
-
+    ''' just check if file exists '''
+    if os.path.exists( cache ):
+        return True
+    return False
 
 def cache_func(func, force=False, cache_name=None):
+    ''' run any python function and cache the return result '''
     import traceback
     if not cache_name:
         cache_name = traceback.extract_stack(None, 2)[0][2]
     cache = __cached_name__(cache_name)
-    if __exists__( cache ) and not force:
-        data = __load__(cache)
-    else:
+    data = __load__(cache)
+    if not data or force:
         data = func()
         __save__(data, cache)
     return data
 
 def glob(path):
+    ''' cache the return result of glob '''
     cache = __cached_name__(path)
-    if __exists__( cache ):
-        data = __load__(cache)
-    else:
+    data = __load__(cache)
+    if not data:
         data = _glob.glob(path)
         __save__(data, cache)
     return data
 
 def exists(path):
+    ''' cache the return result if files exist '''
     cache = __cached_name__(path+"_exists_")
-    if __exists__( cache ):
-        data = __load__(cache)
-    else:
+    data = __load__(cache)
+    if not data:
         data = os.path.exists(path)
         __save__(data, cache)
     return data
 
 class popen:
+    ''' run popen and cache the return result
+    perfect to cache results from shell commands '''
     def __init__(self, cmd, cache_name=None):
         if not cache_name:
             cache_name = cmd
         self.cache = __cached_name__(cache_name)
         self.cmd = cmd
     def readlines(self):
-        if __exists__( self.cache ):
-            data = __load__(self.cache)
-        else:
+        data = __load__(self.cache)
+        if not data:
             data = os.popen(self.cmd).readlines()
             __save__(data, self.cache)
         return data
 
 class copen:
+    ''' run python open and cache the result.
+    this essentiall caches file content in memory '''
     def __init__(self, file, mode='r'):
         self.cache = __cached_name__(file)
         self.file = file
         self.mode = mode
     def readlines(self):
-        if __exists__( self.cache ):
-            data = __load__(self.cache)
-        else:
+        data = __load__(self.cache)
+        if not data:
             f = open(self.file, self.mode)
             data = f.readlines()
             f.close()
