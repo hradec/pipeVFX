@@ -156,7 +156,7 @@ jobs:
 
     # - name: try to download artifact from this phase - if works, skip this phase build (retrying the build)
     #   continue-on-error: true
-    #   uses: actions/download-artifact@v2
+    #   uses: actions/download-artifact@v4.1.7
     #   with:
     #       name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ env.NEXT_MATRIX_NAME }}-${{ github.sha }}.tar.gz
     #
@@ -231,7 +231,7 @@ jobs:
     # this allows us to continue building the libs folder during the whole workflow.
     # ================================================================================================================
     - name: download artifact from previous run 1/2
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4.1.7
       # if: ${{ env.DO_DOWNLOAD_ARTIFACT }} == '1'
       if: matrix.name != 'phase1'
       continue-on-error: true
@@ -240,7 +240,7 @@ jobs:
         # name: ${{ env.STUDIO }}-${{ github.ref_name }}-${{ github.sha }}.tar.gz
 
     - name: download artifact from previous run 2/2
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4.1.7
       # if: ${{ env.DO_DOWNLOAD_ARTIFACT }} == '1'
       if: matrix.name != 'phase1'
       continue-on-error: true
